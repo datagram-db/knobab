@@ -43,7 +43,8 @@ struct ActTable {
     std::vector<std::pair<record*, record*>> secondary_index;
 
     record* load_record(trace_t id, act_t act, time_t time, struct record* prev = nullptr, struct record* next = nullptr); // rename: loading_step (emplace_back)
-    void indexing();
+    const std::vector<std::vector<size_t>> & indexing1();
+    void indexing2();
     void sanityCheck();
 
     size_t getTraceLength(size_t id) const { return trace_length.at(id); }

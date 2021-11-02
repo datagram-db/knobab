@@ -12,43 +12,8 @@
 #include <unordered_map>
 #include <bzdb/AttributeTable.h>
 #include <yaucl/bpm/trace_visitor.h>
-
-template<typename T>  struct any_to_uint_bimap {
-
-    std::vector<T> int_to_T;
-    std::unordered_map<T, size_t> T_to_int;
-
-
-    any_to_uint_bimap() = default;
-    any_to_uint_bimap(const any_to_uint_bimap&) = default;
-    any_to_uint_bimap(any_to_uint_bimap&&) = default;
-    any_to_uint_bimap&operator=(const any_to_uint_bimap&) = default;
-    any_to_uint_bimap&operator=(any_to_uint_bimap&&) = default;
-
-    std::pair<size_t, bool> put(const T& elem) {
-        auto it = T_to_int.find(elem);
-        if (it != T_to_int.end())
-            return { it->second, false };
-        else {
-            size_t toRet = int_to_T.size();
-            T_to_int.emplace(elem, toRet);
-            int_to_T.emplace_back(elem);
-            return { toRet, true };
-        }
-    }
-    size_t get(const T& elem) const {
-        auto it = T_to_int.find(elem);
-        if (it != T_to_int.end())
-            return it->second;
-        else {
-            throw std::runtime_error("Unkown key");
-        }
-    }
-    const T&  get(size_t elem) const {
-        assert(int_to_T.size() > elem);
-        return int_to_T.at(elem);
-    }
-};
+#include <yaucl/structures/any_to_uint_bimap.h>
+#include <SimplifiedFuzzyStringMatching.h>
 
 enum ParsingState {
     LogParsing,
@@ -61,6 +26,7 @@ class SmallDatabase : public trace_visitor {
     CountTemplate                                   count_table;
     ActTable                                        act_table_by_act_id;
     std::unordered_map<std::string, AttributeTable> attribute_name_to_table;
+    SimplifiedFuzzyStringMatching                   string_values;
 
     bool alreadySet;
     std::string source;
@@ -68,20 +34,17 @@ class SmallDatabase : public trace_visitor {
     size_t noTraces;
     size_t currentEventId;
     ParsingState status;
-
+    size_t actId;
 
 public:
-    any_to_uint_bimap<std::string> event_label_mapper;
+    yaucl::structures::any_to_uint_bimap<std::string> event_label_mapper;
     std::unordered_map<size_t, size_t> counting_reference;
 
     void reconstruct_trace_no_data(std::ostream& os);
+    void reconstruct_trace_with_data(std::ostream& os);
 
-    SmallDatabase() : alreadySet{false} {
-        status = FinishParsing;
-    }
-    void index_data_structures() {
-        act_table_by_act_id.indexing();
-    }
+    SmallDatabase();
+    void index_data_structures();
     void enterLog(const std::string &source, const std::string &name) override;
     void exitLog(const std::string &source, const std::string &name) override;
     size_t enterTrace(const std::string &trace_label) override;

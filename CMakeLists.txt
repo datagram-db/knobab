@@ -15,7 +15,7 @@ add_library(knobab STATIC src/bzdb/oid.cpp src/bzdb/CountTemplate.cpp include/bz
         #src/fuzzyStringMatching/v1.0/LSVM_Primary.cpp
         #src/fuzzyStringMatching/v1.0/SLHM_Primary.cpp
         #src/fuzzyStringMatching/v2.0/FuzzyMatchSerializer.cpp)
-        src/yaucl/data/xml.cpp)
+        src/yaucl/data/xml.cpp src/SimplifiedFuzzyStringMatching.cpp include/SimplifiedFuzzyStringMatching.h include/yaucl/structures/any_to_uint_bimap.h string_utils.cpp string_utils.h)
 
 add_executable(test main.cpp )
 target_link_libraries(test knobab antlr4_static)

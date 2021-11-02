@@ -11,10 +11,12 @@ int main() {
     std::cout << (id1 < id2) << std::endl;
 
     std::cout << "Hello, World!" << std::endl;*/
+    assert(sizeof(double) == sizeof(size_t));
+
     SmallDatabase db;
-    load_into_small_databse(HUMAN_READABLE_YAUCL, false, "/home/giacomo/CLionProjects/bzdb/log_1.txt", db);
+    load_into_small_databse(HUMAN_READABLE_YAUCL, true, "/home/giacomo/CLionProjects/bzdb/log_1.txt", db);
     db.index_data_structures();
-    db.reconstruct_trace_no_data(std::cout);
+    db.reconstruct_trace_with_data(std::cout);
 
 
     return 0;
