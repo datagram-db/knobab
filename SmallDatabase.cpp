@@ -6,7 +6,56 @@
 #include <cassert>
 #include <cmath>
 
+SmallDatabase::SmallDatabase() : alreadySet{false} {
+    status = FinishParsing;
+}
 
+void SmallDatabase::reconstruct_trace_no_data(std::ostream &os) {
+    for (size_t trace_id = 0, N = act_table_by_act_id.secondary_index.size(); trace_id < N; trace_id++) {
+        os << "Trace #" << trace_id << std::endl << "\t- ";
+        const auto& ref = act_table_by_act_id.secondary_index[trace_id];
+        auto ptr = ref.first;
+        while (ptr) {
+            os << event_label_mapper.get(ptr->entry.id.parts.act) << "; ";
+            ptr = ptr->next;
+        };
+        os << std::endl;
+    }
+}
+
+
+void SmallDatabase::reconstruct_trace_with_data(std::ostream &os) {
+    for (size_t trace_id = 0, N = act_table_by_act_id.secondary_index.size(); trace_id < N; trace_id++) {
+        os << "Trace #" << trace_id << std::endl << "\t- ";
+        const auto& ref = act_table_by_act_id.secondary_index[trace_id];
+        auto ptr = ref.first;
+        while (ptr) {
+            os << event_label_mapper.get(ptr->entry.id.parts.act) << "{ ";
+            for (const auto& attr_table : this->attribute_name_to_table) {
+                ptrdiff_t offset = ptr - act_table_by_act_id.table.data();
+                const AttributeTable::record* recordPtr = attr_table.second.resolve_record_if_exists(offset);
+                if (recordPtr) {
+                    os << attr_table.first << '=';
+                    attr_table.second.resolve_and_print(os, *recordPtr);
+                    os << ", ";
+                }
+            }
+            os << "} ";
+            ptr = ptr->next;
+        };
+        os << std::endl;
+    }
+}
+
+
+void SmallDatabase::index_data_structures() {
+    const auto& idx = act_table_by_act_id.indexing1();
+    for (auto& attr_name_to_table_cp : attribute_name_to_table)
+        attr_name_to_table_cp.second.index(idx, act_table_by_act_id.table.size()-1);
+    act_table_by_act_id.indexing2();
+}
+
+///////////////// Event System
 
 void SmallDatabase::enterLog(const std::string &source, const std::string &name) {
     assert(!this->alreadySet);
@@ -30,6 +79,7 @@ size_t SmallDatabase::enterTrace(const std::string &trace_label) {
     currentEventId = 0;
     counting_reference.clear();
     status = TraceParsing;
+    actId = 0;
     return (noTraces++);
 }
 
@@ -47,7 +97,7 @@ void SmallDatabase::exitTrace(size_t traceId) {
 }
 
 size_t SmallDatabase::enterEvent(size_t chronos_tick, const std::string &event_label) {
-    size_t actId = event_label_mapper.put(event_label).first;
+    actId = event_label_mapper.put(event_label).first;
     auto it = counting_reference.emplace(actId, 0UL);
     if (!it.second) {
         it.first->second++;
@@ -55,9 +105,10 @@ size_t SmallDatabase::enterEvent(size_t chronos_tick, const std::string &event_l
     status = EventParsing;
     act_table_by_act_id.load_record(noTraces-1, actId, currentEventId, nullptr, nullptr);
     enterData_part(true);
+    size_t currentEventIdRet = currentEventId++;
     visitField("__time", chronos_tick);
     ///miniActTable.emplace_back(actId, noTraces-1, currentEventId);
-    return currentEventId++;
+    return currentEventIdRet;
 }
 
 void SmallDatabase::exitEvent(size_t event_id) {
@@ -88,37 +139,45 @@ void SmallDatabase::exitData_part(bool isEvent) {
 
 void SmallDatabase::visitField(const std::string &key, bool value) {
     if (status == EventParsing) {
-        visitField(key, value ? 1.0 : 0.0);
-    } // For the moment, we are ignoring the trace payload
+        auto it = attribute_name_to_table.find(key);
+        if (it == attribute_name_to_table.end()) {
+            attribute_name_to_table[key] = {key, BoolAtt};
+            it = attribute_name_to_table.find(key);
+        }
+        it->second.record_load(actId, value, noTraces-1, currentEventId-1);
+    }
 }
 
 void SmallDatabase::visitField(const std::string &key, double value) {
     if (status == EventParsing) {
-        // TODO: directly write the numerical value
-    } // For the moment, we are ignoring the trace payload
+        auto it = attribute_name_to_table.find(key);
+        if (it == attribute_name_to_table.end()) {
+            attribute_name_to_table[key] = {key, DoubleAtt};
+            it = attribute_name_to_table.find(key);
+        }
+        it->second.record_load(actId, value, noTraces-1, currentEventId-1);
+    }
 }
 
 void SmallDatabase::visitField(const std::string &key, const std::string &value) {
     if (status == EventParsing) {
-        // TODO: directly write the numerical value, as well as create a database for the strings.
-    } // For the moment, we are ignoring the trace payload
+        auto it = attribute_name_to_table.find(key);
+        if (it == attribute_name_to_table.end()) {
+            attribute_name_to_table[key] = {key, StringAtt, &string_values};
+            it = attribute_name_to_table.find(key);
+        }
+        it->second.record_load(actId, value, noTraces-1, currentEventId-1);
+    }
 }
 
 void SmallDatabase::visitField(const std::string &key, size_t value) {
     if (status == EventParsing) {
-        visitField(key, (double)value);
-    } // For the moment, we are ignoring the trace payload
-}
-
-void SmallDatabase::reconstruct_trace_no_data(std::ostream &os) {
-    for (size_t trace_id = 0, N = act_table_by_act_id.secondary_index.size(); trace_id < N; trace_id++) {
-        os << "Trace #" << trace_id << std::endl << "\t- ";
-        const auto& ref = act_table_by_act_id.secondary_index[trace_id];
-        auto ptr = ref.first;
-        while (ptr) {
-            os << event_label_mapper.get(ptr->entry.id.parts.act) << "; ";
-            ptr = ptr->next;
-        };
-        os << std::endl;
+        auto it = attribute_name_to_table.find(key);
+        if (it == attribute_name_to_table.end()) {
+            attribute_name_to_table[key] = {key, SizeTAtt};
+            it = attribute_name_to_table.find(key);
+        }
+        it->second.record_load(actId, value, noTraces-1, currentEventId-1);
     }
 }
+

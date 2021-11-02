@@ -78,7 +78,7 @@ void ActTable::sanityCheck() {
     assert(std::is_sorted(table.begin(), table.end()));
 }
 
-void ActTable::indexing() { // todo: rename as indexing, and remove expectedOrdering from emplace_back, instead, put in
+const std::vector<std::vector<size_t>> & ActTable::indexing1() { // todo: rename as indexing, and remove expectedOrdering from emplace_back, instead, put in
     size_t offset = 0;
     // Phase 1
     for (size_t k = 0, N = builder.act_id_to_trace_id_and_time.size(); k < N; k++) {
@@ -94,6 +94,33 @@ void ActTable::indexing() { // todo: rename as indexing, and remove expectedOrde
         ref.clear(); // freeing some memory
     }
     builder.act_id_to_trace_id_and_time.clear(); // freeing some memory
+    return builder.trace_id_to_event_id_to_offset;
+#if 0
+    // Phase 2, creating the secondary index, for accessing the beginning and the end of the trace from the table
+    for (size_t sigma_id = 0, M = builder.trace_id_to_event_id_to_offset.size(); sigma_id < M ; sigma_id++) {
+        auto& ref = builder.trace_id_to_event_id_to_offset[sigma_id];
+        for (size_t time = 0, T = ref.size(); time < T; time++) {
+            size_t offset = ref[time];
+            auto& real_ref = table[offset];
+            if (time == 0) {
+                assert(secondary_index.size() == sigma_id);
+                secondary_index.emplace_back(&real_ref, &table[ref.back()]);
+            }
+            if (time < T-1) {
+                real_ref.next = &table[ref.at(time+1)];
+            }
+            if (time > 0) {
+                real_ref.prev = &table[ref.at(time-1)];
+            }
+        }
+        //ref.clear();
+    }
+    //builder.trace_id_to_event_id_to_offset.clear();
+#endif
+}
+
+
+void ActTable::indexing2() { // todo: rename as indexing, and remove expectedOrdering from emplace_back, instead, put in
 
     // Phase 2, creating the secondary index, for accessing the beginning and the end of the trace from the table
     for (size_t sigma_id = 0, M = builder.trace_id_to_event_id_to_offset.size(); sigma_id < M ; sigma_id++) {
@@ -116,4 +143,3 @@ void ActTable::indexing() { // todo: rename as indexing, and remove expectedOrde
     }
     builder.trace_id_to_event_id_to_offset.clear();
 }
-
