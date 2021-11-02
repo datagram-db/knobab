@@ -163,7 +163,7 @@ void load_xes_with_data(const std::string &filename, bool load_data, trace_visit
 
 #include "yaucl/bpm/DataTraceParse.h"
 
-void load_into_small_databse(log_data_format format, bool loadData, const std::string &filename, KnowledgeBase &output) {
+void load_into_knowledge_base(log_data_format format, bool loadData, const std::string &filename, KnowledgeBase &output) {
     trace_visitor* tv = (trace_visitor*)&output;
     switch (format) {
         case HUMAN_READABLE_YAUCL: {

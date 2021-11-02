@@ -55,7 +55,7 @@ struct ActTable {
             return {nullptr, nullptr};
         else {
             return {table.data() + primary_index.at(id),
-                    (id == (primary_index.size() - 1) ? &primary_index.back() : table.data() + primary_index.at(id+1))};
+                    ((id == (primary_index.size() - 1)) ? (const record*)primary_index.back() : table.data() + primary_index.at(id+1))};
         }
     }
 
