@@ -38,8 +38,30 @@ struct ActTable {
         bool operator!=(const record &rhs) const;
     };
 
+    /**
+     * Actual table containing the data and the navigation indices. Those are mainly required for reconstructing the log
+     * information for isomorphism purposes
+     */
     std::vector<record> table;
+
+
     std::vector<size_t> primary_index;
+
+    /**
+ * Associating an act id to all of the events from all the traces having the same act id
+ */
+    [[nodiscard]] std::pair<const record*, const record*> resolve_index(act_t id) const {
+        if (primary_index.size() < id)
+            return {nullptr, nullptr};
+        else {
+            return {table.data() + primary_index.at(id),
+                    (id == (primary_index.size() - 1) ? &primary_index.back() : table.data() + primary_index.at(id+1))};
+        }
+    }
+
+    /**
+     * Mapping the trace id to the first and last event (see the log printer from the KnowledgeBase for a usage example)
+     */
     std::vector<std::pair<record*, record*>> secondary_index;
 
     record* load_record(trace_t id, act_t act, time_t time, struct record* prev = nullptr, struct record* next = nullptr); // rename: loading_step (emplace_back)
