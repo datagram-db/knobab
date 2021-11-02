@@ -10,7 +10,7 @@ include_directories(submodules/date/include)
 include_directories(submodules/json/include)
 
 include_directories(include)
-add_library(knobab STATIC src/bzdb/oid.cpp src/bzdb/CountTemplate.cpp include/bzdb/CountTemplate.h src/bzdb/ActTable.cpp include/bzdb/ActTable.h src/bzdb/AttributeTable.cpp include/bzdb/AttributeTable.h SmallDatabase.cpp SmallDatabase.h src/yaucl/bpm/trace_visitor.cpp include/yaucl/bpm/trace_visitor.h data_loader.cpp src/yaucl/numeric/numeric_base.cpp include/yaucl/numeric/numeric_base.h src/yaucl/bpm/TracesBaseListener.cpp src/yaucl/bpm/TracesBaseVisitor.cpp src/yaucl/bpm/TracesLexer.cpp src/yaucl/bpm/TracesListener.cpp src/yaucl/bpm/TracesParser.cpp src/yaucl/bpm/TracesVisitor.cpp src/yaucl/bpm/DataTraceParse.cpp
+add_library(knobab STATIC src/bzdb/oid.cpp src/bzdb/CountTemplate.cpp include/bzdb/CountTemplate.h src/bzdb/ActTable.cpp include/bzdb/ActTable.h src/bzdb/AttributeTable.cpp include/bzdb/AttributeTable.h KnowledgeBase.cpp KnowledgeBase.h src/yaucl/bpm/trace_visitor.cpp include/yaucl/bpm/trace_visitor.h data_loader.cpp src/yaucl/numeric/numeric_base.cpp include/yaucl/numeric/numeric_base.h src/yaucl/bpm/TracesBaseListener.cpp src/yaucl/bpm/TracesBaseVisitor.cpp src/yaucl/bpm/TracesLexer.cpp src/yaucl/bpm/TracesListener.cpp src/yaucl/bpm/TracesParser.cpp src/yaucl/bpm/TracesVisitor.cpp src/yaucl/bpm/DataTraceParse.cpp
         #src/fuzzyStringMatching/v1.0/STTGSHM_Primary.cpp
         #src/fuzzyStringMatching/v1.0/LSVM_Primary.cpp
         #src/fuzzyStringMatching/v1.0/SLHM_Primary.cpp

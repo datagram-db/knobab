@@ -22,7 +22,7 @@ enum ParsingState {
     FinishParsing
 };
 
-class SmallDatabase : public trace_visitor {
+class KnowledgeBase : public trace_visitor {
     CountTemplate                                   count_table;
     ActTable                                        act_table_by_act_id;
     std::unordered_map<std::string, AttributeTable> attribute_name_to_table;
@@ -43,7 +43,7 @@ public:
     void reconstruct_trace_no_data(std::ostream& os);
     void reconstruct_trace_with_data(std::ostream& os);
 
-    SmallDatabase();
+    KnowledgeBase();
     void index_data_structures();
     void enterLog(const std::string &source, const std::string &name) override;
     void exitLog(const std::string &source, const std::string &name) override;

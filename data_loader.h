@@ -3,7 +3,7 @@
 //
 
 #include <istream>
-#include "SmallDatabase.h"
+#include "KnowledgeBase.h"
 
 #ifndef BZDB_DATA_LOADER_H
 #define BZDB_DATA_LOADER_H
@@ -13,6 +13,6 @@ enum log_data_format {
     XES1
 };
 
-void load_into_small_databse(log_data_format format, bool loadData, const std::string &filename, SmallDatabase& output);
+void load_into_small_databse(log_data_format format, bool loadData, const std::string &filename, KnowledgeBase& output);
 
 #endif //BZDB_DATA_LOADER_H

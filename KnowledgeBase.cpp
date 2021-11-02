@@ -2,15 +2,15 @@
 // Created by giacomo on 26/12/20.
 //
 
-#include "SmallDatabase.h"
+#include "KnowledgeBase.h"
 #include <cassert>
 #include <cmath>
 
-SmallDatabase::SmallDatabase() : alreadySet{false} {
+KnowledgeBase::KnowledgeBase() : alreadySet{false} {
     status = FinishParsing;
 }
 
-void SmallDatabase::reconstruct_trace_no_data(std::ostream &os) {
+void KnowledgeBase::reconstruct_trace_no_data(std::ostream &os) {
     for (size_t trace_id = 0, N = act_table_by_act_id.secondary_index.size(); trace_id < N; trace_id++) {
         os << "Trace #" << trace_id << std::endl << "\t- ";
         const auto& ref = act_table_by_act_id.secondary_index[trace_id];
@@ -24,7 +24,7 @@ void SmallDatabase::reconstruct_trace_no_data(std::ostream &os) {
 }
 
 
-void SmallDatabase::reconstruct_trace_with_data(std::ostream &os) {
+void KnowledgeBase::reconstruct_trace_with_data(std::ostream &os) {
     for (size_t trace_id = 0, N = act_table_by_act_id.secondary_index.size(); trace_id < N; trace_id++) {
         os << "Trace #" << trace_id << std::endl << "\t- ";
         const auto& ref = act_table_by_act_id.secondary_index[trace_id];
@@ -48,16 +48,21 @@ void SmallDatabase::reconstruct_trace_with_data(std::ostream &os) {
 }
 
 
-void SmallDatabase::index_data_structures() {
+void KnowledgeBase::index_data_structures() {
+    /// generating the primary index for the ActTable, and returning its intermediate index, M2
     const auto& idx = act_table_by_act_id.indexing1();
+
+    /// Applying the intermediate index M2 to each attribute table, so to continue with the value indexing
     for (auto& attr_name_to_table_cp : attribute_name_to_table)
         attr_name_to_table_cp.second.index(idx, act_table_by_act_id.table.size()-1);
+
+    /// Continuing to create the secondary index out of M2, as well as clearing M2
     act_table_by_act_id.indexing2();
 }
 
 ///////////////// Event System
 
-void SmallDatabase::enterLog(const std::string &source, const std::string &name) {
+void KnowledgeBase::enterLog(const std::string &source, const std::string &name) {
     assert(!this->alreadySet);
     this->source = source;
     this->name = name;
@@ -67,7 +72,7 @@ void SmallDatabase::enterLog(const std::string &source, const std::string &name)
     count_table.table.clear();
 }
 
-void SmallDatabase::exitLog(const std::string &source, const std::string &name) {
+void KnowledgeBase::exitLog(const std::string &source, const std::string &name) {
     assert(this->alreadySet);
     assert(this->name == name);
     assert(this->source == source);
@@ -75,7 +80,7 @@ void SmallDatabase::exitLog(const std::string &source, const std::string &name) 
     count_table.sort();
 }
 
-size_t SmallDatabase::enterTrace(const std::string &trace_label) {
+size_t KnowledgeBase::enterTrace(const std::string &trace_label) {
     currentEventId = 0;
     counting_reference.clear();
     status = TraceParsing;
@@ -83,7 +88,7 @@ size_t SmallDatabase::enterTrace(const std::string &trace_label) {
     return (noTraces++);
 }
 
-void SmallDatabase::exitTrace(size_t traceId) {
+void KnowledgeBase::exitTrace(size_t traceId) {
     /*if (act_begin_record_ptr != nullptr) {
         act_end_record_ptr = &act_table_by_act_id.table.back();
         for (size_t i = 0, N = std::distance(act_begin_record_ptr, act_end_record_ptr); i<N; i++) {
@@ -96,7 +101,7 @@ void SmallDatabase::exitTrace(size_t traceId) {
     status = LogParsing;
 }
 
-size_t SmallDatabase::enterEvent(size_t chronos_tick, const std::string &event_label) {
+size_t KnowledgeBase::enterEvent(size_t chronos_tick, const std::string &event_label) {
     actId = event_label_mapper.put(event_label).first;
     auto it = counting_reference.emplace(actId, 0UL);
     if (!it.second) {
@@ -111,7 +116,7 @@ size_t SmallDatabase::enterEvent(size_t chronos_tick, const std::string &event_l
     return currentEventIdRet;
 }
 
-void SmallDatabase::exitEvent(size_t event_id) {
+void KnowledgeBase::exitEvent(size_t event_id) {
     assert(currentEventId == (event_id+1));
     // using counting_reference to populate
     std::vector<std::pair<size_t, size_t>> cp;
@@ -123,21 +128,21 @@ void SmallDatabase::exitEvent(size_t event_id) {
     status = TraceParsing;
 }
 
-void SmallDatabase::enterData_part(bool isEvent) {
+void KnowledgeBase::enterData_part(bool isEvent) {
     if (isEvent)
         assert(status == EventParsing);
     else
         assert(status == TraceParsing);
 }
 
-void SmallDatabase::exitData_part(bool isEvent) {
+void KnowledgeBase::exitData_part(bool isEvent) {
     if (isEvent)
         assert(status == EventParsing);
     else
         assert(status == TraceParsing);
 }
 
-void SmallDatabase::visitField(const std::string &key, bool value) {
+void KnowledgeBase::visitField(const std::string &key, bool value) {
     if (status == EventParsing) {
         auto it = attribute_name_to_table.find(key);
         if (it == attribute_name_to_table.end()) {
@@ -148,7 +153,7 @@ void SmallDatabase::visitField(const std::string &key, bool value) {
     }
 }
 
-void SmallDatabase::visitField(const std::string &key, double value) {
+void KnowledgeBase::visitField(const std::string &key, double value) {
     if (status == EventParsing) {
         auto it = attribute_name_to_table.find(key);
         if (it == attribute_name_to_table.end()) {
@@ -159,7 +164,7 @@ void SmallDatabase::visitField(const std::string &key, double value) {
     }
 }
 
-void SmallDatabase::visitField(const std::string &key, const std::string &value) {
+void KnowledgeBase::visitField(const std::string &key, const std::string &value) {
     if (status == EventParsing) {
         auto it = attribute_name_to_table.find(key);
         if (it == attribute_name_to_table.end()) {
@@ -170,7 +175,7 @@ void SmallDatabase::visitField(const std::string &key, const std::string &value)
     }
 }
 
-void SmallDatabase::visitField(const std::string &key, size_t value) {
+void KnowledgeBase::visitField(const std::string &key, size_t value) {
     if (status == EventParsing) {
         auto it = attribute_name_to_table.find(key);
         if (it == attribute_name_to_table.end()) {
