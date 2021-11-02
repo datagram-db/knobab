@@ -49,6 +49,9 @@ void KnowledgeBase::reconstruct_trace_with_data(std::ostream &os) {
 
 
 void KnowledgeBase::index_data_structures() {
+    /// Filling the gaps in the sparse table, so to take into account the events that are missing from a given trace
+    count_table.indexing(actId-1, this->noTraces-1);
+
     /// generating the primary index for the ActTable, and returning its intermediate index, M2
     const auto& idx = act_table_by_act_id.indexing1();
 
@@ -124,7 +127,7 @@ void KnowledgeBase::exitEvent(size_t event_id) {
         cp.emplace_back(it.first, it.second);
     std::sort(cp.begin(), cp.end());
     for (const auto& it : cp)
-        count_table.emplace_back(it.first, noTraces-1, it.second);
+        count_table.load_record(it.first, noTraces-1, it.second);
     status = TraceParsing;
 }
 

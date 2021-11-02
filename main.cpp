@@ -2,17 +2,13 @@
 
 #include "KnowledgeBase.h"
 #include "data_loader.h"
-#include <yaucl/bpm/DataTraceParse.h>
-
 
 int main() {
-
-
     /// Creating an instance of the knowledge base, that is going to store all the traces in the log!
     KnowledgeBase db;
 
     /// Loading a log file into the database
-    load_into_small_databse(HUMAN_READABLE_YAUCL, true, "/home/giacomo/CLionProjects/bzdb/log_1.txt", db);
+    load_into_knowledge_base(HUMAN_READABLE_YAUCL, true, "/home/giacomo/CLionProjects/bzdb/log_1.txt", db);
 
     /// Indexing the data structures
     /// TODO: these indices might be written in secondary memory as well!

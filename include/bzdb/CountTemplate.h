@@ -18,10 +18,19 @@ struct CountTemplate {
     CountTemplate(const CountTemplate&) = default;
     CountTemplate& operator=(const CountTemplate&) = default;
 
-    void emplace_back(uint16_t fact, uint32_t trace_id, uint16_t event_pos);
-    void emplace_back(const uint_least64_t& monotone_hash);
+    void load_record(uint16_t act, uint32_t trace_id, uint16_t event_pos);
+    void indexing(uint16_t maxAct, uint32_t maxTraceId);
+
+    std::pair<const oid*, const oid*> resolve_primary_index(uint16_t actId);
+
+    ///void emplace_back(const uint_least64_t& monotone_hash);
     void sort();
     void sanityCheck();
+
+private:
+    uint16_t maxAct;
+    uint32_t maxTraceId;
+    std::unordered_map<uint16_t, std::unordered_map<uint32_t, uint16_t>> sparseTable;
 };
 
 
