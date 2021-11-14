@@ -3,7 +3,7 @@
 //
 
 #include "SimplifiedFuzzyStringMatching.h"
-#include "../string_utils.h"
+#include "yaucl/strings/string_utils.h"
 
 
 void compareStringHashmap1(const std::string& str, std::unordered_map<std::string, size_t> &map,
