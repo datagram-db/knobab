@@ -1,7 +1,7 @@
 #include <iostream>
 
 #include "bzdb/KnowledgeBase.h"
-#include "yaucl/bpm/data_loader.h"
+#include "yaucl/bpm/log/data_loader.h"
 
 int main() {
     /// Creating an instance of the knowledge base, that is going to store all the traces in the log!

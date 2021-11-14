@@ -6,7 +6,7 @@
 #include <string>
 #include <vector>
 #include <variant>
-#include "yaucl/bpm/data_loader.h"
+#include "yaucl/bpm/log/data_loader.h"
 #include "yaucl/data/xml.h"
 #include "yaucl/numeric/numeric_base.h"
 
