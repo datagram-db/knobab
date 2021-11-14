@@ -23,13 +23,13 @@
 // Created by giacomo on 12/03/21.
 //
 
-#include <yaucl/bpm/DataTraceParse.h>
-#include <yaucl/bpm/TracesLexer.h>
-#include <yaucl/bpm/TracesParser.h>
+#include <yaucl/bpm/log/DataTraceParse.h>
+#include <yaucl/bpm/log/TracesLexer.h>
+#include <yaucl/bpm/log/TracesParser.h>
+#include <yaucl/data/json.h>
 
 //using namespace yaucl::bpm;
-#include <nlohmann/json.hpp>
-#define UNESCAPE(x)                  nlohmann::json::parse(x).get<std::string>()
+
 
 void yaucl::bpm::DataTraceParse::load(const std::string &stream_name, std::istream &stream, trace_visitor *tv) {
     this->tv = tv;
