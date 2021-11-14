@@ -81,6 +81,8 @@ struct DataPredicate {
     std::string                       var;
     numeric_atom_cases                casusu;
     std::variant<std::string, double> value;
+    std::string                       labelRHS;
+    std::string                       varRHS;
     std::variant<std::string, double> value_upper_bound;
     std::set<std::variant<std::string, double>> exceptions;
 

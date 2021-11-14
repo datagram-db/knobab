@@ -27,17 +27,17 @@
 #include <yaucl/bpm/declare/DADLexer.h>
 #include <yaucl/data/json.h>
 
-DeclareModelParse::DeclareModelParse() : do_renaming{true} {}
+DeclareModelParse::DeclareModelParse() /*: do_renaming{true}*/ {}
 
-std::vector<DeclareDataAware> DeclareModelParse::load(std::istream &stream, bool do_xes_renaming) {
-    bool tmp = do_renaming;
-    do_renaming = do_xes_renaming;
+std::vector<DeclareDataAware> DeclareModelParse::load(std::istream &stream) {
+    ///bool tmp = do_renaming;
+    ///do_renaming = do_xes_renaming;
     antlr4::ANTLRInputStream input(stream);
     DADLexer lexer(&input);
     antlr4::CommonTokenStream tokens(&lexer);
     DADParser parser(&tokens);
     auto result = visit(parser.data_aware_declare()).as<std::vector<DeclareDataAware>>();
-    do_renaming = tmp;
+    ///do_renaming = tmp;
     return result;
 }
 
@@ -57,23 +57,39 @@ antlrcpp::Any DeclareModelParse::visitNary_prop(DADParser::Nary_propContext *ctx
         std::tie (dda.left_act, dda.dnf_left_map) =
                 visitFields(ctx->fields(0)).as<std::pair<std::string,
                 std::vector<std::unordered_map<std::string, DataPredicate>>>>();
-        if (do_renaming)
-            std::transform(dda.left_act.begin(), dda.left_act.end(), dda.left_act.begin(), ::tolower);
+        std::tie (dda.right_act, dda.dnf_right_map) =
+                visitFields(ctx->fields(1)).as<std::pair<std::string,
+                        std::vector<std::unordered_map<std::string, DataPredicate>>>>();
+        /*if (do_renaming)
+            std::transform(dda.left_act.begin(), dda.left_act.end(), dda.left_act.begin(), ::tolower);*/
         for (auto& ref : dda.dnf_left_map) {
             for (auto& cp : ref) {
                 cp.second.label = dda.left_act;
+                if (!cp.second.varRHS.empty())
+                    cp.second.labelRHS = dda.left_act;
             }
         }
-        std::tie (dda.right_act, dda.dnf_right_map) =
-                visitFields(ctx->fields(1)).as<std::pair<std::string,
-                std::vector<std::unordered_map<std::string, DataPredicate>>>>();
-        if (do_renaming)
-            std::transform(dda.right_act.begin(), dda.right_act.end(), dda.right_act.begin(), ::tolower);
+
+        /*if (do_renaming)
+            std::transform(dda.right_act.begin(), dda.right_act.end(), dda.right_act.begin(), ::tolower);*/
         for (auto& ref : dda.dnf_right_map) {
             for (auto& cp : ref) {
                 cp.second.label = dda.right_act;
+                if (!cp.second.varRHS.empty())
+                    cp.second.labelRHS = dda.right_act;
             }
         }
+
+        if (ctx->prop()) {
+            dda.conjunctive_map = visit(ctx->prop()).as<std::vector<std::unordered_map<std::string, DataPredicate>>>();
+            for (auto& ref : dda.conjunctive_map) {
+                for (auto& cp : ref) {
+                    cp.second.label = dda.left_act;
+                    cp.second.labelRHS = dda.right_act;
+                }
+            }
+        }
+
         dda.n = 0;
         dda.casusu =
                 magic_enum::enum_cast<declare_templates>(ctx->LABEL()->getText()).value();
@@ -87,8 +103,8 @@ antlrcpp::Any DeclareModelParse::visitUnary_prop(DADParser::Unary_propContext *c
         std::tie (dda.left_act, dda.dnf_left_map) =
                 visitFields(ctx->fields()).as<std::pair<std::string,
                 std::vector<std::unordered_map<std::string, DataPredicate>>>>();
-        if (do_renaming)
-            std::transform(dda.left_act.begin(), dda.left_act.end(), dda.left_act.begin(), ::tolower);
+        /*if (do_renaming)
+            std::transform(dda.left_act.begin(), dda.left_act.end(), dda.left_act.begin(), ::tolower);*/
         for (auto& ref : dda.dnf_left_map) {
             for (auto& cp : ref) {
                 cp.second.label = dda.left_act;
@@ -160,12 +176,15 @@ antlrcpp::Any DeclareModelParse::visitAtom_conj(DADParser::Atom_conjContext *ctx
 antlrcpp::Any DeclareModelParse::visitAtom(DADParser::AtomContext *ctx) {
     if (ctx) {
         DataPredicate pred;
-        pred.var = ctx->VAR()[0]->getText();
+        auto vec = ctx->VAR();
+        pred.var = vec.at(0)->getText();
         pred.casusu = visit(ctx->rel()).as<numeric_atom_cases>();
         if (ctx->STRING()) {
             pred.value = UNESCAPE(ctx->STRING()->getText());
         } else if (ctx->NUMBER()) {
             pred.value = std::stod(ctx->NUMBER()->getText());
+        } else if (vec.size() > 1) {
+            pred.varRHS = vec.at(1)->getText();
         } else {
             pred.value = 0.0;
         }
@@ -198,13 +217,13 @@ antlrcpp::Any DeclareModelParse::visitNeq(DADParser::NeqContext *ctx) {
     return {NEQ};
 }
 
-ltlf DeclareModelParse::load_model_to_semantics(std::istream &stream, bool do_xes_renaming, bool is_simplified_xes) {
+ltlf DeclareModelParse::load_model_to_semantics(std::istream &stream, bool is_simplified_xes) {
     ltlf formula = ltlf::True();
     std::vector<DeclareDataAware> V;
     if (is_simplified_xes) {
         V = DeclareDataAware::load_simplified_declare_model(stream);
     } else {
-        V = load(stream, do_xes_renaming);
+        V = load(stream);
     }
 
     bool first = true;

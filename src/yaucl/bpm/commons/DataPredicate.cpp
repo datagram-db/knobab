@@ -39,9 +39,13 @@ DataPredicate::DataPredicate(const std::string &var, numeric_atom_cases casusu, 
 
 DataPredicate::DataPredicate(const std::string &var, numeric_atom_cases casusu, const double &value) : var(var), casusu(casusu), value(value) {}
 
+#include <cassert>
+
 std::ostream &operator<<(std::ostream &os, const DataPredicate &predicate) {
     if (predicate.casusu == INTERVAL) {
         double isString = std::holds_alternative<std::string>(predicate.value);
+        assert(predicate.varRHS.empty() && predicate.labelRHS.empty());
+
         if (isString)
             os << std::quoted(std::get<std::string>(predicate.value).c_str());
         else
@@ -89,7 +93,9 @@ std::ostream &operator<<(std::ostream &os, const DataPredicate &predicate) {
             case NEQ:
                 os << " ≠ "; break;
         }
-        if (std::holds_alternative<std::string>(predicate.value))
+        if (!predicate.varRHS.empty())
+            return os << predicate.labelRHS << '.' << predicate.varRHS;
+        else if (std::holds_alternative<std::string>(predicate.value))
             return os << std::quoted(std::get<std::string>(predicate.value).c_str());
         else
             return os << std::get<double>(predicate.value);

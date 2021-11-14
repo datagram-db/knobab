@@ -89,7 +89,7 @@ struct DeclareDataAware {
     std::string left_act, right_act;
 
     // Each map represents a conjunction among different atoms over distinct variables, while the vector represents the disjunction
-    std::vector<std::unordered_map<std::string, DataPredicate>> dnf_left_map, dnf_right_map;
+    std::vector<std::unordered_map<std::string, DataPredicate>> dnf_left_map, dnf_right_map, conjunctive_map;
 
     static DeclareDataAware unary(declare_templates, const std::string& argument, size_t n);
     static DeclareDataAware binary(declare_templates t, const std::string& left, const std::string right);
