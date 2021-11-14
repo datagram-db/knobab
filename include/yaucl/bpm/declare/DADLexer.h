@@ -1,5 +1,5 @@
 
-// Generated from src/bzdb/flloat_deps/DOT.g by ANTLR 4.9.3
+// Generated from src/yaucl/bpm/declare/DAD.g by ANTLR 4.9.3
 
 #pragma once
 
@@ -9,17 +9,17 @@
 
 
 
-class  DOTLexer : public antlr4::Lexer {
+class  DADLexer : public antlr4::Lexer {
 public:
   enum {
     T__0 = 1, T__1 = 2, T__2 = 3, T__3 = 4, T__4 = 5, T__5 = 6, T__6 = 7, 
-    T__7 = 8, T__8 = 9, T__9 = 10, STRICT = 11, GRAPH = 12, DIGRAPH = 13, 
-    NODE = 14, EDGE = 15, SUBGRAPH = 16, NUMBER = 17, STRING = 18, ID = 19, 
-    HTML_STRING = 20, COMMENT = 21, LINE_COMMENT = 22, PREPROC = 23, WS = 24
+    T__7 = 8, T__8 = 9, T__9 = 10, T__10 = 11, T__11 = 12, T__12 = 13, T__13 = 14, 
+    VAR = 15, LABEL = 16, INTNUMBER = 17, NUMBER = 18, STRING = 19, SPACE = 20, 
+    COMMENT = 21, LINE_COMMENT = 22
   };
 
-  explicit DOTLexer(antlr4::CharStream *input);
-  ~DOTLexer();
+  explicit DADLexer(antlr4::CharStream *input);
+  ~DADLexer();
 
   virtual std::string getGrammarFileName() const override;
   virtual const std::vector<std::string>& getRuleNames() const override;

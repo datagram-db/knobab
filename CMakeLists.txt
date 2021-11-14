@@ -18,6 +18,8 @@ include_directories(antlr4/cpp/antlr4)
 include_directories(submodules/date/include)
 include_directories(submodules/json/include)
 
+include_directories(submodules/magic_enum/include)
+
 include_directories(include)
 add_library(knobab STATIC src/bzdb/oid.cpp src/bzdb/CountTemplate.cpp include/bzdb/CountTemplate.h src/bzdb/ActTable.cpp include/bzdb/ActTable.h src/bzdb/AttributeTable.cpp include/bzdb/AttributeTable.h src/bzdb/KnowledgeBase.cpp include/bzdb/KnowledgeBase.h
         #src/fuzzyStringMatching/v1.0/STTGSHM_Primary.cpp
@@ -55,19 +57,25 @@ add_library(yaucl_data STATIC
          src/yaucl/data/xml.cpp)
 
 add_library(yaucl_bpm STATIC
-                src/yaucl/bpm/trace_visitor.cpp
-                include/yaucl/bpm/trace_visitor.h
-                src/yaucl/bpm/data_loader.cpp
-                src/yaucl/bpm/TracesBaseListener.cpp
-                src/yaucl/bpm/TracesBaseVisitor.cpp
-                src/yaucl/bpm/TracesLexer.cpp
-                src/yaucl/bpm/TracesListener.cpp
-                src/yaucl/bpm/TracesParser.cpp
-                src/yaucl/bpm/TracesVisitor.cpp
-                src/yaucl/bpm/DataTraceParse.cpp src/yaucl/bpm/ltlf/DataPredicate.cpp
+        src/yaucl/bpm/log/trace_visitor.cpp
+        include/yaucl/bpm/log/trace_visitor.h
+        src/yaucl/bpm/log/data_loader.cpp
+        src/yaucl/bpm/log/TracesBaseListener.cpp
+        src/yaucl/bpm/log/TracesBaseVisitor.cpp
+        src/yaucl/bpm/log/TracesLexer.cpp
+        src/yaucl/bpm/log/TracesListener.cpp
+        src/yaucl/bpm/log/TracesParser.cpp
+        src/yaucl/bpm/log/TracesVisitor.cpp
+        src/yaucl/bpm/log/DataTraceParse.cpp
+                src/yaucl/bpm/ltlf/DataPredicate.cpp
                 include/yaucl/bpm/ltlf/DataPredicate.h
                 src/yaucl/bpm/ltlf/PropositionalizedAtomsSet.cpp
-                include/yaucl/bpm/ltlf/PropositionalizedAtomsSet.h)
+                include/yaucl/bpm/ltlf/PropositionalizedAtomsSet.h
+                src/yaucl/bpm/declare/DADBaseListener.cpp
+                src/yaucl/bpm/declare/DADBaseVisitor.cpp
+                src/yaucl/bpm/declare/DADListener.cpp
+                src/yaucl/bpm/declare/DADParser.cpp
+                src/yaucl/bpm/declare/DADVisitor.cpp)
 target_link_libraries(yaucl_bpm antlr4_static yaucl_numeric yaucl_data)
 
 add_library(knobab_flloat src/bzdb/flloat_deps/flloat_wrapper.cpp flloat_wrapper.h

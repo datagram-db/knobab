@@ -11,7 +11,7 @@
 #include <bzdb/ActTable.h>
 #include <unordered_map>
 #include <bzdb/AttributeTable.h>
-#include <yaucl/bpm/trace_visitor.h>
+#include <yaucl/bpm/log/trace_visitor.h>
 #include <yaucl/structures/any_to_uint_bimap.h>
 #include <SimplifiedFuzzyStringMatching.h>
 
