@@ -36,7 +36,7 @@ prop_within_dijunction : atom                              #in_atom
                        | atom '&&' prop_within_dijunction  #atom_conj
                        ;
 
-atom : (isnegated='~')? VAR rel (NUMBER | STRING | VAR) ;
+atom : (isnegated='~')? VAR rel (NUMBER | STRING | leftvar=VAR) ;
 
 rel   : '<' #lt
       | '<=' #leq

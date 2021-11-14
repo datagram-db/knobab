@@ -32,7 +32,7 @@ namespace antlr4 {
 }
 class TraceLexer;
 class TraceParser;
-#include <yaucl/bpm/TracesBaseVisitor.h>
+#include <yaucl/bpm/log/TracesBaseVisitor.h>
 //#include <yaucl/bpm/bpm_log.h>
 #include <sstream>
 

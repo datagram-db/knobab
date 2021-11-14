@@ -57,7 +57,7 @@ enum formula_t {
 #include <vector>
 #include <ostream>
 #include <yaucl/bpm/ltlf/PropositionalizedAtomsSet.h>
-#include "DataPredicate.h"
+#include "yaucl/bpm/commons/DataPredicate.h"
 
 
 struct ltlf {
