@@ -40,7 +40,7 @@ class DADParser;
 #include <fstream>
 
 class DeclareModelParse : public DADBaseVisitor {
-    bool do_renaming;
+    ///bool do_renaming;
 public:
     ~DeclareModelParse() {}
     DeclareModelParse();
@@ -50,9 +50,8 @@ public:
      * @param stream
      * @return
      */
-    std::vector<DeclareDataAware> load(std::istream &stream, bool do_xes_renaming);
-
-    ltlf load_model_to_semantics(std::istream &stream, bool do_xes_renaming, bool is_simplified_xes);
+    std::vector<DeclareDataAware> load(std::istream &stream);
+    ltlf load_model_to_semantics(std::istream &stream, bool is_simplified_xes);
 
     ////////////////////////////
     //// Parsing functions ////

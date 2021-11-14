@@ -1,9 +1,10 @@
 #include <iostream>
+#include <yaucl/bpm/declare/DeclareModelParse.h>
 
 #include "bzdb/KnowledgeBase.h"
 #include "yaucl/bpm/log/data_loader.h"
 
-int main() {
+void test_kb() {
     /// Creating an instance of the knowledge base, that is going to store all the traces in the log!
     KnowledgeBase db;
 
@@ -18,7 +19,14 @@ int main() {
     /// This is just an isomorphism proof, that states that I can always reconstruct the original information from the
     /// given representation
     db.reconstruct_trace_with_data(std::cout);
+}
 
+int main() {
+    DeclareModelParse dmp;
+    std::ifstream file{"ex_2.powerdecl"};
+
+    for (const auto& ref : dmp.load(file))
+        std::cout << ref << std::endl;
 
     return 0;
 }

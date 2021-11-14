@@ -66,7 +66,14 @@ std::ostream &operator<<(std::ostream &os, const DeclareDataAware &aware) {
     } else {
         os << aware.n;
     }
-    return os << " )";
+    os << " )";
+    if (aware.conjunctive_map.empty())
+        return os;
+    else {
+        os << " where ";
+        print_dnf(os, aware.conjunctive_map);
+        return os;
+    }
 }
 
 ltlf map_conj(const std::unordered_map<std::string, DataPredicate> &map) {
