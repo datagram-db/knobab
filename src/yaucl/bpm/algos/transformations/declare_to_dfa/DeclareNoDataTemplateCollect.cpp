@@ -74,8 +74,8 @@ TemplateCollectResult DeclareNoDataTemplateCollect::buildUpModel(const std::vect
     }
 }
 
-graph_join_pm operatore(const std::string &dot, std::unordered_map<std::string, std::string> *ptr,
-                        const std::unordered_set<std::string> &SigmaAll) {
+graph_join_pm ReplaceABWithProperLabels(const std::string &dot, std::unordered_map<std::string, std::string> *ptr,
+                                        const std::unordered_set<std::string> &SigmaAll) {
     graph_join_pm result;
     ParseFFLOATDot graph_loader;
     graph_loader.need_back_conversion = ptr != nullptr;

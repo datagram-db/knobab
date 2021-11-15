@@ -98,9 +98,9 @@ struct ltlf {
 
     // Structural operators
 
-    const struct ltlf& reduce() const {
+    /*const struct ltlf& reduce() const {
         return *this;
-    }
+    }*/
     struct ltlf& setBeingCompound(bool isCompound) {
         is_compound_predicate = isCompound;
         return *this;

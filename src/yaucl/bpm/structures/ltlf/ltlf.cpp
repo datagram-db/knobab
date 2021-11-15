@@ -23,7 +23,7 @@
 // Created by giacomo on 18/02/21.
 //
 
-#include <yaucl/bpm/ltlf/ltlf.h>
+#include <yaucl/bpm/structures/ltlf/ltlf.h>
 #include <z3++.h>
 
 ltlf::ltlf() : casusu{TRUE}, is_negated{false}, is_compound_predicate{false} { }

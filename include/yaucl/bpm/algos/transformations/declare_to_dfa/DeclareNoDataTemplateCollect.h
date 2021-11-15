@@ -15,9 +15,9 @@
 #include <magic_enum.hpp>
 #include <fstream>
 
-graph_join_pm operatore(const std::string& dot,
-                         std::unordered_map<std::string, std::string> *ptr,
-                         const std::unordered_set<std::string>& SigmaAll);
+graph_join_pm ReplaceABWithProperLabels(const std::string& dot,
+                                        std::unordered_map<std::string, std::string> *ptr,
+                                        const std::unordered_set<std::string>& SigmaAll);
 
 /**
  * Given a set of declare templates, it generates it, and initializes the non-data aware representation of the
@@ -55,6 +55,8 @@ public:
      * Temporary files are going to be produced in the current directory where the program is running
      *
      * @param SigmaAll      Complete universe set of all the actions
+     * @param T             Callable object, accepting as an Input a ltlf formula using FLLOAT's syntax and
+     *                      returning a DOT string representing the DFA associated to it
      */
     template<typename T>
     void run(const std::unordered_set<std::string>& SigmaAll) {
@@ -122,7 +124,7 @@ public:
                 //std::stringstream s;
                 //s << input_forumla;
                 //throw std::runtime_error("ERROR: in here, I should take the graph ");
-                ref = operatore(dot_graph, &VM.at(i), SigmaAll);
+                ref = ReplaceABWithProperLabels(dot_graph, &VM.at(i), SigmaAll);
                 //parseToGraph(ref, input_forumla, pyscript, (base_serialization_path / (str + ".ltlf")).string(), &VM[i], SigmaAll);
                 std::ofstream file{(base_serialization_path/str).string()};
                 dot(ref, file, false);
