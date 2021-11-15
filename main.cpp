@@ -11,7 +11,7 @@ void test_kb() {
     KnowledgeBase db;
 
     /// Loading a log file into the database
-    load_into_knowledge_base(HUMAN_READABLE_YAUCL, true, "/home/giacomo/CLionProjects/bzdb/log_1.txt", db);
+    load_into_knowledge_base(HUMAN_READABLE_YAUCL, true, "/home/giacomo/CLionProjects/knobab/log_1.txt", db);
 
     /// Indexing the data structures
     /// TODO: these indices might be written in secondary memory as well!
