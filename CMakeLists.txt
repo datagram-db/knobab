@@ -51,12 +51,20 @@ add_library(yaucl_graph STATIC
         include/yaucl/graphs/NodeLabelBijectionGraph.h
         src/yaucl/graphs/graph_join_pm_algorithms.cpp
         src/yaucl/graphs/graph_join_pm_conversion.cpp
-        include/yaucl/graphs/NodeLabelBijectionFA.h src/yaucl/graphs/adjacency_entry.cpp include/yaucl/graphs/adjacency_entry.h src/yaucl/graphs/graph_join_pm.cpp include/yaucl/graphs/graph_join_pm.h)
+        include/yaucl/graphs/NodeLabelBijectionFA.h
+        src/yaucl/graphs/adjacency_entry.cpp
+        include/yaucl/graphs/adjacency_entry.h
+        src/yaucl/graphs/graph_join_pm.cpp
+        include/yaucl/graphs/graph_join_pm.h
+        src/yaucl/graphs/graph_join_pm_conversion.cpp
+        src/yaucl/graphs/graph_join_pm_algorithms.cpp)
 
 add_library(yaucl_data STATIC
          src/yaucl/data/xml.cpp include/yaucl/data/json.h)
 
 add_library(yaucl_bpm STATIC
+        src/yaucl/bpm/declare/DeclareModelParse.cpp
+        include/yaucl/bpm/declare/DeclareModelParse.h
         src/yaucl/bpm/log/trace_visitor.cpp
         include/yaucl/bpm/log/trace_visitor.h
         src/yaucl/bpm/log/data_loader.cpp
@@ -78,10 +86,11 @@ add_library(yaucl_bpm STATIC
         src/yaucl/bpm/declare/DADParser.cpp
         src/yaucl/bpm/declare/DADVisitor.cpp
         src/yaucl/bpm/declare/DeclareDataAware.cpp
-        include/yaucl/bpm/declare/DeclareDataAware.h)
-target_link_libraries(yaucl_bpm antlr4_static yaucl_numeric yaucl_data)
+        include/yaucl/bpm/declare/DeclareDataAware.h src/yaucl/bpm/declare_to_dfa/DeclareNoDataTemplateCollect.cpp include/yaucl/bpm/declare_to_dfa/DeclareNoDataTemplateCollect.h src/yaucl/bpm/declare_to_dfa/TemplateCollectResult.cpp include/yaucl/bpm/declare_to_dfa/TemplateCollectResult.h)
+target_link_libraries(yaucl_bpm antlr4_static yaucl_numeric yaucl_data yaucl_graph)
 
-add_library(knobab_flloat src/bzdb/flloat_deps/flloat_wrapper.cpp flloat_wrapper.h
+add_library(knobab_flloat OBJECT src/bzdb/flloat_deps/flloat_wrapper.cpp
+        include/bzdb/flloat_deps/flloat_wrapper.h
         src/bzdb/flloat_deps/DOTBaseListener.cpp
         src/bzdb/flloat_deps/DOTBaseVisitor.cpp
         src/bzdb/flloat_deps/DOTLexer.cpp
@@ -89,7 +98,15 @@ add_library(knobab_flloat src/bzdb/flloat_deps/flloat_wrapper.cpp flloat_wrapper
         src/bzdb/flloat_deps/DOTParser.cpp
         src/bzdb/flloat_deps/DOTVisitor.cpp
         src/bzdb/flloat_deps/ParseFFLOATDot.cpp
-        include/bzdb/flloat_deps/ParseFFLOATDot.h)
+        include/bzdb/flloat_deps/ParseFFLOATDot.h
+        src/bzdb/flloat_deps/FLLOATPropBaseListener.cpp
+        src/bzdb/flloat_deps/FLLOATPropBaseVisitor.cpp
+        src/bzdb/flloat_deps/FLLOATPropLexer.cpp
+        src/bzdb/flloat_deps/FLLOATPropListener.cpp
+        src/bzdb/flloat_deps/FLLOATPropParser.cpp
+        src/bzdb/flloat_deps/FLLOATPropVisitor.cpp
+        src/bzdb/flloat_deps/FLLOATSimplePropParser.cpp include/bzdb/flloat_deps/FLLOATSimplePropParser.h)
+target_link_libraries(knobab_flloat yaucl_bpm yaucl_graph)
 
-add_executable(test main.cpp DeclareModelParse.cpp include/yaucl/bpm/declare/DeclareModelParse.h)
-target_link_libraries(test knobab antlr4_static ${Boost_LIBRARIES} ${PYTHON_LIBRARIES} yaucl_numeric yaucl_data yaucl_bpm knobab_flloat)
+add_executable(test main.cpp )
+target_link_libraries(test knobab antlr4_static ${Boost_LIBRARIES} ${PYTHON_LIBRARIES} yaucl_numeric yaucl_hashing yaucl_data yaucl_bpm yaucl_graph knobab_flloat)
