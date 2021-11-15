@@ -9,7 +9,7 @@
 #include <yaucl/bpm/declare/DeclareDataAware.h>
 #include <yaucl/graphs/graph_join_pm.h>
 //#include <graphs/third-party-wrappers/FLLOATScriptRunner.h>
-#include <yaucl/bpm/declare_to_dfa/TemplateCollectResult.h>
+#include <yaucl/bpm/algos/transformations/declare_to_dfa/TemplateCollectResult.h>
 #include <filesystem>
 #include <sstream>
 #include <magic_enum.hpp>

@@ -3,7 +3,7 @@
 //
 
 #include <istream>
-#include "bzdb/KnowledgeBase.h"
+#include "knobab/KnowledgeBase.h"
 
 #ifndef BZDB_DATA_LOADER_H
 #define BZDB_DATA_LOADER_H
