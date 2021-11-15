@@ -32,9 +32,9 @@ namespace antlr4 {
 }
 class DADLexer;
 class DADParser;
-#include <yaucl/bpm/declare/DADBaseVisitor.h>
+#include <yaucl/bpm/structures/declare/DADBaseVisitor.h>
 #include <sstream>
-#include "yaucl/bpm/declare/DeclareDataAware.h"
+#include "DeclareDataAware.h"
 //#include <utils/strings.h>
 #include <magic_enum.hpp>
 #include <fstream>

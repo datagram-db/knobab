@@ -26,7 +26,7 @@ add_library(knobab STATIC src/knobab/oid.cpp src/knobab/CountTemplate.cpp includ
         #src/fuzzyStringMatching/v1.0/LSVM_Primary.cpp
         #src/fuzzyStringMatching/v1.0/SLHM_Primary.cpp
         #src/fuzzyStringMatching/v2.0/FuzzyMatchSerializer.cpp)
-        src/yaucl/data/xml.cpp src/SimplifiedFuzzyStringMatching.cpp include/SimplifiedFuzzyStringMatching.h include/yaucl/structures/any_to_uint_bimap.h src/yaucl/strings/string_utils.cpp include/yaucl/strings/string_utils.h src/yaucl/bpm/ltlf/ltlf.cpp include/yaucl/bpm/ltlf/ltlf.h include/yaucl/graphs/FlexibleFA.h)
+        src/yaucl/data/xml.cpp src/SimplifiedFuzzyStringMatching.cpp include/SimplifiedFuzzyStringMatching.h include/yaucl/structures/any_to_uint_bimap.h src/yaucl/strings/string_utils.cpp include/yaucl/strings/string_utils.h src/yaucl/bpm/structures/ltlf/ltlf.cpp include/yaucl/bpm/structures/ltlf/ltlf.h include/yaucl/graphs/FlexibleFA.h)
 
 add_library(yaucl_numeric STATIC
                 src/yaucl/numeric/numeric_base.cpp
@@ -63,30 +63,30 @@ add_library(yaucl_data STATIC
          src/yaucl/data/xml.cpp include/yaucl/data/json.h)
 
 add_library(yaucl_bpm STATIC
-        src/yaucl/bpm/declare/DeclareModelParse.cpp
-        include/yaucl/bpm/declare/DeclareModelParse.h
-        src/yaucl/bpm/log/trace_visitor.cpp
-        include/yaucl/bpm/log/trace_visitor.h
-        src/yaucl/bpm/log/data_loader.cpp
-        src/yaucl/bpm/log/TracesBaseListener.cpp
-        src/yaucl/bpm/log/TracesBaseVisitor.cpp
-        src/yaucl/bpm/log/TracesLexer.cpp
-        src/yaucl/bpm/log/TracesListener.cpp
-        src/yaucl/bpm/log/TracesParser.cpp
-        src/yaucl/bpm/log/TracesVisitor.cpp
-        src/yaucl/bpm/log/DataTraceParse.cpp
-        src/yaucl/bpm/commons/DataPredicate.cpp
-        include/yaucl/bpm/commons/DataPredicate.h
-        src/yaucl/bpm/ltlf/PropositionalizedAtomsSet.cpp
-        include/yaucl/bpm/ltlf/PropositionalizedAtomsSet.h
-        src/yaucl/bpm/declare/DADBaseListener.cpp
-        src/yaucl/bpm/declare/DADBaseVisitor.cpp
-        src/yaucl/bpm/declare/DADListener.cpp
-        src/yaucl/bpm/declare/DADLexer.cpp
-        src/yaucl/bpm/declare/DADParser.cpp
-        src/yaucl/bpm/declare/DADVisitor.cpp
-        src/yaucl/bpm/declare/DeclareDataAware.cpp
-        include/yaucl/bpm/declare/DeclareDataAware.h src/yaucl/bpm/declare_to_dfa/DeclareNoDataTemplateCollect.cpp include/yaucl/bpm/declare_to_dfa/DeclareNoDataTemplateCollect.h src/yaucl/bpm/declare_to_dfa/TemplateCollectResult.cpp include/yaucl/bpm/declare_to_dfa/TemplateCollectResult.h)
+        src/yaucl/bpm/structures/declare/DeclareModelParse.cpp
+        include/yaucl/bpm/structures/declare/DeclareModelParse.h
+        src/yaucl/bpm/structures/log/trace_visitor.cpp
+        include/yaucl/bpm/structures/log/trace_visitor.h
+        src/yaucl/bpm/structures/log/data_loader.cpp
+        src/yaucl/bpm/structures/log/TracesBaseListener.cpp
+        src/yaucl/bpm/structures/log/TracesBaseVisitor.cpp
+        src/yaucl/bpm/structures/log/TracesLexer.cpp
+        src/yaucl/bpm/structures/log/TracesListener.cpp
+        src/yaucl/bpm/structures/log/TracesParser.cpp
+        src/yaucl/bpm/structures/log/TracesVisitor.cpp
+        src/yaucl/bpm/structures/log/DataTraceParse.cpp
+        src/yaucl/bpm/structures/commons/DataPredicate.cpp
+        include/yaucl/bpm/structures/commons/DataPredicate.h
+        src/yaucl/bpm/structures/ltlf/PropositionalizedAtomsSet.cpp
+        include/yaucl/bpm/structures/ltlf/PropositionalizedAtomsSet.h
+        src/yaucl/bpm/structures/declare/DADBaseListener.cpp
+        src/yaucl/bpm/structures/declare/DADBaseVisitor.cpp
+        src/yaucl/bpm/structures/declare/DADListener.cpp
+        src/yaucl/bpm/structures/declare/DADLexer.cpp
+        src/yaucl/bpm/structures/declare/DADParser.cpp
+        src/yaucl/bpm/structures/declare/DADVisitor.cpp
+        src/yaucl/bpm/structures/declare/DeclareDataAware.cpp
+        include/yaucl/bpm/structures/declare/DeclareDataAware.h src/yaucl/bpm/algos/transformations/declare_to_dfa/DeclareNoDataTemplateCollect.cpp include/yaucl/bpm/algos/transformations/declare_to_dfa/DeclareNoDataTemplateCollect.h src/yaucl/bpm/algos/transformations/declare_to_dfa/TemplateCollectResult.cpp include/yaucl/bpm/algos/transformations/declare_to_dfa/TemplateCollectResult.h)
 target_link_libraries(yaucl_bpm antlr4_static yaucl_numeric yaucl_data yaucl_graph)
 
 add_library(knobab_flloat OBJECT src/knobab/flloat_deps/flloat_wrapper.cpp

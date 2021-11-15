@@ -69,13 +69,13 @@ bool isUnaryPredicate(declare_templates t);
 #include <string>
 #include <unordered_map>
 #include <vector>
-#include <yaucl/bpm/commons/DataPredicate.h>
+#include <yaucl/bpm/structures/commons/DataPredicate.h>
 #include <yaucl/hashing/pair_hash.h>
 #include <yaucl/hashing/uset_hash.h>
 #include <yaucl/hashing/vector_hash.h>
 #include <yaucl/hashing/hash_combine.h>
 #include <ostream>
-#include <yaucl/bpm/ltlf/ltlf.h>
+#include <yaucl/bpm/structures/ltlf/ltlf.h>
 
 void print_conj(std::ostream &os, const std::unordered_map<std::string, DataPredicate>& map);
 void print_dnf(std::ostream &os, const std::vector<std::unordered_map<std::string, DataPredicate>>& map);
