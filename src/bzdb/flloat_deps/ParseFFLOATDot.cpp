@@ -3,6 +3,8 @@
 //
 
 #include <bzdb/flloat_deps/DOTLexer.h>
+#include <yaucl/data/json.h>
+#include <bzdb/flloat_deps/FLLOATSimplePropParser.h>
 #include "bzdb/flloat_deps/ParseFFLOATDot.h"
 
 
@@ -129,4 +131,41 @@ antlrcpp::Any ParseFFLOATDot::visitSubgraph(DOTParser::SubgraphContext *context)
 
 antlrcpp::Any ParseFFLOATDot::visitId(DOTParser::IdContext *context) {
     throw std::runtime_error("Unexpected invocation: visitId");
+}
+
+antlrcpp::Any ParseFFLOATDot::visitEdge_stmt(DOTParser::Edge_stmtContext *context) {
+    if (context) {
+        std::string src = context->node_id()->getText();
+        if (src == "fake") return {};
+        std::string dst = context->edgeRHS()->node_id(0)->getText();
+        if (dst == "fake") return {};
+        int srcId = parsing_result.getId(src);
+        int dstId = parsing_result.getId(dst);
+        for (const auto& ls : context->attr_list()->a_list()) {
+            auto v = ls->id();
+            for (size_t i = 0, N = v.size()/2; i<N; i++) {
+                size_t offset_attr = i*2;
+                size_t offset_val = i*2+1;
+                std::string key = v.at(offset_attr)->getText();
+                std::string val = v.at(offset_val)->getText();
+                if ((key == "label")) {
+                    try {
+                        val = UNESCAPE(val);
+                    } catch(...) {
+                        //
+                    }
+                    FLLOATSimplePropParser parser;
+                    std::stringstream ss;
+                    ss.str(val);
+                    auto f = parser.parse(ss);
+                    if (this->need_back_conversion) {
+                        parsing_result.addNewEdgeFromId(srcId, dstId, f.replace_with_unique_name(*this->back_conv));
+                    } else {
+                        parsing_result.addNewEdgeFromId(srcId, dstId, f);
+                    }
+                }
+            }
+        }
+    }
+    return {};
 }
