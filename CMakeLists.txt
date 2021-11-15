@@ -21,7 +21,7 @@ include_directories(submodules/json/include)
 include_directories(submodules/magic_enum/include)
 
 include_directories(include)
-add_library(knobab STATIC src/bzdb/oid.cpp src/bzdb/CountTemplate.cpp include/bzdb/CountTemplate.h src/bzdb/ActTable.cpp include/bzdb/ActTable.h src/bzdb/AttributeTable.cpp include/bzdb/AttributeTable.h src/bzdb/KnowledgeBase.cpp include/bzdb/KnowledgeBase.h
+add_library(knobab STATIC src/knobab/oid.cpp src/knobab/CountTemplate.cpp include/knobab/CountTemplate.h src/knobab/ActTable.cpp include/knobab/ActTable.h src/knobab/AttributeTable.cpp include/knobab/AttributeTable.h src/knobab/KnowledgeBase.cpp include/knobab/KnowledgeBase.h
         #src/fuzzyStringMatching/v1.0/STTGSHM_Primary.cpp
         #src/fuzzyStringMatching/v1.0/LSVM_Primary.cpp
         #src/fuzzyStringMatching/v1.0/SLHM_Primary.cpp
@@ -89,23 +89,23 @@ add_library(yaucl_bpm STATIC
         include/yaucl/bpm/declare/DeclareDataAware.h src/yaucl/bpm/declare_to_dfa/DeclareNoDataTemplateCollect.cpp include/yaucl/bpm/declare_to_dfa/DeclareNoDataTemplateCollect.h src/yaucl/bpm/declare_to_dfa/TemplateCollectResult.cpp include/yaucl/bpm/declare_to_dfa/TemplateCollectResult.h)
 target_link_libraries(yaucl_bpm antlr4_static yaucl_numeric yaucl_data yaucl_graph)
 
-add_library(knobab_flloat OBJECT src/bzdb/flloat_deps/flloat_wrapper.cpp
-        include/bzdb/flloat_deps/flloat_wrapper.h
-        src/bzdb/flloat_deps/DOTBaseListener.cpp
-        src/bzdb/flloat_deps/DOTBaseVisitor.cpp
-        src/bzdb/flloat_deps/DOTLexer.cpp
-        src/bzdb/flloat_deps/DOTListener.cpp
-        src/bzdb/flloat_deps/DOTParser.cpp
-        src/bzdb/flloat_deps/DOTVisitor.cpp
-        src/bzdb/flloat_deps/ParseFFLOATDot.cpp
-        include/bzdb/flloat_deps/ParseFFLOATDot.h
-        src/bzdb/flloat_deps/FLLOATPropBaseListener.cpp
-        src/bzdb/flloat_deps/FLLOATPropBaseVisitor.cpp
-        src/bzdb/flloat_deps/FLLOATPropLexer.cpp
-        src/bzdb/flloat_deps/FLLOATPropListener.cpp
-        src/bzdb/flloat_deps/FLLOATPropParser.cpp
-        src/bzdb/flloat_deps/FLLOATPropVisitor.cpp
-        src/bzdb/flloat_deps/FLLOATSimplePropParser.cpp include/bzdb/flloat_deps/FLLOATSimplePropParser.h)
+add_library(knobab_flloat OBJECT src/knobab/flloat_deps/flloat_wrapper.cpp
+        include/knobab/flloat_deps/flloat_wrapper.h
+        src/knobab/flloat_deps/DOTBaseListener.cpp
+        src/knobab/flloat_deps/DOTBaseVisitor.cpp
+        src/knobab/flloat_deps/DOTLexer.cpp
+        src/knobab/flloat_deps/DOTListener.cpp
+        src/knobab/flloat_deps/DOTParser.cpp
+        src/knobab/flloat_deps/DOTVisitor.cpp
+        src/knobab/flloat_deps/ParseFFLOATDot.cpp
+        include/knobab/flloat_deps/ParseFFLOATDot.h
+        src/knobab/flloat_deps/FLLOATPropBaseListener.cpp
+        src/knobab/flloat_deps/FLLOATPropBaseVisitor.cpp
+        src/knobab/flloat_deps/FLLOATPropLexer.cpp
+        src/knobab/flloat_deps/FLLOATPropListener.cpp
+        src/knobab/flloat_deps/FLLOATPropParser.cpp
+        src/knobab/flloat_deps/FLLOATPropVisitor.cpp
+        src/knobab/flloat_deps/FLLOATSimplePropParser.cpp include/knobab/flloat_deps/FLLOATSimplePropParser.h)
 target_link_libraries(knobab_flloat yaucl_bpm yaucl_graph)
 
 add_executable(test main.cpp )
