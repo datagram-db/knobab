@@ -22,7 +22,7 @@
 //
 
 #include <iomanip>
-#include "yaucl/bpm/commons/DataPredicate.h"
+#include "yaucl/bpm/structures/commons/DataPredicate.h"
 
 double      DataPredicate::MIN_DOUBLE = -std::numeric_limits<double>::max();
 double      DataPredicate::MAX_DOUBLE =  std::numeric_limits<double>::max();

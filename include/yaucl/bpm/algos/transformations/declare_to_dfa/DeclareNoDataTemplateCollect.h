@@ -6,7 +6,7 @@
 #define BPM21_TEMPLATECOLLECT_H
 
 #include <unordered_map>
-#include <yaucl/bpm/declare/DeclareDataAware.h>
+#include <yaucl/bpm/structures/declare/DeclareDataAware.h>
 #include <yaucl/graphs/graph_join_pm.h>
 //#include <graphs/third-party-wrappers/FLLOATScriptRunner.h>
 #include <yaucl/bpm/algos/transformations/declare_to_dfa/TemplateCollectResult.h>

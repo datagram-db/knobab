@@ -2,7 +2,7 @@
 // Created by giacomo on 26/12/20.
 //
 
-#include "bzdb/CountTemplate.h"
+#include "knobab/CountTemplate.h"
 
 void CountTemplate::load_record(uint16_t act, uint32_t trace_id, uint16_t event_pos) {
     sparseTable[act][trace_id] = event_pos;

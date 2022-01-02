@@ -2,7 +2,7 @@
 // Generated from src/knobab/flloat_deps/DOT.g by ANTLR 4.9.3
 
 
-#include "bzdb/flloat_deps/DOTLexer.h"
+#include "knobab//flloat_deps/DOTLexer.h"
 
 
 using namespace antlr4;

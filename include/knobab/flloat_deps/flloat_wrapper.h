@@ -7,10 +7,9 @@
 
 #include <boost/python.hpp>
 #include <yaucl/graphs/graph_join_pm.h>
-#include <bzdb/flloat_deps/ParseFFLOATDot.h>
+#include <knobab/flloat_deps/ParseFFLOATDot.h>
 #include <yaucl/graphs/graph_join_pm_conversion.h>
 #include <yaucl/graphs/graph_join_pm_algorithms.h>
-
 
 class FLLOAT {
     boost::python::object flloat_parser_ltlf, flloat_ltlf;

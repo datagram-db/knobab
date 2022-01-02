@@ -6,7 +6,7 @@
 #define BZDB_ATTRIBUTETABLE_H
 
 #include <string>
-#include <bzdb/oid.h>
+#include <knobab/oid.h>
 #include <variant>
 class SimplifiedFuzzyStringMatching;
 

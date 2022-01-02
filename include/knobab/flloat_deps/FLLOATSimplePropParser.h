@@ -32,12 +32,12 @@ namespace antlr4 {
 }
 class FLLOATPropLexer;
 class FLLOATPropParser;
-#include <bzdb/flloat_deps/FLLOATPropBaseVisitor.h>
+#include <knobab/flloat_deps/FLLOATPropBaseVisitor.h>
 #include <sstream>
 //#include <utils/strings.h>
 #include <magic_enum.hpp>
 #include <fstream>
-#include <yaucl/bpm/ltlf/ltlf.h>
+#include <yaucl/bpm/structures/ltlf/ltlf.h>
 
 /**
  * Propositions parses from the FLLOAT output, using a specific sympy format

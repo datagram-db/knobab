@@ -31,6 +31,7 @@
 #include <iostream>
 #include <functional>
 #include <sstream>
+#include <optional>
 
 namespace yaucl {
     namespace structures {

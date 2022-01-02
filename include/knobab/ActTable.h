@@ -6,7 +6,7 @@
 #define BZDB_ACTTABLE_H
 
 
-#include <bzdb/oid.h>
+#include <knobab/oid.h>
 #include <tuple>
 #include <vector>
 

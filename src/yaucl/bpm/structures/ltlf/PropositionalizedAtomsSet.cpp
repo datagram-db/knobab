@@ -23,7 +23,7 @@
 // Created by giacomo on 18/02/21.
 //
 
-#include <yaucl/bpm/ltlf/PropositionalizedAtomsSet.h>
+#include <yaucl/bpm/structures/ltlf/PropositionalizedAtomsSet.h>
 
 bool PropositionalizedAtomsSet::insert(const std::string &atom, bool isTerminal) {
     if (set.insert(atom).second) {

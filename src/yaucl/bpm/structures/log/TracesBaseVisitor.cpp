@@ -2,6 +2,6 @@
 // Generated from src/bpm/Traces.g by ANTLR 4.9.2
 
 
-#include "yaucl/bpm/log/TracesBaseVisitor.h"
+#include "yaucl/bpm/structures/log/TracesBaseVisitor.h"
 
 

@@ -1,17 +1,16 @@
 cmake_minimum_required(VERSION 3.16)
 project(knobab)
 set(CMAKE_CXX_STANDARD 20)
-
+include_directories(submodules/rapidxml-1.13)
 
 set(Boost_USE_STATIC_LIBS ON)
 set(Boost_USE_MULTITHREADED ON)
 set(Boost_USE_STATIC_RUNTIME OFF)
-find_package(Boost 1.71.0 COMPONENTS python)
+find_package(Boost 1.74 REQUIRED COMPONENTS python)
 find_package(PythonLibs REQUIRED)
 include_directories(${PYTHON_INCLUDE_DIRS})
 include_directories(${Boost_INCLUDE_DIRS})
 
-add_library(rapidxml INTERFACE)
 add_subdirectory(submodules/antlr4/runtime/Cpp)
 include_directories(submodules/antlr4/runtime/Cpp/runtime/src)
 include_directories(antlr4/cpp/antlr4)
@@ -86,11 +85,15 @@ add_library(yaucl_bpm STATIC
         src/yaucl/bpm/structures/declare/DADParser.cpp
         src/yaucl/bpm/structures/declare/DADVisitor.cpp
         src/yaucl/bpm/structures/declare/DeclareDataAware.cpp
-        include/yaucl/bpm/structures/declare/DeclareDataAware.h src/yaucl/bpm/algos/transformations/declare_to_dfa/DeclareNoDataTemplateCollect.cpp include/yaucl/bpm/algos/transformations/declare_to_dfa/DeclareNoDataTemplateCollect.h src/yaucl/bpm/algos/transformations/declare_to_dfa/TemplateCollectResult.cpp include/yaucl/bpm/algos/transformations/declare_to_dfa/TemplateCollectResult.h)
+        include/yaucl/bpm/structures/declare/DeclareDataAware.h
+        src/yaucl/bpm/algos/transformations/declare_to_dfa/DeclareNoDataTemplateCollect.cpp
+        include/yaucl/bpm/algos/transformations/declare_to_dfa/DeclareNoDataTemplateCollect.h
+        src/yaucl/bpm/algos/transformations/declare_to_dfa/TemplateCollectResult.cpp
+        include/yaucl/bpm/algos/transformations/declare_to_dfa/TemplateCollectResult.h)
 target_link_libraries(yaucl_bpm antlr4_static yaucl_numeric yaucl_data yaucl_graph)
 
-add_library(knobab_flloat OBJECT src/knobab/flloat_deps/flloat_wrapper.cpp
-        include/knobab/flloat_deps/flloat_wrapper.h
+add_library(knobab_flloat STATIC
+        src/knobab/flloat_deps/flloat_wrapper.cpp
         src/knobab/flloat_deps/DOTBaseListener.cpp
         src/knobab/flloat_deps/DOTBaseVisitor.cpp
         src/knobab/flloat_deps/DOTLexer.cpp
@@ -98,15 +101,14 @@ add_library(knobab_flloat OBJECT src/knobab/flloat_deps/flloat_wrapper.cpp
         src/knobab/flloat_deps/DOTParser.cpp
         src/knobab/flloat_deps/DOTVisitor.cpp
         src/knobab/flloat_deps/ParseFFLOATDot.cpp
-        include/knobab/flloat_deps/ParseFFLOATDot.h
         src/knobab/flloat_deps/FLLOATPropBaseListener.cpp
         src/knobab/flloat_deps/FLLOATPropBaseVisitor.cpp
         src/knobab/flloat_deps/FLLOATPropLexer.cpp
         src/knobab/flloat_deps/FLLOATPropListener.cpp
         src/knobab/flloat_deps/FLLOATPropParser.cpp
         src/knobab/flloat_deps/FLLOATPropVisitor.cpp
-        src/knobab/flloat_deps/FLLOATSimplePropParser.cpp include/knobab/flloat_deps/FLLOATSimplePropParser.h)
-target_link_libraries(knobab_flloat yaucl_bpm yaucl_graph)
+        src/knobab/flloat_deps/FLLOATSimplePropParser.cpp )
+target_link_libraries(knobab_flloat ${Boost_LIBRARIES} ${PYTHON_LIBRARIES}  yaucl_bpm yaucl_graph)
 
 add_executable(test main.cpp )
 target_link_libraries(test knobab antlr4_static ${Boost_LIBRARIES} ${PYTHON_LIBRARIES} yaucl_numeric yaucl_hashing yaucl_data yaucl_bpm yaucl_graph knobab_flloat)

@@ -30,8 +30,7 @@ namespace antlr4 {
     class ANTLRInputStream;
     class CommonTokenStream;
 }
-class DADLexer;
-class DADParser;
+
 #include <yaucl/bpm/structures/declare/DADBaseVisitor.h>
 #include <sstream>
 #include "DeclareDataAware.h"
