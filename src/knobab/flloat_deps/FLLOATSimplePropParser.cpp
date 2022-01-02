@@ -23,8 +23,8 @@
 // Created by giacomo on 13/03/21.
 //
 
-#include "bzdb/flloat_deps/FLLOATSimplePropParser.h"
-#include <bzdb/flloat_deps/FLLOATPropLexer.h>
+#include "knobab/flloat_deps/FLLOATSimplePropParser.h"
+#include <knobab/flloat_deps/FLLOATPropLexer.h>
 
 ltlf FLLOATSimplePropParser::parse(std::istream &stream) {
     antlr4::ANTLRInputStream input(stream);

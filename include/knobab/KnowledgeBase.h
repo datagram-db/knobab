@@ -7,11 +7,11 @@
 
 #include <vector>
 #include <string>
-#include <bzdb/CountTemplate.h>
-#include <bzdb/ActTable.h>
+#include <knobab/CountTemplate.h>
+#include <knobab/ActTable.h>
 #include <unordered_map>
-#include <bzdb/AttributeTable.h>
-#include <yaucl/bpm/log/trace_visitor.h>
+#include <knobab/AttributeTable.h>
+#include <yaucl/bpm/structures/log/trace_visitor.h>
 #include <yaucl/structures/any_to_uint_bimap.h>
 #include <SimplifiedFuzzyStringMatching.h>
 

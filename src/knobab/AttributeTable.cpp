@@ -2,7 +2,7 @@
 // Created by giacomo on 26/12/20.
 //
 
-#include "bzdb/AttributeTable.h"
+#include "knobab/AttributeTable.h"
 #include "SimplifiedFuzzyStringMatching.h"
 #include <cassert>
 

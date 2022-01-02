@@ -2,10 +2,10 @@
 // Generated from src/bpm/Traces.g by ANTLR 4.9.2
 
 
-#include "yaucl/bpm/log/TracesListener.h"
-#include "yaucl/bpm/log/TracesVisitor.h"
+#include "yaucl/bpm/structures/log/TracesListener.h"
+#include "yaucl/bpm/structures/log/TracesVisitor.h"
 
-#include "yaucl/bpm/log/TracesParser.h"
+#include "yaucl/bpm/structures/log/TracesParser.h"
 
 
 using namespace antlrcpp;

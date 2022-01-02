@@ -2,7 +2,7 @@
 // Created by giacomo on 26/07/21.
 //
 
-#include "yaucl/bpm/declare_to_dfa/DeclareNoDataTemplateCollect.h"
+#include "yaucl/bpm/algos/transformations/declare_to_dfa/DeclareNoDataTemplateCollect.h"
 #include <magic_enum.hpp>
 #include <yaucl/graphs/graph_join_pm_conversion.h>
 
@@ -22,7 +22,7 @@ void DeclareNoDataTemplateCollect::add(const DeclareDataAware &left) {
 }
 
 #include <fstream>
-#include <bzdb/flloat_deps/ParseFFLOATDot.h>
+#include <knobab/flloat_deps/ParseFFLOATDot.h>
 
 
 static inline void conditionalPruningGraph(bool doPrune, bool firstInsertion, TemplateCollectResult& result, graph_join_pm& currGraph) {

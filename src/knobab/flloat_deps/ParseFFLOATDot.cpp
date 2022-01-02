@@ -2,10 +2,10 @@
 // Created by giacomo on 14/11/2021.
 //
 
-#include <bzdb/flloat_deps/DOTLexer.h>
+#include <knobab/flloat_deps/DOTLexer.h>
 #include <yaucl/data/json.h>
-#include <bzdb/flloat_deps/FLLOATSimplePropParser.h>
-#include "bzdb/flloat_deps/ParseFFLOATDot.h"
+#include <knobab/flloat_deps/FLLOATSimplePropParser.h>
+#include "knobab/flloat_deps/ParseFFLOATDot.h"
 
 
 FlexibleFA<size_t, std::string> getFAFromLTLFEdges(const std::unordered_set<std::string> &SigmaAll,

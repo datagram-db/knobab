@@ -2,7 +2,7 @@
 // Created by giacomo on 26/07/21.
 //
 
-#include "yaucl/bpm/declare_to_dfa/DeclareNoDataTemplateCollect.h"
+#include "yaucl/bpm/algos/transformations/declare_to_dfa//DeclareNoDataTemplateCollect.h"
 #include <magic_enum.hpp>
 #include <yaucl/graphs/graph_join_pm_conversion.h>
 

@@ -6,7 +6,7 @@
 #include <string>
 #include <vector>
 #include <variant>
-#include "yaucl/bpm/log/data_loader.h"
+#include "yaucl/bpm/structures/log/data_loader.h"
 #include "yaucl/data/xml.h"
 #include "yaucl/numeric/numeric_base.h"
 
@@ -161,7 +161,7 @@ void load_xes_with_data(const std::string &filename, bool load_data, trace_visit
     tv->exitLog(filename, filename);
 }
 
-#include "yaucl/bpm/log/DataTraceParse.h"
+#include "yaucl/bpm/structures/log/DataTraceParse.h"
 
 void load_into_knowledge_base(log_data_format format, bool loadData, const std::string &filename, KnowledgeBase &output) {
     trace_visitor* tv = (trace_visitor*)&output;

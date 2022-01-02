@@ -2,7 +2,7 @@
 // Created by giacomo on 26/12/20.
 //
 
-#include "bzdb/ActTable.h"
+#include "knobab/ActTable.h"
 #include <cmath>
 
 uint16_t cast_to_float(size_t x, size_t l) {

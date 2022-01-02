@@ -1,10 +1,10 @@
 #include <iostream>
-#include <yaucl/bpm/declare/DeclareModelParse.h>
-#include <yaucl/bpm/declare_to_dfa/DeclareNoDataTemplateCollect.h>
-#include <bzdb/flloat_deps/flloat_wrapper.h>
+#include <yaucl/bpm/structures/declare/DeclareModelParse.h>
+#include <yaucl/bpm/algos/transformations/declare_to_dfa/DeclareNoDataTemplateCollect.h>
+#include <knobab/flloat_deps/flloat_wrapper.h>
 
-#include "bzdb/KnowledgeBase.h"
-#include "yaucl/bpm/log/data_loader.h"
+#include "knobab/KnowledgeBase.h"
+#include "yaucl/bpm/structures/log/data_loader.h"
 
 void test_kb() {
     /// Creating an instance of the knowledge base, that is going to store all the traces in the log!

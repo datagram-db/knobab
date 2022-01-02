@@ -21,7 +21,7 @@
 
 #include <magic_enum.hpp>
 #include <yaucl/data/xml.h>
-#include "yaucl/bpm/declare/DeclareDataAware.h"
+#include "yaucl/bpm/structures/declare/DeclareDataAware.h"
 
 void print_dnf(std::ostream &os, const std::vector<std::unordered_map<std::string, DataPredicate>> &map) {
     static std::string OR{" ∨ "};

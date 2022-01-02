@@ -23,9 +23,9 @@
 // Created by giacomo on 09/03/21.
 //
 
-#include "yaucl/bpm/declare/DeclareModelParse.h"
-#include <yaucl/bpm/declare/DADLexer.h>
+#include <yaucl/bpm/structures/declare/DeclareModelParse.h>
 #include <yaucl/data/json.h>
+#include <yaucl/bpm/structures/declare/DADLexer.h>
 
 DeclareModelParse::DeclareModelParse() /*: do_renaming{true}*/ {}
 

@@ -11,7 +11,7 @@
 
 #include <yaucl/graphs/FlexibleFA.h>
 #include <yaucl/graphs/graph_join_pm.h>
-#include <yaucl/bpm/ltlf/ltlf.h>
+#include <yaucl/bpm/structures/ltlf/ltlf.h>
 //#include <graphs/third-party-wrappers/FLLOATScriptRunner.h>
 
 void convert_to_novel_graph(const FlexibleFA<std::string, size_t> &old, graph_join_pm& result);

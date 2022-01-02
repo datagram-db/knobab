@@ -6,7 +6,7 @@
 #define BZDB_COUNTTEMPLATE_H
 
 #include <vector>
-#include <bzdb/oid.h>
+#include <knobab/oid.h>
 #include <algorithm>
 #include <cassert>
 

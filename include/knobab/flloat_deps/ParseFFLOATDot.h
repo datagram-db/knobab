@@ -32,14 +32,14 @@ namespace antlr4 {
 }
 class DADLexer;
 class DADParser;
-#include <bzdb/flloat_deps/DOTBaseVisitor.h>
+#include <knobab//flloat_deps/DOTBaseVisitor.h>
 #include <sstream>
 //#include <yaucl/utils/strings.h>
 //#include <magic_enum.hpp>
 #include <fstream>
 #include <yaucl/graphs/NodeLabelBijectionFA.h>
 #include <yaucl/graphs/FlexibleFA.h>
-#include <yaucl/bpm/ltlf/ltlf.h>
+#include <yaucl/bpm/structures/ltlf/ltlf.h>
 
 class ParseFFLOATDot : public DOTVisitor {
 

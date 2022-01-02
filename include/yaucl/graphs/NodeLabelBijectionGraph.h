@@ -43,7 +43,7 @@ public:
 
     NodeLabelBijectionGraph()  {}
     NodeLabelBijectionGraph(const NodeLabelBijectionGraph<NodeElement, EdgeLabel>& x) = default;
-    NodeLabelBijectionGraph<NodeElement, EdgeLabel>(NodeLabelBijectionGraph<NodeElement, EdgeLabel>&& x) = default;
+    NodeLabelBijectionGraph(NodeLabelBijectionGraph<NodeElement, EdgeLabel>&& x) = default;
     NodeLabelBijectionGraph<NodeElement, EdgeLabel>& operator=(const NodeLabelBijectionGraph<NodeElement, EdgeLabel>& x) = default;
     NodeLabelBijectionGraph<NodeElement, EdgeLabel>& operator=(NodeLabelBijectionGraph<NodeElement, EdgeLabel>&& x) = default;
 
