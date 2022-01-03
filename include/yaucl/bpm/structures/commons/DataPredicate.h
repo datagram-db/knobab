@@ -45,10 +45,12 @@
 
 }*/
 
+#include <unordered_set>
 #include <yaucl/hashing/hash_combine.h>
 #include <cmath>
 #include <cfloat>
 #include <set>
+#include <yaucl/structures/default_constructors.h>
 
 enum numeric_atom_cases {
     LT,
@@ -57,7 +59,8 @@ enum numeric_atom_cases {
     GEQ,
     EQ,
     NEQ,
-    INTERVAL
+    INTERVAL,
+    TTRUE
 };
 
 std::string prev_char(const std::string& val, size_t max_size);
@@ -85,35 +88,34 @@ struct DataPredicate {
     std::string                       varRHS;
     std::variant<std::string, double> value_upper_bound;
     std::set<std::variant<std::string, double>> exceptions;
+    std::vector<DataPredicate>        BiVariableConditions;
 
     static std::variant<std::string, double> prev_of(const std::variant<std::string, double>& x);
     static std::variant<std::string, double> next_of(const std::variant<std::string, double>& x);
 
     bool isStringPredicate() const;
     bool isDoublePredicate() const;
+    bool isBiVariableCondition() const;
     std::variant<std::vector<std::pair<std::string, std::string>>,
-            std::vector<std::pair<double, double>>> decompose_into_intervals() const;
+            std::vector<std::pair<double, double>>> decompose_single_variable_into_intervals() const;
 
 
     std::variant<std::vector<std::pair<std::string, std::string>>,
-            std::vector<std::pair<double, double>>> decompose_into_intervals_with_missing() const;
+            std::vector<std::pair<double, double>>> decompose_single_variable_into_intervals_with_missing() const;
 
     DataPredicate();
+    DEFAULT_COPY_ASSGN(DataPredicate)
     DataPredicate(const std::string &var, numeric_atom_cases casusu, const std::variant<std::string, double> &value);
     DataPredicate(const std::string &var, numeric_atom_cases casusu, const std::string &value);
     DataPredicate(const std::string &var, numeric_atom_cases casusu, const double &value);
-    DataPredicate(const DataPredicate& ) = default;
-    DataPredicate(DataPredicate&& ) = default;
     DataPredicate(const std::string& label, const std::string& var, double lb, double ub);
     DataPredicate(const std::string& label, const std::string& var, const std::string& lb, const std::string& ub);
-    DataPredicate& operator=(const DataPredicate&) = default;
-    DataPredicate& operator=(DataPredicate&&) = default;
 
     friend std::ostream &operator<<(std::ostream &os, const DataPredicate &predicate);
     void asInterval();
     void intersect_with(const DataPredicate& predicate);
-    bool test(const  std::string& val) const;
-    bool test(       double       val) const;
+    bool testOverSingleVariable(const  std::string& val) const;
+    bool testOverSingleVariable(double       val) const;
 
     bool operator==(const DataPredicate &rhs) const;
     bool operator!=(const DataPredicate &rhs) const;

@@ -18,6 +18,6 @@
  * along with bpm21. If not, see <http://www.gnu.org/licenses/>.
  */
 Response(A, true, B, x > 0.0)
-Response(A, true, B, x > y)
-Response(A, true, B, x > y) where z < x
+Response(A, true, B, x > y && x < 2.0)
+Response(A, true, B, x > y) where z < x && z > y && x > y
 Existence(B, x > 3.0, 1)

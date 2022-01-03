@@ -155,6 +155,7 @@ void load_xes_with_data(const std::string &filename, bool load_data, trace_visit
 
         if (hasTraceOpened) {
             tv->exitTrace(trace_id);
+            hasTraceOpened = false;
         }
     }
 

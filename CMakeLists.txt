@@ -89,7 +89,7 @@ add_library(yaucl_bpm STATIC
         src/yaucl/bpm/algos/transformations/declare_to_dfa/DeclareNoDataTemplateCollect.cpp
         include/yaucl/bpm/algos/transformations/declare_to_dfa/DeclareNoDataTemplateCollect.h
         src/yaucl/bpm/algos/transformations/declare_to_dfa/TemplateCollectResult.cpp
-        include/yaucl/bpm/algos/transformations/declare_to_dfa/TemplateCollectResult.h)
+        include/yaucl/bpm/algos/transformations/declare_to_dfa/TemplateCollectResult.h src/yaucl/bpm/structures/declare/DisjunctiveDeclareDataAware.cpp include/yaucl/bpm/structures/declare/DisjunctiveDeclareDataAware.h)
 target_link_libraries(yaucl_bpm antlr4_static yaucl_numeric yaucl_data yaucl_graph)
 
 add_library(knobab_flloat STATIC
@@ -110,5 +110,5 @@ add_library(knobab_flloat STATIC
         src/knobab/flloat_deps/FLLOATSimplePropParser.cpp )
 target_link_libraries(knobab_flloat ${Boost_LIBRARIES} ${PYTHON_LIBRARIES}  yaucl_bpm yaucl_graph)
 
-add_executable(test main.cpp )
+add_executable(test main.cpp src/yaucl/bpm/structures/declare/CNFDeclareDataAware.cpp include/yaucl/bpm/structures/declare/CNFDeclareDataAware.h)
 target_link_libraries(test knobab antlr4_static ${Boost_LIBRARIES} ${PYTHON_LIBRARIES} yaucl_numeric yaucl_hashing yaucl_data yaucl_bpm yaucl_graph knobab_flloat)
