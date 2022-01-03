@@ -36,7 +36,7 @@
     template <>
     struct hash<std::variant<std::string, double>>
     {
-        std::size_t operator()(const std::variant<std::string, double>& k) const {
+        std::size_t operator()(const union_minimal& k) const {
             return std::holds_alternative<double>(k) ?
                    (13*std::hash<double>{}(std::get<double>(k))) :
                    (31*std::hash<std::string>{}(std::get<std::string>(k)));
@@ -74,6 +74,8 @@ std::string next_char(const std::string& val, size_t max_size);
 #define     PREV_STRING(str)    (prev_char((str), MAXIMUM_STRING_LENGTH))
 #define     NEXT_STRING(str)    (next_char((str), MAXIMUM_STRING_LENGTH))
 
+using union_minimal = std::variant<std::string, double>;
+
 struct DataPredicate {
     static double      MIN_DOUBLE;
     static double      MAX_DOUBLE;
@@ -83,15 +85,15 @@ struct DataPredicate {
     std::string                       label;
     std::string                       var;
     numeric_atom_cases                casusu;
-    std::variant<std::string, double> value;
+    union_minimal value;
     std::string                       labelRHS;
     std::string                       varRHS;
-    std::variant<std::string, double> value_upper_bound;
-    std::set<std::variant<std::string, double>> exceptions;
+    union_minimal value_upper_bound;
+    std::set<union_minimal> exceptions;
     std::vector<DataPredicate>        BiVariableConditions;
 
-    static std::variant<std::string, double> prev_of(const std::variant<std::string, double>& x);
-    static std::variant<std::string, double> next_of(const std::variant<std::string, double>& x);
+    static union_minimal prev_of(const union_minimal& x);
+    static union_minimal next_of(const union_minimal& x);
 
     bool isStringPredicate() const;
     bool isDoublePredicate() const;
@@ -105,7 +107,7 @@ struct DataPredicate {
 
     DataPredicate();
     DEFAULT_COPY_ASSGN(DataPredicate)
-    DataPredicate(const std::string &var, numeric_atom_cases casusu, const std::variant<std::string, double> &value);
+    DataPredicate(const std::string &var, numeric_atom_cases casusu, const union_minimal &value);
     DataPredicate(const std::string &var, numeric_atom_cases casusu, const std::string &value);
     DataPredicate(const std::string &var, numeric_atom_cases casusu, const double &value);
     DataPredicate(const std::string& label, const std::string& var, double lb, double ub);

@@ -24,10 +24,30 @@
 #include <unordered_map>
 #include <map>
 #include <vector>
+#include <numeric>
+
 
 namespace yaucl {
     namespace iterators {
 
+        template <typename T, typename Lambda>
+        std::vector<std::vector<T>> cartesian( std::vector<std::vector<T> >& v, Lambda tester ) {
+            auto product = []( long long a, auto& b ) { return a*b.size(); };
+            const long long N = std::accumulate( v.begin(), v.end(), 1LL, product );
+            std::vector<T> u(v.size());
+            std::vector<std::vector<T>> result;
+            for( long long n=0 ; n<N ; ++n ) {
+                lldiv_t q { n, 0 };
+                for( long long i=v.size()-1 ; 0<=i ; --i ) {
+                    q = std::div( q.quot, v[i].size() );
+                    u[i] = v[i][q.rem];
+                }
+                if (tester(u)) {
+                    result.emplace_back(u);
+                }
+            }
+            return result;
+        }
 
         template <typename typemapite, typename lambda>
         void map_iterate_key_intersection(typemapite it_left, typemapite e_left, typemapite it_right, typemapite e_right,  lambda function) {

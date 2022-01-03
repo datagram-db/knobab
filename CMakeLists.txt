@@ -20,12 +20,14 @@ include_directories(submodules/json/include)
 include_directories(submodules/magic_enum/include)
 
 include_directories(include)
-add_library(knobab STATIC src/knobab/oid.cpp src/knobab/CountTemplate.cpp include/knobab/CountTemplate.h src/knobab/ActTable.cpp include/knobab/ActTable.h src/knobab/AttributeTable.cpp include/knobab/AttributeTable.h src/knobab/KnowledgeBase.cpp include/knobab/KnowledgeBase.h
-        #src/fuzzyStringMatching/v1.0/STTGSHM_Primary.cpp
-        #src/fuzzyStringMatching/v1.0/LSVM_Primary.cpp
-        #src/fuzzyStringMatching/v1.0/SLHM_Primary.cpp
-        #src/fuzzyStringMatching/v2.0/FuzzyMatchSerializer.cpp)
-        src/yaucl/data/xml.cpp src/SimplifiedFuzzyStringMatching.cpp include/SimplifiedFuzzyStringMatching.h include/yaucl/structures/any_to_uint_bimap.h src/yaucl/strings/string_utils.cpp include/yaucl/strings/string_utils.h src/yaucl/bpm/structures/ltlf/ltlf.cpp include/yaucl/bpm/structures/ltlf/ltlf.h include/yaucl/graphs/FlexibleFA.h)
+add_library(knobab STATIC
+        src/knobab/oid.cpp
+        src/knobab/CountTemplate.cpp
+        src/knobab/ActTable.cpp
+        src/knobab/AttributeTable.cpp
+        src/knobab/KnowledgeBase.cpp
+         src/SimplifiedFuzzyStringMatching.cpp
+        src/knobab/predicates/testing_predicates.cpp)
 
 add_library(yaucl_numeric STATIC
                 src/yaucl/numeric/numeric_base.cpp
@@ -44,6 +46,7 @@ add_library(yaucl_hashing STATIC
 target_include_directories(yaucl_hashing PUBLIC ${CMAKE_SOURCE_DIR}/include/yaucl/hashing/ ${CMAKE_CURRENT_BINARY_DIR})
 
 add_library(yaucl_graph STATIC
+
         src/yaucl/graphs/adjacency_graph.cpp
         include/yaucl/graphs/adjacency_graph.h
         include/yaucl/graphs/FlexibleGraph.h
@@ -55,13 +58,21 @@ add_library(yaucl_graph STATIC
         include/yaucl/graphs/adjacency_entry.h
         src/yaucl/graphs/graph_join_pm.cpp
         include/yaucl/graphs/graph_join_pm.h
+        include/yaucl/graphs/graph_join_pm.h
         src/yaucl/graphs/graph_join_pm_conversion.cpp
         src/yaucl/graphs/graph_join_pm_algorithms.cpp)
+
+add_library(yaucl_stringutils STATIC
+        src/yaucl/strings/string_utils.cpp include/yaucl/strings/string_utils.h)
 
 add_library(yaucl_data STATIC
          src/yaucl/data/xml.cpp include/yaucl/data/json.h)
 
 add_library(yaucl_bpm STATIC
+        src/yaucl/bpm/structures/ltlf/ltlf.cpp
+        include/yaucl/bpm/structures/ltlf/ltlf.h
+        src/yaucl/bpm/structures/declare/CNFDeclareDataAware.cpp
+        include/yaucl/bpm/structures/declare/CNFDeclareDataAware.h
         src/yaucl/bpm/structures/declare/DeclareModelParse.cpp
         include/yaucl/bpm/structures/declare/DeclareModelParse.h
         src/yaucl/bpm/structures/log/trace_visitor.cpp
@@ -110,5 +121,5 @@ add_library(knobab_flloat STATIC
         src/knobab/flloat_deps/FLLOATSimplePropParser.cpp )
 target_link_libraries(knobab_flloat ${Boost_LIBRARIES} ${PYTHON_LIBRARIES}  yaucl_bpm yaucl_graph)
 
-add_executable(test main.cpp src/yaucl/bpm/structures/declare/CNFDeclareDataAware.cpp include/yaucl/bpm/structures/declare/CNFDeclareDataAware.h)
-target_link_libraries(test knobab antlr4_static ${Boost_LIBRARIES} ${PYTHON_LIBRARIES} yaucl_numeric yaucl_hashing yaucl_data yaucl_bpm yaucl_graph knobab_flloat)
+add_executable(test main.cpp )
+target_link_libraries(test knobab antlr4_static ${Boost_LIBRARIES} ${PYTHON_LIBRARIES} yaucl_stringutils yaucl_numeric yaucl_hashing yaucl_data yaucl_bpm yaucl_graph knobab_flloat)

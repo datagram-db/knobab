@@ -92,35 +92,41 @@ struct DeclareDataAware {
     std::vector<std::unordered_map<std::string, DataPredicate>> dnf_left_map, dnf_right_map, conjunctive_map;
 
     template <typename Lambda>
-    void collectLeftAttributes(Lambda outResult,
+    std::unordered_set<std::string> collectLeftAttributes(Lambda outResult,
                                bool collectFromLeftMap = true,
                                bool collectFromJoinMap = true) const {
+        std::unordered_set<std::string> forJoin;
         if (collectFromLeftMap) {
             for (const auto& ref : dnf_left_map)
                 for (const auto& cp: ref)
                     outResult(cp.second.var);
         }
-        if (collectFromJoinMap) {
-            for (const auto& ref : conjunctive_map)
-                for (const auto& cp: ref)
-                    outResult(cp.second.var);
+        for (const auto& ref : conjunctive_map)
+            for (const auto& cp: ref) {
+                if (collectFromJoinMap) outResult(cp.second.var);
+                forJoin.insert(cp.second.var);
         }
+        return forJoin;
     }
 
-    template <typename Lambda> void
+    template <typename Lambda> std::unordered_set<std::string>
     collectRightAttributes(Lambda outResult, bool collectFromRightMap = true,
                                              bool collectFromJoinMap = true) const {
+        std::unordered_set<std::string> forJoin;
         if (collectFromRightMap) {
             for (const auto& ref : dnf_right_map)
                 for (const auto& cp: ref)
                     outResult(cp.second.var);
         }
-        if (collectFromJoinMap) {
+        {
             for (const auto& ref : conjunctive_map)
                 for (const auto& cp: ref)
-                    if (!cp.second.varRHS.empty())
-                        outResult(cp.second.varRHS);
+                    if (!cp.second.varRHS.empty()) {
+                        if (collectFromJoinMap) outResult(cp.second.varRHS);
+                        forJoin.insert(cp.second.var);
+                    }
         }
+        return forJoin;
     }
 
 

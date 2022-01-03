@@ -207,6 +207,7 @@ KnowledgeBase::collectValuesFrom(std::set<union_type> &S, ssize_t trace_id, uint
 
 #include <bitset>
 
+
 void KnowledgeBase::collectValuesAmongTraces(std::set<union_type> &S, size_t trace_id, act_t acts, bool hasNoActId,
                                              const std::string &attribute_name, bool hasNoAttribute) const {
     const auto& ref = act_table_by_act_id.secondary_index[trace_id];
@@ -264,7 +265,7 @@ void KnowledgeBase::collectValuesAmongTraces(
         const std::unordered_map<std::string, std::unordered_set<std::string>> &actToTables,
         const std::unordered_set<std::string> &otherValues, trace_t traceId) const {
     const auto& ref = act_table_by_act_id.secondary_index[traceId];
-    auto ptr = ref.first;
+    ActTable::record* ptr = ref.first;
     while (ptr) {
         std::string sAct = event_label_mapper.get(ptr->entry.id.parts.act);
         auto it = actToTables.find(sAct);
@@ -287,3 +288,20 @@ void KnowledgeBase::collectValuesAmongTraces(
     }
 }
 
+union_minimal resolveUnionMinimal(const AttributeTable &table, const AttributeTable::record &x) {
+    switch (table.type) {
+        case DoubleAtt:
+            return *(double*)(&x.value);
+        case LongAtt:
+            return (double)(*(long long*)(&x.value));
+        case StringAtt:
+            assert(table.ptr);
+            return table.ptr->get(x.value);
+        case BoolAtt:
+            return (x.value != 0 ? 0.0 : 1.0);
+            //case SizeTAtt:
+        default:
+            // TODO: hierarchical types!, https://dl.acm.org/doi/10.1145/3410566.3410583
+            return (double)x.value;
+    }
+}

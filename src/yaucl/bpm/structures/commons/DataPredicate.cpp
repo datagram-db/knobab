@@ -32,7 +32,7 @@ std::string DataPredicate::MAX_STRING =  std::string(MAXIMUM_STRING_LENGTH, std:
 
 DataPredicate::DataPredicate() : casusu{TTRUE} {}
 
-DataPredicate::DataPredicate(const std::string &var, numeric_atom_cases casusu, const std::variant<std::string, double> &value) : var(
+DataPredicate::DataPredicate(const std::string &var, numeric_atom_cases casusu, const union_minimal &value) : var(
         var), casusu(casusu), value(value) {}
 
 DataPredicate::DataPredicate(const std::string &var, numeric_atom_cases casusu, const std::string &value) : var(var), casusu(casusu), value(value) {}
@@ -229,8 +229,8 @@ void DataPredicate::asInterval() {
     if ((casusu == INTERVAL) || (casusu == TTRUE) || (isBiVariableCondition())) return;
 
     bool isString = std::holds_alternative<std::string>(value);
-    std::variant<std::string, double> prev, next;
-    std::variant<std::string, double> min, max;
+    union_minimal prev, next;
+    union_minimal min, max;
     if (isString)  {
         std::string s = std::get<std::string>(value);
         min = MIN_STRING;
@@ -341,14 +341,14 @@ bool DataPredicate::operator!=(const DataPredicate &rhs) const {
     return !(rhs == *this);
 }
 
-std::variant<std::string, double> DataPredicate::prev_of(const std::variant<std::string, double> &x) {
+union_minimal DataPredicate::prev_of(const union_minimal &x) {
     if (std::holds_alternative<std::string>(x))
         return {PREV_STRING(std::get<std::string>(x))};
     else
         return {PREV_DOUBLE(std::get<double>(x))};
 }
 
-std::variant<std::string, double> DataPredicate::next_of(const std::variant<std::string, double> &x) {
+union_minimal DataPredicate::next_of(const union_minimal &x) {
     if (std::holds_alternative<std::string>(x))
         return {NEXT_STRING(std::get<std::string>(x))};
     else
@@ -388,8 +388,8 @@ std::variant<std::vector<std::pair<std::string, std::string>>,
         result = std::vector<std::pair<double, double>>{};
     }
 
-    std::variant<std::string, double> prev, next;
-    std::variant<std::string, double> min, max;
+    union_minimal prev, next;
+    union_minimal min, max;
     if (isString)  {
         std::string s = std::get<std::string>(value);
         min = MIN_STRING;
@@ -464,7 +464,7 @@ std::variant<std::vector<std::pair<std::string, std::string>>,
                 }
             } else {
                 size_t i = 0, N = exceptions.size();
-                std::variant<std::string, double> prev = value;
+                union_minimal prev = value;
                 for (const auto& val : exceptions) {
                     if (i == 0) {
                         if (isString)
@@ -514,8 +514,8 @@ std::variant<std::vector<std::pair<std::string, std::string>>,
         result = std::vector<std::pair<double, double>>{};
     }
 
-    std::variant<std::string, double> prev, next;
-    std::variant<std::string, double> min, max;
+    union_minimal prev, next;
+    union_minimal min, max;
     if (isString)  {
         std::string s = std::get<std::string>(value);
         min = MIN_STRING;
@@ -596,7 +596,7 @@ std::variant<std::vector<std::pair<std::string, std::string>>,
                 }
             } else {
                 size_t i = 0, N = exceptions.size();
-                std::variant<std::string, double> prev = value;
+                union_minimal prev = value;
                 for (const auto& val : exceptions) {
                     if (i == 0) {
                         if (isString)
