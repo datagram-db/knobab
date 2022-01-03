@@ -27,7 +27,7 @@ add_library(knobab STATIC
         src/knobab/AttributeTable.cpp
         src/knobab/KnowledgeBase.cpp
          src/SimplifiedFuzzyStringMatching.cpp
-        src/knobab/predicates/testing_predicates.cpp)
+        src/knobab/predicates/testing_predicates.cpp src/knobab/algorithms/kb_grounding.cpp src/knobab/algorithms/kb_grounding.cpp include/knobab/algorithms/kb_grounding.h)
 
 add_library(yaucl_numeric STATIC
                 src/yaucl/numeric/numeric_base.cpp
@@ -46,7 +46,6 @@ add_library(yaucl_hashing STATIC
 target_include_directories(yaucl_hashing PUBLIC ${CMAKE_SOURCE_DIR}/include/yaucl/hashing/ ${CMAKE_CURRENT_BINARY_DIR})
 
 add_library(yaucl_graph STATIC
-
         src/yaucl/graphs/adjacency_graph.cpp
         include/yaucl/graphs/adjacency_graph.h
         include/yaucl/graphs/FlexibleGraph.h
