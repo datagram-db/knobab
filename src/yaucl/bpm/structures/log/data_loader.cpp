@@ -176,3 +176,4 @@ void load_into_knowledge_base(log_data_format format, bool loadData, const std::
         case XES1:                 load_xes_with_data(filename, loadData, tv); break;
     }
 }
+

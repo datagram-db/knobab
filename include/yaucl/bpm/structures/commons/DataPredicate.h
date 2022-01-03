@@ -63,6 +63,8 @@ enum numeric_atom_cases {
     TTRUE
 };
 
+numeric_atom_cases invert_predicate_direction(numeric_atom_cases val);
+
 std::string prev_char(const std::string& val, size_t max_size);
 std::string next_char(const std::string& val, size_t max_size);
 
@@ -112,12 +114,17 @@ struct DataPredicate {
     DataPredicate(const std::string &var, numeric_atom_cases casusu, const double &value);
     DataPredicate(const std::string& label, const std::string& var, double lb, double ub);
     DataPredicate(const std::string& label, const std::string& var, const std::string& lb, const std::string& ub);
+    DataPredicate(const std::string &label, const std::string &var, union_minimal lb, union_minimal ub);
+
 
     friend std::ostream &operator<<(std::ostream &os, const DataPredicate &predicate);
     void asInterval();
-    void intersect_with(const DataPredicate& predicate);
+    bool intersect_with(const DataPredicate& predicate);
     bool testOverSingleVariable(const  std::string& val) const;
     bool testOverSingleVariable(double       val) const;
+
+    DataPredicate instantiateRHSWith(const union_minimal& val) const;
+    DataPredicate reverseBiVariablePredicate() const;
 
     bool operator==(const DataPredicate &rhs) const;
     bool operator!=(const DataPredicate &rhs) const;

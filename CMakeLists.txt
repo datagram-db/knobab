@@ -100,7 +100,7 @@ add_library(yaucl_bpm STATIC
         src/yaucl/bpm/algos/transformations/declare_to_dfa/DeclareNoDataTemplateCollect.cpp
         include/yaucl/bpm/algos/transformations/declare_to_dfa/DeclareNoDataTemplateCollect.h
         src/yaucl/bpm/algos/transformations/declare_to_dfa/TemplateCollectResult.cpp
-        include/yaucl/bpm/algos/transformations/declare_to_dfa/TemplateCollectResult.h src/yaucl/bpm/structures/declare/DisjunctiveDeclareDataAware.cpp include/yaucl/bpm/structures/declare/DisjunctiveDeclareDataAware.h)
+        include/yaucl/bpm/algos/transformations/declare_to_dfa/TemplateCollectResult.h src/yaucl/bpm/structures/declare/DisjunctiveDeclareDataAware.cpp include/yaucl/bpm/structures/declare/DisjunctiveDeclareDataAware.h src/yaucl/bpm/algos/transformations/grounding.cpp src/yaucl/bpm/algos/transformations/grounding.cpp include/yaucl/bpm/algos/transformations/grounding.h src/yaucl/bpm/structures/commons/testing_predicates.cpp include/yaucl/bpm/structures/commons/testing_predicates.h)
 target_link_libraries(yaucl_bpm antlr4_static yaucl_numeric yaucl_data yaucl_graph)
 
 add_library(knobab_flloat STATIC

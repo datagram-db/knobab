@@ -3,6 +3,7 @@
 //
 
 #include <knobab/predicates/testing_predicates.h>
+#include <yaucl/bpm/structures/commons/testing_predicates.h>
 
 bool test_data_predicate(const DataPredicate &dp, const union_type &val) {
     if (std::holds_alternative<std::string>(val)) {
@@ -23,16 +24,7 @@ bool test_data_predicate(const DataPredicate &dp, const union_type &val) {
     }
 }
 
-bool test_data_predicate(const DataPredicate &dp, const union_minimal &val) {
-    if (std::holds_alternative<std::string>(val)) {
-        return dp.testOverSingleVariable(std::get<std::string>(val));
-    } else {
-        if (std::holds_alternative<double>(val))
-            return dp.testOverSingleVariable(std::get<double>(val));
-        else
-            throw std::runtime_error(std::to_string(val.index())+" Unexpected index type");
-    }
-}
+
 
 bool test_conjunctive_predicate(KnowledgeBase &db, ActTable::record *eventFromTrace,
                                 const std::string &expectedActFromDeclare,
@@ -62,7 +54,7 @@ bool test_conjunctive_predicate(KnowledgeBase &db, ActTable::record *eventFromTr
             // If the current element does not satisfy the present element of the conjunction, then all of the other
             // elements will be false, too: so, I can quit the iteration
             if (testSingleVariable)
-                if (!test_data_predicate(it->second, value)) return false;
+                if (!test_minimal_data_predicate(it->second, value)) return false;
             eventObject[attributeOrVar] = value;
             if (testBiVariables && (!it->second.BiVariableConditions.empty()))
                 eventObjectPredicatesToAssess[attributeOrVar].emplace_back(&it->second.BiVariableConditions);
@@ -87,7 +79,7 @@ bool test_conjunctive_predicate(KnowledgeBase &db, ActTable::record *eventFromTr
                 // Associating the right's variable value to the element
                 dp.value = itR->second;
                 // if the data does not jointly satisfy this predicate, then return the falsehood
-                if (!test_data_predicate(dp, itL->second)) return false;
+                if (!test_minimal_data_predicate(dp, itL->second)) return false;
             }
         }
     }

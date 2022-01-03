@@ -12,9 +12,6 @@
 bool test_data_predicate(const DataPredicate& dp,
                          const union_type& val);
 
-bool test_data_predicate(const DataPredicate &dp,
-                         const union_minimal &val);
-
 void filter_some_values_from_disjunctive_map(const std::vector<std::unordered_map<std::string, DataPredicate>> &theMapToScan,
                       std::unordered_map<std::string, std::set<union_type>> &theMapToFilter);
 

@@ -24,6 +24,25 @@
 #include <iomanip>
 #include "yaucl/bpm/structures/commons/DataPredicate.h"
 
+numeric_atom_cases invert_predicate_direction(numeric_atom_cases val) {
+    switch (val) {
+        case LT:
+            return GT;
+        case GT:
+            return LT;
+        case LEQ:
+            return GEQ;
+        case GEQ:
+            return LEQ;
+        case EQ:
+        case NEQ:
+        case TTRUE:
+            return val;
+        case INTERVAL:
+            throw std::runtime_error("ERROR: you cannot invert a relationship which is just an interval! An interval is not a valid predicate, rather than a combination of intervals. There is some flaw in the logic!");
+    }
+}
+
 double      DataPredicate::MIN_DOUBLE = -std::numeric_limits<double>::max();
 double      DataPredicate::MAX_DOUBLE =  std::numeric_limits<double>::max();
 std::string DataPredicate::MIN_STRING = "";
@@ -170,10 +189,11 @@ std::string next_char(const std::string &val, size_t max_size) {
 
 
 #include <cassert>
-void DataPredicate::intersect_with(const DataPredicate& predicate) {
+bool DataPredicate::intersect_with(const DataPredicate& predicate) {
     assert(var == predicate.var);
     if (predicate.isBiVariableCondition()) {
         BiVariableConditions.emplace_back(predicate);
+        return true;
     } else {
         if (casusu == predicate.casusu) {
             switch (casusu) {
@@ -198,29 +218,31 @@ void DataPredicate::intersect_with(const DataPredicate& predicate) {
                     exceptions.insert(predicate.value);
                     break;
 
-                case INTERVAL:
-                    value = std::min(value, predicate.value);
-                    value_upper_bound = std::max(value_upper_bound, predicate.value_upper_bound);
+                case INTERVAL:// (1)
+                    value = std::max(value, predicate.value);
+                    value_upper_bound = std::min(value_upper_bound, predicate.value_upper_bound);
+                    if (value > value_upper_bound) {
+                        return false;
+                    }
+
+                    std::set<union_minimal> S;
+                    for (const auto& x : exceptions) {
+                        if ((value <= x) && (x <= value_upper_bound))
+                            S.insert(x);
+                    }
+                    for (const auto& x : predicate.exceptions) {
+                        if ((value <= x) && (x <= value_upper_bound))
+                            S.insert(x);
+                    }
+                    exceptions = S;
                     break;
             }
+            return true;
         } else {
             asInterval();
             DataPredicate rightCopy = predicate;
             rightCopy.asInterval();
-
-            value = std::max(value, rightCopy.value);
-            value_upper_bound = std::min(value_upper_bound, rightCopy.value_upper_bound);
-
-            std::set<std::variant<std::string, double>> S;
-            for (const auto& x : exceptions) {
-                if ((value <= x) && (x <= value_upper_bound))
-                    S.insert(x);
-            }
-            for (const auto& x : rightCopy.exceptions) {
-                if ((value <= x) && (x <= value_upper_bound))
-                    S.insert(x);
-            }
-            exceptions = S;
+            return intersect_with(rightCopy); // (1)
         }
     }
 }
@@ -624,4 +646,31 @@ std::variant<std::vector<std::pair<std::string, std::string>>,
 
 bool DataPredicate::isBiVariableCondition() const {
     return !varRHS.empty();
+}
+
+DataPredicate::DataPredicate(const std::string &label, const std::string &var, union_minimal lb, union_minimal ub) : label{label}, var{var}, casusu{INTERVAL} {
+    value = lb;
+    value_upper_bound = ub;
+}
+
+DataPredicate DataPredicate::instantiateRHSWith(const union_minimal& val) const {
+    // This RHS instantiation is not applicable to intervals, which have no RHS variable
+    assert(casusu != INTERVAL);
+    // In order to run this method, I shall have the rhs variable
+    assert(!varRHS.empty());
+    DataPredicate cpy = *this;
+    cpy.varRHS.clear();
+    cpy.labelRHS.clear();
+    cpy.value = val;
+    return cpy;
+}
+
+DataPredicate DataPredicate::reverseBiVariablePredicate() const {
+    assert(casusu != INTERVAL);
+    assert(!varRHS.empty());
+    DataPredicate cpy = *this;
+    std::swap(cpy.var, cpy.varRHS);
+    std::swap(cpy.label, cpy.labelRHS);
+    cpy.casusu = invert_predicate_direction(cpy.casusu);
+    return cpy;
 }

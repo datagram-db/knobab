@@ -40,6 +40,7 @@ namespace antlr4 {
 
 class DeclareModelParse : public DADBaseVisitor {
     ///bool do_renaming;
+    bool asConjunctiveModel;
 public:
     ~DeclareModelParse() {}
     DeclareModelParse();
@@ -49,7 +50,7 @@ public:
      * @param stream
      * @return
      */
-    std::vector<DeclareDataAware> load(std::istream &stream);
+    std::vector<DeclareDataAware> load(std::istream &stream, bool asConjunctiveModel);
     ltlf load_model_to_semantics(std::istream &stream, bool is_simplified_xes);
 
     ////////////////////////////
