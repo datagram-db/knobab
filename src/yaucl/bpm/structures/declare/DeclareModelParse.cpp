@@ -115,9 +115,11 @@ antlrcpp::Any DeclareModelParse::visitNary_prop(DADParser::Nary_propContext *ctx
             dda.conjunctive_map = conjAny.as<std::vector<std::unordered_map<std::string, DataPredicate>>>();
             for (auto& ref : dda.conjunctive_map) {
                 for (auto& cp : ref) {
+                    assert(cp.second.casusu == TRUE); // That is, no data interval should be provided in here!
                     cp.second.label = dda.left_act;
                     cp.second.labelRHS = dda.right_act;
                     for (auto& subitem : cp.second.BiVariableConditions) {
+                        assert(subitem.isBiVariableCondition()); // in the conjunction after where, all the predicates should be among variables, only!
                         subitem.label = dda.left_act;
                         subitem.labelRHS = dda.right_act;
                     }
@@ -226,7 +228,13 @@ antlrcpp::Any DeclareModelParse::visitIn_atom(DADParser::In_atomContext *ctx) {
     std::unordered_map<std::string, DataPredicate> v;
     if (ctx) {
         DataPredicate pred = visitAtom(ctx->atom()).as<DataPredicate>();
-        v[pred.var] = pred;
+        if (pred.isBiVariableCondition()) {
+            v[pred.var].var = pred.var;
+            v[pred.var].BiVariableConditions.emplace_back(pred);
+        } else {
+            v[pred.var] = pred;
+        }
+
     }
     return {v};
 }
