@@ -19,9 +19,13 @@ enum AttributeTableType {
     // TODO: hierarchical types!, https://dl.acm.org/doi/10.1145/3410566.3410583
 };
 
+using union_type = std::variant<double, size_t, long long, std::string, bool>;
+
 #include <vector>
 #include <map>
 #include <unordered_map>
+
+
 
 struct AttributeTable {
     std::string attr_name;
@@ -51,14 +55,15 @@ struct AttributeTable {
     const record * resolve_record_if_exists(size_t actTableOffset) const;
     std::ostream& resolve_and_print(std::ostream& os, const AttributeTable::record &x) const;
 
-    void record_load(act_t act_id, const std::variant<double, size_t, long long, std::string, bool>& val, trace_t tid, event_t eid);
+    void record_load(act_t act_id, const union_type& val, trace_t tid, event_t eid);
     void index(const std::vector<std::vector<size_t>> &trace_id_to_event_id_to_offset, size_t maxOffset);
+    union_type resolve(const record& x) const;
 
 private:
-    std::vector<std::map<std::variant<double, size_t, long long, std::string, bool>, std::vector<std::pair<trace_t, event_t>>>> elements;
-    std::variant<double, size_t, long long, std::string, bool> resolve(const record& x);
-    size_t storeLoad(const std::variant<double, size_t, long long, std::string, bool> &x);
-    bool assertVariant(const std::variant<double, size_t, long long, std::string, bool>& val);
+    std::vector<std::map<union_type, std::vector<std::pair<trace_t, event_t>>>> elements;
+
+    size_t storeLoad(const union_type &x);
+    bool assertVariant(const union_type& val);
 };
 
 

@@ -65,8 +65,13 @@ antlrcpp::Any DeclareModelParse::visitNary_prop(DADParser::Nary_propContext *ctx
         for (auto& ref : dda.dnf_left_map) {
             for (auto& cp : ref) {
                 cp.second.label = dda.left_act;
-                if (!cp.second.varRHS.empty())
+                for (auto& subitem : cp.second.BiVariableConditions) {
+                    subitem.label = dda.left_act;
+                    subitem.labelRHS = dda.left_act;
+                }
+                if (!cp.second.varRHS.empty()) {
                     cp.second.labelRHS = dda.left_act;
+                }
             }
         }
 
@@ -75,8 +80,13 @@ antlrcpp::Any DeclareModelParse::visitNary_prop(DADParser::Nary_propContext *ctx
         for (auto& ref : dda.dnf_right_map) {
             for (auto& cp : ref) {
                 cp.second.label = dda.right_act;
-                if (!cp.second.varRHS.empty())
+                for (auto& subitem : cp.second.BiVariableConditions) {
+                    subitem.label = dda.right_act;
+                    subitem.labelRHS = dda.right_act;
+                }
+                if (!cp.second.varRHS.empty()) {
                     cp.second.labelRHS = dda.right_act;
+                }
             }
         }
 
@@ -86,6 +96,10 @@ antlrcpp::Any DeclareModelParse::visitNary_prop(DADParser::Nary_propContext *ctx
                 for (auto& cp : ref) {
                     cp.second.label = dda.left_act;
                     cp.second.labelRHS = dda.right_act;
+                    for (auto& subitem : cp.second.BiVariableConditions) {
+                        subitem.label = dda.left_act;
+                        subitem.labelRHS = dda.right_act;
+                    }
                 }
             }
         }
@@ -167,8 +181,14 @@ antlrcpp::Any DeclareModelParse::visitAtom_conj(DADParser::Atom_conjContext *ctx
         auto it = v.find(baseCase.var);
         if (it != v.end())
             it->second.intersect_with(baseCase);
-        else
-            v[baseCase.var] = baseCase;
+        else {
+            if (baseCase.isBiVariableCondition()) {
+                v[baseCase.var].var = baseCase.var;
+                v[baseCase.var].BiVariableConditions.emplace_back(baseCase);
+            } else {
+                v[baseCase.var] = baseCase;
+            }
+        }
     }
     return {v};
 }

@@ -23,7 +23,19 @@
 #include <yaucl/data/xml.h>
 #include "yaucl/bpm/structures/declare/DeclareDataAware.h"
 
-void print_dnf(std::ostream &os, const std::vector<std::unordered_map<std::string, DataPredicate>> &map) {
+inline void print_conj(std::ostream &os, const std::unordered_map<std::string, DataPredicate> &map) {
+    static std::string AND{" ∧ "};
+    size_t i = 0, N = map.size();
+    for (const std::pair<std::string, DataPredicate>& elem : map) {
+        os << elem.second;
+        if (i != (N-1)) {
+            os << AND;
+        }
+        i++;
+    }
+}
+
+inline void print_dnf(std::ostream &os, const std::vector<std::unordered_map<std::string, DataPredicate>> &map) {
     static std::string OR{" ∨ "};
     for (size_t i = 0, N = map.size(); i<N; i++) {
         const std::unordered_map<std::string, DataPredicate>& elem = map.at(i);
@@ -36,17 +48,7 @@ void print_dnf(std::ostream &os, const std::vector<std::unordered_map<std::strin
     }
 }
 
-void print_conj(std::ostream &os, const std::unordered_map<std::string, DataPredicate> &map) {
-    static std::string AND{" ∧ "};
-    size_t i = 0, N = map.size();
-    for (const std::pair<std::string, DataPredicate>& elem : map) {
-        os << elem.second;
-        if (i != (N-1)) {
-            os << AND;
-        }
-        i++;
-    }
-}
+
 
 
 std::ostream &operator<<(std::ostream &os, const DeclareDataAware &aware) {
@@ -500,3 +502,4 @@ DeclareDataAware DeclareDataAware::binary(declare_templates t, const std::string
     result.n = 2;
     return result;
 }
+

@@ -30,7 +30,7 @@ std::string DataPredicate::MIN_STRING = "";
 std::string DataPredicate::MAX_STRING =  std::string(MAXIMUM_STRING_LENGTH, std::numeric_limits<char>::max());
 
 
-DataPredicate::DataPredicate() : var{"x"}, casusu{EQ}, value{0.0} {}
+DataPredicate::DataPredicate() : casusu{TTRUE} {}
 
 DataPredicate::DataPredicate(const std::string &var, numeric_atom_cases casusu, const std::variant<std::string, double> &value) : var(
         var), casusu(casusu), value(value) {}
@@ -42,7 +42,10 @@ DataPredicate::DataPredicate(const std::string &var, numeric_atom_cases casusu, 
 #include <cassert>
 
 std::ostream &operator<<(std::ostream &os, const DataPredicate &predicate) {
-    if (predicate.casusu == INTERVAL) {
+    if ((predicate.casusu == TTRUE) ) {
+        if (predicate.BiVariableConditions.empty())
+            os << "true";
+    } else if (predicate.casusu == INTERVAL) {
         double isString = std::holds_alternative<std::string>(predicate.value);
         assert(predicate.varRHS.empty() && predicate.labelRHS.empty());
 
@@ -94,13 +97,26 @@ std::ostream &operator<<(std::ostream &os, const DataPredicate &predicate) {
                 os << " ≠ "; break;
         }
         if (!predicate.varRHS.empty())
-            return os << predicate.labelRHS << '.' << predicate.varRHS;
+            os << predicate.labelRHS << '.' << predicate.varRHS;
         else if (std::holds_alternative<std::string>(predicate.value))
-            return os << std::quoted(std::get<std::string>(predicate.value).c_str());
+            os << std::quoted(std::get<std::string>(predicate.value).c_str());
         else
-            return os << std::get<double>(predicate.value);
+            os << std::get<double>(predicate.value);
     }
-
+    if (!predicate.BiVariableConditions.empty()) {
+        static std::string AND{" ∧ "};
+        if (predicate.casusu != TTRUE) os << AND << '(';
+        size_t i = 0, N = predicate.BiVariableConditions.size();
+        for (const DataPredicate& elem : predicate.BiVariableConditions) {
+            os << elem;
+            if (i != (N-1)) {
+                os << AND;
+            }
+            i++;
+        }
+        if (predicate.casusu != TTRUE) os << ')';
+    }
+    return os;
 }
 
 std::string prev_char(const std::string &val, size_t max_size) {
@@ -156,58 +172,61 @@ std::string next_char(const std::string &val, size_t max_size) {
 #include <cassert>
 void DataPredicate::intersect_with(const DataPredicate& predicate) {
     assert(var == predicate.var);
-    if (casusu == predicate.casusu) {
-        switch (casusu) {
-            case LT:
-            case LEQ:
-                value = std::min(value, predicate.value);
-                break;
-
-            case GT:
-            case GEQ:
-                value = std::max(value, predicate.value);
-                break;
-
-            case EQ:
-                // The intersection of equality should consider that the equivalence is among identical values
-                assert(value == predicate.value);
-                break;
-
-            case NEQ:
-                casusu = INTERVAL;
-                exceptions.insert(value);
-                exceptions.insert(predicate.value);
-                break;
-
-            case INTERVAL:
-                value = std::min(value, predicate.value);
-                value_upper_bound = std::max(value_upper_bound, predicate.value_upper_bound);
-                break;
-        }
+    if (predicate.isBiVariableCondition()) {
+        BiVariableConditions.emplace_back(predicate);
     } else {
-        asInterval();
-        DataPredicate rightCopy = predicate;
-        rightCopy.asInterval();
+        if (casusu == predicate.casusu) {
+            switch (casusu) {
+                case LT:
+                case LEQ:
+                    value = std::min(value, predicate.value);
+                    break;
 
-        value = std::max(value, rightCopy.value);
-        value_upper_bound = std::min(value_upper_bound, rightCopy.value_upper_bound);
+                case GT:
+                case GEQ:
+                    value = std::max(value, predicate.value);
+                    break;
 
-        std::set<std::variant<std::string, double>> S;
-        for (const auto& x : exceptions) {
-            if ((value <= x) && (x <= value_upper_bound))
-                S.insert(x);
+                case EQ:
+                    // The intersection of equality should consider that the equivalence is among identical values
+                    assert(value == predicate.value);
+                    break;
+
+                case NEQ:
+                    casusu = INTERVAL;
+                    exceptions.insert(value);
+                    exceptions.insert(predicate.value);
+                    break;
+
+                case INTERVAL:
+                    value = std::min(value, predicate.value);
+                    value_upper_bound = std::max(value_upper_bound, predicate.value_upper_bound);
+                    break;
+            }
+        } else {
+            asInterval();
+            DataPredicate rightCopy = predicate;
+            rightCopy.asInterval();
+
+            value = std::max(value, rightCopy.value);
+            value_upper_bound = std::min(value_upper_bound, rightCopy.value_upper_bound);
+
+            std::set<std::variant<std::string, double>> S;
+            for (const auto& x : exceptions) {
+                if ((value <= x) && (x <= value_upper_bound))
+                    S.insert(x);
+            }
+            for (const auto& x : rightCopy.exceptions) {
+                if ((value <= x) && (x <= value_upper_bound))
+                    S.insert(x);
+            }
+            exceptions = S;
         }
-        for (const auto& x : rightCopy.exceptions) {
-            if ((value <= x) && (x <= value_upper_bound))
-                S.insert(x);
-        }
-        exceptions = S;
     }
 }
 
 void DataPredicate::asInterval() {
-    if (casusu == INTERVAL) return;
-
+    if ((casusu == INTERVAL) || (casusu == TTRUE) || (isBiVariableCondition())) return;
 
     bool isString = std::holds_alternative<std::string>(value);
     std::variant<std::string, double> prev, next;
@@ -255,7 +274,8 @@ void DataPredicate::asInterval() {
     casusu = INTERVAL;
 }
 
-bool DataPredicate::test(const std::string &val) const {
+bool DataPredicate::testOverSingleVariable(const std::string &val) const {
+    assert(!isBiVariableCondition());
     bool isString = std::holds_alternative<std::string>(value);
     if (!isString) return false;
     std::string current = std::get<std::string>(value);
@@ -281,7 +301,8 @@ bool DataPredicate::test(const std::string &val) const {
     }
 }
 
-bool DataPredicate::test(double val) const {
+bool DataPredicate::testOverSingleVariable(double val) const {
+    assert(!isBiVariableCondition());
     bool isDouble = std::holds_alternative<double>(value);
     if (!isDouble) return false;
     double current = std::get<double>(value);
@@ -337,6 +358,8 @@ std::variant<std::string, double> DataPredicate::next_of(const std::variant<std:
 #include <cassert>
 
 bool DataPredicate::isStringPredicate() const {
+    if (casusu == TTRUE)
+        return false;
     bool isString = std::holds_alternative<std::string>(value);
     if (casusu == INTERVAL)
         assert(isString == std::holds_alternative<std::string>(value_upper_bound));
@@ -344,6 +367,8 @@ bool DataPredicate::isStringPredicate() const {
 }
 
 bool DataPredicate::isDoublePredicate() const {
+    if (casusu == TTRUE)
+        return false;
     bool isString = std::holds_alternative<double>(value);
     if (casusu == INTERVAL)
         assert(isString == std::holds_alternative<double>(value_upper_bound));
@@ -352,7 +377,8 @@ bool DataPredicate::isDoublePredicate() const {
 
 
 std::variant<std::vector<std::pair<std::string, std::string>>,
-        std::vector<std::pair<double, double>>> DataPredicate::decompose_into_intervals() const {
+        std::vector<std::pair<double, double>>> DataPredicate::decompose_single_variable_into_intervals() const {
+    assert(!isBiVariableCondition());
     bool isString = isStringPredicate();
     std::variant<std::vector<std::pair<std::string, std::string>>,
             std::vector<std::pair<double, double>>> result;
@@ -477,7 +503,8 @@ DataPredicate::DataPredicate(const std::string &label, const std::string &var, c
 }
 
 std::variant<std::vector<std::pair<std::string, std::string>>,
-        std::vector<std::pair<double, double>>> DataPredicate::decompose_into_intervals_with_missing() const {
+        std::vector<std::pair<double, double>>> DataPredicate::decompose_single_variable_into_intervals_with_missing() const {
+    assert(!isBiVariableCondition());
     bool isString = isStringPredicate();
     std::variant<std::vector<std::pair<std::string, std::string>>,
             std::vector<std::pair<double, double>>> result;
@@ -593,4 +620,8 @@ std::variant<std::vector<std::pair<std::string, std::string>>,
             }
             return result;
     }
+}
+
+bool DataPredicate::isBiVariableCondition() const {
+    return !varRHS.empty();
 }

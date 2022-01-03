@@ -91,14 +91,46 @@ struct DeclareDataAware {
     // Each map represents a conjunction among different atoms over distinct variables, while the vector represents the disjunction
     std::vector<std::unordered_map<std::string, DataPredicate>> dnf_left_map, dnf_right_map, conjunctive_map;
 
+    template <typename Lambda>
+    void collectLeftAttributes(Lambda outResult,
+                               bool collectFromLeftMap = true,
+                               bool collectFromJoinMap = true) const {
+        if (collectFromLeftMap) {
+            for (const auto& ref : dnf_left_map)
+                for (const auto& cp: ref)
+                    outResult(cp.second.var);
+        }
+        if (collectFromJoinMap) {
+            for (const auto& ref : conjunctive_map)
+                for (const auto& cp: ref)
+                    outResult(cp.second.var);
+        }
+    }
+
+    template <typename Lambda> void
+    collectRightAttributes(Lambda outResult, bool collectFromRightMap = true,
+                                             bool collectFromJoinMap = true) const {
+        if (collectFromRightMap) {
+            for (const auto& ref : dnf_right_map)
+                for (const auto& cp: ref)
+                    outResult(cp.second.var);
+        }
+        if (collectFromJoinMap) {
+            for (const auto& ref : conjunctive_map)
+                for (const auto& cp: ref)
+                    if (!cp.second.varRHS.empty())
+                        outResult(cp.second.varRHS);
+        }
+    }
+
+
+
+    DEFAULT_CONSTRUCTORS(DeclareDataAware)
+
     static DeclareDataAware unary(declare_templates, const std::string& argument, size_t n);
     static DeclareDataAware binary(declare_templates t, const std::string& left, const std::string right);
 
-    DeclareDataAware() = default;
-    DeclareDataAware(const DeclareDataAware&) = default;
-    DeclareDataAware( DeclareDataAware&&) = default;
-    DeclareDataAware& operator=(const DeclareDataAware& )=default;
-    DeclareDataAware& operator=( DeclareDataAware&& )=default;
+
 
     static DeclareDataAware parse_declare_non_data_string(const std::string& line);
     static std::vector<DeclareDataAware> load_simplified_declare_model(std::istream &file);

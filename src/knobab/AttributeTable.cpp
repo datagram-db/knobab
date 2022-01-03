@@ -6,7 +6,7 @@
 #include "SimplifiedFuzzyStringMatching.h"
 #include <cassert>
 
-std::variant<double, size_t, long long, std::string, bool> AttributeTable::resolve(const AttributeTable::record &x) {
+union_type AttributeTable::resolve(const AttributeTable::record &x) const {
     switch (type) {
         case DoubleAtt:
             return *(double*)(&x.value);
