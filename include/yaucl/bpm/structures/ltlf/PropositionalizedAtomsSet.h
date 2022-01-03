@@ -45,6 +45,10 @@ public:
     std::unordered_set<std::string>::iterator end();
     std::optional<bool> hasTerminalCondition(const std::string& atom);
 
+    bool containsInSet(const std::string& atom) const {
+        return set.contains(atom);
+    }
+
     std::string different_label() const {
         return sstr;
     }

@@ -16,6 +16,7 @@
 #include <yaucl/bpm/structures/log/trace_visitor.h>
 #include <yaucl/structures/any_to_uint_bimap.h>
 #include <SimplifiedFuzzyStringMatching.h>
+#include <yaucl/bpm/structures/commons/DataPredicate.h>
 
 enum ParsingState {
     LogParsing,
@@ -28,6 +29,8 @@ enum ParsingState {
 
 using trace_set = std::bitset<sizeof(uint32_t)>;
 using act_set = std::bitset<sizeof(uint16_t)>;
+union_minimal resolveUnionMinimal(const AttributeTable &table, const AttributeTable::record &x);
+
 
 class KnowledgeBase : public trace_visitor {
     CountTemplate                                   count_table;
@@ -45,6 +48,22 @@ class KnowledgeBase : public trace_visitor {
 
 public:
 
+    std::pair<std::unordered_map<std::string, AttributeTable>::iterator,
+            std::unordered_map<std::string, AttributeTable>::iterator> getAttrNameTableIt() {
+        return {attribute_name_to_table.begin(), attribute_name_to_table.end()};
+    }
+
+    union_type resolveRecord(const ActTable::record* eventFromTrace,
+                             const std::unordered_map<std::string, AttributeTable>::iterator& attr_table) const {
+
+        return attr_table->second.resolve(*attr_table->second.resolve_record_if_exists(eventFromTrace - act_table_by_act_id.table.data()));
+    }
+
+    union_minimal resolveMinimalRecord(const ActTable::record* eventFromTrace,
+                                 const std::unordered_map<std::string, AttributeTable>::iterator& attr_table) const {
+            return resolveUnionMinimal(attr_table->second,
+                                       *attr_table->second.resolve_record_if_exists(eventFromTrace - act_table_by_act_id.table.data()));
+        }
 
 
     /**
@@ -147,6 +166,8 @@ private:
             const std::unordered_map<std::string, std::unordered_set<std::string>> &actToTables,
             const std::unordered_set<std::string> &otherValues, trace_t traceId) const;
 };
+
+
 
 
 #endif //BZDB_SMALLDATABASE_H

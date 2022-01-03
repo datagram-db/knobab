@@ -747,7 +747,7 @@ struct ltlf ltlf::negate() const {
                     bool isFormulaSet = false;
 
                     bool isString = std::holds_alternative<std::string>(numeric_atom.value);
-                    std::variant<std::string, double> l_min, l_max;
+                    union_minimal l_min, l_max;
                     if (isString) {
                         l_min = DataPredicate::MIN_STRING;
                         l_max = DataPredicate::MAX_STRING;
