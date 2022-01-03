@@ -232,7 +232,7 @@ void test_declare() {
     std::ifstream file{"ex_2.powerdecl"};
 
     DeclareNoDataTemplateCollect tc;
-    for (const auto& ref : dmp.load(file)) {
+    for (const auto& ref : dmp.load(file, true)) {
         tc.add(ref);
         std::cout << ref << std::endl;
     }
@@ -240,9 +240,29 @@ void test_declare() {
     tc.run<FLLOAT>(SigmaAll);
 }
 
+void test_grounding() {
+
+    {
+        // Making sure that an empty interval is returned via invalidating the predicate
+        DataPredicate pred1{"x", LT, 3};
+        DataPredicate pred2{"x", GT, 5};
+        assert(!pred1.intersect_with(pred2));
+        std::cout << pred1 << std::endl;
+    }
+
+    {
+        DeclareModelParse dmp;
+        std::ifstream file{"ex_3.powerdecl"};
+        for (const auto& ref : dmp.load(file, false)) {
+            std::cout << ref << std::endl;
+        }
+    }
+
+}
 
 int main() {
-    test_declare();
+    //test_declare();
+    test_grounding();
 
     return 0;
 }

@@ -33,6 +33,8 @@
 #include <sstream>
 #include <optional>
 
+
+
 class PropositionalizedAtomsSet {
 public:
     using ItemWithTerminality = std::pair<std::string, bool>;

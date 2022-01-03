@@ -29,9 +29,10 @@
 
 DeclareModelParse::DeclareModelParse() /*: do_renaming{true}*/ {}
 
-std::vector<DeclareDataAware> DeclareModelParse::load(std::istream &stream) {
+std::vector<DeclareDataAware> DeclareModelParse::load(std::istream &stream, bool asConjunctiveModel) {
     ///bool tmp = do_renaming;
     ///do_renaming = do_xes_renaming;
+    this->asConjunctiveModel = asConjunctiveModel;
     antlr4::ANTLRInputStream input(stream);
     DADLexer lexer(&input);
     antlr4::CommonTokenStream tokens(&lexer);
@@ -45,7 +46,18 @@ antlrcpp::Any DeclareModelParse::visitData_aware_declare(DADParser::Data_aware_d
     std::vector<DeclareDataAware> v;
     if (ctx) {
         for (DADParser::DeclareContext* ptr : ctx->declare()) {
-            v.emplace_back(visit(ptr).as<DeclareDataAware>());
+            auto currVisit = visit(ptr);
+            if (currVisit.isNull()) {
+                // If the log file has to be interpreted as a model, and therefore as conjunctive,
+                // then since one clause fails, all the other will fail in conjunction: therefore,
+                // the model is empty
+                if (asConjunctiveModel)
+                    return {std::vector<DeclareDataAware>{}};
+                // Otherwise, discard the invalid element
+            } else{
+                // Add the valid element, nevertheless!
+                v.emplace_back(currVisit.as<DeclareDataAware>());
+            }
         }
     }
     return {v};
@@ -54,11 +66,17 @@ antlrcpp::Any DeclareModelParse::visitData_aware_declare(DADParser::Data_aware_d
 antlrcpp::Any DeclareModelParse::visitNary_prop(DADParser::Nary_propContext *ctx) {
     DeclareDataAware dda;
     if (ctx) {
+        auto leftAny = visitFields(ctx->fields(0));
+        if (leftAny.isNull())
+            return {};
         std::tie (dda.left_act, dda.dnf_left_map) =
-                visitFields(ctx->fields(0)).as<std::pair<std::string,
-                std::vector<std::unordered_map<std::string, DataPredicate>>>>();
+                leftAny.as<std::pair<std::string, std::vector<std::unordered_map<std::string, DataPredicate>>>>();
+
+        auto rightAny = visitFields(ctx->fields(1));
+        if (rightAny.isNull())
+            return {};
         std::tie (dda.right_act, dda.dnf_right_map) =
-                visitFields(ctx->fields(1)).as<std::pair<std::string,
+                rightAny.as<std::pair<std::string,
                         std::vector<std::unordered_map<std::string, DataPredicate>>>>();
         /*if (do_renaming)
             std::transform(dda.left_act.begin(), dda.left_act.end(), dda.left_act.begin(), ::tolower);*/
@@ -91,7 +109,10 @@ antlrcpp::Any DeclareModelParse::visitNary_prop(DADParser::Nary_propContext *ctx
         }
 
         if (ctx->prop()) {
-            dda.conjunctive_map = visit(ctx->prop()).as<std::vector<std::unordered_map<std::string, DataPredicate>>>();
+            auto conjAny = visit(ctx->prop());
+            if (conjAny.isNull())
+                return {};
+            dda.conjunctive_map = conjAny.as<std::vector<std::unordered_map<std::string, DataPredicate>>>();
             for (auto& ref : dda.conjunctive_map) {
                 for (auto& cp : ref) {
                     cp.second.label = dda.left_act;
@@ -114,11 +135,11 @@ antlrcpp::Any DeclareModelParse::visitNary_prop(DADParser::Nary_propContext *ctx
 antlrcpp::Any DeclareModelParse::visitUnary_prop(DADParser::Unary_propContext *ctx) {
     DeclareDataAware dda;
     if (ctx) {
+        auto leftAny = visitFields(ctx->fields());
+        if (leftAny.isNull())
+            return {};
         std::tie (dda.left_act, dda.dnf_left_map) =
-                visitFields(ctx->fields()).as<std::pair<std::string,
-                std::vector<std::unordered_map<std::string, DataPredicate>>>>();
-        /*if (do_renaming)
-            std::transform(dda.left_act.begin(), dda.left_act.end(), dda.left_act.begin(), ::tolower);*/
+                leftAny.as<std::pair<std::string, std::vector<std::unordered_map<std::string, DataPredicate>>>>();
         for (auto& ref : dda.dnf_left_map) {
             for (auto& cp : ref) {
                 cp.second.label = dda.left_act;
@@ -135,29 +156,66 @@ antlrcpp::Any DeclareModelParse::visitFields(DADParser::FieldsContext *ctx) {
     std::pair<std::string,
             std::vector<std::unordered_map<std::string, DataPredicate>>> cp;
     if (ctx) {
-        cp.first = ctx->LABEL()->getText();
-        cp.second = visit(ctx->prop()).as<std::vector<std::unordered_map<std::string, DataPredicate>>>();
+        auto prop = visit(ctx->prop());
+        if (prop.isNotNull()) {
+            std::pair<std::string,
+                    std::vector<std::unordered_map<std::string, DataPredicate>>> cp;
+            cp.first = ctx->LABEL()->getText();
+            cp.second = visit(ctx->prop()).as<std::vector<std::unordered_map<std::string, DataPredicate>>>();
+            return {cp};
+        } else {
+            return {};
+        }
     }
     return {cp};
 }
 
 antlrcpp::Any DeclareModelParse::visitDisj(DADParser::DisjContext *ctx) {
-    std::vector<std::unordered_map<std::string, DataPredicate>> v;
     if (ctx) {
         std::unordered_map<std::string, DataPredicate> M = visit(ctx->prop_within_dijunction()).as<std::unordered_map<std::string, DataPredicate>>();
-        v = visit(ctx->prop()).as<std::vector<std::unordered_map<std::string, DataPredicate>>>();
-        v.emplace_back(M);
+        auto vAny = visit(ctx->prop());
+        if (vAny.isNotNull()) {
+            auto v = vAny.as<std::vector<std::unordered_map<std::string, DataPredicate>>>();
+            if (v.empty()) {
+                // if the element is empty, it means that it evaluates to true, so this can be immediately returned
+                return vAny;
+            } else {
+                // Otherwise, I can add the conjunctive condition if it does not evaluate to false
+                if (!M.empty())
+                    v.emplace_back(M);
+                return {v};
+            }
+        } else {
+            // if it evaluates to false, it can be only changed by M
+            if (!M.empty()) {
+                std::vector<std::unordered_map<std::string, DataPredicate>> v;
+                v.emplace_back(M);
+                return {v};
+            } else {
+                // evaluates to false!
+                return {};
+            }
+        }
+
     }
-    return {v};
+    return {};
 }
 
 antlrcpp::Any DeclareModelParse::visitConj_or_atom(DADParser::Conj_or_atomContext *ctx) {
     std::vector<std::unordered_map<std::string, DataPredicate>> v;
     if (ctx) {
         std::unordered_map<std::string, DataPredicate> M = visit(ctx->prop_within_dijunction()).as<std::unordered_map<std::string, DataPredicate>>();
-        v.emplace_back(M);
+        if (!M.empty()) {
+            // inserting an element to the disjunction, only if the element is not empty
+            // that is, only if it does not evaluate to false
+            v.emplace_back(M);
+            return {v};
+        } else {
+            // Otherwise, evaluate that to false as a whole
+            return {};
+        }
     }
-    return {v};
+    return {};
 }
 
 antlrcpp::Any DeclareModelParse::visitTop(DADParser::TopContext *ctx) {
@@ -177,11 +235,20 @@ antlrcpp::Any DeclareModelParse::visitAtom_conj(DADParser::Atom_conjContext *ctx
     std::unordered_map<std::string, DataPredicate> v;
     if (ctx) {
         v = visit(ctx->prop_within_dijunction()).as<std::unordered_map<std::string, DataPredicate>>();
+        // by the reason of grammar, if v is empty, it means that one of the predicates is empty
+        // Given that we are in conjunction, this means all the elements of the conjunction will be
+        // evaluated to false, too!
+        if (v.empty())
+            return {v};
+
         DataPredicate baseCase = visitAtom(ctx->atom()).as<DataPredicate>();
         auto it = v.find(baseCase.var);
-        if (it != v.end())
-            it->second.intersect_with(baseCase);
-        else {
+        if (it != v.end()) {
+            if (!it->second.intersect_with(baseCase)) {
+                // if the evaluation reduces to false, the whole conjunction is false! therefore, returning it
+                v.clear();
+            } // otherwise, the intersection is already effective!
+        } else {
             if (baseCase.isBiVariableCondition()) {
                 v[baseCase.var].var = baseCase.var;
                 v[baseCase.var].BiVariableConditions.emplace_back(baseCase);
@@ -243,7 +310,7 @@ ltlf DeclareModelParse::load_model_to_semantics(std::istream &stream, bool is_si
     if (is_simplified_xes) {
         V = DeclareDataAware::load_simplified_declare_model(stream);
     } else {
-        V = load(stream);
+        V = load(stream, true);
     }
 
     bool first = true;
