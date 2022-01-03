@@ -49,14 +49,14 @@ std::string DataPredicate::MIN_STRING = "";
 std::string DataPredicate::MAX_STRING =  std::string(MAXIMUM_STRING_LENGTH, std::numeric_limits<char>::max());
 
 
-DataPredicate::DataPredicate() : casusu{TTRUE} {}
+DataPredicate::DataPredicate() : casusu{TTRUE}, wasReversed{false} {}
 
 DataPredicate::DataPredicate(const std::string &var, numeric_atom_cases casusu, const union_minimal &value) : var(
-        var), casusu(casusu), value(value) {}
+        var), casusu(casusu), value(value), wasReversed{false}  {}
 
-DataPredicate::DataPredicate(const std::string &var, numeric_atom_cases casusu, const std::string &value) : var(var), casusu(casusu), value(value) {}
+DataPredicate::DataPredicate(const std::string &var, numeric_atom_cases casusu, const std::string &value) : var(var), wasReversed{false} , casusu(casusu), value(value) {}
 
-DataPredicate::DataPredicate(const std::string &var, numeric_atom_cases casusu, const double &value) : var(var), casusu(casusu), value(value) {}
+DataPredicate::DataPredicate(const std::string &var, numeric_atom_cases casusu, const double &value) : var(var), wasReversed{false} , casusu(casusu), value(value) {}
 
 #include <cassert>
 
@@ -190,7 +190,13 @@ std::string next_char(const std::string &val, size_t max_size) {
 
 #include <cassert>
 bool DataPredicate::intersect_with(const DataPredicate& predicate) {
-    assert(var == predicate.var);
+    if (predicate.casusu == TTRUE)
+        return true;
+    if ((casusu == TTRUE) && (!predicate.isBiVariableCondition())) {
+        *this = predicate;
+        return true;
+    }
+    assert(var == predicate.var && label == predicate.label);
     if (predicate.isBiVariableCondition()) {
         BiVariableConditions.emplace_back(predicate);
         return true;
@@ -513,13 +519,13 @@ std::variant<std::vector<std::pair<std::string, std::string>>,
     }
 }
 
-DataPredicate::DataPredicate(const std::string &label, const std::string &var, double lb, double ub) : label{label}, var{var}, casusu{INTERVAL} {
+DataPredicate::DataPredicate(const std::string &label, const std::string &var, double lb, double ub) : label{label}, wasReversed{false} , var{var}, casusu{INTERVAL} {
     value = lb;
     value_upper_bound = ub;
 }
 
 DataPredicate::DataPredicate(const std::string &label, const std::string &var, const std::string &lb,
-                             const std::string &ub) : label{label}, var{var}, casusu{INTERVAL} {
+                             const std::string &ub) : label{label}, wasReversed{false} , var{var}, casusu{INTERVAL} {
     value = lb;
     value_upper_bound = ub;
 }
@@ -648,7 +654,7 @@ bool DataPredicate::isBiVariableCondition() const {
     return !varRHS.empty();
 }
 
-DataPredicate::DataPredicate(const std::string &label, const std::string &var, union_minimal lb, union_minimal ub) : label{label}, var{var}, casusu{INTERVAL} {
+DataPredicate::DataPredicate(const std::string &label, const std::string &var, union_minimal lb, union_minimal ub) : label{label}, wasReversed{false} , var{var}, casusu{INTERVAL} {
     value = lb;
     value_upper_bound = ub;
 }
@@ -672,5 +678,6 @@ DataPredicate DataPredicate::reverseBiVariablePredicate() const {
     std::swap(cpy.var, cpy.varRHS);
     std::swap(cpy.label, cpy.labelRHS);
     cpy.casusu = invert_predicate_direction(cpy.casusu);
+    cpy.wasReversed = !wasReversed;
     return cpy;
 }

@@ -87,12 +87,13 @@ struct DataPredicate {
     std::string                       label;
     std::string                       var;
     numeric_atom_cases                casusu;
-    union_minimal value;
+    union_minimal                     value;
     std::string                       labelRHS;
     std::string                       varRHS;
-    union_minimal value_upper_bound;
-    std::set<union_minimal> exceptions;
+    union_minimal                     value_upper_bound;
+    std::set<union_minimal>           exceptions;
     std::vector<DataPredicate>        BiVariableConditions;
+    bool                              wasReversed;
 
     static union_minimal prev_of(const union_minimal& x);
     static union_minimal next_of(const union_minimal& x);

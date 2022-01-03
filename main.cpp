@@ -11,6 +11,7 @@
 #include <string>
 #include <knobab/predicates/testing_predicates.h>
 #include <yaucl/functional/iterators.h>
+#include <yaucl/bpm/algos/transformations/grounding.h>
 
 
 struct GroundingStrategyConf {
@@ -242,7 +243,7 @@ void test_declare() {
 
 void test_grounding() {
 
-    {
+    if (false) {
         // Making sure that an empty interval is returned via invalidating the predicate
         DataPredicate pred1{"x", LT, 3};
         DataPredicate pred2{"x", GT, 5};
@@ -250,11 +251,38 @@ void test_grounding() {
         std::cout << pred1 << std::endl;
     }
 
-    {
+    if (false) {
         DeclareModelParse dmp;
         std::ifstream file{"ex_3.powerdecl"};
+
+        std::unordered_map<std::string, union_minimal> mapLeft{{"x", 0.5},{"y", 0.7}, {"z", 2.3}, {"t", 2.9} };
+
         for (const auto& ref : dmp.load(file, false)) {
-            std::cout << ref << std::endl;
+            auto tmp = instantiateWithValues(ref, mapLeft, mapLeft);
+            if (tmp)
+                std::cout << tmp.value() << std::endl;
+        }
+    }
+
+    if (false) {
+        DeclareModelParse dmp;
+        std::ifstream file{"ex_3.powerdecl"};
+        std::unordered_map<std::string, union_minimal> mapLeft{{"x", 0.5},{"y", 0.7}, {"z", 2.3}, {"t", 2.9} };
+        for (const auto& ref : dmp.load(file, false)) {
+            auto tmp = instantiateWithValues(ref, {}, mapLeft);
+            if (tmp)
+                std::cout << tmp.value() << std::endl;
+        }
+    }
+
+     if (true){
+        DeclareModelParse dmp;
+        std::ifstream file{"ex_3.powerdecl"};
+        std::unordered_map<std::string, union_minimal> mapLeft{{"x", 0.5},{"y", 0.7}, {"z", 2.3}, {"t", 2.9} };
+        for (const auto& ref : dmp.load(file, false)) {
+            auto tmp = instantiateWithValues(ref, mapLeft, {});
+            if (tmp)
+                std::cout << tmp.value() << std::endl;
         }
     }
 

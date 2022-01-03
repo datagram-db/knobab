@@ -10,35 +10,37 @@
 #include <optional>
 #include <yaucl/bpm/structures/commons/DataPredicate.h>
 #include <yaucl/functional/optional_binary.h>
+#include <yaucl/bpm/structures/declare/DeclareDataAware.h>
 
-/**
- * This function provides the grounding of a single data predicate associated to a variable, if possible
- *
- * @param toGround                          Predicate to be grounded
- * @param map                               Substitution map, mapping each variable in the predicate to the value
- *                                          to be replaced
- * @param toIntersectAtAnUpperLevel         If the resulting predicate has a change of variable after grounding, in this
- *                                          return map you will have the result of it
- * @return There are two cases of missing value: either we had a failure, thus implying that the value
- *         did not satisfy the predicate, and therefore the whole part shall be discarded, or an empty
- *         value, meaning that the interval was successfully rewritten, but that, in the meantime, has
- *         changed the variable towards which it belongs. If the value is present, then this is the substitute
- *         candidate (the grounded one) for the one that was originally provided.
- */
+/*
 yaucl::functional::optional_binary<DataPredicate> instantiateWithValues(
-                                                    const DataPredicate& toGround,
-                                                   const std::unordered_map<std::string, union_minimal>& map,
-                                                   std::unordered_map<std::string, std::vector<DataPredicate>>& toIntersectAtAnUpperLevel
+                                                   const DataPredicate& toGround,
+                                                   const std::unordered_map<std::string, union_minimal> &mapL,
+                                                   const std::unordered_map<std::string, union_minimal> &mapR,
+                                                   std::unordered_map<std::string, std::vector<DataPredicate>>& toIntersectAtAnUpperLevelLeft,
+                                                   std::unordered_map<std::string, std::vector<DataPredicate>>& toIntersectAtAnUpperLevelRight,
+                                                   bool isAlwaysFromTheSameEventAndIntersectMap
                                                    );
 
 
-yaucl::functional::optional_binary<std::unordered_map<std::string, DataPredicate>> instantiateWithValues(
+std::optional<std::unordered_map<std::string, DataPredicate>> instantiateWithValues(
                                                     const std::unordered_map<std::string, DataPredicate>& toGround,
-                                                    const std::unordered_map<std::string, union_minimal>& map) {
-    std::unordered_map<std::string, std::vector<DataPredicate>> toIntersectAtAnUpperLevel;
-    for (const auto& cp : toGround) {
+                                                    const std::unordered_map<std::string, union_minimal> &mapL,
+                                                    const std::unordered_map<std::string, union_minimal> &mapR,
+                                                    bool isAlwaysFromTheSameEventAndIntersectMap
+                                                    );
 
-    }
-}
+std::optional<std::vector<std::unordered_map<std::string, DataPredicate>>> instantiateWithValues(
+                                                    const std::vector<std::unordered_map<std::string, DataPredicate>>& toGround,
+                                                    const std::unordered_map<std::string, union_minimal> &mapL,
+                                                    const std::unordered_map<std::string, union_minimal> &mapR,
+                                                    bool isAlwaysFromTheSameEventAndIntersectMap
+                                                    );*/
+
+std::optional<DeclareDataAware> instantiateWithValues(
+                                                    const DeclareDataAware& toGround,
+                                                    const std::unordered_map<std::string, union_minimal>& mapLeft,
+                                                    const std::unordered_map<std::string, union_minimal>& mapRight
+                                                    );
 
 #endif //KNOBAB_GROUNDING_H
