@@ -99,17 +99,18 @@ std::ostream& operator<<(std::ostream& os, const std::unordered_set<T> &s)
     return os << '}';
 }
 
+#include <numeric>
 #include <vector>
 
 template <typename T>
 std::unordered_set<std::unordered_set<T>> cartesian_product(const std::vector<std::vector<T>> & v ) {
-    const long long N = accumulate( v.begin(), v.end(), 1LL, []( long long a, const std::vector<T>& b ) { return a*b.size(); } );
+    const long long N = std::accumulate( v.begin(), v.end(), 1LL, []( long long a, const std::vector<T>& b ) { return a*b.size(); } );
     std::unordered_set<std::unordered_set<T>> result;
     for( long long n=0 ; n<N ; ++n ) {
         lldiv_t q { n, 0 };
         std::unordered_set<T> u;
         for( long long i=v.size()-1 ; 0<=i ; --i ) {
-            q = div( q.quot, v[i].size() );
+            q = std::div( q.quot, v[i].size() );
             u.insert(v[i][q.rem]);
             //u[i] = v[i][q.rem];
         }

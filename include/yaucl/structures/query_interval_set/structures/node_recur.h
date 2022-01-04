@@ -37,10 +37,7 @@ template <typename T> struct node_recur {
 
     node_recur(T min, T max) : min(min), max(max), isPointed(0) {}
     node_recur(): isPointed(0) {}
-    node_recur(const node_recur&) = default;
-    node_recur(node_recur&& )     = default;
-    node_recur& operator=(const node_recur&) = default;
-    node_recur& operator=(node_recur&&     ) = default;
+    DEFAULT_COPY_ASSGN(node_recur)
 
     bool operator<(const node_recur &rhs) const {
         if (min < rhs.min) return true;

@@ -27,7 +27,7 @@ add_library(knobab STATIC
         src/knobab/AttributeTable.cpp
         src/knobab/KnowledgeBase.cpp
          src/SimplifiedFuzzyStringMatching.cpp
-        src/knobab/predicates/testing_predicates.cpp src/knobab/algorithms/kb_grounding.cpp src/knobab/algorithms/kb_grounding.cpp include/knobab/algorithms/kb_grounding.h)
+        src/knobab/predicates/testing_predicates.cpp src/knobab/algorithms/kb_grounding.cpp src/knobab/algorithms/kb_grounding.cpp include/knobab/algorithms/kb_grounding.h src/knobab/algorithms/atomization_pipeline.cpp include/knobab/algorithms/atomization_pipeline.h)
 
 add_library(yaucl_numeric STATIC
                 src/yaucl/numeric/numeric_base.cpp
@@ -66,6 +66,8 @@ add_library(yaucl_stringutils STATIC
 
 add_library(yaucl_data STATIC
          src/yaucl/data/xml.cpp include/yaucl/data/json.h)
+
+add_library(yaucl_structures STATIC src/yaucl/structures/StringPrevNext.cpp include/yaucl/structures/StringPrevNext.h src/yaucl/structures/DoublePrevNext.cpp include/yaucl/structures/DoublePrevNext.h)
 
 add_library(yaucl_bpm STATIC
         src/yaucl/bpm/structures/ltlf/ltlf.cpp
