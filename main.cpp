@@ -13,18 +13,6 @@
 #include <yaucl/functional/iterators.h>
 #include <yaucl/bpm/algos/transformations/grounding.h>
 
-
-
-
-
-
-
-
-
-
-
-
-
 void test_kb() {
     /// Creating an instance of the knowledge base, that is going to store all the traces in the log!
     KnowledgeBase db;
