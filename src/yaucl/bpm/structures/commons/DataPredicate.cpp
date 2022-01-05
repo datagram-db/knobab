@@ -47,7 +47,7 @@ double      DataPredicate::MIN_DOUBLE = -std::numeric_limits<double>::max();
 double      DataPredicate::MAX_DOUBLE =  std::numeric_limits<double>::max();
 std::string DataPredicate::MIN_STRING = "";
 std::string DataPredicate::MAX_STRING =  std::string(MAXIMUM_STRING_LENGTH, std::numeric_limits<char>::max());
-
+size_t      DataPredicate::msl = MAXIMUM_STRING_LENGTH;
 
 DataPredicate::DataPredicate() : casusu{TTRUE}, wasReversed{false} {}
 

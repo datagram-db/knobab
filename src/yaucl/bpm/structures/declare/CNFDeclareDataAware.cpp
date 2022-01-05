@@ -11,3 +11,18 @@ CNFDeclareDataAware::CNFDeclareDataAware(const std::vector<DeclareDataAware> &or
     for (const auto& ref : orig)
         singleElementOfConjunction.emplace_back(ref);
 }
+
+std::ostream &operator<<(std::ostream &os, const CNFDeclareDataAware &aware) {
+        static std::string CONJ{" ⋀ "};
+        size_t N = aware.singleElementOfConjunction.size();
+        if (N == 0)
+            os << "false";
+        else {
+            for (size_t i = 0; i<N; i++) {
+                os << aware.singleElementOfConjunction.at(i);
+                if (i != (N-1))
+                    os << CONJ;
+            }
+        }
+        return os;
+}

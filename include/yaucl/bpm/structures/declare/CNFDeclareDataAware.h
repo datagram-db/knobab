@@ -6,6 +6,7 @@
 #define KNOBAB_CNFDECLAREDATAAWARE_H
 
 #include <yaucl/bpm/structures/declare/DisjunctiveDeclareDataAware.h>
+#include <ostream>
 
 struct CNFDeclareDataAware {
     std::vector<DisjunctiveDeclareDataAware> singleElementOfConjunction;
@@ -13,6 +14,8 @@ struct CNFDeclareDataAware {
 
     CNFDeclareDataAware(const DeclareDataAware& singleton);
     CNFDeclareDataAware(const std::vector<DeclareDataAware>& orig);
+
+    friend std::ostream &operator<<(std::ostream &os, const CNFDeclareDataAware &aware);
 };
 
 

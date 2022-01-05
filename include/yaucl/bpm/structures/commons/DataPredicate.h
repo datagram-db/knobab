@@ -73,8 +73,7 @@ std::string next_char(const std::string& val, size_t max_size);
 
 #define MAXIMUM_STRING_LENGTH       (10)
 
-#define     PREV_STRING(str)    (prev_char((str), MAXIMUM_STRING_LENGTH))
-#define     NEXT_STRING(str)    (next_char((str), MAXIMUM_STRING_LENGTH))
+
 
 using union_minimal = std::variant<std::string, double>;
 
@@ -83,6 +82,7 @@ struct DataPredicate {
     static double      MAX_DOUBLE;
     static std::string MIN_STRING;
     static std::string MAX_STRING;
+    static size_t      msl;
 
     std::string                       label;
     std::string                       var;
@@ -130,6 +130,9 @@ struct DataPredicate {
     bool operator==(const DataPredicate &rhs) const;
     bool operator!=(const DataPredicate &rhs) const;
 };
+
+#define     PREV_STRING(str)    (prev_char((str), DataPredicate::msl))
+#define     NEXT_STRING(str)    (next_char((str), DataPredicate::msl))
 
 namespace std {
     template <>

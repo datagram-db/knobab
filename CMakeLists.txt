@@ -17,6 +17,9 @@ include_directories(antlr4/cpp/antlr4)
 include_directories(submodules/date/include)
 include_directories(submodules/json/include)
 
+add_subdirectory(submodules/yamlcpp)
+include_directories(submodules/yamlcpp/include)
+
 include_directories(submodules/magic_enum/include)
 
 include_directories(include)
@@ -27,7 +30,13 @@ add_library(knobab STATIC
         src/knobab/AttributeTable.cpp
         src/knobab/KnowledgeBase.cpp
          src/SimplifiedFuzzyStringMatching.cpp
-        src/knobab/predicates/testing_predicates.cpp src/knobab/algorithms/kb_grounding.cpp src/knobab/algorithms/kb_grounding.cpp include/knobab/algorithms/kb_grounding.h src/knobab/algorithms/atomization_pipeline.cpp include/knobab/algorithms/atomization_pipeline.h)
+        src/knobab/predicates/testing_predicates.cpp
+        src/knobab/algorithms/kb_grounding.cpp
+        src/knobab/algorithms/kb_grounding.cpp
+        include/knobab/algorithms/kb_grounding.h
+        src/knobab/algorithms/atomization_pipeline.cpp
+        include/knobab/algorithms/atomization_pipeline.h)
+target_link_libraries(knobab yaml-cpp yaucl_structures)
 
 add_library(yaucl_numeric STATIC
                 src/yaucl/numeric/numeric_base.cpp
@@ -123,4 +132,4 @@ add_library(knobab_flloat STATIC
 target_link_libraries(knobab_flloat ${Boost_LIBRARIES} ${PYTHON_LIBRARIES}  yaucl_bpm yaucl_graph)
 
 add_executable(test main.cpp )
-target_link_libraries(test knobab antlr4_static ${Boost_LIBRARIES} ${PYTHON_LIBRARIES} yaucl_stringutils yaucl_numeric yaucl_hashing yaucl_data yaucl_bpm yaucl_graph knobab_flloat)
+target_link_libraries(test yaml-cpp knobab antlr4_static ${Boost_LIBRARIES} ${PYTHON_LIBRARIES} yaucl_stringutils yaucl_numeric yaucl_hashing yaucl_data yaucl_bpm yaucl_graph knobab_flloat yaucl_structures)

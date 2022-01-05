@@ -1,0 +1,4 @@
+strategy: "ALWAYS_EXPAND_LESS_TOTAL_VALUES"
+doPreliminaryFill: 1
+ignoreActForAttributes: 0
+creamOffSingleValues: 1

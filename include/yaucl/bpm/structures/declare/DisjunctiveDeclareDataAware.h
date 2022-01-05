@@ -7,6 +7,7 @@
 
 #include <vector>
 #include <yaucl/bpm/structures/declare/DeclareDataAware.h>
+#include <ostream>
 
 class DisjunctiveDeclareDataAware {
 public:
@@ -14,6 +15,8 @@ public:
 
     DEFAULT_CONSTRUCTORS(DisjunctiveDeclareDataAware)
     DisjunctiveDeclareDataAware(const DeclareDataAware& singleton);
+
+    friend std::ostream &operator<<(std::ostream &os, const DisjunctiveDeclareDataAware &aware);
 };
 
 
