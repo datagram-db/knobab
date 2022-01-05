@@ -39,6 +39,14 @@ public:
         db.index_data_structures();
     }
 
+    void load_model(const std::string &model_file) {
+        if (!std::filesystem::exists(std::filesystem::path(model_file))) {
+            std::cerr << "ERROR: model file does not exist: " << model_file << std::endl;
+            exit(1);
+        }
+        std::ifstream file{model_file};
+        conjunctive_model = dmp.load(file, true);
+    }
 
     void set_atomization_parameters(const std::string fresh_atom_label = "p",
                                     size_t mslength = MAXIMUM_STRING_LENGTH) {
@@ -47,10 +55,6 @@ public:
         DataPredicate::MAX_STRING = ap.s_max;
         DataPredicate::msl = mslength;
     }
-
-    /*doPreliminaryFill,
-                                     ignoreActForAttributes,
-                                     creamOffSingleValues,*/
 
     void set_grounding_parameters(bool doPreliminaryFill = true,
                                   bool ignoreActForAttributes = false,
@@ -63,6 +67,10 @@ public:
         grounding_conf.strategy1 = ps;
     }
 
+    void init_atomize_tables() {
+        collect_data_from_declare_disjunctive_model(ap, grounding);
+    }
+
     void doGrounding() {
         grounding = GroundWhereStrategy(grounding_conf,
                                                 db,
@@ -71,28 +79,38 @@ public:
 
     void print_model(std::ostream& os) {
         os << "Declarative Model: " << std::endl;
-        os << "-------------------" << std::endl;
+        os << "----------------------------------------" << std::endl;
         for (const auto& def : conjunctive_model)
             os << def << std::endl;
+
+        os << "----------------------------------------" << std::endl;
         os << std::endl;
     }
 
     void print_grounded_model(std::ostream& os) {
+        os << "Grounded Model: " << std::endl;
+        os << "----------------------------------------" << std::endl;
         os << grounding << std::endl;
+        os << "----------------------------------------" << std::endl;
+        os << std::endl;
     }
 
     void print_knowledge_base(std::ostream& os) {
+        os << "Knowledge Base: " << std::endl;
+        os << "----------------------------------------" << std::endl;
         db.reconstruct_trace_with_data(os);
+        os << "----------------------------------------" << std::endl;
+        os << std::endl;
     }
 
-    void load_model(const std::string &model_file) {
-        if (!std::filesystem::exists(std::filesystem::path(model_file))) {
-            std::cerr << "ERROR: model file does not exist: " << model_file << std::endl;
-            exit(1);
-        }
-        std::ifstream file{model_file};
-        conjunctive_model = dmp.load(file, true);
+    void print_grounding_tables(std::ostream& os) {
+        os << "Grounding Tables: " << std::endl;
+        os << "----------------------------------------" << std::endl;
+        os << ap << std::endl;
+        os << "----------------------------------------" << std::endl;
+        os << std::endl;
     }
+
 };
 
 void test_kb() {
@@ -195,12 +213,12 @@ void whole_testing(const std::string& log_file = "testing/log.txt",
 
     std::cout << "Loading the log file: " << log_file << std::endl;
     env.load_log(HUMAN_READABLE_YAUCL, true, log_file);
-    env.print_knowledge_base(std::cout);
+    env.print_knowledge_base(std::cout); // DEBUG
     //////////////////////////////////////////////////////////////////
 
     std::cout << "Loading the declarative model from file: " << declare_file << std::endl;
     env.load_model(declare_file);
-    env.print_model(std::cout);
+    env.print_model(std::cout); // DEBUG
     //////////////////////////////////////////////////////////////////
 
     if (std::filesystem::exists(std::filesystem::path(grounding_strategy))) {
@@ -236,12 +254,12 @@ void whole_testing(const std::string& log_file = "testing/log.txt",
                                      ps);
     }
     env.doGrounding();
-    env.print_grounded_model(std::cout);
+    env.print_grounded_model(std::cout); // DEBUG
     //////////////////////////////////////////////////////////////////
 
     if (std::filesystem::exists(std::filesystem::path(atomization_conf))) {
         std::cout << "Loading the atomization configuration file: " << atomization_conf << std::endl;
-        YAML::Node n = YAML::Load(atomization_conf);
+        YAML::Node n = YAML::LoadFile(atomization_conf);
         if (n["fresh_atom_label"]) {
             fresh_atom_label = n["fresh_atom_label"].Scalar();
         }
@@ -250,6 +268,11 @@ void whole_testing(const std::string& log_file = "testing/log.txt",
         }
         env.set_atomization_parameters(fresh_atom_label, msl);
     }
+    //////////////////////////////////////////////////////////////////
+
+    std::cout << "Loading the atomization tables given the model" << std::endl;
+    env.init_atomize_tables();
+    env.print_grounding_tables(std::cout);
     //////////////////////////////////////////////////////////////////
 
 
