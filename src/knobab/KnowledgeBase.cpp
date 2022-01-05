@@ -288,6 +288,20 @@ void KnowledgeBase::collectValuesAmongTraces(
     }
 }
 
+void KnowledgeBase::clear() {
+    status = FinishParsing;
+    source.clear();
+    name.clear();
+    noTraces = 0;
+    count_table.clear();
+    act_table_by_act_id.clear();
+    attribute_name_to_table.clear();
+    string_values.clear();
+    noTraces = 0;
+    currentEventId = 0;
+    actId = 0;
+}
+
 union_minimal resolveUnionMinimal(const AttributeTable &table, const AttributeTable::record &x) {
     switch (table.type) {
         case DoubleAtt:

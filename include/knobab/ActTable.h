@@ -68,6 +68,11 @@ struct ActTable {
     const std::vector<std::vector<size_t>> & indexing1();
     void indexing2();
     void sanityCheck();
+    void clear() {
+        secondary_index.clear();
+        primary_index.clear();
+        table.clear();
+    }
 
     size_t getTraceLength(size_t id) const { return trace_length.at(id); }
 

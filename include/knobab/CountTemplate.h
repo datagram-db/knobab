@@ -26,6 +26,9 @@ struct CountTemplate {
     ///void emplace_back(const uint_least64_t& monotone_hash);
     void sort();
     void sanityCheck();
+    void clear() {
+        table.clear();
+    }
 
 private:
     uint16_t maxAct;

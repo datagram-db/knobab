@@ -97,44 +97,7 @@ public:
                            ) const;
 
 
-
-    /*
-     * void
-KnowledgeBase::collectValuesAmongTraces(std::set<union_type> &S, ssize_t trace_id, uint16_t act_id,
-                                 const std::string &attribute_name) const {
-    bool hasNoAttribute = attribute_name.empty();
-    bool hasNoActId = act_id == (uint16_t)-1;
-    ssize_t N = act_table_by_act_id.secondary_index.size();
-    if (trace_id == -1) {
-        for (size_t currentTraceId = 0; currentTraceId < N; currentTraceId++) {
-            collectValuesAmongTraces(S, currentTraceId, act_id, hasNoActId, attribute_name, hasNoAttribute);
-        }
-    } else if ((trace_id >= 0) && (trace_id < N)) {
-        collectValuesAmongTraces(S, trace_id, act_id, hasNoActId, attribute_name, hasNoAttribute);
-    }
-}
-
-#include <bitset>
-
-void KnowledgeBase::collectValuesAmongTraces(std::set<union_type> &S, size_t trace_id, act_t acts, bool hasNoActId,
-                                             const std::string &attribute_name, bool hasNoAttribute) const {
-    std::bitset<sizeof(uint16_t)> b;
-    const auto& ref = act_table_by_act_id.secondary_index[trace_id];
-    auto ptr = ref.first;
-    while (ptr) {
-        if (hasNoActId || (ptr->entry.id.parts.act == acts)) {
-            for (const auto& attr_table : attribute_name_to_table) {
-                ptrdiff_t offset = ptr - act_table_by_act_id.table.data();
-                const AttributeTable::record* recordPtr = attr_table.second.resolve_record_if_exists(offset);
-                if (recordPtr &&  (hasNoAttribute || (attribute_name == attr_table.first))) {
-                    S.insert(attr_table.second.resolve(*recordPtr));
-                }
-            }
-        }
-        ptr = ptr->next;
-    };
-}
-     */
+    void clear();
 
     yaucl::structures::any_to_uint_bimap<std::string> event_label_mapper;
     std::unordered_map<size_t, size_t> counting_reference;
