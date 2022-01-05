@@ -418,6 +418,8 @@ struct ltlf ltlf::_isPotentialFinalState() const {
 
 void ltlf::_actionsUpToNext(PropositionalizedAtomsSet &atoms, bool isTerminal) const {
     switch (casusu) {
+        case NUMERIC_ATOM:
+            break;
         case ACT: {}
             atoms.insert(act, isTerminal);
             break;
@@ -437,7 +439,6 @@ void ltlf::_actionsUpToNext(PropositionalizedAtomsSet &atoms, bool isTerminal) c
             break;
         case UNTIL:
         case RELEASE:
-        case NUMERIC_ATOM:
             std::cerr << "Error: this should be always called after next normal form, so I should not be able to call this" << std::endl;
             assert(false);
     }
@@ -470,7 +471,7 @@ struct ltlf ltlf::_interpret(const std::unordered_set<std::string>& map) const {
 
 PropositionalizedAtomsSet ltlf::possibleActionsUpToNext() const {
     PropositionalizedAtomsSet result;
-    nnf().stepwise_expand()._actionsUpToNext(result, true);
+    nnf().simplify().oversimplify().stepwise_expand()._actionsUpToNext(result, true);
     return result;
 }
 

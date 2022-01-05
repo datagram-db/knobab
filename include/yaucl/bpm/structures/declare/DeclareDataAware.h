@@ -97,15 +97,31 @@ struct DeclareDataAware {
                                bool collectFromJoinMap = true) const {
         std::unordered_set<std::string> forJoin;
         if (collectFromLeftMap) {
-            for (const auto& ref : dnf_left_map)
-                for (const auto& cp: ref)
-                    outResult(cp.second.var);
+            for (const auto& ref : dnf_left_map) {
+                for (const auto& cp: ref){
+                    if ((cp.second.casusu  != TTRUE) && (!cp.second.var.empty()))
+                        outResult(cp.second.var);
+                    for (const auto& elem : cp.second.BiVariableConditions)
+                        if ((elem.casusu  != TTRUE) && (!elem.var.empty()))
+                            outResult(elem.var);
+                }
+            }
         }
         for (const auto& ref : conjunctive_map)
             for (const auto& cp: ref) {
-                if (collectFromJoinMap) outResult(cp.second.var);
-                forJoin.insert(cp.second.var);
-        }
+                if ((cp.second.casusu  != TTRUE) && (!cp.second.var.empty())) {
+                    if (collectFromJoinMap)
+                        outResult(cp.second.var);
+                    forJoin.insert(cp.second.var);
+                }
+                for (const auto& elem : cp.second.BiVariableConditions) {
+                    if ((elem.casusu  != TTRUE) && (!elem.var.empty())) {
+                        if (collectFromJoinMap)
+                            outResult(elem.var);
+                        forJoin.insert(elem.var);
+                    }
+                }
+            }
         return forJoin;
     }
 
@@ -115,16 +131,30 @@ struct DeclareDataAware {
         std::unordered_set<std::string> forJoin;
         if (collectFromRightMap) {
             for (const auto& ref : dnf_right_map)
-                for (const auto& cp: ref)
-                    outResult(cp.second.var);
+                for (const auto& cp: ref) {
+                    if ((cp.second.casusu  != TTRUE) && (!cp.second.var.empty()))
+                        outResult(cp.second.var);
+                    for (const auto& elem : cp.second.BiVariableConditions)
+                        if ((elem.casusu  != TTRUE) && (!elem.var.empty()))
+                            outResult(elem.var);
+                }
         }
         {
             for (const auto& ref : conjunctive_map)
-                for (const auto& cp: ref)
-                    if (!cp.second.varRHS.empty()) {
-                        if (collectFromJoinMap) outResult(cp.second.varRHS);
-                        forJoin.insert(cp.second.var);
+                for (const auto& cp: ref) {
+                    if ((cp.second.casusu != TTRUE) && (!cp.second.varRHS.empty())) {
+                        if (collectFromJoinMap)
+                            outResult(cp.second.varRHS);
+                        forJoin.insert(cp.second.varRHS);
                     }
+                    for (const auto& elem : cp.second.BiVariableConditions) {
+                        if ((elem.casusu != TTRUE) && (!elem.varRHS.empty())) {
+                            if (collectFromJoinMap)
+                                outResult(elem.varRHS);
+                            forJoin.insert(elem.varRHS);
+                        }
+                    }
+                }
         }
         return forJoin;
     }

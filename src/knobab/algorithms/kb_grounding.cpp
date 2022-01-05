@@ -7,7 +7,7 @@
 #include <yaucl/functional/iterators.h>
 #include <yaucl/bpm/algos/transformations/grounding.h>
 
-GroundingStrategyConf::GroundingStrategyConf(const KnowledgeBase& kb) : strategy1{ALWAYS_EXPAND_LESS_TOTAL_VALUES}, db{kb}, doPreliminaryFill{true}, trace_ids{}, I_A_x{}, ignoreActForAttributes{false}
+GroundingStrategyConf::GroundingStrategyConf() : strategy1{ALWAYS_EXPAND_LESS_TOTAL_VALUES},  doPreliminaryFill{true}, trace_ids{}, I_A_x{}, ignoreActForAttributes{false}
 {}
 
 
@@ -56,6 +56,9 @@ void fillForCartesian(std::vector<std::string> &names, std::vector<std::vector<u
 DisjunctiveDeclareDataAware GroundWhereStrategy(GroundingStrategyConf& conf,
                                                 const KnowledgeBase& db,
                                                 const DeclareDataAware& d) {
+
+    if (d.conjunctive_map.empty())
+        return {d};
 
     if (!conf.doPreliminaryFill) {
         conf.OtherAttributes.clear();
@@ -108,7 +111,7 @@ DisjunctiveDeclareDataAware GroundWhereStrategy(GroundingStrategyConf& conf,
         }
         if (leftEmpty) return {};
         for (const auto& element: I_Y_right) {
-            if (conf.LEFT.contains(element.first)) {
+            if (conf.RIGHT.contains(element.first)) {
                 rightEmpty = false;
                 rightSize *= element.second.size();
             }
@@ -152,6 +155,10 @@ DisjunctiveDeclareDataAware GroundWhereStrategy(GroundingStrategyConf& conf,
 
         if (isLeft) {
             auto tmp = instantiateWithValues(d, map, {});
+            if (tmp)
+                result.elementsInDisjunction.emplace_back(tmp.value());
+        } else {
+            auto tmp = instantiateWithValues(d, {}, map);
             if (tmp)
                 result.elementsInDisjunction.emplace_back(tmp.value());
         }

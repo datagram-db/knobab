@@ -56,7 +56,7 @@ eqGrounding(const DataPredicate &toGround,
 // of the possibile binary predicates in it: so, everything reduces to an empty predicate
     if (!test_minimal_data_predicate(toGround, it->second))
         return yaucl::functional::optional_binary<DataPredicate>::invalid();
-    // otherwise, this predicate after grounding reduces to being equal to the given value
+    // otherwise, this predicate after grounding_conf reduces to being equal to the given value
 // But, before allocating memory for nothing at all, I must first test all of the remaining
 // ones if any
     //std::vector<DataPredicate> allPredicates;
@@ -76,12 +76,12 @@ eqGrounding(const DataPredicate &toGround,
 }
 
 /**
- * This function provides the grounding of a single data predicate associated to a variable, if possible
+ * This function provides the grounding_conf of a single data predicate associated to a variable, if possible
  *
  * @param toGround                          Predicate to be grounded
  * @param map                               Substitution map, mapping each variable in the predicate to the value
  *                                          to be replaced
- * @param toIntersectAtAnUpperLevel         If the resulting predicate has a change of variable after grounding, in this
+ * @param toIntersectAtAnUpperLevel         If the resulting predicate has a change of variable after grounding_conf, in this
  *                                          return map you will have the result of it
  * @return There are two cases of missing value: either we had a failure, thus implying that the value
  *         did not satisfy the predicate, and therefore the whole part shall be discarded, or an empty
@@ -198,7 +198,7 @@ instantiateWithValues(const DataPredicate &toGround,
                 // if the RHS is empty, then all I need to do is to test if the left element is part of the map
                 auto itL = mapL.find(toGround.var);
                 if (itL == mapL.end()) {
-                    // If it isn't, I'm not grounding it, and therefore I'm returning the interval untouched
+                    // If it isn't, I'm not grounding_conf it, and therefore I'm returning the interval untouched
                     return {toGround};
                 } else {
                     // Otherwise, I just need to test if it is valid and, if yes, I replace the interval
