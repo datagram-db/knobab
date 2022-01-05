@@ -405,7 +405,37 @@ std::optional<DeclareDataAware> instantiateWithValues(
         updateMapsFromWhereConjunction(onlyRight, result.dnf_right_map);
     }
 
+    for (auto& map : result.dnf_left_map) {
+        for (auto& cp : map) {
+            if (!cp.second.var.empty())
+                cp.second.label = result.left_act;
+            if (!cp.second.varRHS.empty())
+                cp.second.labelRHS = result.left_act;
+            for (auto& child : cp.second.BiVariableConditions) {
+                if (!child.var.empty())
+                    child.label = result.left_act;
+                if (!child.varRHS.empty())
+                    child.labelRHS = result.left_act;
+            }
+        }
+    }
 
+    for (auto& map : result.dnf_right_map) {
+        for (auto& cp : map) {
+            if (!cp.second.var.empty())
+                cp.second.label = result.right_act;
+            if (!cp.second.varRHS.empty())
+                cp.second.labelRHS = result.right_act;
+            for (auto& child : cp.second.BiVariableConditions) {
+                if (!child.var.empty())
+                    child.label = result.right_act;
+                if (!child.varRHS.empty())
+                    child.labelRHS = result.right_act;
+            }
+        }
+    }
+
+    assert(result.conjunctive_map.empty());
 
     return result;
 }
