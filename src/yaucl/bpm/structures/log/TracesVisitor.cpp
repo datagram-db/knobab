@@ -1,7 +1,7 @@
 
-// Generated from src/bpm/Traces.g by ANTLR 4.9.2
+// Generated from src/yaucl/bpm/structures/log/Traces.g by ANTLR 4.9.3
 
 
-#include "yaucl/bpm/structures/log/TracesVisitor.h"
+#include "TracesVisitor.h"
 
 

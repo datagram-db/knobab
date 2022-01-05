@@ -17,9 +17,15 @@ class SimplifiedFuzzyStringMatching {
     std::unordered_map<std::string, std::unordered_map<std::string, size_t>> gram_multiplicity;
     std::unordered_map<std::string, size_t> objectGramSize;
 
+
 public:
     std::pair<size_t, bool> put(const std::string& value);
     std::string get(size_t id) const;
+    void clear() {
+        shift0_2grams_containment.clear();
+        gram_multiplicity.clear();
+        objectGramSize.clear();
+    }
 };
 
 

@@ -13,6 +13,26 @@
 #include <yaucl/functional/iterators.h>
 #include <yaucl/bpm/algos/transformations/grounding.h>
 
+class Environment {
+    /// Creating an instance of the knowledge base, that is going to store all the traces in the log!
+    KnowledgeBase db;
+
+public:
+
+    void clear() {
+        db.clear();
+    }
+
+    void load_data(log_data_format format, bool loadData, const std::string &filename) {
+        load_into_knowledge_base(format, loadData, filename, db);
+        db.index_data_structures();
+    }
+
+    void print_knowledge_base(std::ostream& os) {
+        db.reconstruct_trace_with_data(os);
+    }
+};
+
 void test_kb() {
     /// Creating an instance of the knowledge base, that is going to store all the traces in the log!
     KnowledgeBase db;
@@ -91,9 +111,17 @@ void test_grounding() {
 
 }
 
+void whole_testing() {
+    Environment env;
+    env.clear();
+    env.load_data(HUMAN_READABLE_YAUCL, true, "/home/giacomo/projects/knobab/testing/log.txt");
+    env.print_knowledge_base(std::cout);
+}
+
 int main() {
+    whole_testing();
     //test_declare();
-    test_grounding();
+    //test_grounding();
 
     return 0;
 }

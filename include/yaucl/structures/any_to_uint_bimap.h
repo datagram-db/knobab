@@ -25,6 +25,11 @@ namespace yaucl {
             any_to_uint_bimap&operator=(const any_to_uint_bimap&) = default;
             any_to_uint_bimap&operator=(any_to_uint_bimap&&) = default;
 
+            void clear() {
+                int_to_T.clear();
+                T_to_int.clear();
+            }
+
             std::pair<size_t, bool> put(const T& elem) {
                 auto it = T_to_int.find(elem);
                 if (it != T_to_int.end())
