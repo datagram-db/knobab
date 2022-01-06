@@ -11,7 +11,7 @@ GroundingStrategyConf::GroundingStrategyConf() : strategy1{ALWAYS_EXPAND_LESS_TO
 {}
 
 
-std::pair<std::unordered_set<std::string>,
+inline std::pair<std::unordered_set<std::string>,
         std::unordered_set<std::string>>
 collectFromDeclare(GroundingStrategyConf &conf, const DeclareDataAware &d) {
     std::unordered_set<std::string> leftAttrSet, rightAttrSet;
@@ -38,7 +38,7 @@ collectFromDeclare(GroundingStrategyConf &conf, const DeclareDataAware &d) {
     return cp;
 }
 
-void fillForCartesian(std::vector<std::string> &names, std::vector<std::vector<union_type>> &toCartesianProduct,
+inline void fillForCartesian(std::vector<std::string> &names, std::vector<std::vector<union_type>> &toCartesianProduct,
                       std::unordered_set<std::string> &refL,
                       std::unordered_map<std::string, std::set<union_type>> &map) {
     for (const auto& name : refL) {
@@ -53,7 +53,7 @@ void fillForCartesian(std::vector<std::string> &names, std::vector<std::vector<u
 
 
 
-DisjunctiveDeclareDataAware GroundWhereStrategy(GroundingStrategyConf& conf,
+inline DisjunctiveDeclareDataAware GroundWhereStrategy(GroundingStrategyConf& conf,
                                                 const KnowledgeBase& db,
                                                 const DeclareDataAware& d) {
 

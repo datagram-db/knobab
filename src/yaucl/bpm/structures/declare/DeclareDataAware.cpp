@@ -69,13 +69,31 @@ std::ostream &operator<<(std::ostream &os, const DeclareDataAware &aware) {
         os << aware.n;
     }
     os << " )";
-    if (aware.conjunctive_map.empty())
-        return os;
-    else {
+    if (!aware.conjunctive_map.empty()) {
         os << " where ";
         print_dnf(os, aware.conjunctive_map);
-        return os;
     }
+
+    if (!aware.left_decomposed_atoms.empty()) {
+        os << " {leftAtoms = ";
+        for (auto it = aware.left_decomposed_atoms.begin(), en = aware.left_decomposed_atoms.end(); it != en; ) {
+            os << *it;
+            it++;
+            if (it != en) os << ", ";
+        }
+        os << " }";
+    }
+    if (!aware.right_decomposed_atoms.empty()) {
+        os << " {rightAtoms = ";
+        for (auto it = aware.right_decomposed_atoms.begin(), en = aware.right_decomposed_atoms.end(); it != en; ) {
+            os << *it;
+            it++;
+            if (it != en) os << ", ";
+        }
+        os << " }";
+    }
+
+    return os;
 }
 
 ltlf map_conj(const std::unordered_map<std::string, DataPredicate> &map) {

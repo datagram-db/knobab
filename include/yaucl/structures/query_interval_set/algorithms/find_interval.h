@@ -47,6 +47,18 @@ std::vector<std::pair<T,T>> find_interval(const PrevNext& indexer, struct node_r
 
         // Scanning the sorted intervals (assert)
         size_t N = it->children.size();
+        size_t M = it->onlyForPointed.size();
+
+        if (M != 0) {
+            for (size_t i = 0; i<M; i++) {
+                auto ref = it->onlyForPointed.at(i);
+                if ((ref.min >= currentLeft) && (ref.min <= currentRight) &&
+                    (ref.max <= currentRight) && (ref.max >= currentLeft)) {
+                    result.emplace_back(ref.min, ref.max);
+                }
+            }
+        }
+
         node_recur<T>* list_ptr = (N == 0 ? nullptr : it->children.data());
 
         if (it->children.empty()) {
@@ -70,6 +82,9 @@ std::vector<std::pair<T,T>> find_interval(const PrevNext& indexer, struct node_r
                         if (currentLeft > currentRight)
                             std::swap(currentRight, currentLeft);
                     }
+                } else if ((list_ptr[i].min >= currentLeft) && (list_ptr[i].min <= currentRight) &&
+                           (list_ptr[i].max <= currentRight) && (list_ptr[i].max >= currentLeft)) {
+                    q.emplace(list_ptr[i].min, list_ptr[i].max, &list_ptr[i]);
                 } else
                     break;
             }
