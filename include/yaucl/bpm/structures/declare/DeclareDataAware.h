@@ -90,6 +90,7 @@ struct DeclareDataAware {
 
     // Each map represents a conjunction among different atoms over distinct variables, while the vector represents the disjunction
     std::vector<std::unordered_map<std::string, DataPredicate>> dnf_left_map, dnf_right_map, conjunctive_map;
+    std::unordered_set<std::string> left_decomposed_atoms, right_decomposed_atoms;
 
     template <typename Lambda>
     std::unordered_set<std::string> collectLeftAttributes(Lambda outResult,

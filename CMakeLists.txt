@@ -35,7 +35,7 @@ add_library(knobab STATIC
         src/knobab/algorithms/kb_grounding.cpp
         include/knobab/algorithms/kb_grounding.h
         src/knobab/algorithms/atomization_pipeline.cpp
-        include/knobab/algorithms/atomization_pipeline.h)
+        include/knobab/algorithms/atomization_pipeline.h )
 target_link_libraries(knobab yaml-cpp yaucl_structures)
 
 add_library(yaucl_numeric STATIC

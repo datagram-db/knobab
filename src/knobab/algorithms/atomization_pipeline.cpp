@@ -65,6 +65,7 @@ semantic_atom_set AtomizingPipeline::interval_decomposition(const DataPredicate 
         const auto V = std::get<1>(pred.decompose_single_variable_into_intervals());
         auto& ref = double_map.at(pred.label).at(pred.var);
         for (const auto& cp : V) {
+            std::cout << ref << std::endl;
             for (const auto& I : ref.findInterval(cp.first, cp.second)) {
                 DataPredicate dp{pred.label, pred.var, I.first, I.second};
                 assert(Mcal.contains(dp));
@@ -121,6 +122,24 @@ void collect_data_from_declare_disjunctive_model(AtomizingPipeline &pipeline_dat
                 pipeline_data.act_universe.insert(declare_clause.right_act);
             assert(declare_clause.conjunctive_map.empty());
             for (const auto& itemList : declare_clause.dnf_left_map) {
+                for (const auto& item : itemList) {
+                    auto& formula_numeric_atom = item.second;
+                    assert(formula_numeric_atom.BiVariableConditions.empty());
+                    assert(formula_numeric_atom.varRHS.empty());
+                    if (formula_numeric_atom.casusu == TTRUE) continue;
+                    pipeline_data.map1[formula_numeric_atom.label][formula_numeric_atom.var].insert(formula_numeric_atom);
+                    auto x = formula_numeric_atom.decompose_single_variable_into_intervals();
+                    if (formula_numeric_atom.isStringPredicate()) {
+                        auto  V = std::get<0>(x);
+                        pipeline_data.string_bulk_map[formula_numeric_atom.label][formula_numeric_atom.var].insert(V.begin(), V.end());
+                    } else {
+                        auto  V = std::get<1>(x);
+                        pipeline_data.double_bulk_map[formula_numeric_atom.label][formula_numeric_atom.var].insert(V.begin(), V.end());
+                    }
+                }
+            }
+
+            for (const auto& itemList : declare_clause.dnf_right_map) {
                 for (const auto& item : itemList) {
                     auto& formula_numeric_atom = item.second;
                     assert(formula_numeric_atom.BiVariableConditions.empty());
@@ -211,6 +230,73 @@ void collect_data_from_declare_disjunctive_model(AtomizingPipeline &pipeline_dat
                 }
             }
             pipeline_data.max_ctam_iteration[ref.first] = W.size();
+        }
+    }
+}
+
+inline
+semantic_atom_set atomize_conjunction(AtomizingPipeline &pipeline_data,
+                                      const std::unordered_map<std::string, DataPredicate> &conj){
+    semantic_atom_set S;
+    bool isFirst = true;
+    for (const auto& ref : conj) {
+        if (ref.second.casusu != TTRUE) {
+            auto atom = ref.second;
+            atom.asInterval();
+            if (isFirst) {
+                S = pipeline_data.interval_decomposition(atom, false);
+                isFirst = false;
+                if (S.empty()) return S;
+            } else {
+                S = unordered_intersection(S, pipeline_data.interval_decomposition(atom, false));
+                if (S.empty()) return S;
+            }
+        }
+        for (const auto& child : ref.second.BiVariableConditions) {
+            if (child.casusu != TTRUE) {
+                auto atom = child;
+                atom.asInterval();
+                if (isFirst) {
+                    S = pipeline_data.interval_decomposition(atom, false);
+                    isFirst = false;
+                    if (S.empty()) return S;
+                } else {
+                    S = unordered_intersection(S, pipeline_data.interval_decomposition(atom, false));
+                    if (S.empty()) return S;
+                }
+            }
+        }
+    }
+    return S;
+}
+
+inline
+semantic_atom_set atomize_disjunction(AtomizingPipeline &pipeline_data,
+                                      const std::vector<std::unordered_map<std::string, DataPredicate>> &disj){
+    semantic_atom_set S;
+    for (const auto& child : disj) {
+        auto tmp = atomize_conjunction(pipeline_data, child);
+        S.insert(tmp.begin(), tmp.end());
+    }
+    return S;
+}
+
+void atomize_model(AtomizingPipeline &pipeline_data, CNFDeclareDataAware &disjoint_model) {
+    for ( auto& ref : disjoint_model.singleElementOfConjunction) {
+        for ( auto& child : ref.elementsInDisjunction) {
+            assert(child.conjunctive_map.empty());
+            child.left_decomposed_atoms = pipeline_data.atom_decomposition(child.left_act, false);
+            if (!child.dnf_left_map.empty()) {
+                auto tmp = atomize_disjunction(pipeline_data, child.dnf_left_map);
+                child.left_decomposed_atoms = unordered_intersection(child.left_decomposed_atoms,
+                                              tmp);
+            }
+            child.right_decomposed_atoms = pipeline_data.atom_decomposition(child.right_act, false);
+            if (!child.dnf_right_map.empty()) {
+                auto tmp = atomize_disjunction(pipeline_data, child.dnf_right_map);
+                child.right_decomposed_atoms = unordered_intersection(child.right_decomposed_atoms,
+                                              tmp);
+            }
         }
     }
 }
