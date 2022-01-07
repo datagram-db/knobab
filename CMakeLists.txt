@@ -35,7 +35,7 @@ add_library(knobab STATIC
         src/knobab/algorithms/kb_grounding.cpp
         include/knobab/algorithms/kb_grounding.h
         src/knobab/algorithms/atomization_pipeline.cpp
-        include/knobab/algorithms/atomization_pipeline.h )
+        include/knobab/algorithms/atomization_pipeline.h evaluate_easy_prop_to_atoms.cpp evaluate_easy_prop_to_atoms.h)
 target_link_libraries(knobab yaml-cpp yaucl_structures)
 
 add_library(yaucl_numeric STATIC
@@ -110,7 +110,7 @@ add_library(yaucl_bpm STATIC
         src/yaucl/bpm/algos/transformations/declare_to_dfa/DeclareNoDataTemplateCollect.cpp
         include/yaucl/bpm/algos/transformations/declare_to_dfa/DeclareNoDataTemplateCollect.h
         src/yaucl/bpm/algos/transformations/declare_to_dfa/TemplateCollectResult.cpp
-        include/yaucl/bpm/algos/transformations/declare_to_dfa/TemplateCollectResult.h src/yaucl/bpm/structures/declare/DisjunctiveDeclareDataAware.cpp include/yaucl/bpm/structures/declare/DisjunctiveDeclareDataAware.h src/yaucl/bpm/algos/transformations/grounding.cpp src/yaucl/bpm/algos/transformations/grounding.cpp include/yaucl/bpm/algos/transformations/grounding.h src/yaucl/bpm/structures/commons/testing_predicates.cpp include/yaucl/bpm/structures/commons/testing_predicates.h)
+        include/yaucl/bpm/algos/transformations/declare_to_dfa/TemplateCollectResult.h src/yaucl/bpm/structures/declare/DisjunctiveDeclareDataAware.cpp include/yaucl/bpm/structures/declare/DisjunctiveDeclareDataAware.h src/yaucl/bpm/algos/transformations/grounding.cpp src/yaucl/bpm/algos/transformations/grounding.cpp include/yaucl/bpm/algos/transformations/grounding.h src/yaucl/bpm/structures/commons/testing_predicates.cpp include/yaucl/bpm/structures/commons/testing_predicates.h src/yaucl/bpm/structures/ltlf/easy_prop.cpp include/yaucl/bpm/structures/commons/easy_prop.h)
 target_link_libraries(yaucl_bpm antlr4_static yaucl_numeric yaucl_data yaucl_graph)
 
 add_library(knobab_flloat STATIC

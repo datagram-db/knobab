@@ -113,6 +113,8 @@ struct ltlf {
     std::unordered_set<std::string> propositionalize() const;
     PropositionalizedAtomsSet possibleActionsUpToNext() const;
 
+    struct ltlf replace_with(const std::unordered_map<std::string, ltlf>& map) const;
+
     struct ltlf replace_with_unique_name(const std::unordered_map<std::string, std::string>& map) const;
 
     //std::unordered_set<std::string> allActions() const;

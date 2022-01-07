@@ -15,6 +15,8 @@
 #include <yaucl/structures/DoublePrevNext.h>
 #include <yaucl/structures/set_operations.h>
 #include <ostream>
+#include <yaucl/bpm/structures/commons/easy_prop.h>
+
 
 using label_var_atoms_map_t = std::unordered_map<std::string, std::unordered_map<std::string, std::unordered_set<DataPredicate>>>;
 using double_bulk_map_t = std::unordered_map<std::string, std::unordered_map<std::string, spt_bulk_insertion<double>>>;
@@ -89,5 +91,7 @@ private:
 void collect_data_from_declare_disjunctive_model(AtomizingPipeline& pipeline_data, const CNFDeclareDataAware& disjoint_model);
 
 void atomize_model(AtomizingPipeline& pipeline_data, CNFDeclareDataAware &disjoint_model);
+
+
 
 #endif //KNOBAB_ATOMIZATION_PIPELINE_H

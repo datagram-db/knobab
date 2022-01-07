@@ -279,9 +279,10 @@ void whole_testing(const std::string& log_file = "testing/log.txt",
     env.print_grounding_tables(std::cout);
     //////////////////////////////////////////////////////////////////
 
-
+    std::cout << "Atomizing the declare formulae" << std::endl;
     env.first_atomize_model();
     env.print_grounded_model(std::cout); // DEBUG
+    //////////////////////////////////////////////////////////////////
 
 }
 
