@@ -64,6 +64,8 @@ enum declare_templates {
     VacNegNotChainSuccession
 };
 
+bool isUnaryPredicate(declare_templates type);
+
 bool isUnaryPredicate(declare_templates t);
 
 #include <string>

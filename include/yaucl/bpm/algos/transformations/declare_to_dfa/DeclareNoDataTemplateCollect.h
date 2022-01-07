@@ -24,7 +24,8 @@ graph_join_pm ReplaceABWithProperLabels(const std::string& dot,
  * original ones. In fact, please bear in mind that each dataaware template should be already atomized into a
  * non data-aware representation
  */
-struct DeclareNoDataTemplateCollect {
+
+struct [[deprecated]] DeclareNoDataTemplateCollect {
 private:
     std::unordered_map<std::pair<declare_templates, size_t>,
             std::unordered_set<DeclareDataAware>> allTemplates;

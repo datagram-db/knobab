@@ -47,14 +47,13 @@ class ParseFFLOATDot : public DOTVisitor {
     NodeLabelBijectionFA<std::string, easy_prop> parsing_result;
 public:
 
-    bool need_back_conversion;
-    const std::unordered_map<std::string, std::string>* back_conv;
+    ///bool need_back_conversion;
+    ///const std::unordered_map<std::string, std::string>* back_conv;
 
-    ParseFFLOATDot() : back_conv{nullptr}, need_back_conversion{false} {}
+    ParseFFLOATDot() /*: back_conv{nullptr}, need_back_conversion{false}*/ {}
     ~ParseFFLOATDot()  {}
 
-    FlexibleFA<size_t, std::string> parse(std::istream& stream,
-                                          const std::unordered_set<std::string>& SigmaAll);
+    NodeLabelBijectionFA<std::string, easy_prop> parse(std::istream &stream);
 
 
     antlrcpp::Any visitGraph(DOTParser::GraphContext *context) override;

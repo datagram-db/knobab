@@ -19,5 +19,7 @@ struct TemplateCollectResult {
     TemplateCollectResult& operator=(TemplateCollectResult&& ) = default;
 };
 
+void conditionalPruningGraph(bool doPrune, bool firstInsertion, TemplateCollectResult& result, graph_join_pm& currGraph);
+
 
 #endif //BPM21_TEMPLATECOLLECTRESULT_H
