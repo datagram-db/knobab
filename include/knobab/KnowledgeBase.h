@@ -34,7 +34,6 @@ union_minimal resolveUnionMinimal(const AttributeTable &table, const AttributeTa
 
 class KnowledgeBase : public trace_visitor {
     CountTemplate                                   count_table;
-    ActTable                                        act_table_by_act_id;
     std::unordered_map<std::string, AttributeTable> attribute_name_to_table;
     SimplifiedFuzzyStringMatching                   string_values;
 
@@ -120,6 +119,7 @@ public:
     void visitField(const std::string &key, const std::string &value) override;
     void visitField(const std::string &key, size_t value) override;
 
+    ActTable                                        act_table_by_act_id;
 private:
     void collectValuesAmongTraces(std::set<union_type> &S, size_t trace_id, act_t acts, bool HasNoAct,
                                   const std::string &attribute_name, bool hasNoAttribute) const;
