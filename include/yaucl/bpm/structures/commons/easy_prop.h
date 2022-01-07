@@ -13,14 +13,18 @@ struct easy_prop {
     enum t {
         E_P_AND,
         E_P_OR,
-        E_P_ATOM
+        E_P_ATOM,
+        E_P_TRUE,
+        E_P_FALSE
     };
     t casusu;
     bool isAtomNegated;
     std::vector<easy_prop> args;
     std::string single_atom_if_any;
 
-    DEFAULT_CONSTRUCTORS(easy_prop)
+    easy_prop(t casusu);
+    easy_prop();
+    DEFAULT_COPY_ASSGN(easy_prop)
 };
 
 

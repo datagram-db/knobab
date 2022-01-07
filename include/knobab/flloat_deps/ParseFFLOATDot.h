@@ -40,10 +40,11 @@ class DADParser;
 #include <yaucl/graphs/NodeLabelBijectionFA.h>
 #include <yaucl/graphs/FlexibleFA.h>
 #include <yaucl/bpm/structures/ltlf/ltlf.h>
+#include <yaucl/bpm/structures/commons/easy_prop.h>
 
 class ParseFFLOATDot : public DOTVisitor {
 
-    NodeLabelBijectionFA<std::string, ltlf> parsing_result;
+    NodeLabelBijectionFA<std::string, easy_prop> parsing_result;
 public:
 
     bool need_back_conversion;
