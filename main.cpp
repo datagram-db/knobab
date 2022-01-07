@@ -15,133 +15,6 @@
 #include <knobab/algorithms/atomization_pipeline.h>
 #include <knobab/algorithms/kb_grounding.h>
 
-class Environment {
-    /// Creating an instance of the knowledge base, that is going to store all the traces in the log!
-    KnowledgeBase db;
-    AtomizingPipeline ap;
-    GroundingStrategyConf grounding_conf;
-
-    DeclareModelParse dmp;
-    std::vector<DeclareDataAware> conjunctive_model;
-
-    CNFDeclareDataAware grounding;
-
-public:
-
-    /**
-     * Returns the atoms associated to both the declare model and the current knowledge base!
-     * @return
-     */
-    semantic_atom_set  getSigmaAll() {
-        semantic_atom_set S = ap.act_atoms;
-        for (const auto& ref : ap.interval_map) {
-            std::pair<std::string, size_t> cp;
-            cp.first = ref.first;
-            for (size_t i = 0, N = ap.max_ctam_iteration.at(cp.first); i<N; i++) {
-                cp.second = i;
-                S.insert(ap.clause_to_atomization_map.at(cp));
-            }
-        }
-        for (auto & ref : db.act_table_by_act_id.secondary_index) {
-            auto ptr = ref.first;
-            while (ptr) {
-                auto lx = db.event_label_mapper.get(ptr->entry.id.parts.act);
-                if (!ap.interval_map.contains(lx))
-                    S.insert(lx);
-                ptr = ptr->next;
-            };
-        }
-        return S;
-    }
-
-    void clear() {
-        db.clear();
-        ap.clear();
-        conjunctive_model.clear();
-    }
-
-    void load_log(log_data_format format, bool loadData, const std::string &filename) {
-        load_into_knowledge_base(format, loadData, filename, db);
-        db.index_data_structures();
-    }
-
-    void load_model(const std::string &model_file) {
-        if (!std::filesystem::exists(std::filesystem::path(model_file))) {
-            std::cerr << "ERROR: model file does not exist: " << model_file << std::endl;
-            exit(1);
-        }
-        std::ifstream file{model_file};
-        conjunctive_model = dmp.load(file, true);
-    }
-
-    void set_atomization_parameters(const std::string fresh_atom_label = "p",
-                                    size_t mslength = MAXIMUM_STRING_LENGTH) {
-        ap.fresh_atom_label = fresh_atom_label;
-        ap.s_max = std::string(mslength, std::numeric_limits<char>::max());
-        DataPredicate::MAX_STRING = ap.s_max;
-        DataPredicate::msl = mslength;
-    }
-
-    void set_grounding_parameters(bool doPreliminaryFill = true,
-                                  bool ignoreActForAttributes = false,
-                                  bool creamOffSingleValues = true,
-                                  GroundingStrategyConf::pruning_strategy ps = GroundingStrategyConf::ALWAYS_EXPAND_LESS_TOTAL_VALUES
-    ) {
-        grounding_conf.doPreliminaryFill = doPreliminaryFill;
-        grounding_conf.ignoreActForAttributes = ignoreActForAttributes;
-        grounding_conf.creamOffSingleValues = creamOffSingleValues;
-        grounding_conf.strategy1 = ps;
-    }
-
-    void init_atomize_tables() {
-        collect_data_from_declare_disjunctive_model(ap, grounding);
-    }
-
-    void doGrounding() {
-        grounding = GroundWhereStrategy(grounding_conf,
-                                                db,
-                                                conjunctive_model);
-    }
-
-    void print_model(std::ostream& os) {
-        os << "Declarative Model: " << std::endl;
-        os << "----------------------------------------" << std::endl;
-        for (const auto& def : conjunctive_model)
-            os << def << std::endl;
-
-        os << "----------------------------------------" << std::endl;
-        os << std::endl;
-    }
-
-    void print_grounded_model(std::ostream& os) {
-        os << "Grounded Model: " << std::endl;
-        os << "----------------------------------------" << std::endl;
-        os << grounding << std::endl;
-        os << "----------------------------------------" << std::endl;
-        os << std::endl;
-    }
-
-    void print_knowledge_base(std::ostream& os) {
-        os << "Knowledge Base: " << std::endl;
-        os << "----------------------------------------" << std::endl;
-        db.reconstruct_trace_with_data(os);
-        os << "----------------------------------------" << std::endl;
-        os << std::endl;
-    }
-
-    void print_grounding_tables(std::ostream& os) {
-        os << "Grounding Tables: " << std::endl;
-        os << "----------------------------------------" << std::endl;
-        os << ap << std::endl;
-        os << "----------------------------------------" << std::endl;
-        os << std::endl;
-    }
-
-    void first_atomize_model() {
-        atomize_model(ap, grounding);
-    }
-
-};
 
 void test_kb() {
     /// Creating an instance of the knowledge base, that is going to store all the traces in the log!
@@ -222,6 +95,7 @@ void test_grounding() {
 }
 
 #include <yaml-cpp/yaml.h>
+#include <knobab/Environment.h>
 
 void whole_testing(const std::string& log_file = "testing/log.txt",
                    const std::string& declare_file = "testing/declare1.powerdecl",

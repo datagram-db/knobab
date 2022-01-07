@@ -38,6 +38,7 @@ class FLLOATPropParser;
 #include <magic_enum.hpp>
 #include <fstream>
 #include <yaucl/bpm/structures/ltlf/ltlf.h>
+#include <yaucl/bpm/structures/commons/easy_prop.h>
 
 /**
  * Propositions parses from the FLLOAT output, using a specific sympy format
@@ -48,7 +49,7 @@ public:
     FLLOATSimplePropParser(){}
     ~FLLOATSimplePropParser() {}
 
-    ltlf parse(std::istream& stream);
+    easy_prop parse(std::istream& stream);
 
     antlrcpp::Any visitNegation(FLLOATPropParser::NegationContext *context) override;
     antlrcpp::Any visitAtom(FLLOATPropParser::AtomContext *context) override;

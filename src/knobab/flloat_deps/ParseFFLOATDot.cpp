@@ -9,7 +9,8 @@
 
 
 FlexibleFA<size_t, std::string> getFAFromLTLFEdges(const std::unordered_set<std::string> &SigmaAll,
-                                                   const NodeLabelBijectionFA<std::string, ltlf> &parsing_result2) {
+                                                   const NodeLabelBijectionFA<std::string, easy_prop> &parsing_result2) {
+    throw std::runtime_error("ERROR: TO IMPLEMENT!");
     FlexibleFA<size_t, std::string> result;
     std::unordered_map<size_t, size_t> idConv;
     for (size_t nodeId = 0, N = parsing_result2.maximumNodeId(); nodeId<N; nodeId++) {
@@ -28,10 +29,12 @@ FlexibleFA<size_t, std::string> getFAFromLTLFEdges(const std::unordered_set<std:
             // std::cerr << edge.first << std::endl;
             size_t dst = idConv.at(edge.second);
             for (const std::string& act : SigmaAll) {
+#if TODO
                 if (edge.first.easy_interpret(act)) {
                     //   std::cerr << '\t' << act << std::endl;
                     result.addNewEdgeFromId(src, dst, act);
                 }
+#endif
             }
         }
     }
@@ -41,6 +44,7 @@ FlexibleFA<size_t, std::string> getFAFromLTLFEdges(const std::unordered_set<std:
 
 FlexibleFA<size_t, std::string> ParseFFLOATDot::parse(std::istream& stream,
                                                       const std::unordered_set<std::string>& SigmaAll) {
+    throw std::runtime_error("DEPRECATED!");
     antlr4::ANTLRInputStream input(stream);
     DOTLexer lexer(&input);
     antlr4::CommonTokenStream tokens(&lexer);
@@ -159,7 +163,10 @@ antlrcpp::Any ParseFFLOATDot::visitEdge_stmt(DOTParser::Edge_stmtContext *contex
                     ss.str(val);
                     auto f = parser.parse(ss);
                     if (this->need_back_conversion) {
+                        throw std::runtime_error("ERROR: TO IMPLEMENT!");
+#ifdef TODO
                         parsing_result.addNewEdgeFromId(srcId, dstId, f.replace_with_unique_name(*this->back_conv));
+#endif
                     } else {
                         parsing_result.addNewEdgeFromId(srcId, dstId, f);
                     }

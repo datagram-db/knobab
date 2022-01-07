@@ -60,7 +60,7 @@ struct AtomizingPipeline {
      * @param isNegated     Whether the act might appear negated in the ltlf formula
      * @return              Set of atoms associated to the act, after decomposition
      */
-    semantic_atom_set atom_decomposition(const std::string &act, bool isNegated);
+    semantic_atom_set atom_decomposition(const std::string &act, bool isNegated = false);
 
     /**
      * Decomposition of a data predicate associated to a Act/Event
@@ -68,7 +68,7 @@ struct AtomizingPipeline {
      * @param isNegated     Whether the act might appear negated in the ltlf formula
      * @return              Set of atoms associated to the act, after decomposition
      */
-    semantic_atom_set interval_decomposition(const DataPredicate &pred, bool isNegated);
+    semantic_atom_set interval_decomposition(const DataPredicate &pred, bool isNegated = false);
 
     /**
      * Clears all the maps collected for the atomization pipeline

@@ -25,76 +25,76 @@
 
 #include "knobab/flloat_deps/FLLOATSimplePropParser.h"
 #include <knobab/flloat_deps/FLLOATPropLexer.h>
+#include <yaucl/bpm/structures/commons/easy_prop.h>
 
-ltlf FLLOATSimplePropParser::parse(std::istream &stream) {
+easy_prop FLLOATSimplePropParser::parse(std::istream &stream) {
     antlr4::ANTLRInputStream input(stream);
     FLLOATPropLexer lexer(&input);
     antlr4::CommonTokenStream tokens(&lexer);
     tokens.fill();
     FLLOATPropParser parser(&tokens);
     // Returning the simplified formula, thus in DFN and with the negation pushed towards the leaves
-    return visit(parser.statement()).as<ltlf>().nnf().simplify()/*.reduce().oversimplify()*/;
+    return visit(parser.statement()).as<easy_prop>()/*.nnf().simplify()*//*.reduce().oversimplify()*/;
 }
 
 antlrcpp::Any FLLOATSimplePropParser::visitAtom(FLLOATPropParser::AtomContext *context) {
     if (context) {
-        return ltlf::Act(context->getText());
+        easy_prop ep;
+        ep.casusu = easy_prop::E_P_ATOM;
+        ep.isAtomNegated = false;
+        ep.single_atom_if_any = context->getText();
+        return {ep};
     }
-    return {ltlf::True().negate()};
+    return {easy_prop{easy_prop::E_P_FALSE}};
 }
 
 antlrcpp::Any FLLOATSimplePropParser::visitNegation(FLLOATPropParser::NegationContext *context) {
     if (context) {
-        return ltlf::Neg(visit(context->statement()).as<ltlf>());
+        auto tmp = visit(context->statement()).as<easy_prop>();
+        assert((tmp.casusu == easy_prop::E_P_ATOM) && (!tmp.isAtomNegated));
+        tmp.isAtomNegated = true;
+        return {tmp};
     }
-    return {ltlf::True().negate()};
+    return {easy_prop{easy_prop::E_P_FALSE}};
 }
 
 antlrcpp::Any FLLOATSimplePropParser::visitParen(FLLOATPropParser::ParenContext *context) {
     if (context) {
         return visit(context->statement());
     }
-    return {ltlf::True().negate()};
+    return {easy_prop{easy_prop::E_P_FALSE}};
 }
 
 antlrcpp::Any FLLOATSimplePropParser::visitOr(FLLOATPropParser::OrContext *context) {
     if (context) {
-        ltlf stmt = ltlf::True().negate();
-        bool first = true;
-        for (const auto& childPtr: context->statement()) {
-            if (first) {
-                stmt = visit(childPtr).as<ltlf>();
-                first = false;
-            } else {
-                stmt = ltlf::Or(visit(childPtr).as<ltlf>(), stmt);
-            }
-        }
-        return {stmt};
+        assert(context->statement().size() == 2);
+        easy_prop ep;
+        ep.casusu = easy_prop::E_P_OR;
+        ep.isAtomNegated = false;
+        ep.args.emplace_back(visit(context->statement(0)).as<easy_prop>());
+        ep.args.emplace_back(visit(context->statement(1)).as<easy_prop>());
+        return ep;
     }
-    return {ltlf::True().negate()};
+    return {easy_prop{easy_prop::E_P_FALSE}};
 }
 
 antlrcpp::Any FLLOATSimplePropParser::visitTop(FLLOATPropParser::TopContext *context) {
-    return {ltlf::True()};
+    return {easy_prop{}};
 }
 
 antlrcpp::Any FLLOATSimplePropParser::visitBot(FLLOATPropParser::BotContext *context) {
-    return {ltlf::True().negate()};
+    return {easy_prop{easy_prop::E_P_FALSE}};
 }
 
 antlrcpp::Any FLLOATSimplePropParser::visitAnd(FLLOATPropParser::AndContext *context) {
     if (context) {
-        ltlf stmt = ltlf::True();
-        bool first = true;
-        for (const auto& childPtr: context->statement()) {
-            if (first) {
-                stmt = visit(childPtr).as<ltlf>();
-                first = false;
-            } else {
-                stmt = ltlf::And(visit(childPtr).as<ltlf>(), stmt);
-            }
-        }
-        return {stmt};
+        assert(context->statement().size() == 2);
+        easy_prop ep;
+        ep.casusu = easy_prop::E_P_AND;
+        ep.isAtomNegated = false;
+        ep.args.emplace_back(visit(context->statement(0)).as<easy_prop>());
+        ep.args.emplace_back(visit(context->statement(1)).as<easy_prop>());
+        return ep;
     }
     return {ltlf::True().negate()};
 }

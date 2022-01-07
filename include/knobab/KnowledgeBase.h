@@ -101,8 +101,8 @@ public:
     yaucl::structures::any_to_uint_bimap<std::string> event_label_mapper;
     std::unordered_map<size_t, size_t> counting_reference;
 
-    void reconstruct_trace_no_data(std::ostream& os);
-    void reconstruct_trace_with_data(std::ostream& os);
+    void reconstruct_trace_no_data(std::ostream& os) const;
+    void reconstruct_trace_with_data(std::ostream& os) const;
 
     KnowledgeBase();
     void index_data_structures();

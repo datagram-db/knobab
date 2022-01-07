@@ -10,7 +10,7 @@ KnowledgeBase::KnowledgeBase() : alreadySet{false} {
     status = FinishParsing;
 }
 
-void KnowledgeBase::reconstruct_trace_no_data(std::ostream &os) {
+void KnowledgeBase::reconstruct_trace_no_data(std::ostream &os) const {
     for (size_t trace_id = 0, N = act_table_by_act_id.secondary_index.size(); trace_id < N; trace_id++) {
         os << "Trace #" << trace_id << std::endl << "\t- ";
         const auto& ref = act_table_by_act_id.secondary_index[trace_id];
@@ -24,7 +24,7 @@ void KnowledgeBase::reconstruct_trace_no_data(std::ostream &os) {
 }
 
 
-void KnowledgeBase::reconstruct_trace_with_data(std::ostream &os) {
+void KnowledgeBase::reconstruct_trace_with_data(std::ostream &os) const {
     for (size_t trace_id = 0, N = act_table_by_act_id.secondary_index.size(); trace_id < N; trace_id++) {
         os << "Trace #" << trace_id << std::endl << "\t- ";
         const auto& ref = act_table_by_act_id.secondary_index[trace_id];
