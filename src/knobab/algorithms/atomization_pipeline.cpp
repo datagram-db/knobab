@@ -65,7 +65,6 @@ semantic_atom_set AtomizingPipeline::interval_decomposition(const DataPredicate 
         const auto V = std::get<1>(pred.decompose_single_variable_into_intervals());
         auto& ref = double_map.at(pred.label).at(pred.var);
         for (const auto& cp : V) {
-            std::cout << ref << std::endl;
             for (const auto& I : ref.findInterval(cp.first, cp.second)) {
                 DataPredicate dp{pred.label, pred.var, I.first, I.second};
                 assert(Mcal.contains(dp));
@@ -300,3 +299,5 @@ void atomize_model(AtomizingPipeline &pipeline_data, CNFDeclareDataAware &disjoi
         }
     }
 }
+
+
