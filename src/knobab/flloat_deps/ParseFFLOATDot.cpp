@@ -41,7 +41,7 @@ FlexibleFA<size_t, std::string> getFAFromLTLFEdges(const std::unordered_set<std:
     return result;
 }
 
-
+#if 0
 FlexibleFA<size_t, std::string> ParseFFLOATDot::parse(std::istream& stream,
                                                       const std::unordered_set<std::string>& SigmaAll) {
     throw std::runtime_error("DEPRECATED!");
@@ -56,6 +56,7 @@ FlexibleFA<size_t, std::string> ParseFFLOATDot::parse(std::istream& stream,
 
     return getFAFromLTLFEdges(SigmaAll, parsing_result);
 }
+#endif
 
 antlrcpp::Any ParseFFLOATDot::visitGraph(DOTParser::GraphContext *context) {
     throw std::runtime_error("Unexpected invocation: visitGraph");
@@ -162,17 +163,25 @@ antlrcpp::Any ParseFFLOATDot::visitEdge_stmt(DOTParser::Edge_stmtContext *contex
                     std::stringstream ss;
                     ss.str(val);
                     auto f = parser.parse(ss);
-                    if (this->need_back_conversion) {
-                        throw std::runtime_error("ERROR: TO IMPLEMENT!");
-#ifdef TODO
-                        parsing_result.addNewEdgeFromId(srcId, dstId, f.replace_with_unique_name(*this->back_conv));
-#endif
-                    } else {
-                        parsing_result.addNewEdgeFromId(srcId, dstId, f);
-                    }
+                    parsing_result.addNewEdgeFromId(srcId, dstId, f);
                 }
             }
         }
     }
     return {};
+}
+
+NodeLabelBijectionFA<std::string, easy_prop>
+ParseFFLOATDot::parse(std::istream &stream) {
+    antlr4::ANTLRInputStream input(stream);
+    DOTLexer lexer(&input);
+    antlr4::CommonTokenStream tokens(&lexer);
+    tokens.fill();
+    DOTParser parser(&tokens);
+    for (const auto& ptr : parser.graph()->stmt_list()->stmt()) {
+        visitStmt(ptr);
+    }
+    NodeLabelBijectionFA<std::string, easy_prop> copy;
+    std::swap(parsing_result, copy); // clearing the temporary field graph, returning the copy
+    return copy;
 }

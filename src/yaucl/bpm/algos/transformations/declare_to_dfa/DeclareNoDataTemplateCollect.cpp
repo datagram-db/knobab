@@ -21,29 +21,27 @@ void DeclareNoDataTemplateCollect::add(const DeclareDataAware &left) {
     allTemplates[std::make_pair(left.casusu, left.n)].insert(left);
 }
 
+#if 0
+
+DeclareNoDataTemplateCollect::DeclareNoDataTemplateCollect(bool doPrune, const std::string &base_serialization_path) : doPrune(doPrune), isAdding(true), base_serialization_path{base_serialization_path} {
+    if (std::filesystem::exists(base_serialization_path)) {
+        assert(std::filesystem::is_directory(base_serialization_path));
+    } else {
+        std::filesystem::create_directories(base_serialization_path);
+    }
+}
+
+
+void DeclareNoDataTemplateCollect::add(const DeclareDataAware &left) {
+    isAdding = true;
+    allTemplates[std::make_pair(left.casusu, left.n)].insert(left);
+}
+#endif
+
 #include <fstream>
 #include <knobab/flloat_deps/ParseFFLOATDot.h>
 
 
-static inline void conditionalPruningGraph(bool doPrune, bool firstInsertion, TemplateCollectResult& result, graph_join_pm& currGraph) {
-    if (!doPrune) {
-        result.distinct_graph_model.emplace_back(currGraph);
-        if (firstInsertion) {
-            result.joined_graph_model = currGraph;
-        } else {
-            result.joined_graph_model = graph_join(result.joined_graph_model, currGraph);
-        }
-    } else {
-        graph_join_pm result_;
-        remove_unaccepting_states(currGraph, result_);
-        result.distinct_graph_model.emplace_back(result_);
-        if (firstInsertion) {
-            result.joined_graph_model = result_;
-        } else {
-            result.joined_graph_model = graph_join(result.joined_graph_model, result_);
-        }
-    }
-}
 
 TemplateCollectResult DeclareNoDataTemplateCollect::buildUpModel(const std::vector<DeclareDataAware> &Model) {
     std::vector<graph_join_pm> distinct_graph_model;
@@ -76,17 +74,19 @@ TemplateCollectResult DeclareNoDataTemplateCollect::buildUpModel(const std::vect
 
 graph_join_pm ReplaceABWithProperLabels(const std::string &dot, std::unordered_map<std::string, std::string> *ptr,
                                         const std::unordered_set<std::string> &SigmaAll) {
+    throw std::runtime_error("ERROR: deprecated function call!");
+#if 0
     graph_join_pm result;
     ParseFFLOATDot graph_loader;
-    graph_loader.need_back_conversion = ptr != nullptr;
-    graph_loader.back_conv = ptr;
+    //graph_loader.need_back_conversion = ptr != nullptr;
+    //graph_loader.back_conv = ptr;
     {
         graph_join_pm g2;
         {
             ///std::cout << tmp << std::endl << std::endl;
             std::istringstream strm{dot};
             auto g = graph_loader
-                    .parse(strm, SigmaAll)
+                    .parse(strm)
                     .makeDFAAsInTheory(SigmaAll)
                     .shiftLabelsToNodes();
             g.pruneUnreachableNodes();
@@ -97,4 +97,5 @@ graph_join_pm ReplaceABWithProperLabels(const std::string &dot, std::unordered_m
         minimize(g2, result);
     }
     return result;
+#endif
 }

@@ -267,8 +267,8 @@ toFiniteSemantics(declare_templates casusu, size_t n, const std::string &left_ac
     }
 }
 
-bool isUnaryPredicate(declare_templates t) {
-    switch (t) {
+bool isUnaryPredicate(declare_templates type) {
+    switch (type) {
         case Existence:
         case Absence:
         case Absence2:
@@ -280,6 +280,7 @@ bool isUnaryPredicate(declare_templates t) {
             return false;
     }
 }
+
 
 ltlf DeclareDataAware::toFiniteSemantics() const {
     ltlf left = ltlf::And(ltlf::Act(left_act), map_disj(dnf_left_map)).simplify().setBeingCompound(true);

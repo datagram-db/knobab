@@ -377,3 +377,55 @@ void getUnreachableNodesForAcceptance(graph_join_pm &input, std::vector<bool> &f
     }
 }
 
+
+
+void make_graph_deterministic::generate_out_graph(graph_join_pm &input,
+                        graph_join_pm &output) {
+    multiNodesToNewNode.clear();
+    std::unordered_map<std::string, std::unordered_set<size_t>> M;
+    for (size_t startingNodeId : input.starting_point) {
+        auto label = input.vertex_id_secondary_index[startingNodeId].first;
+        M[label].insert(startingNodeId);
+    }
+    for (const auto& ref : M)
+        generate_out_graph(input, output, ref.first, ref.second);
+}
+
+size_t make_graph_deterministic::generate_out_graph(graph_join_pm &input,
+                          graph_join_pm &output,
+                          const std::string& label,
+                          const std::unordered_set<size_t>& I)  {
+    if (multiNodesToNewNode.contains(I)) {
+        return multiNodesToNewNode.at(I);
+    } else {
+        std::unordered_map<std::string, std::unordered_set<size_t>> M;
+        size_t srcNodeId;
+        bool allStarting = true;
+        bool atLeastOneEnding = false;
+        for (size_t id : I) {
+            if ((!atLeastOneEnding) && resolve_node(input, id).is_final) {
+                atLeastOneEnding = true;
+            }
+            if (!input.starting_point.contains(id)) {
+                allStarting = false;
+            }
+            for (const std::pair<std::string, std::vector<std::pair<size_t, double>>>& edgeId :
+                    resolve_node(input, id).outgoing_hash_to_outgoingNodeIdWithWeight) {
+                auto& refEntry = M[edgeId.first];
+                for (const std::pair<size_t, double>& cp : edgeId.second) {
+                    refEntry.insert(cp.first);
+                }
+            }
+        }
+
+        srcNodeId = add_node(output, label, allStarting, atLeastOneEnding);
+        multiNodesToNewNode[I] = srcNodeId; // set node as visited
+
+        for (const auto& outgoingEdge : M) {
+            size_t dstNodeId = generate_out_graph(input,output, outgoingEdge.first, outgoingEdge.second);
+            add_edge(output, srcNodeId, dstNodeId, 1.0);
+        }
+
+        return srcNodeId;
+    }
+}

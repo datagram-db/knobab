@@ -8,7 +8,8 @@
 #include <map>
 #include <vector>
 #include <string>
-#include <yaucl/graphs//adjacency_entry.h>
+#include <yaucl/graphs/adjacency_entry.h>
+#include <yaucl/hashing/uset_hash.h>
 #include <unordered_set>
 
 /**
@@ -140,5 +141,23 @@ void getUnreachableNodesForAcceptance(graph_join_pm &input,
  * @param output        Pruned graph
  */
 void remove_unaccepting_states(graph_join_pm& input, graph_join_pm& output);
+
+
+/**
+ * Generates a deterministic graph
+ */
+struct make_graph_deterministic {
+    std::unordered_map<std::unordered_set<size_t>, size_t> multiNodesToNewNode;
+
+    void generate_out_graph(graph_join_pm &input,
+                            graph_join_pm &output);
+
+private:
+    size_t generate_out_graph(graph_join_pm &input,
+                              graph_join_pm &output,
+                              const std::string& label,
+                              const std::unordered_set<size_t>& I);
+};
+
 
 #endif //AUTOMATA_JOIN_AUTOMATA_JOIN_H

@@ -34,6 +34,7 @@ void Environment::clear() {
 
 #include <filesystem>
 
+
 void Environment::load_model(const std::string &model_file) {
     if (!std::filesystem::exists(std::filesystem::path(model_file))) {
         std::cerr << "ERROR: model file does not exist: " << model_file << std::endl;
@@ -48,7 +49,7 @@ void Environment::load_log(log_data_format format, bool loadData, const std::str
     db.index_data_structures();
 }
 
-void Environment::set_atomization_parameters(const std::string fresh_atom_label, size_t mslength) {
+void Environment::set_atomization_parameters(const std::string &fresh_atom_label, size_t mslength) {
     ap.fresh_atom_label = fresh_atom_label;
     ap.s_max = std::string(mslength, std::numeric_limits<char>::max());
     DataPredicate::MAX_STRING = ap.s_max;
@@ -113,28 +114,29 @@ void Environment::first_atomize_model() {
 }
 
 semantic_atom_set Environment::evaluate_easy_prop_to_atoms(const easy_prop &prop,
-                                                           const std::unordered_map<std::string, std::string> &bogus_act_to_atom,
+                                                           //const std::unordered_map<std::string, std::string> &bogus_act_to_atom,
                                                            const std::unordered_map<std::string, semantic_atom_set> &bogus_act_to_set) {
     switch (prop.casusu) {
         case easy_prop::E_P_AND:
             assert(prop.args.size() == 2);
             assert(!prop.isAtomNegated);
-            return unordered_intersection(evaluate_easy_prop_to_atoms( prop.args.at(0), bogus_act_to_atom, bogus_act_to_set),
-                                          evaluate_easy_prop_to_atoms( prop.args.at(1), bogus_act_to_atom, bogus_act_to_set) );
+            return unordered_intersection(evaluate_easy_prop_to_atoms( prop.args.at(0)/*, bogus_act_to_atom*/, bogus_act_to_set),
+                                          evaluate_easy_prop_to_atoms( prop.args.at(1)/*, bogus_act_to_atom*/, bogus_act_to_set) );
         case easy_prop::E_P_OR: {
             assert(prop.args.size() == 2);
             assert(!prop.isAtomNegated);
-            semantic_atom_set S = evaluate_easy_prop_to_atoms( prop.args.at(0), bogus_act_to_atom, bogus_act_to_set);
-            auto tmp = evaluate_easy_prop_to_atoms( prop.args.at(1), bogus_act_to_atom, bogus_act_to_set);
+            semantic_atom_set S = evaluate_easy_prop_to_atoms( prop.args.at(0)/*, bogus_act_to_atom*/, bogus_act_to_set);
+            auto tmp = evaluate_easy_prop_to_atoms( prop.args.at(1)/*, bogus_act_to_atom*/, bogus_act_to_set);
             S.insert(tmp.begin(), tmp.end());
             return S;
         }
         case easy_prop::E_P_ATOM:
             assert(prop.args.empty());
-            assert(bogus_act_to_atom.contains(prop.single_atom_if_any));
+            assert(bogus_act_to_set.contains(prop.single_atom_if_any));
+            ///assert(bogus_act_to_atom.contains(prop.single_atom_if_any));
             if (prop.isAtomNegated) {
-                semantic_atom_set S = ap.atom_decomposition(bogus_act_to_atom.at(prop.single_atom_if_any));
-                return unordered_difference(S, bogus_act_to_set.at(prop.single_atom_if_any));
+                ///semantic_atom_set S = ap.atom_decomposition(bogus_act_to_atom.at(prop.single_atom_if_any));
+                return unordered_difference(getSigmaAll(), bogus_act_to_set.at(prop.single_atom_if_any));
             } else {
                 return bogus_act_to_set.at(prop.single_atom_if_any);
             }
@@ -142,5 +144,110 @@ semantic_atom_set Environment::evaluate_easy_prop_to_atoms(const easy_prop &prop
             return getSigmaAll();
         case easy_prop::E_P_FALSE:
             return {};
+    }
+}
+
+FlexibleFA<size_t, std::string> Environment::declare_to_graph_for_patterns(const DeclareDataAware &decl) {
+    assert(!decl.left_decomposed_atoms.empty());
+    assert(!decl.right_decomposed_atoms.empty());
+    {
+        auto it = pattern_graph.find(decl);
+        if (it != pattern_graph.end()) return it->second;
+    }
+
+    NodeLabelBijectionFA<std::string, easy_prop> patternGraphToInstantiate =
+            declare_to_graph.getDeclareTemplate(decl.casusu, decl.n);
+
+    //std::unordered_map<std::string, std::string> bogus_act_to_atom;
+    //bogus_act_to_atom[declare_to_graph.left_act] = decl.left_act;
+
+    std::unordered_map<std::string, semantic_atom_set> bogus_act_to_set;
+    bogus_act_to_set[declare_to_graph.left_act] = decl.left_decomposed_atoms;
+
+    if (isUnaryPredicate(decl.casusu)) {
+        //bogus_act_to_atom[declare_to_graph.right_act] = decl.right_act;
+        bogus_act_to_set[declare_to_graph.left_act] = decl.right_decomposed_atoms;
+    }
+
+    FlexibleFA<size_t, std::string> result;
+    std::unordered_map<size_t, size_t> idConv;
+    for (size_t nodeId = 0, N = patternGraphToInstantiate.maximumNodeId(); nodeId<N; nodeId++) {
+        size_t src = result.addNewNodeWithLabel(nodeId);
+        idConv[nodeId] = src;
+    }
+    for (size_t finalNodes : patternGraphToInstantiate.fini()) {
+        result.addToFinalNodesFromId(idConv.at(finalNodes));
+    }
+    for (size_t initialNodes : patternGraphToInstantiate.init()) {
+        result.addToInitialNodesFromId(idConv.at(initialNodes));
+    }
+    for (size_t nodeId = 0, N = patternGraphToInstantiate.maximumNodeId(); nodeId<N; nodeId++) {
+        size_t src = idConv.at(nodeId);
+        for (const auto&edge : patternGraphToInstantiate.outgoingEdges(nodeId)) {
+            // std::cerr << edge.first << std::endl;
+            size_t dst = idConv.at(edge.second);
+            for (const std::string& act : evaluate_easy_prop_to_atoms(edge.first/*, bogus_act_to_atom*/, bogus_act_to_set)) {
+                result.addNewEdgeFromId(src, dst, act);
+            }
+        }
+    }
+    return (pattern_graph[decl] = result.makeDFAAsInTheory(getSigmaAll()));
+}
+
+void Environment::compute_declare_to_graph_for_joins(const DeclareDataAware &decl, graph_join_pm &out_result) {
+    //graph_loader.need_back_conversion = ptr != nullptr;
+    //graph_loader.back_conv = ptr;
+    {
+        graph_join_pm g2;
+        {
+            auto g = declare_to_graph_for_patterns(decl)
+                    .shiftLabelsToNodes();
+            g.pruneUnreachableNodes();
+            g.dot(std::cout);
+
+            convert_to_novel_graph(g, g2);
+        }
+        minimize(g2, out_result);
+    }
+}
+
+void Environment::compute_declare_for_disjunctive(const DisjunctiveDeclareDataAware &decl, graph_join_pm &out_result) {
+    graph_join_pm tmp;
+    make_graph_deterministic det;
+    for (const auto& declare : decl.elementsInDisjunction) {
+        compute_declare_to_graph_for_joins(declare, tmp);
+    }
+    det.generate_out_graph(tmp, out_result);
+}
+
+TemplateCollectResult Environment::compute_declare_for_conjunctive(bool doPrune) {
+    std::vector<graph_join_pm> distinct_graph_model;
+    graph_join_pm              joined_graph_model;
+    size_t M = grounding.singleElementOfConjunction.size();
+    if (M == 0) {
+        return {};
+    } else {
+        auto& zeroModel = grounding.singleElementOfConjunction.at(0);
+        ///assert(allTemplates.contains(std::make_pair(zeroModel.casusu, zeroModel.n)));
+        ///assert(allTemplates[std::make_pair(zeroModel.casusu, zeroModel.n)].contains(zeroModel));
+        graph_join_pm currGraph;
+        compute_declare_for_disjunctive(zeroModel, currGraph); // // = template_to_graph.at(zeroModel);
+        TemplateCollectResult result;
+        conditionalPruningGraph(doPrune, true, result, currGraph);
+        for (size_t j = 1; j<M; j++) {
+            auto& zeroModelJ = grounding.singleElementOfConjunction.at(j);
+            ///assert(allTemplates.contains(std::make_pair(zeroModelJ.casusu, zeroModelJ.n)));
+            ///assert(allTemplates[std::make_pair(zeroModelJ.casusu, zeroModelJ.n)].contains(zeroModelJ));
+            graph_join_pm currGraph2;
+            compute_declare_for_disjunctive(zeroModelJ, currGraph2);
+            ///auto& currGraph2 = template_to_graph.at(zeroModelJ);
+            conditionalPruningGraph(doPrune, false, result, currGraph2);
+        }
+        if (doPrune) {
+            graph_join_pm result_;
+            remove_unaccepting_states(result.joined_graph_model, result_);
+            result.joined_graph_model = result_;
+        }
+        return result;
     }
 }

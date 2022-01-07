@@ -111,7 +111,7 @@ add_library(yaucl_bpm STATIC
         include/yaucl/bpm/algos/transformations/declare_to_dfa/DeclareNoDataTemplateCollect.h
         src/yaucl/bpm/algos/transformations/declare_to_dfa/TemplateCollectResult.cpp
         include/yaucl/bpm/algos/transformations/declare_to_dfa/TemplateCollectResult.h src/yaucl/bpm/structures/declare/DisjunctiveDeclareDataAware.cpp include/yaucl/bpm/structures/declare/DisjunctiveDeclareDataAware.h src/yaucl/bpm/algos/transformations/grounding.cpp src/yaucl/bpm/algos/transformations/grounding.cpp include/yaucl/bpm/algos/transformations/grounding.h src/yaucl/bpm/structures/commons/testing_predicates.cpp include/yaucl/bpm/structures/commons/testing_predicates.h src/yaucl/bpm/structures/ltlf/easy_prop.cpp include/yaucl/bpm/structures/commons/easy_prop.h)
-target_link_libraries(yaucl_bpm antlr4_static yaucl_numeric yaucl_data yaucl_graph)
+target_link_libraries(yaucl_bpm antlr4_static yaucl_numeric yaucl_data yaucl_graph yaucl_hashing)
 
 add_library(knobab_flloat STATIC
         src/knobab/flloat_deps/flloat_wrapper.cpp
@@ -128,7 +128,7 @@ add_library(knobab_flloat STATIC
         src/knobab/flloat_deps/FLLOATPropListener.cpp
         src/knobab/flloat_deps/FLLOATPropParser.cpp
         src/knobab/flloat_deps/FLLOATPropVisitor.cpp
-        src/knobab/flloat_deps/FLLOATSimplePropParser.cpp )
+        src/knobab/flloat_deps/FLLOATSimplePropParser.cpp src/knobab/flloat_deps/DeclareTemplateCollect.cpp include/knobab/flloat_deps/DeclareTemplateCollect.h)
 target_link_libraries(knobab_flloat ${Boost_LIBRARIES} ${PYTHON_LIBRARIES}  yaucl_bpm yaucl_graph)
 
 add_executable(test main.cpp )

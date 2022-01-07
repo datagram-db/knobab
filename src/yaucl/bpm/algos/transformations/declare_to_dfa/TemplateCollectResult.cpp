@@ -6,20 +6,28 @@
 #include <magic_enum.hpp>
 #include <yaucl/graphs/graph_join_pm_conversion.h>
 
-
-DeclareNoDataTemplateCollect::DeclareNoDataTemplateCollect(bool doPrune, const std::string &base_serialization_path) : doPrune(doPrune), isAdding(true), base_serialization_path{base_serialization_path} {
-    if (std::filesystem::exists(base_serialization_path)) {
-        assert(std::filesystem::is_directory(base_serialization_path));
+void conditionalPruningGraph(bool doPrune, bool firstInsertion, TemplateCollectResult& result, graph_join_pm& currGraph) {
+    if (!doPrune) {
+        result.distinct_graph_model.emplace_back(currGraph);
+        if (firstInsertion) {
+            result.joined_graph_model = currGraph;
+        } else {
+            result.joined_graph_model = graph_join(result.joined_graph_model, currGraph);
+        }
     } else {
-        std::filesystem::create_directories(base_serialization_path);
+        graph_join_pm result_;
+        remove_unaccepting_states(currGraph, result_);
+        result.distinct_graph_model.emplace_back(result_);
+        if (firstInsertion) {
+            result.joined_graph_model = result_;
+        } else {
+            result.joined_graph_model = graph_join(result.joined_graph_model, result_);
+        }
     }
 }
 
 
-void DeclareNoDataTemplateCollect::add(const DeclareDataAware &left) {
-    isAdding = true;
-    allTemplates[std::make_pair(left.casusu, left.n)].insert(left);
-}
+
 
 #include <fstream>
 //#include <yaucl/graphs/automata_join.h>
