@@ -211,6 +211,7 @@ void getNodeClustersFromLabel(graph_join_pm &graph,
 }
 
 void minimize(graph_join_pm &g, graph_join_pm &result) {
+    result.doesAcceptEmptyString = g.doesAcceptEmptyString;
     std::unordered_map<size_t, std::unordered_set<size_t>> eq_rel;
 
     ///std::cout << "Starting minimization" << std::endl;
@@ -277,6 +278,7 @@ void minimize(graph_join_pm &g, graph_join_pm &result) {
 }
 
 void invert_graph(graph_join_pm &input, graph_join_pm &output) {
+    std::cerr<< "WARNING: inverting the graph is dangerous for empty string preserving (TEST)" << std::endl;
     for (size_t i = 0, N = input.V_size; i<N; i++) {
         auto& ref = input.vertex_id_secondary_index.at(i);
         auto& v_i = input.vertex_hash_primary_index.at(ref.first).at(ref.second);
@@ -301,6 +303,7 @@ void remove_unaccepting_states(graph_join_pm &input, graph_join_pm &output) {
 
     std::vector<bool> forward_visited(input.V_size, false);
     std::vector<bool> backward_visited(input.V_size, false);
+    output.doesAcceptEmptyString = input.doesAcceptEmptyString;
     getUnreachableNodesForAcceptance(input, forward_visited, backward_visited);
 
 
@@ -382,6 +385,7 @@ void getUnreachableNodesForAcceptance(graph_join_pm &input, std::vector<bool> &f
 void make_graph_deterministic::generate_out_graph(graph_join_pm &input,
                         graph_join_pm &output) {
     multiNodesToNewNode.clear();
+    output.doesAcceptEmptyString = input.doesAcceptEmptyString;
     std::unordered_map<std::string, std::unordered_set<size_t>> M;
     for (size_t startingNodeId : input.starting_point) {
         auto label = input.vertex_id_secondary_index[startingNodeId].first;

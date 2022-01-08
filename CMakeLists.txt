@@ -68,7 +68,7 @@ add_library(yaucl_graph STATIC
         include/yaucl/graphs/graph_join_pm.h
         include/yaucl/graphs/graph_join_pm.h
         src/yaucl/graphs/graph_join_pm_conversion.cpp
-        src/yaucl/graphs/graph_join_pm_algorithms.cpp)
+        src/yaucl/graphs/graph_join_pm_algorithms.cpp minimizeDFA.cpp include/yaucl/graphs/algorithms/minimizeDFA.h)
 
 add_library(yaucl_stringutils STATIC
         src/yaucl/strings/string_utils.cpp include/yaucl/strings/string_utils.h)

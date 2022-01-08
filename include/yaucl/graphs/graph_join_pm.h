@@ -20,6 +20,7 @@ struct graph_join_pm {
     std::map<std::string, std::vector<adjacency_entry>> vertex_hash_primary_index;
     std::vector<std::pair<std::string, size_t>> vertex_id_secondary_index;
     std::unordered_set<size_t> starting_point;
+    bool doesAcceptEmptyString;
     size_t size() const;
 
     graph_join_pm();

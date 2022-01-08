@@ -26,7 +26,7 @@ struct Environment {
 
     DeclareTemplateCollect declare_to_graph;
 
-    std::unordered_map<DeclareDataAware, FlexibleFA<size_t, std::string>> pattern_graph;
+    //std::unordered_map<DeclareDataAware, FlexibleFA<size_t, std::string>> pattern_graph;
 
 public:
 
