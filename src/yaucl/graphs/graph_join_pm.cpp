@@ -4,7 +4,7 @@
 #include <yaucl/strings/serializers.h>
 #include "yaucl/graphs/graph_join_pm.h"
 
-graph_join_pm::graph_join_pm() : V_size{0}, E_size{0} {}
+graph_join_pm::graph_join_pm() : V_size{0}, E_size{0}, doesAcceptEmptyString{false} {}
 
 std::ostream &operator<<(std::ostream &os, const graph_join_pm &pm) {
     os << "Graph(|V|=" << pm.V_size << ")" << std::endl;
@@ -405,6 +405,7 @@ graph_join_pm graph_join(graph_join_pm &left, graph_join_pm &right) {
 
     graph_join_intermediate(left, right, id, result, vertex_map);
 
+    result.doesAcceptEmptyString = left.doesAcceptEmptyString && right.doesAcceptEmptyString;
     return result;
 }
 

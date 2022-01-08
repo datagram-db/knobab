@@ -8,10 +8,10 @@
 const  std::string DeclareTemplateCollect::left_act{"a"};
 const  std::string DeclareTemplateCollect::right_act{"b"};
 
-DeclareTemplateCollect::DeclareTemplateCollect(const std::filesystem::path& cachePath) : element{cachePath}{
-    if (!std::filesystem::exists(cachePath / "graph_pattern_cache")) {
-       if (! std::filesystem::create_directories(cachePath / "graph_pattern_cache")) {
-           throw std::runtime_error(cachePath.string() + "path does not exists");
+DeclareTemplateCollect::DeclareTemplateCollect(const std::filesystem::path& cachePath) : element{cachePath / "graph_pattern_cache"}{
+    if (!std::filesystem::exists(element)) {
+       if (! std::filesystem::create_directories(element)) {
+           throw std::runtime_error(element.string() + "path does not exists");
        }
     }
 }

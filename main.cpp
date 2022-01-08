@@ -96,9 +96,10 @@ void test_grounding() {
 
 #include <yaml-cpp/yaml.h>
 #include <knobab/Environment.h>
+#include <yaucl/graphs/algorithms/minimizeDFA.h>
 
 void whole_testing(const std::string& log_file = "testing/log.txt",
-                   const std::string& declare_file = "testing/declare1.powerdecl",
+                   const std::string& declare_file = "testing/declare2.powerdecl",
                    const std::string& atomization_conf = "testing/atomization_pipeline.yaml",
                    const std::string& grounding_strategy = "testing/grounding_strategy.yaml") {
     Environment env;
@@ -183,6 +184,23 @@ void whole_testing(const std::string& log_file = "testing/log.txt",
     env.first_atomize_model();
     env.print_grounded_model(std::cout); // DEBUG
     //////////////////////////////////////////////////////////////////
+
+    {
+        auto result = env.compute_declare_for_conjunctive(false);
+        {
+            std::ofstream output_nl_model{"node_labelled_graph.dot"};
+            dot(result.joined_graph_model, output_nl_model, true);
+        }
+        {
+            auto g = convert_to_dfa_graph(result.joined_graph_model);
+
+            // TODO: merge sink un-accepting nodes in makeDFAAsInTheory
+            auto DFA = minimizeDFA(g).makeDFAAsInTheory(env.getSigmaAll());
+
+            std::ofstream output_el_model{"edge_labelled_graph.dot"};
+            DFA.dot(output_el_model);
+        }
+    }
 
 }
 

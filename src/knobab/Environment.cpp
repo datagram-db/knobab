@@ -33,6 +33,7 @@ void Environment::clear() {
 }
 
 #include <filesystem>
+#include <yaucl/graphs/algorithms/minimizeDFA.h>
 
 
 void Environment::load_model(const std::string &model_file) {
@@ -150,10 +151,10 @@ semantic_atom_set Environment::evaluate_easy_prop_to_atoms(const easy_prop &prop
 FlexibleFA<size_t, std::string> Environment::declare_to_graph_for_patterns(const DeclareDataAware &decl) {
     assert(!decl.left_decomposed_atoms.empty());
     assert(!decl.right_decomposed_atoms.empty());
-    {
+    /*{
         auto it = pattern_graph.find(decl);
         if (it != pattern_graph.end()) return it->second;
-    }
+    }*/
 
     NodeLabelBijectionFA<std::string, easy_prop> patternGraphToInstantiate =
             declare_to_graph.getDeclareTemplate(decl.casusu, decl.n);
@@ -164,9 +165,9 @@ FlexibleFA<size_t, std::string> Environment::declare_to_graph_for_patterns(const
     std::unordered_map<std::string, semantic_atom_set> bogus_act_to_set;
     bogus_act_to_set[declare_to_graph.left_act] = decl.left_decomposed_atoms;
 
-    if (isUnaryPredicate(decl.casusu)) {
+    if (!isUnaryPredicate(decl.casusu)) {
         //bogus_act_to_atom[declare_to_graph.right_act] = decl.right_act;
-        bogus_act_to_set[declare_to_graph.left_act] = decl.right_decomposed_atoms;
+        bogus_act_to_set[declare_to_graph.right_act] = decl.right_decomposed_atoms;
     }
 
     FlexibleFA<size_t, std::string> result;
@@ -191,7 +192,7 @@ FlexibleFA<size_t, std::string> Environment::declare_to_graph_for_patterns(const
             }
         }
     }
-    return (pattern_graph[decl] = result.makeDFAAsInTheory(getSigmaAll()));
+    return (/*pattern_graph[decl] =*/ result.makeDFAAsInTheory(getSigmaAll()));
 }
 
 void Environment::compute_declare_to_graph_for_joins(const DeclareDataAware &decl, graph_join_pm &out_result) {
@@ -200,10 +201,11 @@ void Environment::compute_declare_to_graph_for_joins(const DeclareDataAware &dec
     {
         graph_join_pm g2;
         {
-            auto g = declare_to_graph_for_patterns(decl)
-                    .shiftLabelsToNodes();
+            auto g3 = declare_to_graph_for_patterns(decl);
+
+            g3.dot(std::cout);
+                    auto g = g3.shiftLabelsToNodes();
             g.pruneUnreachableNodes();
-            g.dot(std::cout);
 
             convert_to_novel_graph(g, g2);
         }
@@ -234,6 +236,15 @@ TemplateCollectResult Environment::compute_declare_for_conjunctive(bool doPrune)
         compute_declare_for_disjunctive(zeroModel, currGraph); // // = template_to_graph.at(zeroModel);
         TemplateCollectResult result;
         conditionalPruningGraph(doPrune, true, result, currGraph);
+        {
+            auto g = convert_to_dfa_graph(currGraph);
+
+            // TODO: merge sink un-accepting nodes in makeDFAAsInTheory
+            auto DFA = minimizeDFA(g).makeDFAAsInTheory(getSigmaAll());
+
+            std::ofstream output_el_model{std::to_string(0)+"_test.g"};
+            DFA.dot(output_el_model);
+        }
         for (size_t j = 1; j<M; j++) {
             auto& zeroModelJ = grounding.singleElementOfConjunction.at(j);
             ///assert(allTemplates.contains(std::make_pair(zeroModelJ.casusu, zeroModelJ.n)));
@@ -242,6 +253,15 @@ TemplateCollectResult Environment::compute_declare_for_conjunctive(bool doPrune)
             compute_declare_for_disjunctive(zeroModelJ, currGraph2);
             ///auto& currGraph2 = template_to_graph.at(zeroModelJ);
             conditionalPruningGraph(doPrune, false, result, currGraph2);
+            {
+                auto g = convert_to_dfa_graph(currGraph2);
+
+                // TODO: merge sink un-accepting nodes in makeDFAAsInTheory
+                auto DFA = minimizeDFA(g).makeDFAAsInTheory(getSigmaAll());
+
+                std::ofstream output_el_model{std::to_string(j)+"_test.g"};
+                DFA.dot(output_el_model);
+            }
         }
         if (doPrune) {
             graph_join_pm result_;

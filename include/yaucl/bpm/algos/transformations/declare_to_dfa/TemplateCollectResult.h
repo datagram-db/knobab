@@ -17,6 +17,10 @@ struct TemplateCollectResult {
     TemplateCollectResult(TemplateCollectResult&& ) = default;
     TemplateCollectResult& operator=(const TemplateCollectResult& ) = default;
     TemplateCollectResult& operator=(TemplateCollectResult&& ) = default;
+
+    [[deprecated]]
+    void minimize();
+
 };
 
 void conditionalPruningGraph(bool doPrune, bool firstInsertion, TemplateCollectResult& result, graph_join_pm& currGraph);

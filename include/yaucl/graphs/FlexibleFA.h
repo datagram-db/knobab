@@ -199,7 +199,7 @@ public:
         return reachable;
     }
 
-    std::unordered_set<size_t> Move2(const std::unordered_set<size_t>& P, const EdgeLabel& given) {
+    std::unordered_set<size_t> Move2(const std::unordered_set<size_t>& P, const EdgeLabel& given) const {
         std::unordered_set<size_t> reachable;
         for (const size_t& p : P) {
             if (removed_nodes.contains(p)) continue;
@@ -211,7 +211,7 @@ public:
         return reachable;
     }
 
-    std::unordered_map<EdgeLabel, std::unordered_set<size_t>> Move3(const std::unordered_set<size_t>& P) {
+    std::unordered_map<EdgeLabel, std::unordered_set<size_t>> Move3(const std::unordered_set<size_t>& P) const {
         std::unordered_map<EdgeLabel, std::unordered_set<size_t>> reachable;
         for (const size_t& p : P) {
             if (removed_nodes.contains(p)) continue;

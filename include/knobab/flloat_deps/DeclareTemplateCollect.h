@@ -15,7 +15,7 @@
 
 class DeclareTemplateCollect {
     std::unordered_map<std::pair<declare_templates, size_t>, NodeLabelBijectionFA<std::string, easy_prop>> graph_map;
-    const std::filesystem::path& element;
+    std::filesystem::path element;
     FLLOAT callable; // python callable
 
 public:

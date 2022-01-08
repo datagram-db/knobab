@@ -16,7 +16,7 @@ void conditionalPruningGraph(bool doPrune, bool firstInsertion, TemplateCollectR
         }
     } else {
         graph_join_pm result_;
-        remove_unaccepting_states(currGraph, result_);
+        //remove_unaccepting_states(currGraph, result_);
         result.distinct_graph_model.emplace_back(result_);
         if (firstInsertion) {
             result.joined_graph_model = result_;
@@ -146,3 +146,8 @@ TemplateCollectResult DeclareNoDataTemplateCollect::buildUpModel(const std::vect
     }
 }
 */
+void TemplateCollectResult::minimize() {
+    graph_join_pm result;
+    ::minimize(joined_graph_model, result);
+    joined_graph_model = result;
+}

@@ -16,6 +16,8 @@
 
 void convert_to_novel_graph(const FlexibleFA<std::string, size_t> &old, graph_join_pm& result);
 
+FlexibleFA<size_t, std::string> convert_to_dfa_graph(graph_join_pm& input);
+
 /*
 void parseToGraph(graph_join_pm& result,
                   ltlf& formulas_to_dfas,
