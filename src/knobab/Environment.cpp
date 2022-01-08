@@ -198,13 +198,14 @@ FlexibleFA<size_t, std::string> Environment::declare_to_graph_for_patterns(const
 void Environment::compute_declare_to_graph_for_joins(const DeclareDataAware &decl, graph_join_pm &out_result) {
     //graph_loader.need_back_conversion = ptr != nullptr;
     //graph_loader.back_conv = ptr;
+    static size_t i = 0;
     {
         graph_join_pm g2;
         {
             auto g3 = declare_to_graph_for_patterns(decl);
-
-            g3.dot(std::cout);
-                    auto g = g3.shiftLabelsToNodes();
+            std::ofstream ofile{std::to_string(i++)+"_tmp.dot"};
+            g3.dot(ofile);
+            auto g = g3.shiftLabelsToNodes();
             g.pruneUnreachableNodes();
 
             convert_to_novel_graph(g, g2);
