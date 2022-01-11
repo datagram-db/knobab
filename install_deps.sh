@@ -5,4 +5,4 @@ pip install git+https://github.com/whitemech/flloat.git
 
 ## Pulling the repositories
 git submodule update --init --recursive
-git submodule update --recursive --remote
+##git submodule update --recursive --remote
