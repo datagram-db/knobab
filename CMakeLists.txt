@@ -11,15 +11,17 @@ include_directories(submodules/rapidxml-1.13)
 #include_directories(${PYTHON_INCLUDE_DIRS})
 #include_directories(${Boost_INCLUDE_DIRS})
 
-set(UTF8_TESTS OFF)
-add_subdirectory(submodules/antlr4/runtime/Cpp)
-include_directories(submodules/antlr4/runtime/Cpp/runtime/src)
-include_directories(antlr4/cpp/antlr4)
+#set(UTF8_TESTS OFF)
+#add_subdirectory(submodules/antlr4/runtime/Cpp)
+#include_directories(submodules/antlr4/runtime/Cpp/runtime/src)
+#include_directories(antlr4/cpp/antlr4)
 include_directories(submodules/date/include)
 include_directories(submodules/json/include)
 
 include_directories(submodules/magic_enum/include)
 
+set(CMAKE_VERBOSE_MAKEFILE  TRUE)
+set(CMAKE_CXX_COMPILER g++)
 include_directories(include)
 add_library(knobab STATIC
         src/knobab/oid.cpp
@@ -33,7 +35,8 @@ add_library(knobab STATIC
         src/knobab/algorithms/kb_grounding.cpp
         include/knobab/algorithms/kb_grounding.h
         src/knobab/algorithms/atomization_pipeline.cpp
-        include/knobab/algorithms/atomization_pipeline.h src/knobab/Environment.cpp include/knobab/Environment.h)
+        include/knobab/algorithms/atomization_pipeline.h #src/knobab/Environment.cpp include/knobab/Environment.h
+        )
 target_link_libraries(knobab  yaucl_structures)
 
 add_library(yaucl_numeric STATIC
@@ -81,35 +84,44 @@ add_library(yaucl_bpm STATIC
         include/yaucl/bpm/structures/ltlf/ltlf.h
         src/yaucl/bpm/structures/declare/CNFDeclareDataAware.cpp
         include/yaucl/bpm/structures/declare/CNFDeclareDataAware.h
-        src/yaucl/bpm/structures/declare/DeclareModelParse.cpp
+#        src/yaucl/bpm/structures/declare/DeclareModelParse.cpp
         include/yaucl/bpm/structures/declare/DeclareModelParse.h
         src/yaucl/bpm/structures/log/trace_visitor.cpp
         include/yaucl/bpm/structures/log/trace_visitor.h
-        src/yaucl/bpm/structures/log/data_loader.cpp
-        src/yaucl/bpm/structures/log/TracesBaseListener.cpp
-        src/yaucl/bpm/structures/log/TracesBaseVisitor.cpp
-        src/yaucl/bpm/structures/log/TracesLexer.cpp
-        src/yaucl/bpm/structures/log/TracesListener.cpp
-        src/yaucl/bpm/structures/log/TracesParser.cpp
-        src/yaucl/bpm/structures/log/TracesVisitor.cpp
-        src/yaucl/bpm/structures/log/DataTraceParse.cpp
+#        src/yaucl/bpm/structures/log/data_loader.cpp
+#        src/yaucl/bpm/structures/log/TracesBaseListener.cpp
+#        src/yaucl/bpm/structures/log/TracesBaseVisitor.cpp
+#        src/yaucl/bpm/structures/log/TracesLexer.cpp
+#        src/yaucl/bpm/structures/log/TracesListener.cpp
+#        src/yaucl/bpm/structures/log/TracesParser.cpp
+#        src/yaucl/bpm/structures/log/TracesVisitor.cpp
+#        src/yaucl/bpm/structures/log/DataTraceParse.cpp
         src/yaucl/bpm/structures/commons/DataPredicate.cpp
         include/yaucl/bpm/structures/commons/DataPredicate.h
         src/yaucl/bpm/structures/ltlf/PropositionalizedAtomsSet.cpp
         include/yaucl/bpm/structures/ltlf/PropositionalizedAtomsSet.h
-        src/yaucl/bpm/structures/declare/DADBaseListener.cpp
-        src/yaucl/bpm/structures/declare/DADBaseVisitor.cpp
-        src/yaucl/bpm/structures/declare/DADListener.cpp
-        src/yaucl/bpm/structures/declare/DADLexer.cpp
-        src/yaucl/bpm/structures/declare/DADParser.cpp
-        src/yaucl/bpm/structures/declare/DADVisitor.cpp
+#        src/yaucl/bpm/structures/declare/DADBaseListener.cpp
+#        src/yaucl/bpm/structures/declare/DADBaseVisitor.cpp
+#        src/yaucl/bpm/structures/declare/DADListener.cpp
+#        src/yaucl/bpm/structures/declare/DADLexer.cpp
+#        src/yaucl/bpm/structures/declare/DADParser.cpp
+#        src/yaucl/bpm/structures/declare/DADVisitor.cpp
         src/yaucl/bpm/structures/declare/DeclareDataAware.cpp
         include/yaucl/bpm/structures/declare/DeclareDataAware.h
         src/yaucl/bpm/algos/transformations/declare_to_dfa/DeclareNoDataTemplateCollect.cpp
         include/yaucl/bpm/algos/transformations/declare_to_dfa/DeclareNoDataTemplateCollect.h
         src/yaucl/bpm/algos/transformations/declare_to_dfa/TemplateCollectResult.cpp
-        include/yaucl/bpm/algos/transformations/declare_to_dfa/TemplateCollectResult.h src/yaucl/bpm/structures/declare/DisjunctiveDeclareDataAware.cpp include/yaucl/bpm/structures/declare/DisjunctiveDeclareDataAware.h src/yaucl/bpm/algos/transformations/grounding.cpp src/yaucl/bpm/algos/transformations/grounding.cpp include/yaucl/bpm/algos/transformations/grounding.h src/yaucl/bpm/structures/commons/testing_predicates.cpp include/yaucl/bpm/structures/commons/testing_predicates.h src/yaucl/bpm/structures/ltlf/easy_prop.cpp include/yaucl/bpm/structures/commons/easy_prop.h)
-target_link_libraries(yaucl_bpm antlr4_static yaucl_numeric yaucl_data yaucl_graph yaucl_hashing)
+        include/yaucl/bpm/algos/transformations/declare_to_dfa/TemplateCollectResult.h
+        src/yaucl/bpm/structures/declare/DisjunctiveDeclareDataAware.cpp
+        include/yaucl/bpm/structures/declare/DisjunctiveDeclareDataAware.h
+        src/yaucl/bpm/algos/transformations/grounding.cpp
+        src/yaucl/bpm/algos/transformations/grounding.cpp
+        include/yaucl/bpm/algos/transformations/grounding.h
+        src/yaucl/bpm/structures/commons/testing_predicates.cpp
+        include/yaucl/bpm/structures/commons/testing_predicates.h
+        src/yaucl/bpm/structures/ltlf/easy_prop.cpp
+        include/yaucl/bpm/structures/commons/easy_prop.h)
+target_link_libraries(yaucl_bpm  yaucl_numeric yaucl_data yaucl_graph yaucl_hashing)
 
 #add_library(knobab_flloat STATIC
 #        src/knobab/flloat_deps/flloat_wrapper.cpp
@@ -130,4 +142,4 @@ target_link_libraries(yaucl_bpm antlr4_static yaucl_numeric yaucl_data yaucl_gra
 #target_link_libraries(knobab_flloat ${Boost_LIBRARIES} ${PYTHON_LIBRARIES}  yaucl_bpm yaucl_graph)
 
 add_executable(test main.cpp )
-target_link_libraries(test knobab antlr4_static yaucl_stringutils yaucl_numeric yaucl_hashing yaucl_data yaucl_bpm yaucl_graph yaucl_structures)
+target_link_libraries(test knobab  yaucl_stringutils yaucl_numeric yaucl_hashing yaucl_data yaucl_bpm yaucl_graph yaucl_structures)

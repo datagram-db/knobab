@@ -21,7 +21,7 @@ struct CountTemplate {
     void load_record(uint16_t act, uint32_t trace_id, uint16_t event_pos);
     void indexing(uint16_t maxAct, uint32_t maxTraceId);
 
-    std::pair<const oid*, const oid*> resolve_primary_index(uint16_t actId);
+    std::pair<const oid*, const oid*> resolve_primary_index(const uint16_t actId, uint32_t& start, uint32_t& send) const;
 
     ///void emplace_back(const uint_least64_t& monotone_hash);
     void sort();
