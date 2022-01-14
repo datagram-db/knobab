@@ -24,7 +24,7 @@
 //
 
 #include <yaucl/bpm/structures/ltlf/ltlf.h>
-#include <z3++.h>
+#include <cassert>
 
 ltlf::ltlf() : casusu{TRUE}, is_negated{false}, is_compound_predicate{false} { }
 

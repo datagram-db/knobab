@@ -51,7 +51,7 @@ void KnowledgeBase::reconstruct_trace_with_data(std::ostream &os) const {
 
 void KnowledgeBase::index_data_structures() {
     /// Filling the gaps in the sparse table, so to take into account the events that are missing from a given trace
-    count_table.indexing(actId-1, this->noTraces-1);
+    count_table.indexing(actId, this->noTraces-1);
 
     /// generating the primary index for the ActTable, and returning its intermediate index, M2
     const auto& idx = act_table_by_act_id.indexing1();
@@ -62,9 +62,11 @@ void KnowledgeBase::index_data_structures() {
 
     /// Continuing to create the secondary index out of M2, as well as clearing M2
     act_table_by_act_id.indexing2();
+    act_table_by_act_id.sanityCheck();
 }
 
 ///////////////// Event System
+#include <iostream>
 
 void KnowledgeBase::enterLog(const std::string &source, const std::string &name) {
     assert(!this->alreadySet);
@@ -107,8 +109,9 @@ void KnowledgeBase::exitTrace(size_t traceId) {
 
 size_t KnowledgeBase::enterEvent(size_t chronos_tick, const std::string &event_label) {
     actId = event_label_mapper.put(event_label).first;
-    auto it = counting_reference.emplace(actId, 0UL);
+    auto it = counting_reference.emplace(actId, 1UL);
     if (!it.second) {
+        // Existing key, increment the count val
         it.first->second++;
     }
     status = EventParsing;
@@ -318,4 +321,81 @@ union_minimal resolveUnionMinimal(const AttributeTable &table, const AttributeTa
             // TODO: hierarchical types!, https://dl.acm.org/doi/10.1145/3410566.3410583
             return (double)x.value;
     }
+}
+
+std::unordered_map<uint32_t, float> KnowledgeBase::exists(const std::pair<const oid *, const oid *>& subsection, uint32_t& start, uint32_t& end, const uint16_t& amount,const bool& isExact) const {
+    std::unordered_map<uint32_t, float> foundElems;
+#if 0
+
+    uint16_t mappedVal;
+
+    try{
+        mappedVal = event_label_mapper.get(act);
+    }
+    catch(const std::exception& e){
+        return foundElems;
+    }
+
+    std::pair<const oid*, const oid*> subsection = count_table.resolve_primary_index(mappedVal, start, end);     // Pointers to first and last oid from Count Table subsection
+#endif
+    if(!subsection.first){
+        return foundElems;
+    }
+
+    for (auto it = count_table.table.begin() + start; it != count_table.table.begin() + end; ++it) {
+        if(isExact && amount == it->id.parts.event_id){
+            foundElems.emplace(it->id.parts.trace_id, 1);
+        }
+        else {
+            float perc = 1 - ((float)std::abs(amount - it->id.parts.event_id) / (float)std::max(amount, it->id.parts.event_id));
+            foundElems.emplace(it->id.parts.trace_id, perc);
+        }
+    }
+
+    return foundElems;
+}
+
+void KnowledgeBase::load_data_without_antlr4(const KnowledgeBase::no_antlr_log &L, const std::string &source,
+                                             const std::string &name) {
+    enterLog(source, name);
+    for (auto const& trace : L ){ //sigma_i
+        size_t strace_id = enterTrace("bogus");
+        size_t chronos = 0;
+        enterData_part(false);
+        exitData_part(false);
+        for (auto const & event : trace) {
+            auto const act = event.first;
+            size_t event_id = enterEvent(chronos++, act);
+            enterData_part(true);
+            for (auto const& cp : event.second) {
+                if (std::holds_alternative<bool>(cp.second)) {
+                    visitField(cp.first, std::get<bool>(cp.second));
+                } else if (std::holds_alternative<double>(cp.second)) {
+                    visitField(cp.first, std::get<double>(cp.second));
+                } else if (std::holds_alternative< std::string>(cp.second)) {
+                    visitField(cp.first, std::get< std::string>(cp.second));
+                }else if (std::holds_alternative< size_t>(cp.second)) {
+                    visitField(cp.first, std::get< size_t>(cp.second));
+                }
+            }
+            exitData_part(true);
+            exitEvent(event_id);
+        }
+        exitTrace(strace_id);
+    }
+    exitLog(source, name);
+}
+
+std::pair<const oid *, const oid *> KnowledgeBase::resolveCountingData(const std::string &act, uint32_t& start, uint32_t& end) {
+    uint16_t mappedVal;
+
+    try{
+        mappedVal = event_label_mapper.get(act);
+    }
+    catch(const std::exception& e){
+        return {nullptr, nullptr};
+    }
+
+
+    return count_table.resolve_primary_index(mappedVal, start, end);     // Pointers to first and last oid from Count Table subsection
 }

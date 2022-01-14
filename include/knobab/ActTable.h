@@ -26,7 +26,7 @@ struct ActTable {
         struct record*  next;
 
         record();
-        record(trace_t id, time_t time, act_t act, struct record* prev, struct record* next);
+        record(act_t act, trace_t id, time_t time, struct record* prev, struct record* next);
         record(const record& ) = default;
         record& operator=(const record&) = default;
 

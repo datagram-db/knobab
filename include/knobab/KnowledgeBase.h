@@ -17,6 +17,7 @@
 #include <yaucl/structures/any_to_uint_bimap.h>
 #include <SimplifiedFuzzyStringMatching.h>
 #include <yaucl/bpm/structures/commons/DataPredicate.h>
+#include <variant>
 
 enum ParsingState {
     LogParsing,
@@ -46,6 +47,7 @@ class KnowledgeBase : public trace_visitor {
     size_t actId;
 
 public:
+    ActTable                                        act_table_by_act_id;
 
     std::pair<std::unordered_map<std::string, AttributeTable>::iterator,
             std::unordered_map<std::string, AttributeTable>::iterator> getAttrNameTableIt() {
@@ -59,10 +61,10 @@ public:
     }
 
     union_minimal resolveMinimalRecord(const ActTable::record* eventFromTrace,
-                                 const std::unordered_map<std::string, AttributeTable>::iterator& attr_table) const {
-            return resolveUnionMinimal(attr_table->second,
-                                       *attr_table->second.resolve_record_if_exists(eventFromTrace - act_table_by_act_id.table.data()));
-        }
+                                       const std::unordered_map<std::string, AttributeTable>::iterator& attr_table) const {
+        return resolveUnionMinimal(attr_table->second,
+                                   *attr_table->second.resolve_record_if_exists(eventFromTrace - act_table_by_act_id.table.data()));
+    }
 
 
     /**
@@ -76,7 +78,7 @@ public:
      * @return The collected values as above
      */
     void collectValuesFrom(std::set<union_type> &S, ssize_t trace_id, uint16_t act_id,
-                                           const std::string &attribute_name) const;
+                           const std::string &attribute_name) const;
     void collectValuesFrom(std::set<union_type> &S, const std::unordered_set<size_t> &trace_ids, uint16_t act_id,
                            const std::string &attribute_name) const;
 
@@ -93,7 +95,7 @@ public:
                            const std::unordered_set<trace_t>& trace_ids = {},
                            const std::unordered_map<std::string, std::unordered_set<std::string>>& actToVariables = {},
                            const std::unordered_set<std::string>& otherValues = {}
-                           ) const;
+    ) const;
 
 
     void clear();
@@ -119,7 +121,21 @@ public:
     void visitField(const std::string &key, const std::string &value) override;
     void visitField(const std::string &key, size_t value) override;
 
-    ActTable                                        act_table_by_act_id;
+    using no_antlr_event = std::pair<std::string, std::unordered_map<std::string, std::variant<bool, double, std::string, size_t>>>; // <act, payload>
+    using no_antlr_trace = std::vector<no_antlr_event>;
+    using no_antlr_log = std::vector<no_antlr_trace>;
+
+
+    void load_data_without_antlr4(const no_antlr_log& L, const std::string &source, const std::string &name);
+
+
+    // First part of the pipeline
+
+    std::pair<const oid *, const oid *> resolveCountingData(const std::string &act, uint32_t& start, uint32_t& end);
+
+    // Second part of the pipeline
+    std::unordered_map<uint32_t, float> exists(const std::pair<const oid *, const oid *>& subsection,  uint32_t& start, uint32_t& end, const uint16_t& amount = 1, const bool& isExact = false) const;
+
 private:
     void collectValuesAmongTraces(std::set<union_type> &S, size_t trace_id, act_t acts, bool HasNoAct,
                                   const std::string &attribute_name, bool hasNoAttribute) const;
