@@ -204,8 +204,28 @@ void whole_testing(const std::string& log_file = "testing/log.txt",
 
 }
 
+void test_fsm() {
+    SimplifiedFuzzyStringMatching matcher;
+
+    matcher.put("hello");
+    matcher.put("bello");
+    matcher.put("bel");
+    matcher.put("hell");
+    matcher.put("call");
+    matcher.put("fall");
+    matcher.put("tall");
+    matcher.put("all");
+    matcher.put("elementary");
+
+    std::multimap<double, std::string> result;
+    matcher.fuzzyMatch(0.0, 100, "fall", result);
+    for (const auto& cp : result)
+        std::cout << cp.first << " - " << cp.second << std::endl;
+}
+
 int main() {
-    whole_testing();
+    test_fsm();
+    //whole_testing();
     //test_declare();
     //test_grounding();
 

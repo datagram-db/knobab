@@ -58,7 +58,7 @@ void KnowledgeBase::index_data_structures() {
 
     /// Applying the intermediate index M2 to each attribute table, so to continue with the value indexing
     for (auto& attr_name_to_table_cp : attribute_name_to_table)
-        attr_name_to_table_cp.second.index(idx, act_table_by_act_id.table.size()-1);
+        attr_name_to_table_cp.second.index(idx);
 
     /// Continuing to create the secondary index out of M2, as well as clearing M2
     act_table_by_act_id.indexing2();
