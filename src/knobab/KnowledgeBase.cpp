@@ -323,38 +323,6 @@ union_minimal resolveUnionMinimal(const AttributeTable &table, const AttributeTa
     }
 }
 
-std::unordered_map<uint32_t, float> KnowledgeBase::exists(const std::pair<const oid *, const oid *>& subsection, uint32_t& start, uint32_t& end, const uint16_t& amount,const bool& isExact) const {
-    std::unordered_map<uint32_t, float> foundElems;
-#if 0
-
-    uint16_t mappedVal;
-
-    try{
-        mappedVal = event_label_mapper.get(act);
-    }
-    catch(const std::exception& e){
-        return foundElems;
-    }
-
-    std::pair<const oid*, const oid*> subsection = count_table.resolve_primary_index(mappedVal, start, end);     // Pointers to first and last oid from Count Table subsection
-#endif
-    if(!subsection.first){
-        return foundElems;
-    }
-
-    for (auto it = count_table.table.begin() + start; it != count_table.table.begin() + end; ++it) {
-        if(isExact && amount == it->id.parts.event_id){
-            foundElems.emplace(it->id.parts.trace_id, 1);
-        }
-        else {
-            float perc = 1 - ((float)std::abs(amount - it->id.parts.event_id) / (float)std::max(amount, it->id.parts.event_id));
-            foundElems.emplace(it->id.parts.trace_id, perc);
-        }
-    }
-
-    return foundElems;
-}
-
 void KnowledgeBase::load_data_without_antlr4(const KnowledgeBase::no_antlr_log &L, const std::string &source,
                                              const std::string &name) {
     enterLog(source, name);
@@ -386,16 +354,92 @@ void KnowledgeBase::load_data_without_antlr4(const KnowledgeBase::no_antlr_log &
     exitLog(source, name);
 }
 
-std::pair<const oid *, const oid *> KnowledgeBase::resolveCountingData(const std::string &act, uint32_t& start, uint32_t& end) {
-    uint16_t mappedVal;
-
+uint16_t KnowledgeBase::getMappedValueFromAction(const std::string &act) const {
     try{
-        mappedVal = event_label_mapper.get(act);
+        return event_label_mapper.get(act);
     }
     catch(const std::exception& e){
+        return -1;
+    }
+}
+
+std::pair<const oid *, const oid *> KnowledgeBase::resolveCountingData(const std::string &act, uint32_t& start, uint32_t& end) const {
+    const uint16_t& mappedVal = getMappedValueFromAction(act);
+
+    if(mappedVal < 0){
         return {nullptr, nullptr};
     }
 
-
-    return count_table.resolve_primary_index(mappedVal, start, end);     // Pointers to first and last oid from Count Table subsection
+    return count_table.resolve_primary_index(mappedVal, start, end);
 }
+
+std::pair<const ActTable::record*, const ActTable::record*> KnowledgeBase::resolveActData(const std::string &act, uint32_t &start, uint32_t &end) const {
+    const uint16_t& mappedVal = getMappedValueFromAction(act);
+
+    if(mappedVal < 0){
+        return {nullptr, nullptr};
+    }
+
+    return act_table_by_act_id.resolve_index(mappedVal);
+}
+
+std::unordered_map<uint32_t, float> KnowledgeBase::exists(const std::pair<const oid *, const oid *>& subsection, const uint32_t& start, const uint32_t& end, const uint16_t& amount,const bool& isExact) const {
+    std::unordered_map<uint32_t, float> foundElems;
+
+    if(!subsection.first){
+        return foundElems;
+    }
+
+    for (auto it = count_table.table.begin() + start; it != count_table.table.begin() + end + 1; ++it) {
+        if(isExact && amount == it->id.parts.event_id){
+            foundElems.emplace(it->id.parts.trace_id, 1);
+        }
+        else {
+            float perc = 1 - ((float)std::abs(amount - it->id.parts.event_id) / (float)std::max(amount, it->id.parts.event_id));
+            foundElems.emplace(it->id.parts.trace_id, perc);
+        }
+    }
+
+    return foundElems;
+}
+
+std::vector<uint32_t> KnowledgeBase::init(const std::string& act) const {
+    const uint16_t& mappedVal = getMappedValueFromAction(act);
+
+    if(mappedVal < 0){
+        return std::vector<uint32_t>();
+    }
+
+    std::vector<uint32_t> foundTrace = std::vector<uint32_t>();
+
+    for(const std::pair<ActTable::record*, ActTable::record*>& inst : act_table_by_act_id.secondary_index){
+        if(inst.first->entry.id.parts.act == mappedVal){
+            const uint32_t& foundID = inst.first->entry.id.parts.trace_id;
+            foundTrace.emplace_back(foundID);
+        }
+    }
+
+    return foundTrace;
+}
+
+std::vector<uint32_t> KnowledgeBase::ends(const std::string& act) const {
+    const uint16_t& mappedVal = getMappedValueFromAction(act);
+
+    if(mappedVal < 0){
+        return std::vector<uint32_t>();
+    }
+
+    std::vector<uint32_t> foundTrace = std::vector<uint32_t>();
+
+    for(const std::pair<ActTable::record*, ActTable::record*>& inst : act_table_by_act_id.secondary_index){
+        if(inst.second->entry.id.parts.act == mappedVal){
+            const uint32_t& foundID = inst.second->entry.id.parts.trace_id;
+            foundTrace.emplace_back(foundID);
+        }
+    }
+
+    return foundTrace;
+}
+
+
+

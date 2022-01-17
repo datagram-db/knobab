@@ -130,11 +130,16 @@ public:
 
 
     // First part of the pipeline
-
-    std::pair<const oid *, const oid *> resolveCountingData(const std::string &act, uint32_t& start, uint32_t& end);
+    uint16_t getMappedValueFromAction(const std::string &act) const;
+    std::pair<const oid*, const oid*> resolveCountingData(const std::string &act, uint32_t& start, uint32_t& end) const;
+    std::pair<const ActTable::record*, const ActTable::record*> resolveActData(const std::string &act, uint32_t& start, uint32_t& end) const;
 
     // Second part of the pipeline
-    std::unordered_map<uint32_t, float> exists(const std::pair<const oid *, const oid *>& subsection,  uint32_t& start, uint32_t& end, const uint16_t& amount = 1, const bool& isExact = false) const;
+    std::unordered_map<uint32_t, float> exists(const std::pair<const oid *, const oid *>& subsection,  const uint32_t& start, const uint32_t& end, const uint16_t& amount = 1, const bool& isExact = false) const;
+
+    std::vector<uint32_t> init(const std::string& act) const;
+
+    std::vector<uint32_t> ends(const std::string& act) const;
 
 private:
     void collectValuesAmongTraces(std::set<union_type> &S, size_t trace_id, act_t acts, bool HasNoAct,
