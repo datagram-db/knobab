@@ -24,7 +24,7 @@
 //{{"a", {}}, {"c", {{"x", 2.0}}}}};
 
 const KnowledgeBase::no_antlr_log LogTrace = {
-        {{"a", {}}, {"a", {}}, {"a", {}}, {"a", {}}, {"b", {}}},
+        {{"a", {}}, {"a", {}}, {"a", {}}, {"b", {}}},
         {{"b", {}}, {"b", {}}, {"b", {}}, {"b", {}}, {"a", {}}},
         {{"c", {}}, {"b", {}}, {"c", {}}, {"b", {}}, {"c", {}}}};
 
@@ -54,9 +54,14 @@ int main() {
 
     // First part
     uint32_t a, b;
-    auto data = db.resolveCountingData("a", a, b);
+    std::pair<const oid *, const oid *>  data = db.resolveCountingData("a", a, b);
 
     // Second part
     std::unordered_map<uint32_t, float> found = db.exists(data, a, b, 3);
+
+    std::vector<uint32_t> testVec = db.init("a");
+
+    std::vector<uint32_t> testVec1 = db.ends("a");
+
     return 0;
 }
