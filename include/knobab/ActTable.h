@@ -50,14 +50,7 @@ struct ActTable {
     /**
  * Associating an act id to all of the events from all the traces having the same act id
  */
-    [[nodiscard]] std::pair<const record*, const record*> resolve_index(act_t id) const {
-        if (primary_index.size() < id)
-            return {nullptr, nullptr};
-        else {
-            return {table.data() + primary_index.at(id),
-                    ((id == (primary_index.size() - 1)) ? (const record*)primary_index.back() : table.data() + primary_index.at(id+1))};
-        }
-    }
+    [[nodiscard]] std::pair<const record*, const record*> resolve_index(act_t id) const;
 
     /**
      * Mapping the trace id to the first and last event (see the log printer from the KnowledgeBase for a usage example)
