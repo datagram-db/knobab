@@ -236,6 +236,8 @@ bool AttributeTable::range_query(size_t actId, const DataPredicate &prop, Attrib
             if (std::distance(tmpLeft, tmpRight) < 0) {
                 return false;
             }
+            ssize_t left = std::distance(begin, tmpLeft);
+            ssize_t right = std::distance(begin, tmpRight);
 
             thisResult.exact_solution.first = tmpLeft;
             thisResult.exact_solution.second = tmpRight;
@@ -244,43 +246,48 @@ bool AttributeTable::range_query(size_t actId, const DataPredicate &prop, Attrib
                 // this computation shall be performed only if we also need to provide the approximated match
                 if (type == StringAtt) {
                     SimplifiedFuzzyStringMatching sfzm;
-                    for (auto i = lb; i <= ub; ++i) {
+                    for (auto i = left; i <= right; ++i) {
                         // Filling the approximate match element with the items of interest
-                        sfzm.put(get<std::string>(resolve(*i)));
+                        sfzm.put(get<std::string>(resolve(table[it.first + i])));
                     }
 
                     // Retrieving the best candidate for each element of the interval: we cannot do better than this...
-                    for (auto i = begin; i <= lb; ++i) {
-                        getIterator(min_threshold, thisResult, sfzm, i);
+                    for (auto i = 0; i < left; ++i) {
+                        getIterator(min_threshold, thisResult, sfzm, &table.at(it.first + i));
                     }
-                    for (auto i = ub; i <= end; ++i) {
-                        getIterator(min_threshold, thisResult, sfzm, i);
+                    for (auto i = right+1; i < ((ssize_t)(it.second-it.first)); ++i) {
+                        getIterator(min_threshold, thisResult, sfzm, &table.at(it.first + i));
                     }
                 } else {
-                    for (auto i = lb - 1; i >= begin; i--) {
-                        double thisValue = similarityFunction(resolve(*i), prop_leftValue, c);
+                    for (ssize_t i = ((ssize_t)left)-1; i >= ((ssize_t)0); i--) {
+                        double thisValue = similarityFunction(resolve(table.at(it.first+i)), prop_leftValue, c);
                         if (thisValue < min_threshold)
                             break; // Stop the iteration if we reached the maximum part
-                        thisResult.approx_solution.emplace_back((const AttributeTable::record *) &i, thisValue);
+                        thisResult.approx_solution.emplace_back(&table.at(it.first+i), thisValue);
                     }
-                    for (auto i = end - 1; i <= ub; i--) {
-                        double thisValue = similarityFunction(resolve(*i), prop_rightValue, c);
+                    for (ssize_t i = ((ssize_t)(it.second-it.first))-1; i > right; i--) {
+                        double thisValue = similarityFunction(resolve(table.at(it.first+i)), prop_rightValue, c);
                         if (thisValue < min_threshold)
                             break; // Stop the iteration if we reached the maximum part
-                        thisResult.approx_solution.emplace_back((const AttributeTable::record *) &i, thisValue);
+                        thisResult.approx_solution.emplace_back(&table.at(it.first+i), thisValue);
                     }
                 }
                 std::sort(thisResult.approx_solution.begin(), thisResult.approx_solution.end());
+                thisResult.approx_solution.erase(std::unique(thisResult.approx_solution.begin(), thisResult.approx_solution.end()), thisResult.approx_solution.end());
             }
         } else {
             // No solution found! only approximations are admissable.
             if (type == StringAtt) {
                 // Instead of scanning the whole records, just use ptr, and then perform the intersection!
-
+                SimplifiedFuzzyStringMatching sfzm;
+                for (auto i = it.first; i < it.second; ++i) {
+                    // Filling the approximate match element with the items of interest
+                    sfzm.put(get<std::string>(resolve(table[i])));
+                }
                 std::unordered_map<std::string, double> aggr;
                 {
                     std::multimap<double, std::string> result;
-                    ptr.fuzzyMatch(min_threshold, 1, std::get<std::string>(prop_leftValue), result);
+                    sfzm.fuzzyMatch(min_threshold, 1, std::get<std::string>(prop_leftValue), result);
                     for (const auto &cp: result) {
                         auto it2 = aggr.emplace(cp.second, cp.first);
                         if (!it2.second) {
@@ -290,7 +297,7 @@ bool AttributeTable::range_query(size_t actId, const DataPredicate &prop, Attrib
                 }
                 {
                     std::multimap<double, std::string> result;
-                    ptr.fuzzyMatch(min_threshold, 1, std::get<std::string>(prop_rightValue), result);
+                    sfzm.fuzzyMatch(min_threshold, 1, std::get<std::string>(prop_rightValue), result);
                     for (const auto &cp: result) {
                         auto it2 = aggr.emplace(cp.second, cp.first);
                         if (!it2.second) {
@@ -310,32 +317,36 @@ bool AttributeTable::range_query(size_t actId, const DataPredicate &prop, Attrib
                             }
                         }
                     }
+                    std::sort(thisResult.approx_solution.begin(), thisResult.approx_solution.end());
+                    thisResult.approx_solution.erase(std::unique(thisResult.approx_solution.begin(), thisResult.approx_solution.end()), thisResult.approx_solution.end());
                 }
                 return !aggr.empty();
             } else {
                 disjunctive_range_query_result *current_result = nullptr;
-                for (auto i = end - 1; i >= begin; i--) {
-                    double thisValue = similarityFunction(resolve(*i), prop_leftValue, c);
+                for (auto i = ((ssize_t)it.second) - 1; i >= ((ssize_t)it.first); i--) {
+                    double thisValue = similarityFunction(resolve(table.at(i)), prop_leftValue, c);
                     if (thisValue < min_threshold)
                         break; // Stop the iteration if we reached the maximum part
                     if (!current_result) {
                         result.emplace_back();
                         current_result = result.data() + (result.size() - 1);
                     }
-                    current_result->approx_solution.emplace_back((const AttributeTable::record *) &i, thisValue);
+                    current_result->approx_solution.emplace_back(&table.at(i), thisValue);
                 }
-                for (auto i = begin; i < end; i++) {
-                    double thisValue = similarityFunction(resolve(*i), prop_rightValue, c);
+                for (auto i = it.first; i < it.second; i++) {
+                    double thisValue = similarityFunction(resolve(table.at(i)), prop_rightValue, c);
                     if (thisValue < min_threshold)
                         break; // Stop the iteration if we reached the maximum part
                     if (!current_result) {
                         result.emplace_back();
                         current_result = result.data() + (result.size() - 1);
                     }
-                    current_result->approx_solution.emplace_back((const AttributeTable::record *) &i, thisValue);
+                    current_result->approx_solution.emplace_back(&table.at(i), thisValue);
                 }
-                if (current_result)
+                if (current_result) {
                     std::sort(current_result->approx_solution.begin(), current_result->approx_solution.end());
+                    current_result->approx_solution.erase(std::unique(current_result->approx_solution.begin(), current_result->approx_solution.end()), current_result->approx_solution.end());
+                }
                 return current_result != nullptr;
             }
         }

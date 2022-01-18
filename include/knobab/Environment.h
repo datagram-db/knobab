@@ -32,6 +32,7 @@ public:
 
     double min_threshold = 1.0;
     double c = 2.0;
+    bool   index_missing_data = false;
 
     /// Data Range Queries
     std::vector<std::pair<std::pair<trace_t, event_t>, double>> range_query(DataPredicate prop) const {
@@ -56,8 +57,9 @@ public:
      * @param format        Format of the log
      * @param loadData      Whether to load the trace and event payloads
      * @param filename      Filename associated to the log
+     * @param setMaximumStrLen Whether to exploit the knowledge base information to infer the maximum string length
      */
-    void load_log(log_data_format format, bool loadData, const std::string &filename);
+    void load_log(log_data_format format, bool loadData, const std::string &filename, bool setMaximumStrLen = true);
 
     /**
      * Loading the Declare model in the Extended format
@@ -120,21 +122,14 @@ public:
      * @return
      */
     semantic_atom_set evaluate_easy_prop_to_atoms(const easy_prop &prop,
-                                                  //const std::unordered_map<std::string, std::string>& bogus_act_to_atom,
                                                   const std::unordered_map<std::string, semantic_atom_set>& bogus_act_to_set);
 
     void print_model(std::ostream& os) const ;
     void print_grounded_model(std::ostream& os) const;
     void print_knowledge_base(std::ostream& os) const;
-    void print_count_table(std::ostream& os) const {
-        db.print_count_table(os);
-    }
-    void print_act_table(std::ostream& os) const {
-        db.print_act_table(os);
-    }
-    void print_attribute_tables(std::ostream& os) const {
-        db.print_attribute_tables(os);
-    }
+    void print_count_table(std::ostream& os) const;
+    void print_act_table(std::ostream& os) const;
+    void print_attribute_tables(std::ostream& os) const;
     void print_grounding_tables(std::ostream& os);
 
 private:
