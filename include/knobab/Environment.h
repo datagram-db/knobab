@@ -126,6 +126,15 @@ public:
     void print_model(std::ostream& os) const ;
     void print_grounded_model(std::ostream& os) const;
     void print_knowledge_base(std::ostream& os) const;
+    void print_count_table(std::ostream& os) const {
+        db.print_count_table(os);
+    }
+    void print_act_table(std::ostream& os) const {
+        db.print_act_table(os);
+    }
+    void print_attribute_tables(std::ostream& os) const {
+        db.print_attribute_tables(os);
+    }
     void print_grounding_tables(std::ostream& os);
 
 private:

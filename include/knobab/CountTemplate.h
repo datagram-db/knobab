@@ -9,6 +9,7 @@
 #include <knobab/oid.h>
 #include <algorithm>
 #include <cassert>
+#include <ostream>
 
 
 struct CountTemplate {
@@ -29,6 +30,8 @@ struct CountTemplate {
     void clear() {
         table.clear();
     }
+
+    friend std::ostream &operator<<(std::ostream &os, const CountTemplate &aTemplate);
 
 private:
     uint16_t maxAct;

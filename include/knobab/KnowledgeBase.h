@@ -51,6 +51,17 @@ class KnowledgeBase : public trace_visitor {
 public:
     ActTable                                        act_table_by_act_id;
 
+    void print_count_table(std::ostream& os) const {
+        os << count_table;
+    }
+    void print_act_table(std::ostream& os) const {
+        os << act_table_by_act_id;
+    }
+    void print_attribute_tables(std::ostream& os) const {
+        for (const auto& ref : attribute_name_to_table)
+            os << ref.second;
+    }
+
     std::pair<std::unordered_map<std::string, AttributeTable>::iterator,
             std::unordered_map<std::string, AttributeTable>::iterator> getAttrNameTableIt() {
         return {attribute_name_to_table.begin(), attribute_name_to_table.end()};
@@ -128,13 +139,11 @@ public:
     std::vector<std::pair<std::pair<trace_t, event_t>, double>>
     range_query(DataPredicate prop, double min_threshold = 1.0, const double c = 2.0) const;
 
+    // Backup measure
     using no_antlr_event = std::pair<std::string, std::unordered_map<std::string, std::variant<bool, double, std::string, size_t>>>; // <act, payload>
     using no_antlr_trace = std::vector<no_antlr_event>;
     using no_antlr_log = std::vector<no_antlr_trace>;
-
-
     void load_data_without_antlr4(const no_antlr_log& L, const std::string &source, const std::string &name);
-
 
     // First part of the pipeline
     uint16_t getMappedValueFromAction(const std::string &act) const;
@@ -143,9 +152,7 @@ public:
 
     // Second part of the pipeline
     std::unordered_map<uint32_t, float> exists(const std::pair<const oid *, const oid *>& subsection,  const uint32_t& start, const uint32_t& end, const uint16_t& amount = 1, const bool& isExact = false) const;
-
     std::vector<uint32_t> init(const std::string& act) const;
-
     std::vector<uint32_t> ends(const std::string& act) const;
 
 private:

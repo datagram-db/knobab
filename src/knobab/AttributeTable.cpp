@@ -116,7 +116,7 @@ void AttributeTable::index(const std::vector<std::vector<size_t>> &trace_id_to_e
                 for (const auto& traceid_eventid : val_offset.second) {
                     size_t offset =
                             trace_id_to_event_id_to_offset.at(traceid_eventid.first).at(traceid_eventid.second);
-                    secondary_index[offset] = table.size();
+
                     valueToOffsetInTable[val_offset.first].emplace_back(offset);
                 }
             }
@@ -129,6 +129,7 @@ void AttributeTable::index(const std::vector<std::vector<size_t>> &trace_id_to_e
                 for (const auto& refx : it->second) {
                     if (type == StringAtt)
                         string_offset_mapping[current_string].emplace_back(table.size());
+                    secondary_index[refx] = table.size();
                     table.emplace_back(act_id, val, refx);
                 }
                 it = valueToOffsetInTable.erase(it);
@@ -167,6 +168,8 @@ std::ostream &AttributeTable::resolve_and_print(std::ostream &os, const Attribut
 }
 
 #include <sstream>
+#include <magic_enum.hpp>
+
 
 AttributeTable::range_query_result AttributeTable::range_query(DataPredicate prop, ssize_t act, double min_threshold, const double c) const {
     // Just for consistency checking, I need to evaluate the predicate over the specific table. This is also for efficiency reasons
@@ -333,6 +336,35 @@ bool AttributeTable::range_query(size_t actId, const DataPredicate &prop, Attrib
 
 
 
+std::ostream &operator<<(std::ostream &os, const AttributeTable &table) {
+    const double at16 = std::pow(2, 16);
+    os << "          ActTable[" << table.attr_name << " : " << magic_enum::enum_name(table.type) << ']' << std::endl << "-------------------------------" << std::endl;
+    size_t i = 0;
+    for (const auto& ref : table.table) {
+        auto v = table.resolve(ref);
+        os << (i++) << ": " << ref.act << ", ";
+        switch (table.type) {
+            case DoubleAtt:
+                os << std::get<double>(v);
+                break;
+            case SizeTAtt:
+                os << std::get<size_t>(v);
+                break;
+            case LongAtt:
+                os << std::get<long long>(v);
+                break;
+            case StringAtt:
+                os << std::get<std::string>(v);
+                break;
+            case BoolAtt:
+                os << std::get<bool>(v) ? "TRUE" : "FALSE";
+                break;
+        }
+        os << ", +" << ref.act_table_offset << std::endl;
+    }
+    os << std::endl << "-------------------------------" << std::endl;
+    return os;
+}
 
 
 
