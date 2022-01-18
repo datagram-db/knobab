@@ -36,10 +36,14 @@ void yaucl::bpm::DataTraceParse::load(const std::string &stream_name, std::istre
     isPayloadTrace = false;
     trace_count = 0;
     event_count = 0;
+    std::cout << "Input stream" << std::endl;
     antlr4::ANTLRInputStream input(stream);
+    std::cout << "Tokenizer (Lexer)" << std::endl;
     TracesLexer lexer(&input);
     antlr4::CommonTokenStream tokens(&lexer);
+    std::cout << "Parser" << std::endl;
     TracesParser parser(&tokens);
+    std::cout << "Parsing using libraries" << std::endl;
     tv->enterLog(stream_name, stream_name);
     visitLog(parser.log());
     tv->exitLog(stream_name, stream_name);
@@ -49,9 +53,11 @@ void yaucl::bpm::DataTraceParse::load(const std::string &stream_name, std::istre
 }
 
 antlrcpp::Any yaucl::bpm::DataTraceParse::visitLog(TracesParser::LogContext *ctx) {
+    std::cout << "Log visit starts" << std::endl;
     //yaucl::bpm::log log;
     if (ctx) {
         for (const auto& ptr : ctx->trace()) {
+            std::cout << "Trace i" << std::endl;
             visitTrace(ptr);
         }
     }
@@ -64,10 +70,12 @@ antlrcpp::Any yaucl::bpm::DataTraceParse::visitTrace(TracesParser::TraceContext 
         size_t event_count = 1;
         size_t traceId = tv->enterTrace(std::to_string(trace_count));
         isPayloadTrace = true;
+        std::cout << "Visiting the data" << std::endl;
         visitData_part(ctx->data_part());
         isPayloadTrace = false;
         event_count = 0;
         for (const auto& ptr : ctx->event()) {
+            std::cout << "Visiting the evebt" << std::endl;
             visitEvent(ptr);
         }
         event_count = 0;
@@ -79,6 +87,8 @@ antlrcpp::Any yaucl::bpm::DataTraceParse::visitTrace(TracesParser::TraceContext 
 
 antlrcpp::Any yaucl::bpm::DataTraceParse::visitEvent(TracesParser::EventContext *ctx) {
     if (ctx) {
+
+        std::cout << "Event loading" << std::endl;
         const auto p1 = std::chrono::system_clock::now();
         unsigned long long int timestamp = std::chrono::duration_cast<std::chrono::hours>(p1.time_since_epoch()).count();
         size_t eid = tv->enterEvent(timestamp,ctx->LABEL()->getText());

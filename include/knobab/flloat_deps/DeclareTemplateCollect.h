@@ -11,12 +11,17 @@
 #include <yaucl/graphs/NodeLabelBijectionFA.h>
 #include <yaucl/graphs/FlexibleFA.h>
 #include <filesystem>
+#ifdef PYTHON_RUNS
 #include <knobab/flloat_deps/flloat_wrapper.h>
+#endif
 
 class DeclareTemplateCollect {
     std::unordered_map<std::pair<declare_templates, size_t>, NodeLabelBijectionFA<std::string, easy_prop>> graph_map;
     std::filesystem::path element;
+
+#ifdef PYTHON_RUNS
     FLLOAT callable; // python callable
+#endif
 
 public:
     const static std::string left_act, right_act;

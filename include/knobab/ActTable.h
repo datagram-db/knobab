@@ -26,7 +26,7 @@ struct ActTable {
         struct record*  next;
 
         record();
-        record(trace_t id, time_t time, act_t act, struct record* prev, struct record* next);
+        record(act_t act, trace_t id, time_t time, struct record* prev, struct record* next);
         record(const record& ) = default;
         record& operator=(const record&) = default;
 
@@ -50,14 +50,7 @@ struct ActTable {
     /**
  * Associating an act id to all of the events from all the traces having the same act id
  */
-    [[nodiscard]] std::pair<const record*, const record*> resolve_index(act_t id) const {
-        if (primary_index.size() < id)
-            return {nullptr, nullptr};
-        else {
-            return {table.data() + primary_index.at(id),
-                    ((id == (primary_index.size() - 1)) ? (const record*)primary_index.back() : table.data() + primary_index.at(id+1))};
-        }
-    }
+    [[nodiscard]] std::pair<const record*, const record*> resolve_index(act_t id) const;
 
     /**
      * Mapping the trace id to the first and last event (see the log printer from the KnowledgeBase for a usage example)
