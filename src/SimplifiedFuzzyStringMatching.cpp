@@ -107,7 +107,7 @@ std::string SimplifiedFuzzyStringMatching::get(size_t id) const {
 }
 
 void SimplifiedFuzzyStringMatching::getTwoGramAndString(const std::string &argument,
-                                                        std::unordered_map<std::string, size_t> &map) {
+                                                        std::unordered_map<std::string, size_t> &map) const {
     auto ls = gram_multiplicity.find(argument);
     //void *ls = twogramAndStringToMultiplicity.searchForId(argument);
     if (ls != gram_multiplicity.end()) {
@@ -122,7 +122,7 @@ void SimplifiedFuzzyStringMatching::getTwoGramAndString(const std::string &argum
 void SimplifiedFuzzyStringMatching::rankCollectionOf(std::unordered_set<size_t> &k,
                                                      std::unordered_map<std::string, size_t> &m1, unsigned long size,
                                                      double threshold,
-                                                     yaucl::structures::PollMap<double, std::string> &pollMap) {
+                                                     yaucl::structures::PollMap<double, std::string> &pollMap) const {
     for (size_t itemId : k) {
         std::string associatedToElement = get(itemId);
         std::unordered_map<std::string , size_t> m2;
@@ -158,7 +158,7 @@ void SimplifiedFuzzyStringMatching::rankCollectionOf(std::unordered_set<size_t> 
 }
 
 void SimplifiedFuzzyStringMatching::fuzzyMatch(double threshold, size_t topk, const std::string &objectString,
-                                               std::multimap<double, std::string> &result) {
+                                               std::multimap<double, std::string> &result) const {
     yaucl::structures::PollMap<double, std::string> toReturnTop{topk};
     std::vector<std::string> objectGrams = compareString_wordLetterPairs(objectString);
     std::unordered_set<size_t> candidates{};

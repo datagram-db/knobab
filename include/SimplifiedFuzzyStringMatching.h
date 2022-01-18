@@ -31,17 +31,17 @@ public:
     }
 
     // TODO: import the code for the indexed approximate string matching
-    void getTwoGramAndString(const std::string &argument, std::unordered_map<std::string , size_t> &map);
+    void getTwoGramAndString(const std::string &argument, std::unordered_map<std::string , size_t> &map) const;
 
     void fuzzyMatch(double threshold,
                     size_t topk,
                     const std::string& objectString,
-                    std::multimap<double, std::string> &result);
+                    std::multimap<double, std::string> &result) const;
 
 private:
     void rankCollectionOf(std::unordered_set<size_t> &k, std::unordered_map<std::string , size_t> &m1,
                           unsigned long size, double threshold,
-                          yaucl::structures::PollMap<double, std::string> &pollMap);
+                          yaucl::structures::PollMap<double, std::string> &pollMap) const;
 };
 
 

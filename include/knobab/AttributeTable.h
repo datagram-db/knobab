@@ -9,7 +9,7 @@
 #include <knobab/oid.h>
 #include <variant>
 #include <yaucl/bpm/structures/commons/DataPredicate.h>
-class SimplifiedFuzzyStringMatching;
+
 
 enum AttributeTableType {
     DoubleAtt,
@@ -25,12 +25,13 @@ using union_type = std::variant<double, size_t, long long, std::string, bool>;
 #include <vector>
 #include <map>
 #include <unordered_map>
-
+#include <ostream>
+#include <SimplifiedFuzzyStringMatching.h>
 
 
 struct AttributeTable {
     std::string attr_name;
-    SimplifiedFuzzyStringMatching *ptr;
+    SimplifiedFuzzyStringMatching ptr;
     AttributeTableType type;
     std::unordered_map<std::string, std::vector<size_t>> string_offset_mapping;
 
@@ -51,7 +52,8 @@ struct AttributeTable {
          * Constructor to be used when an exact solution is always the case
          */
         disjunctive_range_query_result(const record *begin, const record *end) : exact_solution(begin, end) {}
-        DEFAULT_CONSTRUCTORS(disjunctive_range_query_result);
+        disjunctive_range_query_result() : disjunctive_range_query_result(nullptr, nullptr) {};
+        DEFAULT_COPY_ASSGN(disjunctive_range_query_result);
 
         /**
          * If the query is an approximated query, I cannot efficiently just provide a range of values where the values
@@ -66,9 +68,50 @@ struct AttributeTable {
          * found
          */
         std::pair<const record *, const record *> exact_solution;
+
+
     };
 
-    using range_query_result = std::vector<disjunctive_range_query_result>;
+    struct range_query_result {
+        std::vector<disjunctive_range_query_result> _data;
+        range_query_result(bool isUniverse) : universe(isUniverse) {}
+        DEFAULT_COPY_ASSGN(range_query_result);
+
+        /**
+         * If set to true and all the other parts are empty, it means that I have an universe solution, id est, all of
+         * the traces are equivalent. Otherwise, I have an empty solution. This solution is done for reasons of efficiency,
+         * so that not all of the recors are returned if required.
+         *
+         * Still, it could be still the universe because all of the records are returned in _data! but still, we are interested
+         * in that, rather than, in some specific scenarios, distinguish an empty set just because we are not allocating all
+         * of the resources for the sake of nothing.
+         *
+         * Please observe, universe is meant to be interpreted with respect to the WHOLE Knowledge Base, and not just to
+         * a single AttributeTable
+         */
+        bool universe;
+
+        bool isUniverse() const { return universe && _data.empty(); }
+        bool isEmptySolution() const { return (!universe) && _data.empty(); }
+
+        std::vector<disjunctive_range_query_result>::reference emplace_back() {
+            return _data.emplace_back();
+        }
+
+        std::vector<disjunctive_range_query_result>::reference emplace_back(const record *begin, const record *end) {
+            return _data.emplace_back(begin, end);
+        }
+
+        size_t size() const {
+            return _data.size();
+        }
+
+        disjunctive_range_query_result* data() {
+            return _data.data();
+        }
+
+    };
+
 
     /**
      * Mapping the act id to the offset of where it appears within the record
@@ -82,10 +125,10 @@ struct AttributeTable {
      */
     std::unordered_map<size_t, size_t> secondary_index;
 
-    AttributeTable() : attr_name(""), ptr{nullptr}, type{BoolAtt} {}
+    AttributeTable() : attr_name(""), type{BoolAtt} {}
 
-    AttributeTable(const std::string &attr, AttributeTableType type, SimplifiedFuzzyStringMatching *ptr = nullptr)
-            : attr_name(attr), ptr{ptr}, type{type} {}
+    AttributeTable(const std::string &attr, AttributeTableType type)
+            : attr_name(attr), type{type} {}
 
     AttributeTable(const AttributeTable &) = default;
 
@@ -109,14 +152,14 @@ struct AttributeTable {
      *
      * @param prop              Predicate that we want to test
      * @param act               Act over which we want to perform the query. If -1, then it means that we want to retrieve them all
-     * @param maximumApprox     If zero, it means that we only want to have exact queries. Otherwise, if a positive value is given,
-     *                          this provides the maximum degree of approximation that is expected
+     * @param minimum           If one, it means that we only want to have exact queries. Otherwise, if a positive value is given,
+     *                          this provides the minimum degree of similarity that is expected
      * @param c                 For distance functions over non-strings, it provides the distance among all of the elements that have
      *                          less distance than the given one
      * @return
      */
     range_query_result
-    range_query(DataPredicate prop, ssize_t act = -1, double maximumApprox = 0.0, const double c = 2.0) const;
+    range_query(DataPredicate prop, ssize_t act = -1, double maximumApprox = 1.0, const double c = 2.0) const;
 
 private:
     std::vector<std::map<union_type, std::vector<std::pair<trace_t, event_t>>>> elements;
@@ -126,7 +169,7 @@ private:
     bool assertVariant(const union_type &val);
 
     bool range_query(size_t actId, const DataPredicate &prop, AttributeTable::range_query_result &result,
-                     bool isNotExactMatch, double min_threshold) const ;
+                     bool isNotExactMatch, double min_threshold, double c) const ;
 
     template <typename T>
     void
@@ -134,7 +177,7 @@ private:
                 SimplifiedFuzzyStringMatching &sfzm,
                 const T& i) const {
         std::multimap<double, std::string> result;
-        sfzm.fuzzyMatch(min_threshold, 1, get<std::string>(resolve(*i)), result); // IDE has a problem, but this is going to be expanded in the Cpp!
+        sfzm.fuzzyMatch(min_threshold, 1, get<std::string>(resolve(*i)), result);
         if (!result.empty()) {
             for (const auto& ref : result) {
                 auto it2 = string_offset_mapping.find(ref.second);

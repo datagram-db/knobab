@@ -44,6 +44,8 @@ class KnowledgeBase : public trace_visitor {
     size_t currentEventId;
     ParsingState status;
     size_t actId;
+    std::vector<std::pair<std::pair<trace_t, event_t>, double>> universe;
+    std::vector<std::pair<std::pair<trace_t, event_t>, double>> empty;
 
 public:
 
@@ -120,6 +122,11 @@ public:
     void visitField(const std::string &key, size_t value) override;
 
     ActTable                                        act_table_by_act_id;
+
+    /// Data Range Queries
+    std::vector<std::pair<std::pair<trace_t, event_t>, double>>
+    range_query(DataPredicate prop, double min_threshold = 1.0, const double c = 2.0) const;
+
 private:
     void collectValuesAmongTraces(std::set<union_type> &S, size_t trace_id, act_t acts, bool HasNoAct,
                                   const std::string &attribute_name, bool hasNoAttribute) const;
