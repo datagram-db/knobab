@@ -51,12 +51,12 @@ size_t      DataPredicate::msl = MAXIMUM_STRING_LENGTH;
 
 DataPredicate::DataPredicate() : casusu{TTRUE}, wasReversed{false} {}
 
-DataPredicate::DataPredicate(const std::string &var, numeric_atom_cases casusu, const union_minimal &value) : var(
-        var), casusu(casusu), value(value), wasReversed{false}  {}
+DataPredicate::DataPredicate(const std::string &var, numeric_atom_cases casusu, const union_minimal &value, const std::string &label) : var(
+        var), casusu(casusu), value(value), wasReversed{false}, label(label)  {}
 
-DataPredicate::DataPredicate(const std::string &var, numeric_atom_cases casusu, const std::string &value) : var(var), wasReversed{false} , casusu(casusu), value(value) {}
+DataPredicate::DataPredicate(const std::string &var, numeric_atom_cases casusu, const std::string &value, const std::string &label) : var(var), label(label) , wasReversed{false} , casusu(casusu), value(value) {}
 
-DataPredicate::DataPredicate(const std::string &var, numeric_atom_cases casusu, const double &value) : var(var), wasReversed{false} , casusu(casusu), value(value) {}
+DataPredicate::DataPredicate(const std::string &var, numeric_atom_cases casusu, const double &value, const std::string &label) : var(var), label(label), wasReversed{false} , casusu(casusu), value(value) {}
 
 #include <cassert>
 
