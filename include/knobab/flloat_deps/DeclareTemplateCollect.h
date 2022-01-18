@@ -2,8 +2,10 @@
 // Created by giacomo on 07/01/2022.
 //
 
+#define PYTHON_RUNS
 #ifndef KNOBAB_DECLARETEMPLATECOLLECT_H
 #define KNOBAB_DECLARETEMPLATECOLLECT_H
+
 
 #include <unordered_map>
 #include <yaucl/bpm/structures/declare/DeclareDataAware.h>
