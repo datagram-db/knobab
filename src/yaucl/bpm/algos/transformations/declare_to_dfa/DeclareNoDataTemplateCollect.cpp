@@ -39,7 +39,7 @@ void DeclareNoDataTemplateCollect::add(const DeclareDataAware &left) {
 #endif
 
 #include <fstream>
-#include <knobab/flloat_deps/ParseFFLOATDot.h>
+//#include <knobab/flloat_deps/ParseFFLOATDot.h>
 
 
 
