@@ -383,21 +383,16 @@ std::pair<const ActTable::record*, const ActTable::record*> KnowledgeBase::resol
     return act_table_by_act_id.resolve_index(mappedVal);
 }
 
-std::unordered_map<uint32_t, float> KnowledgeBase::exists(const std::pair<const oid *, const oid *>& subsection, const uint32_t& start, const uint32_t& end, const uint16_t& amount,const bool& isExact) const {
-    std::unordered_map<uint32_t, float> foundElems;
+std::unordered_map<uint32_t, float> KnowledgeBase::exists(const std::pair<const oid*, const oid*>& subsection, const uint32_t& start, const uint32_t& end, const uint16_t& amount) const {
+    std::unordered_map<uint32_t, float> foundElems = std::unordered_map<uint32_t, float>();
 
     if(!subsection.first){
         return foundElems;
     }
 
     for (auto it = count_table.table.begin() + start; it != count_table.table.begin() + end + 1; ++it) {
-        if(isExact && amount == it->id.parts.event_id){
-            foundElems.emplace(it->id.parts.trace_id, 1);
-        }
-        else {
-            float perc = 1 - ((float)std::abs(amount - it->id.parts.event_id) / (float)std::max(amount, it->id.parts.event_id));
-            foundElems.emplace(it->id.parts.trace_id, perc);
-        }
+        float satisfiability = 1 / ((float)(std::abs(amount - it->id.parts.event_id) / approxConstant) + 1);
+        foundElems.emplace(it->id.parts.trace_id, satisfiability);
     }
 
     return foundElems;

@@ -31,7 +31,7 @@ enum ParsingState {
 using trace_set = std::bitset<sizeof(uint32_t)>;
 using act_set = std::bitset<sizeof(uint16_t)>;
 union_minimal resolveUnionMinimal(const AttributeTable &table, const AttributeTable::record &x);
-
+const uint16_t approxConstant = 2;
 
 class KnowledgeBase : public trace_visitor {
     CountTemplate                                   count_table;
@@ -135,7 +135,7 @@ public:
     std::pair<const ActTable::record*, const ActTable::record*> resolveActData(const std::string &act, uint32_t& start, uint32_t& end) const;
 
     // Second part of the pipeline
-    std::unordered_map<uint32_t, float> exists(const std::pair<const oid *, const oid *>& subsection,  const uint32_t& start, const uint32_t& end, const uint16_t& amount = 1, const bool& isExact = false) const;
+    std::unordered_map<uint32_t, float> exists(const std::pair<const oid *, const oid *>& subsection,  const uint32_t& start, const uint32_t& end, const uint16_t& amount = 1) const;
 
     std::vector<uint32_t> init(const std::string& act) const;
 
