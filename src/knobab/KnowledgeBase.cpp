@@ -320,6 +320,7 @@ void KnowledgeBase::clear() {
 
 std::vector<std::pair<std::pair<trace_t, event_t>, double>>
 KnowledgeBase::range_query(DataPredicate prop, double min_threshold, const double c) const {
+    static const double at16 = std::pow(2, 16);
     if (prop.casusu == TTRUE)
         return universe; // Immediately returning the universe queries
     else
@@ -361,18 +362,20 @@ KnowledgeBase::range_query(DataPredicate prop, double min_threshold, const doubl
             std::vector<std::pair<std::pair<trace_t, event_t>, double>> S;
             for (const auto& element : tmp._data) {
                 if (element.exact_solution.first != nullptr) {
-                    size_t N = std::distance(element.exact_solution.second, element.exact_solution.first);
-                    for (size_t i = 0; i<N; i++) {
-                        auto& exactIt = element.exact_solution.first[i];
-                        S.emplace_back(std::make_pair(
-                                act_table_by_act_id.table.at(exactIt.act_table_offset).entry.id.parts.trace_id, act_table_by_act_id.table.at(exactIt.act_table_offset).entry.id.parts.event_id), 1.0);
+                    size_t N = std::distance(element.exact_solution.first, element.exact_solution.second);
+                    for (size_t i = 0; i<=N; i++) {
+                        const auto& exactIt = element.exact_solution.first[i];
+                        const auto& resolve = act_table_by_act_id.table.at(exactIt.act_table_offset).entry.id.parts;
+                        S.emplace_back(std::make_pair(resolve.trace_id,
+                                                      std::trunc((((double)resolve.event_id)/at16)*act_table_by_act_id.getTraceLength(resolve.trace_id))), 1.0);
                     }
 
                 }
 
                 for (auto item : element.approx_solution) {
-                    S.emplace_back(std::make_pair(
-                            act_table_by_act_id.table.at(item.first->act_table_offset).entry.id.parts.trace_id, act_table_by_act_id.table.at(item.first->act_table_offset).entry.id.parts.event_id), item.second);
+                    const auto& resolve = act_table_by_act_id.table.at(item.first->act_table_offset).entry.id.parts;
+                    S.emplace_back(std::make_pair(resolve.trace_id,
+                                                  std::trunc((((double)resolve.event_id)/at16)*act_table_by_act_id.getTraceLength(resolve.trace_id))), item.second);
 
                 }
             }

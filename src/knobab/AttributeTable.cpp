@@ -206,10 +206,8 @@ bool AttributeTable::range_query(size_t actId, const DataPredicate &prop, Attrib
     if (it.first == it.second)
         return false; // missing attribute ~ for the meantime, we are not approximating the match on the attribute name, but we should in the future
     {
-        assert(table.size() > it.first);
-        assert(table.size() > it.second);
-        auto table_leftValue = resolve(table[it.first]);
-        auto table_rightValue = resolve(table[it.second]);
+        assert(table.size() >= it.first);
+        assert(table.size() >= it.second);
 
         const union_type prop_leftValue = cast_unions(type, prop.value);
         const union_type prop_rightValue = cast_unions(type, prop.value_upper_bound);
@@ -223,28 +221,39 @@ bool AttributeTable::range_query(size_t actId, const DataPredicate &prop, Attrib
 
         if (lb != end) {
             auto ub = std::upper_bound(begin, end, prop_rightValue, [&](const union_type &value, const record &r) {
-                return resolve(r) < value;
+                return resolve(r) > value;
             });
 
             auto &thisResult = result.emplace_back();
-            thisResult.exact_solution.first = lb;
-            thisResult.exact_solution.second = ub;
-            std::cout << std::distance(ub, lb) << std::endl;
+            auto tmpLeft = lb;
+            auto tmpRight = ub;
+            if (tmpRight != end) {
+                tmpRight--;
+            }
+            else
+                tmpRight = table.data() + (it.second-1);
+
+            if (std::distance(tmpLeft, tmpRight) < 0) {
+                return false;
+            }
+
+            thisResult.exact_solution.first = tmpLeft;
+            thisResult.exact_solution.second = tmpRight;
 
             if (isNotExactMatch) {
                 // this computation shall be performed only if we also need to provide the approximated match
                 if (type == StringAtt) {
                     SimplifiedFuzzyStringMatching sfzm;
-                    for (auto i = lb; i != ub; ++i) {
+                    for (auto i = lb; i <= ub; ++i) {
                         // Filling the approximate match element with the items of interest
                         sfzm.put(get<std::string>(resolve(*i)));
                     }
 
                     // Retrieving the best candidate for each element of the interval: we cannot do better than this...
-                    for (auto i = begin; i != lb; ++i) {
+                    for (auto i = begin; i <= lb; ++i) {
                         getIterator(min_threshold, thisResult, sfzm, i);
                     }
-                    for (auto i = ub; i != end; ++i) {
+                    for (auto i = ub; i <= end; ++i) {
                         getIterator(min_threshold, thisResult, sfzm, i);
                     }
                 } else {
@@ -338,7 +347,7 @@ bool AttributeTable::range_query(size_t actId, const DataPredicate &prop, Attrib
 
 std::ostream &operator<<(std::ostream &os, const AttributeTable &table) {
     const double at16 = std::pow(2, 16);
-    os << "          ActTable[" << table.attr_name << " : " << magic_enum::enum_name(table.type) << ']' << std::endl << "-------------------------------" << std::endl;
+    os << "          AttributeTable[" << table.attr_name << " : " << magic_enum::enum_name(table.type) << ']' << std::endl << "-------------------------------" << std::endl;
     size_t i = 0;
     for (const auto& ref : table.table) {
         auto v = table.resolve(ref);
