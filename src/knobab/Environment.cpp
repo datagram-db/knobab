@@ -34,6 +34,7 @@ void Environment::clear() {
 
 #include <filesystem>
 #include <yaucl/graphs/algorithms/minimizeDFA.h>
+#include <yaucl/graphs/graph_join_pm_conversion.h>
 
 
 void Environment::load_model(const std::string &model_file) {

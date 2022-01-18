@@ -12,11 +12,11 @@ uint16_t cast_to_float(size_t x, size_t l) {
 
 ActTable::record::record() : record{0,0,0,nullptr, nullptr} {}
 
-ActTable::record::record(trace_t id, time_t time, act_t act, ActTable::record *prev, ActTable::record *next) : prev{prev}, next{next} {
+ActTable::record::record(act_t act, trace_t id, time_t time, ActTable::record *prev, ActTable::record *next) : prev{prev}, next{next} {
     //entry.id.parts.future = 0;
-    entry.id.parts.act = act;
-    entry.id.parts.trace_id = id;
     entry.id.parts.event_id = time;
+    entry.id.parts.trace_id = id;
+    entry.id.parts.act = act;
 }
 
 bool ActTable::record::operator<(const ActTable::record &rhs) const { return entry < rhs.entry; }
@@ -36,13 +36,12 @@ bool ActTable::record::operator!=(const ActTable::record &rhs) const {
 }
 
 #include <cassert>
+#include <iostream>
 
 ActTable::record *ActTable::load_record(trace_t id, act_t act, time_t time, ActTable::record *prev, ActTable::record *next) {
     /*expectedOrdering.emplace_back(id, time, table.size());
     table.emplace_back(id, time, act, prev, next);
     return &table.back();*/
-
-
     {
         const size_t N = builder.act_id_to_trace_id_and_time.size();
         assert(N >= act);
@@ -52,7 +51,6 @@ ActTable::record *ActTable::load_record(trace_t id, act_t act, time_t time, ActT
             builder.act_id_to_trace_id_and_time[act].emplace_back(id, time);
         }
     }
-
     {
         const size_t M = builder.trace_id_to_event_id_to_offset.size();
         assert(M >= id);
@@ -85,9 +83,9 @@ const std::vector<std::vector<size_t>> & ActTable::indexing1() { // todo: rename
         primary_index.emplace_back(offset);
         auto& ref = builder.act_id_to_trace_id_and_time[k];
         for (const std::pair<trace_t, event_t>& cp : ref) {
-            table.emplace_back(cp.first,                                                    // trace id
-                               cast_to_float(cp.second, trace_length.at(cp.first)), // float time
-                               k,                                                            // act
+            table.emplace_back(k,
+                               cp.first,
+                               cast_to_float(cp.second, trace_length.at(cp.first)),
                                nullptr, nullptr);
             builder.trace_id_to_event_id_to_offset[cp.first][cp.second] = offset++;
         }
@@ -142,4 +140,13 @@ void ActTable::indexing2() { // todo: rename as indexing, and remove expectedOrd
         ref.clear();
     }
     builder.trace_id_to_event_id_to_offset.clear();
+}
+
+std::pair<const ActTable::record *, const ActTable::record *> ActTable::resolve_index(act_t id) const {
+    if (primary_index.size() < id)
+        return {nullptr, nullptr};
+    else {
+        return {table.data() + primary_index.at(id),
+                ((id == (primary_index.size() - 1)) ? (const record*)primary_index.back() : table.data() + (primary_index.at(id+1) - 1))};      // Pointers to first and last records from Act Table subsection
+    }
 }
