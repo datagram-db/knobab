@@ -161,6 +161,9 @@ struct AttributeTable {
     range_query_result
     range_query(DataPredicate prop, ssize_t act = -1, double maximumApprox = 1.0, const double c = 2.0) const;
 
+
+    friend std::ostream &operator<<(std::ostream &os, const AttributeTable &table);
+
 private:
     std::vector<std::map<union_type, std::vector<std::pair<trace_t, event_t>>>> elements;
 

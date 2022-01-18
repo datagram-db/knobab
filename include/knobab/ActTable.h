@@ -9,6 +9,8 @@
 #include <knobab/oid.h>
 #include <tuple>
 #include <vector>
+#include <ostream>
+
 
 uint16_t cast_to_float(size_t x, size_t l);
 
@@ -68,6 +70,8 @@ struct ActTable {
     }
 
     size_t getTraceLength(size_t id) const { return trace_length.at(id); }
+
+    friend std::ostream &operator<<(std::ostream &os, const ActTable &table);
 
 private:
     std::vector<std::tuple<trace_t, event_t, size_t>> expectedOrdering; // TODO: remove?

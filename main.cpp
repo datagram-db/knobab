@@ -22,7 +22,12 @@ void test_data_query(const std::string& log_file = "testing/log.txt",
 
     std::cout << "Loading the log file: " << log_file << std::endl;
     env.load_log(HUMAN_READABLE_YAUCL, true, log_file);
+
+    env.print_count_table(std::cout);
+    env.print_act_table(std::cout);
+    env.print_attribute_tables(std::cout);
     env.print_knowledge_base(std::cout); // DEBUG
+    exit(1);
 
     std::cout << env.range_query({}) << std::endl;
     std::cout << env.range_query({"x", GEQ, 0.0, "A"}) << std::endl;
