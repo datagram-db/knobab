@@ -46,9 +46,15 @@ void Environment::load_model(const std::string &model_file) {
     conjunctive_model = dmp.load(file, true);
 }
 
-void Environment::load_log(log_data_format format, bool loadData, const std::string &filename) {
+void Environment::load_log(log_data_format format, bool loadData, const std::string &filename, bool setMaximumStrLen) {
     load_into_knowledge_base(format, loadData, filename, db);
-    db.index_data_structures();
+    db.index_data_structures(index_missing_data);
+    if (setMaximumStrLen) {
+        auto tmp = db.getMaximumStringLength();
+        ap.s_max = std::string(tmp, std::numeric_limits<char>::max());
+        DataPredicate::MAX_STRING = ap.s_max;
+        DataPredicate::msl = tmp;
+    }
 }
 
 void Environment::set_atomization_parameters(const std::string &fresh_atom_label, size_t mslength) {
@@ -272,4 +278,16 @@ TemplateCollectResult Environment::compute_declare_for_conjunctive(bool doPrune)
         }
         return result;
     }
+}
+
+void Environment::print_count_table(std::ostream &os) const {
+    db.print_count_table(os);
+}
+
+void Environment::print_act_table(std::ostream &os) const {
+    db.print_act_table(os);
+}
+
+void Environment::print_attribute_tables(std::ostream &os) const {
+    db.print_attribute_tables(os);
 }
