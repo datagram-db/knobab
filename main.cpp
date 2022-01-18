@@ -27,10 +27,17 @@ void test_data_query(const std::string& log_file = "testing/log.txt",
     env.print_act_table(std::cout);
     env.print_attribute_tables(std::cout);
     env.print_knowledge_base(std::cout); // DEBUG
-    exit(1);
 
+    /// EXACT QUERIES
     std::cout << env.range_query({}) << std::endl;
     std::cout << env.range_query({"x", GEQ, 0.0, "A"}) << std::endl;
+    std::cout << env.range_query({"x", GEQ, 0.0}) << std::endl;
+    std::cout << env.range_query({"x", LEQ, 2.0}) << std::endl;
+
+    /// SETTING FOR THE APPROX QUERY
+    env.min_threshold = 0.3;
+    env.c = 5.0;
+
 }
 
 void test_fsm() {
