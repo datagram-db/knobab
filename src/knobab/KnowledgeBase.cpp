@@ -25,17 +25,20 @@ void KnowledgeBase::reconstruct_trace_no_data(std::ostream &os) const {
 
 
 void KnowledgeBase::reconstruct_trace_with_data(std::ostream &os) const {
+    constexpr size_t record_size = sizeof(ActTable::record);
     for (size_t trace_id = 0, N = act_table_by_act_id.secondary_index.size(); trace_id < N; trace_id++) {
         os << "Trace #" << trace_id << std::endl << "\t- ";
         const auto& ref = act_table_by_act_id.secondary_index[trace_id];
         auto ptr = ref.first;
         while (ptr) {
+            size_t offset = (((size_t)ptr) - ((size_t)act_table_by_act_id.table.data()));
+            offset = offset / record_size;
             // printing one event at a time
             os << event_label_mapper.get(ptr->entry.id.parts.act) << "{ ";
             for (const auto& attr_table : this->attribute_name_to_table) {
-                ptrdiff_t offset = ptr - act_table_by_act_id.table.data();
                 const AttributeTable::record* recordPtr = attr_table.second.resolve_record_if_exists(offset);
                 if (recordPtr) {
+                    assert(recordPtr->act_table_offset == offset);
                     os << attr_table.first << '=';
                     attr_table.second.resolve_and_print(os, *recordPtr);
                     os << ", ";
