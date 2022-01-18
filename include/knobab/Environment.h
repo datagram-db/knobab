@@ -30,6 +30,14 @@ struct Environment {
 
 public:
 
+    double min_threshold = 1.0;
+    double c = 2.0;
+
+    /// Data Range Queries
+    std::vector<std::pair<std::pair<trace_t, event_t>, double>> range_query(DataPredicate prop) const {
+        return db.range_query(prop, min_threshold, c);
+    }
+
     Environment(const std::filesystem::path& cache_folder = "data/cache") : declare_to_graph{cache_folder} {}
 
     /**

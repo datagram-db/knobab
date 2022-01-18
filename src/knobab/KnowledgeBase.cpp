@@ -62,6 +62,14 @@ void KnowledgeBase::index_data_structures() {
 
     /// Continuing to create the secondary index out of M2, as well as clearing M2
     act_table_by_act_id.indexing2();
+
+    universe.clear();
+    for (event_t i = 0; i<noTraces; i++) {
+        for (act_t j = 0, N = act_table_by_act_id.getTraceLength(i); j<N; j++) {
+            universe.emplace_back(std::make_pair(i, j), 1.0);
+        }
+    }
+    assert(std::is_sorted(universe.begin(), universe.end()));
 }
 
 ///////////////// Event System
@@ -172,7 +180,7 @@ void KnowledgeBase::visitField(const std::string &key, const std::string &value)
     if (status == EventParsing) {
         auto it = attribute_name_to_table.find(key);
         if (it == attribute_name_to_table.end()) {
-            attribute_name_to_table[key] = {key, StringAtt, &string_values};
+            attribute_name_to_table[key] = {key, StringAtt};
             it = attribute_name_to_table.find(key);
         }
         it->second.record_load(actId, value, noTraces-1, currentEventId-1);
@@ -302,6 +310,72 @@ void KnowledgeBase::clear() {
     actId = 0;
 }
 
+#include <sstream>
+
+std::vector<std::pair<std::pair<trace_t, event_t>, double>>
+KnowledgeBase::range_query(DataPredicate prop, double min_threshold, const double c) const {
+    if (prop.casusu == TTRUE)
+        return universe; // Immediately returning the universe queries
+    else
+        prop.asInterval();
+    constexpr size_t max_int = std::numeric_limits<size_t>::max();
+    assert(!prop.var.empty());
+    assert((min_threshold >= std::numeric_limits<double>::epsilon()) && (min_threshold <= 1.0)); // Cannot have a negative approximation, as the approximation is just a distance
+    if (!prop.labelRHS.empty()) {
+        std::stringstream sstr;
+        sstr << "Predicate " << prop << ": cannot have a predicate over two distinct variables! ";
+        throw std::runtime_error(sstr.str());
+    }
+    if (!prop.exceptions.empty()) {
+        std::stringstream sstr;
+        sstr << "Predicate " << prop << ": cannot have excepted values at this stage: this should be an already decomposed interval ";
+        throw std::runtime_error(sstr.str());
+    }
+    if (!prop.BiVariableConditions.empty()) {
+        std::stringstream sstr;
+        sstr << "Predicate " << prop << ": cannot variable conditions that are proper to join conditions: either the decomposition is faulty, or the data clearing is not effective, or the interval decomposition isn't, or the interval is used inappropriately ";
+        throw std::runtime_error(sstr.str());
+    }
+    auto it = attribute_name_to_table.find(prop.var);
+    if (it == attribute_name_to_table.end()) {
+        // if no attribute is there, then I must assume that all of the traces are valid!
+        return universe; // Immediately returning the universe queries
+    } else {
+        // The attribute exists within the dataset
+        ssize_t act_id = -1;
+        if (!prop.label.empty()) {
+            act_id = (ssize_t)event_label_mapper.get(prop.label);
+        }
+        auto tmp = it->second.range_query(prop, act_id, min_threshold, c);
+        if (tmp.isUniverse())
+            return universe;
+        else if (tmp.isEmptySolution())
+            return empty;
+        else {
+            std::vector<std::pair<std::pair<trace_t, event_t>, double>> S;
+            for (const auto& element : tmp._data) {
+                if (element.exact_solution.first != nullptr) {
+                    size_t N = std::distance(element.exact_solution.second, element.exact_solution.first);
+                    for (size_t i = 0; i<N; i++) {
+                        auto& exactIt = element.exact_solution.first[i];
+                        S.emplace_back(std::make_pair(
+                                act_table_by_act_id.table.at(exactIt.act_table_offset).entry.id.parts.trace_id, act_table_by_act_id.table.at(exactIt.act_table_offset).entry.id.parts.event_id), 1.0);
+                    }
+
+                }
+
+                for (auto item : element.approx_solution) {
+                    S.emplace_back(std::make_pair(
+                            act_table_by_act_id.table.at(item.first->act_table_offset).entry.id.parts.trace_id, act_table_by_act_id.table.at(item.first->act_table_offset).entry.id.parts.event_id), item.second);
+
+                }
+            }
+            std::sort(S.begin(), S.end());
+            return S;
+        }
+    }
+}
+
 union_minimal resolveUnionMinimal(const AttributeTable &table, const AttributeTable::record &x) {
     switch (table.type) {
         case DoubleAtt:
@@ -309,8 +383,7 @@ union_minimal resolveUnionMinimal(const AttributeTable &table, const AttributeTa
         case LongAtt:
             return (double)(*(long long*)(&x.value));
         case StringAtt:
-            assert(table.ptr);
-            return table.ptr->get(x.value);
+            return table.ptr.get(x.value);
         case BoolAtt:
             return (x.value != 0 ? 0.0 : 1.0);
             //case SizeTAtt:

@@ -45,8 +45,7 @@ union_type AttributeTable::resolve(const AttributeTable::record &x) const {
         case LongAtt:
             return *(long long*)(&x.value);
         case StringAtt:
-            assert(ptr);
-            return ptr->get(x.value);
+            return ptr.get(x.value);
         case BoolAtt:
             return x.value != 0;
         //case SizeTAtt:
@@ -96,7 +95,7 @@ size_t AttributeTable::storeLoad(const std::variant<double, size_t, long long in
 
         case StringAtt: {
             std::string tmp = std::get<std::string>(x);
-            return ptr->put(tmp).first;
+            return ptr.put(tmp).first;
         }
         case BoolAtt:
             return std::get<bool>(x) ? 1 : 0;
@@ -157,8 +156,7 @@ std::ostream &AttributeTable::resolve_and_print(std::ostream &os, const Attribut
         case LongAtt:
             return os << *(long long*)(&x.value);
         case StringAtt:
-            assert(ptr);
-            return os << ptr->get(x.value);
+            return os << ptr.get(x.value);
         case BoolAtt:
             return os << ((x.value != 0) ? "true" : "false");
             //case SizeTAtt:
@@ -171,194 +169,164 @@ std::ostream &AttributeTable::resolve_and_print(std::ostream &os, const Attribut
 #include <sstream>
 
 AttributeTable::range_query_result AttributeTable::range_query(DataPredicate prop, ssize_t act, double min_threshold, const double c) const {
-    constexpr size_t max_int = std::numeric_limits<size_t>::max();
-    assert(prop.label == this->attr_name); // Just for consistency checking, I need to evaluate the predicate over the specific table. This is also for efficiency reasons
-    assert(min_threshold >= 0.0); // Cannot have a negative approximation, as the approximation is just a distance
-    if (!prop.labelRHS.empty()) {
-        std::stringstream sstr;
-        sstr << "Predicate " << prop << ": cannot have a predicate over two distinct variables! ";
-        throw std::runtime_error(sstr.str());
-    }
-    if (!prop.exceptions.empty()) {
-        std::stringstream sstr;
-        sstr << "Predicate " << prop << ": cannot have excepted values at this stage: this should be an already decomposed interval ";
-        throw std::runtime_error(sstr.str());
-    }
-    if (!prop.BiVariableConditions.empty()) {
-        std::stringstream sstr;
-        sstr << "Predicate " << prop << ": cannot variable conditions that are proper to join conditions: either the decomposition is faulty, or the data clearing is not effective, or the interval decomposition isn't, or the interval is used inappropriately ";
-        throw std::runtime_error(sstr.str());
-    }
-    bool isNotExactMatch = min_threshold > std::numeric_limits<double>::epsilon();
+    // Just for consistency checking, I need to evaluate the predicate over the specific table. This is also for efficiency reasons
+    // Plus, this has to be checked only if the predicate is not the always true predicate, forsooth!
+
+    assert((prop.casusu != TTRUE)); // Universal queries should be handled at the higher level: id est, I do not even attempt at returning the data if I know that
+                                    // everything is always true!
+    assert((prop.var == this->attr_name));
+    bool isNotExactMatch = min_threshold < 1.0;
     bool doWeHaveStrings = this->type == StringAtt;
-    if (doWeHaveStrings)
-        assert(ptr); // we need ptr for approximate string matching!
-    SimplifiedFuzzyStringMatching matchIfAttrIsString;
-    if ((prop.casusu != TTRUE) && (prop.casusu != INTERVAL)) {
+    if ((prop.casusu != INTERVAL)) {
         prop.asInterval();// If it is not an interval, make that as so, so we need to deal with only one case!
     }
 
     // At this stage, we know for sure that this element should be an interval at most.
-    AttributeTable::range_query_result result;
+    // Furthermore, given that I never handle always true queries, it is never an implicit
+    // universe solution.
+    AttributeTable::range_query_result result{false};
     if (act == -1) {
         for (size_t actId = 0, N = primary_index.size(); actId < N; actId++) {
-            range_query(actId, prop, result, isNotExactMatch, min_threshold);
+            range_query(actId, prop, result, isNotExactMatch, min_threshold, c);
         }
     } else {
-        AttributeTable::range_query_result result;
-        range_query(act, prop, result, isNotExactMatch, min_threshold);
+        range_query(act, prop, result, isNotExactMatch, min_threshold, c);
     }
     return result;
 }
 
-bool AttributeTable::range_query(size_t actId,
-                                 const DataPredicate &prop,
-                                 AttributeTable::range_query_result &result,
-                                 bool isNotExactMatch,
-                                 double min_threshold) const {
+bool AttributeTable::range_query(size_t actId, const DataPredicate &prop, AttributeTable::range_query_result &result,
+                                 bool isNotExactMatch, double min_threshold, double c) const {
+    assert(prop.casusu == INTERVAL); // At this stage, I should only have interval queries!
     if (actId > primary_index.size()) return false; // missing act
     auto it = primary_index.at(actId);
     if (it.first == it.second)
         return false; // missing attribute ~ for the meantime, we are not approximating the match on the attribute name, but we should in the future
+    {
+        assert(table.size() > it.first);
+        assert(table.size() > it.second);
+        auto table_leftValue = resolve(table[it.first]);
+        auto table_rightValue = resolve(table[it.second]);
 
-    switch (prop.casusu) {
-        case TTRUE:
+        const union_type prop_leftValue = cast_unions(type, prop.value);
+        const union_type prop_rightValue = cast_unions(type, prop.value_upper_bound);
 
-            // TTRUE -> RETURN everything
-            // As the interval is true, return all of the elements that are in there
-            result.emplace_back(&table[it.first], &table[it.second]);
-            return true;
-            break;
+        auto begin = table.data() + it.first;
+        auto end = table.data() + it.second;
 
-        case INTERVAL: {
-            auto table_leftValue = resolve(table[it.first]);
-            auto table_rightValue = resolve(table[it.second]);
+        auto lb = std::lower_bound(begin, end, prop_leftValue, [&](const record &r, const union_type &value) {
+            return resolve(r) < value;
+        });
 
-            const union_type prop_leftValue = cast_unions(type, prop.value);
-            const union_type prop_rightValue = cast_unions(type, prop.value_upper_bound);
-
-            auto begin = table.begin() + it.first;
-            auto end = table.begin() + it.second;
-
-            auto lb = std::lower_bound(begin, end, prop_leftValue, [&](const record &r, const union_type &value) {
+        if (lb != end) {
+            auto ub = std::upper_bound(begin, end, prop_rightValue, [&](const union_type &value, const record &r) {
                 return resolve(r) < value;
             });
 
-            bool hasSolution = false;
-            if (lb != end) {
-                hasSolution = true;
-                auto ub = std::upper_bound(begin, end, prop_rightValue, [&](const union_type &value, const record &r) {
-                    return resolve(r) < value;
-                });
+            auto &thisResult = result.emplace_back();
+            thisResult.exact_solution.first = lb;
+            thisResult.exact_solution.second = ub;
+            std::cout << std::distance(ub, lb) << std::endl;
 
-                auto &thisResult = result.emplace_back();
-                thisResult.exact_solution.first = (const AttributeTable::record *) &lb;
-                thisResult.exact_solution.second = (const AttributeTable::record *) &ub;
-
-                if (isNotExactMatch) {
-                    // this computation shall be performed only if we also need to provide the approximated match
-                    if (type == StringAtt) {
-                        SimplifiedFuzzyStringMatching sfzm;
-                        for (auto i = lb; i != ub; ++i) {
-                            // Filling the approximate match element with the items of interest
-                            sfzm.put(get<std::string>(resolve(*i)));
-                        }
-
-                        // Retrieving the best candidate for each element of the interval: we cannot do better than this...
-                        for (auto i = begin; i != lb; ++i) {
-                            getIterator(min_threshold, thisResult, sfzm, i);
-                        }
-                        for (auto i = ub; i != end; ++i) {
-                            getIterator(min_threshold, thisResult, sfzm, i);
-                        }
-                    } else {
-                        for (auto i = lb - 1; i <= begin; i--) {
-                            double thisValue = similarityFunction(resolve(*i), prop_leftValue);
-                            if (thisValue < min_threshold)
-                                break; // Stop the iteration if we reached the maximum part
-                            thisResult.approx_solution.emplace_back((const AttributeTable::record *) &i, thisValue);
-                        }
-                        for (auto i = end - 1; i <= ub; i--) {
-                            double thisValue = similarityFunction(resolve(*i), prop_rightValue);
-                            if (thisValue < min_threshold)
-                                break; // Stop the iteration if we reached the maximum part
-                            thisResult.approx_solution.emplace_back((const AttributeTable::record *) &i, thisValue);
-                        }
-                    }
-                    std::sort(thisResult.approx_solution.begin(), thisResult.approx_solution.end());
-                }
-            } else {
-                // No solution found! only approximations are admissable.
+            if (isNotExactMatch) {
+                // this computation shall be performed only if we also need to provide the approximated match
                 if (type == StringAtt) {
-                    // Instead of scanning the whole records, just use ptr, and then perform the intersection!
-
-                    std::unordered_map<std::string, double> aggr;
-                    {
-                        std::multimap<double, std::string> result;
-                        ptr->fuzzyMatch(min_threshold, 1, std::get<std::string>(prop_leftValue), result);
-                        for (const auto &cp: result) {
-                            auto it = aggr.emplace(cp.second, cp.first);
-                            if (!it.second) {
-                                it.first->second = std::max(it.first->second, cp.first);
-                            }
-                        }
-                    }
-                    {
-                        std::multimap<double, std::string> result;
-                        ptr->fuzzyMatch(min_threshold, 1, std::get<std::string>(prop_rightValue), result);
-                        for (const auto &cp: result) {
-                            auto it = aggr.emplace(cp.second, cp.first);
-                            if (!it.second) {
-                                it.first->second = std::max(it.first->second, cp.first);
-                            }
-                        }
+                    SimplifiedFuzzyStringMatching sfzm;
+                    for (auto i = lb; i != ub; ++i) {
+                        // Filling the approximate match element with the items of interest
+                        sfzm.put(get<std::string>(resolve(*i)));
                     }
 
-                    if (!aggr.empty()) {
-                        auto &thisResult = result.emplace_back();
-                        for (const auto &ref: aggr) {
-                            auto it2 = string_offset_mapping.find(ref.first);
-                            if (it2 != string_offset_mapping.end()) {
-                                for (const size_t offset: it2->second) {
-                                    thisResult.approx_solution.emplace_back((const record *) (&this->table[offset]),
-                                                                            ref.second);
-                                }
-                            }
-                        }
+                    // Retrieving the best candidate for each element of the interval: we cannot do better than this...
+                    for (auto i = begin; i != lb; ++i) {
+                        getIterator(min_threshold, thisResult, sfzm, i);
                     }
-                    return !aggr.empty();
+                    for (auto i = ub; i != end; ++i) {
+                        getIterator(min_threshold, thisResult, sfzm, i);
+                    }
                 } else {
-                    disjunctive_range_query_result *current_result = nullptr;
-                    for (auto i = end - 1; i <= begin; i--) {
-                        double thisValue = similarityFunction(resolve(*i), prop_leftValue);
+                    for (auto i = lb - 1; i >= begin; i--) {
+                        double thisValue = similarityFunction(resolve(*i), prop_leftValue, c);
                         if (thisValue < min_threshold)
                             break; // Stop the iteration if we reached the maximum part
-                        if (!current_result) {
-                            result.emplace_back();
-                            current_result = result.data() + (result.size() - 1);
-                        }
-                        current_result->approx_solution.emplace_back((const AttributeTable::record *) &i, thisValue);
+                        thisResult.approx_solution.emplace_back((const AttributeTable::record *) &i, thisValue);
                     }
-                    for (auto i = begin; i < end; i++) {
-                        double thisValue = similarityFunction(resolve(*i), prop_rightValue);
+                    for (auto i = end - 1; i <= ub; i--) {
+                        double thisValue = similarityFunction(resolve(*i), prop_rightValue, c);
                         if (thisValue < min_threshold)
                             break; // Stop the iteration if we reached the maximum part
-                        if (!current_result) {
-                            result.emplace_back();
-                            current_result = result.data() + (result.size() - 1);
-                        }
-                        current_result->approx_solution.emplace_back((const AttributeTable::record *) &i, thisValue);
+                        thisResult.approx_solution.emplace_back((const AttributeTable::record *) &i, thisValue);
                     }
-                    if (current_result)
-                        std::sort(current_result->approx_solution.begin(), current_result->approx_solution.end());
-                    return current_result != nullptr;
                 }
+                std::sort(thisResult.approx_solution.begin(), thisResult.approx_solution.end());
+            }
+        } else {
+            // No solution found! only approximations are admissable.
+            if (type == StringAtt) {
+                // Instead of scanning the whole records, just use ptr, and then perform the intersection!
+
+                std::unordered_map<std::string, double> aggr;
+                {
+                    std::multimap<double, std::string> result;
+                    ptr.fuzzyMatch(min_threshold, 1, std::get<std::string>(prop_leftValue), result);
+                    for (const auto &cp: result) {
+                        auto it2 = aggr.emplace(cp.second, cp.first);
+                        if (!it2.second) {
+                            it2.first->second = std::max(it2.first->second, cp.first);
+                        }
+                    }
+                }
+                {
+                    std::multimap<double, std::string> result;
+                    ptr.fuzzyMatch(min_threshold, 1, std::get<std::string>(prop_rightValue), result);
+                    for (const auto &cp: result) {
+                        auto it2 = aggr.emplace(cp.second, cp.first);
+                        if (!it2.second) {
+                            it2.first->second = std::max(it2.first->second, cp.first);
+                        }
+                    }
+                }
+
+                if (!aggr.empty()) {
+                    auto &thisResult = result.emplace_back();
+                    for (const auto &ref: aggr) {
+                        auto it2 = string_offset_mapping.find(ref.first);
+                        if (it2 != string_offset_mapping.end()) {
+                            for (const size_t offset: it2->second) {
+                                thisResult.approx_solution.emplace_back((const record *) (&this->table[offset]),
+                                                                        ref.second);
+                            }
+                        }
+                    }
+                }
+                return !aggr.empty();
+            } else {
+                disjunctive_range_query_result *current_result = nullptr;
+                for (auto i = end - 1; i >= begin; i--) {
+                    double thisValue = similarityFunction(resolve(*i), prop_leftValue, c);
+                    if (thisValue < min_threshold)
+                        break; // Stop the iteration if we reached the maximum part
+                    if (!current_result) {
+                        result.emplace_back();
+                        current_result = result.data() + (result.size() - 1);
+                    }
+                    current_result->approx_solution.emplace_back((const AttributeTable::record *) &i, thisValue);
+                }
+                for (auto i = begin; i < end; i++) {
+                    double thisValue = similarityFunction(resolve(*i), prop_rightValue, c);
+                    if (thisValue < min_threshold)
+                        break; // Stop the iteration if we reached the maximum part
+                    if (!current_result) {
+                        result.emplace_back();
+                        current_result = result.data() + (result.size() - 1);
+                    }
+                    current_result->approx_solution.emplace_back((const AttributeTable::record *) &i, thisValue);
+                }
+                if (current_result)
+                    std::sort(current_result->approx_solution.begin(), current_result->approx_solution.end());
+                return current_result != nullptr;
             }
         }
-            break;
-
-        default:
-            throw std::runtime_error("UNEXPECTED CASE!");
     }
     return true;
 }
