@@ -137,9 +137,9 @@ void ActTable::indexing2() { // todo: rename as indexing, and remove expectedOrd
                 real_ref.prev = &table[ref.at(time-1)];
             }
         }
-        ref.clear();
+        ///ref.clear();
     }
-    builder.trace_id_to_event_id_to_offset.clear();
+    ///builder.trace_id_to_event_id_to_offset.clear();
 }
 
 std::pair<const ActTable::record *, const ActTable::record *> ActTable::resolve_index(act_t id) const {
@@ -160,4 +160,10 @@ std::ostream &operator<<(std::ostream &os, const ActTable &table) {
     }
     os << std::endl << "-------------------------------" << std::endl;
     return os;
+}
+
+void ActTable::clear() {
+    secondary_index.clear();
+    primary_index.clear();
+    table.clear();
 }

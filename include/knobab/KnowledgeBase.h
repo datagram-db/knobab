@@ -23,7 +23,8 @@ enum ParsingState {
     LogParsing,
     TraceParsing,
     EventParsing,
-    FinishParsing
+    FinishParsing,
+    MissingDataParsing
 };
 
 #include <bitset>
@@ -35,9 +36,12 @@ union_minimal resolveUnionMinimal(const AttributeTable &table, const AttributeTa
 
 class KnowledgeBase : public trace_visitor {
     CountTemplate                                   count_table;
-    std::unordered_map<std::string, AttributeTable> attribute_name_to_table;
+    std::unordered_map<std::string, AttributeTable> attribute_name_to_table, approximate_attribute_to_table;
     SimplifiedFuzzyStringMatching                   string_values;
 
+    std::unordered_map<std::string, std::unordered_set<std::string>> registerEventLabelSchema;
+
+    std::string currentEventLabel;
     bool alreadySet;
     std::string source;
     std::string name;
@@ -45,40 +49,58 @@ class KnowledgeBase : public trace_visitor {
     size_t currentEventId;
     ParsingState status;
     size_t actId;
-    std::vector<std::pair<std::pair<trace_t, event_t>, double>> universe;
+    std::vector<std::pair<std::pair<trace_t, event_t>, double>> universe, universeApprox;
     std::vector<std::pair<std::pair<trace_t, event_t>, double>> empty;
+    size_t maximumStringLength = 0;
 
 public:
-    ActTable                                        act_table_by_act_id;
+    static constexpr double    default_double   = 0.0;
+    static constexpr size_t    default_size_t   = 0;
+    static constexpr long long default_longlong = 0;
+    static constexpr bool      default_bool     = false;
+    static std::string         default_string;//= "";
+    static double    maximum_reliability_for_insertion;
 
-    void print_count_table(std::ostream& os) const {
-        os << count_table;
-    }
-    void print_act_table(std::ostream& os) const {
-        os << act_table_by_act_id;
-    }
-    void print_attribute_tables(std::ostream& os) const {
-        for (const auto& ref : attribute_name_to_table)
-            os << ref.second;
-    }
+    ActTable                                        act_table_by_act_id;
+    yaucl::structures::any_to_uint_bimap<std::string> event_label_mapper;
+    std::unordered_map<size_t, size_t> counting_reference;
+
+
+    /************************
+     * Processing Functions *
+     ************************/
+
+    KnowledgeBase();
+    void index_data_structures(bool missingDataIndexing);
+    void clear();
+
+
+
+
+    /***************************
+     * Utility print functions *
+     ***************************/
+
+    void reconstruct_trace_no_data(std::ostream& os) const;
+    void reconstruct_trace_with_data(std::ostream& os) const;
+    void print_count_table(std::ostream& os) const;
+    void print_act_table(std::ostream& os) const;
+    void print_attribute_tables(std::ostream& os) const;
+
+
+
+
+    /***************************
+     * Other Utility Functions *
+     ***************************/
 
     std::pair<std::unordered_map<std::string, AttributeTable>::iterator,
-            std::unordered_map<std::string, AttributeTable>::iterator> getAttrNameTableIt() {
-        return {attribute_name_to_table.begin(), attribute_name_to_table.end()};
-    }
-
+            std::unordered_map<std::string, AttributeTable>::iterator> getAttrNameTableIt();
     union_type resolveRecord(const ActTable::record* eventFromTrace,
-                             const std::unordered_map<std::string, AttributeTable>::iterator& attr_table) const {
-
-        return attr_table->second.resolve(*attr_table->second.resolve_record_if_exists(eventFromTrace - act_table_by_act_id.table.data()));
-    }
-
+                             const std::unordered_map<std::string, AttributeTable>::iterator& attr_table) const;
     union_minimal resolveMinimalRecord(const ActTable::record* eventFromTrace,
-                                       const std::unordered_map<std::string, AttributeTable>::iterator& attr_table) const {
-        return resolveUnionMinimal(attr_table->second,
-                                   *attr_table->second.resolve_record_if_exists(eventFromTrace - act_table_by_act_id.table.data()));
-    }
-
+                                       const std::unordered_map<std::string, AttributeTable>::iterator& attr_table) const;
+    size_t getMaximumStringLength() const { return maximumStringLength+1; }
 
     /**
      * Collects the values contained in the knowledge base as single instances
@@ -111,16 +133,14 @@ public:
     ) const;
 
 
-    void clear();
 
-    yaucl::structures::any_to_uint_bimap<std::string> event_label_mapper;
-    std::unordered_map<size_t, size_t> counting_reference;
 
-    void reconstruct_trace_no_data(std::ostream& os) const;
-    void reconstruct_trace_with_data(std::ostream& os) const;
 
-    KnowledgeBase();
-    void index_data_structures();
+
+    /***************************
+     * Data visiting functions *
+     ***************************/
+
     void enterLog(const std::string &source, const std::string &name) override;
     void exitLog(const std::string &source, const std::string &name) override;
     size_t enterTrace(const std::string &trace_label) override;
@@ -135,25 +155,44 @@ public:
     void visitField(const std::string &key, size_t value) override;
 
 
-    /// Data Range Queries
-    std::vector<std::pair<std::pair<trace_t, event_t>, double>>
-    range_query(DataPredicate prop, double min_threshold = 1.0, const double c = 2.0) const;
 
-    // Backup measure
+
+
+    /*******************************
+     * Backup data reading measure *
+     *******************************/
+
     using no_antlr_event = std::pair<std::string, std::unordered_map<std::string, std::variant<bool, double, std::string, size_t>>>; // <act, payload>
     using no_antlr_trace = std::vector<no_antlr_event>;
     using no_antlr_log = std::vector<no_antlr_trace>;
     void load_data_without_antlr4(const no_antlr_log& L, const std::string &source, const std::string &name);
 
-    // First part of the pipeline
+
+
+
+
+    /******************************
+     * First part of the pipeline *
+     ******************************/
+
     uint16_t getMappedValueFromAction(const std::string &act) const;
     std::pair<const oid*, const oid*> resolveCountingData(const std::string &act, uint32_t& start, uint32_t& end) const;
     std::pair<const ActTable::record*, const ActTable::record*> resolveActData(const std::string &act, uint32_t& start, uint32_t& end) const;
+    std::vector<std::pair<std::pair<trace_t, event_t>, double>> range_query(DataPredicate prop, double min_threshold = 1.0, const double c = 2.0) const;
 
-    // Second part of the pipeline
+
+
+
+
+    /******************************
+     * Second part of the pipeline *
+     ******************************/
+
     std::unordered_map<uint32_t, float> exists(const std::pair<const oid *, const oid *>& subsection,  const uint32_t& start, const uint32_t& end, const uint16_t& amount = 1, const bool& isExact = false) const;
     std::vector<uint32_t> init(const std::string& act) const;
     std::vector<uint32_t> ends(const std::string& act) const;
+
+
 
 private:
     void collectValuesAmongTraces(std::set<union_type> &S, size_t trace_id, act_t acts, bool HasNoAct,
@@ -163,6 +202,9 @@ private:
             std::unordered_map<std::string, std::set<union_type>> &resultOtherValues,
             const std::unordered_map<std::string, std::unordered_set<std::string>> &actToTables,
             const std::unordered_set<std::string> &otherValues, trace_t traceId) const;
+
+    std::pair<int, std::vector<std::pair<std::pair<trace_t, event_t>, double>>>
+    range_query(DataPredicate &prop, double min_threshold, double correction, const double c, bool forExistingData = true) const;
 };
 
 
