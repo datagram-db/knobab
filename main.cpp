@@ -24,9 +24,9 @@
 //{{"a", {}}, {"c", {{"x", 2.0}}}}};
 
 const KnowledgeBase::no_antlr_log LogTrace = {
-        {{"a", {}}, {"a", {}}, {"b", {}}, {"b", {}}},
-        {{"a", {}}, {"a", {}}, {"a", {}}, {"a", {}}, {"a", {}}, {"a", {}}, {"a", {}}, {"a", {}}},
-        {{"c", {}}, {"b", {}}, {"c", {}}, {"b", {}}, {"c", {}}}};
+        {{"a", {}}, {"a", {}}, {"a", {}}, {"b", {}}},
+        {{"b", {}}, {"a", {}}, {"a", {}}, {"a", {}}, {"a", {}}, {"a", {}}, {"a", {}}, {"a", {}}},
+        {{"c", {}}, {"a", {}}, {"b", {}}, {"a", {}}, {"c", {}}}};
 
 KnowledgeBase test_kb(const KnowledgeBase::no_antlr_log& L, const std::string &source, const std::string &name) {
     /// Creating an instance of the knowledge base, that is going to store all the traces in the log!
@@ -59,9 +59,9 @@ int main() {
     // Second part
     std::unordered_map<uint32_t, float> found = db.exists(data, a, b, 50);
 
-    std::vector<uint32_t> testVec = db.init("a");
+    std::unordered_map<std::pair<uint32_t, uint16_t>, float> testVec = db.init("a");
 
-    std::vector<uint32_t> testVec1 = db.ends("a");
+    std::unordered_map<std::pair<uint32_t, uint16_t>, float> testVec1 = db.ends("a");
 
     return 0;
 }
