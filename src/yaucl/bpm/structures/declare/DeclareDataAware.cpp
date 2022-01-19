@@ -282,146 +282,146 @@ bool isUnaryPredicate(declare_templates type) {
 }
 
 
-ltlf DeclareDataAware::toFiniteSemantics() const {
-    ltlf left = ltlf::And(ltlf::Act(left_act), map_disj(dnf_left_map)).simplify().setBeingCompound(true);
+ltlf DeclareDataAware::toFiniteSemantics(bool isForGraph) const {
+    ltlf left = dnf_left_map.empty() ? ltlf::Act(left_act) : ltlf::And(ltlf::Act(left_act), map_disj(dnf_left_map)).simplify().setBeingCompound(true);
 
     ltlf right = ltlf::True();
     if (!right_act.empty()) {
-        right = ltlf::And(ltlf::Act(right_act), map_disj(dnf_right_map)).simplify().setBeingCompound(true);
+        right = dnf_right_map.empty() ? ltlf::Act(right_act) : ltlf::And(ltlf::Act(right_act), map_disj(dnf_right_map)).simplify().setBeingCompound(true);
     }
 
     switch (casusu) {
         case Existence:
             if (n > 1) {
                 return ltlf::Diamond(
-                        ltlf::And(left, ltlf::Next(doExistence(n - 1, left_act, dnf_left_map).toFiniteSemantics()))
+                        ltlf::And(left, ltlf::Next(doExistence(n - 1, left_act, dnf_left_map).toFiniteSemantics(isForGraph))),isForGraph
                 );
             } else if (n == 1) {
-                return ltlf::Diamond(left);
+                return ltlf::Diamond(left, isForGraph);
             } else {
-                return ltlf::Diamond(left).negate();
+                return ltlf::Diamond(left, isForGraph).negate();
             }
         case Absence:
-            return ltlf::Neg(doExistence(n, left_act, dnf_left_map).toFiniteSemantics());
+            return ltlf::Neg(doExistence(n, left_act, dnf_left_map).toFiniteSemantics(isForGraph));
 
         case Absence2:
-            return ltlf::Neg(ltlf::Diamond(ltlf::And(left, ltlf::Diamond(left))));
+            return ltlf::Neg(ltlf::Diamond(ltlf::And(left, ltlf::Diamond(left, isForGraph)), isForGraph));
 
         case Exactly:
-            return ltlf::And(doExistence(n, left_act, dnf_left_map).toFiniteSemantics(), doAbsence(n + 1, left_act, dnf_left_map).toFiniteSemantics());
+            return ltlf::And(doExistence(n, left_act, dnf_left_map).toFiniteSemantics(isForGraph), doAbsence(n + 1, left_act, dnf_left_map).toFiniteSemantics(isForGraph));
 
         case Init:
             return left;
 
         case RespExistence:
-            return ltlf::Implies(ltlf::Diamond(left),
-                                 ltlf::Diamond(right));
+            return ltlf::Implies(ltlf::Diamond(left, isForGraph),
+                                 ltlf::Diamond(right, isForGraph), isForGraph);
 
         case Choice:
-            return ltlf::Or(ltlf::Diamond(left), ltlf::Diamond(right));
+            return ltlf::Or(ltlf::Diamond(left, isForGraph), ltlf::Diamond(right, isForGraph));
 
         case ExlChoice:
-            return ltlf::And(ltlf::Or(ltlf::Diamond(left), ltlf::Diamond(right)),
-                             ltlf::Neg(ltlf::And(ltlf::Diamond(left), ltlf::Diamond(right))));
+            return ltlf::And(ltlf::Or(ltlf::Diamond(left, isForGraph), ltlf::Diamond(right, isForGraph)),
+                             ltlf::Neg(ltlf::And(ltlf::Diamond(left, isForGraph), ltlf::Diamond(right, isForGraph))));
 
         case CoExistence:
-            return ltlf::And(ltlf::Implies(ltlf::Diamond(left),
-                                           ltlf::Diamond(right)),
-                             ltlf::Implies(ltlf::Diamond(right),
-                                           ltlf::Diamond(left)));
+            return ltlf::And(ltlf::Implies(ltlf::Diamond(left, isForGraph),
+                                           ltlf::Diamond(right, isForGraph), isForGraph),
+                             ltlf::Implies(ltlf::Diamond(right, isForGraph),
+                                           ltlf::Diamond(left, isForGraph), isForGraph));
 
         case Response:
             return ltlf::Box(ltlf::Implies(left,
-                                           ltlf::Diamond(right)));
+                                           ltlf::Diamond(right, isForGraph), isForGraph), isForGraph);
 
         case NegationResponse:
             return ltlf::Neg(ltlf::Box(ltlf::Implies(left,
-                                                     ltlf::Diamond(right))));
+                                                     ltlf::Diamond(right, isForGraph), isForGraph), isForGraph));
 
         case Precedence:
-            return ltlf::WeakUntil(ltlf::Neg(right), left);
+            return ltlf::WeakUntil(ltlf::Neg(right), left, isForGraph);
 
         case NegationPrecedence:
-            return ltlf::Neg(ltlf::WeakUntil(ltlf::Neg(right), left));
+            return ltlf::Neg(ltlf::WeakUntil(ltlf::Neg(right), left, isForGraph));
 
         case AltResponse:
             return ltlf::Box(ltlf::Implies(left,
-                                           ltlf::Next(ltlf::Until(left.negate(), right))));
+                                           ltlf::Next(ltlf::Until(left.negate(), right)), isForGraph), isForGraph);
 
 
         case NegationAltResponse:
             return ltlf::Neg(ltlf::Box(ltlf::Implies(left,
-                                                     ltlf::Next(ltlf::Until(left.negate(), right)))));
+                                                     ltlf::Next(ltlf::Until(left.negate(), right)), isForGraph), isForGraph));
 
         case AltPrecedence: {
             struct ltlf base = ltlf::Until(right.negate(), left);
             return ltlf::And(base, ltlf::Box(ltlf::Implies(right,
-                                                           ltlf::Next(ltlf::Or(base, ltlf::Box(right.negate()))))));
+                                                           ltlf::Next(ltlf::Or(base, ltlf::Box(right.negate(), isForGraph))), isForGraph), isForGraph));
         }
 
         case AltSuccession: {
             auto L = ltlf::Box(ltlf::Implies(right,
-                                             ltlf::Next(ltlf::Until(left.negate(), right))));
-            struct ltlf base = ltlf::WeakUntil(right.negate(), left);
+                                             ltlf::Next(ltlf::Until(left.negate(), right)), isForGraph), isForGraph);
+            struct ltlf base = ltlf::WeakUntil(right.negate(), left, isForGraph);
             auto R =  ltlf::And(base, ltlf::Box(ltlf::Implies(right,
-                                                              ltlf::Next(base))));
+                                                              ltlf::Next(base), isForGraph), isForGraph));
             return ltlf::And(L, R);
         }
 
         case ChainResponse:
-            return ltlf::Box(ltlf::Implies(left, ltlf::Next(right)));
+            return ltlf::Box(ltlf::Implies(left, ltlf::Next(right), isForGraph), isForGraph);
 
         case ChainPrecedence:
-            return ltlf::Box(ltlf::Implies( ltlf::Next(right), left));
+            return ltlf::Box(ltlf::Implies( ltlf::Next(right), left, isForGraph), isForGraph);
 
         case ChainSuccession:
-            return ltlf::Box(ltlf::Equivalent(left, ltlf::Next(right)));
+            return ltlf::Box(ltlf::Equivalent(left, ltlf::Next(right)), isForGraph);
 
         case Succession: {
-            struct ltlf base = ltlf::WeakUntil(right.negate(), left);
-            return ltlf::And(base, ltlf::Box(ltlf::Implies(left, ltlf::Diamond(right))));
+            struct ltlf base = ltlf::WeakUntil(right.negate(), left, isForGraph);
+            return ltlf::And(base, ltlf::Box(ltlf::Implies(left, ltlf::Diamond(right, isForGraph), isForGraph), isForGraph));
         }
 
         case End:
-            return ltlf::Diamond(ltlf::And(left, ltlf::Neg(ltlf::Next(ltlf::Or(left, left.negate())))));
+            return ltlf::Diamond(ltlf::And(left, ltlf::Neg(ltlf::Next(ltlf::Or(left, left.negate())))), isForGraph);
 
         case NotPrecedence:
-            return ltlf::Box(ltlf::Implies(left, ltlf::Neg(ltlf::Diamond(right))));
+            return ltlf::Box(ltlf::Implies(left, ltlf::Neg(ltlf::Diamond(right, isForGraph)), isForGraph), isForGraph);
 
         case NotSuccession:
             return ltlf::Box(ltlf::Implies(left,
-                                           ltlf::Neg(ltlf::Diamond(right))));
+                                           ltlf::Neg(ltlf::Diamond(right, isForGraph)), isForGraph), isForGraph);
 
         case NotResponse:
-            return ltlf::Box(ltlf::Implies(left, ltlf::Neg(ltlf::Box(right))));
+            return ltlf::Box(ltlf::Implies(left, ltlf::Neg(ltlf::Box(right, isForGraph)), isForGraph));
 
         case NotChainPrecedence:
-            return ltlf::Box(ltlf::Implies(right, ltlf::Neg(ltlf::Next(left))));
+            return ltlf::Box(ltlf::Implies(right, ltlf::Neg(ltlf::Next(left)), isForGraph), isForGraph);
 
         case NotCoExistence:
-            return ltlf::Neg(ltlf::And(ltlf::Diamond(left), ltlf::Diamond(right)));
+            return ltlf::Neg(ltlf::And(ltlf::Diamond(left, isForGraph), ltlf::Diamond(right, isForGraph)));
 
         case NegSuccession:
-            return ltlf::Box(ltlf::Implies(left, ltlf::Neg(ltlf::Box(right))));
+            return ltlf::Box(ltlf::Implies(left, ltlf::Neg(ltlf::Box(right, isForGraph)), isForGraph), isForGraph);
 
         case NotChainResponse:
-            return ltlf::Box(ltlf::Implies(left, ltlf::Neg(ltlf::Next(right))));
+            return ltlf::Box(ltlf::Implies(left, ltlf::Neg(ltlf::Next(right)), isForGraph));
 
         case NegChainSuccession:
-            return ltlf::Box(ltlf::Equivalent(left, ltlf::Next(right.negate())));
+            return ltlf::Box(ltlf::Equivalent(left, ltlf::Next(right.negate())), isForGraph);
 
         case NotChainSuccession:
-            return ltlf::Box(ltlf::Implies(left, ltlf::Next(right.negate())));
+            return ltlf::Box(ltlf::Implies(left, ltlf::Next(right.negate()), isForGraph), isForGraph);
 
         case NotRespExistence:
-            return ltlf::Implies(left, ltlf::Neg(ltlf::Diamond(right)));
+            return ltlf::Implies(left, ltlf::Neg(ltlf::Diamond(right, isForGraph)), isForGraph);
 
         case NegNotChainSuccession:
-            return ltlf::Diamond(ltlf::And(left, ltlf::Neg(ltlf::Next(right.negate()))));
+            return ltlf::Diamond(ltlf::And(left, ltlf::Neg(ltlf::Next(right.negate()))), isForGraph);
 
         case VacNegNotChainSuccession:
-            return ltlf::Or(ltlf::Diamond(ltlf::And(left, ltlf::Neg(ltlf::Next(right.negate())))),
-                            ltlf::Box(left.negate()));
+            return ltlf::Or(ltlf::Diamond(ltlf::And(left, ltlf::Neg(ltlf::Next(right.negate()))), isForGraph),
+                            ltlf::Box(left.negate(), isForGraph));
     }
 }
 
