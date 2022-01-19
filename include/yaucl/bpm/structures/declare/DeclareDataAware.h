@@ -179,7 +179,7 @@ struct DeclareDataAware {
     bool operator==(const DeclareDataAware &rhs) const;
     bool operator!=(const DeclareDataAware &rhs) const;
 
-    ltlf toFiniteSemantics() const;
+    ltlf toFiniteSemantics(bool isForGraph = true) const;
 
     static DeclareDataAware doExistence(size_t n, const std::string& left_act, const std::vector<std::unordered_map<std::string, DataPredicate>>& dnf_left_map);
     static DeclareDataAware doAbsence(size_t n, const std::string& left_act, const std::vector<std::unordered_map<std::string, DataPredicate>>& dnf_left_map);

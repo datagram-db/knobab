@@ -48,7 +48,8 @@ enum formula_t {
     FALSE,
     NUMERIC_ATOM,
     BOX,
-    DIAMOND
+    DIAMOND,
+    LAST
 };
 
 
@@ -89,12 +90,12 @@ struct ltlf {
     static struct ltlf And(const ltlf& left, const ltlf& right);
     static struct ltlf Until(const ltlf& left, const ltlf& right);
     static struct ltlf Release(const ltlf& left, const ltlf& right);
-    static struct ltlf Diamond(const ltlf& sub);
-    static struct ltlf Box(const ltlf& sub);
+    static struct ltlf Diamond(const ltlf& sub, bool isGraphGeneration = true);
+    static struct ltlf Box(const ltlf& sub, bool isGraphGeneration = true);
     static struct ltlf Last();
-    static struct ltlf Implies(const ltlf& left, const ltlf& right);
+    static struct ltlf Implies(const ltlf& left, const ltlf& right, bool isGraphGeneration = true);
     static struct ltlf Equivalent(const ltlf& left, const ltlf& right);
-    static struct ltlf WeakUntil(const ltlf& left, const ltlf& right);
+    static struct ltlf WeakUntil(const ltlf& left, const ltlf& right, bool isForGraphs = true);
 
     // Structural operators
 
@@ -107,8 +108,8 @@ struct ltlf {
     }
     struct ltlf simplify() const;
     struct ltlf oversimplify() const;
-    struct ltlf negate() const;
-    struct ltlf nnf() const;
+    struct ltlf negate(bool isGraph = true) const;
+    struct ltlf nnf(bool isGraph = true) const;
     struct ltlf stepwise_expand() const;
     std::unordered_set<std::string> propositionalize() const;
     PropositionalizedAtomsSet possibleActionsUpToNext() const;
