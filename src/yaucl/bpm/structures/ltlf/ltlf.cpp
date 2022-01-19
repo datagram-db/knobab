@@ -62,12 +62,18 @@ struct ltlf ltlf::And(const ltlf &left, const ltlf &right) {
     return formula;
 }
 
-struct ltlf ltlf::Diamond(const ltlf &sub) {
-    return Until(ltlf::True(), sub);
+struct ltlf ltlf::Diamond(const ltlf &sub, bool isForGraphs) {
+    if (isForGraphs) return Until(ltlf::True(), sub);
+    ltlf formula{DIAMOND};
+    formula.args.emplace_back(sub);
+    return formula;
 }
 
-struct ltlf ltlf::Box(const ltlf &sub) {
-    return Release({FALSE}, sub);
+struct ltlf ltlf::Box(const ltlf &sub, bool isForGraphs) {
+    if (isForGraphs) return  Release({FALSE}, sub);
+    ltlf formula{BOX};
+    formula.args.emplace_back(sub);
+    return formula;
 }
 
 struct ltlf ltlf::Last() {
@@ -88,16 +94,16 @@ struct ltlf ltlf::Release(const ltlf &left, const ltlf &right) {
     return formula;
 }
 
-struct ltlf ltlf::Implies(const ltlf &left, const ltlf &right) {
-    return Or(Neg(left), right);
+struct ltlf ltlf::Implies(const ltlf &left, const ltlf &right, bool isGraphGeneration) {
+    return isGraphGeneration ? Or(Neg(left), right) : Or(Neg(left), And(left, right));
 }
 
 struct ltlf ltlf::Equivalent(const ltlf &left, const ltlf &right) {
     return Or(And(left, right), And(left.negate(), right.negate()));
 }
 
-struct ltlf ltlf::WeakUntil(const ltlf &left, const ltlf &right) {
-    return Or(Until(left, right), Box(left));
+struct ltlf ltlf::WeakUntil(const ltlf &left, const ltlf &right, bool isForGraphs) {
+    return Or(Until(left, right), Box(left, isForGraphs));
 }
 
 
@@ -602,6 +608,7 @@ bool ltlf::operator==(const ltlf &rhs) const {
     if (!preliminar) return false;
 
     switch (casusu) {
+        case LAST:
         case TRUE:
         case FALSE:
         case ACT:
@@ -752,7 +759,7 @@ struct ltlf ltlf::simplify() const {
 
 
 
-struct ltlf ltlf::negate() const {
+struct ltlf ltlf::negate(bool isGraph) const {
     switch (casusu) {
         case ACT: {
             struct ltlf curr = *this;
@@ -828,6 +835,7 @@ struct ltlf ltlf::negate() const {
                         element.value = elem;
                         element.value_upper_bound = elem;
                         element.var = numeric_atom.var;
+                        element.var = numeric_atom.var;
                         element.label = numeric_atom.label;
                         if (isFormulaSet) {
                             formula = ltlf::Or(ltlf::Interval(element), formula);
@@ -843,47 +851,57 @@ struct ltlf ltlf::negate() const {
         }
         case NEG_OF:
             if (args.at(0).casusu == NEG_OF)
-                return args.at(0).args.at(0).nnf();
+                return args.at(0).args.at(0).nnf(isGraph);
             else
-                return args.at(0).simplify();
+                return args.at(0).nnf(isGraph) ;
         case OR:
-            return And(args.at(0).negate(), args.at(1).negate()).setBeingCompound(is_compound_predicate);
+            return And(args.at(0).negate(isGraph), args.at(1).negate(isGraph)).setBeingCompound(is_compound_predicate);
         case AND:
-            return Or(args.at(0).negate(), args.at(1).negate()).setBeingCompound(is_compound_predicate);
+            return Or(args.at(0).negate(isGraph), args.at(1).negate(isGraph)).setBeingCompound(is_compound_predicate);
         case BOX:
+            return Diamond(args.at(0).negate(isGraph), isGraph);
         case DIAMOND:
+            return Box(args.at(0).negate(isGraph), isGraph);
         case NEXT:
-            return *this;
+            return Or({LAST}, (args.at(0).negate(isGraph)));
         case UNTIL:
-            return Release(args.at(0).negate(), args.at(1).negate()).setBeingCompound(is_compound_predicate);
+            return Release(args.at(0).negate(isGraph), args.at(1).negate(isGraph)).setBeingCompound(is_compound_predicate);
         case RELEASE:
-            return Until(args.at(0).negate(), args.at(1).negate()).setBeingCompound(is_compound_predicate);
+            return Until(args.at(0).negate(isGraph), args.at(1).negate(isGraph)).setBeingCompound(is_compound_predicate);
         case TRUE:
             return {FALSE};
         case FALSE:
             return True();
+        case LAST:
+            return Next(True());
         default:
             throw std::runtime_error("Unexpected case");
     }
 }
 
-struct ltlf ltlf::nnf() const {
+struct ltlf ltlf::nnf(bool isGraph) const {
     switch (casusu) {
         case NEG_OF:
             if (args.at(0).casusu == NEG_OF)
-                return args.at(0).args.at(0).nnf();
+                return args.at(0).args.at(0).nnf(isGraph);
             else
-                return args.at(0).negate();
+                return args.at(0).negate(isGraph);
         case OR:
-            return Or(args.at(0).nnf(), args.at(1).nnf()).setBeingCompound(is_compound_predicate);
+            return Or(args.at(0).nnf(isGraph),
+                      args.at(1).nnf(isGraph)).setBeingCompound(is_compound_predicate);
         case AND:
-            return And(args.at(0).nnf(), args.at(1).nnf()).setBeingCompound(is_compound_predicate);
+            return And(args.at(0).nnf(isGraph),
+                       args.at(1).nnf(isGraph)).setBeingCompound(is_compound_predicate);
         case NEXT:
-            return Next(args.at(0).nnf()).setBeingCompound(is_compound_predicate);
+            return Next(args.at(0).nnf(isGraph)).setBeingCompound(is_compound_predicate);
+        case DIAMOND:
+            return Diamond(args.at(0).nnf(isGraph), isGraph);
+        case BOX:
+            return Box(args.at(0).nnf(isGraph), isGraph);
         case UNTIL:
-            return Until(args.at(0).nnf(), args.at(1).nnf()).setBeingCompound(is_compound_predicate);
+            return Until(args.at(0).nnf(isGraph), args.at(1).nnf(isGraph)).setBeingCompound(is_compound_predicate);
         case RELEASE:
-            return Release(args.at(0).nnf(), args.at(1).nnf()).setBeingCompound(is_compound_predicate);
+            return Release(args.at(0).nnf(isGraph), args.at(1).nnf(isGraph)).setBeingCompound(is_compound_predicate);
         default:
             return {*this};
     }
