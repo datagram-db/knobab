@@ -59,9 +59,9 @@ int main() {
     // Second part
     std::unordered_map<uint32_t, float> found = db.exists(data, a, b, 50);
 
-    std::unordered_map<std::pair<uint32_t, uint16_t>, float> testVec = db.init("a");
+    TraceData<std::pair<uint32_t, uint16_t>, float> testVec = db.init<std::pair<uint32_t, uint16_t>, float>("a");
 
-    std::unordered_map<std::pair<uint32_t, uint16_t>, float> testVec1 = db.ends("a");
+    //TraceData<std::pair<uint32_t, uint16_t>, float> testVec1 = db.ends<std::pair<uint32_t, uint16_t>, float>("a");
 
     return 0;
 }

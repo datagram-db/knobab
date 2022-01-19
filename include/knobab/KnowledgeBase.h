@@ -26,6 +26,16 @@ enum ParsingState {
     FinishParsing
 };
 
+template<typename traceIdentifier, typename traceValue>
+struct TraceData{
+    TraceData(){}
+
+    TraceData(traceIdentifier id, traceValue v) : traceApproximations(id, v) {
+    }
+
+    std::vector<std::pair<traceIdentifier, traceValue>> traceApproximations;
+};
+
 #include <bitset>
 
 using trace_set = std::bitset<sizeof(uint32_t)>;
@@ -137,11 +147,74 @@ public:
     // Second part of the pipeline
     std::unordered_map<uint32_t, float> exists(const std::pair<const oid *, const oid *>& subsection,  const uint32_t& start, const uint32_t& end, const uint16_t& amount = 1) const;
 
-    std::unordered_map<std::pair<uint32_t, uint16_t>, float> init(const std::string& act) const;
+    template <typename traceIdentifier, typename traceValue>
+    TraceData<traceIdentifier, traceValue> init(const std::string& act) const{
+        TraceData<traceIdentifier, traceValue> traceData;
 
-    std::unordered_map<std::pair<uint32_t, uint16_t>, float> ends(const std::string& act) const;
+        for(const std::pair<ActTable::record*, ActTable::record*>& inst : act_table_by_act_id.secondary_index){
+            std::pair<traceIdentifier, traceValue> tracePair = existsAt<traceIdentifier, traceValue>(act, inst.first, 0);
+            traceData.traceApproximations.emplace_back(tracePair);
+        }
 
-    std::pair<std::pair<uint32_t, uint16_t>, float> existsAt(const std::string& act, const ActTable::record* start, const uint16_t& pos) const;
+        return traceData;
+    }
+
+    template <typename traceIdentifier, typename traceValue>
+    TraceData<traceIdentifier, traceValue> ends(const std::string& act) const{
+        TraceData<traceIdentifier, traceValue> traceData;
+
+        for(const std::pair<ActTable::record*, ActTable::record*>& inst : act_table_by_act_id.secondary_index){
+            std::pair<traceIdentifier, traceValue> tracePair = existsAt<traceIdentifier, traceValue>(act, inst.first, act_table_by_act_id.getTraceLength(inst.first->entry.id.parts.trace_id) - 1);
+            traceData.traceApproximations.emplace_back(tracePair);
+        }
+
+        return traceData;
+    }
+
+    template <typename traceIdentifier, typename traceValue>
+    std::pair<traceIdentifier, traceValue> existsAt(const std::string& act, const ActTable::record* start, const uint16_t& pos) const{
+        std::pair<traceIdentifier, traceValue> tracePair;
+        const uint16_t& mappedVal = getMappedValueFromAction(act);
+
+        if(mappedVal < 0){
+            return tracePair;
+        }
+
+        float closestSatisfiability = 0.F, eventId = 0.F;
+        uint16_t approxConstant = 2;      // Half of max possible eventId
+        uint16_t currentTraceLength = act_table_by_act_id.getTraceLength(start->entry.id.parts.trace_id);
+        uint16_t bestDistance = MAX_UINT16;
+        ActTable::record current = *start;
+
+        for(uint16_t currentPos = 0; currentPos < currentTraceLength; ++currentPos){
+            uint16_t distance = std::abs(pos - currentPos);
+
+            /* Optimization - If we are a point through the trace where we will never find a better fit */
+            if(distance > bestDistance){
+                break;
+            }
+
+            if(mappedVal == current.entry.id.parts.act){
+                float satisfiability = getSatisifiability(pos, currentPos, approxConstant);
+
+                if(satisfiability > closestSatisfiability){
+                    closestSatisfiability = satisfiability;
+                    eventId = currentPos;
+                    bestDistance = distance;
+                }
+            }
+
+            if(!current.next){
+                break;
+            }
+
+            current = *current.next;
+        }
+
+        tracePair = {{start->entry.id.parts.trace_id, eventId}, closestSatisfiability};
+
+        return tracePair;
+    }
 
 private:
     void collectValuesAmongTraces(std::set<union_type> &S, size_t trace_id, act_t acts, bool HasNoAct,
