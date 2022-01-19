@@ -31,7 +31,7 @@ enum ParsingState {
 using trace_set = std::bitset<sizeof(uint32_t)>;
 using act_set = std::bitset<sizeof(uint16_t)>;
 union_minimal resolveUnionMinimal(const AttributeTable &table, const AttributeTable::record &x);
-const uint16_t approxConstant = 2;
+const uint16_t MAX_UINT16 = std::pow(2, 16) - 1;
 
 class KnowledgeBase : public trace_visitor {
     CountTemplate                                   count_table;
@@ -137,9 +137,11 @@ public:
     // Second part of the pipeline
     std::unordered_map<uint32_t, float> exists(const std::pair<const oid *, const oid *>& subsection,  const uint32_t& start, const uint32_t& end, const uint16_t& amount = 1) const;
 
-    std::vector<uint32_t> init(const std::string& act) const;
+    std::unordered_map<std::pair<uint32_t, uint16_t>, float> init(const std::string& act) const;
 
-    std::vector<uint32_t> ends(const std::string& act) const;
+    std::unordered_map<std::pair<uint32_t, uint16_t>, float> ends(const std::string& act) const;
+
+    std::pair<std::pair<uint32_t, uint16_t>, float> existsAt(const std::string& act, const ActTable::record* start, const uint16_t& pos) const;
 
 private:
     void collectValuesAmongTraces(std::set<union_type> &S, size_t trace_id, act_t acts, bool HasNoAct,
@@ -149,6 +151,8 @@ private:
             std::unordered_map<std::string, std::set<union_type>> &resultOtherValues,
             const std::unordered_map<std::string, std::unordered_set<std::string>> &actToTables,
             const std::unordered_set<std::string> &otherValues, trace_t traceId) const;
+
+    float getSatisifiability(const uint16_t& val1, const uint16_t& val2, const uint16_t& approxConstant) const;
 };
 
 

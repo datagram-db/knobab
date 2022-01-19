@@ -6,8 +6,8 @@
 #include <cmath>
 
 uint16_t cast_to_float(size_t x, size_t l) {
-    const double at16 = std::pow(2, 16);
-    return (uint16_t)std::ceil(((double)x)/((double)l) * at16);
+    const double at16 = std::pow(2, 16) - 1;
+    return (uint16_t)((double)x)/((double)l) * at16;
 }
 
 ActTable::record::record() : record{0,0,0,nullptr, nullptr} {}
@@ -83,6 +83,7 @@ const std::vector<std::vector<size_t>> & ActTable::indexing1() { // todo: rename
         primary_index.emplace_back(offset);
         auto& ref = builder.act_id_to_trace_id_and_time[k];
         for (const std::pair<trace_t, event_t>& cp : ref) {
+            // TALK TO GIACOMO ABOUT BELOW, TIME VALS MAY NOT BE RATIOED PROPERLY -- 0, 0.25, 0.75 ?????
             table.emplace_back(k,
                                cp.first,
                                cast_to_float(cp.second, trace_length.at(cp.first)),

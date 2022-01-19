@@ -391,50 +391,80 @@ std::unordered_map<uint32_t, float> KnowledgeBase::exists(const std::pair<const 
     }
 
     for (auto it = count_table.table.begin() + start; it != count_table.table.begin() + end + 1; ++it) {
-        float satisfiability = 1 / ((float)(std::abs(amount - it->id.parts.event_id) / approxConstant) + 1);
+        uint16_t approxConstant = act_table_by_act_id.getTraceLength(it->id.parts.trace_id) / 2;
+        float satisfiability = getSatisifiability(amount, it->id.parts.event_id, approxConstant);
         foundElems.emplace(it->id.parts.trace_id, satisfiability);
     }
 
     return foundElems;
 }
 
-std::vector<uint32_t> KnowledgeBase::init(const std::string& act) const {
+std::unordered_map<std::pair<uint32_t, uint16_t>, float> KnowledgeBase::init(const std::string& act) const {
+    std::unordered_map<std::pair<uint32_t, uint16_t>, float> mapToFill;
+
+    for(const std::pair<ActTable::record*, ActTable::record*>& inst : act_table_by_act_id.secondary_index){
+        mapToFill.emplace(existsAt(act, inst.first, 0));
+    }
+
+    return mapToFill;
+}
+
+std::unordered_map<std::pair<uint32_t, uint16_t>, float> KnowledgeBase::ends(const std::string& act) const {
+    std::unordered_map<std::pair<uint32_t, uint16_t>, float> mapToFill;
+
+    for(const std::pair<ActTable::record*, ActTable::record*>& inst : act_table_by_act_id.secondary_index){
+        mapToFill.emplace(existsAt(act, inst.first, act_table_by_act_id.getTraceLength(inst.first->entry.id.parts.trace_id) - 1));
+    }
+
+    return mapToFill;
+}
+
+std::pair<std::pair<uint32_t, uint16_t>, float> KnowledgeBase::existsAt(const std::string& act, const ActTable::record* start, const uint16_t& pos) const {
+    std::pair<std::pair<uint32_t, uint16_t>, float> tracePair;
     const uint16_t& mappedVal = getMappedValueFromAction(act);
 
     if(mappedVal < 0){
-        return std::vector<uint32_t>();
+        return tracePair;
     }
 
-    std::vector<uint32_t> foundTrace = std::vector<uint32_t>();
+    float closestSatisfiability = 0.F, eventId = 0.F;
+    uint16_t approxConstant = 2;      // Half of max possible eventId
+    uint16_t currentTraceLength = act_table_by_act_id.getTraceLength(start->entry.id.parts.trace_id);
+    uint16_t bestDistance = MAX_UINT16;
+    ActTable::record current = *start;
 
-    for(const std::pair<ActTable::record*, ActTable::record*>& inst : act_table_by_act_id.secondary_index){
-        if(inst.first->entry.id.parts.act == mappedVal){
-            const uint32_t& foundID = inst.first->entry.id.parts.trace_id;
-            foundTrace.emplace_back(foundID);
+    for(uint16_t currentPos = 0; currentPos < currentTraceLength; ++currentPos){
+        uint16_t distance = std::abs(pos - currentPos);
+
+        /* Optimization - If we are a point through the trace where we will never find a better fit */
+        if(distance > bestDistance){
+            break;
         }
+
+        if(mappedVal == current.entry.id.parts.act){
+            float satisfiability = getSatisifiability(pos, currentPos, approxConstant);
+
+            if(satisfiability > closestSatisfiability){
+                closestSatisfiability = satisfiability;
+                eventId = currentPos;
+                bestDistance = distance;
+            }
+        }
+
+        if(!current.next){
+            break;
+        }
+
+        current = *current.next;
     }
 
-    return foundTrace;
+    tracePair = {{start->entry.id.parts.trace_id, eventId}, closestSatisfiability};
+
+    return tracePair;
 }
 
-std::vector<uint32_t> KnowledgeBase::ends(const std::string& act) const {
-    const uint16_t& mappedVal = getMappedValueFromAction(act);
-
-    if(mappedVal < 0){
-        return std::vector<uint32_t>();
-    }
-
-    std::vector<uint32_t> foundTrace = std::vector<uint32_t>();
-
-    for(const std::pair<ActTable::record*, ActTable::record*>& inst : act_table_by_act_id.secondary_index){
-        if(inst.second->entry.id.parts.act == mappedVal){
-            const uint32_t& foundID = inst.second->entry.id.parts.trace_id;
-            foundTrace.emplace_back(foundID);
-        }
-    }
-
-    return foundTrace;
+float KnowledgeBase::getSatisifiability(const uint16_t& val1, const uint16_t& val2, const uint16_t& approxConstant) const {
+    return 1 / ((float)(std::abs(val1 - val2) / (float)approxConstant) + 1);
 }
-
 
 
