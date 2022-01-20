@@ -66,7 +66,7 @@ enum declare_templates {
 
 bool isUnaryPredicate(declare_templates type);
 
-bool isUnaryPredicate(declare_templates t);
+//bool isUnaryPredicate(declare_templates t);
 
 #include <string>
 #include <unordered_map>
