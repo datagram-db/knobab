@@ -24,6 +24,7 @@ include_directories(submodules/magic_enum/include)
 
 include_directories(include)
 add_library(knobab STATIC
+        src/knobab/algorithms/MAXSatPipeline.cpp
         src/knobab/oid.cpp
         src/knobab/CountTemplate.cpp
         src/knobab/ActTable.cpp

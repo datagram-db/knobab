@@ -455,7 +455,7 @@ void KnowledgeBase::clear() {
 #include <sstream>
 
 // TODO: to be replaced with Sam's function
-template<class InputIt1, class InputIt2, class OutputIt, class Aggregation>
+template<typename InputIt1, typename InputIt2, typename OutputIt, typename Aggregation>
 OutputIt tmp_set_union(InputIt1 first1, InputIt1 last1,
                    InputIt2 first2, InputIt2 last2,
                    OutputIt d_first, Aggregation aggr)

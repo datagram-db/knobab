@@ -30,6 +30,7 @@
 template<typename T>
 std::unordered_set<T> unordered_intersection(const std::unordered_set<T> &a,
                                              const std::unordered_set<T> &b){
+    if (a.size() > b.size()) return unordered_intersection(b, a);
     std::unordered_set<T> v3;
     for (auto i = a.begin(); i != a.end(); i++) {
         if (b.find(*i) != b.end()) v3.insert(*i);
@@ -50,6 +51,7 @@ std::unordered_set<T> unordered_difference(const std::unordered_set<T> &a,
 template<typename T>
 double unodreded_distance(const std::unordered_set<T> &a,
                           const std::unordered_set<T> &b) {
+    if (a.size() < b.size()) return unodreded_distance(b, a);
     double total = a.size();
     for (auto i = b.begin(); i != b.end(); i++) {
         if (a.find(*i) == a.end()) total++;
