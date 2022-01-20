@@ -86,7 +86,7 @@ const std::vector<std::vector<size_t>> & ActTable::indexing1() { // todo: rename
             // TALK TO GIACOMO ABOUT BELOW, TIME VALS MAY NOT BE RATIOED PROPERLY -- 0, 0.25, 0.75 ?????
             table.emplace_back(k,
                                cp.first,
-                               cast_to_float(cp.second, trace_length.at(cp.first)),
+                               cast_to_float(cp.second, trace_length.at(cp.first) - 1),
                                nullptr, nullptr);
             builder.trace_id_to_event_id_to_offset[cp.first][cp.second] = offset++;
         }
@@ -143,11 +143,20 @@ void ActTable::indexing2() { // todo: rename as indexing, and remove expectedOrd
     builder.trace_id_to_event_id_to_offset.clear();
 }
 
-std::pair<const ActTable::record *, const ActTable::record *> ActTable::resolve_index(act_t id) const {
+//std::pair<const ActTable::record *, const ActTable::record *> ActTable::resolve_index(act_t id) const {
+//    if (primary_index.size() < id)
+//        return {nullptr, nullptr};
+//    else {
+//        return {table.data() + primary_index.at(id),
+//                ((id == (primary_index.size() - 1)) ? (const record*)primary_index.back() : table.data() + (primary_index.at(id+1) - 1))};      // Pointers to first and last records from Act Table subsection
+//    }
+//}
+
+std::pair<const uint32_t, const uint32_t> ActTable::resolve_index(act_t id) const {
     if (primary_index.size() < id)
-        return {nullptr, nullptr};
+        return {-1, -1};
     else {
-        return {table.data() + primary_index.at(id),
-                ((id == (primary_index.size() - 1)) ? (const record*)primary_index.back() : table.data() + (primary_index.at(id+1) - 1))};      // Pointers to first and last records from Act Table subsection
+        return {primary_index.at(id),
+                ((id == (primary_index.size() - 1)) ? primary_index.at(primary_index.size() - 1) - 1 : primary_index.at(id+1) - 1)};      // Pointers to first and last records from Act Table subsection
     }
 }
