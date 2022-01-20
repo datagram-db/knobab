@@ -51,3 +51,13 @@ std::pair<const oid *, const oid *> CountTemplate::resolve_primary_index(const u
         return {nullptr, nullptr};
     }
 }
+
+std::pair<const uint32_t, const uint32_t> CountTemplate::resolve_primary_index(const uint16_t actId) const {
+    if (actId < maxAct) {
+        const uint32_t start = (maxTraceId + 1) * actId;
+        const uint32_t end = start + maxTraceId;
+        return {start, end};       // Pointers to first and last oid from Count Table subsection
+    } else {
+        return {-1, -1};
+    }
+}

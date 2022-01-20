@@ -1,6 +1,6 @@
 #include <iostream>
 #include "yaucl/bpm/structures/log/data_loader.h"
-
+#include "yaucl/strings/serializers.h"
 //const KnowledgeBase::no_antlr_log LogTrace = {
 //        {{"a", {}}, {"a", {}}, {"b", {}}}};
 
@@ -25,8 +25,8 @@
 
 const KnowledgeBase::no_antlr_log LogTrace = {
         {{"a", {}}, {"a", {}}, {"a", {}}, {"b", {}}},
-        {{"b", {}}, {"a", {}}, {"a", {}}, {"a", {}}, {"a", {}}, {"a", {}}, {"a", {}}, {"a", {}}},
-        {{"c", {}}, {"a", {}}, {"b", {}}, {"a", {}}, {"c", {}}}};
+        {{"b", {}}, {"b", {}}, {"b", {}}, {"b", {}}, {"a", {}}},
+        {{"c", {}}, {"b", {}}, {"c", {}}, {"b", {}}, {"c", {}}}};
 
 KnowledgeBase test_kb(const KnowledgeBase::no_antlr_log& L, const std::string &source, const std::string &name) {
     /// Creating an instance of the knowledge base, that is going to store all the traces in the log!
@@ -53,15 +53,17 @@ int main() {
     KnowledgeBase db = test_kb(LogTrace, "", "");
 
     // First part
-    uint32_t a, b;
-    std::pair<const oid *, const oid *>  data = db.resolveCountingData("a", a, b);
+    std::pair<const uint32_t, const uint32_t>  data = db.resolveCountingData("a");
 
     // Second part
-    std::unordered_map<uint32_t, float> found = db.exists(data, a, b, 50);
+    std::unordered_map<uint32_t, float> found = db.exists(data, 2);
 
-    TraceData<std::pair<uint32_t, uint16_t>, float> testVec = db.init<std::pair<uint32_t, uint16_t>, float>("a");
+    TraceData<std::pair<uint32_t, uint16_t>, float> testVec = db.init<std::pair<uint32_t, uint16_t>, float>("a", 0.5);
 
-    //TraceData<std::pair<uint32_t, uint16_t>, float> testVec1 = db.ends<std::pair<uint32_t, uint16_t>, float>("a");
+    TraceData<std::pair<uint32_t, uint16_t>, float> testVec1 = db.ends<std::pair<uint32_t, uint16_t>, float>("a", 0.5);
+
+    std::cout << testVec.traceApproximations << std::endl << testVec1.traceApproximations;
+    std::flush(std::cout);
 
     return 0;
 }
