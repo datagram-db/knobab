@@ -141,79 +141,47 @@ public:
 
     // First part of the pipeline
     uint16_t getMappedValueFromAction(const std::string &act) const;
-    std::pair<const oid*, const oid*> resolveCountingData(const std::string &act, uint32_t& start, uint32_t& end) const;
-    std::pair<const ActTable::record*, const ActTable::record*> resolveActData(const std::string &act, uint32_t& start, uint32_t& end) const;
+    std::pair<const uint32_t, const uint32_t> resolveCountingData(const std::string &act) const;
 
     // Second part of the pipeline
-    std::unordered_map<uint32_t, float> exists(const std::pair<const oid *, const oid *>& subsection,  const uint32_t& start, const uint32_t& end, const uint16_t& amount = 1) const;
+    std::unordered_map<uint32_t, float> exists(const std::pair<const uint32_t, const uint32_t>& indexes, const uint16_t& amount) const;
 
     template <typename traceIdentifier, typename traceValue>
-    TraceData<traceIdentifier, traceValue> init(const std::string& act) const{
-        TraceData<traceIdentifier, traceValue> traceData;
-
-        for(const std::pair<ActTable::record*, ActTable::record*>& inst : act_table_by_act_id.secondary_index){
-            std::pair<traceIdentifier, traceValue> tracePair = existsAt<traceIdentifier, traceValue>(act, inst.first, 0);
-            traceData.traceApproximations.emplace_back(tracePair);
-        }
-
-        return traceData;
+    TraceData<traceIdentifier, traceValue> init(const std::string& act, const float minThreshold = 1) const{
+        return existsAt<traceIdentifier, traceValue>(act, 0, minThreshold);
     }
 
     template <typename traceIdentifier, typename traceValue>
-    TraceData<traceIdentifier, traceValue> ends(const std::string& act) const{
-        TraceData<traceIdentifier, traceValue> traceData;
-
-        for(const std::pair<ActTable::record*, ActTable::record*>& inst : act_table_by_act_id.secondary_index){
-            std::pair<traceIdentifier, traceValue> tracePair = existsAt<traceIdentifier, traceValue>(act, inst.first, act_table_by_act_id.getTraceLength(inst.first->entry.id.parts.trace_id) - 1);
-            traceData.traceApproximations.emplace_back(tracePair);
-        }
-
-        return traceData;
+    TraceData<traceIdentifier, traceValue> ends(const std::string& act, const float minThreshold = 1) const{
+        return existsAt<traceIdentifier, traceValue>(act, MAX_UINT16, minThreshold);
     }
 
     template <typename traceIdentifier, typename traceValue>
-    std::pair<traceIdentifier, traceValue> existsAt(const std::string& act, const ActTable::record* start, const uint16_t& pos) const{
+    TraceData<traceIdentifier, traceValue> existsAt(const std::string& act, const uint16_t& eventId, const float minThreshold = 1) const{
+        TraceData<traceIdentifier, traceValue> foundData;
+
         std::pair<traceIdentifier, traceValue> tracePair;
         const uint16_t& mappedVal = getMappedValueFromAction(act);
 
         if(mappedVal < 0){
-            return tracePair;
+            return foundData;
         }
 
-        float closestSatisfiability = 0.F, eventId = 0.F;
-        uint16_t approxConstant = 2;      // Half of max possible eventId
-        uint16_t currentTraceLength = act_table_by_act_id.getTraceLength(start->entry.id.parts.trace_id);
-        uint16_t bestDistance = MAX_UINT16;
-        ActTable::record current = *start;
+        std::pair<const uint32_t , const uint32_t> indexes = act_table_by_act_id.resolve_index(mappedVal);
 
-        for(uint16_t currentPos = 0; currentPos < currentTraceLength; ++currentPos){
-            uint16_t distance = std::abs(pos - currentPos);
-
-            /* Optimization - If we are a point through the trace where we will never find a better fit */
-            if(distance > bestDistance){
-                break;
-            }
-
-            if(mappedVal == current.entry.id.parts.act){
-                float satisfiability = getSatisifiability(pos, currentPos, approxConstant);
-
-                if(satisfiability > closestSatisfiability){
-                    closestSatisfiability = satisfiability;
-                    eventId = currentPos;
-                    bestDistance = distance;
-                }
-            }
-
-            if(!current.next){
-                break;
-            }
-
-            current = *current.next;
+        if(indexes.first < 0){
+            return foundData;
         }
 
-        tracePair = {{start->entry.id.parts.trace_id, eventId}, closestSatisfiability};
+        for (auto it = act_table_by_act_id.table.begin() + indexes.first; it != act_table_by_act_id.table.begin() + indexes.second + 1; ++it) {
+            float satisfiability = getSatisifiabilityFromEventId(eventId, it->entry.id.parts.event_id);
 
-        return tracePair;
+            if(satisfiability >= minThreshold) {
+                foundData.traceApproximations.emplace_back(std::pair<std::pair<uint32_t, uint16_t>, float>({it->entry.id.parts.trace_id, it->entry.id.parts.event_id}, satisfiability));
+            }
+        }
+
+        return foundData;
     }
 
 private:
@@ -225,7 +193,11 @@ private:
             const std::unordered_map<std::string, std::unordered_set<std::string>> &actToTables,
             const std::unordered_set<std::string> &otherValues, trace_t traceId) const;
 
-    float getSatisifiability(const uint16_t& val1, const uint16_t& val2, const uint16_t& approxConstant) const;
+    float getSatisifiabilityFromPositions(const uint16_t& val1, const uint16_t& val2, const uint16_t& approxConstant) const;
+
+    float getSatisifiabilityFromEventId(const uint16_t& val1, const uint16_t& val2) const;
+
+    uint16_t getPositionFromEventId(const oid* event) const;
 };
 
 

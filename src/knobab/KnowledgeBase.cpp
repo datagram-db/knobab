@@ -363,44 +363,45 @@ uint16_t KnowledgeBase::getMappedValueFromAction(const std::string &act) const {
     }
 }
 
-std::pair<const oid *, const oid *> KnowledgeBase::resolveCountingData(const std::string &act, uint32_t& start, uint32_t& end) const {
+std::pair<const uint32_t, const uint32_t> KnowledgeBase::resolveCountingData(const std::string &act) const {
     const uint16_t& mappedVal = getMappedValueFromAction(act);
 
     if(mappedVal < 0){
-        return {nullptr, nullptr};
+        return {-1, -1};
     }
 
-    return count_table.resolve_primary_index(mappedVal, start, end);
+    return count_table.resolve_primary_index(mappedVal);
 }
 
-std::pair<const ActTable::record*, const ActTable::record*> KnowledgeBase::resolveActData(const std::string &act, uint32_t &start, uint32_t &end) const {
-    const uint16_t& mappedVal = getMappedValueFromAction(act);
-
-    if(mappedVal < 0){
-        return {nullptr, nullptr};
-    }
-
-    return act_table_by_act_id.resolve_index(mappedVal);
-}
-
-std::unordered_map<uint32_t, float> KnowledgeBase::exists(const std::pair<const oid*, const oid*>& subsection, const uint32_t& start, const uint32_t& end, const uint16_t& amount) const {
+std::unordered_map<uint32_t, float> KnowledgeBase::exists(const std::pair<const uint32_t, const uint32_t>& indexes, const uint16_t& amount) const {
     std::unordered_map<uint32_t, float> foundElems = std::unordered_map<uint32_t, float>();
 
-    if(!subsection.first){
-        return foundElems;
-    }
-
-    for (auto it = count_table.table.begin() + start; it != count_table.table.begin() + end + 1; ++it) {
+    for (auto it = count_table.table.begin() + indexes.first; it != count_table.table.begin() + indexes.second + 1; ++it) {
         uint16_t approxConstant = act_table_by_act_id.getTraceLength(it->id.parts.trace_id) / 2;
-        float satisfiability = getSatisifiability(amount, it->id.parts.event_id, approxConstant);
+        float satisfiability = getSatisifiabilityFromPositions(amount, it->id.parts.event_id, approxConstant);
         foundElems.emplace(it->id.parts.trace_id, satisfiability);
     }
 
     return foundElems;
 }
 
-float KnowledgeBase::getSatisifiability(const uint16_t& val1, const uint16_t& val2, const uint16_t& approxConstant) const {
+float KnowledgeBase::getSatisifiabilityFromPositions(const uint16_t& val1, const uint16_t& val2, const uint16_t& approxConstant) const {
     return 1 / ((float)(std::abs(val1 - val2) / (float)approxConstant) + 1);
 }
 
+float KnowledgeBase::getSatisifiabilityFromEventId(const uint16_t& val1, const uint16_t& val2) const {
+    return 1 - ((float)std::abs(val1 - val2) / (float)MAX_UINT16);
+}
+
+uint16_t KnowledgeBase::getPositionFromEventId(const oid* event) const {
+    uint16_t traceLength = act_table_by_act_id.getTraceLength(event->id.parts.trace_id);
+
+    /* Guard against length 1 traces */
+    if(traceLength == 1){
+        return 0;
+    }
+
+    uint16_t posFromEventId = std::ceil((float)(event->id.parts.event_id / (float)MAX_UINT16) * (traceLength - 1));
+    return posFromEventId;
+}
 
