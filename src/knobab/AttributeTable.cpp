@@ -169,6 +169,7 @@ std::ostream &AttributeTable::resolve_and_print(std::ostream &os, const Attribut
 
 #include <sstream>
 #include <magic_enum.hpp>
+#include <yaucl/structures/set_operations.h>
 
 
 AttributeTable::range_query_result AttributeTable::range_query(DataPredicate prop, ssize_t act, double min_threshold, const double c) const {
@@ -272,8 +273,7 @@ bool AttributeTable::range_query(size_t actId, const DataPredicate &prop, Attrib
                         thisResult.approx_solution.emplace_back(&table.at(it.first+i), thisValue);
                     }
                 }
-                std::sort(thisResult.approx_solution.begin(), thisResult.approx_solution.end());
-                thisResult.approx_solution.erase(std::unique(thisResult.approx_solution.begin(), thisResult.approx_solution.end()), thisResult.approx_solution.end());
+                remove_duplicates(thisResult.approx_solution);
             }
         } else {
             // No solution found! only approximations are admissable.
@@ -317,8 +317,7 @@ bool AttributeTable::range_query(size_t actId, const DataPredicate &prop, Attrib
                             }
                         }
                     }
-                    std::sort(thisResult.approx_solution.begin(), thisResult.approx_solution.end());
-                    thisResult.approx_solution.erase(std::unique(thisResult.approx_solution.begin(), thisResult.approx_solution.end()), thisResult.approx_solution.end());
+                    remove_duplicates(thisResult.approx_solution);
                 }
                 return !aggr.empty();
             } else {
@@ -344,8 +343,7 @@ bool AttributeTable::range_query(size_t actId, const DataPredicate &prop, Attrib
                     current_result->approx_solution.emplace_back(&table.at(i), thisValue);
                 }
                 if (current_result) {
-                    std::sort(current_result->approx_solution.begin(), current_result->approx_solution.end());
-                    current_result->approx_solution.erase(std::unique(current_result->approx_solution.begin(), current_result->approx_solution.end()), current_result->approx_solution.end());
+                    remove_duplicates(current_result->approx_solution);
                 }
                 return current_result != nullptr;
             }

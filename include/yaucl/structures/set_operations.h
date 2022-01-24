@@ -131,5 +131,75 @@ std::ostream& operator<<(std::ostream& os, const std::vector<T> &s)
     return os << ']';
 }*/
 
+#include <map>
+#include <functional>
+template <typename Iterator, typename Key, typename Value>
+std::map<Key, std::vector<Value>> GroupByKeyExtractor(Iterator begin, Iterator end, std::function<Key(const Value&)> keyExtractor)
+{
+    assert(std::is_sorted(begin, end));
+    std::map<Key, std::vector<Value>> groups;
+    decltype(end) upper;
+
+    for(auto lower = begin; lower != end; lower = upper)
+    {
+        Key k = keyExtractor(*lower);
+
+        // get the upper position of all elements with the same ID
+        upper = std::upper_bound(begin, end,  *lower,[keyExtractor](const Value& x, const Value& y) { return keyExtractor(x) < keyExtractor(y); });
+
+        // add those elements as a group to the output vector
+        groups[k] = {lower, upper};
+    }
+
+    return groups;
+}
+
+template <typename Iterator, typename Key, typename Value>
+std::vector<std::pair<Key, std::vector<Value>>> GroupByKeyExtractorAsVector(Iterator begin, Iterator end, std::function<Key(const Value&)> keyExtractor)
+{
+    assert(std::is_sorted(begin, end));
+    std::vector<std::pair<Key, std::vector<Value>>> groups;
+    decltype(end) upper;
+
+    for(auto lower = begin; lower != end; lower = upper)
+    {
+        Key k = keyExtractor(*lower);
+
+        // get the upper position of all elements with the same ID
+        upper = std::upper_bound(begin, end,  *lower,[keyExtractor](const Value& x, const Value& y) { return keyExtractor(x) < keyExtractor(y); });
+
+        // add those elements as a group to the output vector
+        groups.emplace_back(k, std::vector<Value>{lower, upper});
+    }
+
+    return groups;
+}
+
+template <typename Iterator, typename Key, typename Value>
+std::vector<std::vector<Value>> GroupByKeyExtractorIgnoreKey(Iterator begin, Iterator end, std::function<Key(const Value&)> keyExtractor)
+{
+    assert(std::is_sorted(begin, end));
+    std::vector<std::vector<Value>> groups;
+    decltype(end) upper;
+
+    for(auto lower = begin; lower != end; lower = upper)
+    {
+        Key k = keyExtractor(*lower);
+
+        // get the upper position of all elements with the same ID
+        upper = std::upper_bound(begin, end,  *lower,[keyExtractor](const Value& x, const Value& y) { return keyExtractor(x) < keyExtractor(y); });
+
+        // add those elements as a group to the output vector
+        groups.emplace_back(std::vector<Value>{lower, upper});
+    }
+
+    return groups;
+}
+
+template <typename T>
+void remove_duplicates(std::vector<T>& vec){
+    std::sort(vec.begin(), vec.end());
+    vec.erase(std::unique(vec.begin(), vec.end()), vec.end());
+}
 
 #endif //INCONSISTENCY_DETECTOR_SET_OPERATIONS_H

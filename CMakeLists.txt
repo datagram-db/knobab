@@ -24,6 +24,7 @@ include_directories(submodules/magic_enum/include)
 
 include_directories(include)
 add_library(knobab STATIC
+        src/knobab/trace_repairs/MarkedEvent.cpp
         src/knobab/algorithms/MAXSatPipeline.cpp
         src/knobab/oid.cpp
         src/knobab/CountTemplate.cpp
@@ -36,7 +37,7 @@ add_library(knobab STATIC
         src/knobab/algorithms/kb_grounding.cpp
         include/knobab/algorithms/kb_grounding.h
         src/knobab/algorithms/atomization_pipeline.cpp
-        include/knobab/algorithms/atomization_pipeline.h src/knobab/Environment.cpp include/knobab/Environment.h)
+        include/knobab/algorithms/atomization_pipeline.h src/knobab/Environment.cpp include/knobab/Environment.h src/knobab/trace_repairs/DataQuery.cpp include/knobab/trace_repairs/DataQuery.h)
 target_link_libraries(knobab yaml-cpp yaucl_structures)
 
 add_library(yaucl_numeric STATIC
