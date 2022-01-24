@@ -18,62 +18,13 @@
 #include <SimplifiedFuzzyStringMatching.h>
 #include <yaucl/bpm/structures/commons/DataPredicate.h>
 #include <variant>
+#include <knobab/dataStructures/TraceData.h>
 
 enum ParsingState {
     LogParsing,
     TraceParsing,
     EventParsing,
     FinishParsing
-};
-
-template<typename traceIdentifier, typename traceValue>
-struct TraceData{
-    TraceData(){}
-
-    TraceData(traceIdentifier id, traceValue v) : traceApproximations(id, v) {
-    }
-
-    template<typename InputIt2, typename OutputIt>
-    OutputIt setUnion(InputIt2 first2, InputIt2 last2,
-                           OutputIt d_first)
-    {
-        InputIt2 first1 = traceApproximations.begin(), last1 = traceApproximations.end();
-        for (; first1 != last1; ++d_first) {
-            if (first2 == last2)
-                return std::copy(first1, last1, d_first);
-            if (*first2 < *first1) {
-                *d_first = *first2++;
-            } else if (*first2 > *first1) {
-                *d_first = *first1++;
-            } else {
-                *d_first = *first1++;
-                *first2++;
-            }
-        }
-        return std::copy(first2, last2, d_first);
-    }
-
-    template<typename InputIt2, typename OutputIt>
-    OutputIt setIntersection(InputIt2 first2, InputIt2 last2,
-                      OutputIt d_first)
-    {
-        InputIt2 first1 = traceApproximations.begin(), last1 = traceApproximations.end();
-        for (; first1 != last1; ++d_first) {
-            if (first2 == last2)
-                return  d_first;
-            if (*first2 < *first1) {
-                first2++;
-            } else if (*first2 > *first1) {
-                first1++;
-            } else {
-                *d_first = *first1++;
-                *first2++;
-            }
-        }
-        return d_first;
-    }
-
-    std::vector<std::pair<traceIdentifier, traceValue>> traceApproximations;
 };
 
 #include <bitset>
@@ -219,7 +170,7 @@ public:
             float satisfiability = getSatisifiabilityBetweenValues(eventId, it->entry.id.parts.event_id, approxConstant);
 
             if(satisfiability >= minThreshold) {
-                foundData.traceApproximations.emplace_back(std::pair<std::pair<uint32_t, uint16_t>, float>({it->entry.id.parts.trace_id, it->entry.id.parts.event_id}, satisfiability));
+                foundData.getTraceApproximations().emplace_back(std::pair<std::pair<uint32_t, uint16_t>, float>({it->entry.id.parts.trace_id, it->entry.id.parts.event_id}, satisfiability));
             }
         }
 
