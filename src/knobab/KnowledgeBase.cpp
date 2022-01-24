@@ -378,19 +378,15 @@ std::unordered_map<uint32_t, float> KnowledgeBase::exists(const std::pair<const 
 
     for (auto it = count_table.table.begin() + indexes.first; it != count_table.table.begin() + indexes.second + 1; ++it) {
         uint16_t approxConstant = act_table_by_act_id.getTraceLength(it->id.parts.trace_id) / 2;
-        float satisfiability = getSatisifiabilityFromPositions(amount, it->id.parts.event_id, approxConstant);
+        float satisfiability = getSatisifiabilityBetweenValues(amount, it->id.parts.event_id, approxConstant);
         foundElems.emplace(it->id.parts.trace_id, satisfiability);
     }
 
     return foundElems;
 }
 
-float KnowledgeBase::getSatisifiabilityFromPositions(const uint16_t& val1, const uint16_t& val2, const uint16_t& approxConstant) const {
-    return 1 / ((float)(std::abs(val1 - val2) / (float)approxConstant) + 1);
-}
-
-float KnowledgeBase::getSatisifiabilityFromEventId(const uint16_t& val1, const uint16_t& val2) const {
-    return 1 - ((float)std::abs(val1 - val2) / (float)MAX_UINT16);
+float KnowledgeBase::getSatisifiabilityBetweenValues(const uint16_t& val1, const uint16_t& val2, const uint16_t& approxConstant) const {
+    return 1 / (((float)std::abs(val1 - val2) / approxConstant) + 1);
 }
 
 uint16_t KnowledgeBase::getPositionFromEventId(const oid* event) const {
