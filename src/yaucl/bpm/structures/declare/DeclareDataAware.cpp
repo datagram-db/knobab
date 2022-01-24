@@ -393,7 +393,7 @@ ltlf DeclareDataAware::toFiniteSemantics(bool isForGraph) const {
                                            ltlf::Neg(ltlf::Diamond(right, isForGraph)), isForGraph), isForGraph);
 
         case NotResponse:
-            return ltlf::Box(ltlf::Implies(left, ltlf::Neg(ltlf::Box(right, isForGraph)), isForGraph));
+            return ltlf::Box(ltlf::Implies(left, ltlf::Neg(ltlf::Box(right, isForGraph)), isForGraph), isForGraph);
 
         case NotChainPrecedence:
             return ltlf::Box(ltlf::Implies(right, ltlf::Neg(ltlf::Next(left)), isForGraph), isForGraph);
@@ -405,7 +405,7 @@ ltlf DeclareDataAware::toFiniteSemantics(bool isForGraph) const {
             return ltlf::Box(ltlf::Implies(left, ltlf::Neg(ltlf::Box(right, isForGraph)), isForGraph), isForGraph);
 
         case NotChainResponse:
-            return ltlf::Box(ltlf::Implies(left, ltlf::Neg(ltlf::Next(right)), isForGraph));
+            return ltlf::Box(ltlf::Implies(left, ltlf::Neg(ltlf::Next(right)), isForGraph), isForGraph);
 
         case NegChainSuccession:
             return ltlf::Box(ltlf::Equivalent(left, ltlf::Next(right.negate())), isForGraph);

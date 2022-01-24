@@ -26,11 +26,11 @@
 #include <yaucl/bpm/structures/ltlf/ltlf.h>
 #include <cassert>
 
-ltlf::ltlf() : casusu{TRUE}, is_negated{false}, is_compound_predicate{false} { }
+ltlf::ltlf() : casusu{TRUE}, is_negated{false}, is_compound_predicate{false}, is_exclusive{false} { }
 
-ltlf::ltlf(const std::string &act) : casusu{ACT}, act{act}, is_negated{false}, is_compound_predicate{false}  {}
+ltlf::ltlf(const std::string &act) : casusu{ACT}, act{act}, is_negated{false}, is_compound_predicate{false}, is_exclusive{false}  {}
 
-ltlf::ltlf(formula_t citki) : casusu{citki}, is_negated{false}, is_compound_predicate{false}   {}
+ltlf::ltlf(formula_t citki) : casusu{citki}, is_negated{false}, is_compound_predicate{false}, is_exclusive{false}   {}
 
 struct ltlf ltlf::True() { return {}; }
 
@@ -52,6 +52,7 @@ struct ltlf ltlf::Or(const ltlf &left, const ltlf &right) {
     struct ltlf formula{OR};
     formula.args.emplace_back(left);
     formula.args.emplace_back(right);
+    formula.is_exclusive = false;
     return formula;
 }
 
@@ -95,7 +96,13 @@ struct ltlf ltlf::Release(const ltlf &left, const ltlf &right) {
 }
 
 struct ltlf ltlf::Implies(const ltlf &left, const ltlf &right, bool isGraphGeneration) {
-    return isGraphGeneration ? Or(Neg(left), right) : Or(Neg(left), And(left, right));
+    if (isGraphGeneration) {
+        return Or(Neg(left), right);
+    } else {
+        auto res = Or(Neg(left), And(left, right));
+        res.is_exclusive = true;
+        return res;
+    }
 }
 
 struct ltlf ltlf::Equivalent(const ltlf &left, const ltlf &right) {
@@ -140,6 +147,16 @@ std::ostream &operator<<(std::ostream &os, const ltlf &syntax) {
             return os << "F(" << syntax.args[0] << ")"<< reset;
         default:
             return os << "false"<< reset;
+    }
+}
+
+void ltlf::collectElements(std::unordered_map<std::string, std::unordered_set<bool>> &negation) const {
+    assert(casusu != NUMERIC_ATOM);
+    if (casusu == ACT) {
+        negation[act].insert(is_negated);
+    } else {
+        for (const auto& ref : args)
+            ref.collectElements(negation);
     }
 }
 
@@ -888,7 +905,7 @@ struct ltlf ltlf::nnf(bool isGraph) const {
                 return args.at(0).negate(isGraph);
         case OR:
             return Or(args.at(0).nnf(isGraph),
-                      args.at(1).nnf(isGraph)).setBeingCompound(is_compound_predicate);
+                      args.at(1).nnf(isGraph)).setBeingCompound(is_compound_predicate).setExclusiveness(is_exclusive);
         case AND:
             return And(args.at(0).nnf(isGraph),
                        args.at(1).nnf(isGraph)).setBeingCompound(is_compound_predicate);

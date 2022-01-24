@@ -67,16 +67,14 @@ struct ltlf {
     std::vector<ltlf>      args;
     bool                   is_negated;
     bool                   is_compound_predicate;
+    bool                   is_exclusive;
     DataPredicate          numeric_atom;
 
     // C++ constructors
     ltlf();
     ltlf(const std::string& act);
     ltlf(formula_t citki);
-    ltlf(const ltlf& ) = default;
-    ltlf(ltlf&&      ) = default;
-    ltlf& operator=(const ltlf&) = default;
-    ltlf& operator=(ltlf&&     ) = default;
+    DEFAULT_COPY_ASSGN(ltlf)
 
     // Semantic constructors
     static struct ltlf True();
@@ -106,6 +104,10 @@ struct ltlf {
         is_compound_predicate = isCompound;
         return *this;
     }
+    struct ltlf& setExclusiveness(bool isExclusive) {
+        is_exclusive = isExclusive;
+        return *this;
+    }
     struct ltlf simplify() const;
     struct ltlf oversimplify() const;
     struct ltlf negate(bool isGraph = true) const;
@@ -115,8 +117,8 @@ struct ltlf {
     PropositionalizedAtomsSet possibleActionsUpToNext() const;
 
     struct ltlf replace_with(const std::unordered_map<std::string, ltlf>& map) const;
-
     struct ltlf replace_with_unique_name(const std::unordered_map<std::string, std::string>& map) const;
+    void collectElements(std::unordered_map<std::string, std::unordered_set<bool>> &negation) const;
 
     //std::unordered_set<std::string> allActions() const;
 
