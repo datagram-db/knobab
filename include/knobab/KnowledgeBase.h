@@ -184,20 +184,20 @@ public:
     std::pair<const uint32_t, const uint32_t> resolveCountingData(const std::string &act) const;
 
     // Second part of the pipeline
-    std::unordered_map<uint32_t, float> exists(const std::pair<const uint32_t, const uint32_t>& indexes, const uint16_t& amount) const;
+    std::unordered_map<uint32_t, double> exists(const std::pair<const uint32_t, const uint32_t>& indexes, const uint16_t& amount) const;
 
     template <typename traceIdentifier, typename traceValue>
-    TraceData<traceIdentifier, traceValue> init(const std::string& act, const float minThreshold = 1) const{
+    TraceData<traceIdentifier, traceValue> init(const std::string& act, const double minThreshold = 1) const{
         return existsAt<traceIdentifier, traceValue>(act, 0, minThreshold);
     }
 
     template <typename traceIdentifier, typename traceValue>
-    TraceData<traceIdentifier, traceValue> ends(const std::string& act, const float minThreshold = 1) const{
+    TraceData<traceIdentifier, traceValue> ends(const std::string& act, const double minThreshold = 1) const{
         return existsAt<traceIdentifier, traceValue>(act, MAX_UINT16, minThreshold);
     }
 
     template <typename traceIdentifier, typename traceValue>
-    TraceData<traceIdentifier, traceValue> existsAt(const std::string& act, const uint16_t& eventId, const float minThreshold = 1) const{
+    TraceData<traceIdentifier, traceValue> existsAt(const std::string& act, const uint16_t& eventId, const double minThreshold = 1) const{
         TraceData<traceIdentifier, traceValue> foundData;
 
         std::pair<traceIdentifier, traceValue> tracePair;
