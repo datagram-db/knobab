@@ -163,7 +163,7 @@ std::ostream & human_readable_ltlf_printing(std::ostream &os, const ltlf& syntax
                 return human_readable_ltlf_printing(os, syntax.args[0]) << "))" << reset;
             case OR:
                 os << "(";
-                human_readable_ltlf_printing(os, syntax.args[0]) << ") ∨ (";
+                human_readable_ltlf_printing(os, syntax.args[0]) << (syntax.is_exclusive ? ") ⊻ (" : ") ∨ (");
                 return human_readable_ltlf_printing(os, syntax.args[1]) << ')' << reset;
             case AND:
                 os << "(";
@@ -197,16 +197,14 @@ std::ostream & human_readable_ltlf_printing(std::ostream &os, const ltlf& syntax
 
 void generate_nonunary_templates() {
     for (declare_templates t : magic_enum::enum_values<declare_templates>()) {
-        if (isUnaryPredicate(t)) continue; // discarding unary predicates.
-        if (t == Response)
-            std::cout << "DEBUG" << std::endl;
+        if (isUnaryPredicate(t)) continue; // discarding unary predicates
 
         std::cout << magic_enum::enum_name(t) << ":" << std::endl << "\t - ";
         auto f = DeclareDataAware::binary(t, "a", "b").toFiniteSemantics(false);
-        human_readable_ltlf_printing(std::cout, f) << std::endl;
+       // human_readable_ltlf_printing(std::cout, f) << std::endl;
         auto nnf = f.nnf(false);
-        if (nnf != f) {
-            std::cout << "\t - ";
+        /*if (nnf != f)*/ {
+            //std::cout << "\t - ";
             human_readable_ltlf_printing(std::cout, nnf) << std::endl;
         }
         std::cout << std::endl;
@@ -232,8 +230,21 @@ void test_fsm() {
         std::cout << cp.first << " - " << cp.second << std::endl;
 }
 
+
+
+void test_group_by() {
+    std::vector<std::pair<size_t, double>> W{{1,2}, {3,0.5}, {3, 0.7}, {2, 0.5}, {1, 7}};
+    std::sort(W.begin(), W.end());
+
+    auto M = cartesian_product(GroupByKeyExtractorIgnoreKey<std::vector<std::pair<size_t, double>>::iterator, size_t, std::pair<size_t, double>>(W.begin(), W.end(), [](const std::pair<size_t, double>& x) {return x.first; }));
+    std::cout << M << std::endl;
+}
+
+
 int main() {
-    generate_nonunary_templates();
+
+    test_group_by();
+    //generate_nonunary_templates();
     //test_data_query();
     //test_fsm();
     //whole_testing();

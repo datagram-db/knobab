@@ -8,98 +8,52 @@
 #include <knobab/KnowledgeBase.h>
 #include <yaucl/bpm/structures/declare/CNFDeclareDataAware.h>
 #include "atomization_pipeline.h"
+#include "knobab/trace_repairs/DataQuery.h"
+
+bool hasToCollectRight(declare_templates t) {
+    return true;
+}
 
 struct MAXSatPipeline {
     // Input
     const KnowledgeBase& kb;
     CNFDeclareDataAware* declare_model = nullptr;
     const AtomizingPipeline& atomization;
-    double c_the_distance_cost = 2.0;
+    double c_the_distance_cost;
     double min_approximation;
+    static std::string LEFT_ATOM, RIGHT_ATOM;
 
-    struct DataQuery {
-        std::string label;
-        std::string var;
-        union_minimal lower_bound, upper_bound;
+    std::unordered_map<declare_templates, ltlf> ltlf_semantics;
 
-        static DataQuery ExistsQuery(const std::string& atom) {
-            DataQuery returnable;
-            assert(!atom.empty());
-            returnable.label = atom;
-            return returnable;
-        }
-        static DataQuery RangeQuery(const std::string& atom, const std::string& var, const union_minimal& lb, const union_minimal& ub) {
-            DataQuery returnable;
-            assert(!atom.empty());
-            returnable.label = atom;
-            assert(!var.empty());
-            returnable.var = var;
-            returnable.lower_bound = lb;
-            returnable.upper_bound = ub;
-            return returnable;
-        }
+    MAXSatPipeline(const KnowledgeBase &kb,
+                   const AtomizingPipeline &atomization,
+                   double c_normalization = 2.0,
+                   double min_threshold = 1.0);
 
-        bool isAtomQuery() const { return !var.empty(); }
 
-        DEFAULT_CONSTRUCTORS(DataQuery);
-    };
 
-    std::vector<std::pair<DataQuery, std::vector<std::pair<std::pair<trace_t, event_t>, double>>>> V;
+    // DATA
+    std::vector<std::pair<DataQuery, std::vector<std::pair<std::pair<trace_t, event_t>, double>>>> data_accessing;
+    std::unordered_map<DeclareDataAware, std::unordered_map<std::pair<bool, std::string>, label_set_t>> declare_atomization;
 
-    void data_chunk(CNFDeclareDataAware* model) {
-        if (!model) return;
-        declare_model = model;
-        label_set_t visitedAtoms;
-        for (auto& it : declare_model->singleElementOfConjunction) {
-            for (auto& item : it.elementsInDisjunction) {
-                assert(!item.left_act.empty());
-                assert(isUnaryPredicate(item.casusu) || (!item.right_act.empty()));
+    void pipeline(CNFDeclareDataAware* model) {
+        /// Clearing the previous spurious computation values
+        clear();
 
-                bool isJoinQuery = false;
-                auto& refMap = item.dnf_left_map;
-                auto& decomposition = item.left_decomposed_atoms;
-                std::string atomOfReference = item.left_act;
-                // just a map Sanity Check for pipeline debugging purposes: testing the assumptions
-                for (const auto& coll : item.dnf_left_map) {
-                    for (const auto& pred: coll) {
-                        if (isJoinQuery) {
-                            assert(pred.second.BiVariableConditions.empty());
-                            assert(pred.second.casusu == TTRUE);
-                        }
-                    }
-                }
-                // Also, the decomposition map should not be empty, as it must mean that there
-                // at least one predicate, which is the atom!
-                if (visitedAtoms.insert(atomOfReference).second) { //(A)
-                    V.emplace_back(DataQuery::ExistsQuery(atomOfReference),
-                                   std::vector<std::pair<std::pair<trace_t, event_t>, double>>{});
-                }
-                assert(!decomposition.empty());
-                for (const auto& atom : decomposition) {
-                    if (visitedAtoms.insert(atom).second) { // Only considering the firstly met atoms!
-                        if (atomization.act_atoms.contains(atom)) {
-                            assert(false); // Should have been already inserted in (A)!
-                        } else {
-                            auto it = atomization.atom_to_conjunctedPredicates.find(atom);
-                            assert(it != atomization.atom_to_conjunctedPredicates.end());
-                            for (const auto& clause : it->second) {
-                                // Sanity Checks
-                                assert(clause.casusu == INTERVAL);
-                                assert(clause.BiVariableConditions.empty());
-                                V.emplace_back(DataQuery::RangeQuery(atomOfReference, clause.var, clause.value, clause.value_upper_bound),
-                                               std::vector<std::pair<std::pair<trace_t, event_t>, double>>{});
-                            }
-                        }
-                    }
-                }
-            }
-        }
+        /// Extracting the predicates from both the LTLf semantics and the data extracted from it
+        data_chunk(model);
+
+        /// First element of the pipeline: given the data query, fills in the
+        data_pipeline_first();
+
+        /// Second part of the pipeline: compute each possible instance of the operator that there exists
+
+        /// Third part of the pipeline: aggregate the results together
     }
 
-    void data_pipeline_first() {
-        // TODO: SAM's task: fill in the results in V
-    }
-
+    void clear();
+    void data_chunk(CNFDeclareDataAware* model);
+    void data_pipeline_first();
 
 };
 
