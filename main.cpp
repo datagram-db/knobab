@@ -56,20 +56,20 @@ int main() {
     std::pair<const uint32_t, const uint32_t>  data = db.resolveCountingData("a");
 
     // Second part
-    std::unordered_map<uint32_t, float> found = db.exists(data, 2);
+    std::unordered_map<uint32_t, double> found = db.exists(data, 2);
 
-    const float minThreshhold = 0;
+    const double minThreshhold = 0;
 
-    TraceData<std::pair<uint32_t, uint16_t>, float> testVec = db.init<std::pair<uint32_t, uint16_t>, float>("a", minThreshhold);
-    TraceData<std::pair<uint32_t, uint16_t>, float> testVec1 = db.init<std::pair<uint32_t, uint16_t>, float>("a", minThreshhold);
+    TraceData<std::pair<uint32_t, uint16_t>, double> testVec = db.init<std::pair<uint32_t, uint16_t>, double>("a", minThreshhold);
+    TraceData<std::pair<uint32_t, uint16_t>, double> testVec1 = db.ends<std::pair<uint32_t, uint16_t>, double>("a", minThreshhold);
 
-    TraceData<std::pair<uint32_t, uint16_t>, float> testVec2;
+    TraceData<std::pair<uint32_t, uint16_t>, double> testVec2;
     testVec.setUnion(testVec1.traceApproximations.begin(), testVec1.traceApproximations.end(), std::back_inserter(testVec2.traceApproximations));
 
     std::cout << "========UNION=========" << std::endl << "BETWEEN: " << std::endl << testVec.traceApproximations << std::endl << "AND" << std::endl << testVec1.traceApproximations << std::endl << "RESULT: " << std::endl << testVec2.traceApproximations << std::endl;
     std::flush(std::cout);
 
-    TraceData<std::pair<uint32_t, uint16_t>, float> testVec3;
+    TraceData<std::pair<uint32_t, uint16_t>, double> testVec3;
     testVec.setIntersection(testVec1.traceApproximations.begin(), testVec1.traceApproximations.end(), std::back_inserter(testVec3.traceApproximations));
 
     std::cout << "========INTERSECTION=========" << std::endl << "BETWEEN: " << std::endl << testVec.traceApproximations << std::endl << "AND" << std::endl << testVec1.traceApproximations << std::endl << "RESULT: " << std::endl << testVec3.traceApproximations<< std::endl;
