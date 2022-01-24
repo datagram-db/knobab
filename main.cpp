@@ -1,6 +1,9 @@
 #include <iostream>
 #include "yaucl/bpm/structures/log/data_loader.h"
 #include "yaucl/strings/serializers.h"
+#include "knobab/utilities/Aggregators.h"
+#include "knobab/dataStructures/TraceData.h"
+
 //const KnowledgeBase::no_antlr_log LogTrace = {
 //        {{"a", {}}, {"a", {}}, {"b", {}}}};
 
@@ -58,21 +61,21 @@ int main() {
     // Second part
     std::unordered_map<uint32_t, double> found = db.exists(data, 2);
 
-    const double minThreshhold = 0;
+    const double minThreshHold = 0;
 
-    TraceData<std::pair<uint32_t, uint16_t>, double> testVec = db.init<std::pair<uint32_t, uint16_t>, double>("a", minThreshhold);
-    TraceData<std::pair<uint32_t, uint16_t>, double> testVec1 = db.ends<std::pair<uint32_t, uint16_t>, double>("a", minThreshhold);
+    TraceData<std::pair<uint32_t, uint16_t>, double> testVec = db.init<std::pair<uint32_t, uint16_t>, double>("a", minThreshHold);
+    TraceData<std::pair<uint32_t, uint16_t>, double> testVec1 = db.ends<std::pair<uint32_t, uint16_t>, double>("a", minThreshHold);
 
     TraceData<std::pair<uint32_t, uint16_t>, double> testVec2;
-    testVec.setUnion(testVec1.traceApproximations.begin(), testVec1.traceApproximations.end(), std::back_inserter(testVec2.traceApproximations));
+    testVec.setUnion(testVec1.getTraceApproximations().begin(), testVec1.getTraceApproximations().end(), std::back_inserter(testVec2.getTraceApproximations()),  Aggregators::maxSimilarity<double, double, double>);
 
-    std::cout << "========UNION=========" << std::endl << "BETWEEN: " << std::endl << testVec.traceApproximations << std::endl << "AND" << std::endl << testVec1.traceApproximations << std::endl << "RESULT: " << std::endl << testVec2.traceApproximations << std::endl;
+    std::cout << "========UNION=========" << std::endl << "BETWEEN: " << std::endl << testVec.getTraceApproximations() << std::endl << "AND" << std::endl << testVec1.getTraceApproximations() << std::endl << "RESULT: " << std::endl << testVec2.getTraceApproximations() << std::endl;
     std::flush(std::cout);
 
     TraceData<std::pair<uint32_t, uint16_t>, double> testVec3;
-    testVec.setIntersection(testVec1.traceApproximations.begin(), testVec1.traceApproximations.end(), std::back_inserter(testVec3.traceApproximations));
+    testVec.setIntersection(testVec1.getTraceApproximations().begin(), testVec1.getTraceApproximations().end(), std::back_inserter(testVec3.getTraceApproximations()), Aggregators::joinSimilarity<double, double, double>);
 
-    std::cout << "========INTERSECTION=========" << std::endl << "BETWEEN: " << std::endl << testVec.traceApproximations << std::endl << "AND" << std::endl << testVec1.traceApproximations << std::endl << "RESULT: " << std::endl << testVec3.traceApproximations<< std::endl;
+    std::cout << "========INTERSECTION=========" << std::endl << "BETWEEN: " << std::endl << testVec.getTraceApproximations() << std::endl << "AND" << std::endl << testVec1.getTraceApproximations() << std::endl << "RESULT: " << std::endl << testVec3.getTraceApproximations()<< std::endl;
     std::flush(std::cout);
 
     return 0;
