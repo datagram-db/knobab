@@ -33,6 +33,46 @@ struct TraceData{
     TraceData(traceIdentifier id, traceValue v) : traceApproximations(id, v) {
     }
 
+    template<typename InputIt2, typename OutputIt>
+    OutputIt setUnion(InputIt2 first2, InputIt2 last2,
+                           OutputIt d_first)
+    {
+        InputIt2 first1 = traceApproximations.begin(), last1 = traceApproximations.end();
+        for (; first1 != last1; ++d_first) {
+            if (first2 == last2)
+                return std::copy(first1, last1, d_first);
+            if (*first2 < *first1) {
+                *d_first = *first2++;
+            } else if (*first2 > *first1) {
+                *d_first = *first1++;
+            } else {
+                *d_first = *first1++;
+                *first2++;
+            }
+        }
+        return std::copy(first2, last2, d_first);
+    }
+
+    template<typename InputIt2, typename OutputIt>
+    OutputIt setIntersection(InputIt2 first2, InputIt2 last2,
+                      OutputIt d_first)
+    {
+        InputIt2 first1 = traceApproximations.begin(), last1 = traceApproximations.end();
+        for (; first1 != last1; ++d_first) {
+            if (first2 == last2)
+                return  d_first;
+            if (*first2 < *first1) {
+                first2++;
+            } else if (*first2 > *first1) {
+                first1++;
+            } else {
+                *d_first = *first1++;
+                *first2++;
+            }
+        }
+        return d_first;
+    }
+
     std::vector<std::pair<traceIdentifier, traceValue>> traceApproximations;
 };
 
@@ -174,7 +214,9 @@ public:
         }
 
         for (auto it = act_table_by_act_id.table.begin() + indexes.first; it != act_table_by_act_id.table.begin() + indexes.second + 1; ++it) {
-            float satisfiability = getSatisifiabilityFromEventId(eventId, it->entry.id.parts.event_id);
+            uint16_t approxConstant = MAX_UINT16 / 2;
+
+            float satisfiability = getSatisifiabilityBetweenValues(eventId, it->entry.id.parts.event_id, approxConstant);
 
             if(satisfiability >= minThreshold) {
                 foundData.traceApproximations.emplace_back(std::pair<std::pair<uint32_t, uint16_t>, float>({it->entry.id.parts.trace_id, it->entry.id.parts.event_id}, satisfiability));
@@ -193,9 +235,7 @@ private:
             const std::unordered_map<std::string, std::unordered_set<std::string>> &actToTables,
             const std::unordered_set<std::string> &otherValues, trace_t traceId) const;
 
-    float getSatisifiabilityFromPositions(const uint16_t& val1, const uint16_t& val2, const uint16_t& approxConstant) const;
-
-    float getSatisifiabilityFromEventId(const uint16_t& val1, const uint16_t& val2) const;
+    float getSatisifiabilityBetweenValues(const uint16_t& val1, const uint16_t& val2, const uint16_t& approxConstant) const;
 
     uint16_t getPositionFromEventId(const oid* event) const;
 };
