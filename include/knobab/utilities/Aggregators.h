@@ -5,7 +5,6 @@
 #ifndef KNOBAB_AGGREGATORS_H
 #define KNOBAB_AGGREGATORS_H
 
-
 class Aggregators {
 public:
     template<typename Input1, typename Input2, typename Output>
