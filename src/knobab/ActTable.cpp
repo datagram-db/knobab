@@ -83,7 +83,6 @@ const std::vector<std::vector<size_t>> & ActTable::indexing1() { // todo: rename
         primary_index.emplace_back(offset);
         auto& ref = builder.act_id_to_trace_id_and_time[k];
         for (const std::pair<trace_t, event_t>& cp : ref) {
-            // TALK TO GIACOMO ABOUT BELOW, TIME VALS MAY NOT BE RATIOED PROPERLY -- 0, 0.25, 0.75 ?????
             table.emplace_back(k,
                                cp.first,
                                cast_to_float(cp.second, trace_length.at(cp.first) - 1),

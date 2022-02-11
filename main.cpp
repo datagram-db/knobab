@@ -3,6 +3,7 @@
 #include "yaucl/strings/serializers.h"
 #include "knobab/utilities/Aggregators.h"
 #include "knobab/dataStructures/TraceData.h"
+#include "knobab/utilities/LTLFOperators.h"
 
 //const KnowledgeBase::no_antlr_log LogTrace = {
 //        {{"a", {}}, {"a", {}}, {"b", {}}}};
@@ -78,5 +79,15 @@ int main() {
     std::cout << "========INTERSECTION=========" << std::endl << "BETWEEN: " << std::endl << testVec.getTraceApproximations() << std::endl << "AND" << std::endl << testVec1.getTraceApproximations() << std::endl << "RESULT: " << std::endl << testVec3.getTraceApproximations()<< std::endl;
     std::flush(std::cout);
 
+    struct example{
+        std::vector<oid> elems;
+    };
+
+    example e;
+    e.elems.emplace_back(0,0,0);
+    e.elems.emplace_back(0,0,1);
+    e.elems.emplace_back(0,0,2);
+
+    uint16_t x = next(0, 3, 0, e);
     return 0;
 }
