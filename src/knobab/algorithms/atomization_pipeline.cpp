@@ -290,11 +290,13 @@ void atomize_model(AtomizingPipeline &pipeline_data, CNFDeclareDataAware &disjoi
                 child.left_decomposed_atoms = unordered_intersection(child.left_decomposed_atoms,
                                               tmp);
             }
-            child.right_decomposed_atoms = pipeline_data.atom_decomposition(child.right_act, false);
-            if (!child.dnf_right_map.empty()) {
-                auto tmp = atomize_disjunction(pipeline_data, child.dnf_right_map);
-                child.right_decomposed_atoms = unordered_intersection(child.right_decomposed_atoms,
-                                              tmp);
+            if (!child.right_act.empty()) {
+                child.right_decomposed_atoms = pipeline_data.atom_decomposition(child.right_act, false);
+                if (!child.dnf_right_map.empty()) {
+                    auto tmp = atomize_disjunction(pipeline_data, child.dnf_right_map);
+                    child.right_decomposed_atoms = unordered_intersection(child.right_decomposed_atoms,
+                                                                          tmp);
+                }
             }
         }
     }

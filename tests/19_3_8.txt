@@ -1,0 +1,13 @@
+#ChainResponse(C, true, A, true )
+#Precedence(A, true, A, true )
+#Absence2(A, true, 1 )
+
+B
+B,B
+B,B,B
+B,B,B,B
+B,B,B,B,B
+B,B,B,B,B,B
+B,B,B,B,B,B,B
+B,B,B,B,B,B,B,B
+B,B,B,B,B,B,B,B,B

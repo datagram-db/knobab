@@ -105,8 +105,8 @@ struct ltlf ltlf::Implies(const ltlf &left, const ltlf &right, bool isGraphGener
     }
 }
 
-struct ltlf ltlf::Equivalent(const ltlf &left, const ltlf &right) {
-    return Or(And(left, right), And(left.negate(), right.negate()));
+struct ltlf ltlf::Equivalent(const ltlf &left, const ltlf &right, bool isForGraphs) {
+    return And(Implies(left, right, isForGraphs), Implies(right, left, isForGraphs));
 }
 
 struct ltlf ltlf::WeakUntil(const ltlf &left, const ltlf &right, bool isForGraphs) {
@@ -116,10 +116,6 @@ struct ltlf ltlf::WeakUntil(const ltlf &left, const ltlf &right, bool isForGraph
 
 std::ostream &operator<<(std::ostream &os, const ltlf &syntax) {
     std::string reset = "";
-    /*if (syntax.is_compound_predicate) {
-        os << "\033[32m";
-        reset = "\033[0m";
-    }*/
     if (syntax.is_negated)
         os << "!";
     switch (syntax.casusu) {
@@ -274,137 +270,7 @@ bool ltlf::easy_interpret(const std::string &map) const {
     }
 }
 
-/*void ltlf::_allActions(std::unordered_set<std::string> &labels) const {
-    switch (casusu) {
-        case ACT: {}
-            labels.insert(act);
-            break;
-        case TRUE:
-        case FALSE:
-            break;
-        default:
-            for (const auto& arg : args)
-                arg._allActions(labels);
-    }
-}*/
-
-/*std::unordered_set<std::string> ltlf::allActions() const {
-    std::unordered_set<std::string> result;
-    _allActions(result);
-    return result;
-}*/
-
 struct ltlf ltlf::oversimplify() const {
-    /*auto falsehood = True().negate().simplify();
-    auto truth = True();
-    switch (casusu) {
-        case NEG_OF:
-            return this->nnf().oversimplify().setBeingCompound(is_compound_predicate);
-        case OR: {
-
-            {
-                std::unordered_set<ltlf> set;
-                std::unordered_set<ltlf> removed;
-                std::vector<ltlf> toIterateOn{set.begin(), set.end()};
-                collectStructuralElements(OR, set, true);
-                if (set.contains(falsehood))
-                    set.erase(falsehood);
-                if (set.contains(truth))
-                    return truth;
-                for (const auto& arg : set)
-                    if (set.contains(arg.negate().nnf().simplify()))
-                        return truth;
-                for (const auto& arg : toIterateOn) {
-                    if (removed.contains(arg)) continue;
-                    if ((arg.casusu == UNTIL) && (set.contains(arg.args.at(1)))) {
-                        removed.emplace(arg.args.at(1));
-                        set.erase(arg.args.at(1));
-                    }
-                    for (auto it = set.begin(); it != set.end(); ) {
-                        if (*it == arg) continue;
-                        if ((it->casusu == AND) && (it->containsElement(AND, arg, true))) {
-                            removed.emplace(*it);
-                            it = set.erase(it);
-                        } else if ((it->casusu == RELEASE) && (it->args.at(1) == arg)) {
-                            removed.emplace(*it);
-                            it = set.erase(it);
-                        } else {
-                            it++;
-                        }
-                    }
-                }
-                assert(set.size() >0);
-                if (set.size()== 1) {
-                    auto f = *set.begin();
-                    f.setBeingCompound(is_compound_predicate);
-                    return f;
-                } else {
-                    auto f = *set.begin();
-                    auto it = set.begin(); it++;
-                    for (; it != set.end(); it++) {
-                        f = Or(*it, f);
-                    }
-                    return f.setBeingCompound(is_compound_predicate);
-                }
-            }
-        }
-        case AND: {
-
-            {
-                std::unordered_set<ltlf> set;
-                collectStructuralElements(AND, set, true);
-                if (set.contains(truth))
-                    set.erase(truth);
-                if (set.contains(falsehood))
-                    return falsehood;
-                for (const auto& arg : set)
-                    if (set.contains(arg.negate().simplify()))
-                        return falsehood;
-                assert(set.size() >0);
-                if (set.size()== 1) {
-                    auto f = *set.begin();
-                    f.setBeingCompound(is_compound_predicate);
-                    return f;
-                } else {
-                    auto f = *set.begin();
-                    auto it = set.begin(); it++;
-                    for (; it != set.end(); it++) {
-                        f = And(*it, f);
-                    }
-                    return f.setBeingCompound(is_compound_predicate);
-                }
-            }
-        }
-        case NEXT: {
-            auto arg = args.at(0).oversimplify();
-            switch (arg.casusu) {
-                case TRUE:
-                case FALSE:
-                    return arg.setBeingCompound(is_compound_predicate);
-                case OR:
-                    return Or(Next(arg.args.at(0)), Next(arg.args.at(1))).oversimplify().setBeingCompound(is_compound_predicate);
-                case AND:
-                    return And(Next(arg.args.at(0)), Next(arg.args.at(1))).oversimplify().setBeingCompound(is_compound_predicate);
-                default:
-                    return Next(arg).setBeingCompound(is_compound_predicate);
-            }
-        }
-        case UNTIL: {
-            auto left = args.at(0).oversimplify();
-            auto right = args.at(1).oversimplify();
-            if (right.casusu == OR) {
-                return Or(Until(left, right.args.at(0)), Until(left, right.args.at(1))).setBeingCompound(is_compound_predicate);
-            } else if (left.casusu == AND) {
-                return And(Until(left.args.at(0), right), Until(left.args.at(1), right)).setBeingCompound(is_compound_predicate);
-            } else {
-                return Until(left, right).setBeingCompound(is_compound_predicate);
-            }
-        }
-        case RELEASE:
-            return ltlf::Release(args.at(0).oversimplify(), args.at(1).oversimplify()).setBeingCompound(is_compound_predicate);
-        default:
-            return {*this};
-    }*/
     return *this;
 }
 
@@ -664,109 +530,6 @@ bool ltlf::operator!=(const ltlf &rhs) const {
 
 struct ltlf ltlf::simplify() const {
     return *this;
-    /*
-    switch (casusu) {
-        case NEG_OF:
-            return this->nnf().simplify();
-        case OR: {
-            auto left = args.at(0).simplify();
-            auto right = args.at(1).simplify();
-            if (left == right)
-                return left.setBeingCompound(is_compound_predicate);
-            if ((left.casusu == TRUE) || (right.casusu == TRUE) || ((left == right.negate())))
-                return True();
-            else if (left.casusu == FALSE)
-                return right.setBeingCompound(is_compound_predicate);
-            else if ((right.casusu == TRUE) || (left == right))
-                return left.setBeingCompound(is_compound_predicate);
-            else if (right.casusu == AND) {
-                right.args[0] = right.args.at(0).simplify();
-                right.args[1] = right.args.at(1).simplify();
-                if ((left == right.args.at(0)) || (left == right.args.at(1))) {
-                    return left.setBeingCompound(is_compound_predicate);
-                } else {
-                    return ltlf::Or(left, right).setBeingCompound(is_compound_predicate);
-                }
-            } else if (left.casusu == AND) {
-                left.args[0] = left.args.at(0).simplify();
-                left.args[1] = left.args.at(1).simplify();
-                if ((right == left.args.at(0)) || (right == left.args.at(1))) {
-                    return right;
-                } else {
-                    return ltlf::Or(left, right).setBeingCompound(is_compound_predicate);
-                }
-            } else {
-                return ltlf::Or(left, right).setBeingCompound(is_compound_predicate);
-            }
-        }
-        case AND: {
-            auto left = args.at(0).simplify();
-            auto right = args.at(1).simplify();
-            if (left == right)
-                return left.setBeingCompound(is_compound_predicate);
-            if ((left.casusu == FALSE) || (right.casusu == FALSE))
-                return True().negate();
-            else if (left.casusu == TRUE)
-                return right.setBeingCompound(is_compound_predicate);
-            else if (right.casusu == TRUE)
-                return left.setBeingCompound(is_compound_predicate);
-            else if (right.casusu == OR) {
-                right.args[0] = right.args.at(0).simplify();
-                right.args[1] = right.args.at(1).simplify();
-                if ((left == right.args.at(0)) || (left == right.args.at(1))) {
-                    return left.setBeingCompound(is_compound_predicate);
-                } else {
-                    return ltlf::Or(ltlf::And(left, right.args.at(0)),
-                                    ltlf::And(left, right.args.at(1))).simplify().setBeingCompound(is_compound_predicate);
-                }
-            } else if (left.casusu == OR) {
-                left.args[0] = left.args.at(0).simplify();
-                left.args[1] = left.args.at(1).simplify();
-                if ((right == left.args.at(0)) || (right == left.args.at(1))) {
-                    return right.setBeingCompound(is_compound_predicate);
-                } else {
-                    return ltlf::Or(ltlf::And(right, left.args.at(0)),
-                                    ltlf::And(right, left.args.at(1))).simplify().setBeingCompound(is_compound_predicate);
-                }
-            } else if (left.casusu == AND) {
-                left.args[0] = left.args.at(0).simplify();
-                left.args[1] = left.args.at(1).simplify();
-                if (((right == left.args.at(0)))&&((right == left.args.at(1)))) {
-                    return right.setBeingCompound(is_compound_predicate);
-                } else if ((right == left.args.at(0))) {
-                    return ltlf::And(right, left.args.at(1)).setBeingCompound(is_compound_predicate);
-                } else if ((right == left.args.at(1))) {
-                    return ltlf::And(right, left.args.at(0)).setBeingCompound(is_compound_predicate);
-                } else {
-                    return *this;
-                }
-            } else if (right.casusu == AND) {
-                right.args[0] = right.args.at(0).simplify();
-                right.args[1] = right.args.at(1).simplify();
-                if (((left == right.args.at(0)))&&((left == right.args.at(1)))) {
-                    return left;
-                } else if ((left == right.args.at(0))) {
-                    return ltlf::And(left, right.args.at(1)).setBeingCompound(is_compound_predicate);
-                } else if ((left == right.args.at(1))) {
-                    return ltlf::And(left, right.args.at(0)).setBeingCompound(is_compound_predicate);
-                } else {
-                    return *this;
-                }
-            } else {
-                return ltlf::And(left, right).setBeingCompound(is_compound_predicate);
-            }
-        }
-        case NEXT: {
-            return ltlf::Next(args.at(0).simplify()).setBeingCompound(is_compound_predicate);
-        }
-        case UNTIL:
-            return ltlf::Until(args.at(0).simplify(), args.at(1).simplify()).setBeingCompound(is_compound_predicate);
-        case RELEASE:
-            return ltlf::Release(args.at(0).simplify(), args.at(1).simplify()).setBeingCompound(is_compound_predicate);
-
-        default:
-            return {*this};
-    }*/
 }
 
 
@@ -944,4 +707,50 @@ struct ltlf ltlf::Interval(const DataPredicate &value) {
     formula.numeric_atom = value;
     formula.casusu = NUMERIC_ATOM;
     return formula;
+}
+
+#include <cassert>
+
+aalta::aalta_formula* to_aaltaf(const ltlf& formula) {
+    ltl_formula* formula1 = to_aaltaf_rec(formula) ;
+    std::cout << to_string(formula1) << std::endl;
+    aalta::aalta_formula* af = aalta::aalta_formula::TAIL ();
+    af = aalta::aalta_formula(formula1, false, true).unique();
+    return af;
+}
+
+ltl_formula* to_aaltaf_rec(const ltlf& syntax) {
+    std::string reset = "";
+    bool isNegated = syntax.is_negated;
+    ltl_formula* tmp;
+    switch (syntax.casusu) {
+        case ACT:
+            tmp = create_var(syntax.act.c_str()); break;
+        case NUMERIC_ATOM:
+            assert(false);
+        case NEG_OF:
+            tmp = AALTAF_NOT(to_aaltaf_rec(syntax.args[0])); break;
+        case OR:
+            tmp = AALTAF_OR(to_aaltaf_rec(syntax.args[0]), to_aaltaf_rec(syntax.args[1]) ); break;
+        case AND:
+            tmp = AALTAF_AND(to_aaltaf_rec(syntax.args[0]), to_aaltaf_rec(syntax.args[1]) ); break;
+        case NEXT:
+            tmp = AALTAF_NEXT(to_aaltaf_rec(syntax.args[0])); break;
+        case UNTIL:
+            tmp = AALTAF_UNTIL(to_aaltaf_rec(syntax.args[0]), to_aaltaf_rec(syntax.args[1]) ); break;
+        case RELEASE:
+            tmp = AALTAF_RELEASE(to_aaltaf_rec(syntax.args[0]), to_aaltaf_rec(syntax.args[1]) ); break;
+        case TRUE:
+            tmp = AALTAF_TRUE(); break;
+        case BOX:
+            tmp = AALTAF_GLOBALLY(to_aaltaf_rec(syntax.args[0])); break;
+        case DIAMOND:
+            tmp = AALTAF_FUTURE(to_aaltaf_rec(syntax.args[0])); break;
+        default:
+            tmp = AALTAF_FALSE(); break;
+    }
+    if (syntax.is_negated)
+        return nnf(AALTAF_NOT(tmp));
+    else
+        return nnf(tmp);
 }

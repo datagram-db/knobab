@@ -1,0 +1,11 @@
+#Response(A, true, A, true )
+#End(C, true, 1 )
+#Choice(A, true, A, true )
+#CoExistence(C, true, C, true )
+#Precedence(C, true, A, true )
+#ChainPrecedence(B, true, B, true )
+#Precedence(B, true, A, true )
+#ChainSuccession(C, true, B, true )
+#Existence(C, true, 1 )
+#End(A, true, 1 )
+

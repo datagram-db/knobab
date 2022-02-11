@@ -92,7 +92,7 @@ struct ltlf {
     static struct ltlf Box(const ltlf& sub, bool isGraphGeneration = true);
     static struct ltlf Last();
     static struct ltlf Implies(const ltlf& left, const ltlf& right, bool isGraphGeneration = true);
-    static struct ltlf Equivalent(const ltlf& left, const ltlf& right);
+    static struct ltlf Equivalent(const ltlf& left, const ltlf& right, bool isGraphGeneration = true);
     static struct ltlf WeakUntil(const ltlf& left, const ltlf& right, bool isForGraphs = true);
 
     // Structural operators
@@ -161,6 +161,8 @@ private:
 #include <yaucl/hashing/vector_hash.h>
 #include <yaucl/hashing/hash_combine.h>
 #include <iostream>
+#include <ltlparser/utility.h>
+
 
 namespace std {
     template <>
@@ -186,5 +188,10 @@ namespace std {
 
 }
 
+ltl_formula* to_aaltaf_rec(const ltlf& formula);
+
+#include <formula/aalta_formula.h>
+
+aalta::aalta_formula* to_aaltaf(const ltlf& formula);
 
 #endif //GRAPHOS_LTL_SYNTAX_H

@@ -1,0 +1,8 @@
+#Succession(B, true, C, true )
+#ChainResponse(A, true, C, true )
+#ChainResponse(C, true, A, true )
+#Succession(A, true, C, true )
+#ChainPrecedence(C, true, A, true )
+#End(C, true, 1 )
+#Response(C, true, B, true )
+

@@ -38,6 +38,7 @@
 #include <iostream>
 #include <sstream>
 #include <fstream>
+#include <queue>
 
 template <typename NodeElement, typename EdgeLabel>
 class FlexibleFA : public FlexibleGraph<NodeElement, EdgeLabel> {
@@ -59,6 +60,30 @@ public:
 
     const std::unordered_set<size_t>& fini() const {
         return final_nodes;
+    }
+
+    std::vector<std::vector<EdgeLabel>> generative(size_t limitSize = 3, size_t max_per_limit = 50) {
+        std::vector<size_t> Arg(limitSize, 0);
+        std::queue<std::pair<size_t, std::vector<EdgeLabel>>> Q;
+        std::vector<std::vector<EdgeLabel>> EL;
+        for (size_t i : init())
+            Q.emplace(i, std::vector<EdgeLabel>{});
+        while (!Q.empty()) {
+            std::pair<size_t, std::vector<EdgeLabel>> cp = Q.front();
+            Q.pop();
+            if ((cp.second.size() <= limitSize)) {
+                if (final_nodes.contains(cp.first) && (cp.second.size() > 0) && (Arg[cp.second.size()] < max_per_limit)) {
+                    Arg[cp.second.size()]++;
+                    EL.emplace_back(cp.second);
+                }
+                for (auto cp2 : outgoingEdges(cp.first)) {
+                    std::vector<EdgeLabel> el{cp.second};
+                    el.emplace_back(cp2.first);
+                    Q.emplace(cp2.second, el);
+                }
+            }
+        }
+        return EL;
     }
 
     std::vector<size_t> getNodeIds() const  {

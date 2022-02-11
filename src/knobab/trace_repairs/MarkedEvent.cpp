@@ -7,7 +7,7 @@
 bool MarkedEvent::operator==(const MarkedEvent &rhs) const {
     return trace_id == rhs.trace_id &&
            event_id == rhs.event_id &&
-           correction_list == rhs.correction_list;
+           atomic_match == rhs.atomic_match;
 }
 
 bool MarkedEvent::operator!=(const MarkedEvent &rhs) const {
@@ -23,7 +23,7 @@ bool MarkedEvent::operator<(const MarkedEvent &rhs) const {
         return true;
     if (rhs.event_id < event_id)
         return false;
-    return correction_list < rhs.correction_list;
+    return atomic_match < rhs.atomic_match;
 }
 
 bool MarkedEvent::operator>(const MarkedEvent &rhs) const {
