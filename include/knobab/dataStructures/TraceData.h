@@ -19,7 +19,7 @@ public:
     OutputIt setUnion(InputIt2 first2, InputIt2 last2,
                       OutputIt d_first, Aggregation aggr)
     {
-        InputIt2 first1 = traceApproximations.begin(), last1 = traceApproximations.end();
+        auto first1 = traceApproximations.begin(), last1 = traceApproximations.end();
         for (; first1 != last1; ++d_first) {
             if (first2 == last2)
                 return std::copy(first1, last1, d_first);
@@ -40,7 +40,7 @@ public:
     OutputIt setIntersection(InputIt2 first2, InputIt2 last2,
                              OutputIt d_first, Aggregation aggr)
     {
-        InputIt2 first1 = traceApproximations.begin(), last1 = traceApproximations.end();
+        auto first1 = traceApproximations.begin(), last1 = traceApproximations.end();
         for (; first1 != last1; ++d_first) {
             if (first2 == last2)
                 return  d_first;
