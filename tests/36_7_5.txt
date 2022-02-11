@@ -1,0 +1,8 @@
+#ChainPrecedence(C, true, C, true )
+#ChainSuccession(A, true, A, true )
+#RespExistence(C, true, A, true )
+#CoExistence(C, true, C, true )
+#Precedence(A, true, B, true )
+#CoExistence(B, true, B, true )
+#Precedence(A, true, C, true )
+

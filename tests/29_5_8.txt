@@ -1,0 +1,6 @@
+#Init(C, true, 1 )
+#Precedence(A, true, C, true )
+#Choice(B, true, C, true )
+#Precedence(C, true, A, true )
+#ChainSuccession(A, true, C, true )
+

@@ -1,0 +1,11 @@
+#ChainPrecedence(C, true, C, true )
+#Precedence(A, true, C, true )
+#Response(C, true, C, true )
+#Init(C, true, 1 )
+#ChainResponse(C, true, B, true )
+#Response(B, true, B, true )
+#Existence(A, true, 1 )
+#Succession(C, true, A, true )
+#Succession(A, true, B, true )
+#RespExistence(B, true, B, true )
+

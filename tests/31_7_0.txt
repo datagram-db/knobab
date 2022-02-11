@@ -1,0 +1,8 @@
+#Existence(C, true, 1 )
+#ChainSuccession(B, true, A, true )
+#Succession(B, true, C, true )
+#ChainResponse(B, true, B, true )
+#ChainResponse(B, true, A, true )
+#Response(B, true, A, true )
+#Succession(A, true, A, true )
+

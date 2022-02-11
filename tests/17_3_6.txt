@@ -1,0 +1,13 @@
+#AltSuccession(A, true, A, true )
+#ChainResponse(A, true, C, true )
+#AltResponse(C, true, C, true )
+
+B
+B,B
+B,B,B
+B,B,B,B
+B,B,B,B,B
+B,B,B,B,B,B
+B,B,B,B,B,B,B
+B,B,B,B,B,B,B,B
+B,B,B,B,B,B,B,B,B

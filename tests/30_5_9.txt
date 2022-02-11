@@ -1,0 +1,10 @@
+#ChainSuccession(C, true, B, true )
+#ChainPrecedence(B, true, C, true )
+#ChainResponse(A, true, C, true )
+#ChainSuccession(A, true, A, true )
+#RespExistence(C, true, B, true )
+
+C,B
+C,B,C,B
+C,B,C,B,C,B
+C,B,C,B,C,B,C,B
