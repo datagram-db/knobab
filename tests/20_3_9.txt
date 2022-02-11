@@ -1,4 +1,0 @@
-#RespExistence(C, true, A, true )
-#ExlChoice(A, true, B, true )
-#ChainSuccession(B, true, A, true )
-

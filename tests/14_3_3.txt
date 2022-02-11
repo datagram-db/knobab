@@ -1,4 +1,0 @@
-#Choice(B, true, B, true )
-#Absence(B, true, 1 )
-#ChainPrecedence(B, true, C, true )
-
