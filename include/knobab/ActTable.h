@@ -83,6 +83,11 @@ private:
 
     table_builder builder;
 
+public:
+    const std::vector<size_t>& getTraceLengths() const {
+        return trace_length;
+    }
+
 };
 
 
