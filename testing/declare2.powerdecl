@@ -17,18 +17,6 @@
  * You should have received a copy of the GNU General Public License
  * along with bpm21. If not, see <http://www.gnu.org/licenses/>.
  */
- Response(A, x > 0.0, B, y <= 0.0)
- Response(B, y <= 0.0, A, true) where y < x
-// Precedence(B, y <= 0.0, A, z > 5.0) where y < x
-
-/*   - A
-          * p0 --> {-1.7976931348623157e+308 ≤ A.x ≤ -3}
-          * p1 --> {-2.9999999999999996 ≤ A.x ≤ 0}
-          * p2 --> {4.9406564584124654e-324 ≤ A.x ≤ 1.7976931348623157e+308}
-     - B
-          * p3 --> {-1.7976931348623157e+308 ≤ B.y ≤ -3.0000000000000004}
-          * p4 --> {-3 ≤ B.y ≤ -3}
-          * p5 --> {-2.9999999999999996 ≤ B.y ≤ -4.9406564584124654e-324}
-          * p6 --> {0 ≤ B.y ≤ 0}
-          * p7 --> {4.9406564584124654e-324 ≤ B.y ≤ 1.7976931348623157e+308}
-*/
+ Response(A, x > 0.0 && y > 5.0, B, y <= 0.0)
+ Response(B, y <= 0.0, A, true) //where y < x
+ Precedence(B, y <= 0.0, A, z > 5.0) //where y < x

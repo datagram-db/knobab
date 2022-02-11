@@ -1,0 +1,6 @@
+#Choice(B, true, A, true )
+#ChainSuccession(B, true, C, true )
+#End(C, true, 1 )
+#Response(C, true, C, true )
+#ChainResponse(C, true, C, true )
+

@@ -1,0 +1,11 @@
+#Succession(C, true, B, true )
+#RespExistence(A, true, C, true )
+#Init(C, true, 1 )
+#Choice(A, true, A, true )
+#CoExistence(B, true, C, true )
+#Existence(B, true, 1 )
+#Precedence(A, true, C, true )
+#Init(B, true, 1 )
+#CoExistence(B, true, A, true )
+#End(B, true, 1 )
+

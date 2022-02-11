@@ -20,11 +20,11 @@ struct Environment {
     GroundingStrategyConf grounding_conf;
 
     DeclareModelParse dmp;
-    std::vector<DeclareDataAware> conjunctive_model;
 
     CNFDeclareDataAware grounding;
 
     DeclareTemplateCollect declare_to_graph;
+    std::vector<DeclareDataAware> conjunctive_model;
 
     //std::unordered_map<DeclareDataAware, FlexibleFA<size_t, std::string>> pattern_graph;
 
@@ -61,11 +61,19 @@ public:
      */
     void load_log(log_data_format format, bool loadData, const std::string &filename, bool setMaximumStrLen = true);
 
+    void load_all_clauses();
+
     /**
      * Loading the Declare model in the Extended format
      * @param model_file
      */
     void load_model(const std::string &model_file);
+    template <typename T> void load_model(T begin, T end) {
+        conjunctive_model.clear();
+        for (auto it = begin; it != end; it++) {
+            conjunctive_model.emplace_back(*it);
+        }
+    }
 
     void set_atomization_parameters(const std::string &fresh_atom_label = "p",
                                     size_t mslength = MAXIMUM_STRING_LENGTH);

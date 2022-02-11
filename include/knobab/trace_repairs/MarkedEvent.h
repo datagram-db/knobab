@@ -12,7 +12,7 @@
 struct MarkedEvent {
     trace_t trace_id;
     event_t event_id;
-    std::vector<DataQuery> correction_list;
+    std::string atomic_match;
 
     /**
      * Checking if two MarkedEvents are compatible
@@ -20,7 +20,7 @@ struct MarkedEvent {
      * @return
      */
     bool comp(const MarkedEvent &rhs) const {
-        return (trace_id == rhs.trace_id) && ((event_id != rhs.event_id) || (correction_list == rhs.correction_list));
+        return (trace_id == rhs.trace_id) && ((event_id != rhs.event_id) || (atomic_match == rhs.atomic_match));
     }
 
     bool operator==(const MarkedEvent &rhs) const;
@@ -36,7 +36,7 @@ namespace std {
     template<>
     struct hash<struct MarkedEvent> {
         std::size_t operator()(const struct MarkedEvent &k) const {
-            return k.trace_id ^ k.event_id;
+            return yaucl::hashing::hash_combine(31, k.atomic_match);
         }
     };
 
