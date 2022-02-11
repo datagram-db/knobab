@@ -1,8 +1,0 @@
-#Choice(C, true, B, true )
-#ChainSuccession(A, true, C, true )
-#RespExistence(C, true, B, true )
-#Succession(B, true, A, true )
-#Existence(B, true, 1 )
-#Succession(C, true, B, true )
-#Choice(C, true, C, true )
-

@@ -1,8 +1,0 @@
-#ChainResponse(B, true, A, true )
-#CoExistence(B, true, A, true )
-#End(C, true, 1 )
-#Succession(C, true, B, true )
-#Precedence(C, true, B, true )
-#Response(C, true, A, true )
-#ChainPrecedence(C, true, B, true )
-
