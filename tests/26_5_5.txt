@@ -1,6 +1,0 @@
-#Succession(C, true, A, true )
-#ChainResponse(B, true, B, true )
-#Init(C, true, 1 )
-#Response(A, true, B, true )
-#Succession(C, true, B, true )
-

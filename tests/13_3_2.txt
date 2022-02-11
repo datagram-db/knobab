@@ -1,4 +1,0 @@
-#ChainSuccession(C, true, C, true )
-#NegChainSuccession(A, true, B, true )
-#End(C, true, 1 )
-

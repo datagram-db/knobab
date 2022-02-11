@@ -1,8 +1,0 @@
-#ChainSuccession(C, true, C, true )
-#Succession(C, true, B, true )
-#CoExistence(A, true, A, true )
-#End(A, true, 1 )
-#Choice(A, true, A, true )
-#Precedence(C, true, C, true )
-#Precedence(C, true, A, true )
-
