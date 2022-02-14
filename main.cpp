@@ -71,23 +71,33 @@ int main() {
     testVec.setUnion(testVec1.getTraceApproximations().begin(), testVec1.getTraceApproximations().end(), std::back_inserter(testVec2.getTraceApproximations()),  Aggregators::maxSimilarity<double, double, double>);
 
     std::cout << "========UNION=========" << std::endl << "BETWEEN: " << std::endl << testVec.getTraceApproximations() << std::endl << "AND" << std::endl << testVec1.getTraceApproximations() << std::endl << "RESULT: " << std::endl << testVec2.getTraceApproximations() << std::endl;
-    std::flush(std::cout);
 
     TraceData<std::pair<uint32_t, uint16_t>, double> testVec3;
     testVec.setIntersection(testVec1.getTraceApproximations().begin(), testVec1.getTraceApproximations().end(), std::back_inserter(testVec3.getTraceApproximations()), Aggregators::joinSimilarity<double, double, double>);
 
     std::cout << "========INTERSECTION=========" << std::endl << "BETWEEN: " << std::endl << testVec.getTraceApproximations() << std::endl << "AND" << std::endl << testVec1.getTraceApproximations() << std::endl << "RESULT: " << std::endl << testVec3.getTraceApproximations()<< std::endl;
-    std::flush(std::cout);
 
     struct example{
-        std::vector<oid> elems;
+        std::vector<std::pair<std::pair<uint32_t, uint16_t>, double>> elems;
     };
 
     example e;
-    e.elems.emplace_back(0,0,0);
-    e.elems.emplace_back(0,0,1);
-    e.elems.emplace_back(0,0,2);
+    // aaab
+    e.elems.emplace_back(std::pair<std::pair<uint32_t, uint16_t>, double>(std::pair<uint32_t, uint16_t>(0, 1), 0));
+    e.elems.emplace_back(std::pair<std::pair<uint32_t, uint16_t>, double>(std::pair<uint32_t, uint16_t>(0, 2), 0));
+    e.elems.emplace_back(std::pair<std::pair<uint32_t, uint16_t>, double>(std::pair<uint32_t, uint16_t>(0, 3), 0));
 
-    uint16_t x = next(0, 3, 0, e);
+    auto x1 = next(0, 1, 2, e);
+    auto x2 = next(e);
+    auto x3 = global(0, 1, 2, e);
+    auto x4 = global(e, db.act_table_by_act_id.getTraceLengths());
+    auto x5 = future(0, 1, 1, e);
+    auto x6 = future(e);
+
+    std::cout << "========LTLf Operators=========" << std::endl;
+    std::cout << "--NEXT--" << std::endl << "TEMPORAL: " << *x1 << std::endl << "NON-TEMPORAL" << *x2 << std::endl;
+    std::cout << "--GLOBAL--" << std::endl << "TEMPORAL: " << *x3 << std::endl << "NON-TEMPORAL" << *x4 << std::endl;
+    std::cout << "--FUTURE--" << std::endl << "TEMPORAL: " << *x5 << std::endl << "NON-TEMPORAL" << *x6 << std::endl;
+    std::flush(std::cout);
     return 0;
 }
