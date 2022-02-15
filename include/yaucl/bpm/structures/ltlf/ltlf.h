@@ -161,7 +161,7 @@ private:
 #include <yaucl/hashing/vector_hash.h>
 #include <yaucl/hashing/hash_combine.h>
 #include <iostream>
-#include <ltlparser/utility.h>
+//#include <ltlparser/utility.h>
 
 
 namespace std {
@@ -188,10 +188,10 @@ namespace std {
 
 }
 
-ltl_formula* to_aaltaf_rec(const ltlf& formula);
+/*ltl_formula* to_aaltaf_rec(const ltlf& formula);
 
 #include <formula/aalta_formula.h>
 
-aalta::aalta_formula* to_aaltaf(const ltlf& formula);
+aalta::aalta_formula* to_aaltaf(const ltlf& formula);*/
 
 #endif //GRAPHOS_LTL_SYNTAX_H
