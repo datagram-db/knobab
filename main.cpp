@@ -95,9 +95,9 @@ int main() {
     auto x6 = future(e);
 
     std::cout << "========LTLf Operators=========" << std::endl;
-    std::cout << "--NEXT--" << std::endl << "TEMPORAL: " << *x1 << std::endl << "NON-TEMPORAL" << *x2 << std::endl;
-    std::cout << "--GLOBAL--" << std::endl << "TEMPORAL: " << *x3 << std::endl << "NON-TEMPORAL" << *x4 << std::endl;
-    std::cout << "--FUTURE--" << std::endl << "TEMPORAL: " << *x5 << std::endl << "NON-TEMPORAL" << *x6 << std::endl;
+    std::cout << "--NEXT--" << std::endl << "TEMPORAL: " << x1 << std::endl << "NON-TEMPORAL" << x2 << std::endl;
+    std::cout << "--GLOBAL--" << std::endl << "TEMPORAL: " << x3 << std::endl << "NON-TEMPORAL" << x4 << std::endl;
+    std::cout << "--FUTURE--" << std::endl << "TEMPORAL: " << x5 << std::endl << "NON-TEMPORAL" << x6 << std::endl;
     std::flush(std::cout);
     return 0;
 }
