@@ -408,14 +408,13 @@ void generate_traces(const std::string& log_file = "testing/nologolog.txt",
 
 
 int main() {
-
     //test_group_by();
     //generate_nonunary_templates();
-    //test_data_query();
+    test_data_query();
     //test_fsm();
     //whole_testing();
     //test_declare();
     //test_grounding();
-    generate_traces();
+    //generate_traces();
     return 0;
 }

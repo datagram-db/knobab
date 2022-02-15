@@ -149,7 +149,7 @@ semantic_atom_set Environment::evaluate_easy_prop_to_atoms(const easy_prop &prop
             }
         case easy_prop::E_P_TRUE:
             return getSigmaAll();
-        case easy_prop::E_P_FALSE:
+        default: //case easy_prop::E_P_FALSE:
             return {};
     }
 }
