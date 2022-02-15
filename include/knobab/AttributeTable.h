@@ -9,7 +9,7 @@
 #include <knobab/oid.h>
 #include <variant>
 #include <yaucl/bpm/structures/commons/DataPredicate.h>
-
+#include <optional>
 
 enum AttributeTableType {
     DoubleAtt,
@@ -139,6 +139,7 @@ struct AttributeTable {
     AttributeTable &operator=(AttributeTable &&) = default;
 
     const record *resolve_record_if_exists(size_t actTableOffset) const;
+    std::optional<union_minimal> resolve_record_if_exists2(size_t actTableOffset) const;
 
     std::ostream &resolve_and_print(std::ostream &os, const AttributeTable::record &x) const;
 
@@ -194,5 +195,8 @@ private:
     }
 
 };
+
+
+union_minimal resolveUnionMinimal(const AttributeTable &table, const AttributeTable::record &x);
 
 #endif //BZDB_ATTRIBUTETABLE_H

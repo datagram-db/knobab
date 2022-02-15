@@ -31,7 +31,6 @@ enum ParsingState {
 
 using trace_set = std::bitset<sizeof(uint32_t)>;
 using act_set = std::bitset<sizeof(uint16_t)>;
-union_minimal resolveUnionMinimal(const AttributeTable &table, const AttributeTable::record &x);
 
 
 class KnowledgeBase : public trace_visitor {
