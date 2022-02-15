@@ -590,22 +590,7 @@ KnowledgeBase::range_query(DataPredicate &prop, double min_threshold, double cor
     }
 }
 
-union_minimal resolveUnionMinimal(const AttributeTable &table, const AttributeTable::record &x) {
-    switch (table.type) {
-        case DoubleAtt:
-            return *(double*)(&x.value);
-        case LongAtt:
-            return (double)(*(long long*)(&x.value));
-        case StringAtt:
-            return table.ptr.get(x.value);
-        case BoolAtt:
-            return (x.value != 0 ? 0.0 : 1.0);
-            //case SizeTAtt:
-        default:
-            // TODO: hierarchical types!, https://dl.acm.org/doi/10.1145/3410566.3410583
-            return (double)x.value;
-    }
-}
+
 
 void KnowledgeBase::load_data_without_antlr4(const KnowledgeBase::no_antlr_log &L, const std::string &source,
                                              const std::string &name) {
