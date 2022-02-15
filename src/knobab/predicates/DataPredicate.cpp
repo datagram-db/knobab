@@ -14,7 +14,7 @@ DataPredicate::DataPredicate(const union_minimal &min, const numeric_atom_cases 
     value = min;
 }
 
-bool DataPredicate::testPredicate(const std::variant<std::string, double>& val) const {
+bool DataPredicate::testPredicate(const union_minimal& val) const {
     try {
         std::get<std::string>(value);
         try {
@@ -48,8 +48,6 @@ bool DataPredicate::testPredicate(const std::variant<std::string, double>& val) 
             return value == val;
         case NEQ:
             return value != val;
-        case INTERVAL:
-            return (value <= val && val <= value_upper_bound);
         case TTRUE:
             return true;
     }

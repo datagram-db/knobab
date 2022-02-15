@@ -19,7 +19,6 @@ enum numeric_atom_cases {
     GEQ,
     EQ,
     NEQ,
-    INTERVAL,
     TTRUE
 };
 
@@ -27,14 +26,13 @@ class DataPredicate {
 public:
     DataPredicate();
     DataPredicate(const union_minimal& min, const numeric_atom_cases& c);
-    bool testPredicate(const std::variant<std::string, double>& val) const;
+    bool testPredicate(const union_minimal& val) const;
 
     bool operator==(const DataPredicate &rhs) const;
     bool operator!=(const DataPredicate &rhs) const;
 private:
     numeric_atom_cases casusu;
     union_minimal value;
-    union_minimal value_upper_bound;
 };
 
 
