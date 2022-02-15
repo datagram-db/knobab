@@ -708,7 +708,7 @@ struct ltlf ltlf::Interval(const DataPredicate &value) {
     formula.casusu = NUMERIC_ATOM;
     return formula;
 }
-
+/*
 #include <cassert>
 
 aalta::aalta_formula* to_aaltaf(const ltlf& formula) {
@@ -753,4 +753,4 @@ ltl_formula* to_aaltaf_rec(const ltlf& syntax) {
         return nnf(AALTAF_NOT(tmp));
     else
         return nnf(tmp);
-}
+}*/
