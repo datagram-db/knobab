@@ -70,7 +70,8 @@ public:
 
     /**
      * Collects the values contained in the knowledge base as single instances
-     * @param trace_id          If the trace id is set to -1, then the values are collected from all the traces.
+     * @param trace_id          If the trace id is set
+     * to -1, then the values are collected from all the traces.
      *                          Otherwise, the value is collected from a specific trace id, if it exists
      * @param act_id            If the act id is set to -1, the values are collected from all the attributes.
      *                          Otherwise, the value is collected from a specific event label, if it exists

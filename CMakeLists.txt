@@ -36,7 +36,7 @@ add_library(knobab STATIC
         include/knobab/algorithms/kb_grounding.h
         src/knobab/algorithms/atomization_pipeline.cpp
         include/knobab/algorithms/atomization_pipeline.h #src/knobab/Environment.cpp include/knobab/Environment.h
-        include/knobab/utilities/Aggregators.h include/knobab/dataStructures/TraceData.h include/knobab/utilities/LTLFOperators.h)
+        include/knobab/utilities/Aggregators.h include/knobab/dataStructures/TraceData.h include/knobab/utilities/LTLFOperators.h src/knobab/predicates/DataPredicate.cpp include/knobab/predicates/DataPredicate.h)
 target_link_libraries(knobab  yaucl_structures)
 
 add_library(yaucl_numeric STATIC
