@@ -361,13 +361,13 @@ ltlf DeclareDataAware::toFiniteSemantics(bool isForGraph) const {
                                            ltlf::Next(ltlf::Until(left.negate(), right)), isForGraph), isForGraph);
 
         case AltPrecedence: {
-            struct ltlf base = ltlf::WeakUntil(right.negate(), left);
+            struct ltlf base = ltlf::WeakUntil(right.negate(), left, isForGraph);
             return ltlf::And(base, ltlf::Box(ltlf::Implies(right,
                                                            ltlf::Next(/*ltlf::Or(base, ltlf::Box(right.negate(), isForGraph))*/base), isForGraph), isForGraph));
         }
 
         case AltSuccession: {
-            auto L = ltlf::Box(ltlf::Implies(left, ltlf::Next(ltlf::Until(left.negate(isForGraph), right))));
+            auto L = ltlf::Box(ltlf::Implies(left, ltlf::Next(ltlf::Until(left.negate(isForGraph), right))), isForGraph);
             auto M = ltlf::WeakUntil(left.negate(isForGraph), right, isForGraph);
             auto R = ltlf::Box(ltlf::Implies(right, ltlf::Next(M), isForGraph), isForGraph);
             return ltlf::And(L, ltlf::And(M, R));

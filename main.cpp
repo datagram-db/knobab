@@ -13,13 +13,15 @@
 #include <knobab/Environment.h>
 #include <yaucl/graphs/algorithms/minimizeDFA.h>
 
+
+
+
 void whole_testing(const std::string& log_file = "testing/log.txt",
                    const std::string& declare_file = "testing/declare4.powerdecl",
                    const std::string& atomization_conf = "testing/atomization_pipeline.yaml",
                    const std::string& grounding_strategy = "testing/grounding_strategy.yaml") {
     Environment env;
     env.clear();
-
     env.load_all_clauses();
 
     std::string fresh_atom_label{"p"};
@@ -103,6 +105,9 @@ void whole_testing(const std::string& log_file = "testing/log.txt",
     env.print_grounded_model(std::cout); // DEBUG
     //////////////////////////////////////////////////////////////////
 
+    env.query_model();
+
+#if 0
     {
         auto result = env.compute_declare_for_conjunctive(false);
         {
@@ -119,6 +124,7 @@ void whole_testing(const std::string& log_file = "testing/log.txt",
             DFA.dot(output_el_model);
         }
     }
+#endif
 
 }
 
@@ -490,14 +496,14 @@ void generate_traces(const std::string& log_file = "testing/nologolog.txt",
 
 int main() {
     //test_group_by();
-    //generate_nonunary_templates();
+    generate_nonunary_templates();
     //test_data_query();
     //test_fsm();
-    //whole_testing();
+    whole_testing();
     //test_declare();
     //test_grounding();
     //generate_traces();
-    ltlf_operators_testing();
+    //ltlf_operators_testing();
 
     return 0;
 }

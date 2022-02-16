@@ -9,17 +9,13 @@
 std::string MAXSatPipeline::LEFT_ATOM{"a"};
 std::string MAXSatPipeline::RIGHT_ATOM{"b"};
 
-MAXSatPipeline::MAXSatPipeline(const KnowledgeBase &kb, const AtomizingPipeline &atomization, double cTheDistanceCost,
-                               double minApproximation) : kb(kb), atomization(atomization), c_the_distance_cost(cTheDistanceCost),
-                                                          min_approximation(minApproximation) {
-
+MAXSatPipeline::MAXSatPipeline() {
     for (declare_templates t : magic_enum::enum_values<declare_templates>()) {
         if (isUnaryPredicate(t)) continue; // discarding unary predicates
         ltlf_semantics[t] = DeclareDataAware::binary(t, LEFT_ATOM, RIGHT_ATOM)
                                  .toFiniteSemantics(false)
                                  .nnf(false);
     }
-
 }
 
 void MAXSatPipeline::clear() {
@@ -27,7 +23,8 @@ void MAXSatPipeline::clear() {
     declare_atomization.clear();
 }
 
-void MAXSatPipeline::data_chunk(CNFDeclareDataAware *model) {
+void MAXSatPipeline::data_chunk(CNFDeclareDataAware *model,
+                                const AtomizingPipeline& atomization) {
     if (!model) return;
     declare_model = model;
     label_set_t visitedAtoms;
@@ -38,6 +35,10 @@ void MAXSatPipeline::data_chunk(CNFDeclareDataAware *model) {
 
             auto& ref = declare_atomization[item];
             if (!ref.empty()) continue; // Ignoring already visited patterns
+
+            if (item.casusu == Init) {
+
+            }
 
             auto& ltlf_sem = ltlf_semantics[item.casusu];
             std::unordered_map<std::string, std::unordered_set<bool>> collection;

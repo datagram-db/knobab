@@ -311,7 +311,7 @@ void Environment::print_attribute_tables(std::ostream &os) const {
 
 void Environment::load_all_clauses() {
     for (declare_templates t : magic_enum::enum_values<declare_templates>()) {
-        std::cout << "INIT: " << magic_enum::enum_name(t) << std::endl;
+        ///std::cout << "INIT: " << magic_enum::enum_name(t) << std::endl;
         if (isUnaryPredicate(t)) {
             for (size_t i = 1; i<3; i++) {
                 declare_to_graph.getDeclareTemplate(t, i);
