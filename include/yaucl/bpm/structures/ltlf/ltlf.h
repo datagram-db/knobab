@@ -48,7 +48,8 @@ enum formula_t {
     FALSE,
     NUMERIC_ATOM,
     BOX,
-    DIAMOND
+    DIAMOND,
+    LAST
 };
 
 
@@ -66,16 +67,14 @@ struct ltlf {
     std::vector<ltlf>      args;
     bool                   is_negated;
     bool                   is_compound_predicate;
+    bool                   is_exclusive;
     DataPredicate          numeric_atom;
 
     // C++ constructors
     ltlf();
     ltlf(const std::string& act);
     ltlf(formula_t citki);
-    ltlf(const ltlf& ) = default;
-    ltlf(ltlf&&      ) = default;
-    ltlf& operator=(const ltlf&) = default;
-    ltlf& operator=(ltlf&&     ) = default;
+    DEFAULT_COPY_ASSGN(ltlf)
 
     // Semantic constructors
     static struct ltlf True();
@@ -89,12 +88,12 @@ struct ltlf {
     static struct ltlf And(const ltlf& left, const ltlf& right);
     static struct ltlf Until(const ltlf& left, const ltlf& right);
     static struct ltlf Release(const ltlf& left, const ltlf& right);
-    static struct ltlf Diamond(const ltlf& sub);
-    static struct ltlf Box(const ltlf& sub);
+    static struct ltlf Diamond(const ltlf& sub, bool isGraphGeneration = true);
+    static struct ltlf Box(const ltlf& sub, bool isGraphGeneration = true);
     static struct ltlf Last();
-    static struct ltlf Implies(const ltlf& left, const ltlf& right);
-    static struct ltlf Equivalent(const ltlf& left, const ltlf& right);
-    static struct ltlf WeakUntil(const ltlf& left, const ltlf& right);
+    static struct ltlf Implies(const ltlf& left, const ltlf& right, bool isGraphGeneration = true);
+    static struct ltlf Equivalent(const ltlf& left, const ltlf& right, bool isGraphGeneration = true);
+    static struct ltlf WeakUntil(const ltlf& left, const ltlf& right, bool isForGraphs = true);
 
     // Structural operators
 
@@ -105,17 +104,21 @@ struct ltlf {
         is_compound_predicate = isCompound;
         return *this;
     }
+    struct ltlf& setExclusiveness(bool isExclusive) {
+        is_exclusive = isExclusive;
+        return *this;
+    }
     struct ltlf simplify() const;
     struct ltlf oversimplify() const;
-    struct ltlf negate() const;
-    struct ltlf nnf() const;
+    struct ltlf negate(bool isGraph = true) const;
+    struct ltlf nnf(bool isGraph = true) const;
     struct ltlf stepwise_expand() const;
     std::unordered_set<std::string> propositionalize() const;
     PropositionalizedAtomsSet possibleActionsUpToNext() const;
 
     struct ltlf replace_with(const std::unordered_map<std::string, ltlf>& map) const;
-
     struct ltlf replace_with_unique_name(const std::unordered_map<std::string, std::string>& map) const;
+    void collectElements(std::unordered_map<std::string, std::unordered_set<bool>> &negation) const;
 
     //std::unordered_set<std::string> allActions() const;
 
@@ -158,6 +161,8 @@ private:
 #include <yaucl/hashing/vector_hash.h>
 #include <yaucl/hashing/hash_combine.h>
 #include <iostream>
+//#include <ltlparser/utility.h>
+
 
 namespace std {
     template <>
@@ -183,5 +188,10 @@ namespace std {
 
 }
 
+/*ltl_formula* to_aaltaf_rec(const ltlf& formula);
+
+#include <formula/aalta_formula.h>
+
+aalta::aalta_formula* to_aaltaf(const ltlf& formula);*/
 
 #endif //GRAPHOS_LTL_SYNTAX_H
