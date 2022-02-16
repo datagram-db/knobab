@@ -632,83 +632,44 @@ uint16_t KnowledgeBase::getMappedValueFromAction(const std::string &act) const {
     }
 }
 
-std::pair<const oid *, const oid *> KnowledgeBase::resolveCountingData(const std::string &act, uint32_t& start, uint32_t& end) const {
+std::pair<const uint32_t, const uint32_t> KnowledgeBase::resolveCountingData(const std::string &act) const {
     const uint16_t& mappedVal = getMappedValueFromAction(act);
 
     if(mappedVal < 0){
-        return {nullptr, nullptr};
+        return {-1, -1};
     }
 
-    return count_table.resolve_primary_index(mappedVal, start, end);
+    return count_table.resolve_primary_index(mappedVal);
 }
 
-std::pair<const ActTable::record*, const ActTable::record*> KnowledgeBase::resolveActData(const std::string &act, uint32_t &start, uint32_t &end) const {
-    const uint16_t& mappedVal = getMappedValueFromAction(act);
+std::unordered_map<uint32_t, double> KnowledgeBase::exists(const std::pair<const uint32_t, const uint32_t>& indexes, const uint16_t& amount) const {
+    std::unordered_map<uint32_t, double> foundElems = std::unordered_map<uint32_t, double>();
 
-    if(mappedVal < 0){
-        return {nullptr, nullptr};
-    }
-
-    return act_table_by_act_id.resolve_index(mappedVal);
-}
-
-std::unordered_map<uint32_t, float> KnowledgeBase::exists(const std::pair<const oid *, const oid *>& subsection, const uint32_t& start, const uint32_t& end, const uint16_t& amount,const bool& isExact) const {
-    std::unordered_map<uint32_t, float> foundElems;
-
-    if(!subsection.first){
-        return foundElems;
-    }
-
-    for (auto it = count_table.table.begin() + start; it != count_table.table.begin() + end + 1; ++it) {
-        if(isExact && amount == it->id.parts.event_id){
-            foundElems.emplace(it->id.parts.trace_id, 1);
-        }
-        else {
-            float perc = 1 - ((float)std::abs(amount - it->id.parts.event_id) / (float)std::max(amount, it->id.parts.event_id));
-            foundElems.emplace(it->id.parts.trace_id, perc);
-        }
+    for (auto it = count_table.table.begin() + indexes.first; it != count_table.table.begin() + indexes.second + 1; ++it) {
+        uint16_t approxConstant = act_table_by_act_id.getTraceLength(it->id.parts.trace_id) / 2;
+        double satisfiability = getSatisifiabilityBetweenValues(amount, it->id.parts.event_id, approxConstant);
+        foundElems.emplace(it->id.parts.trace_id, satisfiability);
     }
 
     return foundElems;
 }
 
-std::vector<uint32_t> KnowledgeBase::init(const std::string& act) const {
-    const uint16_t& mappedVal = getMappedValueFromAction(act);
-
-    if(mappedVal < 0){
-        return std::vector<uint32_t>();
-    }
-
-    std::vector<uint32_t> foundTrace = std::vector<uint32_t>();
-
-    for(const std::pair<ActTable::record*, ActTable::record*>& inst : act_table_by_act_id.secondary_index){
-        if(inst.first->entry.id.parts.act == mappedVal){
-            const uint32_t& foundID = inst.first->entry.id.parts.trace_id;
-            foundTrace.emplace_back(foundID);
-        }
-    }
-
-    return foundTrace;
+float KnowledgeBase::getSatisifiabilityBetweenValues(const uint16_t& val1, const uint16_t& val2, const uint16_t& approxConstant) const {
+    return 1 / (((float)std::abs(val1 - val2) / approxConstant) + 1);
 }
 
-std::vector<uint32_t> KnowledgeBase::ends(const std::string& act) const {
-    const uint16_t& mappedVal = getMappedValueFromAction(act);
+uint16_t KnowledgeBase::getPositionFromEventId(const oid* event) const {
+    uint16_t traceLength = act_table_by_act_id.getTraceLength(event->id.parts.trace_id);
 
-    if(mappedVal < 0){
-        return std::vector<uint32_t>();
+    /* Guard against length 1 traces */
+    if(traceLength == 1){
+        return 0;
     }
 
-    std::vector<uint32_t> foundTrace = std::vector<uint32_t>();
-
-    for(const std::pair<ActTable::record*, ActTable::record*>& inst : act_table_by_act_id.secondary_index){
-        if(inst.second->entry.id.parts.act == mappedVal){
-            const uint32_t& foundID = inst.second->entry.id.parts.trace_id;
-            foundTrace.emplace_back(foundID);
-        }
-    }
-
-    return foundTrace;
+    uint16_t posFromEventId = std::ceil((float)(event->id.parts.event_id / (float)MAX_UINT16) * (traceLength - 1));
+    return posFromEventId;
 }
+
 
 std::pair<std::unordered_map<std::string, AttributeTable>::iterator,
         std::unordered_map<std::string, AttributeTable>::iterator> KnowledgeBase::getAttrNameTableIt() {
@@ -744,6 +705,5 @@ void KnowledgeBase::print_attribute_tables(std::ostream &os) const {
     for (const auto& ref : approximate_attribute_to_table)
         os << ref.second;
 }
-
 
 
