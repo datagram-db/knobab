@@ -24,6 +24,8 @@ struct CountTemplate {
 
     std::pair<const oid*, const oid*> resolve_primary_index(const uint16_t actId, uint32_t& start, uint32_t& send) const;
 
+    std::pair<const uint32_t, const uint32_t> resolve_primary_index(const uint16_t actId) const;
+
     ///void emplace_back(const uint_least64_t& monotone_hash);
     void sort();
     void sanityCheck();

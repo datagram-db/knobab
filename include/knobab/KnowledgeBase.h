@@ -18,6 +18,7 @@
 #include <SimplifiedFuzzyStringMatching.h>
 #include <yaucl/bpm/structures/commons/DataPredicate.h>
 #include <variant>
+#include <knobab/dataStructures/TraceData.h>
 
 enum ParsingState {
     LogParsing,
@@ -31,6 +32,9 @@ enum ParsingState {
 
 using trace_set = std::bitset<sizeof(uint32_t)>;
 using act_set = std::bitset<sizeof(uint16_t)>;
+
+//union_minimal resolveUnionMinimal(const AttributeTable &table, const AttributeTable::record &x);
+const uint16_t MAX_UINT16 = std::pow(2, 16) - 1;
 
 
 class KnowledgeBase : public trace_visitor {
@@ -103,7 +107,8 @@ public:
 
     /**
      * Collects the values contained in the knowledge base as single instances
-     * @param trace_id          If the trace id is set to -1, then the values are collected from all the traces.
+     * @param trace_id          If the trace id is set
+     * to -1, then the values are collected from all the traces.
      *                          Otherwise, the value is collected from a specific trace id, if it exists
      * @param act_id            If the act id is set to -1, the values are collected from all the attributes.
      *                          Otherwise, the value is collected from a specific event label, if it exists
@@ -175,21 +180,51 @@ public:
      ******************************/
 
     uint16_t getMappedValueFromAction(const std::string &act) const;
-    std::pair<const oid*, const oid*> resolveCountingData(const std::string &act, uint32_t& start, uint32_t& end) const;
-    std::pair<const ActTable::record*, const ActTable::record*> resolveActData(const std::string &act, uint32_t& start, uint32_t& end) const;
-    std::vector<std::pair<std::pair<trace_t, event_t>, double>> range_query(DataPredicate prop, double min_threshold = 1.0, const double c = 2.0) const;
+    std::pair<const uint32_t, const uint32_t> resolveCountingData(const std::string &act) const;
 
+    // Second part of the pipeline
+    std::unordered_map<uint32_t, double> exists(const std::pair<const uint32_t, const uint32_t>& indexes, const uint16_t& amount) const;
 
+    template <typename traceIdentifier, typename traceValue>
+    TraceData<traceIdentifier, traceValue> init(const std::string& act, const double minThreshold = 1) const{
+        return existsAt<traceIdentifier, traceValue>(act, 0, minThreshold);
+    }
 
+    template <typename traceIdentifier, typename traceValue>
+    TraceData<traceIdentifier, traceValue> ends(const std::string& act, const double minThreshold = 1) const{
+        return existsAt<traceIdentifier, traceValue>(act, MAX_UINT16, minThreshold);
+    }
 
+    template <typename traceIdentifier, typename traceValue>
+    TraceData<traceIdentifier, traceValue> existsAt(const std::string& act, const uint16_t& eventId, const double minThreshold = 1) const{
+        TraceData<traceIdentifier, traceValue> foundData;
 
-    /******************************
-     * Second part of the pipeline *
-     ******************************/
+        std::pair<traceIdentifier, traceValue> tracePair;
+        const uint16_t& mappedVal = getMappedValueFromAction(act);
 
-    std::unordered_map<uint32_t, float> exists(const std::pair<const oid *, const oid *>& subsection,  const uint32_t& start, const uint32_t& end, const uint16_t& amount = 1, const bool& isExact = false) const;
-    std::vector<uint32_t> init(const std::string& act) const;
-    std::vector<uint32_t> ends(const std::string& act) const;
+        if(mappedVal < 0){
+            return foundData;
+        }
+
+        std::pair<const uint32_t , const uint32_t> indexes = act_table_by_act_id.resolve_index(mappedVal);
+
+        if(indexes.first < 0){
+            return foundData;
+        }
+
+        for (auto it = act_table_by_act_id.table.begin() + indexes.first; it != act_table_by_act_id.table.begin() + indexes.second + 1; ++it) {
+            uint16_t approxConstant = MAX_UINT16 / 2;
+
+            float satisfiability = getSatisifiabilityBetweenValues(eventId, it->entry.id.parts.event_id, approxConstant);
+
+            if(satisfiability >= minThreshold) {
+                foundData.getTraceApproximations().emplace_back(std::pair<std::pair<uint32_t, uint16_t>, float>({it->entry.id.parts.trace_id, it->entry.id.parts.event_id}, satisfiability));
+            }
+        }
+
+        return foundData;
+    }
+
 
 
 
@@ -202,8 +237,14 @@ private:
             const std::unordered_map<std::string, std::unordered_set<std::string>> &actToTables,
             const std::unordered_set<std::string> &otherValues, trace_t traceId) const;
 
+
+    float getSatisifiabilityBetweenValues(const uint16_t& val1, const uint16_t& val2, const uint16_t& approxConstant) const;
+
+    uint16_t getPositionFromEventId(const oid* event) const;
+
     std::pair<int, std::vector<std::pair<std::pair<trace_t, event_t>, double>>>
     range_query(DataPredicate &prop, double min_threshold, double correction, const double c, bool forExistingData = true) const;
+
 };
 
 

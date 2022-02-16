@@ -11,6 +11,8 @@ set(Boost_USE_STATIC_RUNTIME OFF)
 #include_directories(${PYTHON_INCLUDE_DIRS})
 #include_directories(${Boost_INCLUDE_DIRS})
 
+
+#set(UTF8_TESTS OFF)
 add_subdirectory(submodules/antlr4/runtime/Cpp)
 include_directories(submodules/antlr4/runtime/Cpp/runtime/src)
 include_directories(antlr4/cpp/antlr4)
@@ -25,6 +27,9 @@ include_directories(submodules/yamlcpp/include)
 
 include_directories(submodules/magic_enum/include)
 
+
+set(CMAKE_VERBOSE_MAKEFILE  TRUE)
+#set(CMAKE_CXX_COMPILER g++)
 include_directories(include)
 add_library(knobab STATIC
         src/knobab/trace_repairs/MarkedEvent.cpp
@@ -40,7 +45,10 @@ add_library(knobab STATIC
         src/knobab/algorithms/kb_grounding.cpp
         include/knobab/algorithms/kb_grounding.h
         src/knobab/algorithms/atomization_pipeline.cpp
-        include/knobab/algorithms/atomization_pipeline.h src/knobab/Environment.cpp include/knobab/Environment.h src/knobab/trace_repairs/DataQuery.cpp include/knobab/trace_repairs/DataQuery.h)
+
+        include/knobab/algorithms/atomization_pipeline.h #src/knobab/Environment.cpp include/knobab/Environment.h
+        include/knobab/utilities/Aggregators.h include/knobab/dataStructures/TraceData.h include/knobab/utilities/LTLFOperators.h src/knobab/predicates/SimpleDataPredicate.cpp include/knobab/predicates/SimpleDataPredicate.h src/knobab/predicates/PredicateManager.cpp include/knobab/predicates/PredicateManager.h
+        src/knobab/Environment.cpp include/knobab/Environment.h src/knobab/trace_repairs/DataQuery.cpp include/knobab/trace_repairs/DataQuery.h)
 target_link_libraries(knobab yaml-cpp yaucl_structures)
 
 add_library(yaucl_numeric STATIC
@@ -138,5 +146,6 @@ target_link_libraries(knobab_flloat #${Boost_LIBRARIES} ${PYTHON_LIBRARIES}
                                     yaucl_bpm yaucl_graph)
 
 add_executable(test main.cpp )
+
 target_link_libraries(test yaml-cpp  knobab antlr4_static #${Boost_LIBRARIES} ${PYTHON_LIBRARIES} aaltaf
                                   yaucl_stringutils yaucl_numeric yaucl_hashing yaucl_data yaucl_bpm yaucl_graph knobab_flloat yaucl_structures)

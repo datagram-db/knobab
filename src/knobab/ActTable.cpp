@@ -6,8 +6,8 @@
 #include <cmath>
 
 uint16_t cast_to_float(size_t x, size_t l) {
-    const double at16 = std::pow(2, 16);
-    return (uint16_t)std::ceil(((double)x)/((double)l) * at16);
+    const double at16 = std::pow(2, 16) - 1;
+    return (uint16_t)((double)x)/((double)l) * at16;
 }
 
 ActTable::record::record() : record{0,0,0,nullptr, nullptr} {}
@@ -85,7 +85,7 @@ const std::vector<std::vector<size_t>> & ActTable::indexing1() { // todo: rename
         for (const std::pair<trace_t, event_t>& cp : ref) {
             table.emplace_back(k,
                                cp.first,
-                               cast_to_float(cp.second, trace_length.at(cp.first)),
+                               cast_to_float(cp.second, trace_length.at(cp.first) - 1),
                                nullptr, nullptr);
             builder.trace_id_to_event_id_to_offset[cp.first][cp.second] = offset++;
         }
@@ -142,12 +142,21 @@ void ActTable::indexing2() { // todo: rename as indexing, and remove expectedOrd
     ///builder.trace_id_to_event_id_to_offset.clear();
 }
 
-std::pair<const ActTable::record *, const ActTable::record *> ActTable::resolve_index(act_t id) const {
+//std::pair<const ActTable::record *, const ActTable::record *> ActTable::resolve_index(act_t id) const {
+//    if (primary_index.size() < id)
+//        return {nullptr, nullptr};
+//    else {
+//        return {table.data() + primary_index.at(id),
+//                ((id == (primary_index.size() - 1)) ? (const record*)primary_index.back() : table.data() + (primary_index.at(id+1) - 1))};      // Pointers to first and last records from Act Table subsection
+//    }
+//}
+
+std::pair<const uint32_t, const uint32_t> ActTable::resolve_index(act_t id) const {
     if (primary_index.size() < id)
-        return {nullptr, nullptr};
+        return {-1, -1};
     else {
-        return {table.data() + primary_index.at(id),
-                ((id == (primary_index.size() - 1)) ? (const record*)primary_index.back() : table.data() + (primary_index.at(id+1) - 1))};      // Pointers to first and last records from Act Table subsection
+        return {primary_index.at(id),
+                ((id == (primary_index.size() - 1)) ? primary_index.at(primary_index.size() - 1) - 1 : primary_index.at(id+1) - 1)};      // Pointers to first and last records from Act Table subsection
     }
 }
 
@@ -167,3 +176,4 @@ void ActTable::clear() {
     primary_index.clear();
     table.clear();
 }
+
