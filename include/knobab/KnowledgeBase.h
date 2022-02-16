@@ -181,6 +181,8 @@ public:
 
     uint16_t getMappedValueFromAction(const std::string &act) const;
     std::pair<const uint32_t, const uint32_t> resolveCountingData(const std::string &act) const;
+    std::pair<const ActTable::record*, const ActTable::record*> resolveActData(const std::string &act, uint32_t& start, uint32_t& end) const;
+    std::vector<std::pair<std::pair<trace_t, event_t>, double>> range_query(DataPredicate prop, double min_threshold = 1.0, const double c = 2.0) const;
 
     // Second part of the pipeline
     std::unordered_map<uint32_t, double> exists(const std::pair<const uint32_t, const uint32_t>& indexes, const uint16_t& amount) const;
