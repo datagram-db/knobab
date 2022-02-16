@@ -12,6 +12,7 @@
 #include <yaucl/bpm/structures/log/data_loader.h>
 #include <knobab/flloat_deps/DeclareTemplateCollect.h>
 #include <yaucl/bpm/algos/transformations/declare_to_dfa/TemplateCollectResult.h>
+#include <knobab/algorithms/MAXSatPipeline.h>
 
 struct Environment {
     /// Creating an instance of the knowledge base, that is going to store all the traces in the log!
@@ -25,6 +26,8 @@ struct Environment {
 
     DeclareTemplateCollect declare_to_graph;
     std::vector<DeclareDataAware> conjunctive_model;
+
+    MAXSatPipeline maxsat_pipeline;
 
     //std::unordered_map<DeclareDataAware, FlexibleFA<size_t, std::string>> pattern_graph;
 
@@ -46,6 +49,10 @@ public:
      * @return
      */
     semantic_atom_set  getSigmaAll() const;
+
+    void query_model() {
+        maxsat_pipeline.pipeline(&grounding, ap);
+    }
 
     /**
      * Clears all of the bits and pieces, thus preparing into a novel test

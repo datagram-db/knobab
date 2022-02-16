@@ -103,6 +103,7 @@ FlexibleFA<std::vector<NodeElement>, EdgeLabel> minimizeDFA(const FlexibleFA<Nod
         }
     }
 
+    // TODO: this is not going to work if the graph only accepts the empty string!
     size_t vCount = 0;
     std::unordered_set<size_t> equivalentNodes, VS;
     VS.insert(v.begin(), v.end());
