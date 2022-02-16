@@ -8,5 +8,5 @@ dist/*
 test/*
 *.pdf
 *.dot
-*.g
+#*.g
 dist/libantlr4-runtime.a
