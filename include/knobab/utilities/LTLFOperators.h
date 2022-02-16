@@ -7,15 +7,20 @@
 
 #include <optional>
 
-template<typename TableSection>
-std::vector<std::pair<std::pair<uint32_t, uint16_t>, double>> next(const uint32_t &traceId, const uint16_t &startEventId, const uint16_t& endEventId, const TableSection &section) {
-    std::vector<std::pair<std::pair<uint32_t, uint16_t>, double>> temp;
+const uint16_t max = std::numeric_limits<uint16_t>::max();
+static const std::vector<uint16_t> maxVec(max,max);
 
-    auto lower = std::lower_bound(section.elems.begin(), section.elems.end(), (std::pair<std::pair<uint32_t, uint16_t>, double>(std::pair<uint32_t, uint16_t>(traceId, startEventId), 0))) + 1;
-    auto upper = std::upper_bound(lower, section.elems.end(), std::pair<std::pair<uint32_t, uint16_t>, double>(std::pair<uint32_t, uint16_t>(traceId, endEventId), 1));
+template<typename TableSection>
+std::vector<std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>> next(const uint32_t &traceId, const uint16_t &startEventId, const uint16_t& endEventId, const TableSection &section) {
+    auto lower = std::lower_bound(section.elems.begin(), section.elems.end(), std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>{{traceId, startEventId},  {0, {}}});
+    auto upper = std::upper_bound(lower, section.elems.end(), std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>{{traceId, endEventId},  {1, maxVec}});
+
+    std::vector<std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>> temp;
 
     while (lower != upper) {
-        temp.emplace_back(std::pair<uint32_t, uint16_t>{traceId, lower->first.second - 1}, 1);
+        if(lower->first.second > 1){
+            temp.emplace_back(std::pair<uint32_t, uint16_t>{traceId, lower->first.second - 1}, lower->second);
+        }
         lower++;
     }
 
@@ -23,13 +28,13 @@ std::vector<std::pair<std::pair<uint32_t, uint16_t>, double>> next(const uint32_
 }
 
 template<typename TableSection>
-std::vector<std::pair<std::pair<uint32_t, uint16_t>, double>> next(const TableSection &section) {
-    std::vector<std::pair<std::pair<uint32_t, uint16_t>, double>> temp;
+std::vector<std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>> next(const TableSection &section) {
+    std::vector<std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>> temp;
 
     auto itr = section.elems.begin();
     while (itr != section.elems.end()) {
         if(itr->first.second != 1){
-            temp.emplace_back(std::pair<uint32_t, uint16_t>{itr->first.first, itr->first.second - 1}, 1);
+            temp.emplace_back(std::pair<uint32_t, uint16_t>{itr->first.first, itr->first.second - 1}, itr->second);
         }
         itr++;
     }
@@ -37,12 +42,27 @@ std::vector<std::pair<std::pair<uint32_t, uint16_t>, double>> next(const TableSe
     return temp;
 }
 
-template<typename TableSection>
-std::vector<std::pair<std::pair<uint32_t, uint16_t>, double>> global(const uint32_t &traceId, const uint16_t &startEventId, const uint16_t& endEventId, const TableSection &section) {
-    auto lower = std::lower_bound(section.elems.begin(), section.elems.end(), std::pair<std::pair<uint32_t, uint16_t>, double>(std::pair<uint32_t, uint16_t>(traceId, startEventId), 0));
-    auto upper = std::upper_bound(lower, section.elems.end(), std::pair<std::pair<uint32_t, uint16_t>, double>(std::pair<uint32_t, uint16_t>(traceId, endEventId), 1));
+std::vector<uint16_t> populateAndReturnEvents(auto it1, auto it2){
+    std::vector<uint16_t> vec;
 
-    std::vector<std::pair<std::pair<uint32_t, uint16_t>, double>> temp;
+    for(auto itr = it1; itr != it2; ++itr){
+        for(const auto& r2 : itr->second.second){
+            vec.emplace_back(r2);
+        }
+    }
+
+    std::sort( vec.begin(), vec.end() );
+    vec.erase( std::unique( vec.begin(), vec.end() ), vec.end());
+
+    return vec;
+}
+
+template<typename TableSection>
+std::vector<std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>> global(const uint32_t &traceId, const uint16_t &startEventId, const uint16_t& endEventId, const TableSection &section) {
+    auto lower = std::lower_bound(section.elems.begin(), section.elems.end(), std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>{{traceId, startEventId},  {0, {}}});
+    auto upper = std::upper_bound(lower, section.elems.end(), std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>{{traceId, endEventId},  {1, maxVec}});
+
+    std::vector<std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>> temp;
 
     if(lower == upper){
         return temp;
@@ -51,45 +71,48 @@ std::vector<std::pair<std::pair<uint32_t, uint16_t>, double>> global(const uint3
     const uint32_t dist = std::distance(lower, upper - 1);
 
     if(dist == (endEventId - startEventId)){
-        temp.emplace_back(std::pair<uint32_t, uint16_t>{traceId, startEventId}, 1);
+        std::vector<uint16_t> vec = populateAndReturnEvents(lower, upper);
+        temp.emplace_back(std::pair<uint32_t, uint16_t>{traceId, startEventId}, std::pair<double, std::vector<uint16_t>>{1,vec});
     }
 
     return temp;
 }
 
 template<typename TableSection>
-std::vector<std::pair<std::pair<uint32_t, uint16_t>, double>> global(const TableSection &section, const std::vector<size_t>& lengths) {
-    std::vector<std::pair<std::pair<uint32_t, uint16_t>, double>> temp;
-    uint32_t currentTraceId = section.elems.begin()->first.first;
-    auto lower = std::lower_bound(section.elems.begin(), section.elems.end(), std::pair<std::pair<uint32_t, uint16_t>, double>(std::pair<uint32_t, uint16_t>(currentTraceId, 0), 0));
-    auto upper = std::upper_bound(lower, section.elems.end(), std::pair<std::pair<uint32_t, uint16_t>, double>(std::pair<uint32_t, uint16_t>(currentTraceId, lengths[currentTraceId]), 1));
+std::vector<std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>> global(const TableSection &section, const std::vector<size_t>& lengths) {
+    std::vector<std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>> temp;
+    auto lower = section.elems.begin(), upper = section.elems.begin();
 
-    while(lower != section.elems.end()){
-        if(std::abs(upper - lower) == lengths[section.elems.begin()->first.first]){
-            temp.emplace_back(std::pair<uint32_t, uint16_t>{currentTraceId, 1}, 1);
+    while(upper != section.elems.end()){
+        uint32_t currentTraceId = upper->first.first;
+
+        lower = std::lower_bound(upper, section.elems.end(), std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>{{currentTraceId, 1}, {0, {}}});
+        upper = std::upper_bound(lower, section.elems.end(), std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>{{currentTraceId, lengths[currentTraceId]}, {1, maxVec}});
+
+        const uint32_t dist = std::distance(lower, upper - 1);
+
+        if(dist == lengths[currentTraceId] - 1){
+            std::vector<uint16_t> vec = populateAndReturnEvents(lower, upper);
+            temp.emplace_back(std::pair<uint32_t, uint16_t>{currentTraceId, 1}, std::pair<double, std::vector<uint16_t>>{1, vec});
         }
-
-        currentTraceId = (upper + 1)->first.first;
-        lower = std::lower_bound(upper, section.elems.end(), std::pair<std::pair<uint32_t, uint16_t>, double>(std::pair<uint32_t, uint16_t>(currentTraceId, 1), 0));
-        upper = std::upper_bound(lower, section.elems.end(), std::pair<std::pair<uint32_t, uint16_t>, double>(std::pair<uint32_t, uint16_t>(currentTraceId, lengths[currentTraceId]), 1));
     }
 
     return temp;
 }
 
 template<typename TableSection>
-std::vector<std::pair<std::pair<uint32_t, uint16_t>, double>> future(const uint32_t &traceId, const uint16_t &startEventId, const uint16_t& endEventId, const TableSection &section) {
-    auto lower = std::lower_bound(section.elems.begin(), section.elems.end(), std::pair<std::pair<uint32_t, uint16_t>, double>(std::pair<uint32_t, uint16_t>(traceId, startEventId), 0));
-    auto upper = std::upper_bound(section.elems.begin(), section.elems.end(), std::pair<std::pair<uint32_t, uint16_t>, double>(std::pair<uint32_t, uint16_t>(traceId, endEventId), 1));
+std::vector<std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>>  future(const uint32_t &traceId, const uint16_t &startEventId, const uint16_t& endEventId, const TableSection &section) {
+    auto lower = std::lower_bound(section.elems.begin(), section.elems.end(), std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>{{traceId, startEventId}, {0, {}}});
+    auto upper = std::upper_bound(section.elems.begin(), section.elems.end(), std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>{{traceId, endEventId}, {1, maxVec}});
 
-    std::vector<std::pair<std::pair<uint32_t, uint16_t>, double>> temp;
+    std::vector<std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>>  temp;
 
     if(lower == upper){
         return temp;
     }
 
     while (lower != upper) {
-        temp.emplace_back(std::pair<uint32_t, uint16_t>{traceId, lower->first.second}, 1);
+        temp.emplace_back(std::pair<uint32_t, uint16_t>{traceId, lower->first.second}, lower->second);
         lower++;
     }
 
@@ -97,7 +120,7 @@ std::vector<std::pair<std::pair<uint32_t, uint16_t>, double>> future(const uint3
 }
 
 template<typename TableSection>
-std::vector<std::pair<std::pair<uint32_t, uint16_t>, double>> future(const TableSection &section) {
+std::vector<std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>>  future(const TableSection &section) {
     return section.elems;
 }
 

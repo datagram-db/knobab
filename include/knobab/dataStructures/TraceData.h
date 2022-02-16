@@ -6,6 +6,7 @@
 #define KNOBAB_TRACEDATA_H
 
 #include <vector>
+#include "knobab/predicates/PredicateManager.h"
 
 template<typename traceIdentifier, typename traceValue>
 class TraceData {
@@ -17,7 +18,7 @@ public:
 
     template<typename InputIt2, typename OutputIt, typename Aggregation>
     OutputIt setUnion(InputIt2 first2, InputIt2 last2,
-                      OutputIt d_first, Aggregation aggr)
+                      OutputIt d_first, Aggregation aggr, const PredicateManager& manager = {})
     {
         auto first1 = traceApproximations.begin(), last1 = traceApproximations.end();
         for (; first1 != last1; ++d_first) {

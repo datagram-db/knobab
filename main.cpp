@@ -78,20 +78,21 @@ int main() {
     std::cout << "========INTERSECTION=========" << std::endl << "BETWEEN: " << std::endl << testVec.getTraceApproximations() << std::endl << "AND" << std::endl << testVec1.getTraceApproximations() << std::endl << "RESULT: " << std::endl << testVec3.getTraceApproximations()<< std::endl;
 
     struct example{
-        std::vector<std::pair<std::pair<uint32_t, uint16_t>, double>> elems;
+        std::vector<std::pair<std::pair<uint32_t, uint16_t>,  std::pair<double, std::vector<uint16_t>>>> elems;
     };
 
     example e;
     // aaab
-    e.elems.emplace_back(std::pair<std::pair<uint32_t, uint16_t>, double>(std::pair<uint32_t, uint16_t>(0, 1), 0));
-    e.elems.emplace_back(std::pair<std::pair<uint32_t, uint16_t>, double>(std::pair<uint32_t, uint16_t>(0, 2), 0));
-    e.elems.emplace_back(std::pair<std::pair<uint32_t, uint16_t>, double>(std::pair<uint32_t, uint16_t>(0, 3), 0));
+    e.elems.emplace_back(std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>({0, 1}, {1, {1}}));
+    e.elems.emplace_back(std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>({0, 2}, {1, {2}}));
+    e.elems.emplace_back(std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>({0, 3}, {1, {3}}));
 
-    auto x1 = next(0, 1, 2, e);
+
+    auto x1 = next(0, 1, 4, e);
     auto x2 = next(e);
-    auto x3 = global(0, 1, 2, e);
+    auto x3 = global(0, 1, 3, e);
     auto x4 = global(e, db.act_table_by_act_id.getTraceLengths());
-    auto x5 = future(0, 1, 1, e);
+    auto x5 = future(0, 1, 2, e);
     auto x6 = future(e);
 
     std::cout << "========LTLf Operators=========" << std::endl;

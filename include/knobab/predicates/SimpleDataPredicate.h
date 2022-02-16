@@ -10,9 +10,9 @@
 #include <variant>
 #include <unordered_map>
 #include "yaucl/structures/default_constructors.h"
+#include "yaucl/bpm/structures/commons/DataPredicate.h"
 
 // 
-using union_minimal = std::variant<std::string, double>;
 
 /* 
  * Sid -> samuel
@@ -20,16 +20,6 @@ using union_minimal = std::variant<std::string, double>;
  * 
  * */
 using env = std::unordered_map<std::string, union_minimal>;
-enum numeric_atom_cases {
-    UNDEFINED,
-    LT,
-    GT,
-    LEQ,
-    GEQ,
-    EQ,
-    NEQ,
-    TTRUE
-};
 
 class SimpleDataPredicate {
 public:

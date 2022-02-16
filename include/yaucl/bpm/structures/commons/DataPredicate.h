@@ -53,13 +53,13 @@
 #include <yaucl/structures/default_constructors.h>
 
 enum numeric_atom_cases {
+    INTERVAL,
     LT,
     GT,
     LEQ,
     GEQ,
     EQ,
     NEQ,
-    INTERVAL,
     TTRUE
 };
 
