@@ -181,7 +181,7 @@ private:
                 SimplifiedFuzzyStringMatching &sfzm,
                 const T& i) const {
         std::multimap<double, std::string> result;
-        sfzm.fuzzyMatch(min_threshold, 1, get<std::string>(resolve(*i)), result);
+        sfzm.fuzzyMatch(min_threshold, 1, std::get<std::string>(resolve(*i)), result);
         if (!result.empty()) {
             for (const auto& ref : result) {
                 auto it2 = string_offset_mapping.find(ref.second);
