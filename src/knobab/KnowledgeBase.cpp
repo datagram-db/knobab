@@ -5,6 +5,29 @@
 #include "knobab/KnowledgeBase.h"
 #include <cassert>
 #include <cmath>
+#include <magic_enum.hpp>
+
+std::string KnowledgeBase::default_string;
+double KnowledgeBase::maximum_reliability_for_insertion = 0.99;// TODO: PREV_DOUBLE(PREV_DOUBLE(1.0));
+
+static inline void fillInAtGivenStep(const std::string &key,
+                                     const std::variant<double, size_t, long long int, std::string, bool>& value,
+                                     const AttributeTableType &type,
+                       std::unordered_map<std::string, AttributeTable> *ptr,
+                       std::unordered_map<std::string, std::unordered_set<std::string>> *ptr2,
+                       size_t TraceId, size_t EventId, const std::string &EventLabel,
+                       size_t ActId)  {
+    auto it = ptr->find(key);
+    if (it == ptr->end()) {
+        it = ptr->emplace(key, AttributeTable{key, type}).first;
+    } else if (it->second.type != type) {
+        std::string s{magic_enum::enum_name(it->second.type)};
+        std::string currentType{magic_enum::enum_name(type)};
+        throw std::runtime_error(key+" was already associated to " + s+", now it also have "+currentType+": FATAL ERROR!");
+    }
+    if (ptr2) ptr2->operator[](EventLabel).insert(key);
+    it->second.record_load(ActId, value, TraceId, EventId);
+}
 
 KnowledgeBase::KnowledgeBase() : alreadySet{false} {
     status = FinishParsing;
@@ -25,17 +48,20 @@ void KnowledgeBase::reconstruct_trace_no_data(std::ostream &os) const {
 
 
 void KnowledgeBase::reconstruct_trace_with_data(std::ostream &os) const {
+    constexpr size_t record_size = sizeof(ActTable::record);
     for (size_t trace_id = 0, N = act_table_by_act_id.secondary_index.size(); trace_id < N; trace_id++) {
         os << "Trace #" << trace_id << std::endl << "\t- ";
         const auto& ref = act_table_by_act_id.secondary_index[trace_id];
         auto ptr = ref.first;
         while (ptr) {
+            size_t offset = (((size_t)ptr) - ((size_t)act_table_by_act_id.table.data()));
+            offset = offset / record_size;
             // printing one event at a time
             os << event_label_mapper.get(ptr->entry.id.parts.act) << "{ ";
             for (const auto& attr_table : this->attribute_name_to_table) {
-                ptrdiff_t offset = ptr - act_table_by_act_id.table.data();
                 const AttributeTable::record* recordPtr = attr_table.second.resolve_record_if_exists(offset);
                 if (recordPtr) {
+                    assert(recordPtr->act_table_offset == offset);
                     os << attr_table.first << '=';
                     attr_table.second.resolve_and_print(os, *recordPtr);
                     os << ", ";
@@ -49,7 +75,8 @@ void KnowledgeBase::reconstruct_trace_with_data(std::ostream &os) const {
 }
 
 
-void KnowledgeBase::index_data_structures() {
+void KnowledgeBase::index_data_structures(bool missingDataIndexing) {
+
     /// Filling the gaps in the sparse table, so to take into account the events that are missing from a given trace
     count_table.indexing(actId, this->noTraces-1);
 
@@ -58,15 +85,80 @@ void KnowledgeBase::index_data_structures() {
 
     /// Applying the intermediate index M2 to each attribute table, so to continue with the value indexing
     for (auto& attr_name_to_table_cp : attribute_name_to_table)
-        attr_name_to_table_cp.second.index(idx, act_table_by_act_id.table.size()-1);
+        attr_name_to_table_cp.second.index(idx);
 
     /// Continuing to create the secondary index out of M2, as well as clearing M2
     act_table_by_act_id.indexing2();
     act_table_by_act_id.sanityCheck();
+
+    /// Creating the universe relationships, so to return it efficiently without taking too much time!
+    universe.clear();
+    universeApprox.clear();
+    for (event_t i = 0; i<noTraces; i++) {
+        for (act_t j = 0, N = act_table_by_act_id.getTraceLength(i); j<N; j++) {
+            universe.emplace_back(std::make_pair(i, j), 1.0);
+            universeApprox.emplace_back(std::make_pair(i, j), maximum_reliability_for_insertion);
+        }
+    }
+    assert(std::is_sorted(universe.begin(), universe.end()));
+
+    if (missingDataIndexing) {
+        std::cout << "NOW INDEXING 'MISSING DATA'" << std::endl;
+        auto tmp = status;
+        status = MissingDataParsing;
+        constexpr size_t record_size = sizeof(ActTable::record);
+        for (size_t trace_id = 0, N = act_table_by_act_id.secondary_index.size(); trace_id < N; trace_id++) {
+            ///os << "Trace #" << trace_id << std::endl << "\t- ";
+            const auto& ref = act_table_by_act_id.secondary_index[trace_id];
+            auto ptr = ref.first;
+            size_t event_id = 0;
+            while (ptr) {
+                size_t offset = (((size_t)ptr) - ((size_t)act_table_by_act_id.table.data()));
+                offset = offset / record_size;
+                std::string eventLabel = event_label_mapper.get(ptr->entry.id.parts.act);
+                for (const auto& attr_table : this->attribute_name_to_table) {
+                    const AttributeTable::record* recordPtr = attr_table.second.resolve_record_if_exists(offset);
+                    if (!recordPtr) {
+                        std::variant<double, size_t, long long int, std::string, bool> val;
+                        switch (attr_table.second.type) {
+                            case DoubleAtt:
+                                val = default_double;
+                                break;
+                            case SizeTAtt:
+                                val = default_size_t;
+                                break;
+                            case LongAtt:
+                                val = default_longlong;
+                                break;
+                            case StringAtt:
+                                val = default_string;
+                                break;
+                            case BoolAtt:
+                                val = default_bool;
+                                break;
+                        }
+                        fillInAtGivenStep(attr_table.first, val, attr_table.second.type, &approximate_attribute_to_table,
+                                          nullptr, trace_id, event_id, eventLabel, ptr->entry.id.parts.act);
+                    }
+                }
+                ptr = ptr->next;
+                event_id++;
+            }
+            status = tmp;
+
+        }
+
+        /// Applying the intermediate index M2 to each attribute table, so to continue with the value indexing
+        for (auto& attr_name_to_table_cp : approximate_attribute_to_table)
+            attr_name_to_table_cp.second.index(idx);
+    }
+
+    act_table_by_act_id.clearIDX();
 }
 
 ///////////////// Event System
 #include <iostream>
+
 
 void KnowledgeBase::enterLog(const std::string &source, const std::string &name) {
     assert(!this->alreadySet);
@@ -95,19 +187,12 @@ size_t KnowledgeBase::enterTrace(const std::string &trace_label) {
 }
 
 void KnowledgeBase::exitTrace(size_t traceId) {
-    /*if (act_begin_record_ptr != nullptr) {
-        act_end_record_ptr = &act_table_by_act_id.table.back();
-        for (size_t i = 0, N = std::distance(act_begin_record_ptr, act_end_record_ptr); i<N; i++) {
-            act_end_record_ptr[i].entry.id.parts.event_id = cast_to_float(i, N-1);
-        }
-        act_begin_record_ptr = nullptr;
-        act_end_record_ptr = nullptr;
-    }*/
     assert(noTraces == (traceId+1));
     status = LogParsing;
 }
 
 size_t KnowledgeBase::enterEvent(size_t chronos_tick, const std::string &event_label) {
+    currentEventLabel = event_label;
     actId = event_label_mapper.put(event_label).first;
     auto it = counting_reference.emplace(actId, 1UL);
     if (!it.second) {
@@ -119,11 +204,11 @@ size_t KnowledgeBase::enterEvent(size_t chronos_tick, const std::string &event_l
     enterData_part(true);
     size_t currentEventIdRet = currentEventId++;
     visitField("__time", chronos_tick);
-    ///miniActTable.emplace_back(actId, noTraces-1, currentEventId);
     return currentEventIdRet;
 }
 
 void KnowledgeBase::exitEvent(size_t event_id) {
+    currentEventLabel.clear();
     assert(currentEventId == (event_id+1));
     // using counting_reference to populate
     std::vector<std::pair<size_t, size_t>> cp;
@@ -150,47 +235,108 @@ void KnowledgeBase::exitData_part(bool isEvent) {
 }
 
 void KnowledgeBase::visitField(const std::string &key, bool value) {
-    if (status == EventParsing) {
-        auto it = attribute_name_to_table.find(key);
-        if (it == attribute_name_to_table.end()) {
-            attribute_name_to_table[key] = {key, BoolAtt};
-            it = attribute_name_to_table.find(key);
-        }
-        it->second.record_load(actId, value, noTraces-1, currentEventId-1);
-    }
+    constexpr AttributeTableType type = BoolAtt;
+    std::unordered_map<std::string, AttributeTable>* ptr = nullptr;
+    std::unordered_map<std::string, std::unordered_set<std::string>>* ptr2 = nullptr;
+    bool isEventParsing = (status == EventParsing);
+    if (isEventParsing) {
+        ptr2 = &registerEventLabelSchema;
+        ptr = &attribute_name_to_table;
+    } else if (status == MissingDataParsing)
+        ptr = &approximate_attribute_to_table;
+    else
+        return;
+    fillInAtGivenStep(key, value, type, ptr, ptr2, noTraces-1, currentEventId-1, currentEventLabel, actId);
 }
 
+
+
 void KnowledgeBase::visitField(const std::string &key, double value) {
+    constexpr AttributeTableType type = DoubleAtt;
+    std::unordered_map<std::string, AttributeTable>* ptr = nullptr;
+    std::unordered_map<std::string, std::unordered_set<std::string>>* ptr2 = nullptr;
+    bool isEventParsing = (status == EventParsing);
+    if (isEventParsing) {
+        ptr2 = &registerEventLabelSchema;
+        ptr = &attribute_name_to_table;
+    } else if (status == MissingDataParsing)
+        ptr = &approximate_attribute_to_table;
+    else
+        return;
+    fillInAtGivenStep(key, value, type, ptr, ptr2, noTraces-1, currentEventId-1, currentEventLabel, actId);
+#if 0
     if (status == EventParsing) {
         auto it = attribute_name_to_table.find(key);
         if (it == attribute_name_to_table.end()) {
             attribute_name_to_table[key] = {key, DoubleAtt};
             it = attribute_name_to_table.find(key);
+        } else if (it->second.type != DoubleAtt) {
+            std::string s{magic_enum::enum_name(it->second.type)};
+            throw std::runtime_error(key+" was already associated to " + s+", now it also have Double: FATAL ERROR!");
         }
+        registerEventLabelSchema[currentEventLabel].insert(key);
         it->second.record_load(actId, value, noTraces-1, currentEventId-1);
     }
+#endif
 }
 
 void KnowledgeBase::visitField(const std::string &key, const std::string &value) {
+#if 0
     if (status == EventParsing) {
         auto it = attribute_name_to_table.find(key);
         if (it == attribute_name_to_table.end()) {
-            attribute_name_to_table[key] = {key, StringAtt, &string_values};
+            attribute_name_to_table[key] = {key, StringAtt};
             it = attribute_name_to_table.find(key);
+        } else if (it->second.type != StringAtt) {
+            std::string s{magic_enum::enum_name(it->second.type)};
+            throw std::runtime_error(key+" was already associated to " + s+", now it also have String: FATAL ERROR!");
         }
+        registerEventLabelSchema[currentEventLabel].insert(key);
         it->second.record_load(actId, value, noTraces-1, currentEventId-1);
     }
+#endif
+    constexpr AttributeTableType type = StringAtt;
+    std::unordered_map<std::string, AttributeTable>* ptr = nullptr;
+    std::unordered_map<std::string, std::unordered_set<std::string>>* ptr2 = nullptr;
+    bool isEventParsing = (status == EventParsing);
+    if (isEventParsing) {
+        ptr2 = &registerEventLabelSchema;
+        ptr = &attribute_name_to_table;
+    } else if (status == MissingDataParsing)
+        ptr = &approximate_attribute_to_table;
+    else
+        return;
+    maximumStringLength = std::max(maximumStringLength, value.size());
+    fillInAtGivenStep(key, value, type, ptr, ptr2, noTraces-1, currentEventId-1, currentEventLabel, actId);
 }
 
 void KnowledgeBase::visitField(const std::string &key, size_t value) {
+#if 0
     if (status == EventParsing) {
         auto it = attribute_name_to_table.find(key);
         if (it == attribute_name_to_table.end()) {
             attribute_name_to_table[key] = {key, SizeTAtt};
             it = attribute_name_to_table.find(key);
+        } else if (it->second.type != SizeTAtt) {
+            std::string s{magic_enum::enum_name(it->second.type)};
+            throw std::runtime_error(key+" was already associated to " + s+", now it also have Size_T: FATAL ERROR!");
         }
+        registerEventLabelSchema[currentEventLabel].insert(key);
         it->second.record_load(actId, value, noTraces-1, currentEventId-1);
     }
+#endif
+    constexpr AttributeTableType type = SizeTAtt;
+    std::unordered_map<std::string, AttributeTable>* ptr = nullptr;
+    std::unordered_map<std::string, std::unordered_set<std::string>>* ptr2 = nullptr;
+    bool isEventParsing = (status == EventParsing);
+    if (isEventParsing) {
+        ptr2 = &registerEventLabelSchema;
+        ptr = &attribute_name_to_table;
+    } else if (status == MissingDataParsing)
+        ptr = &approximate_attribute_to_table;
+    else
+        return;
+    fillInAtGivenStep(key, value, type, ptr, ptr2, noTraces-1, currentEventId-1, currentEventLabel, actId);
 }
 
 void
@@ -303,25 +449,148 @@ void KnowledgeBase::clear() {
     noTraces = 0;
     currentEventId = 0;
     actId = 0;
+    approximate_attribute_to_table.clear();
 }
 
-union_minimal resolveUnionMinimal(const AttributeTable &table, const AttributeTable::record &x) {
-    switch (table.type) {
-        case DoubleAtt:
-            return *(double*)(&x.value);
-        case LongAtt:
-            return (double)(*(long long*)(&x.value));
-        case StringAtt:
-            assert(table.ptr);
-            return table.ptr->get(x.value);
-        case BoolAtt:
-            return (x.value != 0 ? 0.0 : 1.0);
-            //case SizeTAtt:
-        default:
-            // TODO: hierarchical types!, https://dl.acm.org/doi/10.1145/3410566.3410583
-            return (double)x.value;
+#include <sstream>
+
+// TODO: to be replaced with Sam's function
+template<typename InputIt1, typename InputIt2, typename OutputIt, typename Aggregation>
+OutputIt tmp_set_union(InputIt1 first1, InputIt1 last1,
+                   InputIt2 first2, InputIt2 last2,
+                   OutputIt d_first, Aggregation aggr)
+{
+    for (; first1 != last1; ++d_first) {
+        if (first2 == last2)
+            return std::copy(first1, last1, d_first);
+        if (first2->first < first1->first) {
+            *d_first = *first2++;
+        } else if (first2->first == first1->first) {
+            *d_first = std::make_pair(first2->first, aggr(first1->second, first2->second));
+            *first2++;
+            *first1++;
+        } else {
+            *d_first = *first1++;
+        }
+    }
+    return std::copy(first2, last2, d_first);
+}
+
+std::vector<std::pair<std::pair<trace_t, event_t>, double>>
+KnowledgeBase::range_query(DataPredicate prop, double min_threshold, const double c) const {
+    if (prop.casusu == TTRUE)
+        return universe; // Immediately returning the universe queries
+    else
+        prop.asInterval();
+    constexpr size_t max_int = std::numeric_limits<size_t>::max();
+    assert(!prop.var.empty());
+    assert((min_threshold >= std::numeric_limits<double>::epsilon()) && (min_threshold <= 1.0)); // Cannot have a negative approximation, as the approximation is just a distance
+    if (!prop.labelRHS.empty()) {
+        std::stringstream sstr;
+        sstr << "Predicate " << prop << ": cannot have a predicate over two distinct variables! ";
+        throw std::runtime_error(sstr.str());
+    }
+    if (!prop.exceptions.empty()) {
+        std::stringstream sstr;
+        sstr << "Predicate " << prop << ": cannot have excepted values at this stage: this should be an already decomposed interval ";
+        throw std::runtime_error(sstr.str());
+    }
+    if (!prop.BiVariableConditions.empty()) {
+        std::stringstream sstr;
+        sstr << "Predicate " << prop << ": cannot variable conditions that are proper to join conditions: either the decomposition is faulty, or the data clearing is not effective, or the interval decomposition isn't, or the interval is used inappropriately ";
+        throw std::runtime_error(sstr.str());
+    }
+
+    auto tmp = range_query(prop, min_threshold, 1.0, c, true);
+    if (tmp.first == 1)
+        // isuniverse, already for the exact! any union will always return the universe
+        return universe;
+    else if (tmp.first == 0 && (min_threshold<1.0)) {
+        // if the answer is empty and we want to return an approximated solution, the solution is only over non
+        // existing data
+        auto tmp2 = range_query(prop, min_threshold, maximum_reliability_for_insertion, c, false);
+        if (tmp2.first == 1)
+            return universeApprox;
+        else if (tmp.first == 0)
+            return empty;
+        else return tmp.second;
+    } else if ((!approximate_attribute_to_table.empty()) && (min_threshold < 1.0)) {
+        ///return tmp.second;
+        auto tmp2 = range_query(prop, min_threshold, maximum_reliability_for_insertion, c, false);
+        if (tmp2.first == 1) {
+            // performs the union with the approximated universe: TODO: replace tmp_set_union with Sam's
+            std::vector<std::pair<std::pair<trace_t, event_t>, double>> Result;
+            tmp_set_union(tmp.second.begin(), tmp.second.end(),
+                           universeApprox.begin(), universeApprox.end(),
+                          std::back_inserter(Result), [](double x, double y) {return std::max(x,y);});
+            return Result;
+        } else if (tmp.first == 0)
+            // return the original data directly, with no union
+            return tmp.second;
+        else {
+            // performs he union with the two datasets. TODO: replace tmp_set_union with Sam's
+            std::vector<std::pair<std::pair<trace_t, event_t>, double>> Result;
+            tmp_set_union(tmp.second.begin(), tmp.second.end(),
+                          tmp2.second.begin(), tmp2.second.end(),
+                          std::back_inserter(Result), [](double x, double y) {return std::max(x,y);});
+            return Result;
+        }
+    } else {
+        return tmp.second;
     }
 }
+
+std::pair<int, std::vector<std::pair<std::pair<trace_t, event_t>, double>>>
+KnowledgeBase::range_query(DataPredicate &prop, double min_threshold, double correction, const double c,
+                           bool forExistingData) const {
+
+    static const double at16 = std::pow(2, 16);
+    auto it = (forExistingData ? attribute_name_to_table : approximate_attribute_to_table).find(prop.var);
+    if (it == (forExistingData ? attribute_name_to_table : approximate_attribute_to_table).end()) {
+        // if no attribute is there, then I must assume that all of the traces are valid!
+        return {1, {}}; // Immediately returning the universe queries
+    } else {
+        // The attribute exists within the dataset
+        ssize_t act_id = -1;
+        if (!prop.label.empty()) {
+            act_id = (ssize_t) event_label_mapper.get(prop.label);
+        }
+        auto tmp = it->second.range_query(prop, act_id, min_threshold, c);
+        if (tmp.isUniverse())
+            return {1, {}}; // Immediately returning the universe queries
+        else if (tmp.isEmptySolution())
+            return {0, {}}; // Return empty solution
+        else {
+            std::vector<std::pair<std::pair<trace_t, event_t>, double>> S;
+            for (const auto& element : tmp._data) {
+                if (element.exact_solution.first != nullptr) {
+                    size_t N = std::distance(element.exact_solution.first, element.exact_solution.second);
+                    for (size_t i = 0; i<=N; i++) {
+                        const auto& exactIt = element.exact_solution.first[i];
+                        const auto& resolve = act_table_by_act_id.table.at(exactIt.act_table_offset).entry.id.parts;
+                        S.emplace_back(std::make_pair(resolve.trace_id,
+                                                      trunc((((double)resolve.event_id)/at16) *
+                                                            act_table_by_act_id.getTraceLength(resolve.trace_id))), 1.0 * correction);
+                    }
+
+                }
+
+                for (auto item : element.approx_solution) {
+                    const auto& resolve = act_table_by_act_id.table.at(item.first->act_table_offset).entry.id.parts;
+                    S.emplace_back(std::make_pair(resolve.trace_id,
+                                                  trunc((((double)resolve.event_id)/at16) *
+                                                        act_table_by_act_id.getTraceLength(resolve.trace_id))), item.second * correction);
+
+                }
+            }
+            std::sort(S.begin(), S.end());
+            S.erase(std::unique(S.begin(), S.end()), S.end());
+            return {2, S};
+        }
+    }
+}
+
+
 
 void KnowledgeBase::load_data_without_antlr4(const KnowledgeBase::no_antlr_log &L, const std::string &source,
                                              const std::string &name) {
@@ -400,4 +669,41 @@ uint16_t KnowledgeBase::getPositionFromEventId(const oid* event) const {
     uint16_t posFromEventId = std::ceil((float)(event->id.parts.event_id / (float)MAX_UINT16) * (traceLength - 1));
     return posFromEventId;
 }
+
+
+std::pair<std::unordered_map<std::string, AttributeTable>::iterator,
+        std::unordered_map<std::string, AttributeTable>::iterator> KnowledgeBase::getAttrNameTableIt() {
+    return {attribute_name_to_table.begin(), attribute_name_to_table.end()};
+}
+
+union_type KnowledgeBase::resolveRecord(const ActTable::record *eventFromTrace,
+                                        const std::unordered_map<std::string, AttributeTable>::iterator &attr_table) const {
+
+    return attr_table->second.resolve(*attr_table->second.resolve_record_if_exists(eventFromTrace - act_table_by_act_id.table.data()));
+}
+
+union_minimal KnowledgeBase::resolveMinimalRecord(const ActTable::record *eventFromTrace,
+                                                  const std::unordered_map<std::string, AttributeTable>::iterator &attr_table) const {
+    return resolveUnionMinimal(attr_table->second,
+                               *attr_table->second.resolve_record_if_exists(eventFromTrace - act_table_by_act_id.table.data()));
+}
+
+void KnowledgeBase::print_count_table(std::ostream &os) const {
+    os << count_table;
+}
+
+void KnowledgeBase::print_act_table(std::ostream &os) const {
+    os << act_table_by_act_id;
+}
+
+void KnowledgeBase::print_attribute_tables(std::ostream &os) const {
+    for (const auto& ref : attribute_name_to_table)
+        os << ref.second;
+
+    if (!approximate_attribute_to_table.empty())
+        os << " ~~~~~~~~~~~~~~~~~~~~ APPROXIMATIONS ~~~~~~~~~~~~~~~~~~~~ ";
+    for (const auto& ref : approximate_attribute_to_table)
+        os << ref.second;
+}
+
 

@@ -43,6 +43,7 @@ enum XML_SCAN_STEPS {
 
 #include <chrono>
 
+
 void parse_event(rapidxml::xml_node<>* event, trace_visitor* tv, bool load_data) {
     constexpr std::basic_string_view concept_name{"concept:name"};
     constexpr std::basic_string_view timeTimestamp{"time:timestamp"};
