@@ -13,3 +13,6 @@
 [submodule "submodules/yamlcpp"]
 	path = submodules/yamlcpp
 	url = https://github.com/jbeder/yaml-cpp/
+[submodule "submodules/aaltaf"]
+	path = submodules/aaltaf
+	url = https://github.com/jackbergus/aaltaf

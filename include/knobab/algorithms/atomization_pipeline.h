@@ -47,6 +47,7 @@ struct AtomizingPipeline {
     std::unordered_map<std::pair<std::string, size_t>, std::string>          clause_to_atomization_map;
     std::unordered_map<DataPredicate, std::vector<std::string>>              Mcal;
     std::unordered_map<std::string, size_t>                                  max_ctam_iteration;
+    std::unordered_map<std::string, std::vector<DataPredicate>>              atom_to_conjunctedPredicates;
 
     /**
      * Generating a new atom associated to the data interval associated to an event label

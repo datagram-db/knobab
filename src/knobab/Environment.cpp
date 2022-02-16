@@ -38,6 +38,7 @@ void Environment::clear() {
 
 
 void Environment::load_model(const std::string &model_file) {
+    conjunctive_model.clear();
     if (!std::filesystem::exists(std::filesystem::path(model_file))) {
         std::cerr << "ERROR: model file does not exist: " << model_file << std::endl;
         exit(1);
@@ -46,9 +47,15 @@ void Environment::load_model(const std::string &model_file) {
     conjunctive_model = dmp.load(file, true);
 }
 
-void Environment::load_log(log_data_format format, bool loadData, const std::string &filename) {
+void Environment::load_log(log_data_format format, bool loadData, const std::string &filename, bool setMaximumStrLen) {
     load_into_knowledge_base(format, loadData, filename, db);
-    db.index_data_structures();
+    db.index_data_structures(index_missing_data);
+    if (setMaximumStrLen) {
+        auto tmp = db.getMaximumStringLength();
+        ap.s_max = std::string(tmp, std::numeric_limits<char>::max());
+        DataPredicate::MAX_STRING = ap.s_max;
+        DataPredicate::msl = tmp;
+    }
 }
 
 void Environment::set_atomization_parameters(const std::string &fresh_atom_label, size_t mslength) {
@@ -135,23 +142,21 @@ semantic_atom_set Environment::evaluate_easy_prop_to_atoms(const easy_prop &prop
         case easy_prop::E_P_ATOM:
             assert(prop.args.empty());
             assert(bogus_act_to_set.contains(prop.single_atom_if_any));
-            ///assert(bogus_act_to_atom.contains(prop.single_atom_if_any));
             if (prop.isAtomNegated) {
-                ///semantic_atom_set S = ap.atom_decomposition(bogus_act_to_atom.at(prop.single_atom_if_any));
                 return unordered_difference(getSigmaAll(), bogus_act_to_set.at(prop.single_atom_if_any));
             } else {
                 return bogus_act_to_set.at(prop.single_atom_if_any);
             }
         case easy_prop::E_P_TRUE:
             return getSigmaAll();
-        case easy_prop::E_P_FALSE:
+        default: //case easy_prop::E_P_FALSE:
             return {};
     }
 }
 
 FlexibleFA<size_t, std::string> Environment::declare_to_graph_for_patterns(const DeclareDataAware &decl) {
     assert(!decl.left_decomposed_atoms.empty());
-    assert(!decl.right_decomposed_atoms.empty());
+    assert((isUnaryPredicate(decl.casusu)) || (!decl.right_decomposed_atoms.empty()));
     /*{
         auto it = pattern_graph.find(decl);
         if (it != pattern_graph.end()) return it->second;
@@ -204,8 +209,8 @@ void Environment::compute_declare_to_graph_for_joins(const DeclareDataAware &dec
         graph_join_pm g2;
         {
             auto g3 = declare_to_graph_for_patterns(decl);
-            std::ofstream ofile{std::to_string(i++)+"_tmp.dot"};
-            g3.dot(ofile);
+            /*std::ofstream ofile{std::to_string(i++)+"_tmp.dot"};
+            g3.dot(ofile);*/
             auto g = g3.shiftLabelsToNodes();
             g.pruneUnreachableNodes();
 
@@ -238,15 +243,20 @@ TemplateCollectResult Environment::compute_declare_for_conjunctive(bool doPrune)
         compute_declare_for_disjunctive(zeroModel, currGraph); // // = template_to_graph.at(zeroModel);
         TemplateCollectResult result;
         conditionalPruningGraph(doPrune, true, result, currGraph);
-        {
-            auto g = convert_to_dfa_graph(currGraph);
+        /**{
+            auto g = convert_to_dfa_graph(currGraph).makeDFAAsInTheory(getSigmaAll());
+            {
+                std::ofstream output_el_model{std::to_string(0)+"_test1.g"};
+                dot(currGraph, output_el_model, false);
+            }
+            {
+                std::ofstream output_el_model{std::to_string(0)+"_test2.g"};
+                g.dot(output_el_model);
+            }
 
             // TODO: merge sink un-accepting nodes in makeDFAAsInTheory
-            auto DFA = minimizeDFA(g).makeDFAAsInTheory(getSigmaAll());
-
-            std::ofstream output_el_model{std::to_string(0)+"_test.g"};
-            DFA.dot(output_el_model);
-        }
+            auto DFA = minimizeDFA(g);
+        }*/
         for (size_t j = 1; j<M; j++) {
             auto& zeroModelJ = grounding.singleElementOfConjunction.at(j);
             ///assert(allTemplates.contains(std::make_pair(zeroModelJ.casusu, zeroModelJ.n)));
@@ -256,20 +266,58 @@ TemplateCollectResult Environment::compute_declare_for_conjunctive(bool doPrune)
             ///auto& currGraph2 = template_to_graph.at(zeroModelJ);
             conditionalPruningGraph(doPrune, false, result, currGraph2);
             {
-                auto g = convert_to_dfa_graph(currGraph2);
+                ///auto g = convert_to_dfa_graph(currGraph2).makeDFAAsInTheory(getSigmaAll());
+
+                /**std::ofstream output_el_model{std::to_string(j)+"_testNOW.g"};
+                g.dot(output_el_model);*/
 
                 // TODO: merge sink un-accepting nodes in makeDFAAsInTheory
-                auto DFA = minimizeDFA(g).makeDFAAsInTheory(getSigmaAll());
+                ///auto DFA = minimizeDFA(g);
 
-                std::ofstream output_el_model{std::to_string(j)+"_test.g"};
-                DFA.dot(output_el_model);
+                //dot(currGraph2, output_el_model, false);
+                //DFA.dot(output_el_model);
+            }
+            {
+                ///auto g = convert_to_dfa_graph(result.joined_graph_model).makeDFAAsInTheory(getSigmaAll());
+
+                // TODO: merge sink un-accepting nodes in makeDFAAsInTheory
+                ///auto DFA = minimizeDFA(g);
+
+                ///std::ofstream output_el_model{std::to_string(j)+"_jointmp.g"};
+                //dot(result.joined_graph_model, output_el_model, false);
+                //DFA.dot(output_el_model);
             }
         }
-        if (doPrune) {
+        /*if (doPrune) {
             graph_join_pm result_;
             remove_unaccepting_states(result.joined_graph_model, result_);
             result.joined_graph_model = result_;
-        }
+        }*/
         return result;
+    }
+}
+
+void Environment::print_count_table(std::ostream &os) const {
+    db.print_count_table(os);
+}
+
+void Environment::print_act_table(std::ostream &os) const {
+    db.print_act_table(os);
+}
+
+void Environment::print_attribute_tables(std::ostream &os) const {
+    db.print_attribute_tables(os);
+}
+
+void Environment::load_all_clauses() {
+    for (declare_templates t : magic_enum::enum_values<declare_templates>()) {
+        std::cout << "INIT: " << magic_enum::enum_name(t) << std::endl;
+        if (isUnaryPredicate(t)) {
+            for (size_t i = 1; i<3; i++) {
+                declare_to_graph.getDeclareTemplate(t, i);
+            }
+        } else {
+            declare_to_graph.getDeclareTemplate(t, 2);
+        }
     }
 }

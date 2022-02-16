@@ -30,6 +30,7 @@
 template<typename T>
 std::unordered_set<T> unordered_intersection(const std::unordered_set<T> &a,
                                              const std::unordered_set<T> &b){
+    if (a.size() > b.size()) return unordered_intersection(b, a);
     std::unordered_set<T> v3;
     for (auto i = a.begin(); i != a.end(); i++) {
         if (b.find(*i) != b.end()) v3.insert(*i);
@@ -50,6 +51,7 @@ std::unordered_set<T> unordered_difference(const std::unordered_set<T> &a,
 template<typename T>
 double unodreded_distance(const std::unordered_set<T> &a,
                           const std::unordered_set<T> &b) {
+    if (a.size() < b.size()) return unodreded_distance(b, a);
     double total = a.size();
     for (auto i = b.begin(); i != b.end(); i++) {
         if (a.find(*i) == a.end()) total++;
@@ -129,5 +131,75 @@ std::ostream& operator<<(std::ostream& os, const std::vector<T> &s)
     return os << ']';
 }*/
 
+#include <map>
+#include <functional>
+template <typename Iterator, typename Key, typename Value>
+std::map<Key, std::vector<Value>> GroupByKeyExtractor(Iterator begin, Iterator end, std::function<Key(const Value&)> keyExtractor)
+{
+    assert(std::is_sorted(begin, end));
+    std::map<Key, std::vector<Value>> groups;
+    decltype(end) upper;
+
+    for(auto lower = begin; lower != end; lower = upper)
+    {
+        Key k = keyExtractor(*lower);
+
+        // get the upper position of all elements with the same ID
+        upper = std::upper_bound(begin, end,  *lower,[keyExtractor](const Value& x, const Value& y) { return keyExtractor(x) < keyExtractor(y); });
+
+        // add those elements as a group to the output vector
+        groups[k] = {lower, upper};
+    }
+
+    return groups;
+}
+
+template <typename Iterator, typename Key, typename Value>
+std::vector<std::pair<Key, std::vector<Value>>> GroupByKeyExtractorAsVector(Iterator begin, Iterator end, std::function<Key(const Value&)> keyExtractor)
+{
+    assert(std::is_sorted(begin, end));
+    std::vector<std::pair<Key, std::vector<Value>>> groups;
+    decltype(end) upper;
+
+    for(auto lower = begin; lower != end; lower = upper)
+    {
+        Key k = keyExtractor(*lower);
+
+        // get the upper position of all elements with the same ID
+        upper = std::upper_bound(begin, end,  *lower,[keyExtractor](const Value& x, const Value& y) { return keyExtractor(x) < keyExtractor(y); });
+
+        // add those elements as a group to the output vector
+        groups.emplace_back(k, std::vector<Value>{lower, upper});
+    }
+
+    return groups;
+}
+
+template <typename Iterator, typename Key, typename Value>
+std::vector<std::vector<Value>> GroupByKeyExtractorIgnoreKey(Iterator begin, Iterator end, std::function<Key(const Value&)> keyExtractor)
+{
+    assert(std::is_sorted(begin, end));
+    std::vector<std::vector<Value>> groups;
+    decltype(end) upper;
+
+    for(auto lower = begin; lower != end; lower = upper)
+    {
+        Key k = keyExtractor(*lower);
+
+        // get the upper position of all elements with the same ID
+        upper = std::upper_bound(begin, end,  *lower,[keyExtractor](const Value& x, const Value& y) { return keyExtractor(x) < keyExtractor(y); });
+
+        // add those elements as a group to the output vector
+        groups.emplace_back(std::vector<Value>{lower, upper});
+    }
+
+    return groups;
+}
+
+template <typename T>
+void remove_duplicates(std::vector<T>& vec){
+    std::sort(vec.begin(), vec.end());
+    vec.erase(std::unique(vec.begin(), vec.end()), vec.end());
+}
 
 #endif //INCONSISTENCY_DETECTOR_SET_OPERATIONS_H

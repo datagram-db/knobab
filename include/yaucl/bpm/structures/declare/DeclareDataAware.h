@@ -28,45 +28,33 @@
  * Definition of all the types of Declare statements
  */
 enum declare_templates {
-    Absence,
-    Absence2,
-    AltResponse,
-    AltPrecedence,
-    AltSuccession,
-    Choice,
     End,
-    Exactly,
-    ExlChoice,
-    Existence,
     Init,
+    Existence,
+    Absence2,
+    Absence,
+    Choice,
+    ExlChoice,
     RespExistence,
     CoExistence,
     Response,
     Precedence,
+    Succession,
+    AltResponse,
+    AltPrecedence,
+    AltSuccession,
     ChainResponse,
     ChainPrecedence,
     ChainSuccession,
-    Succession,
-    NotSuccession,
     NotCoExistence,
-    NotChainPrecedence,
-    NotChainResponse,
-    NotChainSuccession,
-    NotPrecedence,
-    NotResponse,
-    NotRespExistence,
     NegSuccession,
-    NegChainSuccession,
-    NegationAltResponse,
-    NegationPrecedence,
-    NegationResponse,
-    NegNotChainSuccession,
-    VacNegNotChainSuccession
+    NegChainSuccession
 };
 
 bool isUnaryPredicate(declare_templates type);
+bool isPredicateNegative(declare_templates type);
 
-bool isUnaryPredicate(declare_templates t);
+//bool isUnaryPredicate(declare_templates t);
 
 #include <string>
 #include <unordered_map>
@@ -179,13 +167,13 @@ struct DeclareDataAware {
     bool operator==(const DeclareDataAware &rhs) const;
     bool operator!=(const DeclareDataAware &rhs) const;
 
-    ltlf toFiniteSemantics() const;
+    ltlf toFiniteSemantics(bool isForGraph = true) const;
 
     static DeclareDataAware doExistence(size_t n, const std::string& left_act, const std::vector<std::unordered_map<std::string, DataPredicate>>& dnf_left_map);
     static DeclareDataAware doAbsence(size_t n, const std::string& left_act, const std::vector<std::unordered_map<std::string, DataPredicate>>& dnf_left_map);
 };
 
-ltlf toFiniteSemantics(declare_templates casusu, size_t n, const std::string& left_act, const std::string& right_act = "");
+//ltlf toFiniteSemantics(declare_templates casusu, size_t n, const std::string& left_act, const std::string& right_act = "");
 
 namespace std {
     template <>
