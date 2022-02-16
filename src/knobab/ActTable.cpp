@@ -137,9 +137,9 @@ void ActTable::indexing2() { // todo: rename as indexing, and remove expectedOrd
                 real_ref.prev = &table[ref.at(time-1)];
             }
         }
-        ref.clear();
+        ///ref.clear();
     }
-    //builder.trace_id_to_event_id_to_offset.clear();
+    ///builder.trace_id_to_event_id_to_offset.clear();
 }
 
 //std::pair<const ActTable::record *, const ActTable::record *> ActTable::resolve_index(act_t id) const {
@@ -159,3 +159,21 @@ std::pair<const uint32_t, const uint32_t> ActTable::resolve_index(act_t id) cons
                 ((id == (primary_index.size() - 1)) ? primary_index.at(primary_index.size() - 1) - 1 : primary_index.at(id+1) - 1)};      // Pointers to first and last records from Act Table subsection
     }
 }
+
+std::ostream &operator<<(std::ostream &os, const ActTable &table) {
+    const double at16 = std::pow(2, 16);
+    os << "          ActTable" << std::endl << "-------------------------------" << std::endl;
+    size_t i = 0;
+    for (const auto& ref : table.table) {
+        os << (i++) << ": " << ref.entry.id.parts.act << ", " << ref.entry.id.parts.trace_id << ", " << std::trunc((((double)ref.entry.id.parts.event_id)/at16)*table.trace_length[ ref.entry.id.parts.trace_id]) << std::endl;
+    }
+    os << std::endl << "-------------------------------" << std::endl;
+    return os;
+}
+
+void ActTable::clear() {
+    secondary_index.clear();
+    primary_index.clear();
+    table.clear();
+}
+

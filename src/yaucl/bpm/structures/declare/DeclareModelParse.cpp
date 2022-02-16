@@ -115,7 +115,7 @@ antlrcpp::Any DeclareModelParse::visitNary_prop(DADParser::Nary_propContext *ctx
             dda.conjunctive_map = conjAny.as<std::vector<std::unordered_map<std::string, DataPredicate>>>();
             for (auto& ref : dda.conjunctive_map) {
                 for (auto& cp : ref) {
-                    assert(cp.second.casusu == TRUE); // That is, no data interval should be provided in here!
+                    assert(cp.second.casusu == numeric_atom_cases::TTRUE); // That is, no data interval should be provided in here!
                     cp.second.label = dda.left_act;
                     cp.second.labelRHS = dda.right_act;
                     for (auto& subitem : cp.second.BiVariableConditions) {
