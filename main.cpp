@@ -243,7 +243,35 @@ void test_fsm() {
         std::cout << cp.first << " - " << cp.second << std::endl;
 }
 
+KnowledgeBase test_kb(const KnowledgeBase::no_antlr_log& L, const std::string &source, const std::string &name) {
+    /// Creating an instance of the knowledge base, that is going to store all the traces in the log!
+    KnowledgeBase db;
 
+    db.load_data_without_antlr4(L, source, name);
+
+    /// Loading a log file into the database
+    /// load_into_knowledge_base(HUMAN_READABLE_YAUCL, true, "testing/log.txt", db);
+
+    /// Indexing the data structures
+    /// TODO: these indices might be written in secondary memory as well!
+    db.index_data_structures(true);
+
+    /// Debugging purposes: checking whether the thing that I obtain by printing corresponds to the one that I obtained before.
+    /// This is just an isomorphism proof, that states that I can always reconstruct the original information from the
+    /// given representation
+    db.reconstruct_trace_with_data(std::cout);
+
+    return db;
+}
+
+void ltlf_operators_testing() {
+
+    const KnowledgeBase::no_antlr_log LogTrace = {
+            {{"a", {}}, {"a", {}}, {"a", {}}, {"b", {}}},
+            {{"b", {}}, {"b", {}}, {"b", {}}, {"b", {}}, {"a", {}}},
+            {{"c", {}}, {"b", {}}, {"c", {}}, {"b", {}}, {"c", {}}}};
+
+    KnowledgeBase db = test_kb(LogTrace, "", "");
 
     // First part
     std::pair<const uint32_t, const uint32_t>  data = db.resolveCountingData("a");
@@ -289,7 +317,6 @@ void test_fsm() {
     std::cout << "--FUTURE--" << std::endl << "TEMPORAL: " << x5 << std::endl << "NON-TEMPORAL" << x6 << std::endl;
     std::flush(std::cout);
 }
-=======
 
 
 void test_group_by() {
@@ -464,12 +491,13 @@ void generate_traces(const std::string& log_file = "testing/nologolog.txt",
 int main() {
     //test_group_by();
     //generate_nonunary_templates();
-    test_data_query();
+    //test_data_query();
     //test_fsm();
     //whole_testing();
     //test_declare();
     //test_grounding();
     //generate_traces();
+    ltlf_operators_testing();
 
     return 0;
 }
