@@ -24,7 +24,8 @@ using union_type = std::variant<double, size_t, long long, std::string, bool>;
 #include <vector>
 #include <map>
 #include <unordered_map>
-
+#include <optional>
+#include "yaucl/bpm/structures/commons/DataPredicate.h"
 
 
 struct AttributeTable {
@@ -59,6 +60,8 @@ struct AttributeTable {
     void index(const std::vector<std::vector<size_t>> &trace_id_to_event_id_to_offset, size_t maxOffset);
     union_type resolve(const record& x) const;
 
+    std::optional<union_minimal> resolve_record_if_exists2(size_t actTableOffset) const;
+
 private:
     std::vector<std::map<union_type, std::vector<std::pair<trace_t, event_t>>>> elements;
 
@@ -66,6 +69,6 @@ private:
     bool assertVariant(const union_type& val);
 };
 
-
+union_minimal resolveUnionMinimal(const AttributeTable &table, const AttributeTable::record &x);
 
 #endif //BZDB_ATTRIBUTETABLE_H

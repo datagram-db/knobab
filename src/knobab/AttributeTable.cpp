@@ -120,5 +120,28 @@ std::ostream &AttributeTable::resolve_and_print(std::ostream &os, const Attribut
     }
 }
 
+union_minimal resolveUnionMinimal(const AttributeTable &table, const AttributeTable::record &x) {
+    switch (table.type) {
+        case DoubleAtt:
+            return *(double*)(&x.value);
+        case LongAtt:
+            return (double)(*(long long*)(&x.value));
+        case StringAtt:
+            return table.ptr->get(x.value);
+        case BoolAtt:
+            return (x.value != 0 ? 0.0 : 1.0);
+            //case SizeTAtt:
+        default:
+            // TODO: hierarchical types!, https://dl.acm.org/doi/10.1145/3410566.3410583
+            return (double)x.value;
+    }
+}
+
+std::optional<union_minimal> AttributeTable::resolve_record_if_exists2(size_t actTableOffset) const {
+    auto ptr = resolve_record_if_exists(actTableOffset);
+    if (!ptr) return {};
+    else return {resolveUnionMinimal(*this, *ptr)};
+}
+
 AttributeTable::record::record(act_t act, size_t value, size_t actTableOffset) : act(act), value(value),
                                                                                  act_table_offset(actTableOffset) {}

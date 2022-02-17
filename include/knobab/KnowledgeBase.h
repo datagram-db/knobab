@@ -31,7 +31,6 @@ enum ParsingState {
 
 using trace_set = std::bitset<sizeof(uint32_t)>;
 using act_set = std::bitset<sizeof(uint16_t)>;
-union_minimal resolveUnionMinimal(const AttributeTable &table, const AttributeTable::record &x);
 const uint16_t MAX_UINT16 = std::pow(2, 16) - 1;
 
 class KnowledgeBase : public trace_visitor {
@@ -171,11 +170,18 @@ public:
             float satisfiability = getSatisifiabilityBetweenValues(eventId, it->entry.id.parts.event_id, approxConstant);
 
             if(satisfiability >= minThreshold) {
-                foundData.getTraceApproximations().emplace_back(std::pair<std::pair<uint32_t, uint16_t>, float>({it->entry.id.parts.trace_id, it->entry.id.parts.event_id}, satisfiability));
+                foundData.getTraceApproximations().emplace_back(std::pair<std::pair<uint32_t, uint16_t>, float>({it->entry.id.parts.trace_id,  getPositionFromEventId({it->entry.id.parts.trace_id, it->entry.id.parts.event_id})}, satisfiability));
             }
         }
 
         return foundData;
+    }
+
+    /* First is traceID, second is eventID */
+    uint16_t getPositionFromEventId(const std::pair<uint32_t, uint16_t> pair) const;
+
+    const std::unordered_map<std::string, AttributeTable> getAttributeNameToTable() const{
+        return attribute_name_to_table;
     }
 
 private:
@@ -188,8 +194,6 @@ private:
             const std::unordered_set<std::string> &otherValues, trace_t traceId) const;
 
     float getSatisifiabilityBetweenValues(const uint16_t& val1, const uint16_t& val2, const uint16_t& approxConstant) const;
-
-    uint16_t getPositionFromEventId(const oid* event) const;
 };
 
 

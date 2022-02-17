@@ -305,24 +305,6 @@ void KnowledgeBase::clear() {
     actId = 0;
 }
 
-union_minimal resolveUnionMinimal(const AttributeTable &table, const AttributeTable::record &x) {
-    switch (table.type) {
-        case DoubleAtt:
-            return *(double*)(&x.value);
-        case LongAtt:
-            return (double)(*(long long*)(&x.value));
-        case StringAtt:
-            assert(table.ptr);
-            return table.ptr->get(x.value);
-        case BoolAtt:
-            return (x.value != 0 ? 0.0 : 1.0);
-            //case SizeTAtt:
-        default:
-            // TODO: hierarchical types!, https://dl.acm.org/doi/10.1145/3410566.3410583
-            return (double)x.value;
-    }
-}
-
 void KnowledgeBase::load_data_without_antlr4(const KnowledgeBase::no_antlr_log &L, const std::string &source,
                                              const std::string &name) {
     enterLog(source, name);
@@ -389,15 +371,15 @@ float KnowledgeBase::getSatisifiabilityBetweenValues(const uint16_t& val1, const
     return 1 / (((float)std::abs(val1 - val2) / approxConstant) + 1);
 }
 
-uint16_t KnowledgeBase::getPositionFromEventId(const oid* event) const {
-    uint16_t traceLength = act_table_by_act_id.getTraceLength(event->id.parts.trace_id);
+uint16_t KnowledgeBase::getPositionFromEventId(const std::pair<uint32_t, uint16_t> pair) const {
+    uint16_t traceLength = act_table_by_act_id.getTraceLength(pair.first);
 
     /* Guard against length 1 traces */
     if(traceLength == 1){
         return 0;
     }
 
-    uint16_t posFromEventId = std::ceil((float)(event->id.parts.event_id / (float)MAX_UINT16) * (traceLength - 1));
+    uint16_t posFromEventId = std::ceil((float)(pair.second / (float)MAX_UINT16) * (traceLength - 1));
     return posFromEventId;
 }
 

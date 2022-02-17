@@ -88,6 +88,9 @@ public:
         return trace_length;
     }
 
+    const table_builder& getBuilder() const{
+        return builder;
+    }
 };
 
 
