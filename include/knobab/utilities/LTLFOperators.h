@@ -18,7 +18,7 @@ std::vector<std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vect
     std::vector<std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>> temp;
 
     while (lower != upper) {
-        if(lower->first.second > 1){
+        if(lower->first.second > 0){
             temp.emplace_back(std::pair<uint32_t, uint16_t>{traceId, lower->first.second - 1}, lower->second);
         }
         lower++;
@@ -33,7 +33,7 @@ std::vector<std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vect
 
     auto itr = section.elems.begin();
     while (itr != section.elems.end()) {
-        if(itr->first.second != 1){
+        if(itr->first.second > 0){
             temp.emplace_back(std::pair<uint32_t, uint16_t>{itr->first.first, itr->first.second - 1}, itr->second);
         }
         itr++;
@@ -86,14 +86,14 @@ std::vector<std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vect
     while(upper != section.elems.end()){
         uint32_t currentTraceId = upper->first.first;
 
-        lower = std::lower_bound(upper, section.elems.end(), std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>{{currentTraceId, 1}, {0, {}}});
+        lower = std::lower_bound(upper, section.elems.end(), std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>{{currentTraceId, 0}, {0, {}}});
         upper = std::upper_bound(lower, section.elems.end(), std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>{{currentTraceId, lengths[currentTraceId]}, {1, maxVec}});
 
         const uint32_t dist = std::distance(lower, upper - 1);
 
         if(dist == lengths[currentTraceId] - 1){
             std::vector<uint16_t> vec = populateAndReturnEvents(lower, upper);
-            temp.emplace_back(std::pair<uint32_t, uint16_t>{currentTraceId, 1}, std::pair<double, std::vector<uint16_t>>{1, vec});
+            temp.emplace_back(std::pair<uint32_t, uint16_t>{currentTraceId, 0}, std::pair<double, std::vector<uint16_t>>{1, vec});
         }
     }
 

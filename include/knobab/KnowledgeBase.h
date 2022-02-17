@@ -170,7 +170,8 @@ public:
             float satisfiability = getSatisifiabilityBetweenValues(eventId, it->entry.id.parts.event_id, approxConstant);
 
             if(satisfiability >= minThreshold) {
-                foundData.getTraceApproximations().emplace_back(std::pair<std::pair<uint32_t, uint16_t>, float>({it->entry.id.parts.trace_id,  getPositionFromEventId({it->entry.id.parts.trace_id, it->entry.id.parts.event_id})}, satisfiability));
+                const uint16_t newEventID = getPositionFromEventId({it->entry.id.parts.trace_id, it->entry.id.parts.event_id});
+                foundData.getTraceApproximations().emplace_back(std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>{{it->entry.id.parts.trace_id,  newEventID}, {satisfiability, {newEventID}}});
             }
         }
 
