@@ -67,7 +67,7 @@ std::pair<ltlf_query*, size_t> ltlf_query_manager::_simplify(const ltlf& expr,  
         }
         result->isTimed = isTimed;
         assert((expr.casusu != ACT) || (!expr.rewritten_act.empty()));
-        result->atom = expr.rewritten_act;
+        result->atom.insert(expr.rewritten_act.begin(), expr.rewritten_act.end());
         Q[h].emplace_back(result);
         conversion_map_for_subexpressions[q] = {result, h};
         counter.emplace(result, 1);
@@ -104,9 +104,9 @@ ltlf_query *ltlf_query_manager::immediateQueries(const std::string &atom, std::u
         result->casusu = casus;
         result->isTimed = false;
         if (predicates.empty())
-            result->atom.emplace_back(atom);
+            result->atom.emplace(atom);
         else
-            result->atom.insert(result->atom.begin(), predicates.begin(), predicates.end());
+            result->atom.insert(predicates.begin(), predicates.end());
         Q[0].emplace_back(result);
         conversion_map_for_subexpressions[q] = {result, 0};
         counter.emplace(result, 1);

@@ -116,7 +116,7 @@ void MAXSatPipeline::data_chunk(CNFDeclareDataAware *model,
 
                 }
                 for (size_t formulaId : atomToFormulaId.at(atom)) {
-                    fomulaidToFormula.at(formulaId)->partial_results.insert(fomulaidToFormula.at(formulaId)->partial_results.begin(), ranges.begin(), ranges.end());
+                    fomulaidToFormula.at(formulaId)->associateDataQueryIdsToFormulaByAtom(atom, ranges);
                 }
             }
         //}
