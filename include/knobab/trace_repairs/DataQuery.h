@@ -26,6 +26,9 @@ struct DataQuery {
     std::variant<std::string, double> lower_bound, upper_bound;
 
     static DataQuery ExistsQuery(const std::string &atom);
+    static DataQuery InitQuery(const std::string &atom);
+    static DataQuery EndsQuery(const std::string &atom);
+
     static DataQuery
     RangeQuery(const std::string &atom, const std::string &var, const std::variant<std::string, double> &lb, const std::variant<std::string, double> &ub);
 

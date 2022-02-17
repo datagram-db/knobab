@@ -13,6 +13,22 @@ DataQuery DataQuery::ExistsQuery(const std::string &atom) {
     return returnable;
 }
 
+DataQuery DataQuery::InitQuery(const std::string &atom) {
+    DataQuery returnable;
+    assert(!atom.empty());
+    returnable.label = atom;
+    returnable.type = DataQueryType::InitQuery;
+    return returnable;
+}
+
+DataQuery DataQuery::EndsQuery(const std::string &atom) {
+    DataQuery returnable;
+    assert(!atom.empty());
+    returnable.label = atom;
+    returnable.type = DataQueryType::EndsQuery;
+    return returnable;
+}
+
 DataQuery
 DataQuery::RangeQuery(const std::string &atom, const std::string &var, const std::variant<std::string, double> &lb,
                                       const std::variant<std::string, double> &ub) {

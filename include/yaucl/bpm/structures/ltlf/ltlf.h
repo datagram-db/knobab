@@ -64,17 +64,21 @@ enum formula_t {
 struct ltlf {
     formula_t              casusu;
     std::string            act;
+    std::vector<std::string> rewritten_act;
     std::vector<ltlf>      args;
     bool                   is_negated;
     bool                   is_compound_predicate;
     bool                   is_exclusive;
+    bool                   is_join_condition_place = false;
     DataPredicate          numeric_atom;
+    std::vector<std::unordered_map<std::string, DataPredicate>> joinCondition;
 
     // C++ constructors
     ltlf();
     ltlf(const std::string& act);
     ltlf(formula_t citki);
     DEFAULT_COPY_ASSGN(ltlf)
+
 
     // Semantic constructors
     static struct ltlf True();
@@ -116,6 +120,16 @@ struct ltlf {
     std::unordered_set<std::string> propositionalize() const;
     PropositionalizedAtomsSet possibleActionsUpToNext() const;
 
+
+    void instantiateJoinCondition(const
+                                  std::vector<std::unordered_map<std::string, DataPredicate>>& ref ) {
+        if (is_join_condition_place)
+            joinCondition = ref;
+        for (auto& arg : args)
+            arg.instantiateJoinCondition(ref);
+    }
+    std::unordered_set<std::string> mark_join_condition(const std::string& left, const std::string& right);
+    ltlf replace_with(const std::unordered_map<std::pair<bool, std::string>, std::unordered_set<std::string>>& map, bool isForGraph = false);
     struct ltlf replace_with(const std::unordered_map<std::string, ltlf>& map) const;
     struct ltlf replace_with_unique_name(const std::unordered_map<std::string, std::string>& map) const;
     void collectElements(std::unordered_map<std::string, std::unordered_set<bool>> &negation) const;
@@ -181,12 +195,20 @@ namespace std {
                 for (const auto& x : k.args)
                     init = hash_combine<ltlf>(init, x);
             }
+            size_t W = 17;
+            for (const auto& ref : k.rewritten_act)
+                W = hash_combine<std::string>(W, ref);
+            init = init ^ W;
             size_t f= hash_combine<bool>(hash_combine<std::string>(hash_combine<formula_t>(init, k.casusu), k.act), k.is_negated);
             return f;
         }
     };
 
 }
+
+
+ltlf map_disj(const std::unordered_set<std::string> &atoms);
+std::ostream & human_readable_ltlf_printing(std::ostream &os, const ltlf& syntax);
 
 /*ltl_formula* to_aaltaf_rec(const ltlf& formula);
 

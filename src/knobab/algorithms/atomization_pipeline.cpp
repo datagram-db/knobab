@@ -119,7 +119,7 @@ void collect_data_from_declare_disjunctive_model(AtomizingPipeline &pipeline_dat
             pipeline_data.act_universe.insert(declare_clause.left_act);
             if (!declare_clause.right_act.empty())
                 pipeline_data.act_universe.insert(declare_clause.right_act);
-            assert(declare_clause.conjunctive_map.empty());
+            //assert(declare_clause.conjunctive_map.empty());
             for (const auto& itemList : declare_clause.dnf_left_map) {
                 for (const auto& item : itemList) {
                     auto& formula_numeric_atom = item.second;
@@ -283,7 +283,7 @@ semantic_atom_set atomize_disjunction(AtomizingPipeline &pipeline_data,
 void atomize_model(AtomizingPipeline &pipeline_data, CNFDeclareDataAware &disjoint_model) {
     for ( auto& ref : disjoint_model.singleElementOfConjunction) {
         for ( auto& child : ref.elementsInDisjunction) {
-            assert(child.conjunctive_map.empty());
+            //assert(child.conjunctive_map.empty());
             child.left_decomposed_atoms = pipeline_data.atom_decomposition(child.left_act, false);
             if (!child.dnf_left_map.empty()) {
                 auto tmp = atomize_disjunction(pipeline_data, child.dnf_left_map);

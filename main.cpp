@@ -17,7 +17,7 @@
 
 
 void whole_testing(const std::string& log_file = "testing/log.txt",
-                   const std::string& declare_file = "testing/declare4.powerdecl",
+                   const std::string& declare_file = "testing/declare2.powerdecl",
                    const std::string& atomization_conf = "testing/atomization_pipeline.yaml",
                    const std::string& grounding_strategy = "testing/grounding_strategy.yaml") {
     Environment env;
@@ -166,51 +166,8 @@ void test_data_query(const std::string& log_file = "testing/log.txt",
 
 }
 
-std::ostream & human_readable_ltlf_printing(std::ostream &os, const ltlf& syntax) {
-        std::string reset = "";
-        if (syntax.is_negated)
-            os << "¬";
-        switch (syntax.casusu) {
-            case ACT:
-                return os << syntax.act << reset;
-            case NUMERIC_ATOM:
-                return os << syntax.numeric_atom<< reset;
-            case NEG_OF:
-                os << "(¬(";
-                return human_readable_ltlf_printing(os, syntax.args[0]) << "))" << reset;
-            case OR:
-                os << "(";
-                human_readable_ltlf_printing(os, syntax.args[0]) << (syntax.is_exclusive ? ") ⊻ (" : ") ∨ (");
-                return human_readable_ltlf_printing(os, syntax.args[1]) << ')' << reset;
-            case AND:
-                os << "(";
-                human_readable_ltlf_printing(os, syntax.args[0]) << ") ∧ (";
-                return human_readable_ltlf_printing(os, syntax.args[1]) << ')' << reset;
-            case NEXT:
-                os << "○(";
-                return human_readable_ltlf_printing(os, syntax.args[0]) << ")" << reset;
-            case UNTIL:
-                os << "(";
-                human_readable_ltlf_printing(os, syntax.args[0]) << ") U (";
-                return human_readable_ltlf_printing(os, syntax.args[1]) << ')' << reset;
-            case RELEASE:
-                os << "(";
-                human_readable_ltlf_printing(os, syntax.args[0]) << ") R (";
-                return human_readable_ltlf_printing(os, syntax.args[1]) << ')' << reset;
-            case TRUE:
-                return os << "true"<< reset;
-            case BOX:
-                os << "▢(";
-                return human_readable_ltlf_printing(os, syntax.args[0]) << ")" << reset;
-            case DIAMOND:
-                os << "◇(";
-                return human_readable_ltlf_printing(os, syntax.args[0]) << ")" << reset;
-            case LAST:
-                return os << "LAST" << reset;
-            default:
-                return os << "false"<< reset;
-        }
-}
+
+
 
 void generate_nonunary_templates() {
     for (declare_templates t : magic_enum::enum_values<declare_templates>()) {
@@ -504,6 +461,9 @@ int main() {
     //test_grounding();
     //generate_traces();
     //ltlf_operators_testing();
+
+
+
 
     return 0;
 }

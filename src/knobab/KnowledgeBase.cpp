@@ -568,18 +568,18 @@ KnowledgeBase::range_query(DataPredicate &prop, double min_threshold, double cor
                     for (size_t i = 0; i<=N; i++) {
                         const auto& exactIt = element.exact_solution.first[i];
                         const auto& resolve = act_table_by_act_id.table.at(exactIt.act_table_offset).entry.id.parts;
-                        S.emplace_back(std::make_pair(resolve.trace_id,
-                                                      trunc((((double)resolve.event_id)/at16) *
-                                                            act_table_by_act_id.getTraceLength(resolve.trace_id))), 1.0 * correction);
+                        S.emplace_back(std::make_pair(resolve.trace_id,resolve.event_id
+                                                      /*trunc((((double)resolve.event_id)/at16) *
+                                                            act_table_by_act_id.getTraceLength(resolve.trace_id))*/), 1.0 * correction);
                     }
 
                 }
 
                 for (auto item : element.approx_solution) {
                     const auto& resolve = act_table_by_act_id.table.at(item.first->act_table_offset).entry.id.parts;
-                    S.emplace_back(std::make_pair(resolve.trace_id,
-                                                  trunc((((double)resolve.event_id)/at16) *
-                                                        act_table_by_act_id.getTraceLength(resolve.trace_id))), item.second * correction);
+                    S.emplace_back(std::make_pair(resolve.trace_id,resolve.event_id
+                            /*trunc((((double)resolve.event_id)/at16) *
+                                  act_table_by_act_id.getTraceLength(resolve.trace_id))*/), item.second * correction);
 
                 }
             }

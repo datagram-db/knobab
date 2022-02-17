@@ -156,6 +156,91 @@ void ltlf::collectElements(std::unordered_map<std::string, std::unordered_set<bo
     }
 }
 
+std::unordered_set<std::string> ltlf::mark_join_condition(const std::string& left, const std::string& right) {
+    switch (casusu) {
+        case ACT: {
+            if ((!is_negated) && ((act == left) || (act == right))) {
+                return {act};
+            } else return  {};
+        }
+        case NEG_OF:
+            assert(false);
+        case NEXT:
+        case DIAMOND:
+        case BOX:
+            return args.at(0).mark_join_condition(left, right);
+        case OR:
+        case AND:
+        case UNTIL:
+        case RELEASE:
+        {
+            auto L = args.at(0).mark_join_condition(left, right);
+            auto R = args.at(1).mark_join_condition(left, right);
+            L.insert(R.begin(), R.end());
+            if (L.contains(left) && R.contains(right))
+                is_join_condition_place = true;
+            return L;
+        }
+        default:
+            return {};
+    }
+}
+
+ltlf ltlf::replace_with(const std::unordered_map<std::pair<bool, std::string>, std::unordered_set<std::string>> &map,
+                        bool isForGraph) {
+    if (map.empty()) return *this;
+    switch (casusu) {
+        case ACT:
+        {
+            auto it = map.find({is_negated, act});
+            assert(it != map.end());
+            auto a = *this;
+            std::copy(it->second.begin(), it->second.end(), std::back_inserter(a.rewritten_act));
+            return a;
+        }
+
+        case NEG_OF:
+            return ltlf::Neg(args.at(0).replace_with(map, isForGraph));
+        case NEXT:
+            return ltlf::Next(args.at(0).replace_with(map, isForGraph));
+        case DIAMOND:
+            return ltlf::Diamond(args.at(0).replace_with(map, isForGraph), isForGraph);
+        case BOX:
+            return ltlf::Box(args.at(0).replace_with(map, isForGraph), isForGraph);
+        case OR:
+        {
+            auto tmp =              ltlf::Or(args.at(0).replace_with(map, isForGraph),
+                                                   args.at(1).replace_with(map, isForGraph));
+            tmp.is_exclusive = is_exclusive;
+            tmp.is_join_condition_place = is_join_condition_place && (!tmp.is_exclusive);
+            return tmp;
+        }
+        case AND: {
+            auto tmp =ltlf::And(args.at(0).replace_with(map, isForGraph),
+                                args.at(1).replace_with(map, isForGraph));
+            tmp.is_join_condition_place = is_join_condition_place;
+            return tmp;
+        }
+        case UNTIL:{
+            auto tmp = ltlf::Until(args.at(0).replace_with(map, isForGraph),
+                               args.at(1).replace_with(map, isForGraph));
+            tmp.is_join_condition_place = is_join_condition_place;
+            return tmp;
+        }
+        case RELEASE: {
+            auto tmp = ltlf::Release(args.at(0).replace_with(map, isForGraph),
+                                     args.at(1).replace_with(map, isForGraph));
+            tmp.is_join_condition_place = is_join_condition_place;
+            return tmp;
+        }
+        case TRUE:
+        case FALSE:
+            return *this;
+        default:
+            throw std::runtime_error("ERROR: the expression shall not contain an interval");
+    }
+}
+
 struct ltlf ltlf::replace_with(const std::unordered_map<std::string, ltlf> &map) const {
     if (map.empty()) return *this;
     switch (casusu) {
@@ -487,7 +572,7 @@ bool ltlf::operator==(const ltlf &rhs) const {
     bool ca = casusu == rhs.casusu;
     if (!ca) return false;
 
-    bool preliminar = (act == rhs.act) &&(is_negated == rhs.is_negated);
+    bool preliminar = (act == rhs.act) &&(is_negated == rhs.is_negated) && (rewritten_act == rhs.rewritten_act) && (joinCondition == rhs.joinCondition);
     if (!preliminar) return false;
 
     switch (casusu) {
@@ -708,6 +793,70 @@ struct ltlf ltlf::Interval(const DataPredicate &value) {
     formula.casusu = NUMERIC_ATOM;
     return formula;
 }
+
+ltlf map_disj(const std::unordered_set<std::string> &atoms) {
+    std::vector<std::string> A{atoms.begin(), atoms.end()};
+    std::sort(A.begin(), A.end());
+    assert(!atoms.empty());
+    bool isFirst = true;
+    ltlf result;
+    for (const auto& ref : A) {
+        if (isFirst) {
+            isFirst = false;
+            result = ltlf::Act(ref);
+        } else {
+            result = ltlf::Or(ltlf::Act(ref), result);
+        }
+    }
+    return result;
+}
+
+std::ostream & human_readable_ltlf_printing(std::ostream &os, const ltlf& syntax) {
+    std::string reset = "";
+    if (syntax.is_negated)
+        os << "¬";
+    switch (syntax.casusu) {
+        case ACT:
+            return os << syntax.act << reset;
+        case NUMERIC_ATOM:
+            return os << syntax.numeric_atom<< reset;
+        case NEG_OF:
+            os << "(¬(";
+            return human_readable_ltlf_printing(os, syntax.args[0]) << "))" << reset;
+        case OR:
+            os << "(";
+            human_readable_ltlf_printing(os, syntax.args[0]) << (syntax.is_exclusive ? ") ⊻ (" : ") ∨ (");
+            return human_readable_ltlf_printing(os, syntax.args[1]) << ')' << reset;
+        case AND:
+            os << "(";
+            human_readable_ltlf_printing(os, syntax.args[0]) << ") ∧ (";
+            return human_readable_ltlf_printing(os, syntax.args[1]) << ')' << reset;
+        case NEXT:
+            os << "○(";
+            return human_readable_ltlf_printing(os, syntax.args[0]) << ")" << reset;
+        case UNTIL:
+            os << "(";
+            human_readable_ltlf_printing(os, syntax.args[0]) << ") U (";
+            return human_readable_ltlf_printing(os, syntax.args[1]) << ')' << reset;
+        case RELEASE:
+            os << "(";
+            human_readable_ltlf_printing(os, syntax.args[0]) << ") R (";
+            return human_readable_ltlf_printing(os, syntax.args[1]) << ')' << reset;
+        case TRUE:
+            return os << "true"<< reset;
+        case BOX:
+            os << "▢(";
+            return human_readable_ltlf_printing(os, syntax.args[0]) << ")" << reset;
+        case DIAMOND:
+            os << "◇(";
+            return human_readable_ltlf_printing(os, syntax.args[0]) << ")" << reset;
+        case LAST:
+            return os << "LAST" << reset;
+        default:
+            return os << "false"<< reset;
+    }
+}
+
 /*
 #include <cassert>
 

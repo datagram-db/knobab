@@ -17,7 +17,7 @@ bool SimpleDataPredicate::operator()(const env &e1, const env &e2) const {
     }
 
     switch (casusu) {
-        case UNDEFINED:
+        case INTERVAL:
             return false;
         case LT:
             return temp1->second < temp2->second;

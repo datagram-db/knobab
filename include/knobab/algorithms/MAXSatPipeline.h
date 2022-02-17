@@ -9,7 +9,7 @@
 #include <yaucl/bpm/structures/declare/CNFDeclareDataAware.h>
 #include "atomization_pipeline.h"
 #include "knobab/trace_repairs/DataQuery.h"
-
+#include "../../../ltlf_query.h"
 
 
 struct MAXSatPipeline {
@@ -19,6 +19,9 @@ struct MAXSatPipeline {
     static std::string LEFT_ATOM, RIGHT_ATOM;
 
     std::unordered_map<declare_templates, ltlf> ltlf_semantics;
+    std::unordered_map<std::string , std::vector<size_t>> atomToFormulaId;
+    size_t maxFormulaId = 0;
+    std::vector<ltlf_query*> fomulaidToFormula;
 
     MAXSatPipeline();
     DEFAULT_COPY_ASSGN(MAXSatPipeline)
@@ -49,6 +52,12 @@ struct MAXSatPipeline {
                     const AtomizingPipeline& atomization);
     void data_pipeline_first();
 
+    void
+    localExtract(const AtomizingPipeline &atomization,
+                 std::unordered_set<std::string> &toUseAtoms,
+                 std::unordered_map<std::pair<bool, std::string>, label_set_t> &ref,
+                 std::unordered_map<std::string, std::unordered_set<bool>> &collection,
+                 const std::unordered_set<std::string> &decomposition, const std::string &collectionMapKey) ;
 };
 
 

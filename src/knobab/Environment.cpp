@@ -3,6 +3,7 @@
 //
 
 #include "knobab/Environment.h"
+#include "../../ltlf_query.h"
 
 semantic_atom_set Environment::getSigmaAll() const {
     semantic_atom_set S = ap.act_atoms;
@@ -30,6 +31,7 @@ void Environment::clear() {
     db.clear();
     ap.clear();
     conjunctive_model.clear();
+    ltlf_query_manager::clear();
 }
 
 #include <filesystem>
@@ -321,3 +323,4 @@ void Environment::load_all_clauses() {
         }
     }
 }
+
