@@ -34,11 +34,11 @@ const KnowledgeBase::no_antlr_log LogTrace = {
          {"a", {{"x", 1.0},{"y", 1.0}}},
          {"b", {{"x", 4.0},{"y", 3.0}}}},
 
-        {{"b", {}},
+        {{"a", {{"x", 2.0},{"y", 1.0}}},
+         {"a", {{"x", 1.0},{"y", 3.0}}},
          {"b", {}},
-         {"b", {}},
-         {"b", {}},
-         {"a", {}}},
+         {"a", {{"x", 1.0},{"y", 3.0}}},
+         {"a", {{"x", 4.0},{"y", 3.0}}}},
 
         {{"c", {}},
          {"b", {}},
@@ -135,15 +135,19 @@ int main() {
 
 
     example e1;
-    // aaab
-    e1.elems.emplace_back(std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>({0, 0}, {1, {0}}));
-    e1.elems.emplace_back(std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>({0, 1}, {1, {1}}));
-    e1.elems.emplace_back(std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>({0, 3}, {1, {3}}));
+    // aabaa
+    e1.elems.emplace_back(std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>({1, 0}, {1, {0}}));
+    e1.elems.emplace_back(std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>({1, 1}, {1, {1}}));
+    e1.elems.emplace_back(std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>({1, 3}, {1, {3}}));
+    e1.elems.emplace_back(std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>({1, 4}, {1, {4}}));
 
-    example e2;
+    example e2, e3;
 
     setUnion(e.elems.begin(), e.elems.end(), e1.elems.begin(), e1.elems.end(), std::back_inserter(e2.elems), Aggregators::maxSimilarity<double, double, double>, &predManager);
     std::cout << "LTLF UNION" << e2.elems << std::endl;
+
+    setIntersection(e.elems.begin(), e.elems.end(), e1.elems.begin(), e1.elems.end(), std::back_inserter(e3.elems), Aggregators::maxSimilarity<double, double, double>, &predManager);
+    std::cout << "LTLF INTERSECTION" << e3.elems << std::endl;
 
     return 0;
 }
