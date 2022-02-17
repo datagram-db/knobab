@@ -47,7 +47,7 @@ add_library(knobab STATIC
         src/knobab/algorithms/atomization_pipeline.cpp
 
         include/knobab/algorithms/atomization_pipeline.h #src/knobab/Environment.cpp include/knobab/Environment.h
-        include/knobab/utilities/Aggregators.h include/knobab/dataStructures/TraceData.h include/knobab/utilities/LTLFOperators.h src/knobab/predicates/SimpleDataPredicate.cpp include/knobab/predicates/SimpleDataPredicate.h src/knobab/predicates/PredicateManager.cpp include/knobab/predicates/PredicateManager.h
+        include/knobab/utilities/Aggregators.h include/knobab/dataStructures/TraceData.h include/knobab/utilities/LTLFOperators.h
         src/knobab/Environment.cpp include/knobab/Environment.h src/knobab/trace_repairs/DataQuery.cpp include/knobab/trace_repairs/DataQuery.h)
 target_link_libraries(knobab yaml-cpp yaucl_structures)
 
@@ -92,6 +92,7 @@ add_library(yaucl_data STATIC
 add_library(yaucl_structures STATIC src/yaucl/structures/StringPrevNext.cpp include/yaucl/structures/StringPrevNext.h src/yaucl/structures/DoublePrevNext.cpp include/yaucl/structures/DoublePrevNext.h)
 
 add_library(yaucl_bpm STATIC
+        ltlf_query.cpp
         src/yaucl/bpm/structures/ltlf/ltlf.cpp
         include/yaucl/bpm/structures/ltlf/ltlf.h
         src/yaucl/bpm/structures/declare/CNFDeclareDataAware.cpp
@@ -123,7 +124,8 @@ add_library(yaucl_bpm STATIC
         src/yaucl/bpm/algos/transformations/declare_to_dfa/DeclareNoDataTemplateCollect.cpp
         include/yaucl/bpm/algos/transformations/declare_to_dfa/DeclareNoDataTemplateCollect.h
         src/yaucl/bpm/algos/transformations/declare_to_dfa/TemplateCollectResult.cpp
-        include/yaucl/bpm/algos/transformations/declare_to_dfa/TemplateCollectResult.h src/yaucl/bpm/structures/declare/DisjunctiveDeclareDataAware.cpp include/yaucl/bpm/structures/declare/DisjunctiveDeclareDataAware.h src/yaucl/bpm/algos/transformations/grounding.cpp src/yaucl/bpm/algos/transformations/grounding.cpp include/yaucl/bpm/algos/transformations/grounding.h src/yaucl/bpm/structures/commons/testing_predicates.cpp include/yaucl/bpm/structures/commons/testing_predicates.h src/yaucl/bpm/structures/ltlf/easy_prop.cpp include/yaucl/bpm/structures/commons/easy_prop.h)
+        src/knobab/predicates/SimpleDataPredicate.cpp include/knobab/predicates/SimpleDataPredicate.h src/knobab/predicates/PredicateManager.cpp include/knobab/predicates/PredicateManager.h
+        include/yaucl/bpm/algos/transformations/declare_to_dfa/TemplateCollectResult.h src/yaucl/bpm/structures/declare/DisjunctiveDeclareDataAware.cpp include/yaucl/bpm/structures/declare/DisjunctiveDeclareDataAware.h src/yaucl/bpm/algos/transformations/grounding.cpp src/yaucl/bpm/algos/transformations/grounding.cpp include/yaucl/bpm/algos/transformations/grounding.h src/yaucl/bpm/structures/commons/testing_predicates.cpp include/yaucl/bpm/structures/commons/testing_predicates.h src/yaucl/bpm/structures/ltlf/easy_prop.cpp include/yaucl/bpm/structures/commons/easy_prop.h ltlf_query.cpp ltlf_query.h)
 target_link_libraries(yaucl_bpm antlr4_static yaucl_numeric yaucl_data yaucl_graph yaucl_hashing) #aaltaf)
 
 add_library(knobab_flloat STATIC

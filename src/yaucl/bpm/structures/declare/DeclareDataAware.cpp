@@ -123,6 +123,10 @@ ltlf map_disj(const std::vector<std::unordered_map<std::string, DataPredicate>> 
     return result;
 }
 
+
+
+
+
 /*
 ltlf
 toFiniteSemantics(declare_templates casusu, size_t n, const std::string &left_act, const std::string &right_act) {
@@ -300,11 +304,16 @@ bool isPredicateNegative(declare_templates type) {
 
 
 ltlf DeclareDataAware::toFiniteSemantics(bool isForGraph) const {
-    ltlf left = dnf_left_map.empty() ? ltlf::Act(left_act) : ltlf::And(ltlf::Act(left_act), map_disj(dnf_left_map)).simplify().setBeingCompound(true);
+    ltlf left =  //left_decomposed_atoms.empty() ?
+                 (dnf_left_map.empty() ?
+            ltlf::Act(left_act) :
+            ltlf::And(ltlf::Act(left_act), map_disj(dnf_left_map)).simplify().setBeingCompound(true)); //: map_disj(left_decomposed_atoms);
 
-    ltlf right = ltlf::True();
+    ltlf right;// = ltlf::True();
     if (!right_act.empty()) {
-        right = dnf_right_map.empty() ? ltlf::Act(right_act) : ltlf::And(ltlf::Act(right_act), map_disj(dnf_right_map)).simplify().setBeingCompound(true);
+        right =  //right_decomposed_atoms.empty() ?
+                 (dnf_right_map.empty() ? ltlf::Act(right_act) : ltlf::And(ltlf::Act(right_act), map_disj(dnf_right_map)).simplify().setBeingCompound(true));
+                 //: map_disj(right_decomposed_atoms);
     }
 
     switch (casusu) {
@@ -324,9 +333,6 @@ ltlf DeclareDataAware::toFiniteSemantics(bool isForGraph) const {
         case Absence2:
             return ltlf::Neg(ltlf::Diamond(ltlf::And(left, ltlf::Diamond(left, isForGraph)), isForGraph));
 
-        /*case Exactly:
-            return ltlf::And(doExistence(n, left_act, dnf_left_map).toFiniteSemantics(isForGraph), doAbsence(n + 1, left_act, dnf_left_map).toFiniteSemantics(isForGraph));
-*/
         case Init:
             return left;
 

@@ -33,6 +33,7 @@ struct Environment {
 
 public:
 
+
     double min_threshold = 1.0;
     double c = 2.0;
     bool   index_missing_data = false;
