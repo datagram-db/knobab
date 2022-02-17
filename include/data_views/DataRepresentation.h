@@ -10,6 +10,7 @@
 #include <cmath>
 #include <ostream>
 
+
 struct DataRepresentationEvent {
     uint32_t              trace_id;
     uint16_t              event_id;

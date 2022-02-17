@@ -2,7 +2,7 @@
 // Created by giacomo on 17/02/2022.
 //
 
-#include "DataRepresentation.h"
+#include <data_views/DataRepresentation.h>
 
 DataRepresentationEvent::DataRepresentationEvent(uint32_t traceId, uint16_t eventId, double satisfiability,
                                                  const std::vector<size_t> &activationOrTarget) : trace_id(traceId),

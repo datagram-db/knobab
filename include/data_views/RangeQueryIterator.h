@@ -9,9 +9,11 @@
 #include <vector>
 #include <limits>
 #include <cassert>
-#include "DataRepresentation.h"
+#include <data_views/DataRepresentation.h>
 
-
+/**
+ * This class provides a wrapper for the range queries iterator.
+ */
 class RangeQueryIterator {
     uint32_t              no_trace_ids;
     uint64_t              current_range_data_ptr_pos;
@@ -44,16 +46,13 @@ public:
 
     ~RangeQueryIterator() {}
     bool hasValue();
-    RangeQueryIterator  operator++(int);
+    RangeQueryIterator  operator++(int) ;
     RangeQueryIterator& operator++();
     const DataRepresentationEvent& operator* () ;
     const DataRepresentationEvent&   operator->();
     RangeQueryIterator  operator+ (size_t v)   const;
-
     bool operator==(const RangeQueryIterator &rhs) const;
-
     bool operator!=(const RangeQueryIterator &rhs) const;
-
 };
 
 

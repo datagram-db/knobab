@@ -1,10 +1,9 @@
 #include <iostream>
 #include <vector>
-#include "RangeQueryIterator.h"
+#include "include/data_views/RangeQueryIterator.h"
 
 
 int main() {
-
     std::pair<int, std::vector<std::pair<std::pair<uint32_t, uint16_t>, double>>> cp;
     cp.first = 1;
     std::vector<size_t> W{1,2,3};

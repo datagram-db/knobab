@@ -3,9 +3,11 @@
 //
 
 #include <streambuf>
+
 #include <memory>
 
-#include "RangeQueryIterator.h"
+
+#include <data_views/RangeQueryIterator.h>
 
 bool RangeQueryIterator::hasValue() {
     if ((!range_data_ptr) || (range_data_ptr->first == 0))
