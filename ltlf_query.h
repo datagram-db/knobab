@@ -32,11 +32,19 @@ struct ltlf_query {
     bool extractActivationTargetConditions = false;
     ltlf_query_t casusu = Q_TRUE;
     std::vector<ltlf_query*> args;
-    std::vector<std::string> atom;
+    std::unordered_set<std::string> atom;
     std::vector<size_t> partial_results;
     bool hasResult = false;
     size_t result_id = 0;
     PredicateManager joinCondition;
+
+    void associateDataQueryIdsToFormulaByAtom(const std::string& x, const std::vector<size_t>& l) {
+        if (atom.contains(x)) {
+            //assert(args.empty());
+            partial_results.insert(partial_results.begin(), l.begin(), l.end());
+        } else for (auto& child : args)
+            child->associateDataQueryIdsToFormulaByAtom(x, l);
+    }
 
     ltlf_query() = default;
     ltlf_query(const ltlf_query&) = default;
