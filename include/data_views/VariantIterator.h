@@ -7,7 +7,7 @@
 
 #include <string>
 #include <vector>
-#include <data_views/DataRepresentation.h>
+#include <data_views/PipelineResultData.h>
 #include <oid.h>
 #include <functional>
 #include <optional>
@@ -28,7 +28,7 @@ class VariantIterator {
     uint64_t current_range_data_ptr_pos;
     const std::vector<size_t> *no_event_ids;
     bool isForJoin, isSet;
-    DataRepresentationEvent data;
+    PipelineResultData data;
     bool isCurrentSet;
 
     /**
@@ -47,7 +47,7 @@ class VariantIterator {
     /**
      * Iterator over concrete table representations
      */
-    std::vector<DataRepresentationEvent>::iterator data_ptr;
+    std::vector<PipelineResultData>::iterator data_ptr;
 
     VariantIterator(uint32_t noTraceIds,
                     uint32_t currentTraceId,
@@ -59,8 +59,8 @@ class VariantIterator {
 
 
     std::vector<VariantIterator> iterators;
-    std::function<bool(const DataRepresentationEvent&)> f;
-    std::function<DataRepresentationEvent(const DataRepresentationEvent&)> T, Tinv;
+    std::function<bool(const PipelineResultData&)> f;
+    std::function<PipelineResultData(const PipelineResultData&)> T, Tinv;
 
 public:
     VariantIterator_t casusu;
@@ -102,7 +102,7 @@ public:
     VariantIterator(const std::vector<oid>::iterator &ptr, bool isForJoin);
 
 
-    VariantIterator(const std::vector<DataRepresentationEvent>::iterator &ptr, bool isForJoin);
+    VariantIterator(const std::vector<PipelineResultData>::iterator &ptr, bool isForJoin);
 
     /**
      * Iterators for filtering the data from another iterator: the aim is to avoid data replication
@@ -114,7 +114,7 @@ public:
      */
     VariantIterator(const VariantIterator& begin,
                     const VariantIterator& end,
-                    std::function<bool(const DataRepresentationEvent&)> f);
+                    std::function<bool(const PipelineResultData&)> f);
 
     /**
      * Iterators for both filtering and then transforming data contained in the iterator.
@@ -130,9 +130,9 @@ public:
      *                  the range query can be computed effectively over the non-filtered data
      */
     VariantIterator(const VariantIterator &begin, const VariantIterator &end,
-                                     std::function<bool(const DataRepresentationEvent &)> f,
-                                     std::function<DataRepresentationEvent(const DataRepresentationEvent&)> T,
-                    std::function<DataRepresentationEvent(const DataRepresentationEvent&)> Tinv);
+                                     std::function<bool(const PipelineResultData &)> f,
+                                     std::function<PipelineResultData(const PipelineResultData&)> T,
+                    std::function<PipelineResultData(const PipelineResultData&)> Tinv);
 
     /**
      * Implementing the unsigned distance between the two pointers
@@ -142,50 +142,17 @@ public:
     int64_t operator-(const VariantIterator &begin) const;
 
     /**
-     * Returns the type associated to the non-filter-transform iterators
-     * @return
-     */
-    VariantIterator_t getConcreteOperatorType() const;
-
-
-
-    /**
-     * Implements the std::lower_bound for the VariantIterators, which might also have filtering conditions to consider!
-     *
-     * @param first     Begin iterator
-     * @param last      End iterator
-     * @param value     Value to be matched
-     * @return          As per std::lower_bound
-     */
-    static VariantIterator lower_bound(VariantIterator first, VariantIterator last, const DataRepresentationEvent& value);
-
-
-
-    /**
-     * Implements the std::upper_bound for the VariantIterators, which might also have filtering conditions to consider!
-     *
-     * @param first     Begin iterator
-     * @param last      End iterator
-     * @param value     Value to be matched
-     * @return          As per std::upper_bound
-     */
-    static VariantIterator upper_bound(VariantIterator first, VariantIterator last, const DataRepresentationEvent& value);
-
-    /**
      * Implements an
      * @param begin
      * @param end
      * @return
      */
     static VariantIterator nextUntimedIterator(const VariantIterator &begin, const VariantIterator &end) {
-        const static auto f = [](const DataRepresentationEvent& x) {return x.event_id>0;};
-        const static auto T = [](const DataRepresentationEvent& x) { auto y = x; y.event_id--; return y; };
-        const static auto Tinv = [](const DataRepresentationEvent& x) { auto y = x; y.event_id++; return y; };
+        const static auto f = [](const PipelineResultData& x) {return x.event_id > 0;};
+        const static auto T = [](const PipelineResultData& x) { auto y = x; y.event_id--; return y; };
+        const static auto Tinv = [](const PipelineResultData& x) { auto y = x; y.event_id++; return y; };
         return {begin, end, f, T, Tinv};
     }
-
-
-    VariantIterator copy();
 
     /**
      * Provides an estimate to the current pointer condition, given the current offset and the data structure of choice
@@ -194,20 +161,28 @@ public:
     size_t currentIteratorPosition() const;
 
     /**
-     * Like operator++, but it doesn't return any result by dereferencing all the time (therefore, it is more efficient)
+     * Memory efficient implementation of operator++, which doesn't really require to implicitely dereference, thus
+     * not necessarily return some data.
      */
     void pop();
-
     VariantIterator operator++(int);
     VariantIterator operator++();
-    const DataRepresentationEvent& operator*();
-    const DataRepresentationEvent& operator->();
+    const PipelineResultData& operator*();
+    const PipelineResultData& operator->();
     VariantIterator operator+(size_t v) const;
     bool operator==(const VariantIterator &rhs) const;
     bool operator!=(const VariantIterator &rhs) const;
 
+    static std::optional<VariantIterator> reset_pointers_recursively(VariantIterator first, VariantIterator last,
+                                                                     const PipelineResultData &value,
+                                                                     bool isLower);
 
 private:
+    /**
+     * Returns the type associated to the non-filter-transform iterators
+     * @return
+     */
+    VariantIterator_t getConcreteOperatorType() const;
 
     /**
      * Resets the current iterator conditions using another iterator's information
@@ -217,11 +192,10 @@ private:
 
     void settingRestrained(const VariantIterator &begin, VariantIterator_t kase);
 
-    static std::optional<VariantIterator> reset_pointers_recursively(VariantIterator first, VariantIterator last,
-                                                                     const DataRepresentationEvent &value,
-                                                                     bool isLower);
 
 };
+
+
 
 
 

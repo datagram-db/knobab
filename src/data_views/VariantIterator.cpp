@@ -8,7 +8,7 @@
 #include <memory>
 
 VariantIterator::VariantIterator(const VariantIterator &begin, const VariantIterator &end,
-                                 std::function<bool(const DataRepresentationEvent &)> f) :
+                                 std::function<bool(const PipelineResultData &)> f) :
         iterators{begin, end}, f{f}, T{T}, casusu{FilterIt} {
     while (iterators[0] != iterators[1] && !f(*iterators[0])) {
         iterators[0].pop();
@@ -16,9 +16,9 @@ VariantIterator::VariantIterator(const VariantIterator &begin, const VariantIter
 }
 
 VariantIterator::VariantIterator(const VariantIterator &begin, const VariantIterator &end,
-                                 std::function<bool(const DataRepresentationEvent &)> f,
-                                 std::function<DataRepresentationEvent(const DataRepresentationEvent &)> T,
-                                 std::function<DataRepresentationEvent(const DataRepresentationEvent &)> Tinv) :
+                                 std::function<bool(const PipelineResultData &)> f,
+                                 std::function<PipelineResultData(const PipelineResultData &)> T,
+                                 std::function<PipelineResultData(const PipelineResultData &)> Tinv) :
         iterators{begin, end}, f{f}, T{T}, Tinv{Tinv}, casusu{FilterAndTransformIt} {
     while (iterators[0] != iterators[1] && !f(*iterators[0])) {
         iterators[0].pop();
@@ -155,7 +155,7 @@ VariantIterator VariantIterator::operator++()    /* prefix */ {
     }
 }
 
-const DataRepresentationEvent& VariantIterator::operator*()  {
+const PipelineResultData& VariantIterator::operator*()  {
     switch(casusu ){
         case RangeQueryIt: {
             assert(!((!range_data_ptr) || (range_data_ptr->first == 0)));
@@ -208,7 +208,7 @@ const DataRepresentationEvent& VariantIterator::operator*()  {
 
 }
 
-const DataRepresentationEvent& VariantIterator::operator->() {
+const PipelineResultData& VariantIterator::operator->() {
     return **this;
 }
 
@@ -327,60 +327,6 @@ int64_t VariantIterator::operator-(const VariantIterator &begin) const {
 
 #include <iostream>
 
-VariantIterator
-VariantIterator::lower_bound(VariantIterator first, VariantIterator last, const DataRepresentationEvent &value) {
-    std::optional<VariantIterator> vi = reset_pointers_recursively(first, last, value, true);
-    if (vi.has_value())
-        return vi.value();
-
-    VariantIterator it = first;
-    auto L = (int64_t)first.currentIteratorPosition(), R = (int64_t)last.currentIteratorPosition();
-    int64_t count, step;
-    count = R - L;
-    while (count > 0) {
-        it = first;
-        step = count / 2;
-        it = it + step;
-        std::cout << *it << " vs " << value << std::endl;
-        if (*it < value) {
-            it.pop();
-            first = it;
-            count -= step + 1;
-        }
-        else
-            count = step;
-    }
-    return first;
-}
-
-
-VariantIterator
-VariantIterator::upper_bound(VariantIterator first, VariantIterator last, const DataRepresentationEvent &value) {
-    std::optional<VariantIterator> vi = reset_pointers_recursively(first, last, value, false);
-    if (vi.has_value())
-        return vi.value();
-
-    VariantIterator it = first;
-    auto L = (int64_t)first.currentIteratorPosition(), R = (int64_t)last.currentIteratorPosition();
-    int64_t count, step;
-    count = R - L;
-    while (count > 0) {
-        it = first;
-        step = count / 2;
-        it = it + step;
-        std::cout << *it << " vs " << value << std::endl;
-        if (!(*it < value)) {
-            it.pop();
-            first = it;
-            count -= step + 1;
-        }
-        else
-            count = step;
-    }
-    return first;
-}
-
-
 VariantIterator_t VariantIterator::getConcreteOperatorType() const {
     switch (casusu) {
         case RangeQueryIt:
@@ -452,36 +398,6 @@ void VariantIterator::settingRestrained(const VariantIterator &begin, VariantIte
     }
 }
 
-VariantIterator VariantIterator::copy()  {
-    switch (casusu) {
-        case RangeQueryIt:
-            return {no_trace_ids,
-                    data.trace_id,
-                    data.event_id,
-                    current_range_data_ptr_pos,
-                    this->no_event_ids,
-                    isForJoin,
-                    range_data_ptr};
-
-        case ExistsIt:
-            return {ex_ptr, isForJoin};
-
-        case OIDIt:
-            return {oid_ptr, isForJoin};
-        case VectorIt:
-            return {data_ptr, isForJoin};
-
-        case FilterIt:
-            return {iterators[0].copy(), iterators[1].copy(), f};
-
-        case FilterAndTransformIt:
-            return {iterators[0].copy(), iterators[1].copy(), f, T, Tinv};
-
-        case NoneIt:
-            return *this;
-    }
-}
-
 size_t VariantIterator::currentIteratorPosition() const {
     switch (casusu) {
         case RangeQueryIt: {
@@ -507,15 +423,17 @@ size_t VariantIterator::currentIteratorPosition() const {
             break;
 
         case VectorIt:
-            return ((size_t)data_ptr.base()) / sizeof(DataRepresentationEvent);
+            return ((size_t)data_ptr.base()) / sizeof(PipelineResultData);
             break;
         case NoneIt:
             return 0;
     }
 }
 
+#include <data_operations/variant_iterator_operations.h>
+
 std::optional<VariantIterator> VariantIterator::reset_pointers_recursively(VariantIterator first, VariantIterator last,
-                                                                           const DataRepresentationEvent &value,
+                                                                           const PipelineResultData &value,
                                                                            bool isLower) {
     assert(first.casusu == last.casusu);
     switch (first.casusu) {
@@ -523,8 +441,8 @@ std::optional<VariantIterator> VariantIterator::reset_pointers_recursively(Varia
         {
             VariantIterator self = first;
             auto it = isLower ?
-                      VariantIterator::lower_bound(first.iterators[0], last.iterators[0], value) :
-                      VariantIterator::upper_bound(first.iterators[0], last.iterators[0], value);
+                      lower_bound(first.iterators[0], last.iterators[0], value) :
+                      upper_bound(first.iterators[0], last.iterators[0], value);
             self.setPointerAtStep(it);
             return {self};
         }
@@ -532,8 +450,8 @@ std::optional<VariantIterator> VariantIterator::reset_pointers_recursively(Varia
         {
             VariantIterator self = first;
             auto it = isLower ?
-                      VariantIterator::lower_bound(first.iterators[0], last.iterators[0], value) :
-                      VariantIterator::upper_bound(first.iterators[0], last.iterators[0], value);
+                      lower_bound(first.iterators[0], last.iterators[0], value) :
+                      upper_bound(first.iterators[0], last.iterators[0], value);
             self.setPointerAtStep(it);
             return {self};
         }
@@ -546,6 +464,6 @@ std::optional<VariantIterator> VariantIterator::reset_pointers_recursively(Varia
     }
 }
 
-VariantIterator::VariantIterator(const std::vector<DataRepresentationEvent>::iterator &ptr, bool isForJoin) : data_ptr{ptr}, isForJoin{isForJoin}, casusu{VectorIt} {}
+VariantIterator::VariantIterator(const std::vector<PipelineResultData>::iterator &ptr, bool isForJoin) : data_ptr{ptr}, isForJoin{isForJoin}, casusu{VectorIt} {}
 
 

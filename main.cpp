@@ -3,6 +3,8 @@
 #include <data_views/VariantIterator.h>
 
 #include <ranges>
+#include <data_operations/variant_iterator_operations.h>
+
 
 int main() {
     std::pair<int, std::vector<std::pair<std::pair<uint32_t, uint16_t>, double>>> cp;
@@ -68,7 +70,7 @@ int main() {
 
 
         std::cout << "-----------------------------------------------------------" << std::endl;
-        std::cout << *VariantIterator::lower_bound(filterB2, filterE2, {3,0})<< std::endl;
+        std::cout << *lower_bound(filterB2, filterE2, {3,0})<< std::endl;
 
         std::cout << "-----------------------------------------------------------" << std::endl;
         while (filterB2!= filterE2) {
