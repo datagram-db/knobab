@@ -41,6 +41,8 @@ public:
      * @param data
      */
     void push_back(const PipelineResultData& data);
+    void emplace_back(uint32_t trace_id, uint16_t event_id, bool isForJoin = true, double satisfiability = 1.0);
+    void emplace_back(uint32_t trace_id, uint16_t event_id, const std::vector<size_t>& join_events = {}, double satisfiability = 1.0);
 
     /**
      * This ensures that the data representation is ordered. If you are always sure that the data is always ordered,

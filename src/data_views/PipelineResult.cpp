@@ -49,3 +49,14 @@ void PipelineResult::ensure_order() {
     makeConcrete();
     std::sort(actual_data.begin(), actual_data.end());
 }
+
+void PipelineResult::emplace_back(uint32_t trace_id, uint16_t event_id, bool isForJoin, double satisfiability) {
+    makeConcrete();
+    actual_data.emplace_back(trace_id, event_id, satisfiability, isForJoin ? std::vector<size_t>{event_id} : std::vector<size_t>{});
+}
+
+void PipelineResult::emplace_back(uint32_t trace_id, uint16_t event_id, const std::vector<size_t> &join_events,
+                                  double satisfiability) {
+    makeConcrete();
+    actual_data.emplace_back(trace_id, event_id, satisfiability, join_events);
+}
