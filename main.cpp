@@ -67,8 +67,6 @@ int main() {
         auto filterE2 = VariantIterator::nextUntimedIterator(filterE1, filterE1);
 
 
-
-
         std::cout << "-----------------------------------------------------------" << std::endl;
         std::cout << *VariantIterator::lower_bound(filterB2, filterE2, {3,0})<< std::endl;
 

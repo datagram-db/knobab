@@ -315,36 +315,12 @@ int64_t VariantIterator::operator-(const VariantIterator &begin) const {
 
 VariantIterator
 VariantIterator::lower_bound(VariantIterator first, VariantIterator last, const DataRepresentationEvent &value) {
-    assert(first.casusu == last.casusu);
-    switch (first.casusu) {
-        case RangeQueryIt:
-        case ExistsIt:
-        case OIDIt:
-        case VectorIt:
-            break;
-        case FilterIt:
-        {
-            VariantIterator self = first;
-            auto it = VariantIterator::lower_bound(first.iterators[0], last.iterators[0], value);
-            self.setPointerAtStep(it);
-            return self;
-        }
-        case FilterAndTransformIt:
-        {
-            VariantIterator self = first;
-            auto it = VariantIterator::lower_bound(first.iterators[0], last.iterators[0], first.Tinv(value));
-            self.setPointerAtStep(it);
-            return self;
-        }
-
-            break;
-        case NoneIt:
-            return first;
-    }
+    std::optional<VariantIterator> vi = reset_pointers_recursively(first, last, value, true);
+    if (vi.has_value())
+        return vi.value();
 
     VariantIterator it = first;
     auto L = (int64_t)first.currentIteratorPosition(), R = (int64_t)last.currentIteratorPosition();
-
     int64_t count, step;
     count = R - L;
     while (count > 0) {
@@ -361,22 +337,35 @@ VariantIterator::lower_bound(VariantIterator first, VariantIterator last, const 
             count = step;
     }
     return first;
-
-
-    R--;
-    while (L <= R)  {
-        auto m = (size_t)floor(((double)(L + R))/((double )2.0));
-        auto mDiff = m - L;
-        auto val = it + mDiff;
-        if (*val < value) {
-            L = m+1;
-        } else if (*val > value)
-            R = m-1;
-        else
-            return val;
-    }
-    return last;
 }
+
+
+VariantIterator
+VariantIterator::upper_bound(VariantIterator first, VariantIterator last, const DataRepresentationEvent &value) {
+    std::optional<VariantIterator> vi = reset_pointers_recursively(first, last, value, false);
+    if (vi.has_value())
+        return vi.value();
+
+    VariantIterator it = first;
+    auto L = (int64_t)first.currentIteratorPosition(), R = (int64_t)last.currentIteratorPosition();
+    int64_t count, step;
+    count = R - L;
+    while (count > 0) {
+        it = first;
+        step = count / 2;
+        it = it + step;
+        std::cout << *it << " vs " << value << std::endl;
+        if (!(*it < value)) {
+            it.pop();
+            first = it;
+            count -= step + 1;
+        }
+        else
+            count = step;
+    }
+    return first;
+}
+
 
 VariantIterator_t VariantIterator::getConcreteOperatorType() const {
     switch (casusu) {
@@ -507,6 +496,38 @@ size_t VariantIterator::currentIteratorPosition() const {
             break;
         case NoneIt:
             return 0;
+    }
+}
+
+std::optional<VariantIterator> VariantIterator::reset_pointers_recursively(VariantIterator first, VariantIterator last,
+                                                                           const DataRepresentationEvent &value,
+                                                                           bool isLower) {
+    assert(first.casusu == last.casusu);
+    switch (first.casusu) {
+        case FilterIt:
+        {
+            VariantIterator self = first;
+            auto it = isLower ?
+                      VariantIterator::lower_bound(first.iterators[0], last.iterators[0], value) :
+                      VariantIterator::upper_bound(first.iterators[0], last.iterators[0], value);
+            self.setPointerAtStep(it);
+            return {self};
+        }
+        case FilterAndTransformIt:
+        {
+            VariantIterator self = first;
+            auto it = isLower ?
+                      VariantIterator::lower_bound(first.iterators[0], last.iterators[0], value) :
+                      VariantIterator::upper_bound(first.iterators[0], last.iterators[0], value);
+            self.setPointerAtStep(it);
+            return {self};
+        }
+
+            break;
+        case NoneIt:
+            return {first};
+        default:
+            return {};
     }
 }
 

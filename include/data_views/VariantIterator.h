@@ -10,6 +10,7 @@
 #include <data_views/DataRepresentation.h>
 #include <oid.h>
 #include <functional>
+#include <optional>
 
 
 enum VariantIterator_t {
@@ -121,19 +122,51 @@ public:
      *                  representation of the underlying data
      * @param T         Transformation function, adding a constant allocation for compying the
      *                  element to a local temporary variable.
+     * @param T         Inverse transformation function: that is going to be useful for look-up queries, where
+     *                  the look up value needs to be back transformed to the original data operator, so that
+     *                  the range query can be computed effectively over the non-filtered data
      */
     VariantIterator(const VariantIterator &begin, const VariantIterator &end,
                                      std::function<bool(const DataRepresentationEvent &)> f,
                                      std::function<DataRepresentationEvent(const DataRepresentationEvent&)> T,
                     std::function<DataRepresentationEvent(const DataRepresentationEvent&)> Tinv);
 
+    /**
+     * Implementing the unsigned distance between the two pointers
+     * @param begin     RHS towards which compute the distance
+     * @return Distance value
+     */
     int64_t operator-(const VariantIterator &begin) const;
 
+    /**
+     * Returns the type associated to the non-filter-transform iterators
+     * @return
+     */
     VariantIterator_t getConcreteOperatorType() const;
 
-    void setPointerAtStep(const VariantIterator& begin);
 
+
+    /**
+     * Implements the std::lower_bound for the VariantIterators, which might also have filtering conditions to consider!
+     *
+     * @param first     Begin iterator
+     * @param last      End iterator
+     * @param value     Value to be matched
+     * @return          As per std::lower_bound
+     */
     static VariantIterator lower_bound(VariantIterator first, VariantIterator last, const DataRepresentationEvent& value);
+
+
+
+    /**
+     * Implements the std::upper_bound for the VariantIterators, which might also have filtering conditions to consider!
+     *
+     * @param first     Begin iterator
+     * @param last      End iterator
+     * @param value     Value to be matched
+     * @return          As per std::upper_bound
+     */
+    static VariantIterator upper_bound(VariantIterator first, VariantIterator last, const DataRepresentationEvent& value);
 
     /**
      * Implements an
@@ -151,9 +184,17 @@ public:
 
     VariantIterator copy();
 
+    /**
+     * Provides an estimate to the current pointer condition, given the current offset and the data structure of choice
+     * @return
+     */
     size_t currentIteratorPosition() const;
 
+    /**
+     * Like operator++, but it doesn't return any result by dereferencing all the time (therefore, it is more efficient)
+     */
     void pop();
+
     VariantIterator operator++(int);
     VariantIterator operator++();
     const DataRepresentationEvent& operator*();
@@ -162,7 +203,21 @@ public:
     bool operator==(const VariantIterator &rhs) const;
     bool operator!=(const VariantIterator &rhs) const;
 
+
+private:
+
+    /**
+     * Resets the current iterator conditions using another iterator's information
+     * @param begin
+     */
+    void setPointerAtStep(const VariantIterator& begin);
+
     void settingRestrained(const VariantIterator &begin, VariantIterator_t kase);
+
+    static std::optional<VariantIterator> reset_pointers_recursively(VariantIterator first, VariantIterator last,
+                                                                     const DataRepresentationEvent &value,
+                                                                     bool isLower);
+
 };
 
 
