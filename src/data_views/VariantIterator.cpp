@@ -119,6 +119,8 @@ VariantIterator VariantIterator::operator++(int) /* postfix */         {
             return {ex_ptr++, isForJoin};
         case OIDIt:
             return {oid_ptr++, isForJoin};
+        case VectorIt:
+            return {data_ptr++, isForJoin};
         case FilterIt:
         case FilterAndTransformIt:
         {
@@ -140,6 +142,8 @@ VariantIterator VariantIterator::operator++()    /* prefix */ {
             ++ex_ptr; return *this;
         case OIDIt:
             ++oid_ptr; return *this;
+        case VectorIt:
+            ++data_ptr; return *this;
         case FilterIt:
         case FilterAndTransformIt:
             do {
@@ -188,6 +192,9 @@ const DataRepresentationEvent& VariantIterator::operator*()  {
             }
             return data;
         }
+        case VectorIt: {
+            return *data_ptr;
+        }
         case FilterIt:
             return *iterators[0];
 
@@ -225,6 +232,8 @@ VariantIterator VariantIterator::operator+(size_t v) const {
             return {ex_ptr + v, isForJoin};
         case OIDIt:
             return {oid_ptr + v, isForJoin};
+        case VectorIt:
+            return {data_ptr + v, isForJoin};
         case FilterIt:
         case FilterAndTransformIt:
             return iterators[0] + v;
@@ -262,8 +271,13 @@ void VariantIterator::pop() {
             break;
         case ExistsIt:
             ++ex_ptr;
+            break;
         case OIDIt:
             ++oid_ptr;
+            break;
+        case VectorIt:
+            ++data_ptr;
+            break;
         case FilterIt:
         case FilterAndTransformIt:
             do {
@@ -421,6 +435,10 @@ void VariantIterator::settingRestrained(const VariantIterator &begin, VariantIte
             oid_ptr = begin.oid_ptr;
             break;
 
+        case VectorIt:
+            data_ptr = begin.data_ptr;
+            break;
+
         case FilterIt:
         case FilterAndTransformIt:// Bug Here
             iterators[0].setPointerAtStep(begin);
@@ -428,9 +446,6 @@ void VariantIterator::settingRestrained(const VariantIterator &begin, VariantIte
             while (iterators[0] != iterators[1] && !f(*iterators[0])) {
                 iterators[0].pop();
             }
-            break;
-        case VectorIt:
-
             break;
         case NoneIt:
             return;
@@ -453,6 +468,8 @@ VariantIterator VariantIterator::copy()  {
 
         case OIDIt:
             return {oid_ptr, isForJoin};
+        case VectorIt:
+            return {data_ptr, isForJoin};
 
         case FilterIt:
             return {iterators[0].copy(), iterators[1].copy(), f};
@@ -460,8 +477,6 @@ VariantIterator VariantIterator::copy()  {
         case FilterAndTransformIt:
             return {iterators[0].copy(), iterators[1].copy(), f, T, Tinv};
 
-        case VectorIt:
-            break;
         case NoneIt:
             return *this;
     }
@@ -492,7 +507,7 @@ size_t VariantIterator::currentIteratorPosition() const {
             break;
 
         case VectorIt:
-            // TODO
+            return ((size_t)data_ptr.base()) / sizeof(DataRepresentationEvent);
             break;
         case NoneIt:
             return 0;
@@ -523,12 +538,14 @@ std::optional<VariantIterator> VariantIterator::reset_pointers_recursively(Varia
             return {self};
         }
 
-            break;
+
         case NoneIt:
             return {first};
         default:
             return {};
     }
 }
+
+VariantIterator::VariantIterator(const std::vector<DataRepresentationEvent>::iterator &ptr, bool isForJoin) : data_ptr{ptr}, isForJoin{isForJoin}, casusu{VectorIt} {}
 
 

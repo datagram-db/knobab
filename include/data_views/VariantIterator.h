@@ -101,6 +101,9 @@ public:
      */
     VariantIterator(const std::vector<oid>::iterator &ptr, bool isForJoin);
 
+
+    VariantIterator(const std::vector<DataRepresentationEvent>::iterator &ptr, bool isForJoin);
+
     /**
      * Iterators for filtering the data from another iterator: the aim is to avoid data replication
      * when possible
