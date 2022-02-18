@@ -18,11 +18,11 @@ enum VariantIterator_t {
     OIDIt,
     FilterIt,
     FilterAndTransformIt,
+    VectorIt,
     NoneIt
 };
 
 class VariantIterator {
-    VariantIterator_t casusu;
     uint32_t no_trace_ids;
     uint64_t current_range_data_ptr_pos;
     const std::vector<size_t> *no_event_ids;
@@ -43,6 +43,11 @@ class VariantIterator {
     /** Iterator over the oid tables */
     std::vector<oid>::iterator oid_ptr;
 
+    /**
+     * Iterator over concrete table representations
+     */
+    std::vector<DataRepresentationEvent>::iterator data_ptr;
+
     VariantIterator(uint32_t noTraceIds,
                     uint32_t currentTraceId,
                     uint16_t currentEventId,
@@ -54,9 +59,10 @@ class VariantIterator {
 
     std::vector<VariantIterator> iterators;
     std::function<bool(const DataRepresentationEvent&)> f;
-    std::function<DataRepresentationEvent(const DataRepresentationEvent&)> T;
+    std::function<DataRepresentationEvent(const DataRepresentationEvent&)> T, Tinv;
 
 public:
+    VariantIterator_t casusu;
     /**
      * Default iterator
      */
@@ -118,31 +124,47 @@ public:
      */
     VariantIterator(const VariantIterator &begin, const VariantIterator &end,
                                      std::function<bool(const DataRepresentationEvent &)> f,
-                                     std::function<DataRepresentationEvent(const DataRepresentationEvent&)> T);
+                                     std::function<DataRepresentationEvent(const DataRepresentationEvent&)> T,
+                    std::function<DataRepresentationEvent(const DataRepresentationEvent&)> Tinv);
 
-    static VariantIterator nextIterator(const VariantIterator &begin, const VariantIterator &end) {
+    int64_t operator-(const VariantIterator &begin) const;
+
+    VariantIterator_t getConcreteOperatorType() const;
+
+    void setPointerAtStep(const VariantIterator& begin);
+
+    static VariantIterator lower_bound(VariantIterator first, VariantIterator last, const DataRepresentationEvent& value);
+
+    /**
+     * Implements an
+     * @param begin
+     * @param end
+     * @return
+     */
+    static VariantIterator nextUntimedIterator(const VariantIterator &begin, const VariantIterator &end) {
         const static auto f = [](const DataRepresentationEvent& x) {return x.event_id>0;};
         const static auto T = [](const DataRepresentationEvent& x) { auto y = x; y.event_id--; return y; };
-        return {begin, end, f, T};
+        const static auto Tinv = [](const DataRepresentationEvent& x) { auto y = x; y.event_id++; return y; };
+        return {begin, end, f, T, Tinv};
     }
 
-    ~VariantIterator() {}
 
-    void incr();
+    VariantIterator copy();
+
+    size_t currentIteratorPosition() const;
+
+    void pop();
     VariantIterator operator++(int);
-
     VariantIterator operator++();
-
     const DataRepresentationEvent& operator*();
-
     const DataRepresentationEvent& operator->();
-
     VariantIterator operator+(size_t v) const;
-
     bool operator==(const VariantIterator &rhs) const;
-
     bool operator!=(const VariantIterator &rhs) const;
+
+    void settingRestrained(const VariantIterator &begin, VariantIterator_t kase);
 };
+
 
 
 #endif //DATAREP_VARIANTITERATOR_H

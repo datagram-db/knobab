@@ -17,6 +17,11 @@ int main() {
             std::cout << *beg << std::endl;
             beg++;
         }
+
+        std::cout << "-----------------------------------------------------------" << std::endl;
+
+        //VariantIterator beg2(&cp, true, 3, &W, true);
+        //std::cout << *VariantIterator::lower_bound(beg2, end, {0,100})<< std::endl;
     }
 
     std::cout << "-----------------------------------------------------------" << std::endl;
@@ -36,7 +41,7 @@ int main() {
 
         while (beg != end) {
             std::cout << *beg << std::endl;
-            beg.incr();
+            beg.pop();
         }
     }
     std::cout << "-----------------------------------------------------------" << std::endl;
@@ -45,24 +50,32 @@ int main() {
         VariantIterator beg(&cp, true, 3, &W, true);
         VariantIterator end(&cp, false, 3, &W, true);
 
-        auto filterB1 = VariantIterator::nextIterator(beg, end);
-        auto filterE1 = VariantIterator::nextIterator(end, end);
+        auto filterB1 = VariantIterator::nextUntimedIterator(beg, end);
+        auto filterE1 = VariantIterator::nextUntimedIterator(end, end);
 
         while (filterB1 != filterE1) {
             std::cout << *filterB1 << std::endl;
-            filterB1.incr();
+            filterB1.pop();
         }
 
 
         std::cout << "-----------------------------------------------------------" << std::endl;
 
-        filterB1 = VariantIterator::nextIterator(beg, end);
-        filterE1 = VariantIterator::nextIterator(end, end);
-        auto filterB2 = VariantIterator::nextIterator(filterB1, filterE1);
-        auto filterE2 = VariantIterator::nextIterator(filterE1, filterE1);
+        filterB1 = VariantIterator::nextUntimedIterator(beg, end);
+        filterE1 = VariantIterator::nextUntimedIterator(end, end);
+        auto filterB2 = VariantIterator::nextUntimedIterator(filterB1, filterE1);
+        auto filterE2 = VariantIterator::nextUntimedIterator(filterE1, filterE1);
+
+
+
+
+        std::cout << "-----------------------------------------------------------" << std::endl;
+        std::cout << *VariantIterator::lower_bound(filterB2, filterE2, {3,0})<< std::endl;
+
+        std::cout << "-----------------------------------------------------------" << std::endl;
         while (filterB2!= filterE2) {
             std::cout << *filterB2 << std::endl;
-            filterB2.incr();
+            filterB2.pop();
         }
 
     }
