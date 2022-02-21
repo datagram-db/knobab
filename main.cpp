@@ -244,7 +244,7 @@ void ltlf_operators_testing() {
     std::pair<const uint32_t, const uint32_t>  data = db.resolveCountingData("a");
 
     // Second part
-    std::unordered_map<uint32_t, double> found = db.exists(data, 2);
+    ///std::unordered_map<uint32_t, double> found = db.exists(data, 2);
 
     const double minThreshHold = 0;
 

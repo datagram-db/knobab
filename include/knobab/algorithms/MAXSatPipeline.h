@@ -47,7 +47,7 @@ struct MAXSatPipeline {
         data_chunk(model, atomization);
 
         /// First element of the pipeline: given the data query, fills in the
-        data_pipeline_first( const KnowledgeBase& kb);
+        data_pipeline_first(kb);
 
         /// Second part of the pipeline: compute each possible instance of the operator that there exists
 
