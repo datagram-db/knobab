@@ -52,7 +52,7 @@ public:
     semantic_atom_set  getSigmaAll() const;
 
     void query_model() {
-        maxsat_pipeline.pipeline(&grounding, ap);
+        maxsat_pipeline.pipeline(&grounding, ap, db);
     }
 
     /**

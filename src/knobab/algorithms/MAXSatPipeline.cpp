@@ -181,7 +181,8 @@ MAXSatPipeline::localExtract(const AtomizingPipeline &atomization,
 void MAXSatPipeline::data_pipeline_first( const KnowledgeBase& kb) {
 
     // 1. Performing the query over each single predicate that we have extracted, so not to duplicate the data access
-    for (auto& ref : data_accessing) {
+    for (size_t i = 0; i< barrier_to_range_queries; i++) {
+        auto& ref = data_accessing.at(i);
         // TODO: Given the query in ref.first, put the result in ref.second
         switch (ref.first.type) {
             case ExistsQuery:
@@ -193,9 +194,15 @@ void MAXSatPipeline::data_pipeline_first( const KnowledgeBase& kb) {
             case EndsQuery:
                 ref.second = kb.ends<std::pair<uint32_t, uint16_t>, double>(ref.first.label).traceApproximations;
                 break;
+            case AtomQuery:
+                ref.second = kb.exists<std::pair<uint32_t, uint16_t>, double>(ref.first.label).traceApproximations;
             default:
-                assert(false);
+                assert(false); // This should be dealt in (B)
         }
+    }
+
+    for (const auto& rangeQueryRefs : data_accessing_range_query_to_offsets) { // (B)
+        kb.exact_range_query(rangeQueryRefs.first, rangeQueryRefs.second, data_accessing);
     }
 
     auto result = partition_sets(atomToFormulaOffset); // O: squared on the size of the atoms
