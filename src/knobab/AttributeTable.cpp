@@ -180,7 +180,6 @@ AttributeTable::range_query_result AttributeTable::range_query(DataPredicate pro
                                     // everything is always true!
     assert((prop.var == this->attr_name));
     bool isNotExactMatch = min_threshold < 1.0;
-    bool doWeHaveStrings = this->type == StringAtt;
     if ((prop.casusu != INTERVAL)) {
         prop.asInterval();// If it is not an interval, make that as so, so we need to deal with only one case!
     }
@@ -199,8 +198,12 @@ AttributeTable::range_query_result AttributeTable::range_query(DataPredicate pro
     return result;
 }
 
-bool AttributeTable::range_query(size_t actId, const DataPredicate &prop, AttributeTable::range_query_result &result,
-                                 bool isNotExactMatch, double min_threshold, double c) const {
+bool AttributeTable::range_query(size_t actId,
+                                 const DataPredicate &prop,
+                                 AttributeTable::range_query_result &result,
+                                 bool isNotExactMatch,
+                                 double min_threshold,
+                                 double c) const {
     assert(prop.casusu == INTERVAL); // At this stage, I should only have interval queries!
     if (actId > primary_index.size()) return false; // missing act
     auto it = primary_index.at(actId);
@@ -409,4 +412,54 @@ union_minimal resolveUnionMinimal(const AttributeTable &table, const AttributeTa
             // TODO: hierarchical types!, https://dl.acm.org/doi/10.1145/3410566.3410583
             return (double)x.value;
     }
+}
+
+
+std::pair<const AttributeTable::record *, const AttributeTable::record *>
+ AttributeTable::exact_range_query(size_t actId, const DataPredicate &prop) const {
+    std::pair<const AttributeTable::record *, const AttributeTable::record *> thisResult{nullptr, nullptr};
+    assert(prop.casusu == INTERVAL); // At this stage, I should only have interval queries!
+    if (actId > primary_index.size()) return thisResult; // missing act
+    auto it = primary_index.at(actId);
+    if (it.first == it.second)
+        return thisResult; // missing attribute ~ for the meantime, we are not approximating the match on the attribute name, but we should in the future
+    {
+        assert(table.size() >= it.first);
+        assert(table.size() >= it.second);
+
+        const union_type prop_leftValue = cast_unions(type, prop.value);
+        const union_type prop_rightValue = cast_unions(type, prop.value_upper_bound);
+
+        auto begin = table.data() + it.first;
+        auto end = table.data() + it.second;
+
+        auto lb = std::lower_bound(begin, end, prop_leftValue, [&](const record &r, const union_type &value) {
+            return resolve(r) < value;
+        });
+
+        if (lb != end) {
+            auto ub = std::upper_bound(begin, end, prop_rightValue, [&](const union_type &value, const record &r) {
+                return resolve(r) > value;
+            });
+
+            auto tmpLeft = lb;
+            auto tmpRight = ub;
+            if (tmpRight != end) {
+                tmpRight--;
+            }
+            else
+                tmpRight = table.data() + (it.second-1);
+
+            if (std::distance(tmpLeft, tmpRight) < 0) {
+                return thisResult;
+            }
+            ssize_t left = std::distance(begin, tmpLeft);
+            ssize_t right = std::distance(begin, tmpRight);
+
+            thisResult.first = tmpLeft;
+            thisResult.second = tmpRight;
+
+        }
+    }
+    return thisResult;
 }

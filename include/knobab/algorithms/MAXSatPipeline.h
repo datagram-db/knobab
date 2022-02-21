@@ -9,7 +9,7 @@
 #include <yaucl/bpm/structures/declare/CNFDeclareDataAware.h>
 #include "atomization_pipeline.h"
 #include "knobab/trace_repairs/DataQuery.h"
-#include "../../../ltlf_query.h"
+#include "yaucl/bpm/structures/ltlf/ltlf_query.h"
 
 
 struct MAXSatPipeline {
@@ -28,8 +28,12 @@ struct MAXSatPipeline {
 
 
     // DATA
+    std::unordered_map<DataQuery, size_t> data_offset;
     std::vector<std::pair<DataQuery, std::vector<std::pair<std::pair<trace_t, event_t>, double>>>> data_accessing;
     std::unordered_map<DeclareDataAware, std::unordered_map<std::pair<bool, std::string>, label_set_t>> declare_atomization;
+    std::vector<std::set<size_t>> atomToFormulaOffset;
+    std::vector<std::string> toUseAtoms; // This is to ensure the insertion of unique elements to the map!
+    std::vector<std::pair<std::pair<trace_t, event_t>, double>> results_cache;
 
     void pipeline(CNFDeclareDataAware* model,
                   const AtomizingPipeline& atomization) {
@@ -54,10 +58,16 @@ struct MAXSatPipeline {
 
     void
     localExtract(const AtomizingPipeline &atomization,
-                 std::unordered_set<std::string> &toUseAtoms,
+                 std::vector<std::string> &toUseAtoms,
                  std::unordered_map<std::pair<bool, std::string>, label_set_t> &ref,
                  std::unordered_map<std::string, std::unordered_set<bool>> &collection,
                  const std::unordered_set<std::string> &decomposition, const std::string &collectionMapKey) ;
+
+    void
+    generateConcreteQuery(std::vector<std::string> &toUseAtoms,
+                          std::vector<std::pair<std::pair<trace_t, event_t>, double>> &empty_result,
+                          DeclareDataAware &item,
+                          ltlf_query *formula, DataQueryType r);
 };
 
 

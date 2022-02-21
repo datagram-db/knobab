@@ -13,11 +13,27 @@ DataQuery DataQuery::ExistsQuery(const std::string &atom) {
     return returnable;
 }
 
+DataQuery DataQuery::AtomQueries (DataQueryType t, const std::string &atom) {
+    DataQuery returnable;
+    assert(!atom.empty());
+    returnable.label = atom;
+    returnable.type = t;
+    return returnable;
+}
+
 DataQuery DataQuery::InitQuery(const std::string &atom) {
     DataQuery returnable;
     assert(!atom.empty());
     returnable.label = atom;
     returnable.type = DataQueryType::InitQuery;
+    return returnable;
+}
+
+DataQuery DataQuery::AtomQuery(const std::string &atom) {
+    DataQuery returnable;
+    assert(!atom.empty());
+    returnable.label = atom;
+    returnable.type = DataQueryType::AtomQuery;
     return returnable;
 }
 

@@ -165,6 +165,9 @@ struct AttributeTable {
 
     friend std::ostream &operator<<(std::ostream &os, const AttributeTable &table);
 
+    std::pair<const record *, const record *>
+    exact_range_query(size_t actId, const DataPredicate &prop) const;
+
 private:
     std::vector<std::map<union_type, std::vector<std::pair<trace_t, event_t>>>> elements;
 
@@ -174,6 +177,7 @@ private:
 
     bool range_query(size_t actId, const DataPredicate &prop, AttributeTable::range_query_result &result,
                      bool isNotExactMatch, double min_threshold, double c) const ;
+
 
     template <typename T>
     void

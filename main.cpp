@@ -16,7 +16,7 @@
 
 
 
-void whole_testing(const std::string& log_file = "testing/log.txt",
+void whole_testing(const std::string& log_file = "/home/giacomo/projects/knobab/testing/log.txt",
                    const std::string& declare_file = "testing/declare2.powerdecl",
                    const std::string& atomization_conf = "testing/atomization_pipeline.yaml",
                    const std::string& grounding_strategy = "testing/grounding_strategy.yaml") {
@@ -37,13 +37,17 @@ void whole_testing(const std::string& log_file = "testing/log.txt",
     }
 
     std::cout << "Loading the log file: " << log_file << std::endl;
+
     env.load_log(HUMAN_READABLE_YAUCL, true, log_file);
-    env.print_knowledge_base(std::cout); // DEBUG
+
+
+
+    //env.print_knowledge_base(std::cout); // DEBUG
     //////////////////////////////////////////////////////////////////
 
     std::cout << "Loading the declarative model from file: " << declare_file << std::endl;
     env.load_model(declare_file);
-    env.print_model(std::cout); // DEBUG
+    //env.print_model(std::cout); // DEBUG
     //////////////////////////////////////////////////////////////////
 
     if (std::filesystem::exists(std::filesystem::path(grounding_strategy))) {
@@ -79,7 +83,7 @@ void whole_testing(const std::string& log_file = "testing/log.txt",
                                      ps);
     }
     env.doGrounding();
-    env.print_grounded_model(std::cout); // DEBUG
+    //env.print_grounded_model(std::cout); // DEBUG
     //////////////////////////////////////////////////////////////////
 
     if (std::filesystem::exists(std::filesystem::path(atomization_conf))) {
@@ -97,12 +101,12 @@ void whole_testing(const std::string& log_file = "testing/log.txt",
 
     std::cout << "Loading the atomization tables given the model" << std::endl;
     env.init_atomize_tables();
-    env.print_grounding_tables(std::cout);
+    //env.print_grounding_tables(std::cout);
     //////////////////////////////////////////////////////////////////
 
     std::cout << "Atomizing the declare formulae" << std::endl;
     env.first_atomize_model();
-    env.print_grounded_model(std::cout); // DEBUG
+    //env.print_grounded_model(std::cout); // DEBUG
     //////////////////////////////////////////////////////////////////
 
     env.query_model();
@@ -451,9 +455,11 @@ void generate_traces(const std::string& log_file = "testing/nologolog.txt",
 }
 
 
+
+
 int main() {
     //test_group_by();
-    generate_nonunary_templates();
+    //generate_nonunary_templates();
     //test_data_query();
     //test_fsm();
     whole_testing();
@@ -461,7 +467,6 @@ int main() {
     //test_grounding();
     //generate_traces();
     //ltlf_operators_testing();
-
 
 
 

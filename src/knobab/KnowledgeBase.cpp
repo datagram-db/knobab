@@ -541,10 +541,13 @@ KnowledgeBase::range_query(DataPredicate prop, double min_threshold, const doubl
 }
 
 std::pair<int, std::vector<std::pair<std::pair<trace_t, event_t>, double>>>
-KnowledgeBase::range_query(DataPredicate &prop, double min_threshold, double correction, const double c,
+KnowledgeBase::range_query(DataPredicate &prop,
+                           double min_threshold,
+                           double correction,
+                           const double c,
                            bool forExistingData) const {
 
-    static const double at16 = std::pow(2, 16);
+    //static const double at16 = std::pow(2, 16);
     auto it = (forExistingData ? attribute_name_to_table : approximate_attribute_to_table).find(prop.var);
     if (it == (forExistingData ? attribute_name_to_table : approximate_attribute_to_table).end()) {
         // if no attribute is there, then I must assume that all of the traces are valid!
@@ -704,6 +707,42 @@ void KnowledgeBase::print_attribute_tables(std::ostream &os) const {
         os << " ~~~~~~~~~~~~~~~~~~~~ APPROXIMATIONS ~~~~~~~~~~~~~~~~~~~~ ";
     for (const auto& ref : approximate_attribute_to_table)
         os << ref.second;
+}
+
+std::vector<std::pair<trace_t, event_t>> KnowledgeBase::exact_range_query(DataPredicate prop) const {
+    assert(prop.casusu != TTRUE);
+    prop.asInterval();
+    constexpr size_t max_int = std::numeric_limits<size_t>::max();
+    assert(!prop.var.empty());
+    assert(prop.labelRHS.empty());
+    assert(prop.exceptions.empty());
+    assert(prop.BiVariableConditions.empty());
+    auto it = attribute_name_to_table.find(prop.var);
+    if (it == attribute_name_to_table.end()) {
+        // if no attribute is there, for the exact match I assume that no value was matched
+        return {};
+    } else {
+        // The attribute exists within the dataset
+        ssize_t act_id = -1;
+        if (!prop.label.empty()) {
+            act_id = (ssize_t) event_label_mapper.get(prop.label);
+        }
+        auto tmp = it->second.exact_range_query(act_id, prop);
+        if ((tmp.first == tmp.second) && tmp.first == nullptr )
+            return {}; // Return empty solution
+        else {
+            std::vector<std::pair<trace_t, event_t>> S;
+            size_t N = std::distance(tmp.first, tmp.second);
+            for (size_t i = 0; i<=N; i++) {
+                const auto& exactIt = tmp.first[i];
+                const auto& resolve = act_table_by_act_id.table.at(exactIt.act_table_offset).entry.id.parts;
+                S.emplace_back(resolve.trace_id,resolve.event_id);
+            }
+            std::sort(S.begin(), S.end());
+            S.erase(std::unique(S.begin(), S.end()), S.end());
+            return S;
+        }
+    }
 }
 
 

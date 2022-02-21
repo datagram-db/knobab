@@ -92,7 +92,7 @@ add_library(yaucl_data STATIC
 add_library(yaucl_structures STATIC src/yaucl/structures/StringPrevNext.cpp include/yaucl/structures/StringPrevNext.h src/yaucl/structures/DoublePrevNext.cpp include/yaucl/structures/DoublePrevNext.h)
 
 add_library(yaucl_bpm STATIC
-        ltlf_query.cpp
+        src/yaucl/bpm/structures/ltlf/ltlf_query.cpp
         src/yaucl/bpm/structures/ltlf/ltlf.cpp
         include/yaucl/bpm/structures/ltlf/ltlf.h
         src/yaucl/bpm/structures/declare/CNFDeclareDataAware.cpp
@@ -125,7 +125,7 @@ add_library(yaucl_bpm STATIC
         include/yaucl/bpm/algos/transformations/declare_to_dfa/DeclareNoDataTemplateCollect.h
         src/yaucl/bpm/algos/transformations/declare_to_dfa/TemplateCollectResult.cpp
         src/knobab/predicates/SimpleDataPredicate.cpp include/knobab/predicates/SimpleDataPredicate.h src/knobab/predicates/PredicateManager.cpp include/knobab/predicates/PredicateManager.h
-        include/yaucl/bpm/algos/transformations/declare_to_dfa/TemplateCollectResult.h src/yaucl/bpm/structures/declare/DisjunctiveDeclareDataAware.cpp include/yaucl/bpm/structures/declare/DisjunctiveDeclareDataAware.h src/yaucl/bpm/algos/transformations/grounding.cpp src/yaucl/bpm/algos/transformations/grounding.cpp include/yaucl/bpm/algos/transformations/grounding.h src/yaucl/bpm/structures/commons/testing_predicates.cpp include/yaucl/bpm/structures/commons/testing_predicates.h src/yaucl/bpm/structures/ltlf/easy_prop.cpp include/yaucl/bpm/structures/commons/easy_prop.h ltlf_query.cpp ltlf_query.h)
+        include/yaucl/bpm/algos/transformations/declare_to_dfa/TemplateCollectResult.h src/yaucl/bpm/structures/declare/DisjunctiveDeclareDataAware.cpp include/yaucl/bpm/structures/declare/DisjunctiveDeclareDataAware.h src/yaucl/bpm/algos/transformations/grounding.cpp src/yaucl/bpm/algos/transformations/grounding.cpp include/yaucl/bpm/algos/transformations/grounding.h src/yaucl/bpm/structures/commons/testing_predicates.cpp include/yaucl/bpm/structures/commons/testing_predicates.h src/yaucl/bpm/structures/ltlf/easy_prop.cpp include/yaucl/bpm/structures/commons/easy_prop.h src/yaucl/bpm/structures/ltlf/ltlf_query.cpp include/yaucl/bpm/structures/ltlf/ltlf_query.h)
 target_link_libraries(yaucl_bpm antlr4_static yaucl_numeric yaucl_data yaucl_graph yaucl_hashing) #aaltaf)
 
 add_library(knobab_flloat STATIC
