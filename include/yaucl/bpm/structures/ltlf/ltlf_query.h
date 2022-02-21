@@ -39,6 +39,13 @@ struct ltlf_query {
     bool hasResult = false;
     size_t result_id = 0;
     PredicateManager joinCondition;
+    bool isLeaf = false;
+    bool hasPremamentMark, hasTempMark;
+    size_t parentMin = std::numeric_limits<size_t>::max(), parentMax = 0, dis = 0;
+
+    size_t currentLayer() const {
+        return parentMax + 1;
+    }
 
     void associateDataQueryIdsToFormulaByAtom(const std::string& x, size_t l);
 
@@ -70,13 +77,16 @@ namespace std {
 
 #include <map>
 #include <knobab/algorithms/atomization_pipeline.h>
+#include <cassert>
+
 
 
 struct ltlf_query_manager {
-    static std::unordered_map<std::pair<ltlf, bool>, std::pair<ltlf_query*, size_t>> conversion_map_for_subexpressions;
+    static std::unordered_map<std::pair<ltlf, bool>, ltlf_query*> conversion_map_for_subexpressions;
     static std::map<size_t, std::vector<ltlf_query*>> Q;
     static std::unordered_map<ltlf_query*, size_t> counter;
     static std::vector<ltlf_query*> atomsToDecomposeInUnion;
+    static std::set<ltlf_query*> VSet;
 
     static void clear();
     static ltlf_query*  init1(const std::string& atom, std::unordered_set<std::string>& predicates);
@@ -87,14 +97,11 @@ struct ltlf_query_manager {
     immediateQueries(const std::string &atom, std::unordered_set<std::string> &predicates, const std::string &prefix,
                      const ltlf_query_t &casus);
 
-    static ltlf_query*  simplify(const ltlf& expr) {
-        return _simplify(expr, false).first;
-    }
+    static void finalize_unions(const std::vector<ltlf_query*>& W);
 
-    static void finalize_unions();
+    static ltlf_query*  simplify(const ltlf& expr,  bool isTimed = false, bool insert = true);
 
 private:
-    static std::pair<ltlf_query*, size_t>  _simplify(const ltlf& expr,  bool isTimed = false);
 };
 
 std::ostream & human_readable_ltlf_printing(std::ostream &os, const ltlf_query* syntax);

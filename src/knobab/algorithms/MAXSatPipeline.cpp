@@ -11,6 +11,8 @@
 std::string MAXSatPipeline::LEFT_ATOM{"a"};
 std::string MAXSatPipeline::RIGHT_ATOM{"b"};
 
+
+
 MAXSatPipeline::MAXSatPipeline() {
     for (declare_templates t : magic_enum::enum_values<declare_templates>()) {
         if (isUnaryPredicate(t)) continue; // discarding unary predicates
@@ -82,11 +84,15 @@ void MAXSatPipeline::data_chunk(CNFDeclareDataAware *model,
     for (auto& ref : atomToFormulaId)
         remove_duplicates(ref.second);
 
-    ltlf_query_manager::finalize_unions();
-    for (const auto& ref : W)
+    ltlf_query_manager::finalize_unions(W); // Squared on the size of the atoms
+
+
+    for (const auto& ref : W) {
         human_readable_ltlf_printing(std::cout, ref) << std::endl; //todo: debugging
+    }
 
     remove_duplicates(toUseAtoms);
+
 
     assert(!toUseAtoms.empty());
     for (const auto& atom : toUseAtoms) { // So not to do the data visiting twice!
@@ -173,7 +179,7 @@ void MAXSatPipeline::data_pipeline_first() {
         // TODO: Given the query in ref.first, put the result in ref.second
     }
 
-    auto result = partition_sets(atomToFormulaOffset);
+    auto result = partition_sets(atomToFormulaOffset); // O: squared on the size of the atoms
     size_t isFromFurtherDecomposition = result.minimal_common_subsets.size();
 
     // TODO: resultOfS for collecting the intermediate computations
@@ -222,5 +228,9 @@ void MAXSatPipeline::data_pipeline_first() {
         }
     }
 
+    auto it = ltlf_query_manager::Q.cbegin(), en = ltlf_query_manager::Q.cend();
+    for (; it != en; it++) {
+        // TODO: parallelized run over the it->second, and store the results
+    }
 }
 

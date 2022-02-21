@@ -224,20 +224,20 @@ partition_sets_result<T> partition_sets(const std::vector<std::set<T>>& subsubSe
         std::unordered_map<std::vector<size_t>, std::set<T>> elems_to_sets;
         {
             std::unordered_map<T, std::vector<size_t>> id_to_elems;
-            for (size_t i = 0, N = subsubSets.size(); i<N; i++) {
+            for (size_t i = 0, N = subsubSets.size(); i<N; i++) { // O(N*m)
                 for (const auto& u : subsubSets.at(i)) {
                     id_to_elems[u].emplace_back(i);
                 }
             }
 
-            for (auto it = id_to_elems.begin(); it != id_to_elems.end(); ) {
+            for (auto it = id_to_elems.begin(); it != id_to_elems.end(); ) { // O(k>m)
                 elems_to_sets[it->second].emplace(it->first);
                 it = id_to_elems.erase(it);
             }
         }
 
 
-        for (auto it = elems_to_sets.begin(); it != elems_to_sets.end(); ) {
+        for (auto it = elems_to_sets.begin(); it != elems_to_sets.end(); ) { //O(k*N)
             size_t curr = result.minimal_common_subsets.size();
             for (const size_t set_id : it->first) {
                 result.decomposedSubsets[set_id].insert(curr);
@@ -246,16 +246,19 @@ partition_sets_result<T> partition_sets(const std::vector<std::set<T>>& subsubSe
             it = elems_to_sets.erase(it);
         }
 
-        for (size_t i = 0, N = subsubSets.size(); i<N; i++) {
+        for (size_t i = 0, N = subsubSets.size(); i<N; i++) { // O(N)
             auto& ref = result.decomposedSubsets.at(i);
             result.decomposedIndexedSubsets.emplace_back(i, &ref);
         }
     }
 
+    // O(N*log(N))
     std::sort(result.decomposedIndexedSubsets.begin(), result.decomposedIndexedSubsets.end(), [](const std::pair<size_t, std::set<size_t>*>& lhs, const std::pair<size_t, std::set<size_t>*>& rhs) {
         return std::includes(rhs.second->begin(), rhs.second->end(), lhs.second->begin(), lhs.second->end());
     });
 
+
+    // O(N^2)
     std::vector<size_t> toRemove;
     for (size_t i = 0, N = result.decomposedIndexedSubsets.size(); i<N-1; i++) {
         auto& refI = result.decomposedIndexedSubsets.at(i).second;

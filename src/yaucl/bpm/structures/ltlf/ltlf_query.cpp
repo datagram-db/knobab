@@ -4,7 +4,37 @@
 
 #include "yaucl/bpm/structures/ltlf/ltlf_query.h"
 
-
+static inline void topological_sort(const std::vector<ltlf_query*>& W,
+                                    std::vector<ltlf_query*>& vertexOreder) {
+    std::unordered_set<ltlf_query*> toVisit{W.begin(), W.end()};
+    std::stack<std::pair<bool, ltlf_query*>> internalStack;
+    std::unordered_set<ltlf_query*> visited;
+    //auto isEnd = adjMap.end();
+    while (!toVisit.empty()) {
+        auto first = toVisit.begin();
+        if (first != toVisit.cend()) {
+            internalStack.push(std::make_pair(false, *first));
+        }
+        while (!internalStack.empty()) {
+            std::pair<bool, ltlf_query*>  cp = internalStack.top();
+            internalStack.pop();
+            toVisit.erase(cp.second);
+            if (cp.first) {
+                vertexOreder.emplace_back(cp.second);
+            } else {
+                if (visited.insert(cp.second).second) {
+                    internalStack.push((cp));
+                    internalStack.push(std::make_pair(true, cp.second));
+                    //auto out = adjMap.find(cp.second);
+                    for (auto & i : cp.second->args) {
+                        internalStack.push(std::make_pair(false, i));
+                    }
+                }
+            }
+        }
+    }
+    std::reverse(vertexOreder.begin(), vertexOreder.end());
+}
 
 bool ltlf_query::operator==(const ltlf_query &rhs) const {
     return isTimed == rhs.isTimed &&
@@ -30,29 +60,32 @@ void ltlf_query::associateDataQueryIdsToFormulaByAtom(const std::string &x, size
 
 
 
-std::unordered_map<std::pair<ltlf, bool>, std::pair<ltlf_query*, size_t>> ltlf_query_manager::conversion_map_for_subexpressions;
+
+std::unordered_map<std::pair<ltlf, bool>, ltlf_query*> ltlf_query_manager::conversion_map_for_subexpressions;
 std::unordered_map<ltlf_query*, size_t> ltlf_query_manager::counter;
 std::map<size_t, std::vector<ltlf_query*>> ltlf_query_manager::Q;
 std::vector<ltlf_query*> ltlf_query_manager::atomsToDecomposeInUnion;
+std::set<ltlf_query*> ltlf_query_manager::VSet;
 
-std::pair<ltlf_query*, size_t> ltlf_query_manager::_simplify(const ltlf& expr,  bool isTimed) {
+ltlf_query* ltlf_query_manager::simplify(const ltlf& expr,  bool isTimed, bool insert) {
     assert((expr.casusu != NEG_OF) && (expr.casusu != NUMERIC_ATOM));
     std::pair<ltlf, bool> q{expr, isTimed};
     auto it = conversion_map_for_subexpressions.find(q);
     if (it != conversion_map_for_subexpressions.end()) {
-        counter[it->second.first]++;
+        counter[it->second]++;
         return it->second;
     } else {
         ltlf_query* result = new ltlf_query();
+        if (insert) VSet.insert(result);
         bool areArgsTimed = isTimed || (expr.casusu == BOX) || (expr.casusu == DIAMOND)
                 || (expr.casusu == UNTIL) || (expr.casusu == RELEASE);
-        size_t h = 0;
+        //size_t h = 0;
         for (const auto& arg : expr.args) {
-            auto cp = _simplify(arg, areArgsTimed);
-            h = std::max(cp.second, h);
-            result->args.emplace_back(cp.first);
+            auto cp = simplify(arg, areArgsTimed, insert);
+            //h = std::max(cp.second, h);
+            result->args.emplace_back(cp);
         }
-        h++;
+        //h++;
         if (expr.is_exclusive) {
             assert(expr.casusu == OR);
             result->casusu = Q_XOR;
@@ -80,18 +113,21 @@ std::pair<ltlf_query*, size_t> ltlf_query_manager::_simplify(const ltlf& expr,  
             atomsToDecomposeInUnion.emplace_back(result);
         }
         result->atom.insert(expr.rewritten_act.begin(), expr.rewritten_act.end());
-        Q[h].emplace_back(result);
-        conversion_map_for_subexpressions[q] = {result, h};
+        //Q[h].emplace_back(result);
+        conversion_map_for_subexpressions[q] =result;// {result, h};
         counter.emplace(result, 1);
-        return {result, h};
+        return result;
     }
 }
 
 void ltlf_query_manager::clear() {
     for (auto it = conversion_map_for_subexpressions.begin(); it != conversion_map_for_subexpressions.end(); it++) {
-        delete it->second.first;
+        delete it->second;
         it = conversion_map_for_subexpressions.erase(it);
     }
+    VSet.clear();
+    atomsToDecomposeInUnion.clear();
+    counter.clear();
 }
 
 ltlf_query *ltlf_query_manager::init1(const std::string &atom, std::unordered_set<std::string> &predicates) {
@@ -111,8 +147,8 @@ ltlf_query *ltlf_query_manager::immediateQueries(const std::string &atom,
     std::pair<ltlf, bool> q{f, false};
     auto it = conversion_map_for_subexpressions.find(q);
     if (it != conversion_map_for_subexpressions.end()) {
-        counter[it->second.first]++;
-        return it->second.first;
+        counter[it->second]++;
+        return it->second;
     } else {
         ltlf_query* result = new ltlf_query();
         result->casusu = casus;
@@ -121,8 +157,8 @@ ltlf_query *ltlf_query_manager::immediateQueries(const std::string &atom,
             result->atom.emplace(atom);
         else
             result->atom.insert(predicates.begin(), predicates.end());
-        Q[0].emplace_back(result);
-        conversion_map_for_subexpressions[q] = {result, 0};
+        //Q[0].emplace_back(result);
+        conversion_map_for_subexpressions[q] = result;
         counter.emplace(result, 1);
         return result;
     }
@@ -136,7 +172,7 @@ ltlf_query *ltlf_query_manager::end1(const std::string &atom, std::unordered_set
     return immediateQueries(atom, predicates, "@declare_end1_", Q_END);
 }
 
-void ltlf_query_manager::finalize_unions() {
+void ltlf_query_manager::finalize_unions(const std::vector<ltlf_query*>& W) {
     std::vector<std::set<std::string>> unionToDecompose;
     for (const auto& ptr : atomsToDecomposeInUnion)
         unionToDecompose.emplace_back(ptr->atom);
@@ -171,8 +207,25 @@ void ltlf_query_manager::finalize_unions() {
                 }
 
         }
-        ltlf_query* q = _simplify(r, true).first;
+        ltlf_query* q = simplify(r, true, false);
+        q->isLeaf = true;
         *atomsToDecomposeInUnion[ref.first] = *q;
+        //delete q; //this will not delete the other nodes, recursively. TODO: this should be done in clear() and avoid leaks
+        atomsToDecomposeInUnion[ref.first]->isLeaf = true;
+    }
+
+    // Making ready for the parallelization of the query execution by setting it into layers
+    std::vector<ltlf_query*> topological_order;
+    topological_sort(W, topological_order);
+    for (const auto& subFormula: topological_order) {
+        for (const auto& adj : subFormula->args) {
+            adj->dis = std::max(adj->dis, subFormula->dis +1);
+            adj->parentMax = std::max(adj->parentMax, subFormula->dis);
+            adj->parentMin = std::min(adj->parentMin, subFormula->dis);
+        }
+    }
+    for (const auto& subFormula: topological_order) {
+        Q[subFormula->dis].emplace_back(subFormula);
     }
 }
 
