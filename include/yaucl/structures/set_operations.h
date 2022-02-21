@@ -202,4 +202,83 @@ void remove_duplicates(std::vector<T>& vec){
     vec.erase(std::unique(vec.begin(), vec.end()), vec.end());
 }
 
+#include <set>
+#include <yaucl/structures/default_constructors.h>
+
+template <typename T>
+struct partition_sets_result {
+    std::vector<std::set<size_t>> decomposedSubsets;
+    std::vector<std::pair<size_t, std::set<size_t>*>> decomposedIndexedSubsets;
+    std::vector<std::set<T>> minimal_common_subsets;
+    std::vector<std::set<size_t>> minimal_common_subsets_composition;
+
+    partition_sets_result(size_t N): decomposedSubsets(N) {}
+    DEFAULT_COPY_ASSGN(partition_sets_result)
+};
+
+template <typename T>
+partition_sets_result<T> partition_sets(const std::vector<std::set<T>>& subsubSets) {
+    partition_sets_result<T> result(subsubSets.size());
+
+    {
+        std::unordered_map<std::vector<size_t>, std::set<T>> elems_to_sets;
+        {
+            std::unordered_map<T, std::vector<size_t>> id_to_elems;
+            for (size_t i = 0, N = subsubSets.size(); i<N; i++) {
+                for (const auto& u : subsubSets.at(i)) {
+                    id_to_elems[u].emplace_back(i);
+                }
+            }
+
+            for (auto it = id_to_elems.begin(); it != id_to_elems.end(); ) {
+                elems_to_sets[it->second].emplace(it->first);
+                it = id_to_elems.erase(it);
+            }
+        }
+
+
+        for (auto it = elems_to_sets.begin(); it != elems_to_sets.end(); ) {
+            size_t curr = result.minimal_common_subsets.size();
+            for (const size_t set_id : it->first) {
+                result.decomposedSubsets[set_id].insert(curr);
+            }
+            result.minimal_common_subsets.emplace_back(it->second);
+            it = elems_to_sets.erase(it);
+        }
+
+        for (size_t i = 0, N = subsubSets.size(); i<N; i++) {
+            auto& ref = result.decomposedSubsets.at(i);
+            result.decomposedIndexedSubsets.emplace_back(i, &ref);
+        }
+    }
+
+    std::sort(result.decomposedIndexedSubsets.begin(), result.decomposedIndexedSubsets.end(), [](const std::pair<size_t, std::set<size_t>*>& lhs, const std::pair<size_t, std::set<size_t>*>& rhs) {
+        return std::includes(rhs.second->begin(), rhs.second->end(), lhs.second->begin(), lhs.second->end());
+    });
+
+    std::vector<size_t> toRemove;
+    for (size_t i = 0, N = result.decomposedIndexedSubsets.size(); i<N-1; i++) {
+        auto& refI = result.decomposedIndexedSubsets.at(i).second;
+        size_t sizeI = refI->size();
+        bool hasElem = false;
+        size_t refIId = 0;
+        for (size_t j = N-1; j>i; j--) {
+            auto& refJ = result.decomposedIndexedSubsets.at(j).second;
+            if (refJ->size() == sizeI) break;
+            if (std::includes(refJ->begin(), refJ->end(), refI->begin(), refI->end())) {
+                if (!hasElem) {
+                    hasElem = true;
+                    refIId = result.minimal_common_subsets.size() + result.minimal_common_subsets_composition.size();
+                    result.minimal_common_subsets_composition.emplace_back(refI->begin(), refI->end());
+                }
+                std::vector<size_t> diff{refIId};
+                std::set_difference(refJ->begin(), refJ->end(), refI->begin(), refI->end(), std::back_inserter(diff));
+                refJ->clear();
+                refJ->insert(diff.begin(), diff.end());
+            }
+        }
+    }
+    return result;
+}
+
 #endif //INCONSISTENCY_DETECTOR_SET_OPERATIONS_H

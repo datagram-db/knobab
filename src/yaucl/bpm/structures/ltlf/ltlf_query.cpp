@@ -2,7 +2,7 @@
 // Created by giacomo on 16/02/2022.
 //
 
-#include "ltlf_query.h"
+#include "yaucl/bpm/structures/ltlf/ltlf_query.h"
 
 
 
@@ -17,6 +17,14 @@ bool ltlf_query::operator!=(const ltlf_query &rhs) const {
     return !(rhs == *this);
 }
 
+void ltlf_query::associateDataQueryIdsToFormulaByAtom(const std::string &x, size_t l) {
+    if (atom.contains(x)) {
+        //assert(args.empty());
+        partial_results.emplace_back(l);
+    } else for (auto& child : args)
+            child->associateDataQueryIdsToFormulaByAtom(x, l);
+}
+
 #include <cassert>
 #include <magic_enum.hpp>
 
@@ -25,6 +33,7 @@ bool ltlf_query::operator!=(const ltlf_query &rhs) const {
 std::unordered_map<std::pair<ltlf, bool>, std::pair<ltlf_query*, size_t>> ltlf_query_manager::conversion_map_for_subexpressions;
 std::unordered_map<ltlf_query*, size_t> ltlf_query_manager::counter;
 std::map<size_t, std::vector<ltlf_query*>> ltlf_query_manager::Q;
+std::vector<ltlf_query*> ltlf_query_manager::atomsToDecomposeInUnion;
 
 std::pair<ltlf_query*, size_t> ltlf_query_manager::_simplify(const ltlf& expr,  bool isTimed) {
     assert((expr.casusu != NEG_OF) && (expr.casusu != NUMERIC_ATOM));
@@ -67,6 +76,9 @@ std::pair<ltlf_query*, size_t> ltlf_query_manager::_simplify(const ltlf& expr,  
         }
         result->isTimed = isTimed;
         assert((expr.casusu != ACT) || (!expr.rewritten_act.empty()));
+        if (expr.casusu==ACT){
+            atomsToDecomposeInUnion.emplace_back(result);
+        }
         result->atom.insert(expr.rewritten_act.begin(), expr.rewritten_act.end());
         Q[h].emplace_back(result);
         conversion_map_for_subexpressions[q] = {result, h};
@@ -86,8 +98,10 @@ ltlf_query *ltlf_query_manager::init1(const std::string &atom, std::unordered_se
     return immediateQueries(atom, predicates, "@declare_init1_", Q_INIT);
 }
 
-ltlf_query *ltlf_query_manager::immediateQueries(const std::string &atom, std::unordered_set<std::string> &predicates,
-                                                 const std::string &prefix, const ltlf_query_t &casus) {
+ltlf_query *ltlf_query_manager::immediateQueries(const std::string &atom,
+                                                 std::unordered_set<std::string> &predicates,
+                                                 const std::string &prefix,
+                                                 const ltlf_query_t &casus) {
     ltlf f = ltlf::Act(prefix + atom);
     if (!predicates.empty()) {
         ltlf A = ltlf::Act("bogus_"+atom);
@@ -114,6 +128,54 @@ ltlf_query *ltlf_query_manager::immediateQueries(const std::string &atom, std::u
     }
 }
 
+ltlf_query *ltlf_query_manager::exists1(const std::string &atom, std::unordered_set<std::string> &predicates) {
+    return immediateQueries(atom, predicates, "@declare_exists1_", Q_EXISTS);
+}
+
+ltlf_query *ltlf_query_manager::end1(const std::string &atom, std::unordered_set<std::string> &predicates) {
+    return immediateQueries(atom, predicates, "@declare_end1_", Q_END);
+}
+
+void ltlf_query_manager::finalize_unions() {
+    std::vector<std::set<std::string>> unionToDecompose;
+    for (const auto& ptr : atomsToDecomposeInUnion)
+        unionToDecompose.emplace_back(ptr->atom);
+    auto result = partition_sets(unionToDecompose);
+    size_t isFromFurtherDecomposition = result.minimal_common_subsets.size();
+    for (const auto& ref : result.decomposedIndexedSubsets) {
+        auto& f = atomsToDecomposeInUnion.at(ref.first);
+        bool just = true;
+        ltlf r;
+        for (size_t i : *ref.second) {
+            if (i < isFromFurtherDecomposition) {
+                ltlf l;
+                l.casusu = ACT;
+                l.rewritten_act.insert(l.rewritten_act.end(), result.minimal_common_subsets.at(i).begin(), result.minimal_common_subsets.at(i).end());
+                if (just) {
+                    r = l;
+                    just = false;
+                } else {
+                    r = ltlf::Or(l, r);
+                }
+            } else
+                for (size_t further : result.minimal_common_subsets_composition.at(i-isFromFurtherDecomposition)) {
+                    ltlf l;
+                    l.casusu = ACT;
+                    l.rewritten_act.insert(l.rewritten_act.end(), result.minimal_common_subsets.at(further).begin(), result.minimal_common_subsets.at(further).end());
+                    if (just) {
+                        r = l;
+                        just = false;
+                    } else {
+                        r = ltlf::Or(l, r);
+                    }
+                }
+
+        }
+        ltlf_query* q = _simplify(r, true).first;
+        *atomsToDecomposeInUnion[ref.first] = *q;
+    }
+}
+
 #include <yaucl/strings/serializers.h>
 
 std::ostream & human_readable_ltlf_printing(std::ostream &os, const ltlf_query* syntax) {
@@ -124,7 +186,7 @@ std::ostream & human_readable_ltlf_printing(std::ostream &os, const ltlf_query* 
         case Q_END:
             return os << "F" << syntax->atom << reset;
         case Q_ACT:
-            return os << syntax->atom << reset;
+            return os << "A" <<  syntax->atom << reset;
         case Q_OR:
             os << "(";
             human_readable_ltlf_printing(os, syntax->args.at(0));

@@ -23,8 +23,10 @@ enum ltlf_query_t {
     Q_UNTIL,
     Q_RELEASE,
     Q_LAST,
+
     Q_INIT,
-    Q_END
+    Q_END,
+    Q_EXISTS
 };
 
 struct ltlf_query {
@@ -32,19 +34,13 @@ struct ltlf_query {
     bool extractActivationTargetConditions = false;
     ltlf_query_t casusu = Q_TRUE;
     std::vector<ltlf_query*> args;
-    std::unordered_set<std::string> atom;
+    std::set<std::string> atom;
     std::vector<size_t> partial_results;
     bool hasResult = false;
     size_t result_id = 0;
     PredicateManager joinCondition;
 
-    void associateDataQueryIdsToFormulaByAtom(const std::string& x, const std::vector<size_t>& l) {
-        if (atom.contains(x)) {
-            //assert(args.empty());
-            partial_results.insert(partial_results.begin(), l.begin(), l.end());
-        } else for (auto& child : args)
-            child->associateDataQueryIdsToFormulaByAtom(x, l);
-    }
+    void associateDataQueryIdsToFormulaByAtom(const std::string& x, size_t l);
 
     ltlf_query() = default;
     ltlf_query(const ltlf_query&) = default;
@@ -80,12 +76,12 @@ struct ltlf_query_manager {
     static std::unordered_map<std::pair<ltlf, bool>, std::pair<ltlf_query*, size_t>> conversion_map_for_subexpressions;
     static std::map<size_t, std::vector<ltlf_query*>> Q;
     static std::unordered_map<ltlf_query*, size_t> counter;
+    static std::vector<ltlf_query*> atomsToDecomposeInUnion;
 
     static void clear();
     static ltlf_query*  init1(const std::string& atom, std::unordered_set<std::string>& predicates);
-    static ltlf_query* end1(const std::string &atom, std::unordered_set<std::string> &predicates) {
-        return immediateQueries(atom, predicates, "@declare_end1_", Q_END);
-    }
+    static ltlf_query* end1(const std::string &atom, std::unordered_set<std::string> &predicates);
+    static ltlf_query* exists1(const std::string &atom, std::unordered_set<std::string> &predicates);
 
     static ltlf_query *
     immediateQueries(const std::string &atom, std::unordered_set<std::string> &predicates, const std::string &prefix,
@@ -94,6 +90,8 @@ struct ltlf_query_manager {
     static ltlf_query*  simplify(const ltlf& expr) {
         return _simplify(expr, false).first;
     }
+
+    static void finalize_unions();
 
 private:
     static std::pair<ltlf_query*, size_t>  _simplify(const ltlf& expr,  bool isTimed = false);

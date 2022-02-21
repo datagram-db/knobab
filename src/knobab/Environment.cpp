@@ -3,7 +3,7 @@
 //
 
 #include "knobab/Environment.h"
-#include "../../ltlf_query.h"
+#include "yaucl/bpm/structures/ltlf/ltlf_query.h"
 
 semantic_atom_set Environment::getSigmaAll() const {
     semantic_atom_set S = ap.act_atoms;
@@ -50,8 +50,30 @@ void Environment::load_model(const std::string &model_file) {
 }
 
 void Environment::load_log(log_data_format format, bool loadData, const std::string &filename, bool setMaximumStrLen) {
-    load_into_knowledge_base(format, loadData, filename, db);
-    db.index_data_structures(index_missing_data);
+    using std::chrono::high_resolution_clock;
+    using std::chrono::duration_cast;
+    using std::chrono::duration;
+    using std::chrono::milliseconds;
+
+    {
+        auto t1 = high_resolution_clock::now();
+        load_into_knowledge_base(format, loadData, filename, db);
+        auto t2 = high_resolution_clock::now();
+
+        /* Getting number of milliseconds as a double. */
+        duration<double, std::milli> ms_double = t2 - t1;
+        std::cout << "Loading and parsing time = " << ms_double.count() << std::endl;
+    }
+
+    {
+        auto t1 = high_resolution_clock::now();
+        db.index_data_structures(index_missing_data);
+        auto t2 = high_resolution_clock::now();
+
+        /* Getting number of milliseconds as a double. */
+        duration<double, std::milli> ms_double = t2 - t1;
+        std::cout << "Indexing time = " << ms_double.count() << std::endl;
+    }
     if (setMaximumStrLen) {
         auto tmp = db.getMaximumStringLength();
         ap.s_max = std::string(tmp, std::numeric_limits<char>::max());

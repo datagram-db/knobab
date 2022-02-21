@@ -18,5 +18,5 @@
  * along with bpm21. If not, see <http://www.gnu.org/licenses/>.
  */
  Response(A, x > 0.0 && y > 5.0, B, y <= 0.0)
- Response(B, y <= 0.0, A, true) where y < x
+ Response(B, y <= 0.0, C, true) where y < x
  Precedence(B, y <= 0.0, A, z > 5.0) //where y < x

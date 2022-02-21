@@ -15,7 +15,8 @@ enum DataQueryType {
     ExistsQuery,
     RangeQuery,
     InitQuery,
-    EndsQuery
+    EndsQuery,
+    AtomQuery
 };
 
 
@@ -25,7 +26,9 @@ struct DataQuery {
     std::string var;
     std::variant<std::string, double> lower_bound, upper_bound;
 
+    static DataQuery AtomQueries (DataQueryType t, const std::string &atom);
     static DataQuery ExistsQuery(const std::string &atom);
+    static DataQuery AtomQuery(const std::string &atom);
     static DataQuery InitQuery(const std::string &atom);
     static DataQuery EndsQuery(const std::string &atom);
 

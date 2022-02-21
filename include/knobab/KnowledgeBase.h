@@ -227,8 +227,7 @@ public:
         return foundData;
     }
 
-
-
+    std::vector<std::pair<trace_t, event_t>> exact_range_query(DataPredicate prop) const;
 
 private:
     void collectValuesAmongTraces(std::set<union_type> &S, size_t trace_id, act_t acts, bool HasNoAct,
@@ -243,6 +242,7 @@ private:
     float getSatisifiabilityBetweenValues(const uint16_t& val1, const uint16_t& val2, const uint16_t& approxConstant) const;
 
     uint16_t getPositionFromEventId(const oid* event) const;
+
 
     std::pair<int, std::vector<std::pair<std::pair<trace_t, event_t>, double>>>
     range_query(DataPredicate &prop, double min_threshold, double correction, const double c, bool forExistingData = true) const;
