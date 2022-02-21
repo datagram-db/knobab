@@ -27,6 +27,7 @@ using union_type = std::variant<double, size_t, long long, std::string, bool>;
 #include <unordered_map>
 #include <ostream>
 #include <SimplifiedFuzzyStringMatching.h>
+#include <knobab/trace_repairs/DataQuery.h>
 
 
 struct AttributeTable {
@@ -166,7 +167,10 @@ struct AttributeTable {
     friend std::ostream &operator<<(std::ostream &os, const AttributeTable &table);
 
     std::pair<const record *, const record *>
-    exact_range_query(size_t actId, const DataPredicate &prop) const;
+    exact_range_query(size_t actId, const DataPredicate &propList) const;
+
+    std::vector<std::pair<const record *, const record *>>
+    exact_range_query(const std::vector<std::pair<size_t, std::vector<DataQuery*>>>& propList) const;
 
 private:
     std::vector<std::map<union_type, std::vector<std::pair<trace_t, event_t>>>> elements;

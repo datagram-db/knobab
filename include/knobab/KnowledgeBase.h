@@ -29,6 +29,8 @@ enum ParsingState {
 };
 
 #include <bitset>
+#include <knobab/trace_repairs/DataQuery.h>
+
 
 using trace_set = std::bitset<sizeof(uint32_t)>;
 using act_set = std::bitset<sizeof(uint16_t)>;
@@ -185,7 +187,15 @@ public:
     std::vector<std::pair<std::pair<trace_t, event_t>, double>> range_query(DataPredicate prop, double min_threshold = 1.0, const double c = 2.0) const;
 
     // Second part of the pipeline
-    std::unordered_map<uint32_t, double> exists(const std::pair<const uint32_t, const uint32_t>& indexes, const uint16_t& amount) const;
+    std::vector<std::pair<std::pair<trace_t, event_t>, double>>  exists(const std::pair<const uint32_t, const uint32_t>& indexes, const uint16_t& amount) const;
+
+    std::vector<std::pair<std::pair<trace_t, event_t>, double>> exists(const std::pair<const uint32_t, const uint32_t>& indexes) const {
+        std::vector<std::pair<std::pair<trace_t, event_t>, double>> foundElems;
+        for (auto it = count_table.table.begin() + indexes.first; it != count_table.table.begin() + indexes.second + 1; ++it) {
+            foundElems.emplace_back(std::pair<trace_t, event_t>{it->id.parts.trace_id, 0}, 1.0);
+        }
+        return foundElems;
+    }
 
     template <typename traceIdentifier, typename traceValue>
     TraceData<traceIdentifier, traceValue> init(const std::string& act, const double minThreshold = 1) const{
@@ -220,7 +230,7 @@ public:
             float satisfiability = getSatisifiabilityBetweenValues(eventId, it->entry.id.parts.event_id, approxConstant);
 
             if(satisfiability >= minThreshold) {
-                foundData.getTraceApproximations().emplace_back(std::pair<std::pair<uint32_t, uint16_t>, float>({it->entry.id.parts.trace_id, it->entry.id.parts.event_id}, satisfiability));
+                foundData.getTraceApproximations().emplace_back(std::pair<std::pair<uint32_t, uint16_t>, double>({it->entry.id.parts.trace_id, it->entry.id.parts.event_id}, satisfiability));
             }
         }
 
@@ -228,6 +238,10 @@ public:
     }
 
     std::vector<std::pair<trace_t, event_t>> exact_range_query(DataPredicate prop) const;
+
+    void exact_range_query(const std::string& var,
+                           const std::unordered_map<std::string, std::vector<size_t>>& actToPredId,
+                           std::vector<std::pair<DataQuery, std::vector<std::pair<std::pair<trace_t, event_t>, double>>>>& Qs) const;
 
 private:
     void collectValuesAmongTraces(std::set<union_type> &S, size_t trace_id, act_t acts, bool HasNoAct,
