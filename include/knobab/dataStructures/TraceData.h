@@ -61,8 +61,8 @@ public:
         return traceApproximations;
     }
 
-private:
     std::vector<std::pair<traceIdentifier, traceValue>> traceApproximations;
+private:
 };
 
 

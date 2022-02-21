@@ -430,15 +430,15 @@ std::pair<const AttributeTable::record *, const AttributeTable::record *>
         const union_type prop_leftValue = cast_unions(type, prop.value);
         const union_type prop_rightValue = cast_unions(type, prop.value_upper_bound);
 
-        auto begin = table.data() + it.first;
-        auto end = table.data() + it.second;
+        const record* begin = table.data() + it.first;
+        const record* end = table.data() + it.second;
 
-        auto lb = std::lower_bound(begin, end, prop_leftValue, [&](const record &r, const union_type &value) {
+        const record* lb = std::lower_bound(begin, end, prop_leftValue, [&](const record &r, const union_type &value) {
             return resolve(r) < value;
         });
 
         if (lb != end) {
-            auto ub = std::upper_bound(begin, end, prop_rightValue, [&](const union_type &value, const record &r) {
+            const record* ub = std::upper_bound(begin, end, prop_rightValue, [&](const union_type &value, const record &r) {
                 return resolve(r) > value;
             });
 
@@ -462,4 +462,61 @@ std::pair<const AttributeTable::record *, const AttributeTable::record *>
         }
     }
     return thisResult;
+}
+
+std::vector<std::pair<const AttributeTable::record *, const AttributeTable::record *>>
+AttributeTable::exact_range_query(const std::vector<std::pair<size_t, std::vector<DataQuery*>>>& propList) const {
+    std::vector<std::pair<const AttributeTable::record *, const AttributeTable::record *>> actualResult;
+    //std::pair<const AttributeTable::record *, const AttributeTable::record *> thisResult{nullptr, nullptr};
+    for (const auto& cps : propList) {
+        size_t actId = cps.first;
+        if (/*(cps.second->empty()) ||*/ (actId > primary_index.size())) {
+            for (size_t i = 0, N = cps.second.size(); i<N; i++)
+                actualResult.emplace_back(nullptr, nullptr);
+        }
+        auto it = primary_index.at(actId);
+        if (it.first == it.second) {
+            for (size_t i = 0, N = cps.second.size(); i<N; i++)
+                actualResult.emplace_back(nullptr, nullptr);
+        } else {
+            assert(table.size() >= it.first);
+            assert(table.size() >= it.second);
+            const record* begin = table.data() + it.first;
+            const record* end = table.data() + it.second;
+
+            auto propRef = cps.second.begin(), propEnd = cps.second.end();
+            do {
+                const union_type prop_leftValue = cast_unions(type, (*propRef)->lower_bound);
+                const union_type prop_rightValue = cast_unions(type, (*propRef)->upper_bound);
+
+                const record* lb = std::lower_bound(begin, end, prop_leftValue, [&](const record &r, const union_type &value) {
+                    return resolve(r) < value;
+                });
+
+                if (lb != end) {
+                    const record* ub = std::upper_bound(begin, end, prop_rightValue, [&](const union_type &value, const record &r) {
+                        return resolve(r) > value;
+                    });
+
+                    auto tmpLeft = lb;
+                    auto tmpRight = ub;
+                    if (tmpRight != end) {
+                        tmpRight--;
+                    }
+                    else
+                        tmpRight = table.data() + (it.second-1);
+
+                    if (std::distance(tmpLeft, tmpRight) < 0) {
+                        actualResult.emplace_back(nullptr, nullptr);
+                    } else {
+                        actualResult.emplace_back(tmpLeft, tmpRight);
+                        begin = tmpRight;
+                    }
+                }
+
+                propRef++;
+            } while (propRef != propEnd);
+        }
+    }
+    return actualResult;
 }

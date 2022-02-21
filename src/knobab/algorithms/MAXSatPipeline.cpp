@@ -86,48 +86,55 @@ void MAXSatPipeline::data_chunk(CNFDeclareDataAware *model,
 
     ltlf_query_manager::finalize_unions(W); // Squared on the size of the atoms
 
-
     for (const auto& ref : W) {
         human_readable_ltlf_printing(std::cout, ref) << std::endl; //todo: debugging
     }
 
     remove_duplicates(toUseAtoms);
 
+    // Just the atom iteration
+    auto toUseAtomsEnd = std::stable_partition(toUseAtoms.begin(), toUseAtoms.end(), [&](const auto& x) { return atomization.act_atoms.contains(x); });
+    for (auto it = toUseAtoms.begin(); it != toUseAtomsEnd; it++) {
+        auto q = DataQuery::AtomQuery(*it);
+        size_t offset = data_accessing.size();
+        auto find = data_offset.emplace(q, offset);
+        if (find.second){
+            offset = data_accessing.size();
+            data_accessing.emplace_back(q, empty_result);
+        } else
+            offset = (find.first->second);
+        atomToFormulaOffset.emplace_back(std::set<size_t>{offset});
+    }
+    barrier_to_range_queries = data_accessing.size();
+    barriers_to_atfo = atomToFormulaOffset.size();
 
-    assert(!toUseAtoms.empty());
-    for (const auto& atom : toUseAtoms) { // So not to do the data visiting twice!
-        if (atomization.act_atoms.contains(atom)) {
-            auto q = DataQuery::AtomQuery(atom);
-            size_t offset = data_accessing.size();
-            auto find = data_offset.emplace(q, offset);
+    for (auto it = toUseAtomsEnd, en = toUseAtoms.end(); it != en; it++) {
+        auto it2 = atomization.atom_to_conjunctedPredicates.find(*it);
+        assert(it2 != atomization.atom_to_conjunctedPredicates.end());
+
+        std::set<size_t> ranges;
+        for (const auto& clause : it2->second) {
+            // Sanity Checks
+            assert(clause.casusu == INTERVAL);
+            assert(clause.BiVariableConditions.empty());
+
+            // TODO: split the RangeQuery by clause.var (as they are going to be on different tables),
+            //       clause.label (as the ranges are ordered by act and then by value) and then sort
+            //       the remainder by interval. By doing so, we are going to pay the access to clause.label
+            //       only once, and we are going to scan the whole range at most linearly instead of performing
+            //       at most linear scans for each predicate.
+            //       Then, the access can be parallelized by variable name, as they are going to query separated tables
+            auto q = DataQuery::RangeQuery(clause.label, clause.var, clause.value, clause.value_upper_bound);
+            auto find = data_offset.emplace(q, data_accessing.size());
             if (find.second){
-                offset = data_accessing.size();
+                ranges.insert(data_accessing.size());
+                data_accessing_range_query_to_offsets[clause.var][clause.label].emplace_back(data_accessing.size());
                 data_accessing.emplace_back(q, empty_result);
             } else
-                offset = (find.first->second);
-            atomToFormulaOffset.emplace_back(std::set<size_t>{offset});
-        } else {
-            auto it = atomization.atom_to_conjunctedPredicates.find(atom);
-            assert(it != atomization.atom_to_conjunctedPredicates.end());
-
-            std::set<size_t> ranges;
-            for (const auto& clause : it->second) {
-                // Sanity Checks
-                assert(clause.casusu == INTERVAL);
-                assert(clause.BiVariableConditions.empty());
-
-                auto q = DataQuery::RangeQuery(clause.label, clause.var, clause.value, clause.value_upper_bound);
-                auto find = data_offset.emplace(q, data_accessing.size());
-                if (find.second){
-                    ranges.insert(data_accessing.size());
-                    data_accessing.emplace_back(q, empty_result);
-                } else
-                    ranges.insert(find.first->second);
-            }
-            atomToFormulaOffset.emplace_back(ranges);
+                ranges.insert(find.first->second);
         }
+        atomToFormulaOffset.emplace_back(ranges);
     }
-
 }
 
 void
@@ -171,12 +178,24 @@ MAXSatPipeline::localExtract(const AtomizingPipeline &atomization,
     }
 }
 
-void MAXSatPipeline::data_pipeline_first() {
+void MAXSatPipeline::data_pipeline_first( const KnowledgeBase& kb) {
 
     // 1. Performing the query over each single predicate that we have extracted, so not to duplicate the data access
-    for (const auto& ref : data_accessing) {
-        // TODO: multithreaded
+    for (auto& ref : data_accessing) {
         // TODO: Given the query in ref.first, put the result in ref.second
+        switch (ref.first.type) {
+            case ExistsQuery:
+                ref.second = kb.exists(kb.resolveCountingData(ref.first.label));
+                break;
+            case InitQuery:
+                ref.second = kb.init<std::pair<uint32_t, uint16_t>, double>(ref.first.label).traceApproximations;
+                break;
+            case EndsQuery:
+                ref.second = kb.ends<std::pair<uint32_t, uint16_t>, double>(ref.first.label).traceApproximations;
+                break;
+            default:
+                assert(false);
+        }
     }
 
     auto result = partition_sets(atomToFormulaOffset); // O: squared on the size of the atoms

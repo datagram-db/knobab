@@ -645,13 +645,13 @@ std::pair<const uint32_t, const uint32_t> KnowledgeBase::resolveCountingData(con
     return count_table.resolve_primary_index(mappedVal);
 }
 
-std::unordered_map<uint32_t, double> KnowledgeBase::exists(const std::pair<const uint32_t, const uint32_t>& indexes, const uint16_t& amount) const {
-    std::unordered_map<uint32_t, double> foundElems = std::unordered_map<uint32_t, double>();
+std::vector<std::pair<std::pair<trace_t, event_t>, double>> KnowledgeBase::exists(const std::pair<const uint32_t, const uint32_t>& indexes, const uint16_t& amount) const {
+    std::vector<std::pair<std::pair<trace_t, event_t>, double>> foundElems;
 
     for (auto it = count_table.table.begin() + indexes.first; it != count_table.table.begin() + indexes.second + 1; ++it) {
         uint16_t approxConstant = act_table_by_act_id.getTraceLength(it->id.parts.trace_id) / 2;
         double satisfiability = getSatisifiabilityBetweenValues(amount, it->id.parts.event_id, approxConstant);
-        foundElems.emplace(it->id.parts.trace_id, satisfiability);
+        foundElems.emplace_back(std::pair<trace_t, event_t>{it->id.parts.trace_id, 0}, satisfiability);
     }
 
     return foundElems;
@@ -741,6 +741,49 @@ std::vector<std::pair<trace_t, event_t>> KnowledgeBase::exact_range_query(DataPr
             std::sort(S.begin(), S.end());
             S.erase(std::unique(S.begin(), S.end()), S.end());
             return S;
+        }
+    }
+}
+
+void KnowledgeBase::exact_range_query(const std::string &var,
+                                      const std::unordered_map<std::string, std::vector<size_t>> &actToPredId,
+                                      std::vector<std::pair<DataQuery, std::vector<std::pair<std::pair<trace_t, event_t>, double>>>> &Qs) const {
+    auto it = attribute_name_to_table.find(var);
+    if (it == attribute_name_to_table.end()) {
+        // if no attribute is there, for the exact match I assume that no value was matched
+        return;
+    } else {
+        // The attribute exists within the dataset
+        std::vector<std::pair<size_t, std::vector<DataQuery*>>> V;
+        for (const auto& mapRef : actToPredId) {
+            std::pair<size_t, std::vector<DataQuery*>>& DQ = V.emplace_back(event_label_mapper.get(mapRef.first), std::vector<DataQuery*>{});
+            for (const auto& qId : mapRef.second) {
+                auto& prop = Qs.at(qId).first;
+                DQ.second.emplace_back(&prop);
+            }
+        }
+
+        // TODO: this is just the concrete doing.
+        auto tmp = it->second.exact_range_query(V);
+
+        size_t j = 0;
+        for (const auto& mapRef : actToPredId) {
+            for (const auto& qId : mapRef.second) {
+                auto& tmpRef = tmp.at(j);
+                if ((tmpRef.first == tmpRef.second) && tmpRef.first == nullptr ) continue;
+                else {
+                    auto& S = Qs[qId].second;
+                    size_t N = std::distance(tmpRef.first, tmpRef.second);
+                    for (size_t i = 0; i<=N; i++) {
+                        const auto& exactIt = tmpRef.first[i];
+                        const auto& resolve = act_table_by_act_id.table.at(exactIt.act_table_offset).entry.id.parts;
+                        S.emplace_back(std::pair<trace_t, event_t>{resolve.trace_id, resolve.event_id}, 1.0);
+                    }
+                    std::sort(S.begin(), S.end());
+                    S.erase(std::unique(S.begin(), S.end()), S.end());
+                }
+                j++;
+            }
         }
     }
 }

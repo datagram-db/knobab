@@ -30,13 +30,16 @@ struct MAXSatPipeline {
     // DATA
     std::unordered_map<DataQuery, size_t> data_offset;
     std::vector<std::pair<DataQuery, std::vector<std::pair<std::pair<trace_t, event_t>, double>>>> data_accessing;
+    std::unordered_map<std::string, std::unordered_map<std::string,std::vector<size_t>>> data_accessing_range_query_to_offsets;
     std::unordered_map<DeclareDataAware, std::unordered_map<std::pair<bool, std::string>, label_set_t>> declare_atomization;
     std::vector<std::set<size_t>> atomToFormulaOffset;
     std::vector<std::string> toUseAtoms; // This is to ensure the insertion of unique elements to the map!
     std::vector<std::pair<std::pair<trace_t, event_t>, double>> results_cache;
+    size_t barrier_to_range_queries, barriers_to_atfo;
 
     void pipeline(CNFDeclareDataAware* model,
-                  const AtomizingPipeline& atomization) {
+                  const AtomizingPipeline& atomization,
+                  const KnowledgeBase& kb) {
         /// Clearing the previous spurious computation values
         clear();
 
@@ -44,7 +47,7 @@ struct MAXSatPipeline {
         data_chunk(model, atomization);
 
         /// First element of the pipeline: given the data query, fills in the
-        data_pipeline_first();
+        data_pipeline_first( const KnowledgeBase& kb);
 
         /// Second part of the pipeline: compute each possible instance of the operator that there exists
 
@@ -54,7 +57,7 @@ struct MAXSatPipeline {
     void clear();
     void data_chunk(CNFDeclareDataAware* model,
                     const AtomizingPipeline& atomization);
-    void data_pipeline_first();
+    void data_pipeline_first( const KnowledgeBase& kb);
 
     void
     localExtract(const AtomizingPipeline &atomization,
