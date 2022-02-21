@@ -85,7 +85,7 @@ const std::vector<std::vector<size_t>> & ActTable::indexing1() { // todo: rename
         for (const std::pair<trace_t, event_t>& cp : ref) {
             table.emplace_back(k,
                                cp.first,
-                               cast_to_float(cp.second, trace_length.at(cp.first) - 1),
+                               cp.second,//cast_to_float(cp.second, trace_length.at(cp.first) - 1),
                                nullptr, nullptr);
             builder.trace_id_to_event_id_to_offset[cp.first][cp.second] = offset++;
         }
