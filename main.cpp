@@ -458,6 +458,9 @@ void generate_traces(const std::string& log_file = "testing/nologolog.txt",
 
 
 int main() {
+
+    partition_sets<std::string>({{"1","2","3"}, {"3","4","5"}, {"1","2"}, {"1","7","8"}, {"8","0","1","2","3"}});
+
     //test_group_by();
     //generate_nonunary_templates();
     //test_data_query();
@@ -467,7 +470,6 @@ int main() {
     //test_grounding();
     //generate_traces();
     //ltlf_operators_testing();
-
 
 
     return 0;

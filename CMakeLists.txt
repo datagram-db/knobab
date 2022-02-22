@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.16)
 project(knobab)
 set(CMAKE_CXX_STANDARD 20)
 include_directories(submodules/rapidxml-1.13)
+include_directories(submodules/thread-pool)
 
 #set(Boost_USE_STATIC_LIBS ON)
 #set(Boost_USE_MULTITHREADED ON)

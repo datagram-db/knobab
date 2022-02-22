@@ -35,7 +35,7 @@ struct ltlf_query {
     ltlf_query_t casusu = Q_TRUE;
     std::vector<ltlf_query*> args;
     std::set<std::string> atom;
-    std::vector<size_t> partial_results;
+    std::set<size_t> partial_results;
     bool hasResult = false;
     size_t result_id = 0;
     PredicateManager joinCondition;
@@ -57,6 +57,8 @@ struct ltlf_query {
 
     bool operator==(const ltlf_query &rhs) const;
     bool operator!=(const ltlf_query &rhs) const;
+
+    std::vector<std::pair<std::pair<uint32_t , uint16_t>, double>> result;
 };
 
 namespace std {

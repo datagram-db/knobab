@@ -10,9 +10,20 @@
 #include "atomization_pipeline.h"
 #include "knobab/trace_repairs/DataQuery.h"
 #include "yaucl/bpm/structures/ltlf/ltlf_query.h"
+#include <thread_pool.hpp>
 
+#define PARALLEL
 
 struct MAXSatPipeline {
+
+
+#ifdef PARALLEL
+    // A global thread pool object, automatically determining the threads with the number of the architecture ones
+    thread_pool pool;
+#else
+    thread_pool pool(1);
+#endif
+
     // Input
 
     CNFDeclareDataAware* declare_model = nullptr;
@@ -34,8 +45,8 @@ struct MAXSatPipeline {
     std::unordered_map<DeclareDataAware, std::unordered_map<std::pair<bool, std::string>, label_set_t>> declare_atomization;
     std::vector<std::set<size_t>> atomToFormulaOffset;
     std::vector<std::string> toUseAtoms; // This is to ensure the insertion of unique elements to the map!
-    std::vector<std::pair<std::pair<trace_t, event_t>, double>> results_cache;
     size_t barrier_to_range_queries, barriers_to_atfo;
+    std::vector<std::vector<std::pair<std::pair<trace_t, event_t>, double>>> atomicPartIntersectionResult;
 
     void pipeline(CNFDeclareDataAware* model,
                   const AtomizingPipeline& atomization,

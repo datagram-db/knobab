@@ -65,5 +65,47 @@ public:
 private:
 };
 
+template<typename InputIt1, typename InputIt2, typename OutputIt, typename Aggregation>
+OutputIt setIntersection(InputIt1 first1, InputIt1 last1,
+                        InputIt2 first2, InputIt2 last2,
+                         OutputIt d_first, Aggregation aggr)
+{
+    for (; first1 != last1; ++d_first) {
+        if (first2 == last2)
+            return  d_first;
+        if (first1->first > first2->first) {
+            first2++;
+        } else if (first1->first < first2->first) {
+            first1++;
+        } else {
+            *d_first = std::make_pair(first1->first, aggr(first1->second, first2->second));
+            *first1++;
+            *first2++;
+        }
+    }
+    return d_first;
+}
+
+
+template<typename InputIt1, typename InputIt2, typename OutputIt, typename Aggregation>
+OutputIt setUnion(InputIt1 first1, InputIt1 last1,
+                  InputIt2 first2, InputIt2 last2,
+                  OutputIt d_first, Aggregation aggr)
+{
+    for (; first1 != last1; ++d_first) {
+        if (first2 == last2)
+            return std::copy(first1, last1, d_first);
+        if (first1->first > first2->first) {
+            *d_first = *first2++;
+        } else if (first1->first < first2->first) {
+            *d_first = *first1++;
+        } else {
+            *d_first = std::make_pair(first1->first, aggr(first1->second, first2->second));
+            *first1++;
+            *first2++;
+        }
+    }
+    return std::copy(first2, last2, d_first);
+}
 
 #endif //KNOBAB_TRACEDATA_H
