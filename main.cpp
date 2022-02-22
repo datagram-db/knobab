@@ -4,7 +4,7 @@
 #include "knobab/utilities/Aggregators.h"
 #include "knobab/dataStructures/TraceData.h"
 #include "knobab/utilities/LTLFOperators.h"
-#include "knobab/setOperators/operators.h"
+#include "knobab/setOperators/SetOperators.h"
 
 //const KnowledgeBase::no_antlr_log LogTrace = {
 //        {{"a", {}}, {"a", {}}, {"b", {}}}};
@@ -30,9 +30,9 @@
 
 const KnowledgeBase::no_antlr_log LogTrace = {
         {{"a", {{"x", 2.0},{"y", 3.0}}},
-         {"a", {{"x", 1.0},{"y", 5.0}}},
-         {"a", {{"x", 6.0},{"y", 5.0}}},
-         {"b", {{"x", 4.0},{"y", 3.0}}}},
+         {"a", {{"x", 2.0},{"y", 3.0}}},
+         {"a", {{"x", 2.0},{"y", 5.0}}},
+         {"a", {{"x", 7.0},{"y", 6.0}}}},
 
         {{"a", {{"x", 2.0},{"y", 1.0}}},
          {"a", {{"x", 1.0},{"y", 3.0}}},
@@ -108,15 +108,13 @@ int main() {
     std::cout << "========INTERSECTION NO PREDICATE=========" << std::endl << "BETWEEN: " << std::endl << initAVec.getTraceApproximations() << std::endl << "AND" << std::endl
     << endsAVec.getTraceApproximations() << std::endl << "RESULT: " << std::endl << intersectionPred.getTraceApproximations() << std::endl;
 
-    struct example{
-        std::vector<std::pair<std::pair<uint32_t, uint16_t>,  std::pair<double, std::vector<uint16_t>>>> elems;
-    };
-
     example e;
-    // aaab
+    // aaaa
     e.elems.emplace_back(std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>({0, 0}, {1, {0}}));
     e.elems.emplace_back(std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>({0, 1}, {1, {1}}));
     e.elems.emplace_back(std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>({0, 2}, {1, {2}}));
+    e.elems.emplace_back(std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>({0, 3}, {1, {3}}));
+    e.elems.emplace_back(std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>({1, 0}, {1, {0}}));
 
     std::cout << "========LTLf Operators=========" << std::endl;
     auto x1 = next(0, 0, 1, e);
@@ -132,18 +130,24 @@ int main() {
     std::cout << "--FUTURE--" << std::endl << "TEMPORAL: " << x5 << std::endl << "NON-TEMPORAL" << x6 << std::endl;
 
     example e1;
-    // aabaa
+    // aaaa
     e1.elems.emplace_back(std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>({0, 0}, {1, {1}}));
     e1.elems.emplace_back(std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>({0, 1}, {1, {2}}));
 
     example e2, e3;
-
     setUnion(e.elems.begin(), e.elems.end(), e1.elems.begin(), e1.elems.end(), std::back_inserter(e2.elems), Aggregators::maxSimilarity<double, double, double>, &predManager);
-    std::cout << "--LTLF UNION--" << std::endl << e2.elems << std::endl;
+    setUnionUntimed(e.elems.begin(), e.elems.end(), e1.elems.begin(), e1.elems.end(), std::back_inserter(e3.elems), Aggregators::maxSimilarity<double, double, double>,  &predManager);
+    std::cout << "--LTLF UNION--" << std::endl << "TEMPORAL: " << e2.elems << std::endl <<  "NON-TEMPORAL" << e3.elems << std::endl;;
 
-    setIntersection(e.elems.begin(), e.elems.end(), e1.elems.begin(), e1.elems.end(), std::back_inserter(e3.elems), Aggregators::maxSimilarity<double, double, double>, &predManager);
-    std::cout << "--LTLF INTERSECTION--" << std::endl << e3.elems << std::endl;
+    example e4, e5;
+    setIntersection(e.elems.begin(), e.elems.end(), e1.elems.begin(), e1.elems.end(), std::back_inserter(e4.elems), Aggregators::maxSimilarity<double, double, double>, &predManager);
+    setIntersectionUntimed(e.elems.begin(), e.elems.end(), e1.elems.begin(), e1.elems.end(), std::back_inserter(e5.elems), Aggregators::maxSimilarity<double, double, double>, &predManager);
+    std::cout << "--LTLF INTERSECTION--" << std::endl << "TEMPORAL: " << e4.elems << std::endl <<  "NON-TEMPORAL" << e5.elems << std::endl;;
 
+
+    example choiceEx = Choice(e, e1, &predManager);
+
+    std::cout << "Hoping this works: " << std::endl << choiceEx.elems << std::endl;
     std::flush(std::cout);
     return 0;
 }
