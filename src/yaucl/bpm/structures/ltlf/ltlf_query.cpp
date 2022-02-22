@@ -50,7 +50,7 @@ bool ltlf_query::operator!=(const ltlf_query &rhs) const {
 void ltlf_query::associateDataQueryIdsToFormulaByAtom(const std::string &x, size_t l) {
     if (atom.contains(x)) {
         //assert(args.empty());
-        partial_results.emplace_back(l);
+        partial_results.emplace(l);
     } else for (auto& child : args)
             child->associateDataQueryIdsToFormulaByAtom(x, l);
 }

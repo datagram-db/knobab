@@ -8,6 +8,7 @@
 #include "knobab/algorithms/MAXSatPipeline.h"
 
 
+
 std::string MAXSatPipeline::LEFT_ATOM{"a"};
 std::string MAXSatPipeline::RIGHT_ATOM{"b"};
 
@@ -27,6 +28,7 @@ void MAXSatPipeline::clear() {
     declare_atomization.clear();
     atomToFormulaOffset.clear();
     toUseAtoms.clear();
+    atomicPartIntersectionResult.clear();
 }
 
 void MAXSatPipeline::data_chunk(CNFDeclareDataAware *model,
@@ -144,10 +146,10 @@ MAXSatPipeline::generateConcreteQuery(std::vector<std::string> &toUseAtoms,
     auto q = DataQuery::AtomQueries(r, item.left_act);
     auto find = data_offset.emplace(q, data_accessing.size());
     if (find.second){
-        formula->partial_results.emplace_back(data_accessing.size());
+        formula->partial_results.emplace(data_accessing.size()); // TODO: removable
         data_accessing.emplace_back(q, empty_result);
     } else
-        formula->partial_results.emplace_back(find.first->second);
+        formula->partial_results.emplace(find.first->second); // TODO: removable
     if (item.left_decomposed_atoms.empty())
         toUseAtoms.emplace_back(item.left_act);
     else
@@ -178,74 +180,189 @@ MAXSatPipeline::localExtract(const AtomizingPipeline &atomization,
     }
 }
 
-void MAXSatPipeline::data_pipeline_first( const KnowledgeBase& kb) {
+static inline
+std::vector<std::pair<std::pair<trace_t, event_t>, double>> local_intersection(const std::set<size_t> &vecs,
+                                                                         const std::vector<std::pair<DataQuery, std::vector<std::pair<std::pair<trace_t, event_t>, double>>>>& results) {
+    if (vecs.empty()) return {};
+    auto it = vecs.begin();
+    auto last_intersection = results.at(*it).second;
+    std::vector<std::pair<std::pair<trace_t, event_t>, double>> curr_intersection;
+    for (std::size_t i = 1; i < vecs.size(); ++i) {
+        it++;
+        auto ref = results.at(*it).second;
+        setIntersection(last_intersection.begin(), last_intersection.end(),
+                              ref.begin(), ref.end(),
+                              std::back_inserter(curr_intersection),
+                              [](auto x, auto y) {return 1.0;});
+        std::swap(last_intersection, curr_intersection);
+        curr_intersection.clear();
+    }
+    return last_intersection;
+}
+
+static inline
+std::vector<std::pair<std::pair<trace_t, event_t>, double>> local_intersection(const std::set<size_t> &vecs,
+                                                                               const std::vector<std::vector<std::pair<std::pair<trace_t, event_t>, double>>>& results) {
+    if (vecs.empty()) return {};
+    auto it = vecs.begin();
+    auto last_intersection = results.at(*it);
+    std::vector<std::pair<std::pair<trace_t, event_t>, double>> curr_intersection;
+    for (std::size_t i = 1; i < vecs.size(); ++i) {
+        it++;
+        auto ref = results.at(*it);
+        setIntersection(last_intersection.begin(), last_intersection.end(),
+                        ref.begin(), ref.end(),
+                        std::back_inserter(curr_intersection),
+                        [](auto x, auto y) {return 1.0;});
+        std::swap(last_intersection, curr_intersection);
+        curr_intersection.clear();
+    }
+    return last_intersection;
+}
+
+static inline
+std::vector<std::pair<std::pair<trace_t, event_t>, double>> local_union(const std::set<size_t> &vecs,
+                                                                         const std::vector<std::vector<std::pair<std::pair<trace_t, event_t>, double>>>& results) {
+    if (vecs.empty()) return {};
+    auto it = vecs.begin();
+    auto last_intersection = results.at(*it);
+    std::vector<std::pair<std::pair<trace_t, event_t>, double>> curr_intersection;
+    for (std::size_t i = 1; i < vecs.size(); ++i) {
+        it++;
+        auto ref = results.at(*it);
+        setUnion(last_intersection.begin(), last_intersection.end(),
+                        ref.begin(), ref.end(),
+                        std::back_inserter(curr_intersection),
+                        [](auto x, auto y) {return 1.0;});
+        std::swap(last_intersection, curr_intersection);
+        curr_intersection.clear();
+    }
+    return last_intersection;
+}
+
+static inline
+std::vector<std::pair<std::pair<trace_t, event_t>, double>> local_union(const ltlf_query* q) {
+    if ((!q) || (q->args.empty())) return {};
+    auto it = q->args.begin();
+    auto last_union = (*it)->result;
+    std::vector<std::pair<std::pair<trace_t, event_t>, double>> curr_union;
+    for (std::size_t i = 1; i < q->args.size(); ++i) {
+        it++;
+        auto ref = (*it)->result;
+        setUnion(last_union.begin(), last_union.end(),
+                 ref.begin(), ref.end(),
+                 std::back_inserter(curr_union),
+                 [](auto x, auto y) {return 1.0;});
+        std::swap(last_union, curr_union);
+        curr_union.clear();
+    }
+    return last_union;
+}
+
+static inline
+std::vector<std::pair<std::pair<trace_t, event_t>, double>> local_intersection(const ltlf_query* q) {
+    if ((!q) || (q->args.empty())) return {};
+    auto it = q->args.begin();
+    auto last_union = (*it)->result;
+    std::vector<std::pair<std::pair<trace_t, event_t>, double>> curr_union;
+    for (std::size_t i = 1; i < q->args.size(); ++i) {
+        it++;
+        auto ref = (*it)->result;
+        setIntersection(last_union.begin(), last_union.end(),
+                 ref.begin(), ref.end(),
+                 std::back_inserter(curr_union),
+                 [](auto x, auto y) {return 1.0;});
+        std::swap(last_union, curr_union);
+        curr_union.clear();
+    }
+    return last_union;
+}
+
+
+
+void MAXSatPipeline::data_pipeline_first(const KnowledgeBase& kb) {
 
     // 1. Performing the query over each single predicate that we have extracted, so not to duplicate the data access
-    for (size_t i = 0; i< barrier_to_range_queries; i++) {
-        auto& ref = data_accessing.at(i);
-        // TODO: Given the query in ref.first, put the result in ref.second
-        switch (ref.first.type) {
-            case ExistsQuery:
-                ref.second = kb.exists(kb.resolveCountingData(ref.first.label));
-                break;
-            case InitQuery:
-                ref.second = kb.init<std::pair<uint32_t, uint16_t>, double>(ref.first.label).traceApproximations;
-                break;
-            case EndsQuery:
-                ref.second = kb.ends<std::pair<uint32_t, uint16_t>, double>(ref.first.label).traceApproximations;
-                break;
-            case AtomQuery:
-                ref.second = kb.exists<std::pair<uint32_t, uint16_t>, double>(ref.first.label).traceApproximations;
-                break;
-            default:
-                assert(false); // This should be dealt in (B)
-        }
+    if (barrier_to_range_queries > 0) {
+        pool.parallelize_loop(0, barrier_to_range_queries, [&](const size_t a, const size_t b) {
+            for (size_t i = a; i < b; i++) {
+                auto& ref = data_accessing.at(i);
+                // TODO: Given the query in ref.first, put the result in ref.second
+                switch (ref.first.type) {
+                    case ExistsQuery:
+                        ref.second = kb.exists(kb.resolveCountingData(ref.first.label));
+                        break;
+                    case InitQuery:
+                        ref.second = kb.init<std::pair<uint32_t, uint16_t>, double>(ref.first.label).traceApproximations;
+                        break;
+                    case EndsQuery:
+                        ref.second = kb.ends<std::pair<uint32_t, uint16_t>, double>(ref.first.label).traceApproximations;
+                        break;
+                    case AtomQuery:
+                        ref.second = kb.exists<std::pair<uint32_t, uint16_t>, double>(ref.first.label).traceApproximations;
+                        break;
+                    default:
+                        assert(false); // This should be dealt in (B)
+                }
+            }
+        });
     }
 
-    for (const auto& rangeQueryRefs : data_accessing_range_query_to_offsets) { // (B)
-        kb.exact_range_query(rangeQueryRefs.first, rangeQueryRefs.second, data_accessing);
+
+    // 2. Performing the queries over the range queries
+    if (!data_accessing_range_query_to_offsets.empty()) {
+        std::vector<std::pair<std::string, std::unordered_map<std::string,std::vector<size_t>>>> someVector;
+        std::transform(std::move_iterator(data_accessing_range_query_to_offsets.begin()),
+                       std::move_iterator(data_accessing_range_query_to_offsets.end()),
+                       std::back_inserter(someVector),
+                       [](auto&& entry){ return std::forward<decltype(entry)>(entry); });
+        pool.parallelize_loop(0, someVector.size(), [&](auto& lb, auto& ub) {
+            for (size_t i = lb; i < ub; i++) {
+                auto& rangeQueryRefs = someVector.at(i);
+                kb.exact_range_query(rangeQueryRefs.first, rangeQueryRefs.second, data_accessing);
+            }
+        });
+        std::transform(std::move_iterator(someVector.begin()),
+                       std::move_iterator(someVector.end()),
+                       std::inserter(data_accessing_range_query_to_offsets, data_accessing_range_query_to_offsets.begin()),
+                       [](auto&& entry){ return std::forward<decltype(entry)>(entry); });
+
     }
 
     auto result = partition_sets(atomToFormulaOffset); // O: squared on the size of the atoms
     size_t isFromFurtherDecomposition = result.minimal_common_subsets.size();
 
-    // TODO: resultOfS for collecting the intermediate computations
-    for (const auto& S : result.minimal_common_subsets) {
-        // TODO: multithreaded
-        // TODO: perform the intersection among all of the elements in S, and put the result in resultOfS
-    }
-
-    // TODO: resultOfSSecond
-    for (const auto& S : result.minimal_common_subsets_composition) {
-        // TODO: multithreaded
-        // TODO: perform the intersection among all of the elements in S, using the intermediate results from resultOfSSecond
-    }
-
-    results_cache.resize(toUseAtoms.size());
-    for (const auto& ref : result.decomposedIndexedSubsets) {
-        // TODO: multithreaded
-        bool just = true;
-        for (size_t i : *ref.second) {
-            // TODO: perform the intersection
-            if (i < isFromFurtherDecomposition) {
-                // TODO: Obtain the (i)-th result from resultOfS
-                if (just) {
-                    just = false;
-                }
-            } else {
-                // TODO: Obtain the (i-isFromFurtherDecomposition)-th result from resultOfSSecond
-                if (just) {
-                    just = false;
-                }
-            }
+    std::vector<std::vector<std::pair<std::pair<trace_t, event_t>, double>>> resultOfS(result.minimal_common_subsets.size()+result.minimal_common_subsets_composition.size());
+    pool.parallelize_loop(0, result.minimal_common_subsets.size(), [&](auto& lb, auto& ub) {
+        for (size_t i = lb; i < ub; i++) {
+            auto& S = result.minimal_common_subsets.at(i);
+            // resultOfS for collecting the intermediate computations
+            resultOfS[i] = local_intersection(S, data_accessing);
         }
-        // TODO: put the global intersection into a map representation.
-        // TODO: ref->first will correspond to the atom in that same position in toUseAtoms.
+    });
 
-    }
+    pool.parallelize_loop(0, result.minimal_common_subsets_composition.size(), [&](auto& lb, auto& ub) {
+        for (size_t i = lb; i < ub; i++) {
+            auto& S = result.minimal_common_subsets_composition.at(i);
+            // Perform the intersection among all of the elements in S,
+            // using the intermediate results from resultOfSSecond
+            resultOfS[isFromFurtherDecomposition + i] = local_intersection(S, resultOfS);
+        }
+    });
 
-    // TODO: clear resultOfS
-    // TODO: clear resultOfSSecond
+
+    std::vector<std::vector<std::pair<std::pair<trace_t, event_t>, double>>> results_cache;
+    results_cache.resize(toUseAtoms.size());
+    pool.parallelize_loop(0, result.decomposedIndexedSubsets.size(), [&](auto lb, auto ub) {
+        for (size_t j = lb; j < ub; j++) {
+            auto& ref = result.decomposedIndexedSubsets.at(j);
+            // put the global intersection into a map representation.
+            // ref->first will correspond to the atom in that same position in toUseAtoms.
+            results_cache[ref.first] = local_intersection(*ref.second, resultOfS);
+        }
+    });
+
+    resultOfS.clear();
 
     // Preparing the second phase of the pipeline, where the extracted data is going to be combined.
     for (size_t i = 0, N = toUseAtoms.size(); i<N; i++) {
@@ -255,9 +372,63 @@ void MAXSatPipeline::data_pipeline_first( const KnowledgeBase& kb) {
         }
     }
 
-    auto it = ltlf_query_manager::Q.cbegin(), en = ltlf_query_manager::Q.cend();
+    auto it = ltlf_query_manager::Q.rbegin(), en = ltlf_query_manager::Q.rend();
     for (; it != en; it++) {
+        pool.parallelize_loop(0, it->second.size(), [&](auto lb, auto ub) {
+            for (size_t j = lb; j < ub; j++) {
+                auto formula = it->second.at(j); // TODO: run this query
+                switch (formula->casusu) {
+                    case Q_TRUE:
+                        break;
+                    case Q_NEXT:
+                        break;
+                    case Q_FALSE:
+                        break;
+                    case Q_ACT:
+                        formula->result = local_union(formula->partial_results, results_cache);
+                        break;
+                    case Q_AND:
+                        if (formula->isTimed) {
+                            formula->result = local_intersection(formula);
+                        } else {
+                            // TODO
+                        }
+                        break;
+                    case Q_OR:
+                        if (formula->isTimed) {
+                            formula->result = local_union(formula);
+                        } else {
+                            // TODO
+                        }
+                        break;
+                    case Q_XOR:
+                        if (formula->isTimed) {
+                            formula->result = local_union(formula);
+                        } else {
+                            // TODO
+                        }
+                        break;
+                    case Q_BOX:
+                        break;
+                    case Q_DIAMOND:
+                        break;
+                    case Q_UNTIL:
+                        break;
+                    case Q_RELEASE:
+                        break;
+                    case Q_LAST:
+                        break;
+                    case Q_INIT:
+                        break;
+                    case Q_END:
+                        break;
+                    case Q_EXISTS:
+                        break;
+                }
+            }
+        });
         // TODO: parallelized run over the it->second, and store the results
     }
+
 }
 
