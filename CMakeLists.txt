@@ -4,6 +4,10 @@ set(CMAKE_CXX_STANDARD 20)
 include_directories(submodules/rapidxml-1.13)
 include_directories(submodules/thread-pool)
 
+set(CMAKE_THREAD_PREFER_PTHREAD TRUE)
+set(THREADS_PREFER_PTHREAD_FLAG TRUE)
+find_package(Threads REQUIRED)
+
 #set(Boost_USE_STATIC_LIBS ON)
 #set(Boost_USE_MULTITHREADED ON)
 #set(Boost_USE_STATIC_RUNTIME OFF)
@@ -150,5 +154,5 @@ target_link_libraries(knobab_flloat #${Boost_LIBRARIES} ${PYTHON_LIBRARIES}
 
 add_executable(test main.cpp )
 
-target_link_libraries(test yaml-cpp  knobab antlr4_static #${Boost_LIBRARIES} ${PYTHON_LIBRARIES} aaltaf
+target_link_libraries(test Threads::Threads yaml-cpp  knobab antlr4_static #${Boost_LIBRARIES} ${PYTHON_LIBRARIES} aaltaf
                                   yaucl_stringutils yaucl_numeric yaucl_hashing yaucl_data yaucl_bpm yaucl_graph knobab_flloat yaucl_structures)
