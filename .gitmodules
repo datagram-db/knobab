@@ -19,3 +19,9 @@
 [submodule "submodules/thread-pool+ù"]
 	path = submodules/thread-pool
 	url = https://github.com/bshoshany/thread-pool
+[submodule "submodules/cpp-httplib"]
+	path = submodules/cpp-httplib
+	url = https://github.com/yhirose/cpp-httplib
+[submodule "submodules/ctest"]
+	path = submodules/ctest
+	url = https://github.com/bvdberg/ctest

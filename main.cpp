@@ -109,6 +109,7 @@ void whole_testing(const std::string& log_file = "/home/giacomo/projects/knobab/
     //env.print_grounded_model(std::cout); // DEBUG
     //////////////////////////////////////////////////////////////////
 
+
     env.query_model();
 
 #if 0

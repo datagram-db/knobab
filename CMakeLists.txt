@@ -3,6 +3,7 @@ project(knobab)
 set(CMAKE_CXX_STANDARD 20)
 include_directories(submodules/rapidxml-1.13)
 include_directories(submodules/thread-pool)
+include_directories(submodules/cpp-httplib)
 
 #set(Boost_USE_STATIC_LIBS ON)
 #set(Boost_USE_MULTITHREADED ON)
