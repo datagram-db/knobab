@@ -6,6 +6,11 @@
 #define KNOBAB_TRACEDATA_H
 
 #include <vector>
+<<<<<<< HEAD
+=======
+#include <iostream>
+#include "knobab/predicates/PredicateManager.h"
+>>>>>>> sam
 
 template<typename traceIdentifier, typename traceValue>
 class TraceData {
@@ -15,6 +20,7 @@ public:
     TraceData(traceIdentifier id, traceValue v) : traceApproximations(id, v) {
     }
 
+<<<<<<< HEAD
     template<typename InputIt2, typename OutputIt, typename Aggregation>
     OutputIt setUnion(InputIt2 first2, InputIt2 last2,
                       OutputIt d_first, Aggregation aggr)
@@ -56,11 +62,15 @@ public:
         }
         return d_first;
     }
+=======
+
+>>>>>>> sam
 
     std::vector<std::pair<traceIdentifier, traceValue>>& getTraceApproximations() {
         return traceApproximations;
     }
 
+<<<<<<< HEAD
     std::vector<std::pair<traceIdentifier, traceValue>> traceApproximations;
 private:
 };
@@ -107,5 +117,11 @@ OutputIt setUnion(InputIt1 first1, InputIt1 last1,
     }
     return std::copy(first2, last2, d_first);
 }
+=======
+private:
+    std::vector<std::pair<traceIdentifier, traceValue>> traceApproximations;
+};
+
+>>>>>>> sam
 
 #endif //KNOBAB_TRACEDATA_H

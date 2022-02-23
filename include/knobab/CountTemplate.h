@@ -9,7 +9,10 @@
 #include <knobab/oid.h>
 #include <algorithm>
 #include <cassert>
+<<<<<<< HEAD
 #include <ostream>
+=======
+>>>>>>> sam
 
 
 struct CountTemplate {
@@ -33,8 +36,11 @@ struct CountTemplate {
         table.clear();
     }
 
+<<<<<<< HEAD
     friend std::ostream &operator<<(std::ostream &os, const CountTemplate &aTemplate);
 
+=======
+>>>>>>> sam
 private:
     uint16_t maxAct;
     uint32_t maxTraceId;

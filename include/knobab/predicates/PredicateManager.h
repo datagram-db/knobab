@@ -11,7 +11,7 @@
 
 struct PredicateManager {
     DEFAULT_CONSTRUCTORS(PredicateManager);
-    PredicateManager(const std::vector<std::vector<SimpleDataPredicate>>& pred): predicates(pred){}
+    PredicateManager(const std::vector<std::vector<SimpleDataPredicate>>& pred, const KnowledgeBase* k):: predicates(pred) , kb(k){}
     bool checkValidity(const env &e1, const env &e2) const;
 
     bool operator==(const PredicateManager &rhs) const;
@@ -21,8 +21,16 @@ struct PredicateManager {
         return predicates.empty();
     }
 
+    const KnowledgeBase* getKnowledgeBase() const{
+        return kb;
+    }
+    
+
+    env GetPayloadDataFromEvent(const std::pair<uint32_t , uint16_t>& pair) const;
+
 
     std::vector<std::vector<SimpleDataPredicate>> predicates;
+    const KnowledgeBase* kb;
 };
 
 
@@ -39,5 +47,6 @@ namespace std {
         }
     };
 }
+
 
 #endif //KNOBAB_PREDICATEMANAGER_H

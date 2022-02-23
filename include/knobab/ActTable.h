@@ -9,8 +9,11 @@
 #include <knobab/oid.h>
 #include <tuple>
 #include <vector>
+<<<<<<< HEAD
 #include <ostream>
 
+=======
+>>>>>>> sam
 
 uint16_t cast_to_float(size_t x, size_t l);
 
@@ -66,15 +69,25 @@ struct ActTable {
     const std::vector<std::vector<size_t>> & indexing1();
     void indexing2();
     void sanityCheck();
+<<<<<<< HEAD
     void clear();
     void clearIDX() {
         builder.trace_id_to_event_id_to_offset.clear();
+=======
+    void clear() {
+        secondary_index.clear();
+        primary_index.clear();
+        table.clear();
+>>>>>>> sam
     }
 
     size_t getTraceLength(size_t id) const { return trace_length.at(id); }
 
+<<<<<<< HEAD
     friend std::ostream &operator<<(std::ostream &os, const ActTable &table);
 
+=======
+>>>>>>> sam
 private:
     std::vector<std::tuple<trace_t, event_t, size_t>> expectedOrdering; // TODO: remove?
     std::vector<size_t> trace_length; // L1
@@ -91,6 +104,12 @@ public:
         return trace_length;
     }
 
+<<<<<<< HEAD
+=======
+    const table_builder& getBuilder() const{
+        return builder;
+    }
+>>>>>>> sam
 };
 
 

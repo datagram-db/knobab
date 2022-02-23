@@ -72,7 +72,8 @@ union _oid
 } ;
 
 struct oid {
-    //static_assert(sizeof(_oid) == sizeof(monotone_hash_t) && sizeof(monotone_hash_t) == sizeof(_oid::S), "Error: the bit in the bitfield are not correctly packed");
+    static_assert(sizeof(_oid) == sizeof(monotone_hash_t) && sizeof(monotone_hash_t) == sizeof(_oid::S), "Error: the bit in the bitfield are not correctly packed");
+
     _oid id;
 
     oid();

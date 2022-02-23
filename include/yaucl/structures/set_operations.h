@@ -27,10 +27,13 @@
 
 #include <unordered_set>
 
+
 template<typename T>
 std::unordered_set<T> unordered_intersection(const std::unordered_set<T> &a,
                                              const std::unordered_set<T> &b){
     if (a.size() > b.size()) return unordered_intersection(b, a);
+
+
     std::unordered_set<T> v3;
     for (auto i = a.begin(); i != a.end(); i++) {
         if (b.find(*i) != b.end()) v3.insert(*i);

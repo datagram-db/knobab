@@ -12,7 +12,10 @@
 #include <yaucl/bpm/structures/log/data_loader.h>
 #include <knobab/flloat_deps/DeclareTemplateCollect.h>
 #include <yaucl/bpm/algos/transformations/declare_to_dfa/TemplateCollectResult.h>
+<<<<<<< HEAD
 #include <knobab/algorithms/MAXSatPipeline.h>
+=======
+>>>>>>> sam
 
 struct Environment {
     /// Creating an instance of the knowledge base, that is going to store all the traces in the log!
@@ -21,18 +24,26 @@ struct Environment {
     GroundingStrategyConf grounding_conf;
 
     DeclareModelParse dmp;
+<<<<<<< HEAD
+=======
+    std::vector<DeclareDataAware> conjunctive_model;
+>>>>>>> sam
 
     CNFDeclareDataAware grounding;
 
     DeclareTemplateCollect declare_to_graph;
+<<<<<<< HEAD
     std::vector<DeclareDataAware> conjunctive_model;
 
     MAXSatPipeline maxsat_pipeline;
+=======
+>>>>>>> sam
 
     //std::unordered_map<DeclareDataAware, FlexibleFA<size_t, std::string>> pattern_graph;
 
 public:
 
+<<<<<<< HEAD
 
     double min_threshold = 1.0;
     double c = 2.0;
@@ -43,6 +54,8 @@ public:
         return db.range_query(prop, min_threshold, c);
     }
 
+=======
+>>>>>>> sam
     Environment(const std::filesystem::path& cache_folder = "data/cache") : declare_to_graph{cache_folder} {}
 
     /**
@@ -51,10 +64,13 @@ public:
      */
     semantic_atom_set  getSigmaAll() const;
 
+<<<<<<< HEAD
     void query_model() {
         maxsat_pipeline.pipeline(&grounding, ap, db);
     }
 
+=======
+>>>>>>> sam
     /**
      * Clears all of the bits and pieces, thus preparing into a novel test
      */
@@ -65,23 +81,31 @@ public:
      * @param format        Format of the log
      * @param loadData      Whether to load the trace and event payloads
      * @param filename      Filename associated to the log
+<<<<<<< HEAD
      * @param setMaximumStrLen Whether to exploit the knowledge base information to infer the maximum string length
      */
     void load_log(log_data_format format, bool loadData, const std::string &filename, bool setMaximumStrLen = true);
 
     void load_all_clauses();
+=======
+     */
+    void load_log(log_data_format format, bool loadData, const std::string &filename);
+>>>>>>> sam
 
     /**
      * Loading the Declare model in the Extended format
      * @param model_file
      */
     void load_model(const std::string &model_file);
+<<<<<<< HEAD
     template <typename T> void load_model(T begin, T end) {
         conjunctive_model.clear();
         for (auto it = begin; it != end; it++) {
             conjunctive_model.emplace_back(*it);
         }
     }
+=======
+>>>>>>> sam
 
     void set_atomization_parameters(const std::string &fresh_atom_label = "p",
                                     size_t mslength = MAXIMUM_STRING_LENGTH);
@@ -138,14 +162,21 @@ public:
      * @return
      */
     semantic_atom_set evaluate_easy_prop_to_atoms(const easy_prop &prop,
+<<<<<<< HEAD
+=======
+                                                  //const std::unordered_map<std::string, std::string>& bogus_act_to_atom,
+>>>>>>> sam
                                                   const std::unordered_map<std::string, semantic_atom_set>& bogus_act_to_set);
 
     void print_model(std::ostream& os) const ;
     void print_grounded_model(std::ostream& os) const;
     void print_knowledge_base(std::ostream& os) const;
+<<<<<<< HEAD
     void print_count_table(std::ostream& os) const;
     void print_act_table(std::ostream& os) const;
     void print_attribute_tables(std::ostream& os) const;
+=======
+>>>>>>> sam
     void print_grounding_tables(std::ostream& os);
 
 private:

@@ -1,4 +1,6 @@
+
 ![Temporary logo for KnoBAB: a K shaped like a tree, ideally a Baobab](images/tmpLogo.png)
+
 
 # KNOwledge Base for Alignments and Business process modelling
 
