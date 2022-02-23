@@ -5,6 +5,7 @@
 #include <magic_enum.hpp>
 #include <knobab/predicates/SimpleDataPredicate.h>
 #include <knobab/predicates/PredicateManager.h>
+#include <knobab/utilities/SetOperators.h>
 #include "knobab/algorithms/MAXSatPipeline.h"
 
 
@@ -190,10 +191,11 @@ std::vector<std::pair<std::pair<trace_t, event_t>, double>> local_intersection(c
     for (std::size_t i = 1; i < vecs.size(); ++i) {
         it++;
         auto ref = results.at(*it).second;
-        setIntersection(last_intersection.begin(), last_intersection.end(),
-                              ref.begin(), ref.end(),
-                              std::back_inserter(curr_intersection),
-                              [](auto x, auto y) {return 1.0;});
+        assert(false); // TODO: consider also the event match at this stage!
+//        setIntersection(last_intersection.begin(), last_intersection.end(),
+//                              ref.begin(), ref.end(),
+//                              std::back_inserter(curr_intersection),
+//                              [](auto x, auto y) {return 1.0;});
         std::swap(last_intersection, curr_intersection);
         curr_intersection.clear();
     }
@@ -210,10 +212,11 @@ std::vector<std::pair<std::pair<trace_t, event_t>, double>> local_intersection(c
     for (std::size_t i = 1; i < vecs.size(); ++i) {
         it++;
         auto ref = results.at(*it);
-        setIntersection(last_intersection.begin(), last_intersection.end(),
-                        ref.begin(), ref.end(),
-                        std::back_inserter(curr_intersection),
-                        [](auto x, auto y) {return 1.0;});
+        assert(false); // TODO: consider also the event match at this stage!
+//        setIntersection(last_intersection.begin(), last_intersection.end(),
+//                        ref.begin(), ref.end(),
+//                        std::back_inserter(curr_intersection),
+//                        [](auto x, auto y) {return 1.0;});
         std::swap(last_intersection, curr_intersection);
         curr_intersection.clear();
     }
@@ -230,10 +233,11 @@ std::vector<std::pair<std::pair<trace_t, event_t>, double>> local_union(const st
     for (std::size_t i = 1; i < vecs.size(); ++i) {
         it++;
         auto ref = results.at(*it);
-        setUnion(last_intersection.begin(), last_intersection.end(),
-                        ref.begin(), ref.end(),
-                        std::back_inserter(curr_intersection),
-                        [](auto x, auto y) {return 1.0;});
+        assert(false); // TODO: consider also the event match at this stage!
+//        setUnion(last_intersection.begin(), last_intersection.end(),
+//                        ref.begin(), ref.end(),
+//                        std::back_inserter(curr_intersection),
+//                        [](auto x, auto y) {return 1.0;});
         std::swap(last_intersection, curr_intersection);
         curr_intersection.clear();
     }
@@ -249,10 +253,11 @@ std::vector<std::pair<std::pair<trace_t, event_t>, double>> local_union(const lt
     for (std::size_t i = 1; i < q->args.size(); ++i) {
         it++;
         auto ref = (*it)->result;
-        setUnion(last_union.begin(), last_union.end(),
-                 ref.begin(), ref.end(),
-                 std::back_inserter(curr_union),
-                 [](auto x, auto y) {return 1.0;});
+        assert(false); // TODO: consider also the event match at this stage!
+//        setUnion(last_union.begin(), last_union.end(),
+//                 ref.begin(), ref.end(),
+//                 std::back_inserter(curr_union),
+//                 [](auto x, auto y) {return 1.0;});
         std::swap(last_union, curr_union);
         curr_union.clear();
     }
@@ -268,10 +273,11 @@ std::vector<std::pair<std::pair<trace_t, event_t>, double>> local_intersection(c
     for (std::size_t i = 1; i < q->args.size(); ++i) {
         it++;
         auto ref = (*it)->result;
-        setIntersection(last_union.begin(), last_union.end(),
-                 ref.begin(), ref.end(),
-                 std::back_inserter(curr_union),
-                 [](auto x, auto y) {return 1.0;});
+        assert(false); // TODO: consider also the event match at this stage!
+//        setIntersection(last_union.begin(), last_union.end(),
+//                 ref.begin(), ref.end(),
+//                 std::back_inserter(curr_union),
+//                 [](auto x, auto y) {return 1.0;});
         std::swap(last_union, curr_union);
         curr_union.clear();
     }
@@ -293,10 +299,10 @@ void MAXSatPipeline::data_pipeline_first(const KnowledgeBase& kb) {
                         ref.second = kb.exists(kb.resolveCountingData(ref.first.label));
                         break;
                     case InitQuery:
-                        ref.second = kb.init<std::pair<uint32_t, uint16_t>, double>(ref.first.label).traceApproximations;
+                        ref.second = kb.initOrig<std::pair<uint32_t, uint16_t>, double>(ref.first.label).traceApproximations;
                         break;
                     case EndsQuery:
-                        ref.second = kb.ends<std::pair<uint32_t, uint16_t>, double>(ref.first.label).traceApproximations;
+                        ref.second = kb.endsOrig<std::pair<uint32_t, uint16_t>, double>(ref.first.label).traceApproximations;
                         break;
                     case AtomQuery:
                         ref.second = kb.exists<std::pair<uint32_t, uint16_t>, double>(ref.first.label).traceApproximations;

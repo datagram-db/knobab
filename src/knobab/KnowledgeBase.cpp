@@ -661,6 +661,19 @@ float KnowledgeBase::getSatisifiabilityBetweenValues(const uint16_t& val1, const
     return 1 / (((float)std::abs(val1 - val2) / approxConstant) + 1);
 }
 
+
+uint16_t KnowledgeBase::getPositionFromEventId(const std::pair<uint32_t, uint16_t> pair) const {
+    uint16_t traceLength = act_table_by_act_id.getTraceLength(pair.first);
+
+    /* Guard against length 1 traces */
+    if(traceLength == 1){
+        return 0;
+    }
+
+    uint16_t posFromEventId = std::ceil((float)(pair.second / (float)MAX_UINT16) * (traceLength - 1));
+    return posFromEventId;
+}
+
 uint16_t KnowledgeBase::getPositionFromEventId(const oid* event) const {
     uint16_t traceLength = act_table_by_act_id.getTraceLength(event->id.parts.trace_id);
 

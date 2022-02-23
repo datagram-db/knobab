@@ -16,6 +16,9 @@ DeclareTemplateCollect::DeclareTemplateCollect(const std::filesystem::path& cach
     }
 }
 
+#include <cassert>
+#include <knobab/flloat_deps/ParseFFLOATDot.h>
+
 NodeLabelBijectionFA<std::string, easy_prop>
 DeclareTemplateCollect::getDeclareTemplate(const declare_templates type, size_t nargs) {
     auto cp = std::make_pair(type, nargs);

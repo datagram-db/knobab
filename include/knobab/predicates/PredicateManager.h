@@ -8,10 +8,11 @@
 
 #include <vector>
 #include "SimpleDataPredicate.h"
+class KnowledgeBase;
 
 struct PredicateManager {
     DEFAULT_CONSTRUCTORS(PredicateManager);
-    PredicateManager(const std::vector<std::vector<SimpleDataPredicate>>& pred, const KnowledgeBase* k):: predicates(pred) , kb(k){}
+    PredicateManager(const std::vector<std::vector<SimpleDataPredicate>>& pred, const KnowledgeBase* k): predicates(pred) , kb(k){}
     bool checkValidity(const env &e1, const env &e2) const;
 
     bool operator==(const PredicateManager &rhs) const;
