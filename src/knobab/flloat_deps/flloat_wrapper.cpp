@@ -4,6 +4,7 @@
 
 
 #include "knobab//flloat_deps/flloat_wrapper.h"
+#include <cassert>
 
 #ifdef PYTHON_WORKS
 namespace python = boost::python;

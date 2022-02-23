@@ -2,17 +2,11 @@
 // Created by giacomo on 07/01/2022.
 //
 
-<<<<<<< HEAD
 #define PYTHON_RUNS
 #ifndef KNOBAB_DECLARETEMPLATECOLLECT_H
 #define KNOBAB_DECLARETEMPLATECOLLECT_H
 
 
-=======
-#ifndef KNOBAB_DECLARETEMPLATECOLLECT_H
-#define KNOBAB_DECLARETEMPLATECOLLECT_H
-
->>>>>>> sam
 #include <unordered_map>
 #include <yaucl/bpm/structures/declare/DeclareDataAware.h>
 #include <yaucl/bpm/structures/commons/easy_prop.h>
@@ -47,3 +41,4 @@ public:
 
 
 #endif //KNOBAB_DECLARETEMPLATECOLLECT_H
+

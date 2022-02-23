@@ -105,7 +105,7 @@ ltlf_query* ltlf_query_manager::simplify(const ltlf& expr,  bool isTimed, bool i
                     }
                 }
             }
-            result->joinCondition = {sdp};
+            result->joinCondition = {sdp,nullptr};
         }
         result->isTimed = isTimed;
         assert((expr.casusu != ACT) || (!expr.rewritten_act.empty()));

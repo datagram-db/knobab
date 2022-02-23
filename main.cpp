@@ -12,7 +12,7 @@
 #include <yaml-cpp/yaml.h>
 #include <knobab/Environment.h>
 #include <yaucl/graphs/algorithms/minimizeDFA.h>
-
+#include <yaucl/graphs/graph_join_pm_conversion.h>
 
 
 
@@ -260,7 +260,7 @@ const KnowledgeBase::no_antlr_log LogTrace = {
 const std::string toSearch = "A";
 const uint8_t searchAmount = 2;
 const std::vector<SimpleDataPredicate> predicates{{"x", "x", numeric_atom_cases::EQ}};
-const double minThreshHold = 0;
+const double minThreshHold = 1;
 
 KnowledgeBase test_kb(const KnowledgeBase::no_antlr_log& L, const std::string &source, const std::string &name) {
     /// Creating an instance of the knowledge base, that is going to store all the traces in the log!
@@ -282,61 +282,6 @@ KnowledgeBase test_kb(const KnowledgeBase::no_antlr_log& L, const std::string &s
     db.reconstruct_trace_with_data(std::cout);
 
     return db;
-}
-
-<<<<<<< HEAD
-void ltlf_operators_testing() {
-
-    const KnowledgeBase::no_antlr_log LogTrace = {
-            {{"a", {}}, {"a", {}}, {"a", {}}, {"b", {}}},
-            {{"b", {}}, {"b", {}}, {"b", {}}, {"b", {}}, {"a", {}}},
-            {{"c", {}}, {"b", {}}, {"c", {}}, {"b", {}}, {"c", {}}}};
-
-    KnowledgeBase db = test_kb(LogTrace, "", "");
-
-    // First part
-    std::pair<const uint32_t, const uint32_t>  data = db.resolveCountingData("a");
-
-    // Second part
-    ///std::unordered_map<uint32_t, double> found = db.exists(data, 2);
-
-    const double minThreshHold = 0;
-
-    TraceData<std::pair<uint32_t, uint16_t>, double> testVec = db.init<std::pair<uint32_t, uint16_t>, double>("a", minThreshHold);
-    TraceData<std::pair<uint32_t, uint16_t>, double> testVec1 = db.ends<std::pair<uint32_t, uint16_t>, double>("a", minThreshHold);
-
-    TraceData<std::pair<uint32_t, uint16_t>, double> testVec2;
-    testVec.setUnion(testVec1.getTraceApproximations().begin(), testVec1.getTraceApproximations().end(), std::back_inserter(testVec2.getTraceApproximations()),  Aggregators::maxSimilarity<double, double, double>);
-
-    std::cout << "========UNION=========" << std::endl << "BETWEEN: " << std::endl << testVec.getTraceApproximations() << std::endl << "AND" << std::endl << testVec1.getTraceApproximations() << std::endl << "RESULT: " << std::endl << testVec2.getTraceApproximations() << std::endl;
-
-    TraceData<std::pair<uint32_t, uint16_t>, double> testVec3;
-    testVec.setIntersection(testVec1.getTraceApproximations().begin(), testVec1.getTraceApproximations().end(), std::back_inserter(testVec3.getTraceApproximations()), Aggregators::joinSimilarity<double, double, double>);
-
-    std::cout << "========INTERSECTION=========" << std::endl << "BETWEEN: " << std::endl << testVec.getTraceApproximations() << std::endl << "AND" << std::endl << testVec1.getTraceApproximations() << std::endl << "RESULT: " << std::endl << testVec3.getTraceApproximations()<< std::endl;
-
-    struct example{
-        std::vector<std::pair<std::pair<uint32_t, uint16_t>, double>> elems;
-    };
-
-    example e;
-    // aaab
-    e.elems.emplace_back(std::pair<std::pair<uint32_t, uint16_t>, double>(std::pair<uint32_t, uint16_t>(0, 1), 0));
-    e.elems.emplace_back(std::pair<std::pair<uint32_t, uint16_t>, double>(std::pair<uint32_t, uint16_t>(0, 2), 0));
-    e.elems.emplace_back(std::pair<std::pair<uint32_t, uint16_t>, double>(std::pair<uint32_t, uint16_t>(0, 3), 0));
-
-    auto x1 = next(0, 1, 2, e);
-    auto x2 = next(e);
-    auto x3 = global(0, 1, 2, e);
-    auto x4 = global(e, db.act_table_by_act_id.getTraceLengths());
-    auto x5 = future(0, 1, 1, e);
-    auto x6 = future(e);
-
-    std::cout << "========LTLf Operators=========" << std::endl;
-    std::cout << "--NEXT--" << std::endl << "TEMPORAL: " << x1 << std::endl << "NON-TEMPORAL" << x2 << std::endl;
-    std::cout << "--GLOBAL--" << std::endl << "TEMPORAL: " << x3 << std::endl << "NON-TEMPORAL" << x4 << std::endl;
-    std::cout << "--FUTURE--" << std::endl << "TEMPORAL: " << x5 << std::endl << "NON-TEMPORAL" << x6 << std::endl;
-    std::flush(std::cout);
 }
 
 
@@ -510,13 +455,12 @@ void generate_traces(const std::string& log_file = "testing/nologolog.txt",
 
 
 void sam_testing() {
-int main() {
     KnowledgeBase db = test_kb(LogTrace, "", "");
-    PredicateManager predManager(predicates, &db);
+    PredicateManager predManager({predicates}, &db);
 
     std::pair<const uint32_t, const uint32_t>  data = db.resolveCountingData(toSearch);
-    std::unordered_map<uint32_t, double> found = db.exists(data, searchAmount);
-    std::cout << "========EXISTS " + toSearch + " " + std::to_string(searchAmount) + "TIMES========="  << std::endl << "RESULT: " << std::endl << found << std::endl;
+    //std::unordered_map<uint32_t, double> found = db.exists(data, searchAmount);
+    //std::cout << "========EXISTS " + toSearch + " " + std::to_string(searchAmount) + "TIMES========="  << std::endl << "RESULT: " << std::endl << found << std::endl;
 
     TraceData<std::pair<uint32_t, uint16_t>,  std::pair<double, std::vector<uint16_t>>> initAVec = db.init<std::pair<uint32_t, uint16_t>,  std::pair<double, std::vector<uint16_t>>>(toSearch, minThreshHold);
     std::cout << "========INIT " + toSearch + "=========" << std::endl << "RESULT: " << std::endl << initAVec.getTraceApproximations() << std::endl;
@@ -525,8 +469,10 @@ int main() {
     std::cout << "========ENDS " + toSearch + "=========" << std::endl << "RESULT: " << std::endl << endsAVec.getTraceApproximations() << std::endl;
 
     TraceData<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>> unionNoPred;
-    setUnion(initAVec.getTraceApproximations().begin(), initAVec.getTraceApproximations().end(), endsAVec.getTraceApproximations().begin(), endsAVec.getTraceApproximations().end(),
-             std::back_inserter(unionNoPred.getTraceApproximations()), Aggregators::maxSimilarity<double, double, double>);
+    setUnion(initAVec.getTraceApproximations().begin(), initAVec.getTraceApproximations().end(),
+             endsAVec.getTraceApproximations().begin(), endsAVec.getTraceApproximations().end(),
+             std::back_inserter(unionNoPred.getTraceApproximations()),
+             Aggregators::maxSimilarity<double, double, double>);
     std::cout << "========UNION NO PREDICATE=========" << std::endl << "BETWEEN: " << std::endl << initAVec.getTraceApproximations() << std::endl << "AND" << std::endl
     << endsAVec.getTraceApproximations() << std::endl << "RESULT: " << std::endl << unionNoPred.getTraceApproximations() << std::endl;
 
@@ -579,7 +525,7 @@ int main() {
     setIntersectionUntimed(aOccurences.begin(), aOccurences.end(), bOccurences.begin(), bOccurences.end(), std::back_inserter(e5), Aggregators::maxSimilarity<double, double, double>, &predManager);
     std::cout << "--LTLF INTERSECTION--" << std::endl << "TEMPORAL: " << e4 << std::endl <<  "NON-TEMPORAL" << e5 << std::endl;;
 
-    dataContainer choice = Choice(aOccurences, bOccurences, nullptr);
+    dataContainer choice = DChoice(aOccurences, bOccurences, nullptr);
     std::cout << "========Choice=========" << std::endl << "BETWEEN: " << std::endl << aOccurences << std::endl << "AND" << std::endl << bOccurences << std::endl << "RESULT: " << std::endl << choice << std::endl;
 
     dataContainer exclusiveChoice = ExclusiveChoice(aOccurences, bOccurences, bOccurences, aOccurences, db.act_table_by_act_id.getTraceLengths(),nullptr);
@@ -607,11 +553,12 @@ int main() {
     //generate_nonunary_templates();
     //test_data_query();
     //test_fsm();
-    whole_testing();
+    //whole_testing();
     //test_declare();
     //test_grounding();
     //generate_traces();
     //ltlf_operators_testing();
+    sam_testing();
 
     return 0;
 }

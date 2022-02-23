@@ -8,7 +8,7 @@
 
 #include <string>
 #include <variant>
-#include <unordered_map>'
+#include <unordered_map>
 #include <yaucl/bpm/structures/commons/DataPredicate.h>
 
 #include "yaucl/structures/default_constructors.h"
@@ -37,8 +37,6 @@ public:
 
     bool operator!=(const SimpleDataPredicate &rhs) const;
 
-
-private:
     numeric_atom_cases casusu;
     std::string lhs, rhs;
 };
