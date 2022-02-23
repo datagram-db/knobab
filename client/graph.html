@@ -1,0 +1,158 @@
+<html lang="en">
+  <head>
+    <title>Vis Network | Example Applications | Disassembler</title>
+<script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+<script type="text/javascript" src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-csv/0.71/jquery.csv-0.71.min.js"></script>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/vis/4.2.0/vis.min.css" rel="stylesheet" type="text/css" />
+
+<style>
+        #mynetwork {
+            width: 70%;
+            height: 90%;
+            border: 1px solid lightgray;
+        }
+                #myinfo {
+            width: 29%;
+            height: 90%;
+            border: 1px solid lightgray;
+        }
+        </style>
+   
+  </head>
+  <body>
+<h3>
+Place cursor on Node 4 for popover
+</h3>
+
+<h4 id="popup-event">
+Popup event not fired yet...
+</h4>
+
+<div id="mynetwork"></div>
+<div id="myinfo"></div>
+
+<div id="csv-display"></div>
+
+ <script>
+    // create an array with nodes
+    var nodes = new vis.DataSet([
+        {id: 1, label: '_Node 1_', 
+          font: { multi: "md", face: "georgia" }},
+        {id: 2, label: 'Node 2', 
+          font: { multi: "md", face: "georgia" }},
+        {id: 3, label: 'Node 3', 
+          font: { multi: "md", face: "georgia" }},
+        {id: 4, label: ' * Node 4\n * ciao', 
+          font: { multi: "md", face: "georgia" }},
+        {id: 5, label: 'Node 5', 
+          font: { multi: "md", face: "georgia" }}
+    ]);
+
+    // create an array with edges
+    var edges = new vis.DataSet([
+        {from: 1, to: 3},
+        {from: 1, to: 2},
+        {from: 2, to: 4},
+        {from: 2, to: 5}
+    ]);
+
+    // create a network
+
+    // provide the data in the vis format
+    var data = {
+        nodes: nodes,
+        edges: edges
+    };
+
+	
+function generateHtmlTable(data) {
+    var html = '<table  class="table table-condensed table-hover table-striped">';
+ 
+      if(typeof(data[0]) === 'undefined') {
+        return null;
+      } else {
+		$.each(data, function( index, row ) {
+		  //bind header
+		  if(index == 0) {
+			html += '<thead>';
+			html += '<tr>';
+			$.each(row, function( index, colData ) {
+				html += '<th>';
+				html += colData;
+				html += '</th>';
+			});
+			html += '</tr>';
+			html += '</thead>';
+			html += '<tbody>';
+		  } else {
+			html += '<tr>';
+			$.each(row, function( index, colData ) {
+				html += '<td>';
+				html += colData;
+				html += '</td>';
+			});
+			html += '</tr>';
+		  }
+		});
+		html += '</tbody>';
+		html += '</table>';
+		//alert(html);
+		$('#csv-display').empty();
+		$('#csv-display').append($(html));
+	  }
+	}	
+
+    // initialize your network!
+    
+
+$( document ).ready(function(){
+    
+    var arrayo = ["http://evanplaice.github.io/jquery-csv/examples/data/analytics1.csv",
+                     "http://evanplaice.github.io/jquery-csv/examples/data/analytics2.csv",
+                     "http://evanplaice.github.io/jquery-csv/examples/data/sine.csv",
+                     "http://evanplaice.github.io/jquery-csv/examples/data/sample2.csv",
+                     "http://evanplaice.github.io/jquery-csv/examples/data/sample2.csv"];
+        var options = {
+  autoResize: true,
+    	physics:{enabled:true},
+    	layout: {hierarchical: {sortMethod: "directed",shakeTowards:"roots"}}
+    };
+    
+    $.ajax({
+	  type: "GET",  
+	  url: "/query_plan.json",
+	  dataType: "text",       
+	  success: function(response)  
+	  {
+    var container = document.getElementById('mynetwork');
+    var data = $.parseJSON(response);
+    var network = new vis.Network(container, data, options);
+    
+        network.on("click", function(node) { 
+         /*$.ajax({
+	  type: "GET",  
+	  url: arrayo[node.nodes[0]],
+	  dataType: "text",       
+	  success: function(response)  
+	  {
+		data = $.csv.toArrays(response);
+		generateHtmlTable(data);
+	  }   
+	});*/
+    	document.getElementById('popup-event').innerHTML = 'Popover shown! Node ID:' + node.nodes[0];
+      document.getElementById('popup-event').style = 'color: red';
+    });
+    
+	  }   
+	});
+    
+
+
+});
+    
+
+    </script>
+  </body>
+</html>
+

@@ -346,3 +346,89 @@ void Environment::load_all_clauses() {
     }
 }
 
+
+#include <httplib.h>
+
+void Environment::server() {
+
+    using namespace httplib;
+    Server svr;
+
+    // Representing the count table as a csv file, with headers
+    svr.Get("/count_table.csv", [this](const httplib::Request& req, httplib::Response& res) {
+        std::stringstream ss;
+        db.print_count_table(ss);
+        res.set_content(ss.str(), "text/csv");
+    });
+    svr.Get("/count.html", [this](const httplib::Request& req, httplib::Response& res) {
+        std::ifstream t("client/count_table.html");
+        t.seekg(0, std::ios::end);
+        size_t size = t.tellg();
+        std::string buffer(size, ' ');
+        t.seekg(0);
+        t.read(&buffer[0], size);
+        res.set_content(buffer, "text/html");
+    });
+
+    // Representing the ACT Table
+    svr.Get("/act_table.csv", [this](const httplib::Request& req, httplib::Response& res) {
+        std::stringstream ss;
+        db.print_act_table(ss);
+        res.set_content(ss.str(), "text/csv");
+    });
+    svr.Get("/act.html", [this](const httplib::Request& req, httplib::Response& res) {
+        std::ifstream t("client/act_table.html");
+        t.seekg(0, std::ios::end);
+        size_t size = t.tellg();
+        std::string buffer(size, ' ');
+        t.seekg(0);
+        t.read(&buffer[0], size);
+        res.set_content(buffer, "text/html");
+    });
+
+    // Returning the attribute tables
+    svr.Get("/att_table_names.csv",[this](const httplib::Request& req, httplib::Response& res) {
+        std::stringstream ss;
+        for (auto it = db.attribute_name_to_table.begin(), en = db.attribute_name_to_table.end(); it != en; ) {
+            ss << it->first;
+            it++;
+            if (it != en) ss << std::endl;
+        }
+        res.set_content(ss.str(), "text/csv");
+    });
+    svr.Get("/att.csv",[this](const httplib::Request& req, httplib::Response& res) {
+        std::stringstream ss;
+        auto it = db.attribute_name_to_table.find(req.get_param_value("f",0));
+        if (it != db.attribute_name_to_table.end())
+            ss << it->second;
+        res.set_content(ss.str(), "text/csv");
+    });
+    svr.Get("/atts.html",[this](const httplib::Request& req, httplib::Response& res) {
+        std::ifstream t("client/att_tables.html");
+        t.seekg(0, std::ios::end);
+        size_t size = t.tellg();
+        std::string buffer(size, ' ');
+        t.seekg(0);
+        t.read(&buffer[0], size);
+        res.set_content(buffer, "text/html");
+    });
+
+
+    svr.Get("/query_plan.json",[this](const httplib::Request& req, httplib::Response& res) {
+        std::stringstream ss;
+        ss << ltlf_query_manager::generateGraph();
+        res.set_content(ss.str(), "text/json");
+    });
+    svr.Get("/graph.html",[this](const httplib::Request& req, httplib::Response& res) {
+        std::ifstream t("client/graph.html");
+        t.seekg(0, std::ios::end);
+        size_t size = t.tellg();
+        std::string buffer(size, ' ');
+        t.seekg(0);
+        t.read(&buffer[0], size);
+        res.set_content(buffer, "text/html");
+    });
+
+    svr.listen("localhost", 8080);
+}
+
