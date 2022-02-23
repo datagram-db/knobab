@@ -6,8 +6,12 @@
 #include "yaucl/strings/string_utils.h"
 
 
+<<<<<<< HEAD
 static inline void compareStringHashmap1(const std::string& str,
                            std::unordered_map<std::string, size_t> &map,
+=======
+void compareStringHashmap1(const std::string& str, std::unordered_map<std::string, size_t> &map,
+>>>>>>> sam
                            std::vector<size_t> &vec) {
     size_t numPairs = str.length() - 1;
     if (numPairs == 0) {
@@ -17,16 +21,25 @@ static inline void compareStringHashmap1(const std::string& str,
         if (numPairs < 0) numPairs = 0;
         int singleGrams = 0;
         for (int i = 0; i < numPairs; i++) {
+<<<<<<< HEAD
             std::string s{(str.substr(i, 2))};
+=======
+            std::string s{yaucl::strings::utf8_tolower(str.substr(i, 2))};
+>>>>>>> sam
             if (!s.empty()) {
                 auto pos = map.find(s);
                 if (pos == map.end()) {
                     map[s] = singleGrams++;
                     vec.emplace_back(1);
                 } else {
+<<<<<<< HEAD
                     /*size_t x = vec[pos->second];
                     vec[pos->second] = x + 1;*/
                     vec[pos->second]++;
+=======
+                    size_t x = vec[pos->second];
+                    vec[pos->second] = x + 1;
+>>>>>>> sam
                 }
             }
         }
@@ -35,8 +48,12 @@ static inline void compareStringHashmap1(const std::string& str,
 
 #include <sstream>
 
+<<<<<<< HEAD
 static inline void compareStringHashmap2(const std::string &string,
                            std::unordered_map<std::string, size_t> &map,
+=======
+void compareStringHashmap2(const std::string &string, std::unordered_map<std::string, size_t> &map,
+>>>>>>> sam
                            std::vector<size_t> &vec) {
     {
         std::string str;
@@ -55,7 +72,11 @@ static inline void compareStringHashmap2(const std::string &string,
 }
 
 //Credits to http://www.catalysoft.com/articles/StrikeAMatch.html
+<<<<<<< HEAD
 static inline void compareString_letterPairs(const std::string& str, std::vector<std::string>& pairs) {
+=======
+void compareString_letterPairs(const std::string& str, std::vector<std::string>& pairs) {
+>>>>>>> sam
     pairs.clear();
     unsigned long numPairs = str.length()-1;
     if (!numPairs) {
@@ -68,6 +89,7 @@ static inline void compareString_letterPairs(const std::string& str, std::vector
     }
 }
 
+<<<<<<< HEAD
 //Credits to http://www.catalysoft.com/articles/StrikeAMatch.html
 std::vector<std::string> compareString_wordLetterPairs(const std::string& strMixed) {
     std::istringstream iss(strMixed);
@@ -88,11 +110,23 @@ std::pair<size_t, bool> SimplifiedFuzzyStringMatching::put(const std::string &st
         std::unordered_map<std::string, size_t>& m = gram_multiplicity[str];
         std::vector<size_t> vec;
         compareStringHashmap2(str, m, vec);
+=======
+std::pair<size_t, bool> SimplifiedFuzzyStringMatching::put(const std::string &value) {
+    auto it = unique_string.put(value);
+    if (it.second) {
+        std::unordered_map<std::string, size_t>& m = gram_multiplicity[value];
+        std::vector<size_t> vec;
+        compareStringHashmap2(value, m, vec);
+>>>>>>> sam
         size_t sum = 0;
         for (size_t& j : vec) {
             sum += j;
         }
+<<<<<<< HEAD
         objectGramSize[str] = sum;
+=======
+        objectGramSize[value] = sum;
+>>>>>>> sam
         for (auto & twoGramFreq : m) {
             shift0_2grams_containment[twoGramFreq.first].emplace_back(it.first);
         }
@@ -105,6 +139,7 @@ std::pair<size_t, bool> SimplifiedFuzzyStringMatching::put(const std::string &st
 std::string SimplifiedFuzzyStringMatching::get(size_t id) const {
     return unique_string.get(id);
 }
+<<<<<<< HEAD
 
 void SimplifiedFuzzyStringMatching::getTwoGramAndString(const std::string &argument,
                                                         std::unordered_map<std::string, size_t> &map) const {
@@ -183,3 +218,5 @@ void SimplifiedFuzzyStringMatching::fuzzyMatch(double threshold, size_t topk, co
     // providing the final result
     toReturnTop.getPoll(result);
 }
+=======
+>>>>>>> sam

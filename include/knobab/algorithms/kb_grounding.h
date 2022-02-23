@@ -13,7 +13,10 @@
 
 struct GroundingStrategyConf {
     enum pruning_strategy {
+<<<<<<< HEAD
         NO_EXPANSION,
+=======
+>>>>>>> sam
         ALWAYS_EXPAND_LEFT,
         ALWAYS_EXPAND_LESS_TOTAL_VALUES
     };

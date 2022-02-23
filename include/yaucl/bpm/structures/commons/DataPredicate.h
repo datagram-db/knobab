@@ -53,13 +53,13 @@
 #include <yaucl/structures/default_constructors.h>
 
 enum numeric_atom_cases {
+    INTERVAL,
     LT,
     GT,
     LEQ,
     GEQ,
     EQ,
     NEQ,
-    INTERVAL,
     TTRUE
 };
 
@@ -110,9 +110,11 @@ struct DataPredicate {
 
     DataPredicate();
     DEFAULT_COPY_ASSGN(DataPredicate)
+    
     DataPredicate(const std::string &var, numeric_atom_cases casusu, const union_minimal &valueconst, const std::string &label = "");
     DataPredicate(const std::string &var, numeric_atom_cases casusu, const std::string &value, const std::string &label = "");
     DataPredicate(const std::string &var, numeric_atom_cases casusu, const double &value, const std::string &label = "");
+
     DataPredicate(const std::string& label, const std::string& var, double lb, double ub);
     DataPredicate(const std::string& label, const std::string& var, const std::string& lb, const std::string& ub);
     DataPredicate(const std::string &label, const std::string &var, union_minimal lb, union_minimal ub);
