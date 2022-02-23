@@ -358,7 +358,7 @@ std::pair<const uint32_t, const uint32_t> KnowledgeBase::resolveCountingData(con
 std::unordered_map<uint32_t, double> KnowledgeBase::exists(const std::pair<const uint32_t, const uint32_t>& indexes, const uint16_t& amount) const {
     std::unordered_map<uint32_t, double> foundElems = std::unordered_map<uint32_t, double>();
 
-    for (auto it = count_table.table.begin() + indexes.first; it != count_table.table.begin() + indexes.second + 1; ++it) {
+    for (auto it = count_table.table.begin() + indexes.second; it != count_table.table.begin() + indexes.first - 1; --it) {
         uint16_t approxConstant = act_table_by_act_id.getTraceLength(it->id.parts.trace_id) / 2;
         double satisfiability = getSatisifiabilityBetweenValues(amount, it->id.parts.event_id, approxConstant);
         foundElems.emplace(it->id.parts.trace_id, satisfiability);

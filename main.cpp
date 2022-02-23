@@ -4,7 +4,9 @@
 #include "knobab/utilities/Aggregators.h"
 #include "knobab/dataStructures/TraceData.h"
 #include "knobab/utilities/LTLFOperators.h"
-#include "knobab/setOperators/SetOperators.h"
+#include "knobab/utilities/SetOperators.h"
+#include "knobab/utilities/DeclareClauses.h"
+#include "yaucl/structures/set_operations.h"
 
 //const KnowledgeBase::no_antlr_log LogTrace = {
 //        {{"a", {}}, {"a", {}}, {"b", {}}}};
@@ -29,26 +31,28 @@
 //{{"a", {}}, {"c", {{"x", 2.0}}}}};
 
 const KnowledgeBase::no_antlr_log LogTrace = {
-        {{"a", {{"x", 2.0},{"y", 3.0}}},
-         {"a", {{"x", 2.0},{"y", 3.0}}},
-         {"a", {{"x", 2.0},{"y", 5.0}}},
-         {"a", {{"x", 7.0},{"y", 6.0}}}},
+        {{"A", {{"x", 2.0},{"y", 3.0}}},
+         {"A", {{"x", 2.0},{"y", 3.0}}},
+         {"A", {{"x", 2.0},{"y", 5.0}}},
+         {"B", {{"x", 2.0},{"y", 6.0}}}},
 
-        {{"a", {{"x", 2.0},{"y", 1.0}}},
-         {"a", {{"x", 1.0},{"y", 3.0}}},
-         {"b", {}},
-         {"a", {{"x", 1.0},{"y", 3.0}}},
-         {"a", {{"x", 4.0},{"y", 3.0}}}},
+        {{"A", {{"x", 2.0},{"y", 1.0}}},
+         {"A", {{"x", 1.0},{"y", 3.0}}},
+         {"B", {}},
+         {"A", {{"x", 1.0},{"y", 3.0}}},
+         {"A", {{"x", 4.0},{"y", 3.0}}}},
 
-        {{"c", {}},
-         {"b", {}},
-         {"c", {}},
-         {"b", {}},
-         {"c", {}}}
+        {{"C", {}},
+         {"B", {}},
+         {"C", {}},
+         {"B", {}},
+         {"C", {}}}
 };
 
-const std::string toSearch = "a";
-const std::vector<SimpleDataPredicate> preds{{"x", "y", numeric_atom_cases::LT}};
+const std::string toSearch = "A";
+const uint8_t searchAmount = 2;
+const std::vector<SimpleDataPredicate> predicates{{"x", "x", numeric_atom_cases::EQ}};
+const double minThreshHold = 0;
 
 KnowledgeBase test_kb(const KnowledgeBase::no_antlr_log& L, const std::string &source, const std::string &name) {
     /// Creating an instance of the knowledge base, that is going to store all the traces in the log!
@@ -73,21 +77,22 @@ KnowledgeBase test_kb(const KnowledgeBase::no_antlr_log& L, const std::string &s
 
 int main() {
     KnowledgeBase db = test_kb(LogTrace, "", "");
+    PredicateManager predManager(predicates, &db);
 
     std::pair<const uint32_t, const uint32_t>  data = db.resolveCountingData(toSearch);
-    std::unordered_map<uint32_t, double> found = db.exists(data, 2);
-    std::cout << "========EXISTS=========" << std::endl << toSearch << std::endl << "RESULT: " << found << std::endl;
-
-    PredicateManager predManager(preds, &db);
-    const double minThreshHold = 0;
+    std::unordered_map<uint32_t, double> found = db.exists(data, searchAmount);
+    std::cout << "========EXISTS " + toSearch + " " + std::to_string(searchAmount) + "TIMES========="  << std::endl << "RESULT: " << std::endl << found << std::endl;
 
     TraceData<std::pair<uint32_t, uint16_t>,  std::pair<double, std::vector<uint16_t>>> initAVec = db.init<std::pair<uint32_t, uint16_t>,  std::pair<double, std::vector<uint16_t>>>(toSearch, minThreshHold);
+    std::cout << "========INIT " + toSearch + "=========" << std::endl << "RESULT: " << std::endl << initAVec.getTraceApproximations() << std::endl;
+
     TraceData<std::pair<uint32_t, uint16_t>,  std::pair<double, std::vector<uint16_t>>> endsAVec = db.ends<std::pair<uint32_t, uint16_t>,  std::pair<double, std::vector<uint16_t>>>(toSearch, minThreshHold);
+    std::cout << "========ENDS " + toSearch + "=========" << std::endl << "RESULT: " << std::endl << endsAVec.getTraceApproximations() << std::endl;
 
     TraceData<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>> unionNoPred;
     setUnion(initAVec.getTraceApproximations().begin(), initAVec.getTraceApproximations().end(), endsAVec.getTraceApproximations().begin(), endsAVec.getTraceApproximations().end(),
              std::back_inserter(unionNoPred.getTraceApproximations()), Aggregators::maxSimilarity<double, double, double>);
-    std::cout << "========UNION NO PREDICATE =========" << std::endl << "BETWEEN: " << std::endl << initAVec.getTraceApproximations() << std::endl << "AND" << std::endl
+    std::cout << "========UNION NO PREDICATE=========" << std::endl << "BETWEEN: " << std::endl << initAVec.getTraceApproximations() << std::endl << "AND" << std::endl
     << endsAVec.getTraceApproximations() << std::endl << "RESULT: " << std::endl << unionNoPred.getTraceApproximations() << std::endl;
 
     TraceData<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>> unionPred;
@@ -99,55 +104,63 @@ int main() {
     TraceData<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>> intersectionNoPred;
     setIntersection(initAVec.getTraceApproximations().begin(), initAVec.getTraceApproximations().end(), endsAVec.getTraceApproximations().begin(), endsAVec.getTraceApproximations().end(),
                     std::back_inserter(intersectionNoPred.getTraceApproximations()), Aggregators::joinSimilarity<double, double, double>);
-    std::cout << "========INTERSECTION WITH PREDICATE=========" << std::endl << "BETWEEN: " << std::endl << initAVec.getTraceApproximations() << std::endl << "AND" << std::endl
+    std::cout << "========INTERSECTION NO PREDICATE=========" << std::endl << "BETWEEN: " << std::endl << initAVec.getTraceApproximations() << std::endl << "AND" << std::endl
     << endsAVec.getTraceApproximations() << std::endl << "RESULT: " << std::endl << intersectionNoPred.getTraceApproximations() << std::endl;
 
     TraceData<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>> intersectionPred;
     setIntersection(initAVec.getTraceApproximations().begin(), initAVec.getTraceApproximations().end(), endsAVec.getTraceApproximations().begin(), endsAVec.getTraceApproximations().end(),
                     std::back_inserter(intersectionPred.getTraceApproximations()), Aggregators::joinSimilarity<double, double, double>, &predManager);
-    std::cout << "========INTERSECTION NO PREDICATE=========" << std::endl << "BETWEEN: " << std::endl << initAVec.getTraceApproximations() << std::endl << "AND" << std::endl
+    std::cout << "========INTERSECTION WITH PREDICATE=========" << std::endl << "BETWEEN: " << std::endl << initAVec.getTraceApproximations() << std::endl << "AND" << std::endl
     << endsAVec.getTraceApproximations() << std::endl << "RESULT: " << std::endl << intersectionPred.getTraceApproximations() << std::endl;
 
-    example e;
-    // aaaa
-    e.elems.emplace_back(std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>({0, 0}, {1, {0}}));
-    e.elems.emplace_back(std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>({0, 1}, {1, {1}}));
-    e.elems.emplace_back(std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>({0, 2}, {1, {2}}));
-    e.elems.emplace_back(std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>({0, 3}, {1, {3}}));
-    e.elems.emplace_back(std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>({1, 0}, {1, {0}}));
+    //aaab from trace 0
+    dataContainer aOccurences{}, bOccurences{};
+    aOccurences.emplace_back(std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>({0, 0}, {1, {0}}));
+    aOccurences.emplace_back(std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>({0, 1}, {1, {1}}));
+    aOccurences.emplace_back(std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>({0, 2}, {1, {2}}));
+
+    bOccurences.emplace_back(std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>({0, 3}, {1, {3}}));
 
     std::cout << "========LTLf Operators=========" << std::endl;
-    auto x1 = next(0, 0, 1, e);
-    auto x2 = next(e);
+    auto x1 = next(0, 0, 1, aOccurences);
+    auto x2 = next(aOccurences);
     std::cout << "--NEXT--" << std::endl << "TEMPORAL: " << x1 << std::endl << "NON-TEMPORAL" << x2 << std::endl;
 
-    auto x3 = global(0, 0, 2, e);
-    auto x4 = global(e, db.act_table_by_act_id.getTraceLengths());
+    auto x3 = global(0, 0, 2, aOccurences);
+    auto x4 = global(aOccurences, db.act_table_by_act_id.getTraceLengths());
     std::cout << "--GLOBAL--" << std::endl << "TEMPORAL: " << x3 << std::endl << "NON-TEMPORAL" << x4 << std::endl;
 
-    auto x5 = future(0, 1, 2, e);
-    auto x6 = future(e);
+    auto x5 = future(0, 1, 2, aOccurences);
+    auto x6 = future(aOccurences);
     std::cout << "--FUTURE--" << std::endl << "TEMPORAL: " << x5 << std::endl << "NON-TEMPORAL" << x6 << std::endl;
 
-    example e1;
-    // aaaa
-    e1.elems.emplace_back(std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>({0, 0}, {1, {1}}));
-    e1.elems.emplace_back(std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>({0, 1}, {1, {2}}));
+    dataContainer e2, e3;
+    setUnion(aOccurences.begin(), aOccurences.end(), bOccurences.begin(), bOccurences.end(), std::back_inserter(e2), Aggregators::maxSimilarity<double, double, double>, &predManager);
+    setUnionUntimed(aOccurences.begin(), aOccurences.end(), bOccurences.begin(), bOccurences.end(), std::back_inserter(e3), Aggregators::maxSimilarity<double, double, double>, &predManager);
+    std::cout << "--LTLF UNION--" << std::endl << "TEMPORAL: " << e2 << std::endl <<  "NON-TEMPORAL" << e3 << std::endl;;
 
-    example e2, e3;
-    setUnion(e.elems.begin(), e.elems.end(), e1.elems.begin(), e1.elems.end(), std::back_inserter(e2.elems), Aggregators::maxSimilarity<double, double, double>, &predManager);
-    setUnionUntimed(e.elems.begin(), e.elems.end(), e1.elems.begin(), e1.elems.end(), std::back_inserter(e3.elems), Aggregators::maxSimilarity<double, double, double>,  &predManager);
-    std::cout << "--LTLF UNION--" << std::endl << "TEMPORAL: " << e2.elems << std::endl <<  "NON-TEMPORAL" << e3.elems << std::endl;;
+    dataContainer e4, e5;
+    setIntersection(aOccurences.begin(), aOccurences.end(), bOccurences.begin(), bOccurences.end(), std::back_inserter(e4), Aggregators::maxSimilarity<double, double, double>, &predManager);
+    setIntersectionUntimed(aOccurences.begin(), aOccurences.end(), bOccurences.begin(), bOccurences.end(), std::back_inserter(e5), Aggregators::maxSimilarity<double, double, double>, &predManager);
+    std::cout << "--LTLF INTERSECTION--" << std::endl << "TEMPORAL: " << e4 << std::endl <<  "NON-TEMPORAL" << e5 << std::endl;;
 
-    example e4, e5;
-    setIntersection(e.elems.begin(), e.elems.end(), e1.elems.begin(), e1.elems.end(), std::back_inserter(e4.elems), Aggregators::maxSimilarity<double, double, double>, &predManager);
-    setIntersectionUntimed(e.elems.begin(), e.elems.end(), e1.elems.begin(), e1.elems.end(), std::back_inserter(e5.elems), Aggregators::maxSimilarity<double, double, double>, &predManager);
-    std::cout << "--LTLF INTERSECTION--" << std::endl << "TEMPORAL: " << e4.elems << std::endl <<  "NON-TEMPORAL" << e5.elems << std::endl;;
+    dataContainer choice = Choice(aOccurences, bOccurences, nullptr);
+    std::cout << "========Choice=========" << std::endl << "BETWEEN: " << std::endl << aOccurences << std::endl << "AND" << std::endl << bOccurences << std::endl << "RESULT: " << std::endl << choice << std::endl;
 
+    dataContainer exclusiveChoice = ExclusiveChoice(aOccurences, bOccurences, bOccurences, aOccurences, db.act_table_by_act_id.getTraceLengths(),nullptr);
+    std::cout << "========ExclusiveChoice=========" << std::endl << "BETWEEN: " << std::endl << aOccurences << std::endl << "AND" << std::endl << bOccurences << std::endl << "RESULT: " << std::endl << exclusiveChoice << std::endl;
 
-    example choiceEx = Choice(e, e1, &predManager);
+    dataContainer responseExistence = ResponseExistence(aOccurences, bOccurences, bOccurences, db.act_table_by_act_id.getTraceLengths(),nullptr);
+    std::cout << "========ResponseExistence=========" << std::endl << "BETWEEN: " << std::endl << aOccurences << std::endl << "AND" << std::endl << bOccurences << std::endl << "RESULT: " << std::endl << responseExistence << std::endl;
 
-    std::cout << "Hoping this works: " << std::endl << choiceEx.elems << std::endl;
+    dataContainer coexistence = Coexistence(aOccurences, bOccurences, bOccurences, aOccurences, db.act_table_by_act_id.getTraceLengths(), &predManager);
+    remove_duplicates(coexistence);
+    std::cout << "========Coexistence=========" << std::endl << "BETWEEN: " << std::endl << aOccurences << std::endl << "AND" << std::endl << bOccurences << std::endl << "RESULT: " << std::endl << coexistence << std::endl;
     std::flush(std::cout);
+
+    dataContainer notCoexistence = NotCoexistence(bOccurences, aOccurences, db.act_table_by_act_id.getTraceLengths(),nullptr);
+    std::cout << "========NotCoexistence=========" << std::endl << "BETWEEN: " << std::endl << aOccurences << std::endl << "AND" << std::endl << bOccurences << std::endl << "RESULT: " << std::endl << notCoexistence << std::endl;
+    std::flush(std::cout);
+
     return 0;
 }

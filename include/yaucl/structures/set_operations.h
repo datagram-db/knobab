@@ -27,6 +27,12 @@
 
 #include <unordered_set>
 
+template <typename T>
+void remove_duplicates(std::vector<T>& vec){
+    std::sort(vec.begin(), vec.end());
+    vec.erase(std::unique(vec.begin(), vec.end()), vec.end());
+}
+
 template<typename T>
 std::unordered_set<T> unordered_intersection(const std::unordered_set<T> &a,
                                              const std::unordered_set<T> &b){
