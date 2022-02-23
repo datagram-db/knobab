@@ -191,7 +191,7 @@ std::vector<std::pair<std::pair<trace_t, event_t>, double>> local_intersection(c
     for (std::size_t i = 1; i < vecs.size(); ++i) {
         it++;
         auto ref = results.at(*it).second;
-        assert(false); // TODO: consider also the event match at this stage!
+//        assert(false); // TODO: consider also the event match at this stage!
 //        setIntersection(last_intersection.begin(), last_intersection.end(),
 //                              ref.begin(), ref.end(),
 //                              std::back_inserter(curr_intersection),
@@ -212,7 +212,7 @@ std::vector<std::pair<std::pair<trace_t, event_t>, double>> local_intersection(c
     for (std::size_t i = 1; i < vecs.size(); ++i) {
         it++;
         auto ref = results.at(*it);
-        assert(false); // TODO: consider also the event match at this stage!
+//        assert(false); // TODO: consider also the event match at this stage!
 //        setIntersection(last_intersection.begin(), last_intersection.end(),
 //                        ref.begin(), ref.end(),
 //                        std::back_inserter(curr_intersection),
@@ -233,7 +233,7 @@ std::vector<std::pair<std::pair<trace_t, event_t>, double>> local_union(const st
     for (std::size_t i = 1; i < vecs.size(); ++i) {
         it++;
         auto ref = results.at(*it);
-        assert(false); // TODO: consider also the event match at this stage!
+//        assert(false); // TODO: consider also the event match at this stage!
 //        setUnion(last_intersection.begin(), last_intersection.end(),
 //                        ref.begin(), ref.end(),
 //                        std::back_inserter(curr_intersection),
@@ -253,7 +253,7 @@ std::vector<std::pair<std::pair<trace_t, event_t>, double>> local_union(const lt
     for (std::size_t i = 1; i < q->args.size(); ++i) {
         it++;
         auto ref = (*it)->result;
-        assert(false); // TODO: consider also the event match at this stage!
+//        assert(false); // TODO: consider also the event match at this stage!
 //        setUnion(last_union.begin(), last_union.end(),
 //                 ref.begin(), ref.end(),
 //                 std::back_inserter(curr_union),
@@ -273,7 +273,7 @@ std::vector<std::pair<std::pair<trace_t, event_t>, double>> local_intersection(c
     for (std::size_t i = 1; i < q->args.size(); ++i) {
         it++;
         auto ref = (*it)->result;
-        assert(false); // TODO: consider also the event match at this stage!
+//        assert(false); // TODO: consider also the event match at this stage!
 //        setIntersection(last_union.begin(), last_union.end(),
 //                 ref.begin(), ref.end(),
 //                 std::back_inserter(curr_union),

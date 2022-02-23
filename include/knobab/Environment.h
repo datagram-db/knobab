@@ -31,6 +31,8 @@ struct Environment {
 
     //std::unordered_map<DeclareDataAware, FlexibleFA<size_t, std::string>> pattern_graph;
 
+    void server();
+
 public:
 
 

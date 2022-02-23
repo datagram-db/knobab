@@ -81,7 +81,8 @@ namespace std {
 #include <knobab/algorithms/atomization_pipeline.h>
 #include <cassert>
 
-
+#include <nlohmann/json.hpp>
+#include <magic_enum.hpp>
 
 struct ltlf_query_manager {
     static std::unordered_map<std::pair<ltlf, bool>, ltlf_query*> conversion_map_for_subexpressions;
@@ -89,6 +90,55 @@ struct ltlf_query_manager {
     static std::unordered_map<ltlf_query*, size_t> counter;
     static std::vector<ltlf_query*> atomsToDecomposeInUnion;
     static std::set<ltlf_query*> VSet;
+
+    static void generateGraph(std::map<ltlf_query*, std::vector<ltlf_query*>>& ref, ltlf_query*q) {
+        auto it = ref.emplace(q, q->args);
+        if (it.second) {
+            for (const auto& arg : q->args)
+                generateGraph(ref, arg);
+        }
+    }
+
+    static std::string generateGraph() {
+        std::map<ltlf_query*, std::vector<ltlf_query*>> ref;
+        std::map<ltlf_query*,size_t> layerId;
+        if (Q.empty()) return "{nodes: [], edges: []}";
+        auto it = Q.begin();
+        ref[nullptr] = it->second;
+        layerId[nullptr] = 0;
+        for (; it != Q.end(); it++) {
+            for (const auto& arg : it->second) {
+                layerId[arg] = 1+it->first;
+                generateGraph(ref, arg);
+            }
+        }
+        nlohmann::json json;
+        json["nodes"] = {};
+        json["edges"] = {};
+        auto& nodes = json["nodes"];
+        auto& edges = json["edges"];
+        for (const auto& cp : ref) {
+            nlohmann::json node;
+            node["id"] = cp.first ? (size_t)cp.first : 0;
+            node["group"] = layerId[cp.first];
+            if ((cp.first) && (cp.first->casusu==Q_ACT)) {
+                std::stringstream aa;
+                aa << cp.first->atom;
+                node["label"] = aa.str();
+            } else {
+                node["label"] = cp.first ? ((cp.first->isTimed ? "t" : "") + std::string(magic_enum::enum_name(cp.first->casusu))) : "Ensemble";
+            }
+            nodes.push_back(node);
+            for (const auto& out : cp.second) {
+                nlohmann::json edge;
+                edge["from"] = cp.first ? (size_t)cp.first : 0;
+                edge["to"] = (size_t)out;
+                edges.push_back(edge);
+            }
+        }
+        return json.dump(4);
+    }
+
 
     static void clear();
     static ltlf_query*  init1(const std::string& atom, std::unordered_set<std::string>& predicates);
