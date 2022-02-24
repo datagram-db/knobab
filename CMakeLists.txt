@@ -163,5 +163,5 @@ target_link_libraries(server Threads::Threads yaml-cpp  knobab antlr4_static #${
 #    enable_testing()
 #endif()
 
-
+enable_testing()
 add_subdirectory (tests)
