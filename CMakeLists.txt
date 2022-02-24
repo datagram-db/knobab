@@ -153,7 +153,15 @@ add_library(knobab_flloat STATIC
 target_link_libraries(knobab_flloat #${Boost_LIBRARIES} ${PYTHON_LIBRARIES}
                                     yaucl_bpm yaucl_graph)
 
-add_executable(test main.cpp )
+add_executable(server main.cpp )
 
-target_link_libraries(test Threads::Threads yaml-cpp  knobab antlr4_static #${Boost_LIBRARIES} ${PYTHON_LIBRARIES} aaltaf
+target_link_libraries(server Threads::Threads yaml-cpp  knobab antlr4_static #${Boost_LIBRARIES} ${PYTHON_LIBRARIES} aaltaf
                                   yaucl_stringutils yaucl_numeric yaucl_hashing yaucl_data yaucl_bpm yaucl_graph knobab_flloat yaucl_structures)
+
+#option(ENABLE_TESTS "Enable tests" OFF)
+#if (${ENABLE_TESTS})
+#    enable_testing()
+#endif()
+
+
+add_subdirectory (tests)

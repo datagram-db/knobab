@@ -15,10 +15,10 @@
 #include <yaucl/graphs/graph_join_pm_conversion.h>
 
 
-void whole_testing(const std::string& log_file = "/home/giacomo/projects/knobab/testing/log.txt",
-                   const std::string& declare_file = "testing/declare2.powerdecl",
-                   const std::string& atomization_conf = "testing/atomization_pipeline.yaml",
-                   const std::string& grounding_strategy = "testing/grounding_strategy.yaml") {
+void whole_testing(const std::string& log_file = "data/testing/log.txt",
+                   const std::string& declare_file = "data/testing/declare2.powerdecl",
+                   const std::string& atomization_conf = "data/testing/atomization_pipeline.yaml",
+                   const std::string& grounding_strategy = "data/testing/grounding_strategy.yaml") {
     Environment env;
     env.clear();
     env.load_all_clauses();
@@ -135,10 +135,10 @@ void whole_testing(const std::string& log_file = "/home/giacomo/projects/knobab/
 
 }
 
-void test_data_query(const std::string& log_file = "testing/log.txt",
-                   const std::string& declare_file = "testing/declare2.powerdecl",
-                   const std::string& atomization_conf = "testing/atomization_pipeline.yaml",
-                   const std::string& grounding_strategy = "testing/grounding_strategy.yaml") {
+void test_data_query(const std::string& log_file = "data/testing/log.txt",
+                   const std::string& declare_file = "data/testing/declare2.powerdecl",
+                   const std::string& atomization_conf = "data/testing/atomization_pipeline.yaml",
+                   const std::string& grounding_strategy = "data/testing/grounding_strategy.yaml") {
     Environment env;
     env.clear();
     std::string fresh_atom_label{"p"};
@@ -193,26 +193,6 @@ void generate_nonunary_templates() {
         std::cout << std::endl;
     }
 }
-
-void test_fsm() {
-    SimplifiedFuzzyStringMatching matcher;
-
-    matcher.put("hello");
-    matcher.put("bello");
-    matcher.put("bel");
-    matcher.put("hell");
-    matcher.put("call");
-    matcher.put("fall");
-    matcher.put("tall");
-    matcher.put("all");
-    matcher.put("elementary");
-
-    std::multimap<double, std::string> result;
-    matcher.fuzzyMatch(0.0, 100, "fall", result);
-    for (const auto& cp : result)
-        std::cout << cp.first << " - " << cp.second << std::endl;
-}
-
 
 #include "knobab/utilities/SetOperators.h"
 #include "knobab/utilities/DeclareClauses.h"
@@ -343,10 +323,10 @@ generateBenchmarkForTests(const std::string &log_file,
     return modelNo;
 }
 
-void generate_traces(const std::string& log_file = "testing/nologolog.txt",
-                     const std::string& declare_file = "testing/declare4.powerdecl",
-                     const std::string& atomization_conf = "testing/atomization_pipeline.yaml",
-                     const std::string& grounding_strategy = "testing/grounding_strategy.yaml") {
+void generate_traces(const std::string& log_file = "data/testing/nologolog.txt",
+                     const std::string& declare_file = "data/testing/declare4.powerdecl",
+                     const std::string& atomization_conf = "data/testing/atomization_pipeline.yaml",
+                     const std::string& grounding_strategy = "data/testing/grounding_strategy.yaml") {
     Environment env;
     env.clear();
     env.load_all_clauses();
