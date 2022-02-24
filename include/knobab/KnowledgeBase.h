@@ -32,6 +32,7 @@ enum ParsingState {
 using trace_set = std::bitset<sizeof(uint32_t)>;
 using act_set = std::bitset<sizeof(uint16_t)>;
 const uint16_t MAX_UINT16 = std::pow(2, 16) - 1;
+using dataContainer = std::vector<std::pair<std::pair<uint32_t, uint16_t>,  std::pair<double, std::vector<uint16_t>>>>;
 
 class KnowledgeBase : public trace_visitor {
     CountTemplate                                   count_table;
@@ -195,6 +196,23 @@ private:
             const std::unordered_set<std::string> &otherValues, trace_t traceId) const;
 
     float getSatisifiabilityBetweenValues(const uint16_t& val1, const uint16_t& val2, const uint16_t& approxConstant) const;
+
+public:
+    const dataContainer getLastElements() const {
+        dataContainer elems{};
+        for (const std::pair<ActTable::record *, ActTable::record *> &rec: act_table_by_act_id.secondary_index) {
+            const uint32_t traceId = rec.second->entry.id.parts.trace_id;
+            uint16_t eventId = rec.second->entry.id.parts.event_id;
+            eventId = getPositionFromEventId({traceId, eventId});
+            const std::pair<uint32_t, uint16_t> traceEventPair{traceId, eventId};
+
+            elems.push_back(
+                    std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>{traceEventPair,
+                                                                                                       {1, {eventId}}});
+        }
+
+        return elems;
+    }
 };
 
 

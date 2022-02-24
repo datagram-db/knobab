@@ -9,7 +9,6 @@
 
 const uint16_t max = std::numeric_limits<uint16_t>::max();
 static const std::vector<uint16_t> maxVec(max,max);
-using dataContainer = std::vector<std::pair<std::pair<uint32_t, uint16_t>,  std::pair<double, std::vector<uint16_t>>>>;
 
 template<typename TableSection>
 dataContainer next(const uint32_t &traceId, const uint16_t &startEventId, const uint16_t& endEventId, const TableSection &section) {
@@ -102,7 +101,7 @@ dataContainer global(const TableSection &section, const std::vector<size_t>& len
 }
 
 template<typename TableSection>
-dataContainer  future(const uint32_t &traceId, const uint16_t &startEventId, const uint16_t& endEventId, const TableSection &section) {
+dataContainer future(const uint32_t &traceId, const uint16_t &startEventId, const uint16_t& endEventId, const TableSection &section) {
     auto lower = std::lower_bound(section.begin(), section.end(), std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>{{traceId, startEventId}, {0, {}}});
     auto upper = std::upper_bound(section.begin(), section.end(), std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>{{traceId, endEventId}, {1, maxVec}});
 
