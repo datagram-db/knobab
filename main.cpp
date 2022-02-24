@@ -266,14 +266,6 @@ KnowledgeBase test_kb(const KnowledgeBase::no_antlr_log& L, const std::string &s
     return db;
 }
 
-
-void test_group_by() {
-    std::vector<std::pair<size_t, double>> W{{1,2}, {3,0.5}, {3, 0.7}, {2, 0.5}, {1, 7}};
-    std::sort(W.begin(), W.end());
-
-    auto M = cartesian_product(GroupByKeyExtractorIgnoreKey<std::vector<std::pair<size_t, double>>::iterator, size_t, std::pair<size_t, double>>(W.begin(), W.end(), [](const std::pair<size_t, double>& x) {return x.first; }));
-    std::cout << M << std::endl;
-}
 #include <random>
 
 template <typename T>
@@ -529,13 +521,10 @@ void sam_testing() {
 
 int main() {
 
-    partition_sets<std::string>({{"1","2","3"}, {"3","4","5"}, {"1","2"}, {"1","7","8"}, {"8","0","1","2","3"}});
-
-    //test_group_by();
     //generate_nonunary_templates();
     //test_data_query();
     //test_fsm();
-    whole_testing();
+    //whole_testing();
     //test_declare();
     //test_grounding();
     //generate_traces();

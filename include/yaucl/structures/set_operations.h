@@ -94,6 +94,8 @@ std::vector<std::unordered_set<T>> powerset(const std::unordered_set<T> & a) {
     return result;
 }
 
+#include <ostream>
+
 template<typename T>
 std::ostream& operator<<(std::ostream& os, const std::unordered_set<T> &s)
 {
@@ -177,6 +179,8 @@ std::vector<std::pair<Key, std::vector<Value>>> GroupByKeyExtractorAsVector(Iter
 
     return groups;
 }
+
+#include <cassert>
 
 template <typename Iterator, typename Key, typename Value>
 std::vector<std::vector<Value>> GroupByKeyExtractorIgnoreKey(Iterator begin, Iterator end, std::function<Key(const Value&)> keyExtractor)
