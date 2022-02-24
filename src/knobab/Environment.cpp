@@ -428,6 +428,17 @@ void Environment::server() {
         t.read(&buffer[0], size);
         res.set_content(buffer, "text/html");
     });
+    svr.Get("/pipeline_data.csv",[this](const httplib::Request& req, httplib::Response& res) {
+        std::stringstream ss;
+        auto it = std::stoull(req.get_param_value("f",0));
+        if (it != 0) {
+            ss << "TraceId,EventId,Sim,{Events}" << std::endl;
+            for (const auto& ref : ((ltlf_query*)   it)->result) {
+                ss << ref.first.first << "," << ref.first.second << "," << ref.second << ",{TODO}" << std::endl;
+            }
+        }
+        res.set_content(ss.str(), "text/csv");
+    });
 
     svr.listen("localhost", 8080);
 }
