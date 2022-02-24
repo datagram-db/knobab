@@ -31,12 +31,12 @@
 //{{"a", {}}, {"c", {{"x", 2.0}}}}};
 
 const KnowledgeBase::no_antlr_log LogTrace = {
-        {{"A", {{"x", 2.0},{"y", 3.0}}},
-         {"B", {{"x", 1.0},{"y", 6.0}}},
-         {"A", {{"x", 2.0},{"y", 3.0}}},
-         {"B", {{"x", 2.0},{"y", 6.0}}},
-         {"A", {{"x", 2.0},{"y", 5.0}}},
-         },
+        {{"B", {{"x", 2.0},{"y", 3.0}}},
+         {"A", {{"x", 1.0},{"y", 6.0}}},
+         {"B", {{"x", 2.0},{"y", 3.0}}},
+         {"A", {{"x", 2.0},{"y", 6.0}}},
+         {"B", {{"x", 2.0},{"y", 5.0}}},
+         {"B", {{"x", 2.0},{"y", 5.0}}},},
 
         {{"A", {{"x", 2.0},{"y", 1.0}}},
          {"A", {{"x", 1.0},{"y", 3.0}}},
@@ -118,11 +118,20 @@ int main() {
     //aaab from trace 0
     dataContainer aOccurences{}, bOccurences{};
     aOccurences.emplace_back(std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>({0, 0}, {1, {0}}));
+    aOccurences.emplace_back(std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>({0, 1}, {1, {1}}));
     aOccurences.emplace_back(std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>({0, 2}, {1, {2}}));
+    aOccurences.emplace_back(std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>({0, 3}, {1, {3}}));
     aOccurences.emplace_back(std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>({0, 4}, {1, {4}}));
+    aOccurences.emplace_back(std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>({0, 5}, {1, {5}}));
+//    aOccurences.emplace_back(std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>({0, 6}, {1, {6}}));
 
-    bOccurences.emplace_back(std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>({0, 1}, {1, {1}}));
-    bOccurences.emplace_back(std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>({0, 3}, {1, {3}}));
+//    bOccurences.emplace_back(std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>({0, 0}, {1, {0}}));
+//    bOccurences.emplace_back(std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>({0, 1}, {1, {1}}));
+//    bOccurences.emplace_back(std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>({0, 2}, {1, {2}}));
+//    bOccurences.emplace_back(std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>({0, 3}, {1, {3}}));
+//    bOccurences.emplace_back(std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>({0, 4}, {1, {4}}));
+//    bOccurences.emplace_back(std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>({0, 5}, {1, {5}}));
+//    bOccurences.emplace_back(std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>({0, 6}, {1, {6}}));
 
     std::cout << "========DATA=========" << std::endl << "SET1: " << std::endl << aOccurences << std::endl << "SET2:" << std::endl << bOccurences << std::endl;
 
@@ -171,8 +180,17 @@ int main() {
     std::cout << "========ChainResponse=========" << std::endl << chainResponse << std::endl;
     std::flush(std::cout);
 
-    dataContainer chainPrecedence = ChainPrecedence(aOccurences, bOccurences, aOccurences, db.getLastElements(), db.act_table_by_act_id.getTraceLengths(),&predManager);
+    dataContainer chainPrecedence = ChainPrecedence(aOccurences, bOccurences, aOccurences, db.getNotFirstElements(), db.getLastElements(), db.act_table_by_act_id.getTraceLengths(),nullptr);
     std::cout << "========ChainPrecedence=========" << std::endl << chainPrecedence << std::endl;
+    std::flush(std::cout);
+
+    dataContainer chainSuccession = ChainSuccession(aOccurences, bOccurences,  bOccurences, aOccurences, db.getNotFirstElements(), db.getLastElements(), db.act_table_by_act_id.getTraceLengths(), nullptr);
+    std::cout << "========ChainSuccession=========" << std::endl << chainSuccession << std::endl;
+    std::flush(std::cout);
+
+    dataContainer negationChainSuccession = NegationChainSuccession(aOccurences, bOccurences,  bOccurences, aOccurences, db.getLastElements(), db.act_table_by_act_id.getTraceLengths(),
+                                                                    nullptr);
+    std::cout << "========NegationChainSuccession=========" << std::endl << negationChainSuccession << std::endl;
     std::flush(std::cout);
     return 0;
 }
