@@ -2,9 +2,9 @@ name: CMake
 
 on:
   push:
-    branches: [ toMerge ]
+    branches: [ main ]
   pull_request:
-    branches: [ toMerge ]
+    branches: [ main ]
 
 env:
   # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
