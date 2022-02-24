@@ -7,16 +7,27 @@
 <link href="https://cdnjs.cloudflare.com/ajax/libs/vis/4.2.0/vis.min.css" rel="stylesheet" type="text/css" />
 
 <style>
+    /* Clear floats after the columns */
+
         #mynetwork {
+            float: left;
             width: 70%;
             height: 90%;
-            border: 1px solid lightgray;
         }
-                #myinfo {
+        #csv-display {
             width: 29%;
             height: 90%;
             border: 1px solid lightgray;
         }
+        .column {
+  float: left;
+}
+
+    .row:after {
+        content: "";
+        display: table;
+        clear: both;
+    }
         </style>
    
   </head>
@@ -25,14 +36,15 @@
 Place cursor on Node 4 for popover
 </h3>
 
-<h4 id="popup-event">
+
+
+<div class="row">
+<div class="column" id="mynetwork"></div>
+<div class="column" id="csv-display"><h4 id="popup-event">
 Popup event not fired yet...
-</h4>
+</h4></div>
+</div>
 
-<div id="mynetwork"></div>
-<div id="myinfo"></div>
-
-<div id="csv-display"></div>
 
  <script>
     // create an array with nodes
@@ -108,11 +120,6 @@ function generateHtmlTable(data) {
 
 $( document ).ready(function(){
     
-    var arrayo = ["http://evanplaice.github.io/jquery-csv/examples/data/analytics1.csv",
-                     "http://evanplaice.github.io/jquery-csv/examples/data/analytics2.csv",
-                     "http://evanplaice.github.io/jquery-csv/examples/data/sine.csv",
-                     "http://evanplaice.github.io/jquery-csv/examples/data/sample2.csv",
-                     "http://evanplaice.github.io/jquery-csv/examples/data/sample2.csv"];
         var options = {
   autoResize: true,
     	physics:{enabled:true},
@@ -130,18 +137,19 @@ $( document ).ready(function(){
     var network = new vis.Network(container, data, options);
     
         network.on("click", function(node) { 
-         /*$.ajax({
+         $.ajax({
 	  type: "GET",  
-	  url: arrayo[node.nodes[0]],
+	  url: "/pipeline_data.csv",
+	  data: {
+	    f: node.nodes[0]
+	  },
 	  dataType: "text",       
 	  success: function(response)  
 	  {
 		data = $.csv.toArrays(response);
 		generateHtmlTable(data);
 	  }   
-	});*/
-    	document.getElementById('popup-event').innerHTML = 'Popover shown! Node ID:' + node.nodes[0];
-      document.getElementById('popup-event').style = 'color: red';
+	});
     });
     
 	  }   
