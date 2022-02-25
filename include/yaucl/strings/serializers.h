@@ -46,15 +46,29 @@ std::ostream &operator<<(std::ostream &os, const std::map<T,V> &insertion) {
 
 template<typename T, typename V>
 std::ostream &operator<<(std::ostream &os, const std::pair<T,V> &insertion) {
-    return os << "{" << insertion.first << ", " << insertion.second << "}";
+    return os << "⟪" << insertion.first << ", " << insertion.second << "⟫";
 }
 
 template<typename T>
 std::ostream &operator<<(std::ostream &os, const std::vector<T> &insertion) {
-    os << '{';
+    os << '[';
     for (size_t i = 0, N = insertion.size(); i<N; i++) {
         os << insertion.at(i);
         if (i < (N-1)) os << ", ";
+    }
+    return os << ']';
+}
+
+#include <set>
+
+template<typename T>
+std::ostream &operator<<(std::ostream &os, const std::set<T> &insertion) {
+    os << '{';
+    auto it = insertion.begin();
+    for (size_t i = 0, N = insertion.size(); i<N; i++) {
+        os << *it;
+        if (i < (N-1)) os << ", ";
+        it++;
     }
     return os << '}';
 }

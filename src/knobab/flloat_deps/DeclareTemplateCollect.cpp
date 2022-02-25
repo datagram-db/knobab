@@ -16,6 +16,9 @@ DeclareTemplateCollect::DeclareTemplateCollect(const std::filesystem::path& cach
     }
 }
 
+#include <cassert>
+#include <knobab/flloat_deps/ParseFFLOATDot.h>
+
 NodeLabelBijectionFA<std::string, easy_prop>
 DeclareTemplateCollect::getDeclareTemplate(const declare_templates type, size_t nargs) {
     auto cp = std::make_pair(type, nargs);
@@ -30,9 +33,9 @@ DeclareTemplateCollect::getDeclareTemplate(const declare_templates type, size_t 
             // if the file is not in cache: create it!
             ltlf input_forumla;
             if (isUnaryPredicate(type)) {
-                input_forumla = toFiniteSemantics(type, nargs, left_act);
+                input_forumla = DeclareDataAware::unary(type, left_act, nargs).toFiniteSemantics();
             } else {
-                input_forumla = toFiniteSemantics(type, nargs,  left_act, right_act);
+                input_forumla = DeclareDataAware::binary(type, left_act, right_act).toFiniteSemantics();
             }
 
             std::stringstream s;

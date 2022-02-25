@@ -33,6 +33,7 @@ bool SimpleDataPredicate::operator()(const env &e1, const env &e2) const {
             return true;
         default:
             return false;
+            
     }
 }
 

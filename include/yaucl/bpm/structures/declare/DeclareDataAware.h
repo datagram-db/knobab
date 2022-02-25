@@ -28,45 +28,33 @@
  * Definition of all the types of Declare statements
  */
 enum declare_templates {
-    Absence,
-    Absence2,
-    AltResponse,
-    AltPrecedence,
-    AltSuccession,
-    Choice,
     End,
-    Exactly,
-    ExlChoice,
-    Existence,
     Init,
+    Existence,
+    Absence2,
+    Absence,
+    Choice,
+    ExlChoice,
     RespExistence,
     CoExistence,
     Response,
     Precedence,
+    Succession,
+    AltResponse,
+    AltPrecedence,
+    AltSuccession,
     ChainResponse,
     ChainPrecedence,
     ChainSuccession,
-    Succession,
-    NotSuccession,
     NotCoExistence,
-    NotChainPrecedence,
-    NotChainResponse,
-    NotChainSuccession,
-    NotPrecedence,
-    NotResponse,
-    NotRespExistence,
     NegSuccession,
-    NegChainSuccession,
-    NegationAltResponse,
-    NegationPrecedence,
-    NegationResponse,
-    NegNotChainSuccession,
-    VacNegNotChainSuccession
+    NegChainSuccession
 };
 
 bool isUnaryPredicate(declare_templates type);
+bool isPredicateNegative(declare_templates type);
 
-bool isUnaryPredicate(declare_templates t);
+//bool isUnaryPredicate(declare_templates t);
 
 #include <string>
 #include <unordered_map>
@@ -93,6 +81,22 @@ struct DeclareDataAware {
     // Each map represents a conjunction among different atoms over distinct variables, while the vector represents the disjunction
     std::vector<std::unordered_map<std::string, DataPredicate>> dnf_left_map, dnf_right_map, conjunctive_map;
     std::unordered_set<std::string> left_decomposed_atoms, right_decomposed_atoms;
+
+    DEFAULT_CONSTRUCTORS(DeclareDataAware)
+    static DeclareDataAware unary(declare_templates, const std::string& argument, size_t n);
+    static DeclareDataAware binary(declare_templates t, const std::string& left, const std::string right);
+
+    static DeclareDataAware doExistence(size_t n, const std::string& left_act, const std::vector<std::unordered_map<std::string, DataPredicate>>& dnf_left_map);
+    static DeclareDataAware doAbsence(size_t n, const std::string& left_act, const std::vector<std::unordered_map<std::string, DataPredicate>>& dnf_left_map);
+
+    static DeclareDataAware parse_declare_non_data_string(const std::string& line);
+    static std::vector<DeclareDataAware> load_simplified_declare_model(std::istream &file);
+    friend std::ostream &operator<<(std::ostream &os, const DeclareDataAware &aware);
+    bool operator==(const DeclareDataAware &rhs) const;
+    bool operator!=(const DeclareDataAware &rhs) const;
+
+
+    ltlf toFiniteSemantics(bool isForGraph = true) const;
 
     template <typename Lambda>
     std::unordered_set<std::string> collectLeftAttributes(Lambda outResult,
@@ -164,28 +168,11 @@ struct DeclareDataAware {
 
 
 
-    DEFAULT_CONSTRUCTORS(DeclareDataAware)
-
-    static DeclareDataAware unary(declare_templates, const std::string& argument, size_t n);
-    static DeclareDataAware binary(declare_templates t, const std::string& left, const std::string right);
 
 
-
-    static DeclareDataAware parse_declare_non_data_string(const std::string& line);
-    static std::vector<DeclareDataAware> load_simplified_declare_model(std::istream &file);
-
-    friend std::ostream &operator<<(std::ostream &os, const DeclareDataAware &aware);
-
-    bool operator==(const DeclareDataAware &rhs) const;
-    bool operator!=(const DeclareDataAware &rhs) const;
-
-    ltlf toFiniteSemantics() const;
-
-    static DeclareDataAware doExistence(size_t n, const std::string& left_act, const std::vector<std::unordered_map<std::string, DataPredicate>>& dnf_left_map);
-    static DeclareDataAware doAbsence(size_t n, const std::string& left_act, const std::vector<std::unordered_map<std::string, DataPredicate>>& dnf_left_map);
 };
 
-ltlf toFiniteSemantics(declare_templates casusu, size_t n, const std::string& left_act, const std::string& right_act = "");
+//ltlf toFiniteSemantics(declare_templates casusu, size_t n, const std::string& left_act, const std::string& right_act = "");
 
 namespace std {
     template <>
