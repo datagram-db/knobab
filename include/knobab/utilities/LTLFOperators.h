@@ -15,6 +15,7 @@ static const std::vector<uint16_t> maxVec(max,max);
 #include <map>
 #include <functional>
 
+using dataContainer = std::vector<std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>>;
 
 template<typename InputIt1, typename InputIt2, typename OutputIt, typename Aggregation>
 OutputIt setUnion(InputIt1 first1, InputIt1 last1, InputIt2 first2, InputIt2 last2,

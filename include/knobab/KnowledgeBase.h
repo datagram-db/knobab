@@ -30,6 +30,7 @@ enum ParsingState {
 
 #include <bitset>
 #include <knobab/trace_repairs/DataQuery.h>
+#include <knobab/utilities/LTLFOperators.h>
 
 
 using trace_set = std::bitset<sizeof(uint32_t)>;
@@ -200,6 +201,11 @@ public:
     /******************************
      * First part of the pipeline *
      ******************************/
+
+    const dataContainer getLastElements() const;
+
+    const dataContainer getNotFirstElements();
+
 
     uint16_t getMappedValueFromAction(const std::string &act) const;
     std::pair<const uint32_t, const uint32_t> resolveCountingData(const std::string &act) const;

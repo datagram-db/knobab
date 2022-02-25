@@ -801,4 +801,46 @@ void KnowledgeBase::exact_range_query(const std::string &var,
     }
 }
 
+const dataContainer KnowledgeBase::getLastElements() const {
+    dataContainer elems{};
+    for (const std::pair<ActTable::record *, ActTable::record *> &rec: act_table_by_act_id.secondary_index) {
+        const uint32_t traceId = rec.second->entry.id.parts.trace_id;
+        uint16_t eventId = rec.second->entry.id.parts.event_id;
+        eventId = getPositionFromEventId({traceId, eventId});
+        const std::pair<uint32_t, uint16_t> traceEventPair{traceId, eventId};
+
+        elems.push_back(
+                std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>{traceEventPair,
+                                                                                                   {1, {eventId}}});
+    }
+
+    return elems;
+}
+
+const dataContainer KnowledgeBase::getNotFirstElements() {
+    dataContainer elems{};
+
+    auto itr = act_table_by_act_id.secondary_index.begin();
+    while (itr != act_table_by_act_id.secondary_index.end()) {
+        auto currentElem = itr->first;
+
+        while (currentElem = currentElem->next) {
+            const uint32_t traceId = currentElem->entry.id.parts.trace_id;
+            uint16_t eventId = currentElem->entry.id.parts.event_id;
+            eventId = getPositionFromEventId({traceId, eventId});
+            const std::pair<uint32_t, uint16_t> traceEventPair{traceId, eventId};
+
+            elems.push_back(
+                    std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>{
+                            traceEventPair,
+                            {1, {eventId}}});
+
+        }
+
+        ++itr;
+    }
+
+    return elems;
+}
+
 
