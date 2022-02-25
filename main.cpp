@@ -587,7 +587,7 @@ void sam_testing() {
     std::cout << "========ExclusiveChoice=========" << std::endl << ExclusiveChoice(aOccurences, bOccurences, bOccurences, aOccurences, db.act_table_by_act_id.getTraceLengths(),nullptr) << std::endl;
     std::cout << "========ResponseExistence=========" << std::endl << ResponseExistence(aOccurences, bOccurences, bOccurences, db.act_table_by_act_id.getTraceLengths(),nullptr) << std::endl;
     std::cout << "========Coexistence=========" << std::endl << Coexistence(aOccurences, bOccurences, bOccurences, aOccurences, db.act_table_by_act_id.getTraceLengths(), nullptr) << std::endl;
-    std::cout << "========NotCoexistence=========" << std::endl << NotCoexistence(bOccurences, aOccurences, db.act_table_by_act_id.getTraceLengths(),nullptr) << std::endl;
+    std::cout << "========NotCoexistence=========" << std::endl << NotCoexistence(bOccurences, aOccurences, db.act_table_by_act_id.getTraceLengths(), nullptr, true) << std::endl;
     std::cout << "========ChainResponse=========" << std::endl << DChainResponse(aOccurences, bOccurences, bOccurences, db.act_table_by_act_id.getTraceLengths(),nullptr) << std::endl;
     std::cout << "========ChainPrecedence=========" << std::endl << DChainPrecedence(aOccurences, bOccurences, aOccurences,  db.getLastElements(), db.act_table_by_act_id.getTraceLengths(),nullptr) << std::endl;
     std::cout << "========ChainSuccession=========" << std::endl << DChainSuccession(aOccurences, bOccurences,  bOccurences, aOccurences,  db.getLastElements(), db.act_table_by_act_id.getTraceLengths(), nullptr) << std::endl;

@@ -125,6 +125,7 @@ setUnionUntimed(InputIt1 first1, InputIt1 last1, InputIt2 first2, InputIt2 last2
                             }
                         }
                     } else {
+                        // NOTE: that will discard potential activation and target conditions, and just put the two events where the situation holds.
                         *d_first = std::make_pair(std::pair<uint32_t, uint16_t>{pair.first, 0},
                                                   std::pair<double, std::vector<uint16_t>>{
                                                           aggr(cont1.second.first, cont2.second.first), {}});
@@ -242,6 +243,7 @@ OutputIt setIntersectionUntimed(InputIt1 first1, InputIt1 last1, InputIt2 first2
                             }
                         }
                     } else {
+                        // NOTE: that will discard potential activation and target conditions, and just put the two events where the situation holds.
                         *d_first = std::make_pair(std::pair<uint32_t, uint16_t>{pair.first, 0},
                                                   std::pair<double, std::vector<uint16_t>>{
                                                           aggr(cont1.second.first, cont2.second.first),
@@ -375,77 +377,91 @@ dataContainer future(const TableSection &section) {
 }
 
 template<typename TableSection>
-dataContainer until(const uint32_t &traceId, const uint16_t &startEventId, const uint16_t& endEventId, const TableSection &aSection, const TableSection &bSection, const PredicateManager* manager = nullptr) {
-    dataContainer aBSection {};
-    setUnion(aSection.begin(), aSection.end(), bSection.begin(), bSection.end(), std::back_inserter(aBSection), Aggregators::maxSimilarity<double, double, double>, manager);
+dataContainer negateUntimed(TableSection &data_untimed, const std::vector<size_t> &lengths, bool preserveNegatedFacts = true) {
+    dataContainer result;
+    size_t first1 = 0, last1 = lengths.size();
+    auto first2 = data_untimed.begin(), last2 = data_untimed.end();
+    for (; first1 != last1; ) {
+        if (first2 == last2) {
+            do {
+                result.emplace_back(std::make_pair(first1, 0), std::make_pair(1.0, std::vector<uint16_t>{}));
+            } while (first1 != last1);
+        }
+        if (first1 > first2->first.first) {
+            first2++;
+        } else if (first1 < first2->first.first) {
+            result.emplace_back(std::make_pair(first1, 0), std::make_pair(1.0, std::vector<uint16_t>{}));
+            first1++;
+        } else {
+            // MEMO: if you want to preserve the condition where it didn't hold for repairs or givin advices, then you should return a result having 0, and containing the result of the match
+            if (preserveNegatedFacts || (first2->second.first <= std::numeric_limits<double>::epsilon())) {
+                auto tmp = *first2;
+                tmp.second.first = 1.0 - tmp.second.first;
+                result.push_back(tmp);
+            }
+            first1++;
+            first2++;
+        }
+    }
+    return result;
+}
 
-    auto bLower = std::lower_bound(bSection.begin(), bSection.end(), std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>{{traceId, startEventId}, {0, {}}});
+template<typename TableSection>
+dataContainer until(const uint32_t &traceId,
+                    const uint16_t &startEventId,
+                    const uint16_t& endEventId,
 
-    if(bLower == bSection.end()){
+                    const TableSection &aSection,
+                    const TableSection &bSection,
+
+                    const PredicateManager* manager = nullptr) {
+
+    auto lower = std::lower_bound(bSection.begin(), bSection.end(), std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>{{traceId, startEventId}, {0, {}}});
+    auto localUpper = lower;
+    auto upper = std::upper_bound(lower, bSection.end(), std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>{{traceId, endEventId},  {1, maxVec}});
+    if(upper == bSection.end()){
         return {};
     }
 
-    auto aBLower = std::lower_bound(aBSection.begin(), aBSection.end(), std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>{{traceId, startEventId}, {0, {}}});
-    auto aBLowerIncr = aBLower;
-    auto aBUpper = std::upper_bound(aBSection.begin(), aBSection.end(), std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>{{traceId, endEventId}, {1, maxVec}});
-
-    auto aLower = std::lower_bound(aSection.begin(), aSection.end(), std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>{{traceId, startEventId}, {0, {}}});
+    auto aIt = std::lower_bound(aSection.begin(), aSection.end(), std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>{{traceId, startEventId}, {0, {}}});
+    auto aEn = std::upper_bound(aSection.begin(), aSection.end(), std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>{{traceId, endEventId}, {1, maxVec}});
 
     dataContainer temp {};
 
-    while (aBLowerIncr != aBUpper) {
-        if(*aBLowerIncr != *aLower){
-            if(*aBLowerIncr == *bLower){
-                std::vector<uint16_t> vec = populateAndReturnEvents(aBLower, aBUpper);
-                temp.emplace_back(std::pair<uint32_t, uint16_t>{traceId, 0}, std::pair<double, std::vector<uint16_t>>{1, vec});
+    for( ; aIt != aEn; aIt++) {
+        if (aIt->first.second == startEventId) {
+            temp.emplace_back(*aIt);
+        } else {
+            localUpper = std::upper_bound(localUpper, upper, std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>{{traceId, aIt->first.second-1},  {1, maxVec}});
+            if(lower == localUpper){
+                // Rationale: (1)
+                // if the condition does not hold for a time [startEventId, aIt->first.second-1], it is because one event makes it not hold.
+                // Therefore, it should never hold even if you are extending the data that you have.
                 return temp;
-            }
-            else{
-                break;
+            } else {
+                const uint32_t dist = std::distance(lower, upper - 1);
+                if(dist == ((aIt->first.second-1) - startEventId)){
+                    std::vector<uint16_t> vec = populateAndReturnEvents(lower, aIt);
+                    temp.emplace_back(std::pair<uint32_t, uint16_t>{traceId, startEventId}, std::pair<double, std::vector<uint16_t>>{1,vec});
+                } else {
+                    // For (1)
+                    return temp;
+                }
             }
         }
-        aLower++;
-        aBLowerIncr++;
-    }
 
-    return {};
+     }
+
+    return temp;
 }
 
 template<typename TableSection>
 dataContainer until(const TableSection &aSection, const TableSection &bSection, const std::vector<size_t>& lengths, const PredicateManager* manager = nullptr) {
-    dataContainer aBSection {};
-    setUnion(aSection.begin(), aSection.end(), bSection.begin(), bSection.end(), std::back_inserter(aBSection), Aggregators::maxSimilarity<double, double, double>, manager);
-
-    auto aBLower = aBSection.begin(), aBUpper = aBSection.begin();
-
     dataContainer temp {};
-
-    while(aBUpper != aBSection.end()){
-        uint32_t currentTraceId = aBUpper->first.first;
-
-        aBLower = std::lower_bound(aBUpper, aBSection.end(), std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>{{currentTraceId, 0}, {0, {}}});
-        auto aBLowerIncr = aBLower;
-        aBUpper = std::upper_bound(aBLower, aBSection.end(), std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>{{currentTraceId, lengths[currentTraceId]}, {1, maxVec}});
-
-        auto aLower = std::lower_bound(aSection.begin(), aSection.end(), std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>{{currentTraceId, aBLower->first.second}, {0, {}}});
-        auto bLower = std::lower_bound(bSection.begin(), bSection.end(), std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>{{currentTraceId, aBLower->first.second}, {0, {}}});
-
-        while (aBLowerIncr != aBUpper) {
-            if(*aBLowerIncr != *aLower){
-                if(*aBLowerIncr == *bLower){
-                    std::vector<uint16_t> vec = populateAndReturnEvents(aBLower, aBUpper);
-                    temp.emplace_back(std::pair<uint32_t, uint16_t>{currentTraceId, 0}, std::pair<double, std::vector<uint16_t>>{1, vec});
-                    return temp;
-                }
-                else{
-                    break;
-                }
-            }
-            aLower++;
-            aBLowerIncr++;
-        }
+    for (uint32_t i = 0, N = (uint32_t)lengths.size(); i<N; i++) {
+        auto pr = until<TableSection>(i, (uint16_t)0, (uint16_t)(lengths.at(i)-1), aSection, bSection, manager);
+        temp.insert(temp.end(), pr.begin(), pr.end());
     }
-
     return temp;
 }
 
