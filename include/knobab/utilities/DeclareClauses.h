@@ -8,7 +8,6 @@
 #include "knobab/utilities/LTLFOperators.h"
 #include "Aggregators.h"
 
-dataContainer NotCoexistence(const dataContainer& notA, const dataContainer& notB, const std::vector<size_t>& lengths, const PredicateManager* manager = nullptr);
 
 
 dataContainer DChoice(const dataContainer& a, const dataContainer& b, const PredicateManager* manager = nullptr){
@@ -20,14 +19,7 @@ dataContainer DChoice(const dataContainer& a, const dataContainer& b, const Pred
     return futureAOrFutureB;
 }
 
-dataContainer ExclusiveChoice(const dataContainer& a, const dataContainer& notA, const dataContainer& b, const dataContainer& notB, const std::vector<size_t>& lengths, const PredicateManager* manager = nullptr){
-    dataContainer choiceAB = DChoice(a, b, manager);
-    dataContainer globalNotAOrGlobalNotB = NotCoexistence(notA, notB, lengths, manager);
 
-    dataContainer choiceABAndGlobalNotAOrGlobalNotB {};
-    setIntersectionUntimed( choiceAB.begin(), choiceAB.end(), globalNotAOrGlobalNotB.begin(), globalNotAOrGlobalNotB.end(), std::back_inserter(choiceABAndGlobalNotAOrGlobalNotB), Aggregators::maxSimilarity<double, double, double>, manager);
-    return choiceABAndGlobalNotAOrGlobalNotB;
-}
 
 dataContainer ResponseExistence(const dataContainer& a, const dataContainer& notA, const dataContainer& b, const std::vector<size_t>& lengths, const PredicateManager* manager = nullptr){
     dataContainer futureA = future(a);
@@ -48,17 +40,48 @@ dataContainer Coexistence(const dataContainer& a, const dataContainer& notA, con
     dataContainer respExBA = ResponseExistence(b, notB,a, lengths, manager);
 
     dataContainer respExABAndRespExBA {};
-    setIntersectionUntimed( respExAB.begin(), respExAB.end(), respExBA.begin(), respExBA.end(), std::back_inserter(respExABAndRespExBA), Aggregators::maxSimilarity<double, double, double>, manager);
+    setIntersectionUntimed( respExAB.begin(), respExAB.end(), respExBA.begin(), respExBA.end(), std::back_inserter(respExABAndRespExBA), Aggregators::maxSimilarity<double, double, double>, nullptr);
     return respExABAndRespExBA;
 }
 
-dataContainer NotCoexistence(const dataContainer& notA, const dataContainer& notB, const std::vector<size_t>& lengths, const PredicateManager* manager){
+dataContainer NotCoexistence(const dataContainer& notA, const dataContainer& notB, const std::vector<size_t>& lengths){
     dataContainer globalNotA = global(notA, lengths);
     dataContainer globalNotB = global(notB, lengths);
 
     dataContainer globalNotAOrGlobalNotB {};
-    setUnionUntimed( globalNotA.begin(), globalNotA.end(), globalNotB.begin(), globalNotB.end(), std::back_inserter(globalNotAOrGlobalNotB), Aggregators::maxSimilarity<double, double, double>, manager);
+    setUnionUntimed( globalNotA.begin(), globalNotA.end(), globalNotB.begin(), globalNotB.end(), std::back_inserter(globalNotAOrGlobalNotB), Aggregators::maxSimilarity<double, double, double>, nullptr);
     return globalNotAOrGlobalNotB;
+}
+
+
+
+dataContainer NotCoexistence(const dataContainer& A, const dataContainer& B, const std::vector<size_t>& lengths, const PredicateManager* predMan, bool preserveNegatedFacts = true) {
+    dataContainer Fa = future(A);
+    dataContainer Fb = future(B);
+
+    dataContainer FaAbdFb {};
+    setIntersectionUntimed( Fa.begin(), Fa.end(), Fb.begin(), Fb.end(), std::back_inserter(FaAbdFb), Aggregators::maxSimilarity<double, double, double>, predMan);
+
+    //dataContainer result = negateUntimed(FaAbdFb, lengths);
+    return negateUntimed(FaAbdFb, lengths, preserveNegatedFacts);
+}
+
+dataContainer ExclusiveChoice(const dataContainer& a, const dataContainer& notA, const dataContainer& b, const dataContainer& notB, const std::vector<size_t>& lengths){
+    dataContainer choiceAB = DChoice(a, b, nullptr);
+    dataContainer globalNotAOrGlobalNotB = NotCoexistence(notA, notB, lengths);
+
+    dataContainer choiceABAndGlobalNotAOrGlobalNotB {};
+    setIntersectionUntimed( choiceAB.begin(), choiceAB.end(), globalNotAOrGlobalNotB.begin(), globalNotAOrGlobalNotB.end(), std::back_inserter(choiceABAndGlobalNotAOrGlobalNotB), Aggregators::maxSimilarity<double, double, double>, nullptr);
+    return choiceABAndGlobalNotAOrGlobalNotB;
+}
+
+dataContainer ExclusiveChoice(const dataContainer& a, const dataContainer& notA, const dataContainer& b, const dataContainer& notB, const std::vector<size_t>& lengths, const PredicateManager* manager, bool preserveNegatedFacts = true){
+    dataContainer choiceAB = DChoice(a, b, manager);
+    dataContainer globalNotAOrGlobalNotB = NotCoexistence(a, b, lengths, manager, preserveNegatedFacts);
+
+    dataContainer choiceABAndGlobalNotAOrGlobalNotB {};
+    setIntersectionUntimed( choiceAB.begin(), choiceAB.end(), globalNotAOrGlobalNotB.begin(), globalNotAOrGlobalNotB.end(), std::back_inserter(choiceABAndGlobalNotAOrGlobalNotB), Aggregators::maxSimilarity<double, double, double>, nullptr);
+    return choiceABAndGlobalNotAOrGlobalNotB;
 }
 
 dataContainer DChainResponse(const dataContainer& a, const dataContainer& notA, const dataContainer& b, const std::vector<size_t>& lengths, const PredicateManager* manager){
