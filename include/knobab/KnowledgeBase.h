@@ -222,14 +222,12 @@ public:
         return foundElems;
     }
 
-    template <typename traceIdentifier, typename traceValue>
-    TraceData<traceIdentifier, traceValue> init(const std::string& act, const double minThreshold = 1) const{
-        return existsAt<traceIdentifier, traceValue>(act, 0, minThreshold);
+    dataContainer init(const std::string& act, bool doExtractEvent, const double minThreshold = 1) const{
+        return initOrEnds(act, true, doExtractEvent, minThreshold);
     }
 
-    template <typename traceIdentifier, typename traceValue>
-    TraceData<traceIdentifier, traceValue> ends(const std::string& act, const double minThreshold = 1) const{
-        return existsAt<traceIdentifier, traceValue>(act, MAX_UINT16, minThreshold);
+    dataContainer ends(const std::string& act, bool doExtractEvent, const double minThreshold = 1) const{
+        return initOrEnds(act, false, doExtractEvent, minThreshold);
     }
 
     template <typename traceIdentifier, typename traceValue>
@@ -245,7 +243,8 @@ public:
     dataContainer exists(const std::string& act, bool markEventsForMatch) const{
         dataContainer foundData;
         std::pair<uint32_t, uint16_t> timePair;
-        std::pair<double, std::vector<uint16_t>> dataPair{1.0, {0}};
+        std::pair<double, std::vector<uint16_t>> dataPair{1.0, {}};
+        if (markEventsForMatch) dataPair.second.emplace_back(0);
         const uint16_t& mappedVal = getMappedValueFromAction(act);
         if(mappedVal < 0){
             return foundData;
@@ -286,17 +285,20 @@ public:
         return foundData;
     }
 
-    template <typename traceIdentifier, typename traceValue>
-    TraceData<traceIdentifier, traceValue> existsAt(const std::string& act, const uint16_t& eventId, const double minThreshold = 1) const{
-        TraceData<traceIdentifier, traceValue> foundData;
 
-        std::pair<traceIdentifier, traceValue> tracePair;
+    dataContainer initOrEnds(const std::string& act, bool beginOrEnd, bool doExtractEvent, const double minThreshold = 1) const{
+        dataContainer foundData;
+
+        dataContainer tracePair;
         const uint16_t& mappedVal = getMappedValueFromAction(act);
 
         if(mappedVal < 0){
             return foundData;
         }
 
+        std::pair<uint32_t, uint16_t> eventPair;
+        std::pair<double, std::vector<uint16_t>> dataPair{1.0, {}};
+        if (doExtractEvent) dataPair.second.emplace_back(0);
         std::pair<const uint32_t , const uint32_t> indexes = act_table_by_act_id.resolve_index(mappedVal);
 
         if(indexes.first < 0){
@@ -305,12 +307,16 @@ public:
 
         for (auto it = act_table_by_act_id.table.begin() + indexes.first; it != act_table_by_act_id.table.begin() + indexes.second + 1; ++it) {
             uint16_t approxConstant = MAX_UINT16 / 2;
+            auto eventId = beginOrEnd ? 0 : act_table_by_act_id.getTraceLength(it->entry.id.parts.trace_id)-1;
 
             float satisfiability = getSatisifiabilityBetweenValues(eventId, it->entry.id.parts.event_id, approxConstant);
 
             if(satisfiability >= minThreshold) {
-                const uint16_t newEventID = getPositionFromEventId({it->entry.id.parts.trace_id, it->entry.id.parts.event_id});
-                foundData.getTraceApproximations().emplace_back(std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>{{it->entry.id.parts.trace_id,  newEventID}, {satisfiability, {newEventID}}});
+                dataPair.first = satisfiability;
+                eventPair.first = it->entry.id.parts.trace_id;
+                eventPair.second = it->entry.id.parts.event_id;
+                if (doExtractEvent) dataPair.second[0] =  eventPair.second;
+                foundData.emplace_back(eventPair, dataPair);
             }
         }
 
