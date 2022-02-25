@@ -315,7 +315,7 @@ public:
                            const std::unordered_map<std::string, std::vector<size_t>>& actToPredId,
                            std::vector<std::pair<DataQuery, std::vector<std::pair<std::pair<trace_t, event_t>, double>>>>& Qs) const;
 #if 0
-=======
+//=======
     TraceData<traceIdentifier, traceValue> existsAt(const std::string& act, const uint16_t& eventId, const double minThreshold = 1) const{
         TraceData<traceIdentifier, traceValue> foundData;
 
@@ -352,7 +352,7 @@ public:
     const std::unordered_map<std::string, AttributeTable> getAttributeNameToTable() const{
         return attribute_name_to_table;
     }
->>>>>>> sam
+//>>>>>>> sam
 #endif
 
 private:
