@@ -156,7 +156,7 @@ std::pair<const uint32_t, const uint32_t> ActTable::resolve_index(act_t id) cons
         return {-1, -1};
     else {
         return {primary_index.at(id),
-                ((id == (primary_index.size() - 1)) ? primary_index.at(primary_index.size() - 1) - 1 : primary_index.at(id+1) - 1)};      // Pointers to first and last records from Act Table subsection
+                ((id == (primary_index.size() - 1)) ? (table.size() - 1) : primary_index.at(id+1) - 1)};      // Pointers to first and last records from Act Table subsection
     }
 }
 

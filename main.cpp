@@ -42,6 +42,7 @@ void whole_testing(const std::string& log_file = "data/testing/log.txt",
 
 
 
+
     //env.print_knowledge_base(std::cout); // DEBUG
     //////////////////////////////////////////////////////////////////
 
@@ -670,7 +671,7 @@ int main() {
     //whole_testing();
     //test_declare();
     //test_grounding();
-    //generate_traces();
+    generate_traces();
     //ltlf_operators_testing();
     //sam_testing();
 

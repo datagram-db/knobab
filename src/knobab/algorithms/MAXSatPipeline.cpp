@@ -305,7 +305,7 @@ void MAXSatPipeline::data_pipeline_first(const KnowledgeBase& kb) {
                         ref.second = kb.endsOrig<std::pair<uint32_t, uint16_t>, double>(ref.first.label).traceApproximations;
                         break;
                     case AtomQuery:
-                        ref.second = kb.exists<std::pair<uint32_t, uint16_t>, double>(ref.first.label).traceApproximations;
+                        // TODO: ref.second = kb.exists<std::pair<uint32_t, uint16_t>, double>(ref.first.label).traceApproximations;
                         break;
                     default:
                         assert(false); // This should be dealt in (B)
