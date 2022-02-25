@@ -42,12 +42,12 @@ dataContainer next(const TableSection &section) {
     return temp;
 }
 
-std::vector<uint16_t> populateAndReturnEvents(auto it1, auto it2){
+std::vector<uint16_t> populateAndReturnEvents(auto it1, auto it2, const PredicateManager* manager = nullptr){
     std::vector<uint16_t> vec;
 
     for(auto itr = it1; itr != it2; ++itr){
         for(const auto& r2 : itr->second.second){
-            vec.emplace_back(r2);
+                vec.push_back(r2);
         }
     }
 
@@ -87,7 +87,7 @@ dataContainer global(const TableSection &section, const std::vector<size_t>& len
         uint32_t currentTraceId = upper->first.first;
 
         lower = std::lower_bound(upper, section.end(), std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>{{currentTraceId, 0}, {0, {}}});
-        upper = std::upper_bound(lower, section.end(), std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>{{currentTraceId, lengths[currentTraceId]}, {1, maxVec}});
+        upper = std::upper_bound(lower, section.end(), std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>{{currentTraceId, lengths[currentTraceId] - 1}, {1, maxVec}});
 
         const uint32_t dist = std::distance(lower, upper - 1);
 
@@ -125,7 +125,10 @@ dataContainer future(const TableSection &section) {
 }
 
 template<typename TableSection>
-dataContainer until(const uint32_t &traceId, const uint16_t &startEventId, const uint16_t& endEventId, const TableSection &aSection, const TableSection &bSection, const TableSection &aBSection) {
+dataContainer until(const uint32_t &traceId, const uint16_t &startEventId, const uint16_t& endEventId, const TableSection &aSection, const TableSection &bSection, const PredicateManager* manager = nullptr) {
+    dataContainer aBSection {};
+    setUnion(true, aSection.begin(), aSection.end(), bSection.begin(), bSection.end(), std::back_inserter(aBSection), Aggregators::maxSimilarity<double, double, double>, manager);
+
     auto bLower = std::lower_bound(bSection.begin(), bSection.end(), std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>{{traceId, startEventId}, {0, {}}});
 
     if(bLower == bSection.end()){
@@ -159,9 +162,13 @@ dataContainer until(const uint32_t &traceId, const uint16_t &startEventId, const
 }
 
 template<typename TableSection>
-dataContainer until(const TableSection &aSection, const TableSection &bSection, const TableSection &aBSection, const std::vector<size_t>& lengths) {
-    dataContainer temp {};
+dataContainer until(const TableSection &aSection, const TableSection &bSection, const std::vector<size_t>& lengths, const PredicateManager* manager = nullptr) {
+    dataContainer aBSection {};
+    setUnion(true, aSection.begin(), aSection.end(), bSection.begin(), bSection.end(), std::back_inserter(aBSection), Aggregators::maxSimilarity<double, double, double>, manager);
+
     auto aBLower = aBSection.begin(), aBUpper = aBSection.begin();
+
+    dataContainer temp {};
 
     while(aBUpper != aBSection.end()){
         uint32_t currentTraceId = aBUpper->first.first;
@@ -171,7 +178,7 @@ dataContainer until(const TableSection &aSection, const TableSection &bSection, 
         aBUpper = std::upper_bound(aBLower, aBSection.end(), std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>{{currentTraceId, lengths[currentTraceId]}, {1, maxVec}});
 
         auto aLower = std::lower_bound(aSection.begin(), aSection.end(), std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>{{currentTraceId, aBLower->first.second}, {0, {}}});
-        auto bLower = std::lower_bound(bSection.begin(), bSection.end(), std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>{{currentTraceId, aBUpper->first.second}, {0, {}}});
+        auto bLower = std::lower_bound(bSection.begin(), bSection.end(), std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>{{currentTraceId, aBLower->first.second}, {0, {}}});
 
         while (aBLowerIncr != aBUpper) {
             if(*aBLowerIncr != *aLower){
