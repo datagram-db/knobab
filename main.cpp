@@ -456,13 +456,13 @@ void sam_testing() {
 //
     std::cout << "========SET OPERATORS=========" << std::endl;
     TraceData<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>> timedUnionNoPred, timedUnionWithPred, untimedUnionNoPred, untimedUnionWithPred;
-    setUnion(true, initAVec.getTraceApproximations().begin(), initAVec.getTraceApproximations().end(), endsAVec.getTraceApproximations().begin(), endsAVec.getTraceApproximations().end(),
+    setUnion( initAVec.getTraceApproximations().begin(), initAVec.getTraceApproximations().end(), endsAVec.getTraceApproximations().begin(), endsAVec.getTraceApproximations().end(),
              std::back_inserter(timedUnionNoPred.getTraceApproximations()), Aggregators::maxSimilarity<double, double, double>);
-    setUnion(true, initAVec.getTraceApproximations().begin(), initAVec.getTraceApproximations().end(), endsAVec.getTraceApproximations().begin(), endsAVec.getTraceApproximations().end(),
+    setUnion( initAVec.getTraceApproximations().begin(), initAVec.getTraceApproximations().end(), endsAVec.getTraceApproximations().begin(), endsAVec.getTraceApproximations().end(),
              std::back_inserter(timedUnionNoPred.getTraceApproximations()), Aggregators::maxSimilarity<double, double, double>, &predManager);
-    setUnion(false, initAVec.getTraceApproximations().begin(), initAVec.getTraceApproximations().end(), endsAVec.getTraceApproximations().begin(), endsAVec.getTraceApproximations().end(),
+    setUnionUntimed( initAVec.getTraceApproximations().begin(), initAVec.getTraceApproximations().end(), endsAVec.getTraceApproximations().begin(), endsAVec.getTraceApproximations().end(),
              std::back_inserter(untimedUnionNoPred.getTraceApproximations()), Aggregators::maxSimilarity<double, double, double>);
-    setUnion(false, initAVec.getTraceApproximations().begin(), initAVec.getTraceApproximations().end(), endsAVec.getTraceApproximations().begin(), endsAVec.getTraceApproximations().end(),
+    setUnionUntimed( initAVec.getTraceApproximations().begin(), initAVec.getTraceApproximations().end(), endsAVec.getTraceApproximations().begin(), endsAVec.getTraceApproximations().end(),
              std::back_inserter(untimedUnionWithPred.getTraceApproximations()), Aggregators::maxSimilarity<double, double, double>, &predManager);
 
     std::cout << "========Union timed no predicate=========" << std::endl << std::setw(9) << "Between: " << initAVec.getTraceApproximations() << std::endl << std::setw(9) << "and: "
@@ -475,13 +475,13 @@ void sam_testing() {
               << endsAVec.getTraceApproximations() << std::endl << std::setw(9) << "Result: " << untimedUnionWithPred.getTraceApproximations() << std::endl;
 
     TraceData<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>> timedIntersectionNoPred, timedIntersectionWithPred, untimedIntersectionNoPred, untimedIntersectionWithPred;
-    setIntersection(true, initAVec.getTraceApproximations().begin(), initAVec.getTraceApproximations().end(), endsAVec.getTraceApproximations().begin(), endsAVec.getTraceApproximations().end(),
+    setIntersection( initAVec.getTraceApproximations().begin(), initAVec.getTraceApproximations().end(), endsAVec.getTraceApproximations().begin(), endsAVec.getTraceApproximations().end(),
                     std::back_inserter(timedIntersectionNoPred.getTraceApproximations()), Aggregators::joinSimilarity<double, double, double>);
-    setIntersection(true, initAVec.getTraceApproximations().begin(), initAVec.getTraceApproximations().end(), endsAVec.getTraceApproximations().begin(), endsAVec.getTraceApproximations().end(),
+    setIntersection( initAVec.getTraceApproximations().begin(), initAVec.getTraceApproximations().end(), endsAVec.getTraceApproximations().begin(), endsAVec.getTraceApproximations().end(),
                     std::back_inserter(timedIntersectionWithPred.getTraceApproximations()), Aggregators::joinSimilarity<double, double, double>, &predManager);
-    setIntersection(false, initAVec.getTraceApproximations().begin(), initAVec.getTraceApproximations().end(), endsAVec.getTraceApproximations().begin(), endsAVec.getTraceApproximations().end(),
+    setIntersectionUntimed( initAVec.getTraceApproximations().begin(), initAVec.getTraceApproximations().end(), endsAVec.getTraceApproximations().begin(), endsAVec.getTraceApproximations().end(),
                     std::back_inserter(untimedIntersectionNoPred.getTraceApproximations()), Aggregators::joinSimilarity<double, double, double>);
-    setIntersection(false, initAVec.getTraceApproximations().begin(), initAVec.getTraceApproximations().end(), endsAVec.getTraceApproximations().begin(), endsAVec.getTraceApproximations().end(),
+    setIntersectionUntimed( initAVec.getTraceApproximations().begin(), initAVec.getTraceApproximations().end(), endsAVec.getTraceApproximations().begin(), endsAVec.getTraceApproximations().end(),
                     std::back_inserter(untimedIntersectionWithPred.getTraceApproximations()), Aggregators::joinSimilarity<double, double, double>, &predManager);
 
     std::cout << "========Intersection timed no predicate=========" << std::endl << std::setw(9) << "Between: " << initAVec.getTraceApproximations() << std::endl << std::setw(9) << "and: "
@@ -556,10 +556,10 @@ void sam_testing() {
 
     std::cout << "========SET OPERATORS=========" << std::endl;
     dataContainer e1, e2, e3, e4, e5, e6, e7, e8;
-    setUnion(true, aOccurences.begin(), aOccurences.end(), bOccurences.begin(), bOccurences.end(), std::back_inserter(e1), Aggregators::maxSimilarity<double, double, double>);
-    setUnion(true, aOccurences.begin(), aOccurences.end(), bOccurences.begin(), bOccurences.end(), std::back_inserter(e2), Aggregators::maxSimilarity<double, double, double>,&predManager);
-    setUnion(false, aOccurences.begin(), aOccurences.end(), bOccurences.begin(), bOccurences.end(), std::back_inserter(e3), Aggregators::maxSimilarity<double, double, double>);
-    setUnion(false, aOccurences.begin(), aOccurences.end(), bOccurences.begin(), bOccurences.end(), std::back_inserter(e4), Aggregators::maxSimilarity<double, double, double>, &predManager);
+    setUnion( aOccurences.begin(), aOccurences.end(), bOccurences.begin(), bOccurences.end(), std::back_inserter(e1), Aggregators::maxSimilarity<double, double, double>);
+    setUnion( aOccurences.begin(), aOccurences.end(), bOccurences.begin(), bOccurences.end(), std::back_inserter(e2), Aggregators::maxSimilarity<double, double, double>,&predManager);
+    setUnionUntimed( aOccurences.begin(), aOccurences.end(), bOccurences.begin(), bOccurences.end(), std::back_inserter(e3), Aggregators::maxSimilarity<double, double, double>);
+    setUnionUntimed( aOccurences.begin(), aOccurences.end(), bOccurences.begin(), bOccurences.end(), std::back_inserter(e4), Aggregators::maxSimilarity<double, double, double>, &predManager);
     std::cout << "========Ltlf Union timed no predicate=========" << std::endl << std::setw(9) << "Between: " << aOccurences << std::endl << std::setw(9) << "and: "
               << bOccurences << std::endl << std::setw(9) << "Result: " << e1 << std::endl;
     std::cout << "========Ltlf Union timed with predicate=========" << std::endl << std::setw(9) << "Between: " << aOccurences << std::endl << std::setw(9) << "and: "
@@ -569,10 +569,10 @@ void sam_testing() {
     ;std::cout << "========Ltlf Union untimed with predicate=========" << std::endl << std::setw(9) << "Between: " << aOccurences << std::endl << std::setw(9) << "and: "
                << bOccurences << std::endl << std::setw(9) << "Result: " << e4 << std::endl;
 
-    setIntersection(true, aOccurences.begin(), aOccurences.end(), bOccurences.begin(), bOccurences.end(), std::back_inserter(e5), Aggregators::maxSimilarity<double, double, double>);
-    setIntersection(true, aOccurences.begin(), aOccurences.end(), bOccurences.begin(), bOccurences.end(), std::back_inserter(e6), Aggregators::maxSimilarity<double, double, double>, &predManager);
-    setIntersection(false, aOccurences.begin(), aOccurences.end(), bOccurences.begin(), bOccurences.end(), std::back_inserter(e7), Aggregators::maxSimilarity<double, double, double>);
-    setIntersection(false, aOccurences.begin(), aOccurences.end(), bOccurences.begin(), bOccurences.end(), std::back_inserter(e8), Aggregators::maxSimilarity<double, double, double>,nullptr);
+    setIntersection( aOccurences.begin(), aOccurences.end(), bOccurences.begin(), bOccurences.end(), std::back_inserter(e5), Aggregators::maxSimilarity<double, double, double>);
+    setIntersection( aOccurences.begin(), aOccurences.end(), bOccurences.begin(), bOccurences.end(), std::back_inserter(e6), Aggregators::maxSimilarity<double, double, double>, &predManager);
+    setIntersectionUntimed( aOccurences.begin(), aOccurences.end(), bOccurences.begin(), bOccurences.end(), std::back_inserter(e7), Aggregators::maxSimilarity<double, double, double>);
+    setIntersectionUntimed( aOccurences.begin(), aOccurences.end(), bOccurences.begin(), bOccurences.end(), std::back_inserter(e8), Aggregators::maxSimilarity<double, double, double>,nullptr);
     std::cout << "========Ltlf Intersection timed no predicate=========" << std::endl << std::setw(9) << "Between: " << aOccurences << std::endl << std::setw(9) << "and: "
               << bOccurences << std::endl << std::setw(9) << "Result: " << e5 << std::endl;
     std::cout << "========Ltlf Intersection timed with predicate=========" << std::endl << std::setw(9) << "Between: " << aOccurences << std::endl << std::setw(9) << "and: "
@@ -583,14 +583,14 @@ void sam_testing() {
               << bOccurences << std::endl << std::setw(9) << "Result: " << e8 << std::endl <<std::endl;
 
     std::cout << "========DECLARE CLAUSES=========" << std::endl;
-    std::cout << "========Choice=========" <<  std::endl << Choice(aOccurences, bOccurences, nullptr) << std::endl;
+    std::cout << "========Choice=========" <<  std::endl << DChoice(aOccurences, bOccurences, nullptr) << std::endl;
     std::cout << "========ExclusiveChoice=========" << std::endl << ExclusiveChoice(aOccurences, bOccurences, bOccurences, aOccurences, db.act_table_by_act_id.getTraceLengths(),nullptr) << std::endl;
     std::cout << "========ResponseExistence=========" << std::endl << ResponseExistence(aOccurences, bOccurences, bOccurences, db.act_table_by_act_id.getTraceLengths(),nullptr) << std::endl;
     std::cout << "========Coexistence=========" << std::endl << Coexistence(aOccurences, bOccurences, bOccurences, aOccurences, db.act_table_by_act_id.getTraceLengths(), nullptr) << std::endl;
     std::cout << "========NotCoexistence=========" << std::endl << NotCoexistence(bOccurences, aOccurences, db.act_table_by_act_id.getTraceLengths(),nullptr) << std::endl;
-    std::cout << "========ChainResponse=========" << std::endl << ChainResponse(aOccurences, bOccurences, bOccurences, db.act_table_by_act_id.getTraceLengths(),nullptr) << std::endl;
-    std::cout << "========ChainPrecedence=========" << std::endl << ChainPrecedence(aOccurences, bOccurences, aOccurences, db.getNotFirstElements(), db.getLastElements(), db.act_table_by_act_id.getTraceLengths(),nullptr) << std::endl;
-    std::cout << "========ChainSuccession=========" << std::endl << ChainSuccession(aOccurences, bOccurences,  bOccurences, aOccurences, db.getNotFirstElements(), db.getLastElements(), db.act_table_by_act_id.getTraceLengths(), nullptr) << std::endl;
+    std::cout << "========ChainResponse=========" << std::endl << DChainResponse(aOccurences, bOccurences, bOccurences, db.act_table_by_act_id.getTraceLengths(),nullptr) << std::endl;
+    std::cout << "========ChainPrecedence=========" << std::endl << DChainPrecedence(aOccurences, bOccurences, aOccurences,  db.getLastElements(), db.act_table_by_act_id.getTraceLengths(),nullptr) << std::endl;
+    std::cout << "========ChainSuccession=========" << std::endl << DChainSuccession(aOccurences, bOccurences,  bOccurences, aOccurences,  db.getLastElements(), db.act_table_by_act_id.getTraceLengths(), nullptr) << std::endl;
     std::cout << "========NegationChainSuccession=========" << std::endl << NegationChainSuccession(aOccurences, bOccurences,  bOccurences, aOccurences, db.getLastElements(), db.act_table_by_act_id.getTraceLengths(),nullptr) << std::endl;
     std::flush(std::cout);
 #if 0

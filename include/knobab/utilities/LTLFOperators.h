@@ -10,7 +10,8 @@
 const uint16_t max = std::numeric_limits<uint16_t>::max();
 static const std::vector<uint16_t> maxVec(max,max);
 
-#include "knobab/predicates/PredicateManager.h"
+#include <knobab/predicates/PredicateManager.h>
+#include <knobab/utilities/Aggregators.h>
 
 #include <map>
 #include <functional>
@@ -376,7 +377,7 @@ dataContainer future(const TableSection &section) {
 template<typename TableSection>
 dataContainer until(const uint32_t &traceId, const uint16_t &startEventId, const uint16_t& endEventId, const TableSection &aSection, const TableSection &bSection, const PredicateManager* manager = nullptr) {
     dataContainer aBSection {};
-    setUnion(true, aSection.begin(), aSection.end(), bSection.begin(), bSection.end(), std::back_inserter(aBSection), Aggregators::maxSimilarity<double, double, double>, manager);
+    setUnion(aSection.begin(), aSection.end(), bSection.begin(), bSection.end(), std::back_inserter(aBSection), Aggregators::maxSimilarity<double, double, double>, manager);
 
     auto bLower = std::lower_bound(bSection.begin(), bSection.end(), std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>{{traceId, startEventId}, {0, {}}});
 
@@ -413,7 +414,7 @@ dataContainer until(const uint32_t &traceId, const uint16_t &startEventId, const
 template<typename TableSection>
 dataContainer until(const TableSection &aSection, const TableSection &bSection, const std::vector<size_t>& lengths, const PredicateManager* manager = nullptr) {
     dataContainer aBSection {};
-    setUnion(true, aSection.begin(), aSection.end(), bSection.begin(), bSection.end(), std::back_inserter(aBSection), Aggregators::maxSimilarity<double, double, double>, manager);
+    setUnion(aSection.begin(), aSection.end(), bSection.begin(), bSection.end(), std::back_inserter(aBSection), Aggregators::maxSimilarity<double, double, double>, manager);
 
     auto aBLower = aBSection.begin(), aBUpper = aBSection.begin();
 
