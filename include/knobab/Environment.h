@@ -12,6 +12,7 @@
 #include <yaucl/bpm/structures/log/data_loader.h>
 #include <knobab/flloat_deps/DeclareTemplateCollect.h>
 #include <yaucl/bpm/algos/transformations/declare_to_dfa/TemplateCollectResult.h>
+#include <knobab/algorithms/MAXSatPipeline.h>
 
 struct Environment {
     /// Creating an instance of the knowledge base, that is going to store all the traces in the log!
@@ -20,15 +21,29 @@ struct Environment {
     GroundingStrategyConf grounding_conf;
 
     DeclareModelParse dmp;
-    std::vector<DeclareDataAware> conjunctive_model;
 
     CNFDeclareDataAware grounding;
 
     DeclareTemplateCollect declare_to_graph;
+    std::vector<DeclareDataAware> conjunctive_model;
+
+    MAXSatPipeline maxsat_pipeline;
 
     //std::unordered_map<DeclareDataAware, FlexibleFA<size_t, std::string>> pattern_graph;
 
+    void server();
+
 public:
+
+
+    double min_threshold = 1.0;
+    double c = 2.0;
+    bool   index_missing_data = false;
+
+    /// Data Range Queries
+    std::vector<std::pair<std::pair<trace_t, event_t>, double>> range_query(DataPredicate prop) const {
+        return db.range_query(prop, min_threshold, c);
+    }
 
     Environment(const std::filesystem::path& cache_folder = "data/cache") : declare_to_graph{cache_folder} {}
 
@@ -37,6 +52,10 @@ public:
      * @return
      */
     semantic_atom_set  getSigmaAll() const;
+
+    void query_model() {
+        maxsat_pipeline.pipeline(&grounding, ap, db);
+    }
 
     /**
      * Clears all of the bits and pieces, thus preparing into a novel test
@@ -48,14 +67,23 @@ public:
      * @param format        Format of the log
      * @param loadData      Whether to load the trace and event payloads
      * @param filename      Filename associated to the log
+     * @param setMaximumStrLen Whether to exploit the knowledge base information to infer the maximum string length
      */
-    void load_log(log_data_format format, bool loadData, const std::string &filename);
+    void load_log(log_data_format format, bool loadData, const std::string &filename, bool setMaximumStrLen = true);
+
+    void load_all_clauses();
 
     /**
      * Loading the Declare model in the Extended format
      * @param model_file
      */
     void load_model(const std::string &model_file);
+    template <typename T> void load_model(T begin, T end) {
+        conjunctive_model.clear();
+        for (auto it = begin; it != end; it++) {
+            conjunctive_model.emplace_back(*it);
+        }
+    }
 
     void set_atomization_parameters(const std::string &fresh_atom_label = "p",
                                     size_t mslength = MAXIMUM_STRING_LENGTH);
@@ -112,12 +140,14 @@ public:
      * @return
      */
     semantic_atom_set evaluate_easy_prop_to_atoms(const easy_prop &prop,
-                                                  //const std::unordered_map<std::string, std::string>& bogus_act_to_atom,
                                                   const std::unordered_map<std::string, semantic_atom_set>& bogus_act_to_set);
 
     void print_model(std::ostream& os) const ;
     void print_grounded_model(std::ostream& os) const;
     void print_knowledge_base(std::ostream& os) const;
+    void print_count_table(std::ostream& os) const;
+    void print_act_table(std::ostream& os) const;
+    void print_attribute_tables(std::ostream& os) const;
     void print_grounding_tables(std::ostream& os);
 
 private:
@@ -134,3 +164,4 @@ private:
 
 
 #endif //KNOBAB_ENVIRONMENT_H
+

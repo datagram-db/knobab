@@ -10,7 +10,8 @@
 #include "Aggregators.h"
 dataContainer NotCoexistence(const dataContainer& notA, const dataContainer& notB, const std::vector<size_t>& lengths, const PredicateManager* manager = nullptr);
 
-dataContainer Choice(const dataContainer& a, const dataContainer& b, const PredicateManager* manager = nullptr){
+
+dataContainer DChoice(const dataContainer& a, const dataContainer& b, const PredicateManager* manager = nullptr){
     dataContainer futureA = future(a);
     dataContainer futureB = future(b);
 
@@ -20,7 +21,7 @@ dataContainer Choice(const dataContainer& a, const dataContainer& b, const Predi
 }
 
 dataContainer ExclusiveChoice(const dataContainer& a, const dataContainer& notA, const dataContainer& b, const dataContainer& notB, const std::vector<size_t>& lengths, const PredicateManager* manager = nullptr){
-    dataContainer choiceAB = Choice(a, b, manager);
+    dataContainer choiceAB = DChoice(a, b, manager);
     dataContainer globalNotAOrGlobalNotB = NotCoexistence(notA, notB, lengths, manager);
 
     dataContainer choiceABAndGlobalNotAOrGlobalNotB {};

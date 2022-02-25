@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/4.1.2/papaparse.js"></script>
+<meta content="text/html; charset=utf-8" http-equiv="Content-Type" />
+    <script type="text/javascript">
+    var ls = [];
+        function arrayToTable(tableData) {
+        var table = $('<table></table>');
+        $(tableData).each(function (i, rowData) {
+            var row = $('<tr></tr>');
+            $(rowData).each(function (j, cellData) {
+                row.append($('<td>'+cellData+'</td>'));
+            });
+            table.append(row);
+        });
+        return table;
+    }
+
+
+    function arrayOfTables(tableData) {
+        var table = $('<ul></ul>');
+        ls = tableData.split(/\r?\n/);
+        for (var cellData = 0; cellData<ls.length; cellData++) {
+            var input = $('<li><input id="'+cellData+'" type="button", value="'+ls[cellData]+'"> </input></li>');
+            table.append($(input));
+        }
+        $('#attributes').append(table);
+        for (var cellData = 0; cellData<ls.length; cellData++) {
+            $("#"+cellData).click(function() {
+            $("#help").empty();
+            var i = parseInt($(this).attr('id'));
+                $.ajax({
+        type: "GET",
+        url: "/att.csv",
+          data: { 
+    f: ls[i]
+  },
+        success: function (data) {
+            $('#help').append(arrayToTable(Papa.parse(data).data));
+        }
+    });
+            });
+        }
+    }
+    
+    $(document).ready(function() {
+    
+
+    
+     $.ajax({
+        type: "GET",
+        url: "/att_table_names.csv",
+        success: function (data) {
+           arrayOfTables(data);
+        }
+     });
+    
+    
+
+    });
+    </script>
+</head>
+
+<body>
+<H1>Attributes:</H1>
+<div id="attributes"> </div>
+<div id="help">table populated with information </div>
+
+</body>
+</html>
+

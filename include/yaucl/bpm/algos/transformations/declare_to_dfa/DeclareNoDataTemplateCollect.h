@@ -79,10 +79,10 @@ public:
                 case Existence:
                 case Absence:
                 case Absence2:
-                case Exactly:
+                //case Exactly:
                 case End:
                 case Init:
-                    input_forumla = toFiniteSemantics(template_.first, template_.second, "a");
+                    input_forumla = DeclareDataAware::unary(template_.first,  "a", template_.second).toFiniteSemantics();
                     for (const auto& template_actual: Sequentialised) {
                         std::unordered_map<std::string, std::string> M;
                         M["a"] = template_actual.left_act;
@@ -92,7 +92,7 @@ public:
                     break;
 
                 default:
-                    input_forumla = toFiniteSemantics(template_.first, template_.second, "a", "b");
+                    input_forumla = DeclareDataAware::binary(template_.first, "a", "b").toFiniteSemantics();
                     for (const auto& template_actual: Sequentialised) {
                         std::unordered_map<std::string, std::string> M;
                         M["a"] = template_actual.left_act;

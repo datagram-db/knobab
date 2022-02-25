@@ -87,16 +87,16 @@ std::ostream &operator<<(std::ostream &os, const AtomizingPipeline &pipeline) {
         os << std::endl << std::endl;
         os << " * Sigma Boxes: " << std::endl;
         os << "================" << std::endl;
-        std::pair<std::string, size_t> cp;
+        std::pair<std::string, size_t> cp;         // Just a copy object for the query
         for (const auto& k : pipeline.interval_map) {
-            os << "   - " << k.first << std::endl;
-            cp.first = k.first;
+            os << "   - " << k.first << std::endl; // Event label
+            cp.first = k.first;                    // cp = <Event Label, ...>
             for (size_t i = 0, N = pipeline.max_ctam_iteration.at(cp.first); i<N; i++) {
-                cp.second = i;
+                cp.second = i;                     // cp = <Event Label, Offset>
                 os << "        * "
-                   << pipeline.clause_to_atomization_map.at(cp)
+                   << pipeline.clause_to_atomization_map.at(cp) // Atom Name
                    << " --> "
-                   << k.second.at(i)
+                   << k.second.at(i)               // Data Predicates in conjunction
                    << std::endl;
             }
         }
@@ -119,7 +119,7 @@ void collect_data_from_declare_disjunctive_model(AtomizingPipeline &pipeline_dat
             pipeline_data.act_universe.insert(declare_clause.left_act);
             if (!declare_clause.right_act.empty())
                 pipeline_data.act_universe.insert(declare_clause.right_act);
-            assert(declare_clause.conjunctive_map.empty());
+            //assert(declare_clause.conjunctive_map.empty());
             for (const auto& itemList : declare_clause.dnf_left_map) {
                 for (const auto& item : itemList) {
                     auto& formula_numeric_atom = item.second;
@@ -283,19 +283,33 @@ semantic_atom_set atomize_disjunction(AtomizingPipeline &pipeline_data,
 void atomize_model(AtomizingPipeline &pipeline_data, CNFDeclareDataAware &disjoint_model) {
     for ( auto& ref : disjoint_model.singleElementOfConjunction) {
         for ( auto& child : ref.elementsInDisjunction) {
-            assert(child.conjunctive_map.empty());
+            //assert(child.conjunctive_map.empty());
             child.left_decomposed_atoms = pipeline_data.atom_decomposition(child.left_act, false);
             if (!child.dnf_left_map.empty()) {
                 auto tmp = atomize_disjunction(pipeline_data, child.dnf_left_map);
                 child.left_decomposed_atoms = unordered_intersection(child.left_decomposed_atoms,
                                               tmp);
             }
-            child.right_decomposed_atoms = pipeline_data.atom_decomposition(child.right_act, false);
-            if (!child.dnf_right_map.empty()) {
-                auto tmp = atomize_disjunction(pipeline_data, child.dnf_right_map);
-                child.right_decomposed_atoms = unordered_intersection(child.right_decomposed_atoms,
-                                              tmp);
+            if (!child.right_act.empty()) {
+                child.right_decomposed_atoms = pipeline_data.atom_decomposition(child.right_act, false);
+                if (!child.dnf_right_map.empty()) {
+                    auto tmp = atomize_disjunction(pipeline_data, child.dnf_right_map);
+                    child.right_decomposed_atoms = unordered_intersection(child.right_decomposed_atoms,
+                                                                          tmp);
+                }
             }
+        }
+    }
+
+    // Model Indexing: required only for the KB queries, but NOT for the graph pipeline!
+    std::pair<std::string, size_t> cp;         // Just a copy object for the query
+    for (const auto& k : pipeline_data.interval_map) {
+        cp.first = k.first;                    // cp = <Event Label, ...>
+        for (size_t i = 0, N = pipeline_data.max_ctam_iteration.at(cp.first); i<N; i++) {
+            cp.second = i;                     // cp = <Event Label, Offset>
+            // Assertion: one atom should only appear once!
+            assert(pipeline_data.atom_to_conjunctedPredicates.emplace(pipeline_data.clause_to_atomization_map.at(cp),
+                                                                      k.second.at(i)).second);
         }
     }
 }
