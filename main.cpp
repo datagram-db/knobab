@@ -553,11 +553,11 @@ void sam_testing() {
     std::flush(std::cout);
   
   
-    dataContainer chainPrecedence = DChainPrecedence(aOccurences, bOccurences, aOccurences, db.getNotFirstElements(), db.getLastElements(), db.act_table_by_act_id.getTraceLengths(),nullptr);
+    dataContainer chainPrecedence = DChainPrecedence(aOccurences, bOccurences, aOccurences, /*db.getNotFirstElements(),*/ db.getLastElements(), db.act_table_by_act_id.getTraceLengths(),nullptr);
     std::cout << "========ChainPrecedence=========" << std::endl << chainPrecedence << std::endl;
     std::flush(std::cout);
 
-    dataContainer chainSuccession = DChainSuccession(aOccurences, bOccurences,  bOccurences, aOccurences, db.getNotFirstElements(), db.getLastElements(), db.act_table_by_act_id.getTraceLengths(), nullptr);
+    dataContainer chainSuccession = DChainSuccession(aOccurences, bOccurences,  bOccurences, aOccurences, /*db.getNotFirstElements(),*/ db.getLastElements(), db.act_table_by_act_id.getTraceLengths(), nullptr);
     std::cout << "========ChainSuccession=========" << std::endl << chainSuccession << std::endl;
     std::flush(std::cout);
 
