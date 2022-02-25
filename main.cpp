@@ -116,47 +116,58 @@ int main() {
     << endsAVec.getTraceApproximations() << std::endl << "RESULT: " << std::endl << intersectionPred.getTraceApproximations() << std::endl;
 
     //aaab from trace 0
-    dataContainer aOccurences{}, bOccurences{};
+    dataContainer aOccurences{}, bOccurences{}, aBOccurences{};
     aOccurences.emplace_back(std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>({0, 0}, {1, {0}}));
     aOccurences.emplace_back(std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>({0, 1}, {1, {1}}));
     aOccurences.emplace_back(std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>({0, 2}, {1, {2}}));
-    aOccurences.emplace_back(std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>({0, 3}, {1, {3}}));
-    aOccurences.emplace_back(std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>({0, 4}, {1, {4}}));
-    aOccurences.emplace_back(std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>({0, 5}, {1, {5}}));
+    //    aOccurences.emplace_back(std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>({0, 3}, {1, {3}}));
+//    aOccurences.emplace_back(std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>({0, 4}, {1, {4}}));
+//    aOccurences.emplace_back(std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>({0, 5}, {1, {5}}));
 //    aOccurences.emplace_back(std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>({0, 6}, {1, {6}}));
 
 //    bOccurences.emplace_back(std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>({0, 0}, {1, {0}}));
 //    bOccurences.emplace_back(std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>({0, 1}, {1, {1}}));
 //    bOccurences.emplace_back(std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>({0, 2}, {1, {2}}));
-//    bOccurences.emplace_back(std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>({0, 3}, {1, {3}}));
-//    bOccurences.emplace_back(std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>({0, 4}, {1, {4}}));
-//    bOccurences.emplace_back(std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>({0, 5}, {1, {5}}));
+    bOccurences.emplace_back(std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>({0, 3}, {1, {3}}));
+    bOccurences.emplace_back(std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>({0, 4}, {1, {4}}));
+    bOccurences.emplace_back(std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>({0, 5}, {1, {5}}));
 //    bOccurences.emplace_back(std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>({0, 6}, {1, {6}}));
+
+    aBOccurences.emplace_back(std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>({0, 0}, {1, {0}}));
+    aBOccurences.emplace_back(std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>({0, 1}, {1, {1}}));
+    aBOccurences.emplace_back(std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>({0, 2}, {1, {2}}));
+    aBOccurences.emplace_back(std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>({0, 3}, {1, {3}}));
+    aBOccurences.emplace_back(std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>({0, 4}, {1, {4}}));
+    aBOccurences.emplace_back(std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>({0, 5}, {1, {5}}));
 
     std::cout << "========DATA=========" << std::endl << "SET1: " << std::endl << aOccurences << std::endl << "SET2:" << std::endl << bOccurences << std::endl;
 
     std::cout << "========LTLf Operators=========" << std::endl;
-    auto x1 = next(0, 0, 1, aOccurences);
-    auto x2 = next(aOccurences);
-    std::cout << "--NEXT--" << std::endl << "TEMPORAL: " << x1 << std::endl << "NON-TEMPORAL" << x2 << std::endl;
+    dataContainer x1 = next(0, 0, 1, aOccurences);
+    dataContainer x2 = next(aOccurences);
+    std::cout << "========NEXT========" << std::endl << "TEMPORAL: " << x1 << std::endl << "NON-TEMPORAL" << x2 << std::endl;
 
-    auto x3 = global(0, 0, 2, aOccurences);
-    auto x4 = global(aOccurences, db.act_table_by_act_id.getTraceLengths());
-    std::cout << "--GLOBAL--" << std::endl << "TEMPORAL: " << x3 << std::endl << "NON-TEMPORAL" << x4 << std::endl;
+    dataContainer x3 = global(0, 0, 2, aOccurences);
+    dataContainer x4 = global(aOccurences, db.act_table_by_act_id.getTraceLengths());
+    std::cout << "========GLOBAL========" << std::endl << "TEMPORAL: " << x3 << std::endl << "NON-TEMPORAL" << x4 << std::endl;
 
-    auto x5 = future(0, 1, 2, aOccurences);
-    auto x6 = future(aOccurences);
-    std::cout << "--FUTURE--" << std::endl << "TEMPORAL: " << x5 << std::endl << "NON-TEMPORAL" << x6 << std::endl;
+    dataContainer x5 = future(0, 1, 2, aOccurences);
+    dataContainer x6 = future(aOccurences);
+    std::cout << "========FUTURE========" << std::endl << "TEMPORAL: " << x5 << std::endl << "NON-TEMPORAL" << x6 << std::endl;
+
+    dataContainer x7 = until(0, 0, 2, aOccurences, bOccurences, aBOccurences);
+    dataContainer x8 = until(aOccurences, bOccurences, aBOccurences, db.act_table_by_act_id.getTraceLengths());
+    std::cout << "========UNTIL========" << std::endl << "TEMPORAL: " << x7 << std::endl << "NON-TEMPORAL" << x8 << std::endl;
 
     dataContainer e2, e3;
     setUnion(true, aOccurences.begin(), aOccurences.end(), bOccurences.begin(), bOccurences.end(), std::back_inserter(e2), Aggregators::maxSimilarity<double, double, double>, &predManager);
     setUnion(false, aOccurences.begin(), aOccurences.end(), bOccurences.begin(), bOccurences.end(), std::back_inserter(e3), Aggregators::maxSimilarity<double, double, double>, &predManager);
-    std::cout << "--LTLF UNION--" << std::endl << "TEMPORAL: " << e2 << std::endl <<  "NON-TEMPORAL" << e3 << std::endl;;
+    std::cout << "========LTLF UNION========" << std::endl << "TEMPORAL: " << e2 << std::endl <<  "NON-TEMPORAL" << e3 << std::endl;;
 
     dataContainer e4, e5;
     setIntersection(true, aOccurences.begin(), aOccurences.end(), bOccurences.begin(), bOccurences.end(), std::back_inserter(e4), Aggregators::maxSimilarity<double, double, double>, &predManager);
     setIntersection(false, aOccurences.begin(), aOccurences.end(), bOccurences.begin(), bOccurences.end(), std::back_inserter(e5), Aggregators::maxSimilarity<double, double, double>, &predManager);
-    std::cout << "--LTLF INTERSECTION--" << std::endl << "TEMPORAL: " << e4 << std::endl <<  "NON-TEMPORAL" << e5 << std::endl;;
+    std::cout << "========LTLF INTERSECTION========" << std::endl << "TEMPORAL: " << e4 << std::endl <<  "NON-TEMPORAL" << e5 << std::endl;;
 
     dataContainer choice = Choice(aOccurences, bOccurences, nullptr);
     std::cout << "========Choice=========" <<  std::endl << choice << std::endl;
@@ -188,8 +199,7 @@ int main() {
     std::cout << "========ChainSuccession=========" << std::endl << chainSuccession << std::endl;
     std::flush(std::cout);
 
-    dataContainer negationChainSuccession = NegationChainSuccession(aOccurences, bOccurences,  bOccurences, aOccurences, db.getLastElements(), db.act_table_by_act_id.getTraceLengths(),
-                                                                    nullptr);
+    dataContainer negationChainSuccession = NegationChainSuccession(aOccurences, bOccurences,  bOccurences, aOccurences, db.getLastElements(), db.act_table_by_act_id.getTraceLengths(),nullptr);
     std::cout << "========NegationChainSuccession=========" << std::endl << negationChainSuccession << std::endl;
     std::flush(std::cout);
     return 0;

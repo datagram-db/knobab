@@ -15,7 +15,7 @@ dataContainer next(const uint32_t &traceId, const uint16_t &startEventId, const 
     auto lower = std::lower_bound(section.begin(), section.end(), std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>{{traceId, startEventId},  {0, {}}});
     auto upper = std::upper_bound(lower, section.end(), std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>{{traceId, endEventId},  {1, maxVec}});
 
-    dataContainer temp;
+    dataContainer temp {};
 
     while (lower != upper) {
         if(lower->first.second > 0){
@@ -62,7 +62,7 @@ dataContainer global(const uint32_t &traceId, const uint16_t &startEventId, cons
     auto lower = std::lower_bound(section.begin(), section.end(), std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>{{traceId, startEventId},  {0, {}}});
     auto upper = std::upper_bound(lower, section.end(), std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>{{traceId, endEventId},  {1, maxVec}});
 
-    dataContainer temp;
+    dataContainer temp {};
 
     if(lower == upper){
         return temp;
@@ -80,7 +80,7 @@ dataContainer global(const uint32_t &traceId, const uint16_t &startEventId, cons
 
 template<typename TableSection>
 dataContainer global(const TableSection &section, const std::vector<size_t>& lengths) {
-    dataContainer temp;
+    dataContainer temp {};
     auto lower = section.begin(), upper = section.begin();
 
     while(upper != section.end()){
@@ -105,7 +105,7 @@ dataContainer future(const uint32_t &traceId, const uint16_t &startEventId, cons
     auto lower = std::lower_bound(section.begin(), section.end(), std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>{{traceId, startEventId}, {0, {}}});
     auto upper = std::upper_bound(section.begin(), section.end(), std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>{{traceId, endEventId}, {1, maxVec}});
 
-    dataContainer  temp;
+    dataContainer  temp {};
 
     if(lower == upper){
         return temp;
@@ -122,6 +122,74 @@ dataContainer future(const uint32_t &traceId, const uint16_t &startEventId, cons
 template<typename TableSection>
 dataContainer future(const TableSection &section) {
     return section;
+}
+
+template<typename TableSection>
+dataContainer until(const uint32_t &traceId, const uint16_t &startEventId, const uint16_t& endEventId, const TableSection &aSection, const TableSection &bSection, const TableSection &aBSection) {
+    auto bLower = std::lower_bound(bSection.begin(), bSection.end(), std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>{{traceId, startEventId}, {0, {}}});
+
+    if(bLower == bSection.end()){
+        return {};
+    }
+
+    auto aBLower = std::lower_bound(aBSection.begin(), aBSection.end(), std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>{{traceId, startEventId}, {0, {}}});
+    auto aBLowerIncr = aBLower;
+    auto aBUpper = std::upper_bound(aBSection.begin(), aBSection.end(), std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>{{traceId, endEventId}, {1, maxVec}});
+
+    auto aLower = std::lower_bound(aSection.begin(), aSection.end(), std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>{{traceId, startEventId}, {0, {}}});
+
+    dataContainer temp {};
+
+    while (aBLowerIncr != aBUpper) {
+        if(*aBLowerIncr != *aLower){
+            if(*aBLowerIncr == *bLower){
+                std::vector<uint16_t> vec = populateAndReturnEvents(aBLower, aBUpper);
+                temp.emplace_back(std::pair<uint32_t, uint16_t>{traceId, 0}, std::pair<double, std::vector<uint16_t>>{1, vec});
+                return temp;
+            }
+            else{
+                break;
+            }
+        }
+        aLower++;
+        aBLowerIncr++;
+    }
+
+    return {};
+}
+
+template<typename TableSection>
+dataContainer until(const TableSection &aSection, const TableSection &bSection, const TableSection &aBSection, const std::vector<size_t>& lengths) {
+    dataContainer temp {};
+    auto aBLower = aBSection.begin(), aBUpper = aBSection.begin();
+
+    while(aBUpper != aBSection.end()){
+        uint32_t currentTraceId = aBUpper->first.first;
+
+        aBLower = std::lower_bound(aBUpper, aBSection.end(), std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>{{currentTraceId, 0}, {0, {}}});
+        auto aBLowerIncr = aBLower;
+        aBUpper = std::upper_bound(aBLower, aBSection.end(), std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>{{currentTraceId, lengths[currentTraceId]}, {1, maxVec}});
+
+        auto aLower = std::lower_bound(aSection.begin(), aSection.end(), std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>{{currentTraceId, aBLower->first.second}, {0, {}}});
+        auto bLower = std::lower_bound(bSection.begin(), bSection.end(), std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>{{currentTraceId, aBUpper->first.second}, {0, {}}});
+
+        while (aBLowerIncr != aBUpper) {
+            if(*aBLowerIncr != *aLower){
+                if(*aBLowerIncr == *bLower){
+                    std::vector<uint16_t> vec = populateAndReturnEvents(aBLower, aBUpper);
+                    temp.emplace_back(std::pair<uint32_t, uint16_t>{currentTraceId, 0}, std::pair<double, std::vector<uint16_t>>{1, vec});
+                    return temp;
+                }
+                else{
+                    break;
+                }
+            }
+            aLower++;
+            aBLowerIncr++;
+        }
+    }
+
+    return temp;
 }
 
 #endif //KNOBAB_LTLFOPERATORS_H
