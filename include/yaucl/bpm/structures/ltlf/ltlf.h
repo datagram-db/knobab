@@ -48,7 +48,8 @@ enum formula_t {
     FALSE,
     NUMERIC_ATOM,
     BOX,
-    DIAMOND
+    DIAMOND,
+    LAST
 };
 
 
@@ -63,19 +64,21 @@ enum formula_t {
 struct ltlf {
     formula_t              casusu;
     std::string            act;
+    std::vector<std::string> rewritten_act;
     std::vector<ltlf>      args;
     bool                   is_negated;
     bool                   is_compound_predicate;
+    bool                   is_exclusive;
+    bool                   is_join_condition_place = false;
     DataPredicate          numeric_atom;
+    std::vector<std::unordered_map<std::string, DataPredicate>> joinCondition;
 
     // C++ constructors
     ltlf();
     ltlf(const std::string& act);
     ltlf(formula_t citki);
-    ltlf(const ltlf& ) = default;
-    ltlf(ltlf&&      ) = default;
-    ltlf& operator=(const ltlf&) = default;
-    ltlf& operator=(ltlf&&     ) = default;
+    DEFAULT_COPY_ASSGN(ltlf)
+
 
     // Semantic constructors
     static struct ltlf True();
@@ -89,12 +92,12 @@ struct ltlf {
     static struct ltlf And(const ltlf& left, const ltlf& right);
     static struct ltlf Until(const ltlf& left, const ltlf& right);
     static struct ltlf Release(const ltlf& left, const ltlf& right);
-    static struct ltlf Diamond(const ltlf& sub);
-    static struct ltlf Box(const ltlf& sub);
+    static struct ltlf Diamond(const ltlf& sub, bool isGraphGeneration = true);
+    static struct ltlf Box(const ltlf& sub, bool isGraphGeneration = true);
     static struct ltlf Last();
-    static struct ltlf Implies(const ltlf& left, const ltlf& right);
-    static struct ltlf Equivalent(const ltlf& left, const ltlf& right);
-    static struct ltlf WeakUntil(const ltlf& left, const ltlf& right);
+    static struct ltlf Implies(const ltlf& left, const ltlf& right, bool isGraphGeneration = true);
+    static struct ltlf Equivalent(const ltlf& left, const ltlf& right, bool isGraphGeneration = true);
+    static struct ltlf WeakUntil(const ltlf& left, const ltlf& right, bool isForGraphs = true);
 
     // Structural operators
 
@@ -105,17 +108,31 @@ struct ltlf {
         is_compound_predicate = isCompound;
         return *this;
     }
+    struct ltlf& setExclusiveness(bool isExclusive) {
+        is_exclusive = isExclusive;
+        return *this;
+    }
     struct ltlf simplify() const;
     struct ltlf oversimplify() const;
-    struct ltlf negate() const;
-    struct ltlf nnf() const;
+    struct ltlf negate(bool isGraph = true) const;
+    struct ltlf nnf(bool isGraph = true) const;
     struct ltlf stepwise_expand() const;
     std::unordered_set<std::string> propositionalize() const;
     PropositionalizedAtomsSet possibleActionsUpToNext() const;
 
-    struct ltlf replace_with(const std::unordered_map<std::string, ltlf>& map) const;
 
+    void instantiateJoinCondition(const
+                                  std::vector<std::unordered_map<std::string, DataPredicate>>& ref ) {
+        if (is_join_condition_place)
+            joinCondition = ref;
+        for (auto& arg : args)
+            arg.instantiateJoinCondition(ref);
+    }
+    std::unordered_set<std::string> mark_join_condition(const std::string& left, const std::string& right);
+    ltlf replace_with(const std::unordered_map<std::pair<bool, std::string>, std::unordered_set<std::string>>& map, bool isForGraph = false);
+    struct ltlf replace_with(const std::unordered_map<std::string, ltlf>& map) const;
     struct ltlf replace_with_unique_name(const std::unordered_map<std::string, std::string>& map) const;
+    void collectElements(std::unordered_map<std::string, std::unordered_set<bool>> &negation) const;
 
     //std::unordered_set<std::string> allActions() const;
 
@@ -158,6 +175,8 @@ private:
 #include <yaucl/hashing/vector_hash.h>
 #include <yaucl/hashing/hash_combine.h>
 #include <iostream>
+//#include <ltlparser/utility.h>
+
 
 namespace std {
     template <>
@@ -176,6 +195,10 @@ namespace std {
                 for (const auto& x : k.args)
                     init = hash_combine<ltlf>(init, x);
             }
+            size_t W = 17;
+            for (const auto& ref : k.rewritten_act)
+                W = hash_combine<std::string>(W, ref);
+            init = init ^ W;
             size_t f= hash_combine<bool>(hash_combine<std::string>(hash_combine<formula_t>(init, k.casusu), k.act), k.is_negated);
             return f;
         }
@@ -183,5 +206,14 @@ namespace std {
 
 }
 
+
+ltlf map_disj(const std::unordered_set<std::string> &atoms);
+std::ostream & human_readable_ltlf_printing(std::ostream &os, const ltlf& syntax);
+
+/*ltl_formula* to_aaltaf_rec(const ltlf& formula);
+
+#include <formula/aalta_formula.h>
+
+aalta::aalta_formula* to_aaltaf(const ltlf& formula);*/
 
 #endif //GRAPHOS_LTL_SYNTAX_H

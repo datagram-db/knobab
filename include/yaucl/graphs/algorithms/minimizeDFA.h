@@ -52,11 +52,11 @@ FlexibleFA<std::vector<NodeElement>, EdgeLabel> minimizeDFA(const FlexibleFA<Nod
                         std::swap(cp.first, cp.second);
                     }
                     //std::cout << '{' << graph.getNodeLabel(cp.first) <<',' << graph.getNodeLabel(cp.second) <<'}' << std::endl;
-                    if ((graph.final_nodes.contains(pp) && (!graph.final_nodes.contains(qp))) ||
-                        (graph.final_nodes.contains(qp) && (!graph.final_nodes.contains(pp)))) {
-                        M[cp] = {false};
-                    } else {
+                    if ((graph.final_nodes.contains(pp) && (graph.final_nodes.contains(qp))) ||
+                        (!graph.final_nodes.contains(qp) && (!graph.final_nodes.contains(pp)))) {
                         M[cp] = {std::unordered_set<std::pair<size_t, size_t>>{}};
+                    } else {
+                        M[cp] = {false};
                     }
                 }
             }
@@ -103,23 +103,29 @@ FlexibleFA<std::vector<NodeElement>, EdgeLabel> minimizeDFA(const FlexibleFA<Nod
         }
     }
 
+    // TODO: this is not going to work if the graph only accepts the empty string!
     size_t vCount = 0;
     std::unordered_set<size_t> equivalentNodes, VS;
     VS.insert(v.begin(), v.end());
     FlexibleFA<std::vector<NodeElement>, EdgeLabel> result;
     std::unordered_map<std::unordered_set<size_t>, size_t> nodeToId;
     std::unordered_map<size_t, std::unordered_set<size_t>> full_eq_class;
+    equivalence_class<size_t> cl;
     {
         std::unordered_set<size_t> preserved;
-        equivalence_class<size_t> cl;
         for (const auto& cp : M) {
             if (!std::holds_alternative<bool>(cp.second)) {
-                size_t l = cp.first.first, r = cp.first.second;
-                if (l>r) std::swap(l, r);
-                cl.insert(l, r);
+                cl.insert(cp.first.first, cp.first.second);
+            } else {
+                cl.insert(cp.first.first, cp.first.first);
+                cl.insert(cp.first.second, cp.first.second);
             }
         }
         for (const auto& cp : cl.calculateEquivalenceClass()) {
+            std::cout <<  graph.getNodeLabel(cp.first) << std::endl;
+            for (const auto& x : cp.second) {
+                std::cout << "\t -" <<  graph.getNodeLabel(x) << "[internal id, not displayed label= "<< x << "]" << std::endl;
+            }
             equivalentNodes.insert(cp.second.begin(), cp.second.end());
             auto it = nodeToId.emplace(cp.second, vCount);
             if (it.second) {
@@ -130,16 +136,12 @@ FlexibleFA<std::vector<NodeElement>, EdgeLabel> minimizeDFA(const FlexibleFA<Nod
                 }
                 it.second = result.addNewNodeWithLabel(nl);
             }
+            full_eq_class[cp.first] = cp.second;
             for (const auto& elements : cp.second) {
                 full_eq_class[elements] = cp.second;
             }
         }
-        for (const auto& cp : unordered_difference(VS, equivalentNodes)) {
-            full_eq_class[cp] = {cp};
-            nodeToId.emplace(std::unordered_set<size_t>{cp}, result.addNewNodeWithLabel(std::vector<NodeElement>{graph.getNodeLabel(cp)}));
-        }
     }
-
     for (size_t fin : graph.fini()) {
         result.addToFinalNodesFromId(nodeToId.at(full_eq_class.at(fin)));
     }
@@ -149,7 +151,7 @@ FlexibleFA<std::vector<NodeElement>, EdgeLabel> minimizeDFA(const FlexibleFA<Nod
     for (const auto& node : nodeToId) {
         std::cout << "{" ;
         for (size_t id : node.first)
-            std::cout << graph.getNodeLabel(id) << ",";
+            std::cout << id << ",";
         std::cout << "}"  << std::endl;
 
 #if 1

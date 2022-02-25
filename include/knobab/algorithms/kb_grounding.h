@@ -13,6 +13,7 @@
 
 struct GroundingStrategyConf {
     enum pruning_strategy {
+        NO_EXPANSION,
         ALWAYS_EXPAND_LEFT,
         ALWAYS_EXPAND_LESS_TOTAL_VALUES
     };
@@ -48,3 +49,4 @@ CNFDeclareDataAware GroundWhereStrategy(GroundingStrategyConf& conf,
                                         const std::vector<DeclareDataAware>& declare);
 
 #endif //KNOBAB_KB_GROUNDING_H
+

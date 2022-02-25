@@ -52,6 +52,7 @@ std::pair<const oid *, const oid *> CountTemplate::resolve_primary_index(const u
     }
 }
 
+
 std::pair<const uint32_t, const uint32_t> CountTemplate::resolve_primary_index(const uint16_t actId) const {
     if (actId < maxAct) {
         const uint32_t start = (maxTraceId + 1) * actId;
@@ -61,3 +62,15 @@ std::pair<const uint32_t, const uint32_t> CountTemplate::resolve_primary_index(c
         return {-1, -1};
     }
 }
+
+std::ostream &operator<<(std::ostream &os, const CountTemplate &aTemplate) {
+    //os << "          CountTemplate" << std::endl << "-------------------------------" << std::endl;
+    size_t i = 0;
+    os << "RowId,Act,TraceId,EventId" << std::endl;
+    for (const auto& ref : aTemplate.table) {
+        os << (i++) << "," <<  ref.id.parts.act << "," << ref.id.parts.trace_id << "," << ref.id.parts.event_id << std::endl;
+    }
+    //os << std::endl << "-------------------------------" << std::endl;
+    return os;
+}
+

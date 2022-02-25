@@ -10,27 +10,35 @@
 #include "yaucl/data/xml.h"
 #include "yaucl/numeric/numeric_base.h"
 
+struct payload {
+    std::unordered_map<std::string, std::string> strings;
+    std::unordered_map<std::string, double> floats;
+    std::unordered_map<std::string, size_t> ints;
+    std::unordered_map<std::string, double> dates;
+    std::unordered_map<std::string, bool> booleans;
+};
 
-void parse_payload(bool isTrace, rapidxml::xml_node<>* payloadNode, trace_visitor* tv) {
+void parse_payload(bool isTrace, rapidxml::xml_node<>* payloadNode, struct payload& pay) {
+
     std::string tag_name  = payloadNode->name();
     std::string attribute = GET_ATTRIBUTE(payloadNode, "key");
     std::string value     = GET_ATTRIBUTE(payloadNode, "value");
     constexpr std::basic_string_view concept_name{"concept:name"};
     constexpr std::basic_string_view timeTimestamp{"time:timestamp"};
-    assert(tv);
     if (tag_name == "string") {
         assert(attribute != concept_name);
-        tv->visitField(attribute, value);
+        pay.strings[attribute] = value;
     } else if (tag_name == "float") {
-
-        tv->visitField(attribute, (double)std::stod(value));
+        pay.floats[attribute] = (double)std::stod(value);
     } else if (tag_name == "int") {
-        tv->visitField(attribute, (size_t)std::stoull(value));
-    } else if (tag_name == "date") {
+        pay.ints[attribute] = (size_t)std::stoull(value);
+    }else if (tag_name == "boolean") {
+        pay.booleans[attribute] = (value == "true");
+    }  else if (tag_name == "date") {
         if (!isTrace) {
             assert(attribute != timeTimestamp);
         }
-        tv->visitField(attribute, (double)yaucl::numeric::parse8601(value));
+        pay.dates[attribute] = (double)yaucl::numeric::parse8601(value);
     }
 }
 
@@ -43,60 +51,63 @@ enum XML_SCAN_STEPS {
 
 #include <chrono>
 
+
 void parse_event(rapidxml::xml_node<>* event, trace_visitor* tv, bool load_data) {
     constexpr std::basic_string_view concept_name{"concept:name"};
     constexpr std::basic_string_view timeTimestamp{"time:timestamp"};
     assert(tv);
-    size_t event_id = 0;
-    bool hasEventOpened;
+    static size_t event_id = 0;
+    bool hasEventOpened = false;
+    bool isNewEvent = true;
+    struct payload pay;
+
+
+    std::string trace_name = std::to_string(event_id);
+    XML_SCAN_STEPS event_start = XML_SCAN_STEPS::LABELS_TRACE_INFO;
+    const auto p1 = std::chrono::system_clock::now();
+    unsigned long long int timestamp = std::chrono::duration_cast<std::chrono::hours>(p1.time_since_epoch()).count();
 
     SIBLING_ITERATE2(t, event) {
         std::string tag_name  = t->name();
         std::string attribute = GET_ATTRIBUTE(t, "key");
         std::string value     = GET_ATTRIBUTE(t, "value");
-        std::string trace_name = std::to_string(event_id++);
-        XML_SCAN_STEPS event_start = XML_SCAN_STEPS::LABELS_TRACE_INFO;
-        const auto p1 = std::chrono::system_clock::now();
-        unsigned long long int timestamp = std::chrono::duration_cast<std::chrono::hours>(p1.time_since_epoch()).count();
+        hasEventOpened = true;
 
         if (tag_name == "string") {
             if (attribute == concept_name) {
-                assert(event_start == XML_SCAN_STEPS::LABELS_TRACE_INFO);
                 trace_name = value;
+                isNewEvent = false;
             } else {
-                assert(event_start != XML_SCAN_STEPS::EVENTS);
-                if (event_start == XML_SCAN_STEPS::LABELS_TRACE_INFO) {
-                    event_id = tv->enterEvent(timestamp, trace_name);
-                    event_start = XML_SCAN_STEPS::TRACE_PAYLOAD;
-                    hasEventOpened = true;
-                }
-                if (load_data) parse_payload(true, t, tv);
+                if (load_data) parse_payload(true, t, pay);
             }
         } else if (tag_name == "date") {
             if (attribute == timeTimestamp) {
-                assert(event_start == XML_SCAN_STEPS::LABELS_TRACE_INFO);
                 timestamp = yaucl::numeric::parse8601(value);
             } else {
-                assert(event_start != XML_SCAN_STEPS::EVENTS);
-                if (event_start == XML_SCAN_STEPS::LABELS_TRACE_INFO) {
-                    event_id = tv->enterEvent(timestamp, trace_name);
-                    event_start = XML_SCAN_STEPS::TRACE_PAYLOAD;
-                    hasEventOpened = true;
-                }
-                if (load_data) parse_payload(true, t, tv);
+                if (load_data) parse_payload(true, t, pay);
             }
         } else {
-            assert(event_start != XML_SCAN_STEPS::EVENTS);
-            if (event_start == XML_SCAN_STEPS::LABELS_TRACE_INFO) {
-                event_id = tv->enterEvent(timestamp, trace_name);
-                event_start = XML_SCAN_STEPS::TRACE_PAYLOAD;
-                hasEventOpened = true;
-            }
-            if (load_data) parse_payload(true, t, tv);
+            if (load_data) parse_payload(true, t, pay);
         }
     }
 
     if (hasEventOpened) {
+        event_id = tv->enterEvent(timestamp, trace_name);
+        for (auto &str: pay.strings) {
+            tv->visitField(str.first, str.second);
+        }
+        for (auto &str: pay.booleans) {
+            tv->visitField(str.first, str.second);
+        }
+        for (auto &str: pay.ints) {
+            tv->visitField(str.first, str.second);
+        }
+        for (auto &str: pay.floats) {
+            tv->visitField(str.first, str.second);
+        }
+        for (auto &str: pay.dates) {
+            tv->visitField(str.first, str.second);
+        }
         tv->exitEvent(event_id);
     }
 }
@@ -119,17 +130,17 @@ void load_xes_with_data(const std::string &filename, bool load_data, trace_visit
         XML_SCAN_STEPS event_start = XML_SCAN_STEPS::LABELS_TRACE_INFO;
         size_t trace_id = 0;
         bool hasTraceOpened = false;
+        tv->enterTrace(std::to_string(trace_id));
 
         SIBLING_ITERATE2(t, trace) {
             std::string tag_name  = t->name();
-            std::string attribute = GET_ATTRIBUTE(t, "key");
-            std::string value     = GET_ATTRIBUTE(t, "value");
             std::string trace_name = std::to_string(trace_id++);
-
             if (tag_name == "event") {
                 event_start = XML_SCAN_STEPS::EVENTS;
                 parse_event(t, tv, load_data);
             } else if (tag_name == "string") {
+                std::string attribute = GET_ATTRIBUTE(t, "key");
+                std::string value     = GET_ATTRIBUTE(t, "value");
                 if (attribute == concept_name) {
                     assert(event_start == XML_SCAN_STEPS::LABELS_TRACE_INFO);
                     trace_name = value;
@@ -140,7 +151,7 @@ void load_xes_with_data(const std::string &filename, bool load_data, trace_visit
                         event_start = XML_SCAN_STEPS::TRACE_PAYLOAD;
                         hasTraceOpened = true;
                     }
-                    if (load_data) parse_payload(true, t, tv);
+                    //if (load_data) parse_payload(true, t, tv);
                 }
             } else {
                 assert(event_start != XML_SCAN_STEPS::EVENTS);
@@ -149,7 +160,7 @@ void load_xes_with_data(const std::string &filename, bool load_data, trace_visit
                     event_start = XML_SCAN_STEPS::TRACE_PAYLOAD;
                     hasTraceOpened = true;
                 }
-                if (load_data) parse_payload(true, t, tv);
+                //if (load_data) parse_payload(true, t, tv);
             }
         }
 
