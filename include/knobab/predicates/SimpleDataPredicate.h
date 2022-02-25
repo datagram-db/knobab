@@ -9,6 +9,11 @@
 #include <string>
 #include <variant>
 #include <unordered_map>
+#include <yaucl/bpm/structures/commons/DataPredicate.h>
+
+#include "yaucl/structures/default_constructors.h"
+
+// 
 #include "yaucl/structures/default_constructors.h"
 #include "yaucl/bpm/structures/commons/DataPredicate.h"
 
@@ -21,6 +26,7 @@
  * */
 using env = std::unordered_map<std::string, union_minimal>;
 
+
 class SimpleDataPredicate {
 public:
     DEFAULT_CONSTRUCTORS(SimpleDataPredicate);
@@ -31,11 +37,20 @@ public:
 
     bool operator!=(const SimpleDataPredicate &rhs) const;
 
-
-private:
     numeric_atom_cases casusu;
     std::string lhs, rhs;
 };
+
+
+namespace std {
+    template <> struct hash<SimpleDataPredicate> {
+        const std::hash<std::string> hs;
+        size_t operator()(const SimpleDataPredicate& x) const {
+            return (hs(x.lhs) ^ hs(x.rhs)) * (size_t)x.casusu;
+        }
+    };
+}
+
 
 
 #endif //KNOBAB_SIMPLEDATAPREDICATE_H

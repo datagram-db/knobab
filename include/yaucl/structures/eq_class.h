@@ -8,65 +8,61 @@
 #include <vector>
 #include <algorithm>
 #include <unordered_map>
-#include <unordered_set>
+#include <set>
 #include <cassert>
 
 template<typename T>
 struct equivalence_class {
-    std::vector<std::pair<T,T>> cmpVector;
+    std::set<std::pair<T,T>> equivalence_relationship;
+    std::set<T> items;
+    std::unordered_map<T, std::unordered_set<T>> class_id_to_members;
+
+    equivalence_class() : hasTransition{false} {};
 
     void insert(const T& left, const T& right) {
-        if (left < right) {
-            cmpVector.emplace_back(right, left);
-        } else if (right < left) {
-            cmpVector.emplace_back(left, right);
-        }
+        equivalence_relationship.emplace(left, right); //
+        equivalence_relationship.emplace(right, left); // Symmetry
+        equivalence_relationship.emplace(right, right); // Identity
+        equivalence_relationship.emplace(left, left); // Identity
+        items.insert(left);
+        items.insert(right);
+        hasTransition = false;
+        class_id_to_members.clear();
     }
 
     std::unordered_map<T, std::unordered_set<T>> calculateEquivalenceClass() {
-        std::sort(cmpVector.begin(), cmpVector.end(), std::greater<>());
-        std::unordered_map<T, T> bigger_to_smaller;
-        std::unordered_map<T, std::unordered_set<T>> equivalence_class;
-
-        for (size_t i = 0, N = cmpVector.size(); i<N; i++) {
-            std::pair<T,T> x = cmpVector.at(i);
-            auto it = bigger_to_smaller.find(x.first);
-
-            if (it != bigger_to_smaller.end()) {
-                T sec = it->second;
-                if (sec > x.second) {
-                    // I find a new smaller candidate
-                    auto it2 = equivalence_class.find(sec);
-                    assert(it2 != equivalence_class.end());
-                    equivalence_class[x.second].insert(it2->second.begin(), it2->second.end());
-                    equivalence_class[x.second].emplace(x.second);
-                    for (auto& y: equivalence_class[x.second]) {
-                        bigger_to_smaller[y] = std::min(bigger_to_smaller[y], x.second);
+        if (!hasTransition) {
+            // Transitive
+            for (const auto& k : items) {
+                for (const auto& i : items) {
+                    for (const auto& j : items) {
+                        if (equivalence_relationship.contains(std::make_pair(i, j)) || (equivalence_relationship.contains(std::make_pair(i, k)) && equivalence_relationship.contains(std::make_pair(k, j))))
+                            equivalence_relationship.emplace(i, j);
                     }
-                    it->second = x.second;
-                    bigger_to_smaller[sec] = x.second;
-                    equivalence_class.erase(it2);
-                } else if (sec < x.second) {
-                    equivalence_class[sec].emplace(x.second);
-                }
-            } else {
-                // New entry (for the moment)
-                bigger_to_smaller[x.first] = x.second;
-                bigger_to_smaller[x.second] = x.second;
-                equivalence_class[x.second].emplace(x.first);
-                equivalence_class[x.second].emplace(x.second);
-                auto it2 = equivalence_class.find(x.first);
-                if (it2 != equivalence_class.end()) {
-                    equivalence_class[x.second].insert(it2->second.begin(), it2->second.end());
-                    equivalence_class.erase(it2);
                 }
             }
+            hasTransition = true;
+
+            std::unordered_map<T, T> non_class_ref_element_to_class_id;
+
+            for (auto it = equivalence_relationship.begin(); it != equivalence_relationship.end(); ) {
+                if ((!non_class_ref_element_to_class_id.contains(it->second)) &&
+                    (((items.contains(it->first)) || class_id_to_members.contains(it->first)))) {
+                    items.erase(it->first);
+                    items.erase(it->second);
+                    class_id_to_members[it->first].emplace(it->second);
+                    if (it->first != it->second) {
+                        non_class_ref_element_to_class_id[it->second] = it->first;
+                    }
+                }
+                it = equivalence_relationship.erase(it);
+            }
         }
-
-        return equivalence_class;
-
-
+        return class_id_to_members;
     }
+
+private:
+    bool hasTransition = false;
 
 };
 

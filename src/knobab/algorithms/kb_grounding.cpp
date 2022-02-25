@@ -57,7 +57,9 @@ inline DisjunctiveDeclareDataAware GroundWhereStrategy(GroundingStrategyConf& co
                                                 const KnowledgeBase& db,
                                                 const DeclareDataAware& d) {
 
-    if (d.conjunctive_map.empty())
+    // Conditions over which I want to disable the grounding for the DeclareDataAware clause.
+    // This will imply that we will have no
+    if (d.conjunctive_map.empty() || (conf.strategy1 == GroundingStrategyConf::NO_EXPANSION))
         return {d};
 
     if (!conf.doPreliminaryFill) {

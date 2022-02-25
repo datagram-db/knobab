@@ -3,6 +3,7 @@
 //
 
 #include "knobab/Environment.h"
+#include "yaucl/bpm/structures/ltlf/ltlf_query.h"
 
 semantic_atom_set Environment::getSigmaAll() const {
     semantic_atom_set S = ap.act_atoms;
@@ -30,6 +31,7 @@ void Environment::clear() {
     db.clear();
     ap.clear();
     conjunctive_model.clear();
+    ltlf_query_manager::clear();
 }
 
 #include <filesystem>
@@ -38,6 +40,7 @@ void Environment::clear() {
 
 
 void Environment::load_model(const std::string &model_file) {
+    conjunctive_model.clear();
     if (!std::filesystem::exists(std::filesystem::path(model_file))) {
         std::cerr << "ERROR: model file does not exist: " << model_file << std::endl;
         exit(1);
@@ -46,9 +49,37 @@ void Environment::load_model(const std::string &model_file) {
     conjunctive_model = dmp.load(file, true);
 }
 
-void Environment::load_log(log_data_format format, bool loadData, const std::string &filename) {
-    load_into_knowledge_base(format, loadData, filename, db);
-    db.index_data_structures();
+void Environment::load_log(log_data_format format, bool loadData, const std::string &filename, bool setMaximumStrLen) {
+    using std::chrono::high_resolution_clock;
+    using std::chrono::duration_cast;
+    using std::chrono::duration;
+    using std::chrono::milliseconds;
+
+    {
+        auto t1 = high_resolution_clock::now();
+        load_into_knowledge_base(format, loadData, filename, db);
+        auto t2 = high_resolution_clock::now();
+
+        /* Getting number of milliseconds as a double. */
+        duration<double, std::milli> ms_double = t2 - t1;
+        std::cout << "Loading and parsing time = " << ms_double.count() << std::endl;
+    }
+
+    {
+        auto t1 = high_resolution_clock::now();
+        db.index_data_structures(index_missing_data);
+        auto t2 = high_resolution_clock::now();
+
+        /* Getting number of milliseconds as a double. */
+        duration<double, std::milli> ms_double = t2 - t1;
+        std::cout << "Indexing time = " << ms_double.count() << std::endl;
+    }
+    if (setMaximumStrLen) {
+        auto tmp = db.getMaximumStringLength();
+        ap.s_max = std::string(tmp, std::numeric_limits<char>::max());
+        DataPredicate::MAX_STRING = ap.s_max;
+        DataPredicate::msl = tmp;
+    }
 }
 
 void Environment::set_atomization_parameters(const std::string &fresh_atom_label, size_t mslength) {
@@ -135,23 +166,21 @@ semantic_atom_set Environment::evaluate_easy_prop_to_atoms(const easy_prop &prop
         case easy_prop::E_P_ATOM:
             assert(prop.args.empty());
             assert(bogus_act_to_set.contains(prop.single_atom_if_any));
-            ///assert(bogus_act_to_atom.contains(prop.single_atom_if_any));
             if (prop.isAtomNegated) {
-                ///semantic_atom_set S = ap.atom_decomposition(bogus_act_to_atom.at(prop.single_atom_if_any));
                 return unordered_difference(getSigmaAll(), bogus_act_to_set.at(prop.single_atom_if_any));
             } else {
                 return bogus_act_to_set.at(prop.single_atom_if_any);
             }
         case easy_prop::E_P_TRUE:
             return getSigmaAll();
-        case easy_prop::E_P_FALSE:
+        default: //case easy_prop::E_P_FALSE:
             return {};
     }
 }
 
 FlexibleFA<size_t, std::string> Environment::declare_to_graph_for_patterns(const DeclareDataAware &decl) {
     assert(!decl.left_decomposed_atoms.empty());
-    assert(!decl.right_decomposed_atoms.empty());
+    assert((isUnaryPredicate(decl.casusu)) || (!decl.right_decomposed_atoms.empty()));
     /*{
         auto it = pattern_graph.find(decl);
         if (it != pattern_graph.end()) return it->second;
@@ -204,8 +233,8 @@ void Environment::compute_declare_to_graph_for_joins(const DeclareDataAware &dec
         graph_join_pm g2;
         {
             auto g3 = declare_to_graph_for_patterns(decl);
-            std::ofstream ofile{std::to_string(i++)+"_tmp.dot"};
-            g3.dot(ofile);
+            /*std::ofstream ofile{std::to_string(i++)+"_tmp.dot"};
+            g3.dot(ofile);*/
             auto g = g3.shiftLabelsToNodes();
             g.pruneUnreachableNodes();
 
@@ -238,15 +267,20 @@ TemplateCollectResult Environment::compute_declare_for_conjunctive(bool doPrune)
         compute_declare_for_disjunctive(zeroModel, currGraph); // // = template_to_graph.at(zeroModel);
         TemplateCollectResult result;
         conditionalPruningGraph(doPrune, true, result, currGraph);
-        {
-            auto g = convert_to_dfa_graph(currGraph);
+        /**{
+            auto g = convert_to_dfa_graph(currGraph).makeDFAAsInTheory(getSigmaAll());
+            {
+                std::ofstream output_el_model{std::to_string(0)+"_test1.g"};
+                dot(currGraph, output_el_model, false);
+            }
+            {
+                std::ofstream output_el_model{std::to_string(0)+"_test2.g"};
+                g.dot(output_el_model);
+            }
 
             // TODO: merge sink un-accepting nodes in makeDFAAsInTheory
-            auto DFA = minimizeDFA(g).makeDFAAsInTheory(getSigmaAll());
-
-            std::ofstream output_el_model{std::to_string(0)+"_test.g"};
-            DFA.dot(output_el_model);
-        }
+            auto DFA = minimizeDFA(g);
+        }*/
         for (size_t j = 1; j<M; j++) {
             auto& zeroModelJ = grounding.singleElementOfConjunction.at(j);
             ///assert(allTemplates.contains(std::make_pair(zeroModelJ.casusu, zeroModelJ.n)));
@@ -256,20 +290,156 @@ TemplateCollectResult Environment::compute_declare_for_conjunctive(bool doPrune)
             ///auto& currGraph2 = template_to_graph.at(zeroModelJ);
             conditionalPruningGraph(doPrune, false, result, currGraph2);
             {
-                auto g = convert_to_dfa_graph(currGraph2);
+                ///auto g = convert_to_dfa_graph(currGraph2).makeDFAAsInTheory(getSigmaAll());
+
+                /**std::ofstream output_el_model{std::to_string(j)+"_testNOW.g"};
+                g.dot(output_el_model);*/
 
                 // TODO: merge sink un-accepting nodes in makeDFAAsInTheory
-                auto DFA = minimizeDFA(g).makeDFAAsInTheory(getSigmaAll());
+                ///auto DFA = minimizeDFA(g);
 
-                std::ofstream output_el_model{std::to_string(j)+"_test.g"};
-                DFA.dot(output_el_model);
+                //dot(currGraph2, output_el_model, false);
+                //DFA.dot(output_el_model);
+            }
+            {
+                ///auto g = convert_to_dfa_graph(result.joined_graph_model).makeDFAAsInTheory(getSigmaAll());
+
+                // TODO: merge sink un-accepting nodes in makeDFAAsInTheory
+                ///auto DFA = minimizeDFA(g);
+
+                ///std::ofstream output_el_model{std::to_string(j)+"_jointmp.g"};
+                //dot(result.joined_graph_model, output_el_model, false);
+                //DFA.dot(output_el_model);
             }
         }
-        if (doPrune) {
+        /*if (doPrune) {
             graph_join_pm result_;
             remove_unaccepting_states(result.joined_graph_model, result_);
             result.joined_graph_model = result_;
-        }
+        }*/
         return result;
     }
 }
+
+void Environment::print_count_table(std::ostream &os) const {
+    db.print_count_table(os);
+}
+
+void Environment::print_act_table(std::ostream &os) const {
+    db.print_act_table(os);
+}
+
+void Environment::print_attribute_tables(std::ostream &os) const {
+    db.print_attribute_tables(os);
+}
+
+void Environment::load_all_clauses() {
+    for (declare_templates t : magic_enum::enum_values<declare_templates>()) {
+        ///std::cout << "INIT: " << magic_enum::enum_name(t) << std::endl;
+        if (isUnaryPredicate(t)) {
+            for (size_t i = 1; i<3; i++) {
+                declare_to_graph.getDeclareTemplate(t, i);
+            }
+        } else {
+            declare_to_graph.getDeclareTemplate(t, 2);
+        }
+    }
+}
+
+
+#include <httplib.h>
+
+void Environment::server() {
+
+    using namespace httplib;
+    Server svr;
+
+    // Representing the count table as a csv file, with headers
+    svr.Get("/count_table.csv", [this](const httplib::Request& req, httplib::Response& res) {
+        std::stringstream ss;
+        db.print_count_table(ss);
+        res.set_content(ss.str(), "text/csv");
+    });
+    svr.Get("/count.html", [this](const httplib::Request& req, httplib::Response& res) {
+        std::ifstream t("client/count_table.html");
+        t.seekg(0, std::ios::end);
+        size_t size = t.tellg();
+        std::string buffer(size, ' ');
+        t.seekg(0);
+        t.read(&buffer[0], size);
+        res.set_content(buffer, "text/html");
+    });
+
+    // Representing the ACT Table
+    svr.Get("/act_table.csv", [this](const httplib::Request& req, httplib::Response& res) {
+        std::stringstream ss;
+        db.print_act_table(ss);
+        res.set_content(ss.str(), "text/csv");
+    });
+    svr.Get("/act.html", [this](const httplib::Request& req, httplib::Response& res) {
+        std::ifstream t("client/act_table.html");
+        t.seekg(0, std::ios::end);
+        size_t size = t.tellg();
+        std::string buffer(size, ' ');
+        t.seekg(0);
+        t.read(&buffer[0], size);
+        res.set_content(buffer, "text/html");
+    });
+
+    // Returning the attribute tables
+    svr.Get("/att_table_names.csv",[this](const httplib::Request& req, httplib::Response& res) {
+        std::stringstream ss;
+        for (auto it = db.attribute_name_to_table.begin(), en = db.attribute_name_to_table.end(); it != en; ) {
+            ss << it->first;
+            it++;
+            if (it != en) ss << std::endl;
+        }
+        res.set_content(ss.str(), "text/csv");
+    });
+    svr.Get("/att.csv",[this](const httplib::Request& req, httplib::Response& res) {
+        std::stringstream ss;
+        auto it = db.attribute_name_to_table.find(req.get_param_value("f",0));
+        if (it != db.attribute_name_to_table.end())
+            ss << it->second;
+        res.set_content(ss.str(), "text/csv");
+    });
+    svr.Get("/atts.html",[this](const httplib::Request& req, httplib::Response& res) {
+        std::ifstream t("client/att_tables.html");
+        t.seekg(0, std::ios::end);
+        size_t size = t.tellg();
+        std::string buffer(size, ' ');
+        t.seekg(0);
+        t.read(&buffer[0], size);
+        res.set_content(buffer, "text/html");
+    });
+
+
+    svr.Get("/query_plan.json",[this](const httplib::Request& req, httplib::Response& res) {
+        std::stringstream ss;
+        ss << ltlf_query_manager::generateGraph();
+        res.set_content(ss.str(), "text/json");
+    });
+    svr.Get("/graph.html",[this](const httplib::Request& req, httplib::Response& res) {
+        std::ifstream t("client/graph.html");
+        t.seekg(0, std::ios::end);
+        size_t size = t.tellg();
+        std::string buffer(size, ' ');
+        t.seekg(0);
+        t.read(&buffer[0], size);
+        res.set_content(buffer, "text/html");
+    });
+    svr.Get("/pipeline_data.csv",[this](const httplib::Request& req, httplib::Response& res) {
+        std::stringstream ss;
+        auto it = std::stoull(req.get_param_value("f",0));
+        if (it != 0) {
+            ss << "TraceId,EventId,Sim,{Events}" << std::endl;
+            for (const auto& ref : ((ltlf_query*)   it)->result) {
+                ss << ref.first.first << "," << ref.first.second << "," << ref.second << ",{TODO}" << std::endl;
+            }
+        }
+        res.set_content(ss.str(), "text/csv");
+    });
+
+    svr.listen("localhost", 8080);
+}
+

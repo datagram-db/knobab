@@ -85,7 +85,7 @@ const std::vector<std::vector<size_t>> & ActTable::indexing1() { // todo: rename
         for (const std::pair<trace_t, event_t>& cp : ref) {
             table.emplace_back(k,
                                cp.first,
-                               cast_to_float(cp.second, trace_length.at(cp.first) - 1),
+                               cp.second,//cast_to_float(cp.second, trace_length.at(cp.first) - 1),
                                nullptr, nullptr);
             builder.trace_id_to_event_id_to_offset[cp.first][cp.second] = offset++;
         }
@@ -137,9 +137,9 @@ void ActTable::indexing2() { // todo: rename as indexing, and remove expectedOrd
                 real_ref.prev = &table[ref.at(time-1)];
             }
         }
-        ref.clear();
+        ///ref.clear();
     }
-    //builder.trace_id_to_event_id_to_offset.clear();
+    ///builder.trace_id_to_event_id_to_offset.clear();
 }
 
 //std::pair<const ActTable::record *, const ActTable::record *> ActTable::resolve_index(act_t id) const {
@@ -156,6 +156,28 @@ std::pair<const uint32_t, const uint32_t> ActTable::resolve_index(act_t id) cons
         return {-1, -1};
     else {
         return {primary_index.at(id),
-                ((id == (primary_index.size() - 1)) ? table.size() - 1 : primary_index.at(id+1) - 1)};      // Pointers to first and last records from Act Table subsection
+                ((id == (primary_index.size() - 1)) ? primary_index.at(primary_index.size() - 1) - 1 : primary_index.at(id+1) - 1)};      // Pointers to first and last records from Act Table subsection
     }
 }
+
+std::ostream &operator<<(std::ostream &os, const ActTable &table) {
+    const double at16 = std::pow(2, 16);
+    //os << "          ActTable" << std::endl << "-------------------------------" << std::endl;
+    size_t i = 0;
+    auto ptr = table.table.data();
+    os << "RowId,Act,TraceId,EventId,PREVPTR,NEXTPTR" << std::endl;
+    for (const auto& ref : table.table) {
+        os << (i++) << "," << ref.entry.id.parts.act << "," << ref.entry.id.parts.trace_id << "," << /*std::trunc((((double)ref.entry.id.parts.event_id)/at16)*table.trace_length[ ref.entry.id.parts.trace_id])*/ref.entry.id.parts.event_id  << ","<< (
+                ref.prev == nullptr ? "NULL" : "+"+std::to_string((ref.prev-ptr)))<<","<< (
+                ref.next == nullptr ? "NULL" : "+"+std::to_string((ref.next-ptr))) << std::endl;
+    }
+    //os << std::endl << "-------------------------------" << std::endl;
+    return os;
+}
+
+void ActTable::clear() {
+    secondary_index.clear();
+    primary_index.clear();
+    table.clear();
+}
+
