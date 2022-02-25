@@ -34,7 +34,7 @@ include_directories(submodules/yamlcpp/include)
 include_directories(submodules/magic_enum/include)
 
 
-set(CMAKE_VERBOSE_MAKEFILE  TRUE)
+#set(CMAKE_VERBOSE_MAKEFILE  TRUE)
 #set(CMAKE_CXX_COMPILER g++)
 include_directories(include)
 add_library(knobab STATIC
@@ -158,9 +158,7 @@ add_executable(server main.cpp )
 target_link_libraries(server Threads::Threads yaml-cpp  knobab antlr4_static #${Boost_LIBRARIES} ${PYTHON_LIBRARIES} aaltaf
                                   yaucl_stringutils yaucl_numeric yaucl_hashing yaucl_data yaucl_bpm yaucl_graph knobab_flloat yaucl_structures)
 
-#option(ENABLE_TESTS "Enable tests" OFF)
-#if (${ENABLE_TESTS})
-#    enable_testing()
-#endif()
-
+enable_testing ()
 add_subdirectory (tests)
+
+
