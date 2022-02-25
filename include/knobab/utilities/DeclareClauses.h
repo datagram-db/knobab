@@ -73,8 +73,30 @@ dataContainer DChainResponse(const dataContainer& a, const dataContainer& notA, 
     return result;
 }
 
+dataContainer DChainPrecedence(const dataContainer& a, const dataContainer& b, const dataContainer& notB, const dataContainer& lastElems, const std::vector<size_t>& lengths, const PredicateManager* manager){
+    dataContainer aORB {};
+    setUnion( a.begin(), a.end(), b.begin(), b.end(), std::back_inserter(aORB), Aggregators::maxSimilarity<double, double, double>, manager);
 
-dataContainer DChainPrecedence(const dataContainer& a, const dataContainer& b, const dataContainer& notB, const dataContainer& notFirstElems, const dataContainer& lastElems, const std::vector<size_t>& lengths, const PredicateManager* manager){
+    dataContainer filteredLastElems {};
+    setIntersection( lastElems.begin(), lastElems.end(), aORB.begin(), aORB.end(), std::back_inserter(filteredLastElems), Aggregators::maxSimilarity<double, double, double>, manager);
+
+    dataContainer nextNotB = next(notB);
+    dataContainer nextNotBOrLast;
+    setUnion( nextNotB.begin(), nextNotB.end(), filteredLastElems.begin(), filteredLastElems.end(), std::back_inserter(nextNotBOrLast), Aggregators::maxSimilarity<double, double, double>, manager);
+
+    dataContainer nextB = next(b);
+    dataContainer nextBAndA {};
+    setIntersection( nextB.begin(), nextB.end(), a.begin(), a.end(), std::back_inserter(nextBAndA), Aggregators::maxSimilarity<double, double, double>, manager);
+
+    dataContainer nextNotBOrLastOrNextBAndA{};
+    setUnion( nextNotBOrLast.begin(), nextNotBOrLast.end(), nextBAndA.begin(), nextBAndA.end(), std::back_inserter(nextNotBOrLastOrNextBAndA), Aggregators::maxSimilarity<double, double, double>, manager);
+
+    dataContainer result = global(nextNotBOrLastOrNextBAndA, lengths);
+    return result;
+}
+
+
+dataContainer DChainPrecedence_with_initial_constraint(const dataContainer& a, const dataContainer& b, const dataContainer& notB, const dataContainer& notFirstElems, const dataContainer& lastElems, const std::vector<size_t>& lengths, const PredicateManager* manager){
     dataContainer aORB {};
     setUnion( a.begin(), a.end(), b.begin(), b.end(), std::back_inserter(aORB), Aggregators::maxSimilarity<double, double, double>, manager);
 
@@ -105,9 +127,18 @@ dataContainer DChainPrecedence(const dataContainer& a, const dataContainer& b, c
     return result;
 }
 
-dataContainer DChainSuccession(const dataContainer& a,  const dataContainer& notA, const dataContainer& b, const dataContainer& notB, const dataContainer& notLastElems, const dataContainer& lastElems, const std::vector<size_t>& lengths, const PredicateManager* manager){
+dataContainer DChainSuccession(const dataContainer& a,  const dataContainer& notA, const dataContainer& b, const dataContainer& notB, const dataContainer& lastElems, const std::vector<size_t>& lengths, const PredicateManager* manager){
     dataContainer chainResponse = DChainResponse(a, notA, b, lengths, manager);
-    dataContainer chainPrecedence = DChainPrecedence(a, b, notB, notLastElems, lastElems, lengths,manager);
+    dataContainer chainPrecedence = DChainPrecedence(a, b, notB, lastElems, lengths,manager);
+
+    dataContainer chainResponseAndChainPrecedence {};
+    setIntersection( chainResponse.begin(), chainResponse.end(), chainPrecedence.begin(), chainPrecedence.end(), std::back_inserter(chainResponseAndChainPrecedence), Aggregators::maxSimilarity<double, double, double>, manager);
+    return chainResponseAndChainPrecedence;
+}
+
+dataContainer DChainSuccession_with_initial_constraint(const dataContainer& a,  const dataContainer& notA, const dataContainer& b, const dataContainer& notB, const dataContainer& notLastElems, const dataContainer& lastElems, const std::vector<size_t>& lengths, const PredicateManager* manager){
+    dataContainer chainResponse = DChainResponse(a, notA, b, lengths, manager);
+    dataContainer chainPrecedence = DChainPrecedence_with_initial_constraint(a, b, notB, notLastElems, lastElems, lengths,manager);
 
     dataContainer chainResponseAndChainPrecedence {};
     setIntersection( chainResponse.begin(), chainResponse.end(), chainPrecedence.begin(), chainPrecedence.end(), std::back_inserter(chainResponseAndChainPrecedence), Aggregators::maxSimilarity<double, double, double>, manager);
