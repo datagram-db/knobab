@@ -153,7 +153,7 @@ void KnowledgeBase::index_data_structures(bool missingDataIndexing) {
             attr_name_to_table_cp.second.index(idx);
     }
 
-    act_table_by_act_id.clearIDX();
+    //act_table_by_act_id.clearIDX();
 }
 
 ///////////////// Event System

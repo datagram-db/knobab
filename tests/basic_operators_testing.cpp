@@ -23,6 +23,7 @@ CTEST_DATA(basic_operators) {
 #define DATA_EMPLACE_BACK(l,trace,event,isMatch)    do { (l).emplace_back(std::make_pair((trace),(event)), std::make_pair((1.0),std::vector<uint16_t>{})); if (isMatch) (l).back().second.second.emplace_back(event);} while (false)
 #define DATA_DECREMENT_EMPLACE_BACK(l,trace,event,isMatch)    do { (l).emplace_back(std::make_pair((trace),(event)-1), std::make_pair((1.0),std::vector<uint16_t>{})); if (isMatch) (l).back().second.second.emplace_back((event));} while (false)
 
+
 CTEST_SETUP(basic_operators) {
     Environment& env = data->env;
     env.clear();
@@ -268,5 +269,41 @@ CTEST2(basic_operators, no_multiple_labels) {
         std::vector<std::pair<trace_t, event_t>> result;
         std::set_intersection(higherRange.begin(), higherRange.end(), narrowRange.begin(), narrowRange.end(), std::back_inserter(result));
         ASSERT_TRUE(narrowRange == result);
+    }
+
+    {
+        // A and_{where x<y} next B
+        dataContainer result, expected;
+        PredicateManager pm{{{{"x", "y", LT}}}, &data->env.db};
+        auto resultA = (data->env.db.exists("A", true));
+        auto resultB = next(data->env.db.exists("B", true));
+        setIntersection(resultA.begin(), resultA.end(), resultB.begin(), resultB.end(), std::back_inserter(result), Aggregators::maxSimilarity<double,double,double>, &pm);
+
+        DATA_EMPLACE_BACK(expected, 3, 0, false);
+        expected.back().second.second.emplace_back(0);
+        expected.back().second.second.emplace_back(1);
+        DATA_EMPLACE_BACK(expected, 5, 0, false);
+        expected.back().second.second.emplace_back(0);
+        expected.back().second.second.emplace_back(1);
+        DATA_EMPLACE_BACK(expected, 7, 0, false);
+        expected.back().second.second.emplace_back(0);
+        expected.back().second.second.emplace_back(1);
+
+        ASSERT_TRUE(result == expected);
+    }
+}
+
+CTEST2(basic_operators, globally_untimed) {
+    {
+        auto result = global(data->env.db.exists("A", true), data->env.db.act_table_by_act_id.getTraceLengths());
+        ASSERT_TRUE(result == dataContainer {std::make_pair(std::make_pair(0,0), std::make_pair(1.0, std::vector<uint16_t>{0}))});
+    }
+    {
+        auto result = global(data->env.db.exists("B", true), data->env.db.act_table_by_act_id.getTraceLengths());
+        ASSERT_TRUE(result == dataContainer {std::make_pair(std::make_pair(1,0), std::make_pair(1.0, std::vector<uint16_t>{0}))});
+    }
+    {
+        auto result = global(data->env.db.exists("C", true), data->env.db.act_table_by_act_id.getTraceLengths());
+        ASSERT_TRUE(result == dataContainer {std::make_pair(std::make_pair(2,0), std::make_pair(1.0, std::vector<uint16_t>{0}))});
     }
 }
