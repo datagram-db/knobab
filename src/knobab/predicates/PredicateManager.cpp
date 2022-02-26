@@ -42,12 +42,12 @@ env PredicateManager::GetPayloadDataFromEvent(const std::pair<uint32_t, uint16_t
     env environment;
 
     for(const auto& p : kb->attribute_name_to_table){
-            size_t offset = kb->act_table_by_act_id.getBuilder().trace_id_to_event_id_to_offset[pair.first][pair.second];
-            std::optional<union_minimal> data = p.second.resolve_record_if_exists2(offset);
+        size_t offset = kb->act_table_by_act_id.getBuilder().trace_id_to_event_id_to_offset.at(pair.first).at(pair.second);
+        std::optional<union_minimal> data = p.second.resolve_record_if_exists2(offset);
 
-            if(data.has_value()) {
-                environment[p.first] = data.value();
-            }
+        if(data.has_value()) {
+            environment[p.first] = data.value();
+        }
     }
 
     return environment;

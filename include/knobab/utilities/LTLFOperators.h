@@ -424,7 +424,7 @@ dataContainer until(const uint32_t &traceId,
     }
 
     auto aIt = std::lower_bound(aSection.begin(), aSection.end(), std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>{{traceId, startEventId}, {0, {}}});
-    auto aEn = std::upper_bound(aSection.begin(), aSection.end(), std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>{{traceId, endEventId}, {1, maxVec}});
+    auto aEn = std::upper_bound(aIt, aSection.end(), std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>{{traceId, endEventId}, {1, maxVec}});
 
     dataContainer temp {};
 
@@ -440,7 +440,7 @@ dataContainer until(const uint32_t &traceId,
                 return temp;
             } else {
                 const uint32_t dist = std::distance(lower, upper - 1);
-                if(dist == ((aIt->first.second-1) - startEventId)){
+                if(dist == ((aIt->first.second) - startEventId)){
                     std::vector<uint16_t> vec = populateAndReturnEvents(lower, aIt);
                     temp.emplace_back(std::pair<uint32_t, uint16_t>{traceId, startEventId}, std::pair<double, std::vector<uint16_t>>{1,vec});
                 } else {
@@ -457,11 +457,55 @@ dataContainer until(const uint32_t &traceId,
 
 template<typename TableSection>
 dataContainer until(const TableSection &aSection, const TableSection &bSection, const std::vector<size_t>& lengths, const PredicateManager* manager = nullptr) {
+    typename TableSection::iterator lower = bSection.begin();
+    typename TableSection::iterator localUpper = lower;
+    typename TableSection::iterator upper = bSection.end();
+
+    typename TableSection::iterator aIt = aSection.begin();
+    typename TableSection::iterator aEn = aSection.begin();
+    typename TableSection::iterator upperA = aSection.begin();
+
     dataContainer temp {};
-    for (uint32_t i = 0, N = (uint32_t)lengths.size(); i<N; i++) {
-        auto pr = until<TableSection>(i, (uint16_t)0, (uint16_t)(lengths.at(i)-1), aSection, bSection, manager);
-        temp.insert(temp.end(), pr.begin(), pr.end());
+
+    for (uint32_t traceId = 0, N = (uint32_t)lengths.size(); traceId < N; traceId++) {
+        lower = std::lower_bound(lower, bSection.end(),
+                                 std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>{{traceId, 0},
+                                                                                                                    {0,       {}}});
+        localUpper = std::upper_bound(lower, upper, std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>{{traceId, lengths.at(traceId)-1},  {1, maxVec}});;
+
+        if(upper == bSection.end()){
+            continue;
+        }
+
+        aIt = std::lower_bound(aEn, upperA, std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>{{traceId, 0}, {0, {}}});
+        aEn = std::upper_bound(aIt, upperA, std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>{{traceId, lengths.at(traceId)-1}, {1, maxVec}});
+
+
+        for( ; aIt != aEn; aIt++) {
+            if (aIt->first.second == 0) {
+                temp.emplace_back(*aIt);
+            } else {
+                localUpper = std::upper_bound(localUpper, upper, std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>{{traceId, aIt->first.second-1},  {1, maxVec}});
+                if(lower == localUpper){
+                    // Rationale: (1)
+                    // if the condition does not hold for a time [startEventId, aIt->first.second-1], it is because one event makes it not hold.
+                    // Therefore, it should never hold even if you are extending the data that you have.
+                    break;
+                } else {
+                    const uint32_t dist = std::distance(lower, upper - 1);
+                    if(dist == ((aIt->first.second))){
+                        std::vector<uint16_t> vec = populateAndReturnEvents(lower, aIt);
+                        temp.emplace_back(std::pair<uint32_t, uint16_t>{traceId, 0}, std::pair<double, std::vector<uint16_t>>{1,vec});
+                    } else {
+                        // For (1)
+                        break;
+                    }
+                }
+            }
+
+        }
     }
+
     return temp;
 }
 
