@@ -38,34 +38,30 @@ bool ActTable::record::operator!=(const ActTable::record &rhs) const {
 #include <cassert>
 #include <iostream>
 
-ActTable::record *ActTable::load_record(trace_t id, act_t act, time_t time, ActTable::record *prev, ActTable::record *next) {
-    /*expectedOrdering.emplace_back(id, time, table.size());
-    table.emplace_back(id, time, act, prev, next);
-    return &table.back();*/
+ActTable::record *ActTable::load_record(trace_t id, act_t act, time_t time) {
     {
         const size_t N = builder.act_id_to_trace_id_and_time.size();
         assert(N >= act);
         if (N == act) {
             builder.act_id_to_trace_id_and_time.emplace_back().emplace_back(id, time);
         } else if (N > act){
+            assert(builder.act_id_to_trace_id_and_time.size() > act);
             builder.act_id_to_trace_id_and_time[act].emplace_back(id, time);
         }
     }
     {
         const size_t M = builder.trace_id_to_event_id_to_offset.size();
         assert(M >= id);
-        std::vector<size_t>* ptr;
         if (M == id) {
             assert(trace_length.size() == M);
-            ptr = &builder.trace_id_to_event_id_to_offset.emplace_back();
+            builder.trace_id_to_event_id_to_offset.emplace_back();
             trace_length.emplace_back(1);
         } else {
             assert((M-1) == id);
-            ptr = &builder.trace_id_to_event_id_to_offset.back();
+            assert(trace_length.size() > id);
             trace_length[id]++;
         }
-        assert(ptr->size() == time);
-        ptr->emplace_back(time);
+        builder.trace_id_to_event_id_to_offset[builder.trace_id_to_event_id_to_offset.size()-1].emplace_back(time);
     }
 }
 
