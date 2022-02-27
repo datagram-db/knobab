@@ -1,8 +1,8 @@
 /*
- * log.txt
- * This file is part of bpm
+ * log_until.txt
+ * This file is part of knobab
  *
- * Copyright (C) 2021 - Giacomo Bergami
+ * Copyright (C) 2022 - Giacomo Bergami
  *
  * bpm is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -30,3 +30,4 @@
 { } : A { x= 4.0 } B { y= 0.0 }   A { x= 1.0 } B { y = -3.0 } B {y = 0.0};
 { } : A { x= 4.0 } B { y= 0.0 } B { y= 8.0 }  A { x= 1.0 } B { y = -3.0 } ;
 { } : A { x= 4.0 } B { y= 0.0 } A { x= 1.0 } B { y = -3.0 }
+{ } : A { x= 4.0 } A { x= 4.0 } A { x= 4.0 } B { y= 10.0 } A { x= 1.0 } B { y = -3.0 }
