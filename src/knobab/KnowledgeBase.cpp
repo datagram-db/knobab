@@ -200,7 +200,7 @@ size_t KnowledgeBase::enterEvent(size_t chronos_tick, const std::string &event_l
         it.first->second++;
     }
     status = EventParsing;
-    act_table_by_act_id.load_record(noTraces-1, actId, currentEventId, nullptr, nullptr);
+    act_table_by_act_id.load_record(noTraces - 1, actId, currentEventId);
     enterData_part(true);
     size_t currentEventIdRet = currentEventId++;
     visitField("__time", chronos_tick);

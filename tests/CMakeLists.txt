@@ -1,8 +1,8 @@
 
 include(GoogleTest)
 
-add_executable(fsm_test fuzzy_string_matching_test.cpp
-        ../submodules/ctest/main.c )
+
+add_executable(fsm_test fuzzy_string_matching_test.cpp )
 target_link_libraries(fsm_test gtest_main knobab)
 gtest_discover_tests(fsm_test)
 
