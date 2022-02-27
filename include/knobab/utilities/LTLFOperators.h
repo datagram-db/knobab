@@ -499,6 +499,33 @@ dataContainer weakUntil(const uint32_t &traceId,
 }
 
 template<typename TableSection>
+dataContainer release(const uint32_t &traceId,
+                        const uint16_t &startEventId,
+                        const uint16_t& endEventId,
+
+                        const TableSection &aSection,
+                        const TableSection &bSection,
+
+                        const PredicateManager* manager = nullptr) {
+
+    dataContainer newB;
+    dataContainer result;
+    setIntersection(aSection.begin(), aSection.end(),
+                    bSection.begin(), bSection.end(),
+                    std::back_inserter(newB),
+                    Aggregators::joinSimilarity<double,double,double>,
+                    manager);
+
+    if (manager) {
+        auto flipped = manager->flip();
+        weakUntil(traceId, startEventId, endEventId, bSection, newB, flipped);
+    } else {
+        weakUntil(traceId, startEventId, endEventId, bSection, newB, nullptr);
+    }
+    return result;
+}
+
+template<typename TableSection>
 dataContainer until(const TableSection &aSection, const TableSection &bSection, const std::vector<size_t>& lengths, const PredicateManager* manager = nullptr) {
     auto lower = bSection.begin();
     auto localUpper = lower;
@@ -637,7 +664,7 @@ dataContainer until(const TableSection &aSection, const TableSection &bSection, 
 }
 
 template<typename TableSection>
-dataContainer weakUntilUntimed(const TableSection &aSection,
+dataContainer weakUntil(const TableSection &aSection,
                                const TableSection &bSection,
                                const std::vector<size_t>& lengths,
                                const PredicateManager* manager = nullptr) {
@@ -647,5 +674,30 @@ dataContainer weakUntilUntimed(const TableSection &aSection,
     setUnionUntimed(untilR.begin(), untilR.end(), globally.begin(), globally.end(), std::back_inserter(result), Aggregators::joinSimilarity<double, double, double>, nullptr);
     return result;
 }
+
+template<typename TableSection>
+dataContainer release(const TableSection &psi,
+                      const TableSection &phi,
+                      const std::vector<size_t>& lengths,
+                      const PredicateManager* manager = nullptr) {
+
+    dataContainer intersection;
+    dataContainer result;
+    setIntersectionUntimed(psi.begin(), psi.end(),
+                           phi.begin(), phi.end(),
+                           std::back_inserter(intersection),
+                           Aggregators::joinSimilarity<double,double,double>,
+                           manager);
+
+    if (manager) {
+        auto flipped = manager->flip();
+        weakUntil(phi, intersection, lengths, flipped);
+    } else {
+        weakUntil(phi, intersection, lengths, nullptr);
+    }
+
+    return result;
+}
+
 
 #endif //KNOBAB_LTLFOPERATORS_H

@@ -37,6 +37,10 @@ public:
 
     bool operator!=(const SimpleDataPredicate &rhs) const;
 
+    SimpleDataPredicate flip() const {
+        return SimpleDataPredicate{rhs, lhs, casusu};
+    }
+
     numeric_atom_cases casusu;
     std::string lhs, rhs;
 };
