@@ -49,15 +49,18 @@ void Environment::load_model(const std::string &model_file) {
     conjunctive_model = dmp.load(file, true);
 }
 
-void Environment::load_log(log_data_format format, bool loadData, const std::string &filename, bool setMaximumStrLen) {
+void Environment::load_log(log_data_format format, bool loadData, const std::string &filename, bool setMaximumStrLen,
+                           std::istream &input_stream) {
     using std::chrono::high_resolution_clock;
     using std::chrono::duration_cast;
     using std::chrono::duration;
     using std::chrono::milliseconds;
 
     {
+        //log_data_format format, bool loadData, std::istream &stream, KnowledgeBase &output,
+        //                              std::string &filename
         auto t1 = high_resolution_clock::now();
-        load_into_knowledge_base(format, loadData, filename, db);
+        load_into_knowledge_base(format, loadData, input_stream, db, filename);
         auto t2 = high_resolution_clock::now();
 
         /* Getting number of milliseconds as a double. */

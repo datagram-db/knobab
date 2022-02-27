@@ -49,7 +49,7 @@
 namespace yaucl {
     namespace data {
         rapidxml::xml_node<> *
-        init_XML_parse(const std::string &filename, const std::string &root_label, rapidxml::xml_document<> &doc, std::vector<char>& );
+        init_XML_parse(std::istream &filename, const std::string &root_label, rapidxml::xml_document<> &doc, std::vector<char> &x);
     }
 }
 

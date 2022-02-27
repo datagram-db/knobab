@@ -69,7 +69,13 @@ public:
      * @param filename      Filename associated to the log
      * @param setMaximumStrLen Whether to exploit the knowledge base information to infer the maximum string length
      */
-    void load_log(log_data_format format, bool loadData, const std::string &filename, bool setMaximumStrLen = true);
+    void load_log(log_data_format format, bool loadData, const std::string &filename, bool setMaximumStrLen,
+                  std::istream &input_stream);
+
+    void load_log(log_data_format format, bool loadData, const std::string &filename, bool setMaximumStrLen) {
+        std::ifstream f{filename};
+        load_log(format, loadData, filename, setMaximumStrLen,f);
+    }
 
     void load_all_clauses();
 

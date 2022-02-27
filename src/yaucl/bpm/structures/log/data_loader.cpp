@@ -112,11 +112,11 @@ void parse_event(rapidxml::xml_node<>* event, trace_visitor* tv, bool load_data)
     }
 }
 
-void load_xes_with_data(const std::string &filename, bool load_data, trace_visitor* tv) {
+void load_xes_with_data(const std::string &filename, std::istream &file, bool load_data, trace_visitor *tv) {
     assert(tv);
     rapidxml::xml_document<> doc;
     std::vector<char> buffer;
-    rapidxml::xml_node<> *root_node =  yaucl::data::init_XML_parse(filename, "log", doc, buffer);
+    rapidxml::xml_node<> *root_node =  yaucl::data::init_XML_parse(file, "log", doc, buffer);
     constexpr std::basic_string_view concept_name{"concept:name"};
     constexpr std::basic_string_view timeTimestamp{"time:timestamp"};
     ///yaucl::bpm::log log;
@@ -175,16 +175,17 @@ void load_xes_with_data(const std::string &filename, bool load_data, trace_visit
 
 #include "yaucl/bpm/structures/log/DataTraceParse.h"
 
-void load_into_knowledge_base(log_data_format format, bool loadData, const std::string &filename, KnowledgeBase &output) {
+void load_into_knowledge_base(log_data_format format, bool loadData, std::istream &stream, KnowledgeBase &output,
+                              const std::string &filename) {
     trace_visitor* tv = (trace_visitor*)&output;
     switch (format) {
         case HUMAN_READABLE_YAUCL: {
             yaucl::bpm::DataTraceParse dp;
-            std::ifstream file{filename};
-            dp.load(filename, file, tv);
+            dp.load(filename, stream, tv);
             break;
         }
-        case XES1:                 load_xes_with_data(filename, loadData, tv); break;
+        case XES1:
+            load_xes_with_data(filename, stream, loadData, tv); break;
     }
 }
 

@@ -10,8 +10,8 @@
 
 
 rapidxml::xml_node<> *
-yaucl::data::init_XML_parse(const std::string &filename, const std::string &root_label, rapidxml::xml_document<> &doc, std::vector<char>& x) {
-    std::ifstream file{filename};
+yaucl::data::init_XML_parse(std::istream &file, const std::string &root_label, rapidxml::xml_document<> &doc, std::vector<char>& x) {
+
     // Read the xml file into a vector
     {
         std::vector<char> buffer((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
