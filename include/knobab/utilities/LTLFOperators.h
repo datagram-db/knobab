@@ -334,11 +334,12 @@ template<typename TableSection>
 dataContainer global(const TableSection &section, const std::vector<size_t>& lengths) {
     dataContainer temp {};
     auto lower = section.begin(), upper = section.begin();
+    auto end = section.end();
 
-    while(upper != section.end()){
+    while(upper != end){
         uint32_t currentTraceId = upper->first.first;
 
-        lower = std::lower_bound(upper, section.end(), std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>{{currentTraceId, 0}, {0, {}}});
+        lower = upper;//std::lower_bound(upper, section.end(), std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>{{currentTraceId, 0}, {0, {}}});
         upper = std::upper_bound(lower, section.end(), std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>{{currentTraceId, lengths[currentTraceId] - 1}, {1, maxVec}});
 
         const uint32_t dist = std::distance(lower, upper - 1);
@@ -417,32 +418,58 @@ dataContainer until(const uint32_t &traceId,
                     const PredicateManager* manager = nullptr) {
 
     auto lower = std::lower_bound(bSection.begin(), bSection.end(), std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>{{traceId, startEventId}, {0, {}}});
-    auto localUpper = lower;
+    //auto localUpper = lower;
     auto upper = std::upper_bound(lower, bSection.end(), std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>{{traceId, endEventId},  {1, maxVec}});
-    if(upper == bSection.end()){
+    if(lower == upper){
         return {};
     }
 
     auto aIt = std::lower_bound(aSection.begin(), aSection.end(), std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>{{traceId, startEventId}, {0, {}}});
-    auto aEn = std::upper_bound(aIt, aSection.end(), std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>{{traceId, endEventId}, {1, maxVec}});
+    auto aEn = aIt;//std::upper_bound(aIt, aSection.end(), std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>{{traceId, endEventId}, {1, maxVec}});
+    auto aEnd = aSection.end();
 
     dataContainer temp {};
+    env e1, e2;
+    std::pair<uint32_t, uint16_t> Fut, Prev;
 
-    for( ; aIt != aEn; aIt++) {
-        if (aIt->first.second == startEventId) {
-            temp.emplace_back(*aIt);
+    for( ; lower != upper; lower++) {
+        Fut.first = lower->first.first;
+        if (lower->first.second == startEventId) {
+            temp.emplace_back(*lower);
         } else {
-            localUpper = std::upper_bound(localUpper, upper, std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>{{traceId, aIt->first.second-1},  {1, maxVec}});
-            if(lower == localUpper){
+            aEn = std::upper_bound(aEn, aEnd, std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>{{traceId, lower->first.second-1},  {1, maxVec}});
+            if(aIt == aEn){
                 // Rationale: (1)
-                // if the condition does not hold for a time [startEventId, aIt->first.second-1], it is because one event makes it not hold.
+                // if the condition does not hold for a time [startEventId, lower->first.second-1], it is because one event makes it not hold.
                 // Therefore, it should never hold even if you are extending the data that you have.
                 return temp;
             } else {
-                const uint32_t dist = std::distance(lower, upper - 1);
-                if(dist == ((aIt->first.second) - startEventId)){
-                    std::vector<uint16_t> vec = populateAndReturnEvents(lower, aIt);
-                    temp.emplace_back(std::pair<uint32_t, uint16_t>{traceId, startEventId}, std::pair<double, std::vector<uint16_t>>{1,vec});
+                const uint32_t dist = std::distance(aIt, aEn - 1);
+                std::vector<uint16_t> V;
+                if(dist == ((lower->first.second) - startEventId)-1){
+                    if (manager) {
+                        for (uint16_t activationEvent : lower->second.second) {
+                            Fut.second = activationEvent;
+                            e1 = manager->GetPayloadDataFromEvent(Fut);
+                            for (auto curr = aIt; curr != aEn; curr++) {
+                                Prev.first = curr->first.first;
+                                for (uint16_t targetEvent : curr->second.second) {
+                                    Prev.second = targetEvent;
+                                    e2 = manager->GetPayloadDataFromEvent(Prev);
+                                    if (!manager->checkValidity(e2, e1)) {
+                                        return temp;
+                                    } else {
+                                        V.emplace_back(targetEvent);
+                                    }
+                                }
+                            }
+                        }
+                        V.insert(V.begin(), lower->second.second.begin(), lower->second.second.end());
+                    } else {
+                        V = populateAndReturnEvents(aIt, aEn);
+                        V.insert(V.begin(), lower->second.second.begin(), lower->second.second.end());
+                    }
+                    temp.emplace_back(std::pair<uint32_t, uint16_t>{traceId, startEventId}, std::pair<double, std::vector<uint16_t>>{1,V});
                 } else {
                     // For (1)
                     return temp;
@@ -457,45 +484,72 @@ dataContainer until(const uint32_t &traceId,
 
 template<typename TableSection>
 dataContainer until(const TableSection &aSection, const TableSection &bSection, const std::vector<size_t>& lengths, const PredicateManager* manager = nullptr) {
-    typename TableSection::iterator lower = bSection.begin();
-    typename TableSection::iterator localUpper = lower;
-    typename TableSection::iterator upper = bSection.end();
+    auto lower = bSection.begin();
+    auto localUpper = lower;
+    auto upper = bSection.end();
 
-    typename TableSection::iterator aIt = aSection.begin();
-    typename TableSection::iterator aEn = aSection.begin();
-    typename TableSection::iterator upperA = aSection.begin();
+    auto aIt = aSection.begin();
+    auto aEn = aSection.begin();
+    auto upperA = aSection.end();
 
     dataContainer temp {};
+    env e1, e2;
+    std::pair<uint32_t, uint16_t> Fut, Prev;
 
-    for (uint32_t traceId = 0, N = (uint32_t)lengths.size(); traceId < N; traceId++) {
-        lower = std::lower_bound(lower, bSection.end(),
-                                 std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>{{traceId, 0},
-                                                                                                                    {0,       {}}});
-        localUpper = std::upper_bound(lower, upper, std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>{{traceId, lengths.at(traceId)-1},  {1, maxVec}});;
+    while (lower != upper) {
+        uint32_t currentTraceId = localUpper->first.first;
 
-        if(upper == bSection.end()){
-            continue;
-        }
+        //std::lower_bound(localUpper, upper, std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>{{currentTraceId, 0}, {0, {}}});
+        localUpper = std::upper_bound(lower, upper, std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>{{currentTraceId, lengths[currentTraceId] - 1}, {1, maxVec}});
 
-        aIt = std::lower_bound(aEn, upperA, std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>{{traceId, 0}, {0, {}}});
-        aEn = std::upper_bound(aIt, upperA, std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>{{traceId, lengths.at(traceId)-1}, {1, maxVec}});
+        aIt = std::lower_bound(aIt, upperA, std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>{{currentTraceId, 0}, {0, {}}});
+        aEn = aIt;//std::upper_bound(aIt, aSection.end(), std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>{{traceId, endEventId}, {1, maxVec}});
 
-
-        for( ; aIt != aEn; aIt++) {
-            if (aIt->first.second == 0) {
-                temp.emplace_back(*aIt);
+        for( ; lower != localUpper; lower++) {
+            Fut.first = lower->first.first;
+            if (lower->first.second == 0) {
+                temp.emplace_back(*lower);
             } else {
-                localUpper = std::upper_bound(localUpper, upper, std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>{{traceId, aIt->first.second-1},  {1, maxVec}});
-                if(lower == localUpper){
+                aEn = std::upper_bound(aEn, upperA, std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>{{currentTraceId, lower->first.second-1},  {1, maxVec}});
+                if(aIt == aEn){
                     // Rationale: (1)
-                    // if the condition does not hold for a time [startEventId, aIt->first.second-1], it is because one event makes it not hold.
+                    // if the condition does not hold for a time [startEventId, lower->first.second-1], it is because one event makes it not hold.
                     // Therefore, it should never hold even if you are extending the data that you have.
                     break;
                 } else {
-                    const uint32_t dist = std::distance(lower, upper - 1);
-                    if(dist == ((aIt->first.second))){
-                        std::vector<uint16_t> vec = populateAndReturnEvents(lower, aIt);
-                        temp.emplace_back(std::pair<uint32_t, uint16_t>{traceId, 0}, std::pair<double, std::vector<uint16_t>>{1,vec});
+                    const uint32_t dist = std::distance(aIt, aEn - 1);
+                    std::vector<uint16_t> V;
+                    if(dist == ((lower->first.second))-1){
+                        if (manager) {
+                            bool hasFail = false;
+                            for (uint16_t activationEvent : lower->second.second) {
+                                if (hasFail) break;
+                                Fut.second = activationEvent;
+                                e1 = manager->GetPayloadDataFromEvent(Fut);
+                                for (auto curr = aIt; curr != aEn; curr++) {
+                                    if (hasFail) break;
+                                    Prev.first = curr->first.first;
+                                    for (uint16_t targetEvent : curr->second.second) {
+                                        Prev.second = targetEvent;
+                                        e2 = manager->GetPayloadDataFromEvent(Prev);
+                                        if (!manager->checkValidity(e2, e1)) {
+                                            hasFail = true;
+                                            break;
+                                        } else {
+                                            V.emplace_back(targetEvent);
+                                        }
+                                    }
+                                }
+                            }
+                            if (hasFail) break;
+                            std::sort(V.begin(), V.end());
+                            V.erase(std::unique(V.begin(), V.end()), V.end());
+                            V.insert(V.begin(), lower->second.second.begin(), lower->second.second.end());
+                        } else {
+                            V = populateAndReturnEvents(aIt, aEn);
+                            V.insert(V.begin(), lower->second.second.begin(), lower->second.second.end());
+                        }
+                        temp.emplace_back(std::pair<uint32_t, uint16_t>{currentTraceId, 0}, std::pair<double, std::vector<uint16_t>>{1,V});
                     } else {
                         // For (1)
                         break;
@@ -504,6 +558,63 @@ dataContainer until(const TableSection &aSection, const TableSection &bSection, 
             }
 
         }
+
+
+#if 0
+
+
+        aIt = std::lower_bound(aEn, upperA, std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>{{currentTraceId, 0}, {0, {}}});
+        aEn = std::upper_bound(aIt, upperA, std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>{{currentTraceId, lengths.at(currentTraceId)-1}, {1, maxVec}});
+
+
+
+        for( ; aIt != aEn; aIt++) {
+            if (aIt->first.second == 0) {
+                temp.emplace_back(*aIt);
+            } else {
+                localUpper = std::upper_bound(localUpper, upper, std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>{{currentTraceId, aIt->first.second-1},  {1, maxVec}});
+                if(lower == localUpper){
+                    // Rationale: (1)
+                    // if the condition does not hold for a time [startEventId, aIt->first.second-1], it is because one event makes it not hold.
+                    // Therefore, it should never hold even if you are extending the data that you have.
+                    break;
+                } else {
+                    const uint32_t dist = std::distance(lower, localUpper - 1);
+                    std::vector<uint16_t> V;
+                    if(dist == ((aIt->first.second)-1)){
+                        if (manager) {
+                            for (uint16_t activationEvent : aIt->second.second) {
+                                Fut.second = activationEvent;
+                                e1 = manager->GetPayloadDataFromEvent(Fut);
+                                for (auto curr = lower; curr != localUpper; curr++) {
+                                    Prev.first = curr->first.first;
+                                    for (uint16_t targetEvent : curr->second.second) {
+                                        Prev.second = targetEvent;
+                                        e2 = manager->GetPayloadDataFromEvent(Prev);
+                                        if (!manager->checkValidity(e1, e2)) {
+                                            break;
+                                        } else {
+                                            V.emplace_back(targetEvent);
+                                        }
+                                    }
+                                }
+                            }
+                            V.insert(V.begin(), aIt->second.second.begin(), aIt->second.second.end());
+                        } else {
+                            V = populateAndReturnEvents(lower, localUpper);
+                            V.insert(V.begin(), aIt->second.second.begin(), aIt->second.second.end());
+                        }
+                        temp.emplace_back(std::pair<uint32_t, uint16_t>{currentTraceId, 0}, std::pair<double, std::vector<uint16_t>>{1,V});
+                    } else {
+                        // For (1)
+                        break;
+                    }
+                }
+            }
+
+        }
+#endif
+        lower = localUpper;
     }
 
     return temp;
