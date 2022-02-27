@@ -6,69 +6,79 @@
 #define CTEST_SEGFAULT
 
 #include <SimplifiedFuzzyStringMatching.h>
-#include "../submodules/ctest/ctest.h"
+#include <gtest/gtest.h>
 
-#define GLOBAL_TEST(name)     CTEST_DATA(name) {  SimplifiedFuzzyStringMatching matcher; std::multimap<double, std::string> result; std::unordered_map<std::string, double> values; };
+#define GLOBAL_TEST(name)     CTEST_DATA(name) {   };
 
-GLOBAL_TEST(fsm)
+class generic_test : public ::testing::Test {
+protected:
+    SimplifiedFuzzyStringMatching matcher;
+    std::multimap<double, std::string> result;
+    std::unordered_map<std::string, double> values;
+};
 
-GLOBAL_TEST(fsm_exact_match)
-
-CTEST_SETUP(fsm) {
-    data->matcher.put("hello");
-    data->matcher.put("bello");
-    data->matcher.put("bel");
-    data->matcher.put("hell");
-    data->matcher.put("call");
-    data->matcher.put("fall");
-    data->matcher.put("tall");
-    data->matcher.put("all");
-    data->matcher.put("elementary");
-    data->matcher.fuzzyMatch(0.0, 100, "fall", data->result);
-    for (const auto& cp : data->result) {
-        data->values.emplace(cp.second, cp.first);
+class fsm : public generic_test {
+protected:
+    void SetUp() override {
+        matcher.put("hello");
+        matcher.put("bello");
+        matcher.put("bel");
+        matcher.put("hell");
+        matcher.put("call");
+        matcher.put("fall");
+        matcher.put("tall");
+        matcher.put("all");
+        matcher.put("elementary");
+        matcher.fuzzyMatch(0.0, 100, "fall", result);
+        for (const auto& cp : result) {
+            values.emplace(cp.second, cp.first);
+        }
     }
-}
+};
 
-CTEST_SETUP(fsm_exact_match) {
-    data->matcher.put("hello");
-    data->matcher.put("bello");
-    data->matcher.put("bel");
-    data->matcher.put("hell");
-    data->matcher.put("call");
-    data->matcher.put("fall");
-    data->matcher.put("tall");
-    data->matcher.put("all");
-    data->matcher.put("elementary");
-    data->matcher.fuzzyMatch(1.0, 1, "fall", data->result);
-    for (const auto& cp : data->result) {
-        data->values.emplace(cp.second, cp.first);
+class fsm_exact_match : public generic_test {
+protected:
+    void SetUp() override {
+        matcher.put("hello");
+        matcher.put("bello");
+        matcher.put("bel");
+        matcher.put("hell");
+        matcher.put("call");
+        matcher.put("fall");
+        matcher.put("tall");
+        matcher.put("all");
+        matcher.put("elementary");
+        matcher.fuzzyMatch(1.0, 1, "fall", result);
+        for (const auto& cp : result) {
+            values.emplace(cp.second, cp.first);
+        }
     }
+};
+
+
+TEST_F(fsm_exact_match, only_one_match) {
+    EXPECT_EQ(values.size(), 1);
 }
 
-CTEST2(fsm_exact_match, only_one_match) {
-    ASSERT_EQUAL(data->values.size(), 1);
-}
-
-CTEST2(fsm_exact_match, has_fall) {
-    ASSERT_TRUE(data->values.contains("fall"));
+TEST_F(fsm_exact_match, has_fall) {
+    EXPECT_TRUE(values.contains("fall"));
 }
 
 
-CTEST2(fsm_exact_match, has_fall_top) {
-    ASSERT_DBL_NEAR(data->values.find("fall")->second, 1.0);
+TEST_F(fsm_exact_match, has_fall_top) {
+    EXPECT_DOUBLE_EQ(values.find("fall")->second, 1.0);
 }
 
-CTEST2(fsm, data_not_matched) {
-    ASSERT_TRUE(!(data->values.contains("elementary")));
+TEST_F(fsm, data_not_matched) {
+    EXPECT_TRUE(!(values.contains("elementary")));
 }
 
-CTEST2(fsm, match_order) {
-    ASSERT_TRUE((data->values.at("fall")) > (data->values.at("all")));
-    ASSERT_TRUE((data->values.at("all")) > (data->values.at("tall")));
-    ASSERT_TRUE((data->values.at("all")) > (data->values.at("call")));
-    ASSERT_DBL_NEAR((data->values.at("call")), (data->values.at("tall")));
-    ASSERT_TRUE((data->values.at("call")) > (data->values.at("hell")));
-    ASSERT_TRUE((data->values.at("hell")) > (data->values.at("hello")));
-    ASSERT_DBL_NEAR((data->values.at("hello")), (data->values.at("bello")));
+TEST_F(fsm, match_order) {
+    EXPECT_TRUE((values.at("fall")) > (values.at("all")));
+    EXPECT_TRUE((values.at("all")) > (values.at("tall")));
+    EXPECT_TRUE((values.at("all")) > (values.at("call")));
+    EXPECT_DOUBLE_EQ((values.at("call")), (values.at("tall")));
+    EXPECT_TRUE((values.at("call")) > (values.at("hell")));
+    EXPECT_TRUE((values.at("hell")) > (values.at("hello")));
+    EXPECT_DOUBLE_EQ((values.at("hello")), (values.at("bello")));
 }

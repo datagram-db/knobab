@@ -159,6 +159,15 @@ target_link_libraries(server Threads::Threads yaml-cpp  knobab antlr4_static #${
                                   yaucl_stringutils yaucl_numeric yaucl_hashing yaucl_data yaucl_bpm yaucl_graph knobab_flloat yaucl_structures)
 
 enable_testing ()
+include(FetchContent)
+FetchContent_Declare(
+        googletest
+        URL https://github.com/google/googletest/archive/58b71c9ea2fa52a7412e2267895d016abe14a971.zip
+)
+# For Windows: Prevent overriding the parent project's compiler/linker settings
+set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+FetchContent_MakeAvailable(googletest)
+
 add_subdirectory (tests)
 
 

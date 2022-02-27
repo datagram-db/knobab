@@ -11,34 +11,27 @@
 #include <fstream>
 #include <filesystem>
 
-#include "../submodules/ctest/ctest.h"
+#include <gtest/gtest.h>
 #include "log_for_tests.h"
 
-CTEST_DATA(basic_operators) {
+class basic_operators : public testing::Test {
+protected:
+    void SetUp() override {
+        ss << log1;
+        env.load_log(HUMAN_READABLE_YAUCL, true, "log1.txt", false, ss);
+    }
+
     Environment env;
     std::stringstream ss;
 };
-
 #define DATA_EMPLACE_BACK(l,trace,event,isMatch)    do { (l).emplace_back(std::make_pair((trace),(event)), std::make_pair((1.0),std::vector<uint16_t>{})); if (isMatch) (l).back().second.second.emplace_back(event);} while (false)
 #define DATA_DECREMENT_EMPLACE_BACK(l,trace,event,isMatch)    do { (l).emplace_back(std::make_pair((trace),(event)-1), std::make_pair((1.0),std::vector<uint16_t>{})); if (isMatch) (l).back().second.second.emplace_back((event));} while (false)
 
-
-CTEST_SETUP(basic_operators) {
-    Environment& env = data->env;
-    env.clear();
-    data->ss << log1;
-    env.load_log(HUMAN_READABLE_YAUCL, true, "log1", false, data->ss);
-};
-
-
-
-
-
-CTEST2(basic_operators, A) {
+TEST_F(basic_operators, A) {
     for (int i = 0; i<2; i++) {
         bool value = (i == 0);
 
-        auto resultA = data->env.db.exists("A", value);
+        auto resultA = env.db.exists("A", value);
 
         dataContainer A;
         DATA_EMPLACE_BACK(A, 0, 0, value);
@@ -59,15 +52,15 @@ CTEST2(basic_operators, A) {
         DATA_EMPLACE_BACK(A, 12, 0, value);
         DATA_EMPLACE_BACK(A, 12, 2, value);
 
-        ASSERT_TRUE(resultA == A);
+        EXPECT_EQ(resultA, A);
     }
 }
 
-CTEST2(basic_operators, B) {
+TEST_F(basic_operators, B) {
     for (int i = 0; i<2; i++) {
         bool value = (i == 0);
 
-        auto resultA = data->env.db.exists("B", value);
+        auto resultA = env.db.exists("B", value);
 
         dataContainer A;
         DATA_EMPLACE_BACK(A, 1, 0, value);
@@ -89,15 +82,15 @@ CTEST2(basic_operators, B) {
         DATA_EMPLACE_BACK(A, 12, 1, value);
         DATA_EMPLACE_BACK(A, 12, 3, value);
 
-        ASSERT_TRUE(resultA == A);
+        EXPECT_EQ(resultA, A);
     }
 }
 
-CTEST2(basic_operators, C) {
+TEST_F(basic_operators, C) {
     for (int i = 0; i<2; i++) {
         bool value = (i == 0);
 
-        auto resultA = data->env.db.exists("C", value);
+        auto resultA = env.db.exists("C", value);
 
         dataContainer A;
         DATA_EMPLACE_BACK(A, 2, 0, value);
@@ -105,16 +98,16 @@ CTEST2(basic_operators, C) {
         DATA_EMPLACE_BACK(A, 6, 1, value);
         DATA_EMPLACE_BACK(A, 8, 1, value);
 
-        ASSERT_TRUE(resultA == A);
+        EXPECT_TRUE(resultA == A);
     }
 }
 
-CTEST2(basic_operators, init_act) {
+TEST_F(basic_operators, init_act) {
     for (int i = 0; i<2; i++) {
         bool value = (i == 0);
 
         {
-            auto resultA = data->env.db.init("A", value);
+            auto resultA = env.db.init("A", value);
             dataContainer A;
             DATA_EMPLACE_BACK(A, 0, 0, value);
             DATA_EMPLACE_BACK(A, 3, 0, value);
@@ -127,40 +120,40 @@ CTEST2(basic_operators, init_act) {
             DATA_EMPLACE_BACK(A, 10, 0, value);
             DATA_EMPLACE_BACK(A, 11, 0, value);
             DATA_EMPLACE_BACK(A, 12, 0, value);
-            ASSERT_TRUE(resultA == A);
+            EXPECT_EQ(resultA, A);
         }
 
         {
-            auto resultA = data->env.db.init("B", value);
+            auto resultA = env.db.init("B", value);
             dataContainer A;
             DATA_EMPLACE_BACK(A, 1, 0, value);
-            ASSERT_TRUE(resultA == A);
+            EXPECT_EQ(resultA, A);
         }
 
         {
-            auto resultA = data->env.db.init("C", value);
+            auto resultA = env.db.init("C", value);
             dataContainer A;
             DATA_EMPLACE_BACK(A, 2, 0, value);
-            ASSERT_TRUE(resultA == A);
+            EXPECT_EQ(resultA, A);
         }
     }
 }
 
-CTEST2(basic_operators, end_act) {
+TEST_F(basic_operators, end_act) {
     for (int i = 0; i<2; i++) {
         bool value = (i == 0);
 
         {
-            auto resultA = data->env.db.ends("A", value);
+            auto resultA = env.db.ends("A", value);
             dataContainer A;
             DATA_EMPLACE_BACK(A, 0, 0, value);
             DATA_EMPLACE_BACK(A, 7, 3, value);
             DATA_EMPLACE_BACK(A, 8, 3, value);
-            ASSERT_TRUE(resultA == A);
+            EXPECT_EQ(resultA, A);
         }
 
         {
-            auto resultA = data->env.db.ends("B", value);
+            auto resultA =  env.db.ends("B", value);
             dataContainer A;
             DATA_EMPLACE_BACK(A, 1, 0, value);
             DATA_EMPLACE_BACK(A, 3, 1, value);
@@ -169,26 +162,26 @@ CTEST2(basic_operators, end_act) {
             DATA_EMPLACE_BACK(A, 10, 4, value);
             DATA_EMPLACE_BACK(A, 11, 4, value);
             DATA_EMPLACE_BACK(A, 12, 3, value);
-            ASSERT_TRUE(resultA == A);
+            EXPECT_EQ(resultA, A);
         }
 
         {
-            auto resultA = data->env.db.ends("C", value);
+            auto resultA =  env.db.ends("C", value);
             dataContainer A;
             DATA_EMPLACE_BACK(A, 2, 0, value);
             DATA_EMPLACE_BACK(A, 4, 1, value);
             DATA_EMPLACE_BACK(A, 6, 1, value);
-            ASSERT_TRUE(resultA == A);
+            EXPECT_EQ(resultA, A);
         }
     }
 }
 
-CTEST2(basic_operators, next_act) {
+TEST_F(basic_operators, next_act) {
     for (int i = 0; i<2; i++) {
         bool value = (i == 0);
 
         {
-            auto resultA = next(data->env.db.exists("A", value));
+            auto resultA = next(env.db.exists("A", value));
             dataContainer A;
             DATA_DECREMENT_EMPLACE_BACK(A, 7, 3, value);
             DATA_DECREMENT_EMPLACE_BACK(A, 8, 3, value);
@@ -196,11 +189,11 @@ CTEST2(basic_operators, next_act) {
             DATA_DECREMENT_EMPLACE_BACK(A, 10, 2, value);
             DATA_DECREMENT_EMPLACE_BACK(A, 11, 3, value);
             DATA_DECREMENT_EMPLACE_BACK(A, 12, 2, value);
-            ASSERT_TRUE(resultA == A);
+            EXPECT_EQ(resultA, A);
         }
 
         {
-            auto resultA = next(data->env.db.exists("B", value));
+            auto resultA = next(env.db.exists("B", value));
             dataContainer A;
             DATA_DECREMENT_EMPLACE_BACK(A, 3, 1, value);
             DATA_DECREMENT_EMPLACE_BACK(A, 5, 1, value);
@@ -219,54 +212,54 @@ CTEST2(basic_operators, next_act) {
             DATA_DECREMENT_EMPLACE_BACK(A, 11, 4, value);
             DATA_DECREMENT_EMPLACE_BACK(A, 12, 1, value);
             DATA_DECREMENT_EMPLACE_BACK(A, 12, 3, value);
-            ASSERT_TRUE(resultA == A);
+            EXPECT_EQ(resultA, A);
         }
 
         {
-            auto resultA = next(data->env.db.exists("C", value));
+            auto resultA = next(env.db.exists("C", value));
             dataContainer A;
             DATA_DECREMENT_EMPLACE_BACK(A, 4, 1, value);
             DATA_DECREMENT_EMPLACE_BACK(A, 6, 1, value);
             DATA_DECREMENT_EMPLACE_BACK(A, 8, 1, value);
-            ASSERT_TRUE(resultA == A);
+            EXPECT_EQ(resultA, A);
         }
     }
 }
 
-CTEST2(basic_operators, no_multiple_labels) {
+TEST_F(basic_operators, no_multiple_labels) {
     {
         // A and B shall never appear at the same time
         dataContainer result;
-        auto resultA = (data->env.db.exists("A", true));
-        auto resultB = (data->env.db.exists("B", true));
+        auto resultA = (env.db.exists("A", true));
+        auto resultB = (env.db.exists("B", true));
         setIntersection(resultA.begin(), resultA.end(), resultB.begin(), resultB.end(), std::back_inserter(result), Aggregators::maxSimilarity<double,double,double>, nullptr);
-        ASSERT_TRUE(result.empty());
+        EXPECT_TRUE(result.empty());
     }
 
     {
         // A and B shall never appear in the next time
         dataContainer result;
-        auto resultA = next(data->env.db.exists("A", true));
-        auto resultB = next(data->env.db.exists("B", true));
+        auto resultA = next(env.db.exists("A", true));
+        auto resultB = next(env.db.exists("B", true));
         setIntersection(resultA.begin(), resultA.end(), resultB.begin(), resultB.end(), std::back_inserter(result), Aggregators::maxSimilarity<double,double,double>, nullptr);
-        ASSERT_TRUE(result.empty());
+        EXPECT_TRUE(result.empty());
     }
 
     {
         // On the other hand, predicates should have an intersection
-        auto higherRange = data->env.db.exact_range_query({"A", "x", -10, 2000});
-        auto narrowRange = data->env.db.exact_range_query({"A", "x", 0, 2000});
+        auto higherRange = env.db.exact_range_query({"A", "x", -10, 2000});
+        auto narrowRange = env.db.exact_range_query({"A", "x", 0, 2000});
         std::vector<std::pair<trace_t, event_t>> result;
         std::set_intersection(higherRange.begin(), higherRange.end(), narrowRange.begin(), narrowRange.end(), std::back_inserter(result));
-        ASSERT_TRUE(narrowRange == result);
+        EXPECT_EQ(narrowRange, result);
     }
 
     {
         // A and_{where x<y} next B
         dataContainer result, expected;
-        PredicateManager pm{{{{"x", "y", LT}}}, &data->env.db};
-        auto resultA = (data->env.db.exists("A", true));
-        auto resultB = next(data->env.db.exists("B", true));
+        PredicateManager pm{{{{"x", "y", LT}}}, &env.db};
+        auto resultA = (env.db.exists("A", true));
+        auto resultB = next(env.db.exists("B", true));
         setIntersection(resultA.begin(), resultA.end(), resultB.begin(), resultB.end(), std::back_inserter(result), Aggregators::maxSimilarity<double,double,double>, &pm);
 
         DATA_EMPLACE_BACK(expected, 3, 0, false);
@@ -279,22 +272,22 @@ CTEST2(basic_operators, no_multiple_labels) {
         expected.back().second.second.emplace_back(0);
         expected.back().second.second.emplace_back(1);
 
-        ASSERT_TRUE(result == expected);
+        EXPECT_EQ(result, expected);
     }
 }
 
-CTEST2(basic_operators, globally_untimed) {
+TEST_F(basic_operators, globally_untimed) {
     {
-        auto result = global(data->env.db.exists("A", true), data->env.db.act_table_by_act_id.getTraceLengths());
-        ASSERT_TRUE(result == dataContainer {std::make_pair(std::make_pair(0,0), std::make_pair(1.0, std::vector<uint16_t>{0}))});
+        auto result = global(env.db.exists("A", true), env.db.act_table_by_act_id.getTraceLengths());
+        EXPECT_EQ(result, dataContainer {std::make_pair(std::make_pair(0,0), std::make_pair(1.0, std::vector<uint16_t>{0}))});
     }
     {
-        auto result = global(data->env.db.exists("B", true), data->env.db.act_table_by_act_id.getTraceLengths());
-        ASSERT_TRUE(result == dataContainer {std::make_pair(std::make_pair(1,0), std::make_pair(1.0, std::vector<uint16_t>{0}))});
+        auto result = global(env.db.exists("B", true), env.db.act_table_by_act_id.getTraceLengths());
+        EXPECT_EQ(result, dataContainer {std::make_pair(std::make_pair(1,0), std::make_pair(1.0, std::vector<uint16_t>{0}))});
     }
     {
-        auto result = global(data->env.db.exists("C", true), data->env.db.act_table_by_act_id.getTraceLengths());
-        ASSERT_TRUE(result == dataContainer {std::make_pair(std::make_pair(2,0), std::make_pair(1.0, std::vector<uint16_t>{0}))});
+        auto result = global(env.db.exists("C", true), env.db.act_table_by_act_id.getTraceLengths());
+        EXPECT_EQ(result, dataContainer {std::make_pair(std::make_pair(2,0), std::make_pair(1.0, std::vector<uint16_t>{0}))});
     }
 }
 
