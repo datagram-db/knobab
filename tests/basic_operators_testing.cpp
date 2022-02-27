@@ -16,10 +16,7 @@
 
 CTEST_DATA(basic_operators) {
     Environment env;
-};
-
-CTEST_DATA(until_test) {
-    Environment env;
+    std::stringstream ss;
 };
 
 #define DATA_EMPLACE_BACK(l,trace,event,isMatch)    do { (l).emplace_back(std::make_pair((trace),(event)), std::make_pair((1.0),std::vector<uint16_t>{})); if (isMatch) (l).back().second.second.emplace_back(event);} while (false)
@@ -29,21 +26,12 @@ CTEST_DATA(until_test) {
 CTEST_SETUP(basic_operators) {
     Environment& env = data->env;
     env.clear();
-    std::stringstream ss;
-    ss << log1;
-    // log_data_format format, bool loadData, std::istream &stream, KnowledgeBase &output,
-    //                              std::string &filename
-    env.load_log(HUMAN_READABLE_YAUCL, true, "log1", false, ss);
+    data->ss << log1;
+    env.load_log(HUMAN_READABLE_YAUCL, true, "log1", false, data->ss);
 };
 
 
-CTEST_SETUP(until_test) {
-    Environment& env = data->env;
-    env.clear();
-    std::stringstream ss;
-    ss << logUntil;
-    env.load_log(HUMAN_READABLE_YAUCL, true, "logUntil.txt", false, ss);
-};
+
 
 
 CTEST2(basic_operators, A) {
@@ -310,21 +298,3 @@ CTEST2(basic_operators, globally_untimed) {
     }
 }
 
-CTEST2(until_test, until_basic) {
-    /* auto a = data->env.db.exists("A", true);
-     auto b = data->env.db.exists("B", true);
-     {
-         std::set<uint32_t> expectedTraces{1,3,5,7,9,10,11,12,13};
-         auto result = until(a, b, data->env.db.act_table_by_act_id.getTraceLengths(), nullptr);
-         for (const auto& ref : result)
-             ASSERT_TRUE(expectedTraces.contains(ref.first.first));
-     }
-
-     PredicateManager pm{{{{"x", "y", LT}}}, &data->env.db};
-     {
-         std::set<uint32_t> expectedTraces{1,3,5,7,13};
-         auto result = until(a, b, data->env.db.act_table_by_act_id.getTraceLengths(), &pm);
-         for (const auto& ref : result)
-             ASSERT_TRUE(expectedTraces.contains(ref.first.first));
-     }*/
-}

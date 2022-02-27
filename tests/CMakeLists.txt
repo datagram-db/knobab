@@ -12,3 +12,8 @@ add_executable(bop_test basic_operators_testing.cpp
         ../submodules/ctest/main.c )
 target_link_libraries(bop_test knobab yaucl_hashing yaucl_bpm knobab_flloat Threads::Threads)
 add_test (NAME bop_test COMMAND bop_test)
+
+add_executable(until_test until_test.cpp
+        ../submodules/ctest/main.c )
+target_link_libraries(until_test knobab yaucl_hashing yaucl_bpm knobab_flloat Threads::Threads)
+add_test (NAME until_test COMMAND until_test)
