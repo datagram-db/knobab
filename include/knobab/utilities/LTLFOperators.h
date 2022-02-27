@@ -483,6 +483,22 @@ dataContainer until(const uint32_t &traceId,
 }
 
 template<typename TableSection>
+dataContainer weakUntil(const uint32_t &traceId,
+                    const uint16_t &startEventId,
+                    const uint16_t& endEventId,
+
+                    const TableSection &aSection,
+                    const TableSection &bSection,
+
+                    const PredicateManager* manager = nullptr) {
+    dataContainer result;
+    dataContainer untilR = until(traceId, startEventId, endEventId, aSection, bSection, manager);
+    dataContainer globally = global(traceId, startEventId, endEventId, aSection);
+    setUnion(untilR.begin(), untilR.end(), globally.begin(), globally.end(), std::back_inserter(result), Aggregators::joinSimilarity<double, double, double>, nullptr);
+    return result;
+}
+
+template<typename TableSection>
 dataContainer until(const TableSection &aSection, const TableSection &bSection, const std::vector<size_t>& lengths, const PredicateManager* manager = nullptr) {
     auto lower = bSection.begin();
     auto localUpper = lower;
@@ -618,6 +634,18 @@ dataContainer until(const TableSection &aSection, const TableSection &bSection, 
     }
 
     return temp;
+}
+
+template<typename TableSection>
+dataContainer weakUntilUntimed(const TableSection &aSection,
+                               const TableSection &bSection,
+                               const std::vector<size_t>& lengths,
+                               const PredicateManager* manager = nullptr) {
+    dataContainer result;
+    dataContainer untilR = until(aSection, bSection, manager);
+    dataContainer globally = global(aSection, lengths);
+    setUnionUntimed(untilR.begin(), untilR.end(), globally.begin(), globally.end(), std::back_inserter(result), Aggregators::joinSimilarity<double, double, double>, nullptr);
+    return result;
 }
 
 #endif //KNOBAB_LTLFOPERATORS_H
