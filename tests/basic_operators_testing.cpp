@@ -29,18 +29,22 @@ CTEST_DATA(until_test) {
 CTEST_SETUP(basic_operators) {
     Environment& env = data->env;
     env.clear();
-    std::filesystem::path file = std::filesystem::current_path().parent_path().parent_path() / "data" / "testing" / "log.txt";
-    env.load_log(HUMAN_READABLE_YAUCL, true, file);
+    std::stringstream ss;
+    ss << log1;
+    // log_data_format format, bool loadData, std::istream &stream, KnowledgeBase &output,
+    //                              std::string &filename
+    env.load_log(HUMAN_READABLE_YAUCL, true, "log1", false, ss);
 };
 
 
 CTEST_SETUP(until_test) {
     Environment& env = data->env;
     env.clear();
-
-    std::filesystem::path file = std::filesystem::current_path().parent_path().parent_path() / "data" / "testing" / "log_until.txt";
-    env.load_log(HUMAN_READABLE_YAUCL, true, file);
+    std::stringstream ss;
+    ss << logUntil;
+    env.load_log(HUMAN_READABLE_YAUCL, true, "logUntil.txt", false, ss);
 };
+
 
 CTEST2(basic_operators, A) {
     for (int i = 0; i<2; i++) {

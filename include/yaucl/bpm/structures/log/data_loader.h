@@ -13,6 +13,7 @@ enum log_data_format {
     XES1
 };
 
-void load_into_knowledge_base(log_data_format format, bool loadData, const std::string &filename, KnowledgeBase& output);
+void load_into_knowledge_base(log_data_format format, bool loadData, std::istream &stream, KnowledgeBase &output,
+                              const std::string &filename);
 
 #endif //BZDB_DATA_LOADER_H

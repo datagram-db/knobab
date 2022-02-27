@@ -38,7 +38,7 @@ void whole_testing(const std::string& log_file = "data/testing/log.txt",
 
     std::cout << "Loading the log file: " << log_file << std::endl;
 
-    env.load_log(HUMAN_READABLE_YAUCL, true, log_file);
+    env.load_log(HUMAN_READABLE_YAUCL, true, log_file, false);
 
 
 
@@ -286,7 +286,7 @@ generateBenchmarkForTests(const std::string &log_file,
     Environment env;
     env.clear();
     env.load_all_clauses();
-    env.load_log(HUMAN_READABLE_YAUCL, true, log_file);
+    env.load_log(HUMAN_READABLE_YAUCL, true, log_file, false);
     env.load_model(templatu.begin(), templatu.end());
     env.doGrounding();
     env.init_atomize_tables();
@@ -344,7 +344,7 @@ void generate_traces(const std::string& log_file = "data/testing/nologolog.txt",
         exit(1);
     }
 
-    env.load_log(HUMAN_READABLE_YAUCL, true, log_file);
+    env.load_log(HUMAN_READABLE_YAUCL, true, log_file, false);
     env.load_model(declare_file);
 
     if (std::filesystem::exists(std::filesystem::path(grounding_strategy))) {
