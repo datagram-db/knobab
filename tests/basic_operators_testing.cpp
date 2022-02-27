@@ -320,11 +320,11 @@ CTEST2(until_test, until_basic) {
             ASSERT_TRUE(expectedTraces.contains(ref.first.first));
     }
 
-    PredicateManager pm{{{{"x", "y", LT}}}, &data->env.db};
+    /*PredicateManager pm{{{{"x", "y", LT}}}, &data->env.db};
     {
         std::set<uint32_t> expectedTraces{1,3,5,7,13};
         auto result = until(a, b, data->env.db.act_table_by_act_id.getTraceLengths(), &pm);
         for (const auto& ref : result)
             ASSERT_TRUE(expectedTraces.contains(ref.first.first));
-    }
+    }*/
 }
