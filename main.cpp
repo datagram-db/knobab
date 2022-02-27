@@ -448,77 +448,77 @@ void sam_testing() {
     //std::cout << "========EXISTS " + toSearch + " " + std::to_string(searchAmount) + "TIMES========="  << std::endl << "RESULT: " << std::endl << found << std::endl;
 
 
-    TraceData<std::pair<uint32_t, uint16_t>,  std::pair<double, std::vector<uint16_t>>> initAVec = db.init<std::pair<uint32_t, uint16_t>,  std::pair<double, std::vector<uint16_t>>>(toSearch, minThreshHold);
-    std::cout << "========Init " + toSearch + "=========" << std::endl << std::setw(8) << "Result: " << initAVec.getTraceApproximations() << std::endl;
+    auto initAVec = db.init(toSearch, minThreshHold);
+    std::cout << "========Init " + toSearch + "=========" << std::endl << std::setw(8) << "Result: " << initAVec << std::endl;
 
-    TraceData<std::pair<uint32_t, uint16_t>,  std::pair<double, std::vector<uint16_t>>> endsAVec = db.ends<std::pair<uint32_t, uint16_t>,  std::pair<double, std::vector<uint16_t>>>(toSearch, minThreshHold);
-    std::cout << "========Ends " + toSearch + "=========" << std::endl << std::setw(8) << "Result: " << endsAVec.getTraceApproximations() << std::endl << std::endl;
+    auto endsAVec = db.ends(toSearch, minThreshHold);
+    std::cout << "========Ends " + toSearch + "=========" << std::endl << std::setw(8) << "Result: " << endsAVec << std::endl << std::endl;
 
 //
     std::cout << "========SET OPERATORS=========" << std::endl;
-    TraceData<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>> timedUnionNoPred, timedUnionWithPred, untimedUnionNoPred, untimedUnionWithPred;
-    setUnion( initAVec.getTraceApproximations().begin(), initAVec.getTraceApproximations().end(), endsAVec.getTraceApproximations().begin(), endsAVec.getTraceApproximations().end(),
-             std::back_inserter(timedUnionNoPred.getTraceApproximations()), Aggregators::maxSimilarity<double, double, double>);
-    setUnion( initAVec.getTraceApproximations().begin(), initAVec.getTraceApproximations().end(), endsAVec.getTraceApproximations().begin(), endsAVec.getTraceApproximations().end(),
-             std::back_inserter(timedUnionNoPred.getTraceApproximations()), Aggregators::maxSimilarity<double, double, double>, &predManager);
-    setUnionUntimed( initAVec.getTraceApproximations().begin(), initAVec.getTraceApproximations().end(), endsAVec.getTraceApproximations().begin(), endsAVec.getTraceApproximations().end(),
-             std::back_inserter(untimedUnionNoPred.getTraceApproximations()), Aggregators::maxSimilarity<double, double, double>);
-    setUnionUntimed( initAVec.getTraceApproximations().begin(), initAVec.getTraceApproximations().end(), endsAVec.getTraceApproximations().begin(), endsAVec.getTraceApproximations().end(),
-             std::back_inserter(untimedUnionWithPred.getTraceApproximations()), Aggregators::maxSimilarity<double, double, double>, &predManager);
+    dataContainer timedUnionNoPred, timedUnionWithPred, untimedUnionNoPred, untimedUnionWithPred;
+    setUnion( initAVec.begin(), initAVec.end(), endsAVec.begin(), endsAVec.end(),
+             std::back_inserter(timedUnionNoPred), Aggregators::maxSimilarity<double, double, double>);
+    setUnion( initAVec.begin(), initAVec.end(), endsAVec.begin(), endsAVec.end(),
+             std::back_inserter(timedUnionNoPred), Aggregators::maxSimilarity<double, double, double>, &predManager);
+    setUnionUntimed( initAVec.begin(), initAVec.end(), endsAVec.begin(), endsAVec.end(),
+             std::back_inserter(untimedUnionNoPred), Aggregators::maxSimilarity<double, double, double>);
+    setUnionUntimed( initAVec.begin(), initAVec.end(), endsAVec.begin(), endsAVec.end(),
+             std::back_inserter(untimedUnionWithPred), Aggregators::maxSimilarity<double, double, double>, &predManager);
 
-    std::cout << "========Union timed no predicate=========" << std::endl << std::setw(9) << "Between: " << initAVec.getTraceApproximations() << std::endl << std::setw(9) << "and: "
-              << endsAVec.getTraceApproximations() << std::endl << std::setw(9) << "Result: " << timedUnionNoPred.getTraceApproximations() << std::endl;
-    std::cout << "========Union timed with predicate=========" << std::endl << std::setw(9) << "Between: " << initAVec.getTraceApproximations() << std::endl << std::setw(9) << "and: "
-              << endsAVec.getTraceApproximations() << std::endl << std::setw(9) << "Result: " << timedUnionNoPred.getTraceApproximations() << std::endl;
-    std::cout << "========Union untimed no predicate=========" << std::endl << std::setw(9) << "Between: " << initAVec.getTraceApproximations() << std::endl << std::setw(9) << "and: "
-              << endsAVec.getTraceApproximations() << std::endl << std::setw(9) << "Result: " << untimedUnionNoPred.getTraceApproximations() << std::endl;
-    std::cout << "========Union untimed with predicate=========" << std::endl << std::setw(9) << "Between: " << initAVec.getTraceApproximations() << std::endl << std::setw(9) << "and: "
-              << endsAVec.getTraceApproximations() << std::endl << std::setw(9) << "Result: " << untimedUnionWithPred.getTraceApproximations() << std::endl;
+    std::cout << "========Union timed no predicate=========" << std::endl << std::setw(9) << "Between: " << initAVec << std::endl << std::setw(9) << "and: "
+              << endsAVec << std::endl << std::setw(9) << "Result: " << timedUnionNoPred << std::endl;
+    std::cout << "========Union timed with predicate=========" << std::endl << std::setw(9) << "Between: " << initAVec << std::endl << std::setw(9) << "and: "
+              << endsAVec << std::endl << std::setw(9) << "Result: " << timedUnionNoPred << std::endl;
+    std::cout << "========Union untimed no predicate=========" << std::endl << std::setw(9) << "Between: " << initAVec << std::endl << std::setw(9) << "and: "
+              << endsAVec << std::endl << std::setw(9) << "Result: " << untimedUnionNoPred << std::endl;
+    std::cout << "========Union untimed with predicate=========" << std::endl << std::setw(9) << "Between: " << initAVec << std::endl << std::setw(9) << "and: "
+              << endsAVec << std::endl << std::setw(9) << "Result: " << untimedUnionWithPred << std::endl;
 
-    TraceData<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>> timedIntersectionNoPred, timedIntersectionWithPred, untimedIntersectionNoPred, untimedIntersectionWithPred;
-    setIntersection( initAVec.getTraceApproximations().begin(), initAVec.getTraceApproximations().end(), endsAVec.getTraceApproximations().begin(), endsAVec.getTraceApproximations().end(),
-                    std::back_inserter(timedIntersectionNoPred.getTraceApproximations()), Aggregators::joinSimilarity<double, double, double>);
-    setIntersection( initAVec.getTraceApproximations().begin(), initAVec.getTraceApproximations().end(), endsAVec.getTraceApproximations().begin(), endsAVec.getTraceApproximations().end(),
-                    std::back_inserter(timedIntersectionWithPred.getTraceApproximations()), Aggregators::joinSimilarity<double, double, double>, &predManager);
-    setIntersectionUntimed( initAVec.getTraceApproximations().begin(), initAVec.getTraceApproximations().end(), endsAVec.getTraceApproximations().begin(), endsAVec.getTraceApproximations().end(),
-                    std::back_inserter(untimedIntersectionNoPred.getTraceApproximations()), Aggregators::joinSimilarity<double, double, double>);
-    setIntersectionUntimed( initAVec.getTraceApproximations().begin(), initAVec.getTraceApproximations().end(), endsAVec.getTraceApproximations().begin(), endsAVec.getTraceApproximations().end(),
-                    std::back_inserter(untimedIntersectionWithPred.getTraceApproximations()), Aggregators::joinSimilarity<double, double, double>, &predManager);
+    dataContainer timedIntersectionNoPred, timedIntersectionWithPred, untimedIntersectionNoPred, untimedIntersectionWithPred;
+    setIntersection( initAVec.begin(), initAVec.end(), endsAVec.begin(), endsAVec.end(),
+                    std::back_inserter(timedIntersectionNoPred), Aggregators::joinSimilarity<double, double, double>);
+    setIntersection( initAVec.begin(), initAVec.end(), endsAVec.begin(), endsAVec.end(),
+                    std::back_inserter(timedIntersectionWithPred), Aggregators::joinSimilarity<double, double, double>, &predManager);
+    setIntersectionUntimed( initAVec.begin(), initAVec.end(), endsAVec.begin(), endsAVec.end(),
+                    std::back_inserter(untimedIntersectionNoPred), Aggregators::joinSimilarity<double, double, double>);
+    setIntersectionUntimed( initAVec.begin(), initAVec.end(), endsAVec.begin(), endsAVec.end(),
+                    std::back_inserter(untimedIntersectionWithPred), Aggregators::joinSimilarity<double, double, double>, &predManager);
 
-    std::cout << "========Intersection timed no predicate=========" << std::endl << std::setw(9) << "Between: " << initAVec.getTraceApproximations() << std::endl << std::setw(9) << "and: "
-    << endsAVec.getTraceApproximations() << std::endl << std::setw(9) << "Result: " << timedIntersectionNoPred.getTraceApproximations() << std::endl;
-    std::cout << "========Intersection timed with predicate=========" << std::endl << std::setw(9) << "Between: " << initAVec.getTraceApproximations() << std::endl << std::setw(9) << "and: "
-              << endsAVec.getTraceApproximations() << std::endl << std::setw(9) << "Result: " << timedIntersectionWithPred.getTraceApproximations() << std::endl;
-    std::cout << "========Intersection untimed no predicate=========" << std::endl << std::setw(9) << "Between: " << initAVec.getTraceApproximations() << std::endl << std::setw(9) << "and: "
-    << endsAVec.getTraceApproximations() << std::endl << std::setw(9) << "Result: " << untimedIntersectionNoPred.getTraceApproximations() << std::endl << std::endl;
-    std::cout << "========Intersection untimed with predicate=========" << std::endl << std::setw(9) << "Between: " << initAVec.getTraceApproximations() << std::endl << std::setw(9) << "and: "
-              << endsAVec.getTraceApproximations() << std::endl << std::setw(9) << "Result: " << untimedIntersectionWithPred.getTraceApproximations() << std::endl << std::endl;
+    std::cout << "========Intersection timed no predicate=========" << std::endl << std::setw(9) << "Between: " << initAVec << std::endl << std::setw(9) << "and: "
+    << endsAVec << std::endl << std::setw(9) << "Result: " << timedIntersectionNoPred << std::endl;
+    std::cout << "========Intersection timed with predicate=========" << std::endl << std::setw(9) << "Between: " << initAVec << std::endl << std::setw(9) << "and: "
+              << endsAVec << std::endl << std::setw(9) << "Result: " << timedIntersectionWithPred << std::endl;
+    std::cout << "========Intersection untimed no predicate=========" << std::endl << std::setw(9) << "Between: " << initAVec << std::endl << std::setw(9) << "and: "
+    << endsAVec << std::endl << std::setw(9) << "Result: " << untimedIntersectionNoPred << std::endl << std::endl;
+    std::cout << "========Intersection untimed with predicate=========" << std::endl << std::setw(9) << "Between: " << initAVec << std::endl << std::setw(9) << "and: "
+              << endsAVec << std::endl << std::setw(9) << "Result: " << untimedIntersectionWithPred << std::endl << std::endl;
 /*
     TraceData<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>> unionNoPred;
 
-    setUnion( initAVec.getTraceApproximations().begin(), initAVec.getTraceApproximations().end(), endsAVec.getTraceApproximations().begin(), endsAVec.getTraceApproximations().end(),
-             std::back_inserter(unionNoPred.getTraceApproximations()), Aggregators::maxSimilarity<double, double, double>);
+    setUnion( initAVec.begin(), initAVec.end(), endsAVec.begin(), endsAVec.end(),
+             std::back_inserter(unionNoPred), Aggregators::maxSimilarity<double, double, double>);
 
-    std::cout << "========UNION NO PREDICATE=========" << std::endl << "BETWEEN: " << std::endl << initAVec.getTraceApproximations() << std::endl << "AND" << std::endl
-    << endsAVec.getTraceApproximations() << std::endl << "RESULT: " << std::endl << unionNoPred.getTraceApproximations() << std::endl;
+    std::cout << "========UNION NO PREDICATE=========" << std::endl << "BETWEEN: " << std::endl << initAVec << std::endl << "AND" << std::endl
+    << endsAVec << std::endl << "RESULT: " << std::endl << unionNoPred << std::endl;
 
     TraceData<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>> unionPred;
-    setUnion( initAVec.getTraceApproximations().begin(), initAVec.getTraceApproximations().end(), endsAVec.getTraceApproximations().begin(), endsAVec.getTraceApproximations().end(),
-             std::back_inserter(unionPred.getTraceApproximations()), Aggregators::maxSimilarity<double, double, double>, &predManager);
-    std::cout << "========UNION WITH PREDICATE=========" << std::endl << "BETWEEN: " << std::endl << initAVec.getTraceApproximations() << std::endl << "AND" << std::endl
-    << endsAVec.getTraceApproximations() << std::endl << "RESULT: " << std::endl << unionPred.getTraceApproximations() << std::endl;
+    setUnion( initAVec.begin(), initAVec.end(), endsAVec.begin(), endsAVec.end(),
+             std::back_inserter(unionPred), Aggregators::maxSimilarity<double, double, double>, &predManager);
+    std::cout << "========UNION WITH PREDICATE=========" << std::endl << "BETWEEN: " << std::endl << initAVec << std::endl << "AND" << std::endl
+    << endsAVec << std::endl << "RESULT: " << std::endl << unionPred << std::endl;
 
     TraceData<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>> intersectionNoPred;
-    setIntersection( initAVec.getTraceApproximations().begin(), initAVec.getTraceApproximations().end(), endsAVec.getTraceApproximations().begin(), endsAVec.getTraceApproximations().end(),
-                    std::back_inserter(intersectionNoPred.getTraceApproximations()), Aggregators::joinSimilarity<double, double, double>);
-    std::cout << "========INTERSECTION NO PREDICATE=========" << std::endl << "BETWEEN: " << std::endl << initAVec.getTraceApproximations() << std::endl << "AND" << std::endl
-    << endsAVec.getTraceApproximations() << std::endl << "RESULT: " << std::endl << intersectionNoPred.getTraceApproximations() << std::endl;
+    setIntersection( initAVec.begin(), initAVec.end(), endsAVec.begin(), endsAVec.end(),
+                    std::back_inserter(intersectionNoPred), Aggregators::joinSimilarity<double, double, double>);
+    std::cout << "========INTERSECTION NO PREDICATE=========" << std::endl << "BETWEEN: " << std::endl << initAVec << std::endl << "AND" << std::endl
+    << endsAVec << std::endl << "RESULT: " << std::endl << intersectionNoPred << std::endl;
 
     TraceData<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>> intersectionPred;
-    setIntersection( initAVec.getTraceApproximations().begin(), initAVec.getTraceApproximations().end(), endsAVec.getTraceApproximations().begin(), endsAVec.getTraceApproximations().end(),
-                    std::back_inserter(intersectionPred.getTraceApproximations()), Aggregators::joinSimilarity<double, double, double>, &predManager);
-    std::cout << "========INTERSECTION WITH PREDICATE=========" << std::endl << "BETWEEN: " << std::endl << initAVec.getTraceApproximations() << std::endl << "AND" << std::endl
-    << endsAVec.getTraceApproximations() << std::endl << "RESULT: " << std::endl << intersectionPred.getTraceApproximations() << std::endl;
+    setIntersection( initAVec.begin(), initAVec.end(), endsAVec.begin(), endsAVec.end(),
+                    std::back_inserter(intersectionPred), Aggregators::joinSimilarity<double, double, double>, &predManager);
+    std::cout << "========INTERSECTION WITH PREDICATE=========" << std::endl << "BETWEEN: " << std::endl << initAVec << std::endl << "AND" << std::endl
+    << endsAVec << std::endl << "RESULT: " << std::endl << intersectionPred << std::endl;
 */
 
     //aaab from trace 0
