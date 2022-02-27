@@ -25,7 +25,18 @@ struct PredicateManager {
     const KnowledgeBase* getKnowledgeBase() const{
         return kb;
     }
-    
+
+    PredicateManager flip() const {
+        PredicateManager result;
+        for (const auto& ref : predicates) {
+            auto inner = result.predicates.emplace_back();
+            for (const auto& ref2 : ref) {
+                inner.emplace_back(ref2.flip());
+            }
+        }
+        result.kb = this->kb;
+        return result;
+    }
 
     env GetPayloadDataFromEvent(const std::pair<uint32_t , uint16_t>& pair) const;
 
