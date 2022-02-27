@@ -29,12 +29,7 @@ CTEST_DATA(until_test) {
 CTEST_SETUP(basic_operators) {
     Environment& env = data->env;
     env.clear();
-    std::filesystem::path file{"log1.txt"};
-    {
-        std::ofstream of{file};
-        of << log1 << std::endl;
-        of.close();
-    }
+    std::filesystem::path file = std::filesystem::current_path().parent_path().parent_path() / "data" / "testing" / "log.txt";
     env.load_log(HUMAN_READABLE_YAUCL, true, file);
 };
 
@@ -42,21 +37,9 @@ CTEST_SETUP(basic_operators) {
 CTEST_SETUP(until_test) {
     Environment& env = data->env;
     env.clear();
-    std::filesystem::path file{"log2.txt"};
-    {
-        std::ofstream of{file};
-        of << logUntil << std::endl;
-        of.close();
-    }
-    env.load_log(HUMAN_READABLE_YAUCL, true, file);
-};
 
-CTEST_TEARDOWN(basic_operators) {
-    {
-        std::filesystem::path file{"log1.txt"};
-        assert(std::filesystem::exists(file));
-        std::filesystem::remove(file);
-    }
+    std::filesystem::path file = std::filesystem::current_path().parent_path().parent_path() / "data" / "testing" / "log_until.txt";
+    env.load_log(HUMAN_READABLE_YAUCL, true, file);
 };
 
 CTEST2(basic_operators, A) {
