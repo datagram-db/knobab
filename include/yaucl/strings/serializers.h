@@ -46,7 +46,7 @@ std::ostream &operator<<(std::ostream &os, const std::map<T,V> &insertion) {
 
 template<typename T, typename V>
 std::ostream &operator<<(std::ostream &os, const std::pair<T,V> &insertion) {
-    return os << "⟪" << insertion.first << ", " << insertion.second << "⟫";
+    return os << "<" << insertion.first << ", " << insertion.second << ">";
 }
 
 template<typename T>

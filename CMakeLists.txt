@@ -153,10 +153,13 @@ add_library(knobab_flloat STATIC
 target_link_libraries(knobab_flloat #${Boost_LIBRARIES} ${PYTHON_LIBRARIES}
                                     yaucl_bpm yaucl_graph)
 
-add_executable(server main.cpp )
+add_subdirectory(submodules/backward-cpp)
+add_executable(server main.cpp ) #${BACKWARD_ENABLE})
 
 target_link_libraries(server Threads::Threads yaml-cpp  knobab antlr4_static #${Boost_LIBRARIES} ${PYTHON_LIBRARIES} aaltaf
                                   yaucl_stringutils yaucl_numeric yaucl_hashing yaucl_data yaucl_bpm yaucl_graph knobab_flloat yaucl_structures)
+
+ add_backward(server)
 
 enable_testing ()
 include(FetchContent)
@@ -167,7 +170,7 @@ FetchContent_Declare(
 # For Windows: Prevent overriding the parent project's compiler/linker settings
 set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(googletest)
-add_subdirectory(submodules/backward-cpp)
+
 
 add_subdirectory (tests)
 

@@ -62,7 +62,7 @@ struct ActTable {
      */
     std::vector<std::pair<record*, record*>> secondary_index;
 
-    ActTable::record *load_record(trace_t id, act_t act, time_t time); // rename: loading_step (emplace_back)
+    void load_record(trace_t id, act_t act, time_t time); // rename: loading_step (emplace_back)
     const std::vector<std::vector<size_t>> & indexing1();
     void indexing2();
     void sanityCheck();
