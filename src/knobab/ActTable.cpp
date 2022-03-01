@@ -38,26 +38,28 @@ bool ActTable::record::operator!=(const ActTable::record &rhs) const {
 #include <cassert>
 #include <iostream>
 
-ActTable::record *ActTable::load_record(trace_t id, act_t act, time_t time) {
+void ActTable::load_record(trace_t id, act_t act, time_t time) {
+    std::vector<std::pair<trace_t, event_t>> V;
+    std::vector<size_t> W;
     {
         const size_t N = builder.act_id_to_trace_id_and_time.size();
-        assert(N >= act);
+        //assert(N >= act);
         if (N == act) {
-            builder.act_id_to_trace_id_and_time.emplace_back().emplace_back(id, time);
+            builder.act_id_to_trace_id_and_time.push_back({std::make_pair(id, time)});
         } else if (N > act){
-            assert(builder.act_id_to_trace_id_and_time.size() > act);
-            builder.act_id_to_trace_id_and_time[act].emplace_back(id, time);
+            //assert(builder.act_id_to_trace_id_and_time.size() > act);
+            builder.act_id_to_trace_id_and_time[act].push_back(std::make_pair(id, time));
         }
     }
     {
         const size_t M = builder.trace_id_to_event_id_to_offset.size();
-        assert(M >= id);
+        //assert(M >= id);
         if (M == id) {
-            assert(trace_length.size() == M);
-            builder.trace_id_to_event_id_to_offset.emplace_back();
-            trace_length.emplace_back(1);
+            //assert(trace_length.size() == M);
+            builder.trace_id_to_event_id_to_offset.push_back(W);
+            trace_length.push_back(1);
         } else {
-            assert((M-1) == id);
+            //assert((M-1) == id);
             assert(trace_length.size() > id);
             trace_length[id]++;
         }
@@ -69,7 +71,7 @@ ActTable::record *ActTable::load_record(trace_t id, act_t act, time_t time) {
 #include <algorithm>
 
 void ActTable::sanityCheck() {
-    assert(std::is_sorted(table.begin(), table.end()));
+    //assert(std::is_sorted(table.begin(), table.end()));
 }
 
 const std::vector<std::vector<size_t>> & ActTable::indexing1() { // todo: rename as indexing, and remove expectedOrdering from emplace_back, instead, put in

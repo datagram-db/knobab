@@ -446,13 +446,11 @@ void sam_testing() {
 
     //std::unordered_map<uint32_t, double> found = db.exists(data, searchAmount);
     //std::cout << "========EXISTS " + toSearch + " " + std::to_string(searchAmount) + "TIMES========="  << std::endl << "RESULT: " << std::endl << found << std::endl;
+    dataContainer initAVec = db.init(toSearch, minThreshHold);
+    //std::cout << "========Init " + toSearch + "=========" << std::endl << std::setw(8) << "Result: " << initAVec << std::endl;
 
-
-    auto initAVec = db.init(toSearch, minThreshHold);
-    std::cout << "========Init " + toSearch + "=========" << std::endl << std::setw(8) << "Result: " << initAVec << std::endl;
-
-    auto endsAVec = db.ends(toSearch, minThreshHold);
-    std::cout << "========Ends " + toSearch + "=========" << std::endl << std::setw(8) << "Result: " << endsAVec << std::endl << std::endl;
+    dataContainer endsAVec = db.ends(toSearch, minThreshHold);
+    //std::cout << "========Ends " + toSearch + "=========" << std::endl << std::setw(8) << "Result: " << endsAVec << std::endl << std::endl;
 
 //
     std::cout << "========SET OPERATORS=========" << std::endl;
@@ -671,9 +669,9 @@ int main() {
     //whole_testing();
     //test_declare();
     //test_grounding();
-    generate_traces();
+    //generate_traces();
     //ltlf_operators_testing();
-    //sam_testing();
+    sam_testing();
 
     return 0;
 }
