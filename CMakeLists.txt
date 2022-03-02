@@ -148,6 +148,10 @@ target_link_libraries(knobab_flloat #${Boost_LIBRARIES} ${PYTHON_LIBRARIES}
 add_subdirectory(submodules/backward-cpp)
 add_executable(server main.cpp ) #${BACKWARD_ENABLE})
 
+
+
+add_subdirectory(submodules/args)
+include_directories(submodules/args)
 target_link_libraries(server Threads::Threads yaml-cpp  knobab antlr4_static #${Boost_LIBRARIES} ${PYTHON_LIBRARIES} aaltaf
                                   yaucl_stringutils yaucl_numeric yaucl_hashing yaucl_data yaucl_bpm yaucl_graph knobab_flloat yaucl_structures)
 

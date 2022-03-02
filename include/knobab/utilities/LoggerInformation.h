@@ -36,6 +36,8 @@ struct LoggerInformation {
     void clear();
 
     friend std::ostream& operator<<(std::ostream& os, const LoggerInformation &information);
+    void log_csv_file_header(std::ostream &csv_log);
+    void log_csv_file(std::ostream& csv_log);
 };
 
 

@@ -1,6 +1,9 @@
 #include <iostream>
 #include <iomanip>
 
+
+#include <args.hxx>
+
 #include "yaucl/bpm/structures/log/data_loader.h"
 #include "yaucl/strings/serializers.h"
 #include "knobab/utilities/Aggregators.h"
@@ -17,19 +20,11 @@
 
 
 void whole_testing(const std::string& log_file = "data/testing/log.txt",
-                   const std::string& declare_file = "data/testing/SimpleComposition.txt",
-                   const std::string& atomization_conf = "data/testing/atomization_pipeline.yaml",
-                   const std::string& grounding_strategy = "data/testing/grounding_strategy.yaml") {
+                   const std::vector<std::string>& declare_files = {"data/testing/SimpleComposition.txt"},
+                   bool doDebugServer = false,
+                   const std::string& benchmarking_file = "") {
     Environment env;
     env.clear();
-    //env.load_all_clauses();
-
-    std::string fresh_atom_label{"p"};
-    size_t msl = 10;
-    bool doPreliminaryFill = true;
-    bool ignoreActForAttributes = false;
-    bool creamOffSingleValues = true;
-    GroundingStrategyConf::pruning_strategy ps = GroundingStrategyConf::ALWAYS_EXPAND_LESS_TOTAL_VALUES;
 
     if (!std::filesystem::exists(std::filesystem::path(log_file))) {
         std::cerr << "ERROR: the log file is missing: cannot run the pipeline! " << log_file << std::endl;
@@ -37,44 +32,51 @@ void whole_testing(const std::string& log_file = "data/testing/log.txt",
     }
 
     std::cout << "Loading the log file: " << log_file << std::endl;
-
     env.load_log(HUMAN_READABLE_YAUCL, true, log_file, false);
 
+    for (const auto& declare_file : declare_files) {
+        std::cout << "Loading the declarative model from file: " << declare_file << std::endl;
+        env.load_model(declare_file);
+        //env.print_model(std::cout); // DEBUG
+        //////////////////////////////////////////////////////////////////
+
+        env.set_grounding_parameters(true, false, true,GroundingStrategyConf::NO_EXPANSION);
+        //env.set_grounding_parameters(grounding_strategy);
+        env.doGrounding();
+        //env.print_grounded_model(std::cout); // DEBUG
+        //////////////////////////////////////////////////////////////////
+
+        env.set_atomization_parameters("p", 10);
+        //env.set_atomization_parameters(std::filesystem::path(atomization_conf));
+        //////////////////////////////////////////////////////////////////
+
+        std::cout << "Loading the atomization tables given the model" << std::endl;
+        env.init_atomize_tables();
+        //env.print_grounding_tables(std::cout);
+        //////////////////////////////////////////////////////////////////
+
+        std::cout << "Atomizing the declare formulae" << std::endl;
+        env.first_atomize_model();
+        //env.print_grounded_model(std::cout); // DEBUG
+        //////////////////////////////////////////////////////////////////
+
+        auto ref = env.query_model(0);
+        std::cout << ref.result << std::endl;
+        std::cout << env.experiment_logger << std::endl;
+        if (doDebugServer) {
+            env.server(ref);
+        }
+        if (!benchmarking_file.empty()) {
+            std::filesystem::path F(benchmarking_file);
+            bool doIHaveToWriteTheHeader = !std::filesystem::exists(F);
+            std::ofstream outF{benchmarking_file, std::ios_base::app};
+            if (doIHaveToWriteTheHeader)
+                env.experiment_logger.log_csv_file_header(outF);
+            env.experiment_logger.log_csv_file(outF);
+        }
+    }
 
 
-
-    //env.print_knowledge_base(std::cout); // DEBUG
-    //////////////////////////////////////////////////////////////////
-
-    std::cout << "Loading the declarative model from file: " << declare_file << std::endl;
-    env.load_model(declare_file);
-    //env.print_model(std::cout); // DEBUG
-    //////////////////////////////////////////////////////////////////
-
-    env.set_grounding_parameters(true, false, true,GroundingStrategyConf::NO_EXPANSION);
-    //env.set_grounding_parameters(grounding_strategy);
-    env.doGrounding();
-    //env.print_grounded_model(std::cout); // DEBUG
-    //////////////////////////////////////////////////////////////////
-
-    env.set_atomization_parameters("p", 10);
-    //env.set_atomization_parameters(std::filesystem::path(atomization_conf));
-    //////////////////////////////////////////////////////////////////
-
-    std::cout << "Loading the atomization tables given the model" << std::endl;
-    env.init_atomize_tables();
-    //env.print_grounding_tables(std::cout);
-    //////////////////////////////////////////////////////////////////
-
-    std::cout << "Atomizing the declare formulae" << std::endl;
-    env.first_atomize_model();
-    //env.print_grounded_model(std::cout); // DEBUG
-    //////////////////////////////////////////////////////////////////
-
-    auto ref = env.query_model(0);
-    std::cout << ref.result << std::endl;
-    std::cout << env.experiment_logger << std::endl;
-    env.server(ref);
 }
 
 void test_data_query(const std::string& log_file = "data/testing/log.txt",
@@ -601,12 +603,54 @@ void sam_testing() {
 }
 
 
-int main() {
+int main(int argc, char **argv) {
+
+    bool setUpServer = false;
+    std::string log_file = "data/testing/log.txt";
+    std::string benchmark = "";
+    std::vector<std::string> queriesV{"data/testing/SimpleComposition.txt"};
+    args::ArgumentParser parser("KnoBAB  (c) 2020-2022 by Giacomo Bergami & Samuel 'Sam' Appleby.", "This free and open software program implements the MaxSat problem via a Knowledge Base, KnoBAB. Nicer things are still to come!");
+    args::HelpFlag help(parser, "help", "Display this help menu", {'h', "help"});
+    args::Group group(parser, "You can use the following parameters", args::Group::Validators::DontCare, args::Options::Global);
+    args::Flag server(group, "server", "Runs the HTTP server for visualizing the internal representation of both the knowledge base and the associated query plan", {'s', "server"});
+    args::ValueFlag<std::string> logFile(parser, "Log", "The Log to load into the knowledgebase", {'l', "log"});
+    args::ValueFlagList<std::string> queries(parser, "Models/Queries", "The queries expressed as Declare models", {'d', "declare"});
+    args::ValueFlag<std::string> benchmarkFile(parser, "Benchmark File", "Appends the current result data into a benchmark file", {'b', "csv"});
+
+    try {
+        parser.ParseCLI(argc, argv);
+    } catch (args::Help) {
+        std::cout << parser;
+        return 0;
+    } catch (args::ParseError e) {
+        std::cerr << e.what() << std::endl;
+        std::cerr << parser;
+        return 1;
+    } catch (args::ValidationError e) {
+        std::cerr << e.what() << std::endl;
+        std::cerr << parser;
+        return 1;
+    }
+
+    if (server) {
+        setUpServer = true;
+    }
+    if (logFile) {
+        log_file = args::get(logFile);
+    }
+    if (queries) {
+        queriesV.clear();
+        for (const auto& query: args::get(queries))
+            queriesV.emplace_back(query);
+    }
+    if (benchmarkFile) {
+        benchmark = args::get(benchmarkFile);
+    }
+    whole_testing(log_file, queriesV, setUpServer, benchmark);
 
     //generate_nonunary_templates();
     //test_data_query();
     //test_fsm();
-    whole_testing();
     //test_declare();
     //test_grounding();
     //generate_traces();
