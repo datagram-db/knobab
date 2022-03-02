@@ -31,7 +31,6 @@ void Environment::clear() {
     db.clear();
     ap.clear();
     conjunctive_model.clear();
-    ltlf_query_manager::clear();
 }
 
 #include <filesystem>
@@ -419,7 +418,7 @@ void Environment::server() {
 
     svr.Get("/query_plan.json",[this](const httplib::Request& req, httplib::Response& res) {
         std::stringstream ss;
-        ss << ltlf_query_manager::generateGraph();
+        ss << maxsat_pipeline.qm.generateGraph();
         res.set_content(ss.str(), "text/json");
     });
     svr.Get("/graph.html",[this](const httplib::Request& req, httplib::Response& res) {

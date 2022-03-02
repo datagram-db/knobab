@@ -265,6 +265,7 @@ public:
 
     template <typename traceIdentifier, typename traceValue>
     TraceData<traceIdentifier, traceValue> existsAtOrig(const std::string& act, const uint16_t& eventId, const double minThreshold = 1) const{
+        uint16_t approxConstant = MAX_UINT16 / 2;
         TraceData<traceIdentifier, traceValue> foundData;
         std::pair<traceIdentifier, traceValue> tracePair;
         const uint16_t& mappedVal = getMappedValueFromAction(act);
@@ -276,8 +277,8 @@ public:
             return foundData;
         }
         for (auto it = act_table_by_act_id.table.begin() + indexes.first; it != act_table_by_act_id.table.begin() + indexes.second + 1; ++it) {
-            uint16_t approxConstant = MAX_UINT16 / 2;
-            float satisfiability = getSatisifiabilityBetweenValues(eventId, it->entry.id.parts.event_id, approxConstant);
+            auto L = act_table_by_act_id.trace_length.at(it->entry.id.parts.trace_id);
+            float satisfiability = getSatisifiabilityBetweenValues(((L <= 1) ? 0 : eventId), cast_to_float2(it->entry.id.parts.event_id, L), approxConstant);
             if(satisfiability >= minThreshold) {
                 foundData.getTraceApproximations().emplace_back(std::pair<std::pair<uint32_t, uint16_t>, double>({it->entry.id.parts.trace_id, it->entry.id.parts.event_id}, satisfiability));
             }

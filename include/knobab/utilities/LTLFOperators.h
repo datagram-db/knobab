@@ -10,6 +10,8 @@
 #include <limits>
 #include <vector>
 
+#include <yaucl/structures/set_operations.h>
+
 const uint16_t max = std::numeric_limits<uint16_t>::max();
 static const std::vector<uint16_t> maxVec(max,max);
 
@@ -55,8 +57,11 @@ OutputIt setUnion(InputIt1 first1, InputIt1 last1, InputIt2 first2, InputIt2 las
                     }
                 }
             } else {
+                auto V = first1->second.second;
+                V.insert(V.end(), first2->second.second.begin(), first2->second.second.end());
+                remove_duplicates(V);
                 *d_first = std::make_pair(first1->first, std::pair<double, std::vector<uint16_t>>{
-                        aggr(first1->second.first, first2->second.first), {}});
+                        aggr(first1->second.first, first2->second.first), V});
             }
 
             first1++;
@@ -129,9 +134,12 @@ setUnionUntimed(InputIt1 first1, InputIt1 last1, InputIt2 first2, InputIt2 last2
                         }
                     } else {
                         // NOTE: that will discard potential activation and target conditions, and just put the two events where the situation holds.
+                        auto V = first1->second.second;
+                        V.insert(V.end(), first2->second.second.begin(), first2->second.second.end());
+                        remove_duplicates(V);
                         *d_first = std::make_pair(std::pair<uint32_t, uint16_t>{pair.first, 0},
                                                   std::pair<double, std::vector<uint16_t>>{
-                                                          aggr(cont1.second.first, cont2.second.first), {}});
+                                                          aggr(cont1.second.first, cont2.second.first), V});
                     }
                 }
             }
@@ -184,8 +192,11 @@ OutputIt setIntersection(InputIt1 first1, InputIt1 last1, InputIt2 first2, Input
                     }
                 }
             } else {
+                auto V = first1->second.second;
+                V.insert(V.end(), first2->second.second.begin(), first2->second.second.end());
+                remove_duplicates(V);
                 *d_first = std::make_pair(first1->first, std::pair<double, std::vector<uint16_t>>{
-                        aggr(first1->second.first, first2->second.first), {}});
+                        aggr(first1->second.first, first2->second.first), V});
             }
 
             first1++;
@@ -247,10 +258,13 @@ OutputIt setIntersectionUntimed(InputIt1 first1, InputIt1 last1, InputIt2 first2
                         }
                     } else {
                         // NOTE: that will discard potential activation and target conditions, and just put the two events where the situation holds.
+                        auto V = first1->second.second;
+                        V.insert(V.end(), first2->second.second.begin(), first2->second.second.end());
+                        remove_duplicates(V);
                         *d_first = std::make_pair(std::pair<uint32_t, uint16_t>{pair.first, 0},
                                                   std::pair<double, std::vector<uint16_t>>{
                                                           aggr(cont1.second.first, cont2.second.first),
-                                                          {pair.second, pair1.second}});
+                                                          V});
                     }
 
 

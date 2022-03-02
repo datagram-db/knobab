@@ -10,6 +10,11 @@ uint16_t cast_to_float(size_t x, size_t l) {
     return (uint16_t)((double)x)/((double)l) * at16;
 }
 
+uint16_t cast_to_float2(size_t x, size_t l) {
+    const static double at16 = std::pow(2, 16) - 1;
+    return l == 1 ? 0 : (uint16_t) (((double) x) / ((double) (l - 1)) * at16);
+}
+
 ActTable::record::record() : record{0,0,0,nullptr, nullptr} {}
 
 ActTable::record::record(act_t act, trace_t id, time_t time, ActTable::record *prev, ActTable::record *next) : prev{prev}, next{next} {
@@ -39,16 +44,14 @@ bool ActTable::record::operator!=(const ActTable::record &rhs) const {
 #include <iostream>
 
 void ActTable::load_record(trace_t id, act_t act, time_t time) {
-    std::vector<std::pair<trace_t, event_t>> V;
-    std::vector<size_t> W;
     {
         const size_t N = builder.act_id_to_trace_id_and_time.size();
         //assert(N >= act);
         if (N == act) {
-            builder.act_id_to_trace_id_and_time.push_back({std::make_pair(id, time)});
+            builder.act_id_to_trace_id_and_time.emplace_back().emplace_back(id, time);
         } else if (N > act){
             //assert(builder.act_id_to_trace_id_and_time.size() > act);
-            builder.act_id_to_trace_id_and_time[act].push_back(std::make_pair(id, time));
+            builder.act_id_to_trace_id_and_time[act].emplace_back(id, time);
         }
     }
     {
@@ -56,7 +59,7 @@ void ActTable::load_record(trace_t id, act_t act, time_t time) {
         //assert(M >= id);
         if (M == id) {
             //assert(trace_length.size() == M);
-            builder.trace_id_to_event_id_to_offset.push_back(W);
+            builder.trace_id_to_event_id_to_offset.emplace_back();
             trace_length.push_back(1);
         } else {
             //assert((M-1) == id);

@@ -8,6 +8,7 @@
 #include <vector>
 #include <string>
 
+
 namespace yaucl {
     namespace numeric {
         std::vector<size_t> numberToBase(size_t n, size_t b);

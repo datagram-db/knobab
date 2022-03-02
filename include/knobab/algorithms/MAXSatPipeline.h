@@ -10,7 +10,7 @@
 #include "atomization_pipeline.h"
 #include "knobab/trace_repairs/DataQuery.h"
 #include "yaucl/bpm/structures/ltlf/ltlf_query.h"
-
+#include <yaucl/numeric/ssize_t.h>
 
 //#define PARALLEL
 
@@ -23,8 +23,11 @@
 #define PARALLELIZE_LOOP_END                                      } while(0);
 #endif
 
+
+
 struct MAXSatPipeline {
     using partial_result = std::vector<std::pair<std::pair<trace_t, event_t>, double>>;
+    ltlf_query_manager qm;
 
 #ifdef PARALLEL
     // A global thread pool object, automatically determining the threads with the number of the architecture ones
@@ -46,6 +49,7 @@ struct MAXSatPipeline {
 
 
     // DATA
+    ssize_t maxPartialResultId = -1;
     std::unordered_map<DataQuery, size_t> data_offset;
     std::vector<std::pair<DataQuery, std::vector<std::pair<std::pair<trace_t, event_t>, double>>>> data_accessing;
     std::unordered_map<std::string, std::unordered_map<std::string,std::vector<size_t>>> data_accessing_range_query_to_offsets;
@@ -55,7 +59,7 @@ struct MAXSatPipeline {
     size_t barrier_to_range_queries, barriers_to_atfo;
     std::vector<std::vector<std::pair<std::pair<trace_t, event_t>, double>>> atomicPartIntersectionResult;
 
-    void pipeline(CNFDeclareDataAware* model,
+    dataContainer pipeline(CNFDeclareDataAware* model,
                   const AtomizingPipeline& atomization,
                   const KnowledgeBase& kb) {
         /// Clearing the previous spurious computation values
@@ -65,7 +69,7 @@ struct MAXSatPipeline {
         data_chunk(model, atomization);
 
         /// First element of the pipeline: given the data query, fills in the
-        data_pipeline_first(kb);
+        return data_pipeline_first(kb);
 
         /// Second part of the pipeline: compute each possible instance of the operator that there exists
 
@@ -75,7 +79,7 @@ struct MAXSatPipeline {
     void clear();
     void data_chunk(CNFDeclareDataAware* model,
                     const AtomizingPipeline& atomization);
-    void data_pipeline_first( const KnowledgeBase& kb);
+    dataContainer data_pipeline_first( const KnowledgeBase& kb);
 
     void
     localExtract(const AtomizingPipeline &atomization,
