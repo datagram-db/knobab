@@ -15,7 +15,12 @@ std::string MAXSatPipeline::RIGHT_ATOM{"b"};
 
 
 
-MAXSatPipeline::MAXSatPipeline() {
+MAXSatPipeline::MAXSatPipeline(size_t nThreads)
+#ifdef MAXSatPipeline_PARALLEL
+    : pool(nThreads)
+#endif
+{
+    // TODO: with different specifications
     for (declare_templates t : magic_enum::enum_values<declare_templates>()) {
         if (isUnaryPredicate(t)) continue; // discarding unary predicates
         ltlf_semantics.emplace(t, DeclareDataAware::binary(t, LEFT_ATOM, RIGHT_ATOM)
@@ -30,6 +35,34 @@ void MAXSatPipeline::clear() {
     atomToFormulaOffset.clear();
     toUseAtoms.clear();
     atomicPartIntersectionResult.clear();
+    result.clear();
+}
+
+void MAXSatPipeline::pipeline(CNFDeclareDataAware* model,
+                       const AtomizingPipeline& atomization,
+                       const KnowledgeBase& kb) {
+    /// Clearing the previous spurious computation values
+    clear();
+
+    /// Extracting the predicates from both the LTLf semantics and the data extracted from it
+    {
+        auto start = std::chrono::system_clock::now();
+        data_chunk(model, atomization);
+        auto end = std::chrono::system_clock::now();
+        auto elapsed =
+                std::chrono::duration<double, std::milli>(end - start);
+        declare_to_ltlf_time = elapsed.count();
+    }
+
+    {
+        auto start = std::chrono::system_clock::now();
+        data_pipeline_first(kb);
+        auto end = std::chrono::system_clock::now();
+        auto elapsed =
+                std::chrono::duration<double, std::milli>(end - start);
+        ltlf_query_time = elapsed.count();
+    }
+
 }
 
 void MAXSatPipeline::data_chunk(CNFDeclareDataAware *model,
@@ -343,7 +376,7 @@ static inline dataContainer local_union(const std::set<size_t> &vecs,
     return finalResult;
 }
 
-static inline dataContainer local_union(const ltlf_query* q) {
+static inline dataContainer local_union(const ltlf_query* q, bool isTimed = true) {
     if ((!q) || (q->args.empty())) return {};
     auto it = q->args.begin();
     auto last_union = (*it)->result;
@@ -351,10 +384,16 @@ static inline dataContainer local_union(const ltlf_query* q) {
     for (std::size_t i = 1; i < q->args.size(); ++i) {
         it++;
         auto ref = (*it)->result;
-        setUnion(last_union.begin(), last_union.end(),
-                 ref.begin(), ref.end(),
-                 std::back_inserter(curr_union),
-                 Aggregators::maxSimilarity<double, double, double>);
+        if (isTimed)
+            setUnion(last_union.begin(), last_union.end(),
+                     ref.begin(), ref.end(),
+                     std::back_inserter(curr_union),
+                     Aggregators::maxSimilarity<double, double, double>);
+        else
+            setUnionUntimed(last_union.begin(), last_union.end(),
+                     ref.begin(), ref.end(),
+                     std::back_inserter(curr_union),
+                     Aggregators::maxSimilarity<double, double, double>);
         std::swap(last_union, curr_union);
         curr_union.clear();
     }
@@ -388,7 +427,7 @@ static inline dataContainer local_intersection(const ltlf_query* q, bool isTimed
 
 
 
-dataContainer MAXSatPipeline::data_pipeline_first(const KnowledgeBase& kb) {
+void MAXSatPipeline::data_pipeline_first(const KnowledgeBase& kb) {
 
     // 1. Performing the query over each single predicate that we have extracted, so not to duplicate the data access
     if (barrier_to_range_queries > 0) {
@@ -492,34 +531,32 @@ dataContainer MAXSatPipeline::data_pipeline_first(const KnowledgeBase& kb) {
                         break;
                     case Q_NEXT:
                         break;
+
                     case Q_FALSE:
+                        // Empty result by default
+                        formula->result.clear();
                         break;
+
                     case Q_ACT:
                     case Q_INIT:
                     case Q_END:
                         formula->result = local_union(formula->partial_results, results_cache, formula->isLeaf);
                         break;
+
                     case Q_AND:
-                        if (formula->isTimed) {
-                            formula->result = local_intersection(formula);
-                        } else {
-                            // TODO
-                        }
+                        // TODO: theta
+                        formula->result = local_intersection(formula, formula->isTimed);
                         break;
+
                     case Q_OR:
-                        if (formula->isTimed) {
-                            formula->result = local_union(formula);
-                        } else {
-                            // TODO
-                        }
+                        // TODO: theta
+                        formula->result = local_union(formula, formula->isTimed);
                         break;
+
                     case Q_XOR:
-                        if (formula->isTimed) {
-                            formula->result = local_union(formula);
-                        } else {
-                            // TODO
-                        }
+                        formula->result = local_union(formula, formula->isTimed);
                         break;
+
                     case Q_BOX:
                         break;
                     case Q_DIAMOND:
@@ -531,8 +568,6 @@ dataContainer MAXSatPipeline::data_pipeline_first(const KnowledgeBase& kb) {
                     case Q_LAST:
                         break;
 
-                        break;
-                        break;
                     case Q_EXISTS:
                         break;
                 }
@@ -544,9 +579,8 @@ dataContainer MAXSatPipeline::data_pipeline_first(const KnowledgeBase& kb) {
     if (!qm.Q.empty()) {
         ltlf_query conjunction;
         conjunction.args = qm.Q.begin()->second;
-        return local_intersection(&conjunction, false);
+        this->result = local_intersection(&conjunction, false);
     } else {
-        return {};
     }
 
 

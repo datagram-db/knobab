@@ -46,6 +46,9 @@ void Environment::load_model(const std::string &model_file) {
     }
     std::ifstream file{model_file};
     conjunctive_model = dmp.load(file, true);
+    experiment_logger.model_parsing_ms = dmp.parsing_time_ms;
+    experiment_logger.model_size = conjunctive_model.size();
+    experiment_logger.model_filename = model_file;
 }
 
 void Environment::load_log(log_data_format format, bool loadData, const std::string &filename, bool setMaximumStrLen,
@@ -54,6 +57,7 @@ void Environment::load_log(log_data_format format, bool loadData, const std::str
     using std::chrono::duration_cast;
     using std::chrono::duration;
     using std::chrono::milliseconds;
+    experiment_logger.log_filename = filename;
 
     {
         //log_data_format format, bool loadData, std::istream &stream, KnowledgeBase &output,
@@ -64,7 +68,8 @@ void Environment::load_log(log_data_format format, bool loadData, const std::str
 
         /* Getting number of milliseconds as a double. */
         duration<double, std::milli> ms_double = t2 - t1;
-        std::cout << "Loading and parsing time = " << ms_double.count() << std::endl;
+        experiment_logger.log_loading_and_parsing_ms = ms_double.count();
+        //std::cout << "Loading and parsing time = " << ms_double.count() << std::endl;
     }
 
     {
@@ -74,7 +79,8 @@ void Environment::load_log(log_data_format format, bool loadData, const std::str
 
         /* Getting number of milliseconds as a double. */
         duration<double, std::milli> ms_double = t2 - t1;
-        std::cout << "Indexing time = " << ms_double.count() << std::endl;
+        experiment_logger.log_indexing_ms = ms_double.count();
+        //std::cout << "Indexing time = " << ms_double.count() << std::endl;
     }
     if (setMaximumStrLen) {
         auto tmp = db.getMaximumStringLength();
@@ -82,6 +88,36 @@ void Environment::load_log(log_data_format format, bool loadData, const std::str
         DataPredicate::MAX_STRING = ap.s_max;
         DataPredicate::msl = tmp;
     }
+
+
+    experiment_logger.n_traces = db.noTraces;
+    experiment_logger.n_acts = db.actId;
+    // Compute some more trace statistics
+
+    double trace_avg, trace_pow2, N;
+    N = db.act_table_by_act_id.trace_length.size();
+    size_t frequency_of_trace_length = 0;
+    size_t previousLength = 0;
+    std::multiset<size_t> O;
+    for (const size_t i : db.act_table_by_act_id.trace_length) {
+        trace_avg += i;
+        trace_pow2 += std::pow(i, 2);
+        O.insert(i);
+
+    }
+    for (size_t len : O) {
+        size_t currFreq = O.count(len);
+        if (currFreq > frequency_of_trace_length) {
+            frequency_of_trace_length = currFreq;
+            previousLength = len;
+        }
+    }
+    trace_avg = trace_avg / N;
+
+    experiment_logger.log_trace_average_length = trace_avg;
+    experiment_logger.log_trace_variance = (trace_pow2 / N) - std::pow(trace_avg, 2);
+    experiment_logger.most_frequent_trace_length = previousLength;
+    experiment_logger.trace_length_frequency = frequency_of_trace_length;
 }
 
 void Environment::set_atomization_parameters(const std::string &fresh_atom_label, size_t mslength) {
@@ -101,7 +137,7 @@ Environment::set_grounding_parameters(bool doPreliminaryFill, bool ignoreActForA
 }
 
 void Environment::init_atomize_tables() {
-    collect_data_from_declare_disjunctive_model(ap, grounding);
+    experiment_logger.model_data_decomposition_time = collect_data_from_declare_disjunctive_model(ap, grounding);
 }
 
 void Environment::doGrounding() {
@@ -145,7 +181,7 @@ void Environment::print_grounding_tables(std::ostream &os) {
 }
 
 void Environment::first_atomize_model() {
-    atomize_model(ap, grounding);
+    experiment_logger.model_atomization_time = atomize_model(ap, grounding);
 }
 
 semantic_atom_set Environment::evaluate_easy_prop_to_atoms(const easy_prop &prop,
@@ -351,7 +387,7 @@ void Environment::load_all_clauses() {
 
 #include <httplib.h>
 
-void Environment::server() {
+void Environment::server(MAXSatPipeline& pipeline) {
 
     using namespace httplib;
     Server svr;
@@ -416,9 +452,9 @@ void Environment::server() {
     });
 
 
-    svr.Get("/query_plan.json",[this](const httplib::Request& req, httplib::Response& res) {
+    svr.Get("/query_plan.json",[this, &pipeline](const httplib::Request& req, httplib::Response& res) {
         std::stringstream ss;
-        ss << maxsat_pipeline.qm.generateGraph();
+        ss << pipeline.qm.generateGraph();
         res.set_content(ss.str(), "text/json");
     });
     svr.Get("/graph.html",[this](const httplib::Request& req, httplib::Response& res) {
@@ -443,5 +479,61 @@ void Environment::server() {
     });
 
     svr.listen("localhost", 8080);
+}
+
+void Environment::set_grounding_parameters(const std::string &grounding_strategy) {
+    GroundingStrategyConf::pruning_strategy ps = GroundingStrategyConf::ALWAYS_EXPAND_LESS_TOTAL_VALUES;
+    size_t msl = 10;
+    bool doPreliminaryFill = true;
+    bool ignoreActForAttributes = false;
+    bool creamOffSingleValues = true;
+    if (std::filesystem::exists(std::filesystem::path(grounding_strategy))) {
+        std::cout << "Loading the grounding_conf strategy configuration file: " << grounding_strategy << std::endl;
+        YAML::Node n = YAML::LoadFile(grounding_strategy);
+
+        if (n["strategy"]) {
+            auto x = n["strategy"].Scalar();
+            auto v = magic_enum::enum_cast<GroundingStrategyConf::pruning_strategy>(x);
+            if (v.has_value()) {
+                ps = v.value();
+            }
+        }
+
+        if (n["doPreliminaryFill"]) {
+            auto x = n["doPreliminaryFill"].Scalar();
+            doPreliminaryFill = (x == "1") || (x == "T") || (x == "true");
+        }
+
+        if (n["ignoreActForAttributes"]) {
+            auto x = n["ignoreActForAttributes"].Scalar();
+            ignoreActForAttributes = (x == "1") || (x == "T") || (x == "true");
+        }
+
+        if (n["creamOffSingleValues"]) {
+            auto x = n["creamOffSingleValues"].Scalar();
+            creamOffSingleValues = (x == "1") || (x == "T") || (x == "true");
+        }
+
+        set_grounding_parameters(doPreliminaryFill,
+                                 ignoreActForAttributes,
+                                 creamOffSingleValues,
+                                 ps);
+    }
+}
+
+void Environment::set_atomization_parameters(const std::filesystem::path &atomization_conf) {
+    std::string fresh_atom_label{"p"};
+    size_t msl = 10;
+    if (std::filesystem::exists((atomization_conf))) {
+        std::cout << "Loading the atomization configuration file: " << atomization_conf << std::endl;
+        YAML::Node n = YAML::LoadFile((atomization_conf).string());
+        if (n["fresh_atom_label"]) {
+            fresh_atom_label = n["fresh_atom_label"].Scalar();
+        }
+        if (n["MAXIMUM_STRING_LENGTH"]) {
+            msl = n["MAXIMUM_STRING_LENGTH"].as<size_t>();
+        }
+        set_atomization_parameters(fresh_atom_label, msl);
+    }
 }
 

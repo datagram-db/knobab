@@ -22,7 +22,7 @@ void whole_testing(const std::string& log_file = "data/testing/log.txt",
                    const std::string& grounding_strategy = "data/testing/grounding_strategy.yaml") {
     Environment env;
     env.clear();
-    env.load_all_clauses();
+    //env.load_all_clauses();
 
     std::string fresh_atom_label{"p"};
     size_t msl = 10;
@@ -51,53 +51,14 @@ void whole_testing(const std::string& log_file = "data/testing/log.txt",
     //env.print_model(std::cout); // DEBUG
     //////////////////////////////////////////////////////////////////
 
-    if (std::filesystem::exists(std::filesystem::path(grounding_strategy))) {
-        std::cout << "Loading the grounding_conf strategy configuration file: " << grounding_strategy << std::endl;
-        YAML::Node n = YAML::LoadFile(grounding_strategy);
-
-        if (n["strategy"]) {
-            auto x = n["strategy"].Scalar();
-            auto v = magic_enum::enum_cast<GroundingStrategyConf::pruning_strategy>(x);
-            if (v.has_value()) {
-                ps = v.value();
-            }
-        }
-
-        if (n["doPreliminaryFill"]) {
-            auto x = n["doPreliminaryFill"].Scalar();
-            doPreliminaryFill = (x == "1") || (x == "T") || (x == "true");
-        }
-
-        if (n["ignoreActForAttributes"]) {
-            auto x = n["ignoreActForAttributes"].Scalar();
-            ignoreActForAttributes = (x == "1") || (x == "T") || (x == "true");
-        }
-
-        if (n["creamOffSingleValues"]) {
-            auto x = n["creamOffSingleValues"].Scalar();
-            creamOffSingleValues = (x == "1") || (x == "T") || (x == "true");
-        }
-
-        env.set_grounding_parameters(doPreliminaryFill,
-                                     ignoreActForAttributes,
-                                     creamOffSingleValues,
-                                     ps);
-    }
+    env.set_grounding_parameters(true, false, true,GroundingStrategyConf::NO_EXPANSION);
+    //env.set_grounding_parameters(grounding_strategy);
     env.doGrounding();
     //env.print_grounded_model(std::cout); // DEBUG
     //////////////////////////////////////////////////////////////////
 
-    if (std::filesystem::exists(std::filesystem::path(atomization_conf))) {
-        std::cout << "Loading the atomization configuration file: " << atomization_conf << std::endl;
-        YAML::Node n = YAML::LoadFile(atomization_conf);
-        if (n["fresh_atom_label"]) {
-            fresh_atom_label = n["fresh_atom_label"].Scalar();
-        }
-        if (n["MAXIMUM_STRING_LENGTH"]) {
-            msl = n["MAXIMUM_STRING_LENGTH"].as<size_t>();
-        }
-        env.set_atomization_parameters(fresh_atom_label, msl);
-    }
+    env.set_atomization_parameters("p", 10);
+    //env.set_atomization_parameters(std::filesystem::path(atomization_conf));
     //////////////////////////////////////////////////////////////////
 
     std::cout << "Loading the atomization tables given the model" << std::endl;
@@ -110,30 +71,10 @@ void whole_testing(const std::string& log_file = "data/testing/log.txt",
     //env.print_grounded_model(std::cout); // DEBUG
     //////////////////////////////////////////////////////////////////
 
-    std::cout << env.query_model() << std::endl;
-
-    env.server();
-
-
-#if 0
-    {
-        auto result = env.compute_declare_for_conjunctive(false);
-        {
-            std::ofstream output_nl_model{"node_labelled_graph.dot"};
-            dot(result.joined_graph_model, output_nl_model, true);
-        }
-        {
-            auto g = convert_to_dfa_graph(result.joined_graph_model);
-
-            // TODO: merge sink un-accepting nodes in makeDFAAsInTheory
-            auto DFA = minimizeDFA(g).makeDFAAsInTheory(env.getSigmaAll());
-
-            std::ofstream output_el_model{"edge_labelled_graph.dot"};
-            DFA.dot(output_el_model);
-        }
-    }
-#endif
-
+    auto ref = env.query_model(0);
+    std::cout << ref.result << std::endl;
+    std::cout << env.experiment_logger << std::endl;
+    env.server(ref);
 }
 
 void test_data_query(const std::string& log_file = "data/testing/log.txt",

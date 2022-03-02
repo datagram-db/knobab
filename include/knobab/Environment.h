@@ -13,9 +13,13 @@
 #include <knobab/flloat_deps/DeclareTemplateCollect.h>
 #include <yaucl/bpm/algos/transformations/declare_to_dfa/TemplateCollectResult.h>
 #include <knobab/algorithms/MAXSatPipeline.h>
+#include <knobab/utilities/LoggerInformation.h>
+#include <yaml-cpp/yaml.h>
 
 struct Environment {
     /// Creating an instance of the knowledge base, that is going to store all the traces in the log!
+
+
     KnowledgeBase db;
     AtomizingPipeline ap;
     GroundingStrategyConf grounding_conf;
@@ -27,15 +31,14 @@ struct Environment {
     DeclareTemplateCollect declare_to_graph;
     std::vector<DeclareDataAware> conjunctive_model;
 
-    MAXSatPipeline maxsat_pipeline;
 
     //std::unordered_map<DeclareDataAware, FlexibleFA<size_t, std::string>> pattern_graph;
 
-    void server();
+    void server(MAXSatPipeline& pipeline);
 
 public:
 
-
+    LoggerInformation experiment_logger;
     double min_threshold = 1.0;
     double c = 2.0;
     bool   index_missing_data = false;
@@ -53,8 +56,19 @@ public:
      */
     semantic_atom_set  getSigmaAll() const;
 
-    dataContainer query_model() {
-        return maxsat_pipeline.pipeline(&grounding, ap, db);
+    MAXSatPipeline query_model(size_t noThreads) {
+        MAXSatPipeline maxsat_pipeline(noThreads);
+        maxsat_pipeline.pipeline(&grounding, ap, db);
+        experiment_logger.model_declare_to_ltlf = maxsat_pipeline.declare_to_ltlf_time;
+        experiment_logger.model_ltlf_query_time = maxsat_pipeline.ltlf_query_time;
+#ifdef MAXSatPipeline_PARALLEL
+        experiment_logger.is_multithreaded = true;
+        experiment_logger.no_threads = noThreads;
+#else
+        experiment_logger.is_multithreaded = false;
+        experiment_logger.no_threads = 1;
+#endif
+        return maxsat_pipeline;
     }
 
     /**
@@ -91,8 +105,11 @@ public:
         }
     }
 
+    void set_atomization_parameters(const std::filesystem::path& atomization_conf);
     void set_atomization_parameters(const std::string &fresh_atom_label = "p",
                                     size_t mslength = MAXIMUM_STRING_LENGTH);
+
+    void set_grounding_parameters(const std::string& grounding_strategy);
     void set_grounding_parameters(bool doPreliminaryFill = true,
                                   bool ignoreActForAttributes = false,
                                   bool creamOffSingleValues = true,
