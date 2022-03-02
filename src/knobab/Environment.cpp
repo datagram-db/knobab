@@ -477,7 +477,9 @@ void Environment::server(MAXSatPipeline& pipeline) {
         }
         res.set_content(ss.str(), "text/csv");
     });
-
+    svr.Get("/quit", [&svr](const httplib::Request& req, httplib::Response& res) {
+        svr.stop();
+    });
     svr.listen("localhost", 8080);
 }
 
