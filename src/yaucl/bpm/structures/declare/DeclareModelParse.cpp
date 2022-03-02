@@ -37,7 +37,12 @@ std::vector<DeclareDataAware> DeclareModelParse::load(std::istream &stream, bool
     DADLexer lexer(&input);
     antlr4::CommonTokenStream tokens(&lexer);
     DADParser parser(&tokens);
+    auto t1 = std::chrono::high_resolution_clock::now();
     auto result = visit(parser.data_aware_declare()).as<std::vector<DeclareDataAware>>();
+    auto t2 = std::chrono::high_resolution_clock::now();
+    /* Getting number of milliseconds as a double. */
+    std::chrono::duration<double, std::milli> ms_double = t2 - t1;
+    parsing_time_ms = ms_double.count();
     ///do_renaming = tmp;
     return result;
 }

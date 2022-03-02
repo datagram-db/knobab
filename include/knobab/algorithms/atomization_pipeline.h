@@ -89,9 +89,9 @@ private:
 };
 
 
-void collect_data_from_declare_disjunctive_model(AtomizingPipeline& pipeline_data, const CNFDeclareDataAware& disjoint_model);
+double collect_data_from_declare_disjunctive_model(AtomizingPipeline& pipeline_data, const CNFDeclareDataAware& disjoint_model);
 
-void atomize_model(AtomizingPipeline& pipeline_data, CNFDeclareDataAware &disjoint_model);
+double atomize_model(AtomizingPipeline& pipeline_data, CNFDeclareDataAware &disjoint_model);
 
 
 

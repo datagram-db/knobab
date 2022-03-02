@@ -50,21 +50,24 @@ class KnowledgeBase : public trace_visitor {
     bool alreadySet;
     std::string source;
     std::string name;
-    size_t noTraces;
     size_t currentEventId;
     ParsingState status;
-    size_t actId;
     std::vector<std::pair<std::pair<trace_t, event_t>, double>> universe, universeApprox;
     std::vector<std::pair<std::pair<trace_t, event_t>, double>> empty;
     size_t maximumStringLength = 0;
 
 public:
+    size_t noTraces;
+    size_t actId;
     static constexpr double    default_double   = 0.0;
     static constexpr size_t    default_size_t   = 0;
     static constexpr long long default_longlong = 0;
     static constexpr bool      default_bool     = false;
     static std::string         default_string;//= "";
     static double    maximum_reliability_for_insertion;
+
+
+
 
 
     ActTable                                        act_table_by_act_id;

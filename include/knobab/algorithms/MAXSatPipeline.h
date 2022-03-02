@@ -12,9 +12,9 @@
 #include "yaucl/bpm/structures/ltlf/ltlf_query.h"
 #include <yaucl/numeric/ssize_t.h>
 
-//#define PARALLEL
+//#define MAXSatPipeline_PARALLEL
 
-#ifdef PARALLEL
+#ifdef MAXSatPipeline_PARALLEL
 #include <thread_pool.hpp>
 #define PARALLELIZE_LOOP_BEGIN(pool, lower, upper, varA, varB)    (pool).parallelize_loop((lower), (upper), [&](const size_t varA, const size_t varB) {
 #define PARALLELIZE_LOOP_END                                      });
@@ -29,12 +29,15 @@ struct MAXSatPipeline {
     using partial_result = std::vector<std::pair<std::pair<trace_t, event_t>, double>>;
     ltlf_query_manager qm;
 
-#ifdef PARALLEL
+#ifdef MAXSatPipeline_PARALLEL
     // A global thread pool object, automatically determining the threads with the number of the architecture ones
     thread_pool pool;
 #endif
 
     // Input
+
+    double declare_to_ltlf_time = 0.0;
+    double ltlf_query_time = 0.0;
 
     CNFDeclareDataAware* declare_model = nullptr;
     static std::string LEFT_ATOM, RIGHT_ATOM;
@@ -44,11 +47,12 @@ struct MAXSatPipeline {
     size_t maxFormulaId = 0;
     std::vector<ltlf_query*> fomulaidToFormula;
 
-    MAXSatPipeline();
+    MAXSatPipeline(size_t nThreads);
     DEFAULT_COPY_ASSGN(MAXSatPipeline)
 
 
     // DATA
+    dataContainer result;
     ssize_t maxPartialResultId = -1;
     std::unordered_map<DataQuery, size_t> data_offset;
     std::vector<std::pair<DataQuery, std::vector<std::pair<std::pair<trace_t, event_t>, double>>>> data_accessing;
@@ -59,27 +63,14 @@ struct MAXSatPipeline {
     size_t barrier_to_range_queries, barriers_to_atfo;
     std::vector<std::vector<std::pair<std::pair<trace_t, event_t>, double>>> atomicPartIntersectionResult;
 
-    dataContainer pipeline(CNFDeclareDataAware* model,
+    void pipeline(CNFDeclareDataAware* model,
                   const AtomizingPipeline& atomization,
-                  const KnowledgeBase& kb) {
-        /// Clearing the previous spurious computation values
-        clear();
-
-        /// Extracting the predicates from both the LTLf semantics and the data extracted from it
-        data_chunk(model, atomization);
-
-        /// First element of the pipeline: given the data query, fills in the
-        return data_pipeline_first(kb);
-
-        /// Second part of the pipeline: compute each possible instance of the operator that there exists
-
-        /// Third part of the pipeline: aggregate the results together
-    }
+                  const KnowledgeBase& kb);
 
     void clear();
     void data_chunk(CNFDeclareDataAware* model,
                     const AtomizingPipeline& atomization);
-    dataContainer data_pipeline_first( const KnowledgeBase& kb);
+    void data_pipeline_first( const KnowledgeBase& kb);
 
     void
     localExtract(const AtomizingPipeline &atomization,

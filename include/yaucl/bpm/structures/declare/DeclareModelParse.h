@@ -42,6 +42,7 @@ class DeclareModelParse : public DADBaseVisitor {
     ///bool do_renaming;
     bool asConjunctiveModel;
 public:
+    double parsing_time_ms = -1.0;
     ~DeclareModelParse() {}
     DeclareModelParse();
 

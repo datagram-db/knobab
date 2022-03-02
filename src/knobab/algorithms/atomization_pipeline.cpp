@@ -111,9 +111,13 @@ std::ostream &operator<<(std::ostream &os, const AtomizingPipeline &pipeline) {
         return os;
 }
 
-void collect_data_from_declare_disjunctive_model(AtomizingPipeline &pipeline_data, const CNFDeclareDataAware &disjoint_model) {
+#include <chrono>
+
+
+double collect_data_from_declare_disjunctive_model(AtomizingPipeline &pipeline_data, const CNFDeclareDataAware &disjoint_model) {
     // old: pipeline_scratch, init_pipeline(3)
-    std::cout << "Collecting the atoms from the formula" << std::endl;
+    //std::cout << "Collecting the atoms from the formula" << std::endl;
+    auto t1 = std::chrono::high_resolution_clock::now();
     for (const auto& conjunction : disjoint_model.singleElementOfConjunction) {
         for (const auto& declare_clause : conjunction.elementsInDisjunction) {
             pipeline_data.act_universe.insert(declare_clause.left_act);
@@ -159,7 +163,7 @@ void collect_data_from_declare_disjunctive_model(AtomizingPipeline &pipeline_dat
     }
 
     // init_pipeline(4)
-    std::cout << "Collecting the atoms associated to no interval" << std::endl;
+    //std::cout << "Collecting the atoms associated to no interval" << std::endl;
     for (const auto& act : pipeline_data.act_universe) {
         auto it1 = pipeline_data.double_bulk_map.find(act);
         bool test1 = (it1 == pipeline_data.double_bulk_map.end()) || (it1->second.empty());
@@ -174,8 +178,8 @@ void collect_data_from_declare_disjunctive_model(AtomizingPipeline &pipeline_dat
     if ((!pipeline_data.double_bulk_map.empty()) || (!(pipeline_data.string_bulk_map.empty()))) {
         //decompose_and_atomize();
 
-        std::cout << "Generating the distinct intervals from the elements" << std::endl;
-        std::cout << " - strings " << std::endl;
+        //std::cout << "Generating the distinct intervals from the elements" << std::endl;
+        //std::cout << " - strings " << std::endl;
         for (auto ref = pipeline_data.string_bulk_map.begin(); ref != pipeline_data.string_bulk_map.cend(); ){
             for (auto& ref2 : ref->second) {
                 std::vector<DataPredicate> result;
@@ -193,7 +197,7 @@ void collect_data_from_declare_disjunctive_model(AtomizingPipeline &pipeline_dat
             ref = pipeline_data.string_bulk_map.erase(ref); // Clearing the map from bulk insertions while iterating.
         }
 
-        std::cout << " - doubles " << std::endl;
+        //std::cout << " - doubles " << std::endl;
         for (auto ref = pipeline_data.double_bulk_map.begin(); ref != pipeline_data.double_bulk_map.cend(); ){
             for (auto& ref2 : ref->second) {
                 std::vector<DataPredicate> result;
@@ -211,7 +215,7 @@ void collect_data_from_declare_disjunctive_model(AtomizingPipeline &pipeline_dat
             ref = pipeline_data.double_bulk_map.erase(ref); // Clearing the map from bulk insertions while iterating.
         }
 
-        std::cout << "Generating the interval composition box" << std::endl;
+        //std::cout << "Generating the interval composition box" << std::endl;
         for (auto& ref: pipeline_data.interval_map) {
             std::vector<std::vector<DataPredicate>> W;
             for (const auto& v : cartesian_product(ref.second)) {
@@ -231,6 +235,10 @@ void collect_data_from_declare_disjunctive_model(AtomizingPipeline &pipeline_dat
             pipeline_data.max_ctam_iteration[ref.first] = W.size();
         }
     }
+
+    auto t2 = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double, std::milli> ms_double = t2 - t1;
+    return ms_double.count();
 }
 
 inline
@@ -280,7 +288,8 @@ semantic_atom_set atomize_disjunction(AtomizingPipeline &pipeline_data,
     return S;
 }
 
-void atomize_model(AtomizingPipeline &pipeline_data, CNFDeclareDataAware &disjoint_model) {
+double atomize_model(AtomizingPipeline &pipeline_data, CNFDeclareDataAware &disjoint_model) {
+    auto t1 = std::chrono::high_resolution_clock::now();
     for ( auto& ref : disjoint_model.singleElementOfConjunction) {
         for ( auto& child : ref.elementsInDisjunction) {
             //assert(child.conjunctive_map.empty());
@@ -312,6 +321,10 @@ void atomize_model(AtomizingPipeline &pipeline_data, CNFDeclareDataAware &disjoi
                                                                       k.second.at(i)).second);
         }
     }
+
+    auto t2 = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double, std::milli> ms_double = t2 - t1;
+    return ms_double.count();
 }
 
 
