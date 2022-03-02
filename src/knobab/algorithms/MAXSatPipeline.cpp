@@ -48,13 +48,13 @@ void MAXSatPipeline::data_chunk(CNFDeclareDataAware *model,
             ltlf_query *formula;
             if (item.casusu == Init) {
                 formula = ltlf_query_manager::init1(item.left_act, item.left_decomposed_atoms);
-                generateConcreteQuery(toUseAtoms, empty_result, item, formula, InitQuery);
+                generateAtomQuery(toUseAtoms, empty_result, item, formula, InitQuery);
             } else if (item.casusu == End) {
                 formula = ltlf_query_manager::end1(item.left_act, item.left_decomposed_atoms);
-                generateConcreteQuery(toUseAtoms, empty_result, item, formula, EndsQuery);
+                generateAtomQuery(toUseAtoms, empty_result, item, formula, EndsQuery);
             } else if (item.casusu == Existence) {
                 formula = ltlf_query_manager::exists1(item.left_act, item.left_decomposed_atoms);
-                generateConcreteQuery(toUseAtoms, empty_result, item, formula, ExistsQuery);
+                generateAtomQuery(toUseAtoms, empty_result, item, formula, ExistsQuery);
             }
 
 
@@ -75,9 +75,9 @@ void MAXSatPipeline::data_chunk(CNFDeclareDataAware *model,
                 // Creating the formula
                 formula = ltlf_query_manager::simplify(tmp);
                 //std::swap(formula->partial_results, requirements);
-                fomulaidToFormula.emplace_back(formula);
             }
 
+            fomulaidToFormula.emplace_back(formula);
             maxFormulaId++;
             W.emplace_back(formula);
             human_readable_ltlf_printing(std::cout, formula) << std::endl; //todo: debugging
@@ -141,9 +141,9 @@ void MAXSatPipeline::data_chunk(CNFDeclareDataAware *model,
 }
 
 void
-MAXSatPipeline::generateConcreteQuery(std::vector<std::string> &toUseAtoms,
-                                      std::vector<std::pair<std::pair<trace_t, event_t>, double>> &empty_result,
-                                      DeclareDataAware &item, ltlf_query *formula, DataQueryType r) {
+MAXSatPipeline::generateAtomQuery(std::vector<std::string> &toUseAtoms,
+                                  std::vector<std::pair<std::pair<trace_t, event_t>, double>> &empty_result,
+                                  DeclareDataAware &item, ltlf_query *formula, DataQueryType r) {
     auto q = DataQuery::AtomQueries(r, item.left_act);
     auto find = data_offset.emplace(q, data_accessing.size());
     if (find.second){
@@ -155,6 +155,7 @@ MAXSatPipeline::generateConcreteQuery(std::vector<std::string> &toUseAtoms,
         toUseAtoms.emplace_back(item.left_act);
     else
         toUseAtoms.insert(toUseAtoms.end(), item.left_decomposed_atoms.begin(), item.left_decomposed_atoms.end());
+    atomToFormulaId[item.left_act].emplace_back(maxFormulaId);
 }
 
 void

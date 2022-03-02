@@ -267,7 +267,7 @@ partition_sets_result<T> partition_sets(const std::vector<std::set<T>>& subsubSe
 
     // O(N^2)
     std::vector<size_t> toRemove;
-    for (size_t i = 0, N = result.decomposedIndexedSubsets.size(); i<N-1; i++) {
+    for (size_t i = 0, N = result.decomposedIndexedSubsets.size(); ((N!=0) && (i<N-1)); i++) {
         auto& refI = result.decomposedIndexedSubsets.at(i).second;
         size_t sizeI = refI->size();
         bool hasElem = false;
