@@ -137,6 +137,7 @@ Environment::set_grounding_parameters(bool doPreliminaryFill, bool ignoreActForA
 }
 
 void Environment::init_atomize_tables() {
+    ap.clear();
     experiment_logger.model_data_decomposition_time = collect_data_from_declare_disjunctive_model(ap, grounding);
 }
 

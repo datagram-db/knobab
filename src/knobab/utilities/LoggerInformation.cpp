@@ -30,3 +30,45 @@ std::ostream& operator<<(std::ostream& os, const LoggerInformation &information)
             << "\t - #Threads: " << information.no_threads;
     return os;
 }
+
+void LoggerInformation::log_csv_file(std::ostream &csv_log) {
+    csv_log << log_filename << ","
+            << log_loading_and_parsing_ms  << ","
+            << log_indexing_ms  << ","
+            << n_traces  << ","
+            << n_acts  << ","
+            << log_trace_average_length  << ","
+            << log_trace_variance << ","
+            << most_frequent_trace_length << ","
+            << trace_length_frequency << ","
+            << model_filename<< ","
+            << model_parsing_ms << ","
+            << model_size<< ","
+            << model_data_decomposition_time << ","
+            << model_atomization_time << ","
+            << model_declare_to_ltlf<< ","
+            << model_ltlf_query_time << ","
+            << (is_multithreaded ? "1" : "No") << ","
+            << no_threads << std::endl;
+}
+
+void LoggerInformation::log_csv_file_header(std::ostream &csv_log) {
+    csv_log << "log_filename" << ","
+            << "log_loading_and_parsing_ms"  << ","
+            << "log_indexing_ms"  << ","
+            << "n_traces"  << ","
+            << "n_acts"  << ","
+            << "log_trace_average_length"  << ","
+            << "log_trace_variance" << ","
+            << "most_frequent_trace_length" << ","
+            << "trace_length_frequency" << ","
+            << "model_filename" << ","
+            << "model_parsing_ms" << ","
+            << "model_size" << ","
+            << "model_data_decomposition_time" << ","
+            << "model_atomization_time" << ","
+            << "model_declare_to_ltlf" << ","
+            << "model_ltlf_query_time" << ","
+            << ("is_multithreaded") << ","
+            << "no_threads" << std::endl;
+}
