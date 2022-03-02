@@ -47,13 +47,13 @@ void MAXSatPipeline::data_chunk(CNFDeclareDataAware *model,
 
             ltlf_query *formula;
             if (item.casusu == Init) {
-                formula = ltlf_query_manager::init1(item.left_act, item.left_decomposed_atoms);
+                formula = qm.init1(item.left_act, item.left_decomposed_atoms);
                 generateAtomQuery(toUseAtoms, empty_result, item, formula, InitQuery);
             } else if (item.casusu == End) {
-                formula = ltlf_query_manager::end1(item.left_act, item.left_decomposed_atoms);
+                formula = qm.end1(item.left_act, item.left_decomposed_atoms);
                 generateAtomQuery(toUseAtoms, empty_result, item, formula, EndsQuery);
             } else if (item.casusu == Existence) {
-                formula = ltlf_query_manager::exists1(item.left_act, item.left_decomposed_atoms);
+                formula = qm.exists1(item.left_act, item.left_decomposed_atoms);
                 generateAtomQuery(toUseAtoms, empty_result, item, formula, ExistsQuery);
             }
 
@@ -73,7 +73,7 @@ void MAXSatPipeline::data_chunk(CNFDeclareDataAware *model,
                 tmp.instantiateJoinCondition(item.conjunctive_map);
 
                 // Creating the formula
-                formula = ltlf_query_manager::simplify(tmp);
+                formula = qm.simplify(tmp);
                 //std::swap(formula->partial_results, requirements);
             }
 
@@ -87,7 +87,7 @@ void MAXSatPipeline::data_chunk(CNFDeclareDataAware *model,
     for (auto& ref : atomToFormulaId)
         remove_duplicates(ref.second);
 
-    ltlf_query_manager::finalize_unions(W); // Squared on the size of the atoms
+    qm.finalize_unions(W); // Squared on the size of the atoms
 
     for (const auto& ref : W) {
         human_readable_ltlf_printing(std::cout, ref) << std::endl; //todo: debugging
@@ -106,6 +106,7 @@ void MAXSatPipeline::data_chunk(CNFDeclareDataAware *model,
             data_accessing.emplace_back(q, empty_result);
         } else
             offset = (find.first->second);
+        maxPartialResultId = std::max(maxPartialResultId, (ssize_t)offset);
         atomToFormulaOffset.emplace_back(std::set<size_t>{offset});
     }
     barrier_to_range_queries = data_accessing.size();
@@ -130,11 +131,14 @@ void MAXSatPipeline::data_chunk(CNFDeclareDataAware *model,
             auto q = DataQuery::RangeQuery(clause.label, clause.var, clause.value, clause.value_upper_bound);
             auto find = data_offset.emplace(q, data_accessing.size());
             if (find.second){
+                maxPartialResultId = std::max(maxPartialResultId, (ssize_t)data_accessing.size());
                 ranges.insert(data_accessing.size());
                 data_accessing_range_query_to_offsets[clause.var][clause.label].emplace_back(data_accessing.size());
                 data_accessing.emplace_back(q, empty_result);
-            } else
+            } else {
+                maxPartialResultId = std::max(maxPartialResultId, (ssize_t)find.first->second);
                 ranges.insert(find.first->second);
+            }
         }
         atomToFormulaOffset.emplace_back(ranges);
     }
@@ -144,18 +148,25 @@ void
 MAXSatPipeline::generateAtomQuery(std::vector<std::string> &toUseAtoms,
                                   std::vector<std::pair<std::pair<trace_t, event_t>, double>> &empty_result,
                                   DeclareDataAware &item, ltlf_query *formula, DataQueryType r) {
+    size_t offset;
     auto q = DataQuery::AtomQueries(r, item.left_act);
     auto find = data_offset.emplace(q, data_accessing.size());
     if (find.second){
         formula->partial_results.emplace(data_accessing.size()); // TODO: removable
+        offset = data_accessing.size();
         data_accessing.emplace_back(q, empty_result);
-    } else
+    } else {
+        offset = (find.first->second);
         formula->partial_results.emplace(find.first->second); // TODO: removable
-    if (item.left_decomposed_atoms.empty())
-        toUseAtoms.emplace_back(item.left_act);
-    else
+    }
+
+    if (/*(!item.left_decomposed_atoms.empty()) && */((item.left_decomposed_atoms.size() > 1) || (!item.left_decomposed_atoms.contains(item.left_act))))
+        /*toUseAtoms.emplace_back(item.left_act);
+    else*/
         toUseAtoms.insert(toUseAtoms.end(), item.left_decomposed_atoms.begin(), item.left_decomposed_atoms.end());
     atomToFormulaId[item.left_act].emplace_back(maxFormulaId);
+    atomToFormulaOffset.emplace_back(std::set<size_t>{offset});
+    maxPartialResultId = std::max(maxPartialResultId, (ssize_t)offset);
 }
 
 void
@@ -343,14 +354,14 @@ static inline dataContainer local_union(const ltlf_query* q) {
         setUnion(last_union.begin(), last_union.end(),
                  ref.begin(), ref.end(),
                  std::back_inserter(curr_union),
-                 [](auto x, auto y) {return 1.0;});
+                 Aggregators::maxSimilarity<double, double, double>);
         std::swap(last_union, curr_union);
         curr_union.clear();
     }
     return last_union;
 }
 
-static inline dataContainer local_intersection(const ltlf_query* q) {
+static inline dataContainer local_intersection(const ltlf_query* q, bool isTimed = true) {
     if ((!q) || (q->args.empty())) return {};
     auto it = q->args.begin();
     auto last_union = (*it)->result;
@@ -358,10 +369,16 @@ static inline dataContainer local_intersection(const ltlf_query* q) {
     for (std::size_t i = 1; i < q->args.size(); ++i) {
         it++;
         auto ref = (*it)->result;
-        setIntersection(last_union.begin(), last_union.end(),
+        if (isTimed)
+            setIntersection(last_union.begin(), last_union.end(),
                  ref.begin(), ref.end(),
                  std::back_inserter(curr_union),
-                 [](auto x, auto y) {return 1.0;});
+                 Aggregators::maxSimilarity<double, double, double>);
+        else
+            setIntersectionUntimed(last_union.begin(), last_union.end(),
+                            ref.begin(), ref.end(),
+                            std::back_inserter(curr_union),
+                            Aggregators::maxSimilarity<double, double, double>);
         std::swap(last_union, curr_union);
         curr_union.clear();
     }
@@ -371,7 +388,7 @@ static inline dataContainer local_intersection(const ltlf_query* q) {
 
 
 
-void MAXSatPipeline::data_pipeline_first(const KnowledgeBase& kb) {
+dataContainer MAXSatPipeline::data_pipeline_first(const KnowledgeBase& kb) {
 
     // 1. Performing the query over each single predicate that we have extracted, so not to duplicate the data access
     if (barrier_to_range_queries > 0) {
@@ -389,9 +406,9 @@ void MAXSatPipeline::data_pipeline_first(const KnowledgeBase& kb) {
                     case EndsQuery:
                         ref.second = kb.endsOrig<std::pair<uint32_t, uint16_t>, double>(ref.first.label).traceApproximations;
                         break;
-                    case AtomQuery:
-                        // TODO: ref.second = kb.exists<std::pair<uint32_t, uint16_t>, double>(ref.first.label).traceApproximations;
-                        break;
+                    //case AtomQuery:
+                    //    // TODO: ref.second = kb.exists<std::pair<uint32_t, uint16_t>, double>(ref.first.label).traceApproximations;
+                    //    break;
                     default:
                         assert(false); // This should be dealt in (B)
                 }
@@ -444,8 +461,8 @@ void MAXSatPipeline::data_pipeline_first(const KnowledgeBase& kb) {
     PARALLELIZE_LOOP_END
 
 
-    std::vector<MAXSatPipeline::partial_result> results_cache;
-    results_cache.resize(toUseAtoms.size());
+    ///results_cache.resize(toUseAtoms.size());
+    std::vector<MAXSatPipeline::partial_result> results_cache(std::max(toUseAtoms.size(), resultOfS.size()), MAXSatPipeline::partial_result{});
     PARALLELIZE_LOOP_BEGIN(pool, 0,result.decomposedIndexedSubsets.size(), lb, ub)
         for (size_t j = lb; j < ub; j++) {
             auto& ref = result.decomposedIndexedSubsets.at(j);
@@ -465,7 +482,7 @@ void MAXSatPipeline::data_pipeline_first(const KnowledgeBase& kb) {
         }
     }
 
-    auto it = ltlf_query_manager::Q.rbegin(), en = ltlf_query_manager::Q.rend();
+    auto it = qm.Q.rbegin(), en = qm.Q.rend();
     for (; it != en; it++) {
         PARALLELIZE_LOOP_BEGIN(pool, 0, it->second.size(), lb, ub)
             for (size_t j = lb; j < ub; j++) {
@@ -479,6 +496,7 @@ void MAXSatPipeline::data_pipeline_first(const KnowledgeBase& kb) {
                         break;
                     case Q_ACT:
                     case Q_INIT:
+                    case Q_END:
                         formula->result = local_union(formula->partial_results, results_cache, formula->isLeaf);
                         break;
                     case Q_AND:
@@ -514,7 +532,6 @@ void MAXSatPipeline::data_pipeline_first(const KnowledgeBase& kb) {
                         break;
 
                         break;
-                    case Q_END:
                         break;
                     case Q_EXISTS:
                         break;
@@ -523,6 +540,15 @@ void MAXSatPipeline::data_pipeline_first(const KnowledgeBase& kb) {
         PARALLELIZE_LOOP_END
         // TODO: parallelized run over the it->second, and store the results
     }
+
+    if (!qm.Q.empty()) {
+        ltlf_query conjunction;
+        conjunction.args = qm.Q.begin()->second;
+        return local_intersection(&conjunction, false);
+    } else {
+        return {};
+    }
+
 
 }
 

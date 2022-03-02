@@ -13,6 +13,7 @@
 
 
 uint16_t cast_to_float(size_t x, size_t l);
+uint16_t cast_to_float2(size_t x, size_t l);
 
 /**
  * TODO: use a graph to store the prev/next information
@@ -71,13 +72,13 @@ struct ActTable {
         builder.trace_id_to_event_id_to_offset.clear();
     }
 
+    std::vector<size_t> trace_length; // L1
     size_t getTraceLength(size_t id) const { return trace_length.at(id); }
 
     friend std::ostream &operator<<(std::ostream &os, const ActTable &table);
 
 private:
     std::vector<std::tuple<trace_t, event_t, size_t>> expectedOrdering; // TODO: remove?
-    std::vector<size_t> trace_length; // L1
 
     struct table_builder {
         std::vector<std::vector<std::pair<trace_t, event_t>>> act_id_to_trace_id_and_time; // M1

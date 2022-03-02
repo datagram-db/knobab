@@ -17,7 +17,7 @@
 
 
 void whole_testing(const std::string& log_file = "data/testing/log.txt",
-                   const std::string& declare_file = "data/testing/InitSingle.txt",
+                   const std::string& declare_file = "data/testing/SimpleComposition.txt",
                    const std::string& atomization_conf = "data/testing/atomization_pipeline.yaml",
                    const std::string& grounding_strategy = "data/testing/grounding_strategy.yaml") {
     Environment env;
@@ -110,8 +110,7 @@ void whole_testing(const std::string& log_file = "data/testing/log.txt",
     //env.print_grounded_model(std::cout); // DEBUG
     //////////////////////////////////////////////////////////////////
 
-
-    env.query_model();
+    std::cout << env.query_model() << std::endl;
 
     env.server();
 
