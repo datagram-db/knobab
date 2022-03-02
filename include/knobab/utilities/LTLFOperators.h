@@ -6,6 +6,9 @@
 #define KNOBAB_LTLFOPERATORS_H
 
 #include <optional>
+#include <cstdint>
+#include <limits>
+#include <vector>
 
 const uint16_t max = std::numeric_limits<uint16_t>::max();
 static const std::vector<uint16_t> maxVec(max,max);
@@ -18,7 +21,7 @@ static const std::vector<uint16_t> maxVec(max,max);
 
 using dataContainer = std::vector<std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>>;
 
-template<typename InputIt1, typename InputIt2, typename OutputIt, typename Aggregation>
+template<typename InputIt1, typename InputIt2, typename OutputIt, typename Aggregation> inline
 OutputIt setUnion(InputIt1 first1, InputIt1 last1, InputIt2 first2, InputIt2 last2,
                   OutputIt d_first, Aggregation aggr, const PredicateManager *manager = nullptr) {
     env e1, e2;
@@ -63,7 +66,7 @@ OutputIt setUnion(InputIt1 first1, InputIt1 last1, InputIt2 first2, InputIt2 las
     return std::copy(first2, last2, d_first);
 }
 
-template<typename InputIt1, typename InputIt2, typename OutputIt, typename Aggregation>
+template<typename InputIt1, typename InputIt2, typename OutputIt, typename Aggregation> inline
 OutputIt
 setUnionUntimed(InputIt1 first1, InputIt1 last1, InputIt2 first2, InputIt2 last2, OutputIt d_first, Aggregation aggr,
                 const PredicateManager *manager = nullptr) {
@@ -147,7 +150,7 @@ setUnionUntimed(InputIt1 first1, InputIt1 last1, InputIt2 first2, InputIt2 last2
     return d_first;
 }
 
-template<typename InputIt1, typename InputIt2, typename OutputIt, typename Aggregation>
+template<typename InputIt1, typename InputIt2, typename OutputIt, typename Aggregation> inline
 OutputIt setIntersection(InputIt1 first1, InputIt1 last1, InputIt2 first2, InputIt2 last2,
                          OutputIt d_first, Aggregation aggr, const PredicateManager *manager = nullptr) {
     env e1, e2;
@@ -192,7 +195,7 @@ OutputIt setIntersection(InputIt1 first1, InputIt1 last1, InputIt2 first2, Input
     return d_first;
 }
 
-template<typename InputIt1, typename InputIt2, typename OutputIt, typename Aggregation>
+template<typename InputIt1, typename InputIt2, typename OutputIt, typename Aggregation> inline
 OutputIt setIntersectionUntimed(InputIt1 first1, InputIt1 last1, InputIt2 first2, InputIt2 last2, OutputIt d_first,
                                 Aggregation aggr,
                                 const PredicateManager *manager = nullptr) {
@@ -262,7 +265,7 @@ OutputIt setIntersectionUntimed(InputIt1 first1, InputIt1 last1, InputIt2 first2
     return d_first;
 }
 
-template<typename TableSection>
+template<typename TableSection> inline
 dataContainer next(const uint32_t &traceId, const uint16_t &startEventId, const uint16_t& endEventId, const TableSection &section) {
     auto lower = std::lower_bound(section.begin(), section.end(), std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>{{traceId, startEventId},  {0, {}}});
     auto upper = std::upper_bound(lower, section.end(), std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>{{traceId, endEventId},  {1, maxVec}});
@@ -279,7 +282,7 @@ dataContainer next(const uint32_t &traceId, const uint16_t &startEventId, const 
     return temp;
 }
 
-template<typename TableSection>
+template<typename TableSection> inline
 dataContainer next(const TableSection &section) {
     dataContainer temp;
 
@@ -299,7 +302,7 @@ std::vector<uint16_t> populateAndReturnEvents(auto it1, auto it2, const Predicat
 
     for(auto itr = it1; itr != it2; ++itr){
         for(const auto& r2 : itr->second.second){
-                vec.push_back(r2);
+            vec.push_back(r2);
         }
     }
 
@@ -309,7 +312,7 @@ std::vector<uint16_t> populateAndReturnEvents(auto it1, auto it2, const Predicat
     return vec;
 }
 
-template<typename TableSection>
+template<typename TableSection> inline
 dataContainer global(const uint32_t &traceId, const uint16_t &startEventId, const uint16_t& endEventId, const TableSection &section) {
     auto lower = std::lower_bound(section.begin(), section.end(), std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>{{traceId, startEventId},  {0, {}}});
     auto upper = std::upper_bound(lower, section.end(), std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>{{traceId, endEventId},  {1, maxVec}});
@@ -330,7 +333,7 @@ dataContainer global(const uint32_t &traceId, const uint16_t &startEventId, cons
     return temp;
 }
 
-template<typename TableSection>
+template<typename TableSection> inline
 dataContainer global(const TableSection &section, const std::vector<size_t>& lengths) {
     dataContainer temp {};
     auto lower = section.begin(), upper = section.begin();
@@ -353,7 +356,7 @@ dataContainer global(const TableSection &section, const std::vector<size_t>& len
     return temp;
 }
 
-template<typename TableSection>
+template<typename TableSection> inline
 dataContainer future(const uint32_t &traceId, const uint16_t &startEventId, const uint16_t& endEventId, const TableSection &section) {
     auto lower = std::lower_bound(section.begin(), section.end(), std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>{{traceId, startEventId}, {0, {}}});
     auto upper = std::upper_bound(section.begin(), section.end(), std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>{{traceId, endEventId}, {1, maxVec}});
@@ -372,12 +375,12 @@ dataContainer future(const uint32_t &traceId, const uint16_t &startEventId, cons
     return temp;
 }
 
-template<typename TableSection>
+template<typename TableSection> inline
 dataContainer future(const TableSection &section) {
     return section;
 }
 
-template<typename TableSection>
+template<typename TableSection> inline
 dataContainer negateUntimed(TableSection &data_untimed, const std::vector<size_t> &lengths, bool preserveNegatedFacts = true) {
     dataContainer result;
     size_t first1 = 0, last1 = lengths.size();
@@ -407,7 +410,7 @@ dataContainer negateUntimed(TableSection &data_untimed, const std::vector<size_t
     return result;
 }
 
-template<typename TableSection>
+template<typename TableSection> inline
 dataContainer until(const uint32_t &traceId,
                     const uint16_t &startEventId,
                     const uint16_t& endEventId,
@@ -482,7 +485,7 @@ dataContainer until(const uint32_t &traceId,
     return temp;
 }
 
-template<typename TableSection>
+template<typename TableSection> inline
 dataContainer weakUntil(const uint32_t &traceId,
                     const uint16_t &startEventId,
                     const uint16_t& endEventId,
@@ -498,7 +501,7 @@ dataContainer weakUntil(const uint32_t &traceId,
     return result;
 }
 
-template<typename TableSection>
+template<typename TableSection> inline
 dataContainer release(const uint32_t &traceId,
                         const uint16_t &startEventId,
                         const uint16_t& endEventId,
@@ -525,7 +528,7 @@ dataContainer release(const uint32_t &traceId,
     return result;
 }
 
-template<typename TableSection>
+template<typename TableSection> inline
 dataContainer until(const TableSection &aSection, const TableSection &bSection, const std::vector<size_t>& lengths, const PredicateManager* manager = nullptr) {
     auto lower = bSection.begin();
     auto localUpper = lower;
@@ -663,7 +666,7 @@ dataContainer until(const TableSection &aSection, const TableSection &bSection, 
     return temp;
 }
 
-template<typename TableSection>
+template<typename TableSection> inline
 dataContainer weakUntil(const TableSection &aSection,
                                const TableSection &bSection,
                                const std::vector<size_t>& lengths,
@@ -675,7 +678,7 @@ dataContainer weakUntil(const TableSection &aSection,
     return result;
 }
 
-template<typename TableSection>
+template<typename TableSection> inline
 dataContainer release(const TableSection &psi,
                       const TableSection &phi,
                       const std::vector<size_t>& lengths,

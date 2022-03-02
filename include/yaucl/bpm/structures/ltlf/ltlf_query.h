@@ -9,6 +9,7 @@
 #include <string>
 #include <yaucl/bpm/structures/ltlf/ltlf.h>
 #include <knobab/predicates/PredicateManager.h>
+#include <knobab/utilities/LTLFOperators.h>
 
 enum ltlf_query_t {
     Q_TRUE,
@@ -29,6 +30,14 @@ enum ltlf_query_t {
     Q_EXISTS
 };
 
+enum LeafType {
+    ActivationLeaf,
+    TargetLeaf,
+    NoneLeaf,
+    NotALeaf,
+    MatchActivationTarget
+};
+
 struct ltlf_query {
     bool isTimed = false;
     bool extractActivationTargetConditions = false;
@@ -39,8 +48,9 @@ struct ltlf_query {
     bool hasResult = false;
     size_t result_id = 0;
     PredicateManager joinCondition;
-    bool isLeaf = false;
+    LeafType isLeaf = NotALeaf;
     bool hasPremamentMark, hasTempMark;
+
     size_t parentMin = std::numeric_limits<size_t>::max(), parentMax = 0, dis = 0;
 
     size_t currentLayer() const {
@@ -58,7 +68,7 @@ struct ltlf_query {
     bool operator==(const ltlf_query &rhs) const;
     bool operator!=(const ltlf_query &rhs) const;
 
-    std::vector<std::pair<std::pair<uint32_t , uint16_t>, double>> result;
+    dataContainer result;
 };
 
 namespace std {
