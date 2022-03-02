@@ -9,14 +9,6 @@ set(CMAKE_THREAD_PREFER_PTHREAD TRUE)
 set(THREADS_PREFER_PTHREAD_FLAG TRUE)
 find_package(Threads REQUIRED)
 
-#set(Boost_USE_STATIC_LIBS ON)
-#set(Boost_USE_MULTITHREADED ON)
-#set(Boost_USE_STATIC_RUNTIME OFF)
-#find_package(Boost 1.74 REQUIRED COMPONENTS python)
-#find_package(PythonLibs REQUIRED)
-#include_directories(${PYTHON_INCLUDE_DIRS})
-#include_directories(${Boost_INCLUDE_DIRS})
-
 
 #set(UTF8_TESTS OFF)
 add_subdirectory(submodules/antlr4/runtime/Cpp)

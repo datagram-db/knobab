@@ -78,10 +78,10 @@ struct MAXSatPipeline {
                  const std::unordered_set<std::string> &decomposition, const std::string &collectionMapKey) ;
 
     void
-    generateConcreteQuery(std::vector<std::string> &toUseAtoms,
-                          std::vector<std::pair<std::pair<trace_t, event_t>, double>> &empty_result,
-                          DeclareDataAware &item,
-                          ltlf_query *formula, DataQueryType r);
+    generateAtomQuery(std::vector<std::string> &toUseAtoms,
+                      std::vector<std::pair<std::pair<trace_t, event_t>, double>> &empty_result,
+                      DeclareDataAware &item,
+                      ltlf_query *formula, DataQueryType r);
 };
 
 
