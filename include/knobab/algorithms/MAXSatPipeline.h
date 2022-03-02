@@ -10,18 +10,25 @@
 #include "atomization_pipeline.h"
 #include "knobab/trace_repairs/DataQuery.h"
 #include "yaucl/bpm/structures/ltlf/ltlf_query.h"
-#include <thread_pool.hpp>
 
-#define PARALLEL
+
+//#define PARALLEL
+
+#ifdef PARALLEL
+#include <thread_pool.hpp>
+#define PARALLELIZE_LOOP_BEGIN(pool, lower, upper, varA, varB)    (pool).parallelize_loop((lower), (upper), [&](const size_t varA, const size_t varB) {
+#define PARALLELIZE_LOOP_END                                      });
+#else
+#define PARALLELIZE_LOOP_BEGIN(pool, lower, upper, varA, varB)    do { auto varA = (lower); auto varB = (upper);
+#define PARALLELIZE_LOOP_END                                      } while(0);
+#endif
 
 struct MAXSatPipeline {
-
+    using partial_result = std::vector<std::pair<std::pair<trace_t, event_t>, double>>;
 
 #ifdef PARALLEL
     // A global thread pool object, automatically determining the threads with the number of the architecture ones
     thread_pool pool;
-#else
-    thread_pool pool(1);
 #endif
 
     // Input

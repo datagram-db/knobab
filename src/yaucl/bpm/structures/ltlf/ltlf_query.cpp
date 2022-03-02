@@ -208,10 +208,10 @@ void ltlf_query_manager::finalize_unions(const std::vector<ltlf_query*>& W) {
 
         }
         ltlf_query* q = simplify(r, true, false);
-        q->isLeaf = true;
+        q->isLeaf = NotALeaf;
         *atomsToDecomposeInUnion[ref.first] = *q;
         //delete q; //this will not delete the other nodes, recursively. TODO: this should be done in clear() and avoid leaks
-        atomsToDecomposeInUnion[ref.first]->isLeaf = true;
+        atomsToDecomposeInUnion[ref.first]->isLeaf = NotALeaf;
     }
 
     // Making ready for the parallelization of the query execution by setting it into layers

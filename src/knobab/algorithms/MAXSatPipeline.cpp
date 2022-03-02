@@ -182,9 +182,64 @@ MAXSatPipeline::localExtract(const AtomizingPipeline &atomization,
     }
 }
 
+
+
+
+static inline void setUnion(const MAXSatPipeline::partial_result& lhs,
+                            const MAXSatPipeline::partial_result& rhs,
+                            std::back_insert_iterator<MAXSatPipeline::partial_result> d_first) {
+    env e1, e2;
+    auto first1 = lhs.begin(), last1 = lhs.end(), first2 = rhs.begin(), last2 = rhs.end();
+    std::pair<uint32_t, uint16_t> pair, pair1;
+
+    for (; first1 != last1; ++d_first) {
+        if (first2 == last2) {
+            std::copy(first1, last1, d_first);
+            return;
+        }
+        if (first1->first > first2->first) {
+            *d_first = *first2++;
+        } else if (first1->first < first2->first) {
+            *d_first = *first1++;
+        } else {
+            pair.first = first1->first.first;
+            pair1.first = first2->first.first;
+            *d_first = std::make_pair(first1->first, std::max(first1->second, first2->second));
+            first1++;
+            first2++;
+        }
+    }
+    std::copy(first2, last2, d_first);
+}
+
+static inline void setIntersection(const MAXSatPipeline::partial_result& lhs,
+                                   const MAXSatPipeline::partial_result& rhs,
+                                    std::back_insert_iterator<MAXSatPipeline::partial_result> d_first) {
+    env e1, e2;
+    auto first1 = lhs.begin(), last1 = lhs.end(), first2 = rhs.begin(), last2 = rhs.end();
+    std::pair<uint32_t, uint16_t> pair, pair1;
+    for (; first1 != last1; ++d_first) {
+        if (first2 == last2) {
+            return;
+        }
+        if (first1->first > first2->first) {
+            *first2++;
+        } else if (first1->first < first2->first) {
+            *first1++;
+        } else {
+            pair.first = first1->first.first;
+            pair1.first = first2->first.first;
+            *d_first = std::make_pair(first1->first, std::max(first1->second, first2->second));
+            first1++;
+            first2++;
+        }
+    }
+    std::copy(first2, last2, d_first);
+}
+
 static inline
 std::vector<std::pair<std::pair<trace_t, event_t>, double>> local_intersection(const std::set<size_t> &vecs,
-                                                                         const std::vector<std::pair<DataQuery, std::vector<std::pair<std::pair<trace_t, event_t>, double>>>>& results) {
+                                                                               const std::vector<std::pair<DataQuery, std::vector<std::pair<std::pair<trace_t, event_t>, double>>>>& results) {
     if (vecs.empty()) return {};
     auto it = vecs.begin();
     auto last_intersection = results.at(*it).second;
@@ -192,98 +247,127 @@ std::vector<std::pair<std::pair<trace_t, event_t>, double>> local_intersection(c
     for (std::size_t i = 1; i < vecs.size(); ++i) {
         it++;
         auto ref = results.at(*it).second;
-//        assert(false); // TODO: consider also the event match at this stage!
-//        setIntersection(last_intersection.begin(), last_intersection.end(),
-//                              ref.begin(), ref.end(),
-//                              std::back_inserter(curr_intersection),
-//                              [](auto x, auto y) {return 1.0;});
+        setIntersection(last_intersection,
+                              ref,
+                              std::back_inserter(curr_intersection));
         std::swap(last_intersection, curr_intersection);
         curr_intersection.clear();
     }
     return last_intersection;
 }
 
-static inline
-std::vector<std::pair<std::pair<trace_t, event_t>, double>> local_intersection(const std::set<size_t> &vecs,
-                                                                               const std::vector<std::vector<std::pair<std::pair<trace_t, event_t>, double>>>& results) {
+static inline MAXSatPipeline::partial_result local_intersection(const std::set<size_t> &vecs,
+                                               const std::vector<MAXSatPipeline::partial_result>& results) {
     if (vecs.empty()) return {};
     auto it = vecs.begin();
     auto last_intersection = results.at(*it);
-    std::vector<std::pair<std::pair<trace_t, event_t>, double>> curr_intersection;
+    MAXSatPipeline::partial_result curr_intersection;
     for (std::size_t i = 1; i < vecs.size(); ++i) {
         it++;
-        auto ref = results.at(*it);
-//        assert(false); // TODO: consider also the event match at this stage!
-//        setIntersection(last_intersection.begin(), last_intersection.end(),
-//                        ref.begin(), ref.end(),
-//                        std::back_inserter(curr_intersection),
-//                        [](auto x, auto y) {return 1.0;});
+        auto& ref = results.at(*it);
+        setIntersection(last_intersection,
+                        ref,
+                        std::back_inserter(curr_intersection));
         std::swap(last_intersection, curr_intersection);
         curr_intersection.clear();
     }
+
     return last_intersection;
 }
 
-static inline
-std::vector<std::pair<std::pair<trace_t, event_t>, double>> local_union(const std::set<size_t> &vecs,
-                                                                         const std::vector<std::vector<std::pair<std::pair<trace_t, event_t>, double>>>& results) {
+static inline dataContainer local_intersection(const std::set<size_t> &vecs,
+                                               const std::vector<MAXSatPipeline::partial_result>& results,
+                                               LeafType isLeaf) {
+    if (vecs.empty()) return {};
+    MAXSatPipeline::partial_result last_intersection = local_intersection(vecs, results);
+
+    // TODO: better done through views!
+    dataContainer  finalResult;
+    for (auto it = last_intersection.begin(); it != last_intersection.end(); it = last_intersection.erase(it)) {
+        switch (isLeaf) {
+            case ActivationLeaf:
+            case TargetLeaf:
+                finalResult.emplace_back(it->first, std::make_pair(it->second, std::vector<uint16_t>{it->first.second}));
+                break;
+            default:
+                finalResult.emplace_back(it->first, std::make_pair(it->second, std::vector<uint16_t>{}));
+                break;
+        }
+    }
+
+    return finalResult;
+}
+
+static inline dataContainer local_union(const std::set<size_t> &vecs,
+                                        const std::vector<MAXSatPipeline::partial_result>& results,
+                                        LeafType isLeaf) {
     if (vecs.empty()) return {};
     auto it = vecs.begin();
     auto last_intersection = results.at(*it);
-    std::vector<std::pair<std::pair<trace_t, event_t>, double>> curr_intersection;
+    MAXSatPipeline::partial_result curr_intersection;
     for (std::size_t i = 1; i < vecs.size(); ++i) {
         it++;
         auto ref = results.at(*it);
-//        assert(false); // TODO: consider also the event match at this stage!
-//        setUnion(last_intersection.begin(), last_intersection.end(),
-//                        ref.begin(), ref.end(),
-//                        std::back_inserter(curr_intersection),
-//                        [](auto x, auto y) {return 1.0;});
+        setUnion(last_intersection,
+                        ref,
+                        std::back_inserter(curr_intersection));
         std::swap(last_intersection, curr_intersection);
         curr_intersection.clear();
     }
-    return last_intersection;
+
+    // TODO: better done through views!
+    dataContainer  finalResult;
+    for (auto it = last_intersection.begin(); it != last_intersection.end(); it = last_intersection.erase(it)) {
+        switch (isLeaf) {
+            case ActivationLeaf:
+            case TargetLeaf:
+                finalResult.emplace_back(it->first, std::make_pair(it->second, std::vector<uint16_t>{it->first.second}));
+                break;
+            default:
+                finalResult.emplace_back(it->first, std::make_pair(it->second, std::vector<uint16_t>{}));
+                break;
+        }
+    }
+
+    return finalResult;
 }
 
-static inline
-std::vector<std::pair<std::pair<trace_t, event_t>, double>> local_union(const ltlf_query* q) {
+static inline dataContainer local_union(const ltlf_query* q) {
     if ((!q) || (q->args.empty())) return {};
     auto it = q->args.begin();
     auto last_union = (*it)->result;
-    std::vector<std::pair<std::pair<trace_t, event_t>, double>> curr_union;
+    dataContainer curr_union;
     for (std::size_t i = 1; i < q->args.size(); ++i) {
         it++;
         auto ref = (*it)->result;
-//        assert(false); // TODO: consider also the event match at this stage!
-//        setUnion(last_union.begin(), last_union.end(),
-//                 ref.begin(), ref.end(),
-//                 std::back_inserter(curr_union),
-//                 [](auto x, auto y) {return 1.0;});
+        setUnion(last_union.begin(), last_union.end(),
+                 ref.begin(), ref.end(),
+                 std::back_inserter(curr_union),
+                 [](auto x, auto y) {return 1.0;});
         std::swap(last_union, curr_union);
         curr_union.clear();
     }
     return last_union;
 }
 
-static inline
-std::vector<std::pair<std::pair<trace_t, event_t>, double>> local_intersection(const ltlf_query* q) {
+static inline dataContainer local_intersection(const ltlf_query* q) {
     if ((!q) || (q->args.empty())) return {};
     auto it = q->args.begin();
     auto last_union = (*it)->result;
-    std::vector<std::pair<std::pair<trace_t, event_t>, double>> curr_union;
+    dataContainer curr_union;
     for (std::size_t i = 1; i < q->args.size(); ++i) {
         it++;
         auto ref = (*it)->result;
-//        assert(false); // TODO: consider also the event match at this stage!
-//        setIntersection(last_union.begin(), last_union.end(),
-//                 ref.begin(), ref.end(),
-//                 std::back_inserter(curr_union),
-//                 [](auto x, auto y) {return 1.0;});
+        setIntersection(last_union.begin(), last_union.end(),
+                 ref.begin(), ref.end(),
+                 std::back_inserter(curr_union),
+                 [](auto x, auto y) {return 1.0;});
         std::swap(last_union, curr_union);
         curr_union.clear();
     }
     return last_union;
 }
+
 
 
 
@@ -291,7 +375,7 @@ void MAXSatPipeline::data_pipeline_first(const KnowledgeBase& kb) {
 
     // 1. Performing the query over each single predicate that we have extracted, so not to duplicate the data access
     if (barrier_to_range_queries > 0) {
-        pool.parallelize_loop(0, barrier_to_range_queries, [&](const size_t a, const size_t b) {
+        PARALLELIZE_LOOP_BEGIN(pool, 0, barrier_to_range_queries, a, b)
             for (size_t i = a; i < b; i++) {
                 auto& ref = data_accessing.at(i);
                 // TODO: Given the query in ref.first, put the result in ref.second
@@ -312,7 +396,7 @@ void MAXSatPipeline::data_pipeline_first(const KnowledgeBase& kb) {
                         assert(false); // This should be dealt in (B)
                 }
             }
-        });
+        PARALLELIZE_LOOP_END
     }
 
 
@@ -323,12 +407,14 @@ void MAXSatPipeline::data_pipeline_first(const KnowledgeBase& kb) {
                        std::move_iterator(data_accessing_range_query_to_offsets.end()),
                        std::back_inserter(someVector),
                        [](auto&& entry){ return std::forward<decltype(entry)>(entry); });
-        pool.parallelize_loop(0, someVector.size(), [&](auto& lb, auto& ub) {
+
+        PARALLELIZE_LOOP_BEGIN(pool, 0,someVector.size(), lb, ub)
             for (size_t i = lb; i < ub; i++) {
                 auto& rangeQueryRefs = someVector.at(i);
                 kb.exact_range_query(rangeQueryRefs.first, rangeQueryRefs.second, data_accessing);
             }
-        });
+        PARALLELIZE_LOOP_END
+
         std::transform(std::move_iterator(someVector.begin()),
                        std::move_iterator(someVector.end()),
                        std::inserter(data_accessing_range_query_to_offsets, data_accessing_range_query_to_offsets.begin()),
@@ -339,35 +425,35 @@ void MAXSatPipeline::data_pipeline_first(const KnowledgeBase& kb) {
     auto result = partition_sets(atomToFormulaOffset); // O: squared on the size of the atoms
     size_t isFromFurtherDecomposition = result.minimal_common_subsets.size();
 
-    std::vector<std::vector<std::pair<std::pair<trace_t, event_t>, double>>> resultOfS(result.minimal_common_subsets.size()+result.minimal_common_subsets_composition.size());
-    pool.parallelize_loop(0, result.minimal_common_subsets.size(), [&](auto& lb, auto& ub) {
+    std::vector<MAXSatPipeline::partial_result> resultOfS(result.minimal_common_subsets.size()+result.minimal_common_subsets_composition.size());
+    PARALLELIZE_LOOP_BEGIN(pool, 0,result.minimal_common_subsets.size(), lb, ub)
         for (size_t i = lb; i < ub; i++) {
             auto& S = result.minimal_common_subsets.at(i);
             // resultOfS for collecting the intermediate computations
             resultOfS[i] = local_intersection(S, data_accessing);
         }
-    });
+    PARALLELIZE_LOOP_END
 
-    pool.parallelize_loop(0, result.minimal_common_subsets_composition.size(), [&](auto& lb, auto& ub) {
+    PARALLELIZE_LOOP_BEGIN(pool, 0,result.minimal_common_subsets_composition.size(), lb, ub)
         for (size_t i = lb; i < ub; i++) {
             auto& S = result.minimal_common_subsets_composition.at(i);
             // Perform the intersection among all of the elements in S,
             // using the intermediate results from resultOfSSecond
             resultOfS[isFromFurtherDecomposition + i] = local_intersection(S, resultOfS);
         }
-    });
+    PARALLELIZE_LOOP_END
 
 
-    std::vector<std::vector<std::pair<std::pair<trace_t, event_t>, double>>> results_cache;
+    std::vector<MAXSatPipeline::partial_result> results_cache;
     results_cache.resize(toUseAtoms.size());
-    pool.parallelize_loop(0, result.decomposedIndexedSubsets.size(), [&](auto lb, auto ub) {
+    PARALLELIZE_LOOP_BEGIN(pool, 0,result.decomposedIndexedSubsets.size(), lb, ub)
         for (size_t j = lb; j < ub; j++) {
             auto& ref = result.decomposedIndexedSubsets.at(j);
             // put the global intersection into a map representation.
             // ref->first will correspond to the atom in that same position in toUseAtoms.
             results_cache[ref.first] = local_intersection(*ref.second, resultOfS);
         }
-    });
+    PARALLELIZE_LOOP_END
 
     resultOfS.clear();
 
@@ -381,7 +467,7 @@ void MAXSatPipeline::data_pipeline_first(const KnowledgeBase& kb) {
 
     auto it = ltlf_query_manager::Q.rbegin(), en = ltlf_query_manager::Q.rend();
     for (; it != en; it++) {
-        pool.parallelize_loop(0, it->second.size(), [&](auto lb, auto ub) {
+        PARALLELIZE_LOOP_BEGIN(pool, 0, it->second.size(), lb, ub)
             for (size_t j = lb; j < ub; j++) {
                 auto formula = it->second.at(j); // TODO: run this query
                 switch (formula->casusu) {
@@ -392,7 +478,8 @@ void MAXSatPipeline::data_pipeline_first(const KnowledgeBase& kb) {
                     case Q_FALSE:
                         break;
                     case Q_ACT:
-                        formula->result = local_union(formula->partial_results, results_cache);
+                    case Q_INIT:
+                        formula->result = local_union(formula->partial_results, results_cache, formula->isLeaf);
                         break;
                     case Q_AND:
                         if (formula->isTimed) {
@@ -425,7 +512,7 @@ void MAXSatPipeline::data_pipeline_first(const KnowledgeBase& kb) {
                         break;
                     case Q_LAST:
                         break;
-                    case Q_INIT:
+
                         break;
                     case Q_END:
                         break;
@@ -433,7 +520,7 @@ void MAXSatPipeline::data_pipeline_first(const KnowledgeBase& kb) {
                         break;
                 }
             }
-        });
+        PARALLELIZE_LOOP_END
         // TODO: parallelized run over the it->second, and store the results
     }
 
