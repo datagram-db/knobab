@@ -5,19 +5,21 @@
 #include "knobab/trace_repairs/DataQuery.h"
 #include <cassert>
 
-DataQuery DataQuery::ExistsQuery(const std::string &atom) {
+DataQuery DataQuery::ExistsQuery(const std::string &atom, LeafType lt) {
     DataQuery returnable;
     assert(!atom.empty());
     returnable.label = atom;
     returnable.type = DataQueryType::ExistsQuery;
+    returnable.t = lt;
     return returnable;
 }
 
-DataQuery DataQuery::AtomQueries (DataQueryType t, const std::string &atom) {
+DataQuery DataQuery::AtomQueries (DataQueryType t, const std::string &atom, LeafType lt) {
     DataQuery returnable;
     assert(!atom.empty());
     returnable.label = atom;
     returnable.type = t;
+    returnable.t = lt;
     return returnable;
 }
 
@@ -29,11 +31,12 @@ DataQuery DataQuery::InitQuery(const std::string &atom) {
     return returnable;
 }
 
-DataQuery DataQuery::AtomQuery(const std::string &atom) {
+DataQuery DataQuery::AtomQuery(const std::string &atom, LeafType lt) {
     DataQuery returnable;
     assert(!atom.empty());
     returnable.label = atom;
     returnable.type = DataQueryType::AtomQuery;
+    returnable.t = lt;
     return returnable;
 }
 
@@ -47,7 +50,7 @@ DataQuery DataQuery::EndsQuery(const std::string &atom) {
 
 DataQuery
 DataQuery::RangeQuery(const std::string &atom, const std::string &var, const std::variant<std::string, double> &lb,
-                                      const std::variant<std::string, double> &ub) {
+                                      const std::variant<std::string, double> &ub, LeafType lt) {
     DataQuery returnable;
     assert(!atom.empty());
     returnable.label = atom;
@@ -56,6 +59,7 @@ DataQuery::RangeQuery(const std::string &atom, const std::string &var, const std
     returnable.lower_bound = lb;
     returnable.upper_bound = ub;
     returnable.type = DataQueryType::RangeQuery;
+    returnable.t = lt;
     return returnable;
 }
 

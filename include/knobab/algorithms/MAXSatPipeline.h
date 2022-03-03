@@ -26,7 +26,6 @@
 
 
 struct MAXSatPipeline {
-    using partial_result = std::vector<std::pair<std::pair<trace_t, event_t>, double>>;
     ltlf_query_manager qm;
 
 #ifdef MAXSatPipeline_PARALLEL

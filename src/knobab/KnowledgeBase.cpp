@@ -760,7 +760,7 @@ std::vector<std::pair<trace_t, event_t>> KnowledgeBase::exact_range_query(DataPr
 
 void KnowledgeBase::exact_range_query(const std::string &var,
                                       const std::unordered_map<std::string, std::vector<size_t>> &actToPredId,
-                                      std::vector<std::pair<DataQuery, std::vector<std::pair<std::pair<trace_t, event_t>, double>>>> &Qs) const {
+                                      std::vector<std::pair<DataQuery, dataContainer>> &Qs) const {
     auto it = attribute_name_to_table.find(var);
     if (it == attribute_name_to_table.end()) {
         // if no attribute is there, for the exact match I assume that no value was matched
@@ -785,12 +785,27 @@ void KnowledgeBase::exact_range_query(const std::string &var,
                 auto& tmpRef = tmp.at(j);
                 if ((tmpRef.first == tmpRef.second) && tmpRef.first == nullptr ) continue;
                 else {
-                    auto& S = Qs[qId].second;
+                    auto& refQ = Qs.at(qId);
+                    LeafType qT = refQ.first.t;
+                    dataContainer & S = refQ.second;
                     size_t N = std::distance(tmpRef.first, tmpRef.second);
+                    std::vector<uint16_t> W;
+                    switch (qT) {
+                        case ActivationLeaf:
+                        case TargetLeaf:
+                            W.emplace_back(0);
+                            break;
+                        default:
+                            break;
+                    }
                     for (size_t i = 0; i<=N; i++) {
                         const auto& exactIt = tmpRef.first[i];
                         const auto& resolve = act_table_by_act_id.table.at(exactIt.act_table_offset).entry.id.parts;
-                        S.emplace_back(std::pair<trace_t, event_t>{resolve.trace_id, resolve.event_id}, 1.0);
+                        if (!W.empty()) {
+                            W[0] = resolve.event_id;
+                        }
+                        S.emplace_back(std::pair<trace_t,event_t>{resolve.trace_id, resolve.event_id},
+                                       std::pair<double,std::vector<uint16_t>>{1.0, W});
                     }
                     std::sort(S.begin(), S.end());
                     S.erase(std::unique(S.begin(), S.end()), S.end());
@@ -841,6 +856,75 @@ const dataContainer KnowledgeBase::getNotFirstElements() {
     }
 
     return elems;
+}
+
+dataContainer KnowledgeBase::init(const std::string &act, bool doExtractEvent, const double minThreshold) const {
+    return initOrEnds(act, true, doExtractEvent, minThreshold);
+}
+
+dataContainer KnowledgeBase::ends(const std::string &act, bool doExtractEvent, const double minThreshold) const {
+    return initOrEnds(act, false, doExtractEvent, minThreshold);
+}
+
+dataContainer
+KnowledgeBase::initOrEnds(const std::string &act, bool beginOrEnd, bool doExtractEvent, const double minThreshold) const {
+    dataContainer foundData;
+
+    dataContainer tracePair;
+    const uint16_t& mappedVal = getMappedValueFromAction(act);
+
+    if(mappedVal < 0){
+        return foundData;
+    }
+
+    std::pair<uint32_t, uint16_t> eventPair;
+    std::pair<double, std::vector<uint16_t>> dataPair{1.0, {}};
+    if (doExtractEvent) dataPair.second.emplace_back(0);
+    std::pair<const uint32_t , const uint32_t> indexes = act_table_by_act_id.resolve_index(mappedVal);
+
+    if(indexes.first < 0){
+        return foundData;
+    }
+
+    for (auto it = act_table_by_act_id.table.begin() + indexes.first; it != act_table_by_act_id.table.begin() + indexes.second + 1; ++it) {
+        uint16_t approxConstant = MAX_UINT16 / 2;
+        auto eventId = beginOrEnd ? 0 : act_table_by_act_id.getTraceLength(it->entry.id.parts.trace_id)-1;
+
+        float satisfiability = getSatisifiabilityBetweenValues(eventId, it->entry.id.parts.event_id, approxConstant);
+
+        if(satisfiability >= minThreshold) {
+            dataPair.first = satisfiability;
+            eventPair.first = it->entry.id.parts.trace_id;
+            eventPair.second = it->entry.id.parts.event_id;
+            if (doExtractEvent) dataPair.second[0] =  eventPair.second;
+            foundData.emplace_back(eventPair, dataPair);
+        }
+    }
+
+    return foundData;
+}
+
+dataContainer KnowledgeBase::exists(const std::string &act, bool markEventsForMatch) const {
+    dataContainer foundData;
+    std::pair<uint32_t, uint16_t> timePair;
+    std::pair<double, std::vector<uint16_t>> dataPair{1.0, {}};
+    if (markEventsForMatch) dataPair.second.emplace_back(0);
+    const uint16_t& mappedVal = getMappedValueFromAction(act);
+    if(mappedVal < 0){
+        return foundData;
+    }
+    std::pair<const uint32_t , const uint32_t> indexes = act_table_by_act_id.resolve_index(mappedVal);
+    if(indexes.first < 0){
+        return foundData;
+    }
+    for (auto it = act_table_by_act_id.table.begin() + indexes.first; it != act_table_by_act_id.table.begin() + indexes.second + 1; ++it) {
+        timePair.first = it->entry.id.parts.trace_id;
+        timePair.second = it->entry.id.parts.event_id;
+        if (markEventsForMatch)
+            dataPair.second[0] = timePair.second;
+        foundData.emplace_back(timePair, dataPair);
+    }
+    return foundData;
 }
 
 

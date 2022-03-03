@@ -56,20 +56,10 @@ public:
      */
     semantic_atom_set  getSigmaAll() const;
 
-    MAXSatPipeline query_model(size_t noThreads) {
-        MAXSatPipeline maxsat_pipeline(noThreads);
-        maxsat_pipeline.pipeline(&grounding, ap, db);
-        experiment_logger.model_declare_to_ltlf = maxsat_pipeline.declare_to_ltlf_time;
-        experiment_logger.model_ltlf_query_time = maxsat_pipeline.ltlf_query_time;
-#ifdef MAXSatPipeline_PARALLEL
-        experiment_logger.is_multithreaded = true;
-        experiment_logger.no_threads = noThreads;
-#else
-        experiment_logger.is_multithreaded = false;
-        experiment_logger.no_threads = 1;
-#endif
-        return maxsat_pipeline;
-    }
+    /**
+     * Performs a query over the setted model. The whole pipeline is returned as a result (e.g., debugging and server)
+     */
+    MAXSatPipeline query_model(size_t noThreads);
 
     /**
      * Clears all of the bits and pieces, thus preparing into a novel test
@@ -85,13 +75,10 @@ public:
      */
     void load_log(log_data_format format, bool loadData, const std::string &filename, bool setMaximumStrLen,
                   std::istream &input_stream);
+    void load_log(log_data_format format, bool loadData, const std::string &filename, bool setMaximumStrLen);
 
-    void load_log(log_data_format format, bool loadData, const std::string &filename, bool setMaximumStrLen) {
-        std::ifstream f{filename};
-        load_log(format, loadData, filename, setMaximumStrLen,f);
-    }
 
-    void load_all_clauses();
+    void cache_declare_templates_as_graphs();
 
     /**
      * Loading the Declare model in the Extended format

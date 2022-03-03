@@ -227,7 +227,7 @@ generateBenchmarkForTests(const std::string &log_file,
                           std::ofstream &file) {
     Environment env;
     env.clear();
-    env.load_all_clauses();
+    env.cache_declare_templates_as_graphs();
     env.load_log(HUMAN_READABLE_YAUCL, true, log_file, false);
     env.load_model(templatu.begin(), templatu.end());
     env.doGrounding();
@@ -272,7 +272,7 @@ void generate_traces(const std::string& log_file = "data/testing/nologolog.txt",
                      const std::string& grounding_strategy = "data/testing/grounding_strategy.yaml") {
     Environment env;
     env.clear();
-    env.load_all_clauses();
+    env.cache_declare_templates_as_graphs();
 
     std::string fresh_atom_label{"p"};
     size_t msl = 10;

@@ -372,7 +372,7 @@ void Environment::print_attribute_tables(std::ostream &os) const {
     db.print_attribute_tables(os);
 }
 
-void Environment::load_all_clauses() {
+void Environment::cache_declare_templates_as_graphs() {
     for (declare_templates t : magic_enum::enum_values<declare_templates>()) {
         ///std::cout << "INIT: " << magic_enum::enum_name(t) << std::endl;
         if (isUnaryPredicate(t)) {
@@ -538,5 +538,25 @@ void Environment::set_atomization_parameters(const std::filesystem::path &atomiz
         }
         set_atomization_parameters(fresh_atom_label, msl);
     }
+}
+
+MAXSatPipeline Environment::query_model(size_t noThreads) {
+    MAXSatPipeline maxsat_pipeline(noThreads);
+    maxsat_pipeline.pipeline(&grounding, ap, db);
+    experiment_logger.model_declare_to_ltlf = maxsat_pipeline.declare_to_ltlf_time;
+    experiment_logger.model_ltlf_query_time = maxsat_pipeline.ltlf_query_time;
+#ifdef MAXSatPipeline_PARALLEL
+    experiment_logger.is_multithreaded = true;
+        experiment_logger.no_threads = noThreads;
+#else
+    experiment_logger.is_multithreaded = false;
+    experiment_logger.no_threads = 1;
+#endif
+    return maxsat_pipeline;
+}
+
+void Environment::load_log(log_data_format format, bool loadData, const std::string &filename, bool setMaximumStrLen) {
+    std::ifstream f{filename};
+    load_log(format, loadData, filename, setMaximumStrLen,f);
 }
 

@@ -10,6 +10,7 @@
 #include <yaucl/hashing/hashing.h>
 #include <yaucl/hashing/hash_combine.h>
 #include <yaucl/structures/default_constructors.h>
+#include <knobab/dataStructures/LeafType.h>
 
 enum DataQueryType {
     ExistsQuery,
@@ -24,16 +25,17 @@ struct DataQuery {
     DataQueryType type;
     std::string label;
     std::string var;
+    LeafType   t;
     std::variant<std::string, double> lower_bound, upper_bound;
 
-    static DataQuery AtomQueries (DataQueryType t, const std::string &atom);
-    static DataQuery ExistsQuery(const std::string &atom);
-    static DataQuery AtomQuery(const std::string &atom);
+    static DataQuery AtomQueries (DataQueryType t, const std::string &atom, LeafType lt = NoneLeaf);
+    static DataQuery ExistsQuery(const std::string &atom, LeafType lt = NoneLeaf);
+    static DataQuery AtomQuery(const std::string &atom, LeafType lt = NoneLeaf);
     static DataQuery InitQuery(const std::string &atom);
     static DataQuery EndsQuery(const std::string &atom);
 
     static DataQuery
-    RangeQuery(const std::string &atom, const std::string &var, const std::variant<std::string, double> &lb, const std::variant<std::string, double> &ub);
+    RangeQuery(const std::string &atom, const std::string &var, const std::variant<std::string, double> &lb, const std::variant<std::string, double> &ub, LeafType lt = NoneLeaf);
 
     DEFAULT_CONSTRUCTORS(DataQuery);
 

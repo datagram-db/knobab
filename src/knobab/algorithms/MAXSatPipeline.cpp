@@ -229,9 +229,9 @@ MAXSatPipeline::localExtract(const AtomizingPipeline &atomization,
 
 
 
-static inline void setUnion(const MAXSatPipeline::partial_result& lhs,
-                            const MAXSatPipeline::partial_result& rhs,
-                            std::back_insert_iterator<MAXSatPipeline::partial_result> d_first) {
+static inline void setUnion(const partial_result& lhs,
+                            const partial_result& rhs,
+                            std::back_insert_iterator<partial_result> d_first) {
     env e1, e2;
     auto first1 = lhs.begin(), last1 = lhs.end(), first2 = rhs.begin(), last2 = rhs.end();
     std::pair<uint32_t, uint16_t> pair, pair1;
@@ -256,9 +256,9 @@ static inline void setUnion(const MAXSatPipeline::partial_result& lhs,
     std::copy(first2, last2, d_first);
 }
 
-static inline void setIntersection(const MAXSatPipeline::partial_result& lhs,
-                                   const MAXSatPipeline::partial_result& rhs,
-                                    std::back_insert_iterator<MAXSatPipeline::partial_result> d_first) {
+static inline void setIntersection(const partial_result& lhs,
+                                   const partial_result& rhs,
+                                    std::back_insert_iterator<partial_result> d_first) {
     env e1, e2;
     auto first1 = lhs.begin(), last1 = lhs.end(), first2 = rhs.begin(), last2 = rhs.end();
     std::pair<uint32_t, uint16_t> pair, pair1;
@@ -300,12 +300,12 @@ std::vector<std::pair<std::pair<trace_t, event_t>, double>> local_intersection(c
     return last_intersection;
 }
 
-static inline MAXSatPipeline::partial_result local_intersection(const std::set<size_t> &vecs,
-                                               const std::vector<MAXSatPipeline::partial_result>& results) {
+static inline partial_result local_intersection(const std::set<size_t> &vecs,
+                                               const std::vector<partial_result>& results) {
     if (vecs.empty()) return {};
     auto it = vecs.begin();
     auto last_intersection = results.at(*it);
-    MAXSatPipeline::partial_result curr_intersection;
+    partial_result curr_intersection;
     for (std::size_t i = 1; i < vecs.size(); ++i) {
         it++;
         auto& ref = results.at(*it);
@@ -320,10 +320,10 @@ static inline MAXSatPipeline::partial_result local_intersection(const std::set<s
 }
 
 static inline dataContainer local_intersection(const std::set<size_t> &vecs,
-                                               const std::vector<MAXSatPipeline::partial_result>& results,
+                                               const std::vector<partial_result>& results,
                                                LeafType isLeaf) {
     if (vecs.empty()) return {};
-    MAXSatPipeline::partial_result last_intersection = local_intersection(vecs, results);
+    partial_result last_intersection = local_intersection(vecs, results);
 
     // TODO: better done through views!
     dataContainer  finalResult;
@@ -343,12 +343,12 @@ static inline dataContainer local_intersection(const std::set<size_t> &vecs,
 }
 
 static inline dataContainer local_union(const std::set<size_t> &vecs,
-                                        const std::vector<MAXSatPipeline::partial_result>& results,
+                                        const std::vector<partial_result>& results,
                                         LeafType isLeaf) {
     if (vecs.empty()) return {};
     auto it = vecs.begin();
     auto last_intersection = results.at(*it);
-    MAXSatPipeline::partial_result curr_intersection;
+    partial_result curr_intersection;
     for (std::size_t i = 1; i < vecs.size(); ++i) {
         it++;
         auto ref = results.at(*it);
@@ -481,7 +481,7 @@ void MAXSatPipeline::data_pipeline_first(const KnowledgeBase& kb) {
     auto result = partition_sets(atomToFormulaOffset); // O: squared on the size of the atoms
     size_t isFromFurtherDecomposition = result.minimal_common_subsets.size();
 
-    std::vector<MAXSatPipeline::partial_result> resultOfS(result.minimal_common_subsets.size()+result.minimal_common_subsets_composition.size());
+    std::vector<partial_result> resultOfS(result.minimal_common_subsets.size()+result.minimal_common_subsets_composition.size());
     PARALLELIZE_LOOP_BEGIN(pool, 0,result.minimal_common_subsets.size(), lb, ub)
         for (size_t i = lb; i < ub; i++) {
             auto& S = result.minimal_common_subsets.at(i);
@@ -501,7 +501,7 @@ void MAXSatPipeline::data_pipeline_first(const KnowledgeBase& kb) {
 
 
     ///results_cache.resize(toUseAtoms.size());
-    std::vector<MAXSatPipeline::partial_result> results_cache(std::max(toUseAtoms.size(), resultOfS.size()), MAXSatPipeline::partial_result{});
+    std::vector<partial_result> results_cache(std::max(toUseAtoms.size(), resultOfS.size()), partial_result{});
     PARALLELIZE_LOOP_BEGIN(pool, 0,result.decomposedIndexedSubsets.size(), lb, ub)
         for (size_t j = lb; j < ub; j++) {
             auto& ref = result.decomposedIndexedSubsets.at(j);

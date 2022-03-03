@@ -25,7 +25,7 @@ using dataContainer = std::vector<std::pair<std::pair<uint32_t, uint16_t>, std::
 
 template<typename InputIt1, typename InputIt2, typename OutputIt, typename Aggregation> inline
 OutputIt setUnion(InputIt1 first1, InputIt1 last1, InputIt2 first2, InputIt2 last2,
-                  OutputIt d_first, Aggregation aggr, const PredicateManager *manager = nullptr) {
+                  OutputIt d_first, Aggregation aggr, const PredicateManager *manager = nullptr, bool dropMatches = false) {
     env e1, e2;
     std::pair<uint32_t, uint16_t> pair, pair1;
 
@@ -51,15 +51,24 @@ OutputIt setUnion(InputIt1 first1, InputIt1 last1, InputIt2 first2, InputIt2 las
                         pair1.second = elem1;
 
                         if (manager->checkValidity(e1, e2)) {
-                            *d_first = std::make_pair(first1->first, std::pair<double, std::vector<uint16_t>>{
-                                    aggr(first1->second.first, first2->second.first), {elem, elem1}});
+                            double aggrV = aggr(first1->second.first, first2->second.first);
+                            if (dropMatches) {
+                                *d_first = std::make_pair(first1->first, std::pair<double, std::vector<uint16_t>>{
+                                        aggr(first1->second.first, first2->second.first), {elem, elem1}});
+                            } else {
+                                *d_first = std::make_pair(first1->first, std::pair<double, std::vector<uint16_t>>{
+                                        aggr(first1->second.first, first2->second.first), {}});
+                            }
                         }
                     }
                 }
             } else {
-                auto V = first1->second.second;
-                V.insert(V.end(), first2->second.second.begin(), first2->second.second.end());
-                remove_duplicates(V);
+                std::vector<uint16_t> V;
+                if (!dropMatches) {
+                    first1->second.second;
+                    V.insert(V.end(), first2->second.second.begin(), first2->second.second.end());
+                    remove_duplicates(V);
+                }
                 *d_first = std::make_pair(first1->first, std::pair<double, std::vector<uint16_t>>{
                         aggr(first1->second.first, first2->second.first), V});
             }
@@ -74,7 +83,7 @@ OutputIt setUnion(InputIt1 first1, InputIt1 last1, InputIt2 first2, InputIt2 las
 template<typename InputIt1, typename InputIt2, typename OutputIt, typename Aggregation> inline
 OutputIt
 setUnionUntimed(InputIt1 first1, InputIt1 last1, InputIt2 first2, InputIt2 last2, OutputIt d_first, Aggregation aggr,
-                const PredicateManager *manager = nullptr) {
+                const PredicateManager *manager = nullptr, bool dropMatches = false) {
     std::map<uint32_t, dataContainer> group1 = GroupByKeyExtractor<InputIt1, uint32_t, std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>>(
             first1, last1,
             [](const std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>> &p) {
@@ -125,18 +134,29 @@ setUnionUntimed(InputIt1 first1, InputIt1 last1, InputIt2 first2, InputIt2 last2
                                 e2 = manager->GetPayloadDataFromEvent(pair1);
 
                                 if (manager->checkValidity(e1, e2)) {
-                                    *d_first = std::make_pair(std::pair<uint32_t, uint16_t>{pair.first, 0},
-                                                              std::pair<double, std::vector<uint16_t>>{
-                                                                      aggr(cont1.second.first, cont2.second.first),
-                                                                      {pair.second, pair1.second}});
+                                    if (dropMatches) {
+                                        *d_first = std::make_pair(std::pair<uint32_t, uint16_t>{pair.first, 0},
+                                                                  std::pair<double, std::vector<uint16_t>>{
+                                                                          aggr(cont1.second.first, cont2.second.first),
+                                                                          {}});
+                                    } else {
+
+                                        *d_first = std::make_pair(std::pair<uint32_t, uint16_t>{pair.first, 0},
+                                                                  std::pair<double, std::vector<uint16_t>>{
+                                                                          aggr(cont1.second.first, cont2.second.first),
+                                                                          {pair.second, pair1.second}});
+                                    }
                                 }
                             }
                         }
                     } else {
                         // NOTE: that will discard potential activation and target conditions, and just put the two events where the situation holds.
-                        auto V = first1->second.second;
-                        V.insert(V.end(), first2->second.second.begin(), first2->second.second.end());
-                        remove_duplicates(V);
+                        std::vector<uint16_t> V;
+                        if (!dropMatches) {
+                            first1->second.second;
+                            V.insert(V.end(), first2->second.second.begin(), first2->second.second.end());
+                            remove_duplicates(V);
+                        }
                         *d_first = std::make_pair(std::pair<uint32_t, uint16_t>{pair.first, 0},
                                                   std::pair<double, std::vector<uint16_t>>{
                                                           aggr(cont1.second.first, cont2.second.first), V});
@@ -160,7 +180,7 @@ setUnionUntimed(InputIt1 first1, InputIt1 last1, InputIt2 first2, InputIt2 last2
 
 template<typename InputIt1, typename InputIt2, typename OutputIt, typename Aggregation> inline
 OutputIt setIntersection(InputIt1 first1, InputIt1 last1, InputIt2 first2, InputIt2 last2,
-                         OutputIt d_first, Aggregation aggr, const PredicateManager *manager = nullptr) {
+                         OutputIt d_first, Aggregation aggr, const PredicateManager *manager = nullptr, bool dropMatches = false) {
     env e1, e2;
     std::pair<uint32_t, uint16_t> pair, pair1;
 
@@ -186,15 +206,23 @@ OutputIt setIntersection(InputIt1 first1, InputIt1 last1, InputIt2 first2, Input
                         e2 = manager->GetPayloadDataFromEvent(pair1);
 
                         if (manager->checkValidity(e1, e2)) {
-                            *d_first = std::make_pair(first1->first, std::pair<double, std::vector<uint16_t>>{
-                                    aggr(first1->second.first, first2->second.first), {pair.second, pair1.second}});
+                            if (dropMatches) {
+                                *d_first = std::make_pair(first1->first, std::pair<double, std::vector<uint16_t>>{
+                                        aggr(first1->second.first, first2->second.first), {}});
+                            } else {
+                                *d_first = std::make_pair(first1->first, std::pair<double, std::vector<uint16_t>>{
+                                        aggr(first1->second.first, first2->second.first), {pair.second, pair1.second}});
+                            }
                         }
                     }
                 }
             } else {
-                auto V = first1->second.second;
-                V.insert(V.end(), first2->second.second.begin(), first2->second.second.end());
-                remove_duplicates(V);
+                std::vector<uint16_t> V;
+                if (!dropMatches) {
+                    V = first1->second.second;
+                    V.insert(V.end(), first2->second.second.begin(), first2->second.second.end());
+                    remove_duplicates(V);
+                }
                 *d_first = std::make_pair(first1->first, std::pair<double, std::vector<uint16_t>>{
                         aggr(first1->second.first, first2->second.first), V});
             }
@@ -209,7 +237,8 @@ OutputIt setIntersection(InputIt1 first1, InputIt1 last1, InputIt2 first2, Input
 template<typename InputIt1, typename InputIt2, typename OutputIt, typename Aggregation> inline
 OutputIt setIntersectionUntimed(InputIt1 first1, InputIt1 last1, InputIt2 first2, InputIt2 last2, OutputIt d_first,
                                 Aggregation aggr,
-                                const PredicateManager *manager = nullptr) {
+                                const PredicateManager *manager = nullptr,
+                                bool dropMatches = false) {
     std::map<uint32_t, dataContainer> group1 = GroupByKeyExtractor<InputIt1, uint32_t, std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>>(
             first1, last1,
             [](const std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>> &p) {
@@ -249,18 +278,28 @@ OutputIt setIntersectionUntimed(InputIt1 first1, InputIt1 last1, InputIt2 first2
                                 e2 = manager->GetPayloadDataFromEvent(pair1);
 
                                 if (manager->checkValidity(e1, e2)) {
-                                    *d_first = std::make_pair(std::pair<uint32_t, uint16_t>{pair.first, 0},
-                                                              std::pair<double, std::vector<uint16_t>>{
-                                                                      aggr(cont1.second.first, cont2.second.first),
-                                                                      {pair.second, pair1.second}});
+                                    if (dropMatches) {
+                                        *d_first = std::make_pair(std::pair<uint32_t, uint16_t>{pair.first, 0},
+                                                                  std::pair<double, std::vector<uint16_t>>{
+                                                                          aggr(cont1.second.first, cont2.second.first),
+                                                                          {}});
+                                    } else {
+                                        *d_first = std::make_pair(std::pair<uint32_t, uint16_t>{pair.first, 0},
+                                                                  std::pair<double, std::vector<uint16_t>>{
+                                                                          aggr(cont1.second.first, cont2.second.first),
+                                                                          {pair.second, pair1.second}});
+                                    }
                                 }
                             }
                         }
                     } else {
                         // NOTE: that will discard potential activation and target conditions, and just put the two events where the situation holds.
-                        auto V = first1->second.second;
-                        V.insert(V.end(), first2->second.second.begin(), first2->second.second.end());
-                        remove_duplicates(V);
+                        std::vector<uint16_t> V;
+                        if (!dropMatches) {
+                            V = first1->second.second;
+                            V.insert(V.end(), first2->second.second.begin(), first2->second.second.end());
+                            remove_duplicates(V);
+                        }
                         *d_first = std::make_pair(std::pair<uint32_t, uint16_t>{pair.first, 0},
                                                   std::pair<double, std::vector<uint16_t>>{
                                                           aggr(cont1.second.first, cont2.second.first),
