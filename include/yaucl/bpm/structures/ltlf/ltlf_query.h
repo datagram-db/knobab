@@ -11,6 +11,7 @@
 #include <knobab/predicates/PredicateManager.h>
 #include <knobab/utilities/LTLFOperators.h>
 
+
 enum ltlf_query_t {
     Q_TRUE,
     Q_NEXT,
@@ -30,13 +31,7 @@ enum ltlf_query_t {
     Q_EXISTS
 };
 
-enum LeafType {
-    ActivationLeaf,
-    TargetLeaf,
-    NoneLeaf,
-    NotALeaf,
-    MatchActivationTarget
-};
+#include <knobab/dataStructures/LeafType.h>
 
 struct ltlf_query {
     bool isTimed = false;

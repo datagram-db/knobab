@@ -29,8 +29,7 @@ using union_type = std::variant<double, size_t, long long, std::string, bool>;
 #include <ostream>
 #include <SimplifiedFuzzyStringMatching.h>
 #include <knobab/trace_repairs/DataQuery.h>
-
-
+#include <knobab/dataStructures/LeafType.h>
 
 struct AttributeTable {
     std::string attr_name;
