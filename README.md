@@ -12,6 +12,39 @@
 
 # Configurations 
 
+After compiling the tool with CMake, the final project is delivered as a server(.exe) executable. By running it with the `--help` argument, the following message will be displayed:
+
+```
+  ./cmake-build-debug/server {OPTIONS}
+
+    KnoBAB (c) 2020-2022 by Giacomo Bergami & Samuel 'Sam' Appleby.
+
+  OPTIONS:
+
+      -h, --help                        Display this help menu
+      You can use the following
+      parameters
+        -s, --server                      Runs the HTTP server for visualizing
+                                          the internal representation of both
+                                          the knowledge base and the associated
+                                          query plan
+      -l[Log], --log=[Log]              The Log to load into the knowledgebase
+      -d[Models/Queries...],
+      --declare=[Models/Queries...]     The queries expressed as Declare models
+      -b[Benchmark File],
+      --csv=[Benchmark File]            Appends the current result data into a
+                                        benchmark file
+
+    This free and open software program implements the MaxSat problem via a
+    Knowledge Base, KnoBAB. Nicer things are still to come!
+```
+
+In order to run multiple queries stored in different files over one single model, you can run this command:
+
+```
+./cmake-build-debug/server  --log "data/testing/log.txt" --declare "data/testing/SimpleComposition.txt" "data/testing/InitSingleA.txt" "data/testing/InitSingleC.txt" --csv test.csv 
+```
+
 ## Windows
 
 ### Toolchain
