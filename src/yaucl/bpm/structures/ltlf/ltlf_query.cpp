@@ -161,8 +161,7 @@ ltlf_query* ltlf_query_manager::simplify(const ltlf& expr,  bool isTimed, bool i
             atomsToDecomposeInUnion.emplace_back(result);
         }
         result->atom.insert(expr.rewritten_act.begin(), expr.rewritten_act.end());
-        //Q[h].emplace_back(result);
-        conversion_map_for_subexpressions[q] =result;// {result, h};
+        conversion_map_for_subexpressions[q] =result;
         counter.emplace(result, 1);
         return result;
     }

@@ -48,6 +48,22 @@ public:
         return db.range_query(prop, min_threshold, c);
     }
 
+    void exact_range_query(const std::vector<DataQuery>& Q) {
+        std::vector<std::pair<DataQuery, partial_result>> Qs;
+        std::unordered_map<std::string, std::vector<size_t>> actToPredId;
+        for (const auto& q : Q)
+            Qs.emplace_back(q, partial_result{});
+
+    }
+
+    void exact_range_query(const std::string &var,
+                                                                            const std::unordered_map<std::string, std::vector<size_t>> &actToPredId,
+                                                                            std::vector<std::pair<DataQuery, partial_result>> &Qs,
+                                                                            const std::optional<uint16_t> &temporalTimeMatch = {},
+                                                                            double approxConstant = 1.0) const {
+        db.exact_range_query(var, actToPredId, Qs, temporalTimeMatch, approxConstant);
+    }
+
     Environment(const std::filesystem::path& cache_folder = "data/cache") : declare_to_graph{cache_folder} {}
 
     /**

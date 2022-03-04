@@ -267,9 +267,11 @@ public:
 
     std::vector<std::pair<trace_t, event_t>> exact_range_query(DataPredicate prop) const;
 
-    void exact_range_query(const std::string& var,
-                           const std::unordered_map<std::string, std::vector<size_t>>& actToPredId,
-                           std::vector<std::pair<DataQuery, dataContainer>>& Qs) const;
+    void exact_range_query(const std::string &var,
+                           const std::unordered_map<std::string, std::vector<size_t>> &actToPredId,
+                           std::vector<std::pair<DataQuery, partial_result>> &Qs,
+                           const std::optional<uint16_t> &temporalTimeMatch = std::optional<uint16_t>{},
+                           double minApproxTime = 1)  const;
 #if 0
 //=======
     TraceData<traceIdentifier, traceValue> existsAt(const std::string& act, const uint16_t& eventId, const double minThreshold = 1) const{

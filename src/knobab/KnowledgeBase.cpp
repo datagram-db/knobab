@@ -760,7 +760,12 @@ std::vector<std::pair<trace_t, event_t>> KnowledgeBase::exact_range_query(DataPr
 
 void KnowledgeBase::exact_range_query(const std::string &var,
                                       const std::unordered_map<std::string, std::vector<size_t>> &actToPredId,
-                                      std::vector<std::pair<DataQuery, dataContainer>> &Qs) const {
+                                      std::vector<std::pair<DataQuery, partial_result>> &Qs,
+                                      const std::optional<uint16_t> &temporalTimeMatch,
+                                      double approxConstant) const {
+
+    bool doTemporalMatchQuery = temporalTimeMatch.has_value();
+    uint16_t isTemproalVal = temporalTimeMatch.value_or(0);
     auto it = attribute_name_to_table.find(var);
     if (it == attribute_name_to_table.end()) {
         // if no attribute is there, for the exact match I assume that no value was matched
@@ -774,6 +779,8 @@ void KnowledgeBase::exact_range_query(const std::string &var,
                 auto& prop = Qs.at(qId).first;
                 DQ.second.emplace_back(&prop);
             }
+            // I do not need to compare the pointers, rather than compare the values associated to those
+            std::sort(DQ.second.begin(), DQ.second.end(), [](auto lhs, auto rhs) {return *lhs < *rhs;});
         }
 
         // TODO: this is just the concrete doing.
@@ -787,25 +794,34 @@ void KnowledgeBase::exact_range_query(const std::string &var,
                 else {
                     auto& refQ = Qs.at(qId);
                     LeafType qT = refQ.first.t;
-                    dataContainer & S = refQ.second;
+                    partial_result& S = refQ.second;
                     size_t N = std::distance(tmpRef.first, tmpRef.second);
-                    std::vector<uint16_t> W;
-                    switch (qT) {
+                    //std::vector<uint16_t> W;
+                    /*switch (qT) {
                         case ActivationLeaf:
                         case TargetLeaf:
                             W.emplace_back(0);
                             break;
                         default:
                             break;
-                    }
+                    }*/
                     for (size_t i = 0; i<=N; i++) {
                         const auto& exactIt = tmpRef.first[i];
                         const auto& resolve = act_table_by_act_id.table.at(exactIt.act_table_offset).entry.id.parts;
-                        if (!W.empty()) {
+                        /*if (!W.empty()) {
                             W[0] = resolve.event_id;
+                        }*/
+                        bool doInsert = true;
+                        float satisfiability = 1.0;
+                        if (doTemporalMatchQuery) {
+                            auto L = resolve.event_id;
+                            satisfiability = getSatisifiabilityBetweenValues(((L <= 1) ? 0 : isTemproalVal),
+                                                                             cast_to_float2(resolve.event_id,L), approxConstant);
+                            doInsert = satisfiability >= approxConstant;
                         }
+                        if (doInsert)
                         S.emplace_back(std::pair<trace_t,event_t>{resolve.trace_id, resolve.event_id},
-                                       std::pair<double,std::vector<uint16_t>>{1.0, W});
+                                       /*std::pair<double,std::vector<uint16_t>>{*/satisfiability/*, W}*/);
                     }
                     std::sort(S.begin(), S.end());
                     S.erase(std::unique(S.begin(), S.end()), S.end());
