@@ -57,7 +57,7 @@ struct MAXSatPipeline {
     std::vector<std::pair<DataQuery, std::vector<std::pair<std::pair<trace_t, event_t>, double>>>> data_accessing;
     std::unordered_map<std::string, std::unordered_map<std::string,std::vector<size_t>>> data_accessing_range_query_to_offsets;
     std::unordered_map<DeclareDataAware, std::unordered_map<std::pair<bool, std::string>, label_set_t>> declare_atomization;
-    std::vector<std::set<size_t>> atomToFormulaOffset;
+    std::vector<std::set<size_t>> atomToResultOffset;
     std::vector<std::string> toUseAtoms; // This is to ensure the insertion of unique elements to the map!
     size_t barrier_to_range_queries, barriers_to_atfo;
     std::vector<std::vector<std::pair<std::pair<trace_t, event_t>, double>>> atomicPartIntersectionResult;
