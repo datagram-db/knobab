@@ -45,6 +45,8 @@ struct DataQuery {
     bool operator>(const DataQuery &rhs) const;
     bool operator<=(const DataQuery &rhs) const;
     bool operator>=(const DataQuery &rhs) const;
+
+
 };
 
 namespace std {

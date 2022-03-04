@@ -211,6 +211,7 @@ void remove_duplicates(std::vector<T>& vec){
 
 #include <set>
 #include <yaucl/structures/default_constructors.h>
+#include <yaucl/strings/serializers.h>
 
 template <typename T>
 struct partition_sets_result {
@@ -221,6 +222,22 @@ struct partition_sets_result {
 
     partition_sets_result(size_t N): decomposedSubsets(N) {}
     DEFAULT_COPY_ASSGN(partition_sets_result)
+
+    friend std::ostream &operator<<(std::ostream &os, const partition_sets_result &result) {
+        size_t N = result.minimal_common_subsets.size();
+        for (size_t i = 0; i < N; i++) {
+            os << "mcs type a, mcs#" << i << "-->" << result.minimal_common_subsets.at(i) << std::endl;
+        }
+        for (size_t i = 0, M = result.minimal_common_subsets_composition.size(); i<M; i++) {
+            os << "mcs type b, mcs#" << i+N << "-->" << result.minimal_common_subsets_composition.at(i) << std::endl;
+        }
+        for (size_t i = 0, M = result.decomposedIndexedSubsets.size(); i<M; i++) {
+            auto& ref = result.decomposedIndexedSubsets.at(i);
+            os << "result, set#" << i << " <=> " << ref.first << " is " << *ref.second << std::endl;
+        }
+
+        return os;
+    }
 };
 
 template <typename T>

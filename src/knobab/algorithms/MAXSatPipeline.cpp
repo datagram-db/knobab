@@ -32,7 +32,7 @@ MAXSatPipeline::MAXSatPipeline(size_t nThreads)
 void MAXSatPipeline::clear() {
     data_accessing.clear();
     declare_atomization.clear();
-    atomToFormulaOffset.clear();
+    atomToResultOffset.clear();
     toUseAtoms.clear();
     atomicPartIntersectionResult.clear();
     result.clear();
@@ -165,10 +165,10 @@ void MAXSatPipeline::data_chunk(CNFDeclareDataAware *model,
         } else
             offset = (find.first->second);
         maxPartialResultId = std::max(maxPartialResultId, (ssize_t)offset);
-        atomToFormulaOffset.emplace_back(std::set<size_t>{offset});
+        atomToResultOffset.emplace_back(std::set<size_t>{offset});
     }
     barrier_to_range_queries = data_accessing.size();
-    barriers_to_atfo = atomToFormulaOffset.size();
+    barriers_to_atfo = atomToResultOffset.size();
 
     // Iterating other the remaining non-act atoms, that is, the data predicate+label ones
     for (auto it = toUseAtomsEnd, en = toUseAtoms.end(); it != en; it++) {
@@ -200,8 +200,8 @@ void MAXSatPipeline::data_chunk(CNFDeclareDataAware *model,
                 tmpRanges.emplace_back(find.first->second);
             }
         }
-        std::cout << interval_to_interval_queries_to_intersect->first << "-->" << tmpRanges << std::endl;
-        atomToFormulaOffset.emplace_back(tmpRanges.begin(), tmpRanges.end());
+        std::cout << atomToResultOffset.size() << "<=>" << interval_to_interval_queries_to_intersect->first << "-->" << tmpRanges << std::endl;
+        atomToResultOffset.emplace_back(tmpRanges.begin(), tmpRanges.end());
     }
 }
 
@@ -227,7 +227,7 @@ MAXSatPipeline::generateAtomQuery(std::vector<std::string> &toUseAtoms,
     else*/
         toUseAtoms.insert(toUseAtoms.end(), item.left_decomposed_atoms.begin(), item.left_decomposed_atoms.end());
     atomToFormulaId[item.left_act].emplace_back(maxFormulaId);
-    atomToFormulaOffset.emplace_back(std::set<size_t>{offset});
+    atomToResultOffset.emplace_back(std::set<size_t>{offset});
     maxPartialResultId = std::max(maxPartialResultId, (ssize_t)offset);
 }
 
@@ -307,7 +307,6 @@ static inline void setIntersection(const partial_result& lhs,
             first2++;
         }
     }
-    std::copy(first2, last2, d_first);
 }
 
 static inline
@@ -499,7 +498,7 @@ void MAXSatPipeline::data_pipeline_first(const KnowledgeBase& kb) {
         PARALLELIZE_LOOP_BEGIN(pool, 0,someVector.size(), lb, ub)
             for (size_t i = lb; i < ub; i++) {
                 auto& rangeQueryRefs = someVector.at(i);
-                kb.exact_range_query(rangeQueryRefs.first, rangeQueryRefs.second, data_accessing, LeafType::NotALeaf);
+                kb.exact_range_query(rangeQueryRefs.first, rangeQueryRefs.second, data_accessing);
             }
         PARALLELIZE_LOOP_END
 
@@ -516,13 +515,21 @@ void MAXSatPipeline::data_pipeline_first(const KnowledgeBase& kb) {
 #endif
     }
 
-    auto set_decomposition_result = partition_sets(atomToFormulaOffset); // O: squared on the size of the atoms
+    for (const auto& da : data_accessing) {
+        std::cout << da.first.label << '.' << da.first.var << " \\in [" << std::get<1>(da.first.lower_bound) << ',' << get<1>(da.first.upper_bound) << "] --> " << da.second << std::endl;
+    }
+
+    // After accessing the data, we perform the interval intersection between these
+    // The computational complexity should be squared on the size of the atoms
+    auto set_decomposition_result = partition_sets(atomToResultOffset);
+    std::cout << set_decomposition_result << std::endl;
     size_t isFromFurtherDecomposition = set_decomposition_result.minimal_common_subsets.size();
 
     std::vector<partial_result> resultOfS(set_decomposition_result.minimal_common_subsets.size()+set_decomposition_result.minimal_common_subsets_composition.size());
     PARALLELIZE_LOOP_BEGIN(pool, 0,set_decomposition_result.minimal_common_subsets.size(), lb, ub)
         for (size_t i = lb; i < ub; i++) {
             auto& S = set_decomposition_result.minimal_common_subsets.at(i);
+            std::cout << i << " is " << S << std::endl;
             // resultOfS for collecting the intermediate computations
             resultOfS[i] = local_intersection(S, data_accessing);
         }
@@ -537,12 +544,16 @@ void MAXSatPipeline::data_pipeline_first(const KnowledgeBase& kb) {
         }
     PARALLELIZE_LOOP_END
 
+    for (size_t i = 0; i<resultOfS.size(); i++) {
+        std::cout << i << "->>->" << resultOfS.at(i) << std::endl;
+    }
 
     ///results_cache.resize(toUseAtoms.size());
     std::vector<partial_result> results_cache(std::max(toUseAtoms.size(), resultOfS.size()), partial_result{});
     PARALLELIZE_LOOP_BEGIN(pool, 0,set_decomposition_result.decomposedIndexedSubsets.size(), lb, ub)
         for (size_t j = lb; j < ub; j++) {
             auto& ref = set_decomposition_result.decomposedIndexedSubsets.at(j);
+            std::cout << ref.first << "-@->" << *ref.second << std::endl;
             // put the global intersection into a map representation.
             // ref->first will correspond to the atom in that same position in toUseAtoms.
             results_cache[ref.first] = local_intersection(*ref.second, resultOfS);
@@ -550,6 +561,9 @@ void MAXSatPipeline::data_pipeline_first(const KnowledgeBase& kb) {
     PARALLELIZE_LOOP_END
 
     resultOfS.clear();
+    for (size_t i = 0; i<results_cache.size(); i++) {
+        std::cout << i << "-->" << results_cache.at(i) << std::endl;
+    }
 
     // Preparing the second phase of the pipeline, where the extracted data is going to be combined.
     for (size_t i = 0, N = toUseAtoms.size(); i<N; i++) {
