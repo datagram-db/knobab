@@ -514,10 +514,10 @@ void MAXSatPipeline::data_pipeline_first(const KnowledgeBase& kb) {
         }
 #endif
     }
-
-    for (const auto& da : data_accessing) {
-        std::cout << da.first.label << '.' << da.first.var << " \\in [" << std::get<1>(da.first.lower_bound) << ',' << get<1>(da.first.upper_bound) << "] --> " << da.second << std::endl;
-    }
+//
+//    for (const auto& da : data_accessing) {
+//        std::cout << da.first.label << '.' << da.first.var << " \\in [" << std::get<1>(da.first.lower_bound) << ',' << get<1>(da.first.upper_bound) << "] --> " << da.second << std::endl;
+//    }
 
     // After accessing the data, we perform the interval intersection between these
     // The computational complexity should be squared on the size of the atoms
@@ -529,7 +529,7 @@ void MAXSatPipeline::data_pipeline_first(const KnowledgeBase& kb) {
     PARALLELIZE_LOOP_BEGIN(pool, 0,set_decomposition_result.minimal_common_subsets.size(), lb, ub)
         for (size_t i = lb; i < ub; i++) {
             auto& S = set_decomposition_result.minimal_common_subsets.at(i);
-            std::cout << i << " is " << S << std::endl;
+//            std::cout << i << " is " << S << std::endl;
             // resultOfS for collecting the intermediate computations
             resultOfS[i] = local_intersection(S, data_accessing);
         }
@@ -544,16 +544,16 @@ void MAXSatPipeline::data_pipeline_first(const KnowledgeBase& kb) {
         }
     PARALLELIZE_LOOP_END
 
-    for (size_t i = 0; i<resultOfS.size(); i++) {
-        std::cout << i << "->>->" << resultOfS.at(i) << std::endl;
-    }
+//    for (size_t i = 0; i<resultOfS.size(); i++) {
+//        std::cout << i << "->>->" << resultOfS.at(i) << std::endl;
+//    }
 
     ///results_cache.resize(toUseAtoms.size());
     std::vector<partial_result> results_cache(std::max(toUseAtoms.size(), resultOfS.size()), partial_result{});
     PARALLELIZE_LOOP_BEGIN(pool, 0,set_decomposition_result.decomposedIndexedSubsets.size(), lb, ub)
         for (size_t j = lb; j < ub; j++) {
             auto& ref = set_decomposition_result.decomposedIndexedSubsets.at(j);
-            std::cout << ref.first << "-@->" << *ref.second << std::endl;
+//            std::cout << ref.first << "-@->" << *ref.second << std::endl;
             // put the global intersection into a map representation.
             // ref->first will correspond to the atom in that same position in toUseAtoms.
             results_cache[ref.first] = local_intersection(*ref.second, resultOfS);
@@ -561,9 +561,9 @@ void MAXSatPipeline::data_pipeline_first(const KnowledgeBase& kb) {
     PARALLELIZE_LOOP_END
 
     resultOfS.clear();
-    for (size_t i = 0; i<results_cache.size(); i++) {
-        std::cout << i << "-->" << results_cache.at(i) << std::endl;
-    }
+//    for (size_t i = 0; i<results_cache.size(); i++) {
+//        std::cout << i << "-->" << results_cache.at(i) << std::endl;
+//    }
 
     // Preparing the second phase of the pipeline, where the extracted data is going to be combined.
     for (size_t i = 0, N = toUseAtoms.size(); i<N; i++) {
@@ -610,10 +610,22 @@ void MAXSatPipeline::data_pipeline_first(const KnowledgeBase& kb) {
                         break;
 
                     case Q_BOX:
+                        if (formula->isTimed) {
+
+                        } else {
+                            formula->result = global(formula->args.at(0)->result, kb.act_table_by_act_id.trace_length);
+                        }
                         break;
                     case Q_DIAMOND:
                         break;
                     case Q_UNTIL:
+                        if (formula->isTimed) {
+                        } else {
+                            formula->result = until(formula->args.at(0)->result,
+                                                    formula->args.at(1)->result,
+                                                    kb.act_table_by_act_id.trace_length,
+                                                    formula->joinCondition.isTruth() ? nullptr : &formula->joinCondition);
+                        }
                         break;
                     case Q_RELEASE:
                         break;
