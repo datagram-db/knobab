@@ -16,6 +16,6 @@ enum LeafType {
 #include <vector>
 #include <utility>
 
-using partial_result = std::vector<std::pair<std::pair<trace_t, event_t>, double>>;
+using partial_result = std::vector<std::pair<std::pair<uint32_t , uint16_t>, double>>;
 
 #endif //KNOBAB_LEAFTYPE_H

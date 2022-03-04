@@ -80,18 +80,35 @@ void MAXSatPipeline::data_chunk(CNFDeclareDataAware *model,
 
             ltlf_query *formula;
             if (item.casusu == Init) {
-                formula = qm.init1(item.left_act, item.left_decomposed_atoms);
-                generateAtomQuery(toUseAtoms, empty_result, item, formula, InitQuery);
+                if ((item.left_decomposed_atoms.size() == 1) && (*item.left_decomposed_atoms.begin() == item.left_act)) {
+                    formula = qm.init1(item.left_act, item.left_decomposed_atoms);
+                    generateAtomQuery(toUseAtoms, empty_result, item, formula, InitQuery);
+                } else {
+                    // TODO: withData
+                }
             } else if (item.casusu == End) {
-                formula = qm.end1(item.left_act, item.left_decomposed_atoms);
-                generateAtomQuery(toUseAtoms, empty_result, item, formula, EndsQuery);
+                if ((item.left_decomposed_atoms.size() == 1) && (*item.left_decomposed_atoms.begin() == item.left_act)) {
+                    formula = qm.end1(item.left_act, item.left_decomposed_atoms);
+                    generateAtomQuery(toUseAtoms, empty_result, item, formula, EndsQuery);
+                } else {
+                    // TODO: withData
+                }
             } else if (item.casusu == Existence) {
-                formula = qm.exists1(item.left_act, item.left_decomposed_atoms);
-                generateAtomQuery(toUseAtoms, empty_result, item, formula, ExistsQuery);
+                if ((item.left_decomposed_atoms.size() == 1) && (*item.left_decomposed_atoms.begin() == item.left_act)) {
+                    formula = qm.exists1(item.left_act, item.left_decomposed_atoms);
+                    generateAtomQuery(toUseAtoms, empty_result, item, formula, ExistsQuery);
+                } else {
+                    // TODO: withData
+                }
             }
 
 
             else {
+                // Parameters
+                bool hasRight = true;
+
+
+                ltlf_query* local_formula;
                 auto& ltlf_sem = ltlf_semantics[item.casusu];
                 //std::vector<size_t> requirements;
                 std::unordered_map<std::string, std::unordered_set<bool>> collection;
@@ -99,15 +116,22 @@ void MAXSatPipeline::data_chunk(CNFDeclareDataAware *model,
 
                 // Collecting all of the atoms, for then transferring those to the analysis per atom
                 localExtract(atomization, toUseAtoms, ref, collection, item.left_decomposed_atoms, LEFT_ATOM);
-                localExtract(atomization, toUseAtoms, ref, collection, item.right_decomposed_atoms, RIGHT_ATOM);
+                if (hasRight)
+                    localExtract(atomization, toUseAtoms, ref, collection, item.right_decomposed_atoms, RIGHT_ATOM);
 
-                // Reconstructing the join
-                auto tmp = ltlf_sem.replace_with(ref);
-                tmp.instantiateJoinCondition(item.conjunctive_map);
+                // If it is a binary Declare operand, then I need to exploit the LTLf rewriting.
+                if (hasRight) {
+                    auto tmp = ltlf_sem.replace_with(ref);
+                    // Reconstructing the join
+                    tmp.instantiateJoinCondition(item.conjunctive_map);
+                    // Creating the formula
+                    local_formula = qm.simplify(tmp);
+                } else {
+                    // Otherwise,
+                }
 
-                // Creating the formula
-                formula = qm.simplify(tmp);
-                //std::swap(formula->partial_results, requirements);
+                // Returned result
+                formula = local_formula;
             }
 
             fomulaidToFormula.emplace_back(formula);
@@ -119,16 +143,17 @@ void MAXSatPipeline::data_chunk(CNFDeclareDataAware *model,
 
     for (auto& ref : atomToFormulaId)
         remove_duplicates(ref.second);
+    qm.finalize_unions(W); // Time Computational Complexity: Squared on the size of the atoms
 
-    qm.finalize_unions(W); // Squared on the size of the atoms
-
+    /////////////////////////////// DEBUGGING
     for (const auto& ref : W) {
-        human_readable_ltlf_printing(std::cout, ref) << std::endl; //todo: debugging
+        human_readable_ltlf_printing(std::cout, ref) << std::endl;
     }
+    /////////////////////////////////////////
 
     remove_duplicates(toUseAtoms);
 
-    // Just the atom iteration
+    // Just the Act iteration
     auto toUseAtomsEnd = std::stable_partition(toUseAtoms.begin(), toUseAtoms.end(), [&](const auto& x) { return atomization.act_atoms.contains(x); });
     for (auto it = toUseAtoms.begin(); it != toUseAtomsEnd; it++) {
         auto q = DataQuery::AtomQuery(*it);
@@ -145,35 +170,38 @@ void MAXSatPipeline::data_chunk(CNFDeclareDataAware *model,
     barrier_to_range_queries = data_accessing.size();
     barriers_to_atfo = atomToFormulaOffset.size();
 
+    // Iterating other the remaining non-act atoms, that is, the data predicate+label ones
     for (auto it = toUseAtomsEnd, en = toUseAtoms.end(); it != en; it++) {
-        auto it2 = atomization.atom_to_conjunctedPredicates.find(*it);
-        assert(it2 != atomization.atom_to_conjunctedPredicates.end());
+        auto interval_to_interval_queries_to_intersect = atomization.atom_to_conjunctedPredicates.find(*it);
+        assert(interval_to_interval_queries_to_intersect != atomization.atom_to_conjunctedPredicates.end());
 
-        std::set<size_t> ranges;
-        for (const auto& clause : it2->second) {
+        std::vector<size_t> tmpRanges;
+        for (const auto& interval_data_query : interval_to_interval_queries_to_intersect->second) {
             // Sanity Checks
-            assert(clause.casusu == INTERVAL);
-            assert(clause.BiVariableConditions.empty());
+            assert(interval_data_query.casusu == INTERVAL);
+            assert(interval_data_query.BiVariableConditions.empty());
 
-            // TODO: split the RangeQuery by clause.var (as they are going to be on different tables),
+            //       splits the RangeQuery by clause.var (as they are going to be on different tables),
             //       clause.label (as the ranges are ordered by act and then by value) and then sort
             //       the remainder by interval. By doing so, we are going to pay the access to clause.label
             //       only once, and we are going to scan the whole range at most linearly instead of performing
             //       at most linear scans for each predicate.
             //       Then, the access can be parallelized by variable name, as they are going to query separated tables
-            auto q = DataQuery::RangeQuery(clause.label, clause.var, clause.value, clause.value_upper_bound);
-            auto find = data_offset.emplace(q, data_accessing.size());
+            auto q = DataQuery::RangeQuery(interval_data_query.label, interval_data_query.var, interval_data_query.value, interval_data_query.value_upper_bound);
+            size_t tmpDataAccessingSize =  data_accessing.size();
+            auto find = data_offset.emplace(q, tmpDataAccessingSize);
             if (find.second){
-                maxPartialResultId = std::max(maxPartialResultId, (ssize_t)data_accessing.size());
-                ranges.insert(data_accessing.size());
-                data_accessing_range_query_to_offsets[clause.var][clause.label].emplace_back(data_accessing.size());
+                maxPartialResultId = std::max(maxPartialResultId, (ssize_t)tmpDataAccessingSize);
+                tmpRanges.emplace_back(tmpDataAccessingSize);
+                data_accessing_range_query_to_offsets[interval_data_query.var][interval_data_query.label].emplace_back(tmpDataAccessingSize);
                 data_accessing.emplace_back(q, empty_result);
             } else {
                 maxPartialResultId = std::max(maxPartialResultId, (ssize_t)find.first->second);
-                ranges.insert(find.first->second);
+                tmpRanges.emplace_back(find.first->second);
             }
         }
-        atomToFormulaOffset.emplace_back(ranges);
+        std::cout << interval_to_interval_queries_to_intersect->first << "-->" << tmpRanges << std::endl;
+        atomToFormulaOffset.emplace_back(tmpRanges.begin(), tmpRanges.end());
     }
 }
 
@@ -183,10 +211,11 @@ MAXSatPipeline::generateAtomQuery(std::vector<std::string> &toUseAtoms,
                                   DeclareDataAware &item, ltlf_query *formula, DataQueryType r) {
     size_t offset;
     auto q = DataQuery::AtomQueries(r, item.left_act);
-    auto find = data_offset.emplace(q, data_accessing.size());
+    size_t tmpDataAccessingSize = data_accessing.size();
+    auto find = data_offset.emplace(q, tmpDataAccessingSize);
     if (find.second){
-        formula->partial_results.emplace(data_accessing.size()); // TODO: removable
-        offset = data_accessing.size();
+        formula->partial_results.emplace(tmpDataAccessingSize); // TODO: removable
+        offset = tmpDataAccessingSize;
         data_accessing.emplace_back(q, empty_result);
     } else {
         offset = (find.first->second);
@@ -458,6 +487,9 @@ void MAXSatPipeline::data_pipeline_first(const KnowledgeBase& kb) {
 
     // 2. Performing the queries over the range queries
     if (!data_accessing_range_query_to_offsets.empty()) {
+#ifdef MAXSatPipeline_PARALLEL
+        // If this is a parallel execution, I can exploit the current library only if I have a vector. Otherwise,
+        // the map data structures are not safe for iteration
         std::vector<std::pair<std::string, std::unordered_map<std::string,std::vector<size_t>>>> someVector;
         std::transform(std::move_iterator(data_accessing_range_query_to_offsets.begin()),
                        std::move_iterator(data_accessing_range_query_to_offsets.end()),
@@ -467,7 +499,7 @@ void MAXSatPipeline::data_pipeline_first(const KnowledgeBase& kb) {
         PARALLELIZE_LOOP_BEGIN(pool, 0,someVector.size(), lb, ub)
             for (size_t i = lb; i < ub; i++) {
                 auto& rangeQueryRefs = someVector.at(i);
-                kb.exact_range_query(rangeQueryRefs.first, rangeQueryRefs.second, data_accessing);
+                kb.exact_range_query(rangeQueryRefs.first, rangeQueryRefs.second, data_accessing, LeafType::NotALeaf);
             }
         PARALLELIZE_LOOP_END
 
@@ -475,24 +507,30 @@ void MAXSatPipeline::data_pipeline_first(const KnowledgeBase& kb) {
                        std::move_iterator(someVector.end()),
                        std::inserter(data_accessing_range_query_to_offsets, data_accessing_range_query_to_offsets.begin()),
                        [](auto&& entry){ return std::forward<decltype(entry)>(entry); });
-
+#else
+        // If this is not in parallel mode, then there is no purpose to create a temporary vector for the parallelization:
+        // therefore, I can directly iterate over the map.
+        for (auto& rangeQueryRefs : data_accessing_range_query_to_offsets) {
+            kb.exact_range_query(rangeQueryRefs.first, rangeQueryRefs.second, data_accessing);
+        }
+#endif
     }
 
-    auto result = partition_sets(atomToFormulaOffset); // O: squared on the size of the atoms
-    size_t isFromFurtherDecomposition = result.minimal_common_subsets.size();
+    auto set_decomposition_result = partition_sets(atomToFormulaOffset); // O: squared on the size of the atoms
+    size_t isFromFurtherDecomposition = set_decomposition_result.minimal_common_subsets.size();
 
-    std::vector<partial_result> resultOfS(result.minimal_common_subsets.size()+result.minimal_common_subsets_composition.size());
-    PARALLELIZE_LOOP_BEGIN(pool, 0,result.minimal_common_subsets.size(), lb, ub)
+    std::vector<partial_result> resultOfS(set_decomposition_result.minimal_common_subsets.size()+set_decomposition_result.minimal_common_subsets_composition.size());
+    PARALLELIZE_LOOP_BEGIN(pool, 0,set_decomposition_result.minimal_common_subsets.size(), lb, ub)
         for (size_t i = lb; i < ub; i++) {
-            auto& S = result.minimal_common_subsets.at(i);
+            auto& S = set_decomposition_result.minimal_common_subsets.at(i);
             // resultOfS for collecting the intermediate computations
             resultOfS[i] = local_intersection(S, data_accessing);
         }
     PARALLELIZE_LOOP_END
 
-    PARALLELIZE_LOOP_BEGIN(pool, 0,result.minimal_common_subsets_composition.size(), lb, ub)
+    PARALLELIZE_LOOP_BEGIN(pool, 0,set_decomposition_result.minimal_common_subsets_composition.size(), lb, ub)
         for (size_t i = lb; i < ub; i++) {
-            auto& S = result.minimal_common_subsets_composition.at(i);
+            auto& S = set_decomposition_result.minimal_common_subsets_composition.at(i);
             // Perform the intersection among all of the elements in S,
             // using the intermediate results from resultOfSSecond
             resultOfS[isFromFurtherDecomposition + i] = local_intersection(S, resultOfS);
@@ -502,9 +540,9 @@ void MAXSatPipeline::data_pipeline_first(const KnowledgeBase& kb) {
 
     ///results_cache.resize(toUseAtoms.size());
     std::vector<partial_result> results_cache(std::max(toUseAtoms.size(), resultOfS.size()), partial_result{});
-    PARALLELIZE_LOOP_BEGIN(pool, 0,result.decomposedIndexedSubsets.size(), lb, ub)
+    PARALLELIZE_LOOP_BEGIN(pool, 0,set_decomposition_result.decomposedIndexedSubsets.size(), lb, ub)
         for (size_t j = lb; j < ub; j++) {
-            auto& ref = result.decomposedIndexedSubsets.at(j);
+            auto& ref = set_decomposition_result.decomposedIndexedSubsets.at(j);
             // put the global intersection into a map representation.
             // ref->first will correspond to the atom in that same position in toUseAtoms.
             results_cache[ref.first] = local_intersection(*ref.second, resultOfS);

@@ -37,13 +37,13 @@ void whole_testing(const std::string& log_file = "data/testing/log.txt",
     for (const auto& declare_file : declare_files) {
         std::cout << "Loading the declarative model from file: " << declare_file << std::endl;
         env.load_model(declare_file);
-        //env.print_model(std::cout); // DEBUG
+        env.print_model(std::cout); // DEBUG
         //////////////////////////////////////////////////////////////////
 
         env.set_grounding_parameters(true, false, true,GroundingStrategyConf::NO_EXPANSION);
         //env.set_grounding_parameters(grounding_strategy);
         env.doGrounding();
-        //env.print_grounded_model(std::cout); // DEBUG
+        env.print_grounded_model(std::cout); // DEBUG
         //////////////////////////////////////////////////////////////////
 
         env.set_atomization_parameters("p", 10);
@@ -52,12 +52,12 @@ void whole_testing(const std::string& log_file = "data/testing/log.txt",
 
         std::cout << "Loading the atomization tables given the model" << std::endl;
         env.init_atomize_tables();
-        //env.print_grounding_tables(std::cout);
+        env.print_grounding_tables(std::cout);
         //////////////////////////////////////////////////////////////////
 
         std::cout << "Atomizing the declare formulae" << std::endl;
         env.first_atomize_model();
-        //env.print_grounded_model(std::cout); // DEBUG
+        env.print_grounded_model(std::cout); // DEBUG
         //////////////////////////////////////////////////////////////////
 
         auto ref = env.query_model(0);
@@ -79,8 +79,8 @@ void whole_testing(const std::string& log_file = "data/testing/log.txt",
 
 }
 
-void test_data_query(const std::string& log_file = "data/testing/log.txt",
-                   const std::string& declare_file = "data/testing/declare2.powerdecl",
+void test_data_query(const std::string& log_file = "data/testing/log_until.txt",
+                   const std::string& declare_file = "data/testing/declare5.powerdecl",
                    const std::string& atomization_conf = "data/testing/atomization_pipeline.yaml",
                    const std::string& grounding_strategy = "data/testing/grounding_strategy.yaml") {
     Environment env;
@@ -111,9 +111,10 @@ void test_data_query(const std::string& log_file = "data/testing/log.txt",
 //    std::cout << env.range_query({"x", LEQ, 2.0}) << std::endl;
 
     /// SETTING FOR THE APPROX QUERY
-    env.min_threshold = 0.3;
+    env.min_threshold = 1;
     env.c = 10.0;
-    std::cout << env.range_query({"x", LEQ, 2.0}) << std::endl;
+
+    //std::cout << env.range_query({"x", LEQ, 2.0}) << std::endl;
 
 }
 
