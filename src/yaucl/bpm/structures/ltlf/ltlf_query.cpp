@@ -115,7 +115,7 @@ std::string ltlf_query_manager::generateGraph() const {
     return json.dump(4);
 }
 
-ltlf_query* ltlf_query_manager::simplify(const ltlf& expr,  bool isTimed, bool insert) {
+ltlf_query* ltlf_query_manager::simplify(const ltlf& expr,  bool isTimed) {
     assert((expr.casusu != NEG_OF) && (expr.casusu != NUMERIC_ATOM));
     std::pair<ltlf, bool> q{expr, isTimed};
     auto it = conversion_map_for_subexpressions.find(q);
@@ -123,48 +123,67 @@ ltlf_query* ltlf_query_manager::simplify(const ltlf& expr,  bool isTimed, bool i
         counter[it->second]++;
         return it->second;
     } else {
-        ltlf_query* result = new ltlf_query();
-        if (insert) VSet.insert(result);
+        auto* result = new ltlf_query();
         bool areArgsTimed = isTimed || (expr.casusu == BOX) || (expr.casusu == DIAMOND)
-                || (expr.casusu == UNTIL) || (expr.casusu == RELEASE);
-        //size_t h = 0;
-        for (const auto& arg : expr.args) {
-            auto cp = simplify(arg, areArgsTimed, insert);
-            //h = std::max(cp.second, h);
-            result->args.emplace_back(cp);
-        }
-        //h++;
+                            || (expr.casusu == UNTIL) || (expr.casusu == RELEASE);
+        const std::vector<ltlf>* ARGS = &expr.args;
+        ltlf_query_t casusu;
         if (expr.is_exclusive) {
             assert(expr.casusu == OR);
-            result->casusu = Q_XOR;
+            casusu = Q_XOR;
         } else {
             std::string v{magic_enum::enum_name(expr.casusu)};
             v = "Q_" + v;
-            result->casusu = magic_enum::enum_cast<ltlf_query_t>(v).value();
+            casusu = magic_enum::enum_cast<ltlf_query_t>(v).value();
         }
-        if (expr.is_join_condition_place) {
-            std::vector<std::vector<SimpleDataPredicate>> sdp;
-            for (const auto& inConj : expr.joinCondition) {
-                auto& x = sdp.emplace_back();
-                for (const auto& pref : inConj) {
-                    //assert(pref.second.BiVariableConditions.empty());
-                    for (const auto& refx : pref.second.BiVariableConditions ) {
-                        x.emplace_back(refx.var, refx.varRHS, refx.casusu);
-                    }
-                }
-            }
-            result->joinCondition = {sdp,nullptr};
-        }
-        result->isTimed = isTimed;
-        assert((expr.casusu != ACT) || (!expr.rewritten_act.empty()));
-        if (expr.casusu==ACT){
-            atomsToDecomposeInUnion.emplace_back(result);
-        }
-        result->atom.insert(expr.rewritten_act.begin(), expr.rewritten_act.end());
+        const std::vector<std::unordered_map<std::string, DataPredicate>>* joinCondition =
+                expr.is_join_condition_place ? (&expr.joinCondition) : nullptr;
+        bool isAct = expr.casusu==ACT;
+
+        result= getQuerySemiInstantiated(expr.rewritten_act, isTimed, result, areArgsTimed, ARGS, casusu, joinCondition,
+                                        isAct);
         conversion_map_for_subexpressions[q] =result;
-        counter.emplace(result, 1);
         return result;
     }
+}
+
+ltlf_query *ltlf_query_manager::getQuerySemiInstantiated(const std::vector<std::string> &rewritten_act,
+                                                         bool isTimed,
+                                                         ltlf_query *result,
+                                                         bool areArgsTimed, const std::vector<ltlf> *ARGS,
+                                                         const ltlf_query_t &casusu,
+                                                         const std::vector<std::unordered_map<std::string, DataPredicate>> *joinCondition,
+                                                         bool isAct) {
+    //if (insert) VSet.insert(result);
+    //size_t h = 0;
+    if (ARGS) for (const auto& arg : *ARGS) {
+        auto cp = simplify(arg, areArgsTimed);
+        //h = std::max(cp.second, h);
+        result->args.emplace_back(cp);
+    }
+    //h++;
+    result->casusu = casusu;
+    if (joinCondition) {
+        std::vector<std::vector<SimpleDataPredicate>> sdp;
+        for (const auto& inConj : *joinCondition) {
+            auto& x = sdp.emplace_back();
+            for (const auto& pref : inConj) {
+                //assert(pref.second.BiVariableConditions.empty());
+                for (const auto& refx : pref.second.BiVariableConditions ) {
+                    x.emplace_back(refx.var, refx.varRHS, refx.casusu);
+                }
+            }
+        }
+        result->joinCondition = {sdp,nullptr};
+    }
+    result->isTimed = isTimed;
+    //assert((expr.casusu != ACT) || (!expr.rewritten_act.empty()));
+    if (isAct){
+        atomsToDecomposeInUnion.emplace_back(result);
+    }
+    result->atom.insert(rewritten_act.begin(), rewritten_act.end());
+    counter.emplace(result, 1);
+    return result;
 }
 
 void ltlf_query_manager::clear() {
@@ -172,19 +191,18 @@ void ltlf_query_manager::clear() {
         delete it->second;
         it = conversion_map_for_subexpressions.erase(it);
     }
-    VSet.clear();
+    //VSet.clear();
     atomsToDecomposeInUnion.clear();
     counter.clear();
 }
 
 ltlf_query *ltlf_query_manager::init1(const std::string &atom, std::unordered_set<std::string> &predicates) {
-    return immediateQueries(atom, predicates, "@declare_init1_", Q_INIT);
+    return immediateQueries(atom, predicates, "@declare_init1_", Q_INIT, 0);
 }
 
-ltlf_query *ltlf_query_manager::immediateQueries(const std::string &atom,
-                                                 std::unordered_set<std::string> &predicates,
-                                                 const std::string &prefix,
-                                                 const ltlf_query_t &casus) {
+ltlf_query *ltlf_query_manager::immediateQueries(const std::string &atom, std::unordered_set<std::string> &predicates,
+                                                 const std::string &prefix, const ltlf_query_t &casus,
+                                                 size_t numeric_arg) {
     ltlf f = ltlf::Act(prefix + atom);
     if (!predicates.empty()) {
         ltlf A = ltlf::Act("bogus_"+atom);
@@ -207,16 +225,31 @@ ltlf_query *ltlf_query_manager::immediateQueries(const std::string &atom,
         //Q[0].emplace_back(result);
         conversion_map_for_subexpressions[q] = result;
         counter.emplace(result, 1);
+        result->numeric_arg = numeric_arg;
         return result;
     }
 }
 
-ltlf_query *ltlf_query_manager::exists1(const std::string &atom, std::unordered_set<std::string> &predicates) {
-    return immediateQueries(atom, predicates, "@declare_exists1_", Q_EXISTS);
+ltlf_query *ltlf_query_manager::absence(const std::string &atom, std::unordered_set<std::string> &predicates,
+                                        size_t atLeast) {
+
+    return atLeast > 0 ?
+           immediateQueries(atom, predicates, "@declare_absence"+std::to_string(atLeast)+"_", Q_ABSENCE, atLeast) :
+           exists(atom, predicates, 1);
+
+}
+
+ltlf_query *ltlf_query_manager::exists(const std::string &atom, std::unordered_set<std::string> &predicates,
+                                        size_t atLeast) {
+
+    return atLeast > 0 ?
+               immediateQueries(atom, predicates, "@declare_exists"+std::to_string(atLeast)+"_", Q_EXISTS, atLeast) :
+           absence(atom, predicates, 1);
+
 }
 
 ltlf_query *ltlf_query_manager::end1(const std::string &atom, std::unordered_set<std::string> &predicates) {
-    return immediateQueries(atom, predicates, "@declare_end1_", Q_END);
+    return immediateQueries(atom, predicates, "@declare_end1_", Q_END, 0);
 }
 
 void ltlf_query_manager::finalize_unions(const std::vector<ltlf_query*>& W) {
@@ -254,7 +287,7 @@ void ltlf_query_manager::finalize_unions(const std::vector<ltlf_query*>& W) {
                 }
 
         }
-        ltlf_query* q = simplify(r, true, false);
+        ltlf_query* q = simplify(r, true);
         q->isLeaf = NotALeaf;
         *atomsToDecomposeInUnion[ref.first] = *q;
         //delete q; //this will not delete the other nodes, recursively. TODO: this should be done in clear() and avoid leaks
@@ -287,6 +320,10 @@ std::ostream & human_readable_ltlf_printing(std::ostream &os, const ltlf_query* 
             return os << "F" << syntax->atom << reset;
         case Q_ACT:
             return os << "A" <<  syntax->atom << reset;
+        case Q_EXISTS:
+            return os << "Ex" <<  syntax->atom << reset;
+        case Q_ABSENCE:
+            return os << "Abs" <<  syntax->atom << reset;
         case Q_OR:
             os << "(";
             human_readable_ltlf_printing(os, syntax->args.at(0));

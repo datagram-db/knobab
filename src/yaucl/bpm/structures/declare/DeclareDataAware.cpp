@@ -276,7 +276,7 @@ bool isUnaryPredicate(declare_templates type) {
     switch (type) {
         case Existence:
         case Absence:
-        case Absence2:
+        //case Absence2:
         case End:
         case Init:
             return true;
@@ -290,7 +290,7 @@ bool isPredicateNegative(declare_templates type) {
         case NotCoExistence:
         case NegSuccession:
         case NegChainSuccession:
-        case Absence2:
+        //case Absence2:
         case Absence:
         case ExlChoice:
         case AltPrecedence:
@@ -330,8 +330,8 @@ ltlf DeclareDataAware::toFiniteSemantics(bool isForGraph) const {
         case Absence:
             return ltlf::Neg(doExistence(n, left_act, dnf_left_map).toFiniteSemantics(isForGraph));
 
-        case Absence2:
-            return ltlf::Neg(ltlf::Diamond(ltlf::And(left, ltlf::Diamond(left, isForGraph)), isForGraph));
+        //case Absence2:
+        //    return ltlf::Neg(ltlf::Diamond(ltlf::And(left, ltlf::Diamond(left, isForGraph)), isForGraph));
 
         case Init:
             return left;

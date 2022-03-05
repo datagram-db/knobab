@@ -14,6 +14,7 @@
 
 enum DataQueryType {
     ExistsQuery,
+    AbsenceQuery,
     RangeQuery,
     InitQuery,
     EndsQuery,
@@ -27,6 +28,7 @@ struct DataQuery {
     std::string var;
     LeafType   t;
     std::variant<std::string, double> lower_bound, upper_bound;
+    size_t numeric_argument;
 
     static DataQuery AtomQueries (DataQueryType t, const std::string &atom, LeafType lt = NoneLeaf);
     static DataQuery ExistsQuery(const std::string &atom, LeafType lt = NoneLeaf);

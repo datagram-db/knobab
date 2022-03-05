@@ -81,8 +81,13 @@ struct MAXSatPipeline {
     void
     generateAtomQuery(std::vector<std::string> &toUseAtoms,
                       std::vector<std::pair<std::pair<trace_t, event_t>, double>> &empty_result,
-                      DeclareDataAware &item,
-                      ltlf_query *formula, DataQueryType r);
+                      DeclareDataAware &item, ltlf_query *formula, DataQueryType r,
+                      size_t numeric_argument);
+
+    void localExtract(const AtomizingPipeline &atomization, std::vector<std::string> &toUseAtoms,
+                      std::unordered_map<std::pair<bool, std::string>, label_set_t> &ref,
+                      const std::unordered_set<std::string> &decomposition, const std::string &collectionMapKey,
+                      bool isNegated);
 };
 
 

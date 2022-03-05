@@ -31,7 +31,7 @@ enum declare_templates {
     End,
     Init,
     Existence,
-    Absence2,
+    //Absence2,
     Absence,
     Choice,
     ExlChoice,

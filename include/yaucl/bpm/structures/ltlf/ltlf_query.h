@@ -28,7 +28,8 @@ enum ltlf_query_t {
 
     Q_INIT,
     Q_END,
-    Q_EXISTS
+    Q_EXISTS,
+    Q_ABSENCE
 };
 
 #include <knobab/dataStructures/LeafType.h>
@@ -46,6 +47,7 @@ struct ltlf_query {
     LeafType isLeaf = NotALeaf;
     bool hasPremamentMark, hasTempMark;
 
+    size_t numeric_arg = 0;
     size_t parentMin = std::numeric_limits<size_t>::max(), parentMax = 0, dis = 0;
 
     size_t currentLayer() const {
@@ -94,7 +96,7 @@ struct ltlf_query_manager {
     std::map<size_t, std::vector<ltlf_query*>> Q;
     std::unordered_map<ltlf_query*, size_t> counter;
     std::vector<ltlf_query*> atomsToDecomposeInUnion;
-    std::set<ltlf_query*> VSet;
+    //std::set<ltlf_query*> VSet;
 
     void generateGraph(std::map<ltlf_query*, std::vector<ltlf_query*>>& ref, ltlf_query*q) const;
     std::string generateGraph() const;
@@ -102,17 +104,23 @@ struct ltlf_query_manager {
     void clear();
     ltlf_query*  init1(const std::string& atom, std::unordered_set<std::string>& predicates);
     ltlf_query* end1(const std::string &atom, std::unordered_set<std::string> &predicates);
-    ltlf_query* exists1(const std::string &atom, std::unordered_set<std::string> &predicates);
+    ltlf_query *exists(const std::string &atom, std::unordered_set<std::string> &predicates, size_t atLeast);
+    ltlf_query *absence(const std::string &atom, std::unordered_set<std::string> &predicates, size_t atLeast);
 
     ltlf_query *
-    immediateQueries(const std::string &atom, std::unordered_set<std::string> &predicates, const std::string &prefix,
-                     const ltlf_query_t &casus);
+    immediateQueries(const std::string &atom, std::unordered_set<std::string> &predicates,
+                     const std::string &prefix, const ltlf_query_t &casus,
+                     size_t numeric_arg);
 
     void finalize_unions(const std::vector<ltlf_query*>& W);
 
-    ltlf_query*  simplify(const ltlf& expr,  bool isTimed = false, bool insert = true);
+    ltlf_query*  simplify(const ltlf& expr,  bool isTimed = false);
 
-private:
+    ltlf_query *getQuerySemiInstantiated(const std::vector<std::string> &expr, bool isTimed,
+                                         ltlf_query *result, bool areArgsTimed, const std::vector<ltlf> *ARGS,
+                                         const ltlf_query_t &casusu,
+                                         const std::vector<std::unordered_map<std::string, DataPredicate>> *joinCondition,
+                                         bool isAct);
 };
 
 std::ostream & human_readable_ltlf_printing(std::ostream &os, const ltlf_query* syntax);
