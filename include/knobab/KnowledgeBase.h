@@ -216,6 +216,8 @@ public:
 
     // Second part of the pipeline
     std::vector<std::pair<std::pair<trace_t, event_t>, double>>  exists(const std::pair<const uint32_t, const uint32_t>& indexes, const uint16_t& amount) const;
+    std::vector<std::pair<std::pair<trace_t, event_t>, double>> absence(const std::pair<const uint32_t, const uint32_t>& indexes, const uint16_t& amount) const;
+
 
     std::vector<std::pair<std::pair<trace_t, event_t>, double>> exists(const std::pair<const uint32_t, const uint32_t>& indexes) const {
         std::vector<std::pair<std::pair<trace_t, event_t>, double>> foundElems;

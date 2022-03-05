@@ -649,9 +649,10 @@ std::vector<std::pair<std::pair<trace_t, event_t>, double>> KnowledgeBase::exist
     std::vector<std::pair<std::pair<trace_t, event_t>, double>> foundElems;
 
     for (auto it = count_table.table.begin() + indexes.first; it != count_table.table.begin() + indexes.second + 1; ++it) {
-        uint16_t approxConstant = act_table_by_act_id.getTraceLength(it->id.parts.trace_id) / 2;
-        double satisfiability = getSatisifiabilityBetweenValues(amount, it->id.parts.event_id, approxConstant);
-        foundElems.emplace_back(std::pair<trace_t, event_t>{it->id.parts.trace_id, 0}, satisfiability);
+        //uint16_t approxConstant = act_table_by_act_id.getTraceLength(it->id.parts.trace_id) / 2;
+        //double satisfiability = getSatisifiabilityBetweenValues(amount, it->id.parts.event_id, approxConstant);
+        if (it->id.parts.event_id >= amount)
+            foundElems.emplace_back(std::pair<trace_t, event_t>{it->id.parts.trace_id, 0}, 1.0);
     }
 
     return foundElems;
@@ -941,6 +942,20 @@ dataContainer KnowledgeBase::exists(const std::string &act, bool markEventsForMa
         foundData.emplace_back(timePair, dataPair);
     }
     return foundData;
+}
+
+std::vector<std::pair<std::pair<trace_t, event_t>, double>>
+KnowledgeBase::absence(const std::pair<const uint32_t, const uint32_t> &indexes, const uint16_t &amount) const {
+    std::vector<std::pair<std::pair<trace_t, event_t>, double>> foundElems;
+
+    for (auto it = count_table.table.begin() + indexes.first; it != count_table.table.begin() + indexes.second + 1; ++it) {
+        //uint16_t approxConstant = act_table_by_act_id.getTraceLength(it->id.parts.trace_id) / 2;
+        //double satisfiability = getSatisifiabilityBetweenValues(amount, it->id.parts.event_id, approxConstant);
+        if (it->id.parts.event_id < amount)
+            foundElems.emplace_back(std::pair<trace_t, event_t>{it->id.parts.trace_id, 0}, 1.0);
+    }
+
+    return foundElems;
 }
 
 

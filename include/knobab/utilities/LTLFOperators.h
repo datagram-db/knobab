@@ -441,7 +441,7 @@ dataContainer negateUntimed(TableSection &data_untimed, const std::vector<size_t
     for (; first1 != last1; ) {
         if (first2 == last2) {
             do {
-                result.emplace_back(std::make_pair(first1, 0), std::make_pair(1.0, std::vector<uint16_t>{}));
+                result.emplace_back(std::make_pair(first1++, 0), std::make_pair(1.0, std::vector<uint16_t>{}));
             } while (first1 != last1);
         }
         if (first1 > first2->first.first) {

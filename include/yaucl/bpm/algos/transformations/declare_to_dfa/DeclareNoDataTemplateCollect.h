@@ -78,7 +78,7 @@ public:
             switch (template_.first) {
                 case Existence:
                 case Absence:
-                case Absence2:
+                //case Absence2:
                 //case Exactly:
                 case End:
                 case Init:

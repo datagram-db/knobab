@@ -341,7 +341,7 @@ void generate_traces(const std::string& log_file = "data/testing/nologolog.txt",
         size_t modelThis = 14;
         std::ofstream file{"tests/test.txt"};
         generateBenchmarkForTests(log_file, 4,std::vector<DeclareDataAware>{DeclareDataAware::binary(NotCoExistence, "C", "B"),
-                                                                                            DeclareDataAware::unary(Absence2, "C", 1),
+                                                                                            //DeclareDataAware::unary(Absence2, "C", 1),
                                                                                             DeclareDataAware::unary(Existence, "B", 1),
                                                                                             DeclareDataAware::binary(Succession, "C", "B"),
                                                                                             DeclareDataAware::binary(AltPrecedence, "C", "B")

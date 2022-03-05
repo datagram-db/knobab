@@ -22,7 +22,11 @@ MAXSatPipeline::MAXSatPipeline(size_t nThreads)
 {
     // TODO: with different specifications
     for (declare_templates t : magic_enum::enum_values<declare_templates>()) {
-        if (isUnaryPredicate(t)) continue; // discarding unary predicates
+        if (isUnaryPredicate(t)) continue;/*
+        ltlf_semantics.emplace(t, DeclareDataAware::unary(t, LEFT_ATOM, 1)
+                .toFiniteSemantics(false)
+                .nnf(false)).first->second.mark_join_condition(LEFT_ATOM, RIGHT_ATOM);
+        else */
         ltlf_semantics.emplace(t, DeclareDataAware::binary(t, LEFT_ATOM, RIGHT_ATOM)
                 .toFiniteSemantics(false)
                 .nnf(false)).first->second.mark_join_condition(LEFT_ATOM, RIGHT_ATOM);
@@ -80,25 +84,52 @@ void MAXSatPipeline::data_chunk(CNFDeclareDataAware *model,
 
             ltlf_query *formula;
             if (item.casusu == Init) {
+                formula = qm.init1(item.left_act, item.left_decomposed_atoms);
                 if ((item.left_decomposed_atoms.size() == 1) && (*item.left_decomposed_atoms.begin() == item.left_act)) {
-                    formula = qm.init1(item.left_act, item.left_decomposed_atoms);
-                    generateAtomQuery(toUseAtoms, empty_result, item, formula, InitQuery);
+                    generateAtomQuery(toUseAtoms, empty_result, item, formula, InitQuery, 0);
                 } else {
-                    // TODO: withData
+                    std::unordered_map<std::string, std::unordered_set<bool>> collection;
+                    std::vector<std::string> LDA{item.left_decomposed_atoms.begin(), item.left_decomposed_atoms.end()};
+                    collection[LEFT_ATOM] = {false};
+                    localExtract(atomization, toUseAtoms, ref, item.left_decomposed_atoms, LEFT_ATOM, false);
+                    qm.getQuerySemiInstantiated(LDA, false, formula, true, nullptr, formula->casusu, nullptr,
+                                             false);
                 }
             } else if (item.casusu == End) {
+                formula = qm.end1(item.left_act, item.left_decomposed_atoms);
                 if ((item.left_decomposed_atoms.size() == 1) && (*item.left_decomposed_atoms.begin() == item.left_act)) {
-                    formula = qm.end1(item.left_act, item.left_decomposed_atoms);
-                    generateAtomQuery(toUseAtoms, empty_result, item, formula, EndsQuery);
+                    generateAtomQuery(toUseAtoms, empty_result, item, formula, EndsQuery, 0);
                 } else {
-                    // TODO: withData
+                    std::unordered_map<std::string, std::unordered_set<bool>> collection;
+                    std::vector<std::string> LDA{item.left_decomposed_atoms.begin(), item.left_decomposed_atoms.end()};
+                    collection[LEFT_ATOM] = {false};
+                    localExtract(atomization, toUseAtoms, ref, collection, item.left_decomposed_atoms, LEFT_ATOM);
+                    qm.getQuerySemiInstantiated(LDA, false, formula, true, nullptr, formula->casusu, nullptr,
+                                                false);
                 }
             } else if (item.casusu == Existence) {
+                formula = qm.exists(item.left_act, item.left_decomposed_atoms, item.n);
                 if ((item.left_decomposed_atoms.size() == 1) && (*item.left_decomposed_atoms.begin() == item.left_act)) {
-                    formula = qm.exists1(item.left_act, item.left_decomposed_atoms);
-                    generateAtomQuery(toUseAtoms, empty_result, item, formula, ExistsQuery);
+                    generateAtomQuery(toUseAtoms, empty_result, item, formula, ExistsQuery, item.n);
                 } else {
-                    // TODO: withData
+                    std::unordered_map<std::string, std::unordered_set<bool>> collection;
+                    std::vector<std::string> LDA{item.left_decomposed_atoms.begin(), item.left_decomposed_atoms.end()};
+                    collection[LEFT_ATOM] = {false};
+                    localExtract(atomization, toUseAtoms, ref, collection, item.left_decomposed_atoms, LEFT_ATOM);
+                    qm.getQuerySemiInstantiated(LDA, false, formula, true, nullptr, formula->casusu, nullptr,
+                                                false);
+                }
+            } else if (item.casusu == Absence) {
+                formula = qm.absence(item.left_act, item.left_decomposed_atoms, item.n);
+                if ((item.left_decomposed_atoms.size() == 1) && (*item.left_decomposed_atoms.begin() == item.left_act)) {
+                    generateAtomQuery(toUseAtoms, empty_result, item, formula, AbsenceQuery, item.n);
+                } else {
+                    std::unordered_map<std::string, std::unordered_set<bool>> collection;
+                    std::vector<std::string> LDA{item.left_decomposed_atoms.begin(), item.left_decomposed_atoms.end()};
+                    collection[LEFT_ATOM] = {false};
+                    localExtract(atomization, toUseAtoms, ref, collection, item.left_decomposed_atoms, LEFT_ATOM);
+                    qm.getQuerySemiInstantiated(LDA, false, formula, true, nullptr, formula->casusu, nullptr,
+                                                false);
                 }
             }
 
@@ -208,9 +239,11 @@ void MAXSatPipeline::data_chunk(CNFDeclareDataAware *model,
 void
 MAXSatPipeline::generateAtomQuery(std::vector<std::string> &toUseAtoms,
                                   std::vector<std::pair<std::pair<trace_t, event_t>, double>> &empty_result,
-                                  DeclareDataAware &item, ltlf_query *formula, DataQueryType r) {
+                                  DeclareDataAware &item, ltlf_query *formula, DataQueryType r,
+                                  size_t numeric_argument) {
     size_t offset;
     auto q = DataQuery::AtomQueries(r, item.left_act);
+    q.numeric_argument = numeric_argument;
     size_t tmpDataAccessingSize = data_accessing.size();
     auto find = data_offset.emplace(q, tmpDataAccessingSize);
     if (find.second){
@@ -242,20 +275,25 @@ MAXSatPipeline::localExtract(const AtomizingPipeline &atomization,
     auto it = collection.find(collectionMapKey);
     if (it != collection.end()) {
         for (bool isNegated : it->second) {
-            const auto& local_decomposition = ref.emplace(std::pair<bool, std::string>{isNegated, collectionMapKey},
-                                                          isNegated ?
-                                                          unordered_difference(atomization.atom_universe, decomposition)
-                                                                    : decomposition).first->second;
-            for (const auto& x : local_decomposition) {
-                //toUseAtoms.insert(x);
-                atomToFormulaId[x].emplace_back(maxFormulaId);
-            }
-            toUseAtoms.insert(toUseAtoms.end(), local_decomposition.begin(), local_decomposition.end());
+            localExtract(atomization, toUseAtoms, ref, decomposition, collectionMapKey, isNegated);
         }
     }
 }
 
-
+void MAXSatPipeline::localExtract(const AtomizingPipeline &atomization, std::vector<std::string> &toUseAtoms,
+                                  std::unordered_map<std::pair<bool, std::string>, label_set_t> &ref,
+                                  const std::unordered_set<std::string> &decomposition,
+                                  const std::string &collectionMapKey, bool isNegated) {
+    const auto& local_decomposition = ref.emplace(std::pair<bool, std::string>{isNegated, collectionMapKey},
+                                                  isNegated ?
+                                                  unordered_difference(atomization.atom_universe, decomposition)
+                                                            : decomposition).first->second;
+    for (const auto& x : local_decomposition) {
+        //toUseAtoms.insert(x);
+        atomToFormulaId[x].emplace_back(maxFormulaId);
+    }
+    toUseAtoms.insert(toUseAtoms.end(), local_decomposition.begin(), local_decomposition.end());
+}
 
 
 static inline void setUnion(const partial_result& lhs,
@@ -465,7 +503,10 @@ void MAXSatPipeline::data_pipeline_first(const KnowledgeBase& kb) {
                 // TODO: Given the query in ref.first, put the result in ref.second
                 switch (ref.first.type) {
                     case ExistsQuery:
-                        ref.second = kb.exists(kb.resolveCountingData(ref.first.label));
+                        ref.second = kb.exists(kb.resolveCountingData(ref.first.label), ref.first.numeric_argument);
+                        break;
+                    case AbsenceQuery:
+                        ref.second = kb.absence(kb.resolveCountingData(ref.first.label), ref.first.numeric_argument);
                         break;
                     case InitQuery:
                         ref.second = kb.initOrig<std::pair<uint32_t, uint16_t>, double>(ref.first.label).traceApproximations;
@@ -575,13 +616,22 @@ void MAXSatPipeline::data_pipeline_first(const KnowledgeBase& kb) {
 
     auto it = qm.Q.rbegin(), en = qm.Q.rend();
     for (; it != en; it++) {
+        dataContainer tmp_result;
+
         PARALLELIZE_LOOP_BEGIN(pool, 0, it->second.size(), lb, ub)
             for (size_t j = lb; j < ub; j++) {
                 auto formula = it->second.at(j); // TODO: run this query
                 switch (formula->casusu) {
                     case Q_TRUE:
+                        assert(false);
                         break;
+
                     case Q_NEXT:
+                        if (formula->isTimed) {
+                            // TODO
+                        } else {
+                            formula->result = next(formula->args.at(0)->result);
+                        }
                         break;
 
                     case Q_FALSE:
@@ -590,9 +640,23 @@ void MAXSatPipeline::data_pipeline_first(const KnowledgeBase& kb) {
                         break;
 
                     case Q_ACT:
+                        formula->result = local_union(formula->partial_results, results_cache, formula->isLeaf);
+                        break;
+
                     case Q_INIT:
+                        formula->result = local_union(formula->partial_results, results_cache, formula->isLeaf);
+                        formula->result.erase(std::remove_if(formula->result.begin(),
+                                                             formula->result.end(),
+                                                  [](const auto&  x){return x.first.second > 0;}),
+                                              formula->result.end());
+                        break;
+
                     case Q_END:
                         formula->result = local_union(formula->partial_results, results_cache, formula->isLeaf);
+                        formula->result.erase(std::remove_if(formula->result.begin(),
+                                                             formula->result.end(),
+                                                             [kb](const auto&  x){return x.first.second < kb.act_table_by_act_id.trace_length.at(x.first.first)-1;}),
+                                              formula->result.end());
                         break;
 
                     case Q_AND:
@@ -611,7 +675,7 @@ void MAXSatPipeline::data_pipeline_first(const KnowledgeBase& kb) {
 
                     case Q_BOX:
                         if (formula->isTimed) {
-
+                            // TODO
                         } else {
                             formula->result = global(formula->args.at(0)->result, kb.act_table_by_act_id.trace_length);
                         }
@@ -620,6 +684,7 @@ void MAXSatPipeline::data_pipeline_first(const KnowledgeBase& kb) {
                         break;
                     case Q_UNTIL:
                         if (formula->isTimed) {
+                            // TODO
                         } else {
                             formula->result = until(formula->args.at(0)->result,
                                                     formula->args.at(1)->result,
@@ -628,12 +693,64 @@ void MAXSatPipeline::data_pipeline_first(const KnowledgeBase& kb) {
                         }
                         break;
                     case Q_RELEASE:
+                        assert(false);
                         break;
                     case Q_LAST:
                         break;
 
-                    case Q_EXISTS:
                         break;
+                    case Q_EXISTS: {
+                        bool isFirstIteration = true;
+                        uint32_t traceId = 0;
+                        uint16_t eventCount = 0;
+                        tmp_result = local_union(formula->partial_results, results_cache, formula->isLeaf);
+                        for (auto ref = tmp_result.begin(); ref != tmp_result.end(); ) {
+                            if (isFirstIteration) {
+                                traceId = ref->first.first;
+                                eventCount = 1;
+                                isFirstIteration = false;
+                            } else {
+                                if ((traceId != ref->first.first)) {
+                                    if ((eventCount >= formula->numeric_arg)) {
+                                        formula->result.emplace_back(std::make_pair(traceId, 0), std::make_pair(1.0, std::vector<uint16_t >{}));
+                                    }
+                                    traceId = ref->first.first;
+                                    eventCount = 1;
+                                } else eventCount++;
+                            }
+                            ref = tmp_result.erase(ref);
+                        }
+                        if ((eventCount >= formula->numeric_arg)) {
+                            formula->result.emplace_back(std::make_pair(traceId, 0), std::make_pair(1.0, std::vector<uint16_t >{}));
+                        }
+                    } break;
+
+                    case Q_ABSENCE: {
+                        bool isFirstIteration = true;
+                        uint32_t traceId = 0;
+                        uint16_t eventCount = 0;
+                        tmp_result = local_union(formula->partial_results, results_cache, formula->isLeaf);
+                        for (auto ref = tmp_result.begin(); ref != tmp_result.end(); ) {
+                            if (isFirstIteration) {
+                                traceId = ref->first.first;
+                                eventCount = 1;
+                                isFirstIteration = false;
+                            } else {
+                                if ((traceId != ref->first.first)) {
+                                    if ((eventCount >= formula->numeric_arg)) {
+                                        formula->result.emplace_back(std::make_pair(traceId, 0), std::make_pair(1.0, std::vector<uint16_t >{}));
+                                    }
+                                    traceId = ref->first.first;
+                                    eventCount = 1;
+                                } else eventCount++;
+                            }
+                            ref = tmp_result.erase(ref);
+                        }
+                        if ((eventCount >= formula->numeric_arg)) {
+                            formula->result.emplace_back(std::make_pair(traceId, 0), std::make_pair(1.0, std::vector<uint16_t >{}));
+                        }
+                        formula->result = negateUntimed(formula->result, kb.act_table_by_act_id.trace_length, false);
+                    } break;
                 }
             }
         PARALLELIZE_LOOP_END
