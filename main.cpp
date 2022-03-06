@@ -22,7 +22,8 @@
 void whole_testing(const std::string& log_file = "data/testing/log.txt",
                    const std::vector<std::string>& declare_files = {"data/testing/SimpleComposition.txt"},
                    bool doDebugServer = false,
-                   const std::string& benchmarking_file = "") {
+                   const std::string& benchmarking_file = "",
+                   const std::string& sqlminer_dump_dir = "") {
     Environment env;
     env.clear();
 
@@ -33,6 +34,9 @@ void whole_testing(const std::string& log_file = "data/testing/log.txt",
 
     std::cout << "Loading the log file: " << log_file << std::endl;
     env.load_log(HUMAN_READABLE_YAUCL, true, log_file, false);
+    if (!sqlminer_dump_dir.empty()) {
+        env.dump_log_for_sqlminer(sqlminer_dump_dir);
+    }
 
     for (const auto& declare_file : declare_files) {
         std::cout << "Loading the declarative model from file: " << declare_file << std::endl;
@@ -609,6 +613,7 @@ int main(int argc, char **argv) {
     bool setUpServer = false;
     std::string log_file = "data/testing/log.txt";
     std::string benchmark = "";
+    std::string sql_miner_dump_folder = "";
     std::vector<std::string> queriesV{"data/testing/SimpleComposition.txt"};
     args::ArgumentParser parser("KnoBAB  (c) 2020-2022 by Giacomo Bergami & Samuel 'Sam' Appleby.", "This free and open software program implements the MaxSat problem via a Knowledge Base, KnoBAB. Nicer things are still to come!");
     args::HelpFlag help(parser, "help", "Display this help menu", {'h', "help"});
@@ -617,6 +622,7 @@ int main(int argc, char **argv) {
     args::ValueFlag<std::string> logFile(parser, "Log", "The Log to load into the knowledgebase", {'l', "log"});
     args::ValueFlagList<std::string> queries(parser, "Models/Queries", "The queries expressed as Declare models", {'d', "declare"});
     args::ValueFlag<std::string> benchmarkFile(parser, "Benchmark File", "Appends the current result data into a benchmark file", {'b', "csv"});
+    args::ValueFlag<std::string>  sqlMinerDump(parser, "SQLMinerDump", "If present, specifies the dump for the SQL miner representation", {'s', "sqlminer"});
 
     try {
         parser.ParseCLI(argc, argv);
@@ -647,7 +653,10 @@ int main(int argc, char **argv) {
     if (benchmarkFile) {
         benchmark = args::get(benchmarkFile);
     }
-    whole_testing(log_file, queriesV, setUpServer, benchmark);
+    if (sqlMinerDump) {
+        sql_miner_dump_folder = args::get(sqlMinerDump);
+    }
+    whole_testing(log_file, queriesV, setUpServer, benchmark, sql_miner_dump_folder);
 
     //generate_nonunary_templates();
     //test_data_query();
@@ -657,6 +666,10 @@ int main(int argc, char **argv) {
     //generate_traces();
     //ltlf_operators_testing();
     //sam_testing();
+
+    // --declare data/testing/AbsenceA.txt --server --log data/testing/log_until.txt
+
+    // --sqlminer /home/giacomo/IdeaProjects/JavaConcurrentAPI/SQLMinerBenchmarker/log --log data/testing/log_until.txt
 
     return 0;
 }

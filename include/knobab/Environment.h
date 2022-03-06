@@ -36,6 +36,8 @@ struct Environment {
 
     void server(MAXSatPipeline& pipeline);
 
+    void dump_log_for_sqlminer(const std::string &basicString);
+
 public:
 
     LoggerInformation experiment_logger;

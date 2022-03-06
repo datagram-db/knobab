@@ -921,11 +921,9 @@ KnowledgeBase::initOrEnds(const std::string &act, bool beginOrEnd, bool doExtrac
     return foundData;
 }
 
-dataContainer KnowledgeBase::exists(const std::string &act, bool markEventsForMatch) const {
-    dataContainer foundData;
+std::vector<std::pair<std::pair<trace_t, event_t>, double>> KnowledgeBase::exists(const std::string &act) const {
+    std::vector<std::pair<std::pair<trace_t, event_t>, double>> foundData;
     std::pair<uint32_t, uint16_t> timePair;
-    std::pair<double, std::vector<uint16_t>> dataPair{1.0, {}};
-    if (markEventsForMatch) dataPair.second.emplace_back(0);
     const uint16_t& mappedVal = getMappedValueFromAction(act);
     if(mappedVal < 0){
         return foundData;
@@ -937,9 +935,7 @@ dataContainer KnowledgeBase::exists(const std::string &act, bool markEventsForMa
     for (auto it = act_table_by_act_id.table.begin() + indexes.first; it != act_table_by_act_id.table.begin() + indexes.second + 1; ++it) {
         timePair.first = it->entry.id.parts.trace_id;
         timePair.second = it->entry.id.parts.event_id;
-        if (markEventsForMatch)
-            dataPair.second[0] = timePair.second;
-        foundData.emplace_back(timePair, dataPair);
+        foundData.emplace_back(timePair, 1.0);
     }
     return foundData;
 }
@@ -956,6 +952,66 @@ KnowledgeBase::absence(const std::pair<const uint32_t, const uint32_t> &indexes,
     }
 
     return foundElems;
+}
+
+void KnowledgeBase::dump_for_sqlminer(std::ostream &log, std::ostream &payload, std::ostream &schema_configuration) {
+    constexpr size_t record_size = sizeof(ActTable::record);
+    size_t eventId = 0;
+    // Writing the schema associated to the payload
+    schema_configuration << "event_id\tbigint" << std::endl;
+    for (const auto kv : this->attribute_name_to_table) {
+        std::string data = kv.first;
+        // convert string to back to lower case
+        std::for_each(data.begin(), data.end(), [](char & c) {
+            c = ::tolower(c);
+        });
+        schema_configuration << data << '\t';
+        switch (kv.second.type) {
+            case DoubleAtt:
+                schema_configuration <<"real" << std::endl;
+                break;
+            case SizeTAtt:
+            case LongAtt:
+                schema_configuration <<"bigint" << std::endl;
+                break;
+                break;
+            case StringAtt:
+                schema_configuration <<"varchar" << std::endl;
+                break;
+            case BoolAtt:
+                schema_configuration <<"boolean" << std::endl;
+                break;
+        }
+    }
+    for (size_t trace_id = 0, N = act_table_by_act_id.secondary_index.size(); trace_id < N; trace_id++) {
+        //os << "Trace #" << trace_id << std::endl << "\t- ";
+        const auto& ref = act_table_by_act_id.secondary_index[trace_id];
+        auto ptr = ref.first;
+        size_t time = 0;
+        while (ptr) {
+            size_t offset = (((size_t)ptr) - ((size_t)act_table_by_act_id.table.data()));
+            offset = offset / record_size;
+            // printing one event at a time
+            log << eventId << "\t" << trace_id << "\t" << event_label_mapper.get(ptr->entry.id.parts.act) << "\t" << time << std::endl;
+            payload << eventId << "\t";
+            auto it = this->attribute_name_to_table.begin(), en = this->attribute_name_to_table.end();
+            while (it != en) {
+                const AttributeTable::record* recordPtr = it->second.resolve_record_if_exists(offset);
+                if (recordPtr) {
+                    assert(recordPtr->act_table_offset == offset);
+                    it->second.resolve_and_print(payload, *recordPtr);
+                }
+                it++;
+                if (it != en)
+                    payload << "\t";
+                else
+                    payload << std::endl;
+            }
+            ptr = ptr->next;
+            eventId++;
+            time++;
+        };
+    }
 }
 
 
