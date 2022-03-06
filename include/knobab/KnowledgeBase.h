@@ -93,6 +93,7 @@ public:
 
     void reconstruct_trace_no_data(std::ostream& os) const;
     void reconstruct_trace_with_data(std::ostream& os) const;
+    void dump_for_sqlminer(std::ostream& log, std::ostream& payload, std::ostream& schema_configuration);
     void print_count_table(std::ostream& os) const;
     void print_act_table(std::ostream& os) const;
     void print_attribute_tables(std::ostream& os) const;
@@ -229,7 +230,7 @@ public:
 
     dataContainer init(const std::string& act, bool doExtractEvent, const double minThreshold = 1) const;
     dataContainer ends(const std::string& act, bool doExtractEvent, const double minThreshold = 1) const;
-    dataContainer exists(const std::string& act, bool markEventsForMatch) const;
+    std::vector<std::pair<std::pair<trace_t, event_t>, double>> exists(const std::string& act) const;
 
     template <typename traceIdentifier, typename traceValue>
     TraceData<traceIdentifier, traceValue> initOrig(const std::string& act, const double minThreshold = 1) const{

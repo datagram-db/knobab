@@ -560,3 +560,17 @@ void Environment::load_log(log_data_format format, bool loadData, const std::str
     load_log(format, loadData, filename, setMaximumStrLen,f);
 }
 
+void Environment::dump_log_for_sqlminer(const std::string &basicString) {
+    namespace fs = std::filesystem;
+    fs::path parent = basicString;
+    if (!fs::is_directory(parent) || !fs::exists(parent)) { // Check if src folder exists
+        fs::create_directories(parent); // create src folder
+    }
+
+    std::ofstream log_table{parent / "log.tab"},
+                  schema{parent / "payloadschema.tab"},
+                  payload{parent / "payload.tab"};
+
+    db.dump_for_sqlminer(log_table, payload, schema);
+}
+

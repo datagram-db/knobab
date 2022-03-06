@@ -7,4 +7,6 @@ if [ ! -d prom-6.11-all-platforms ]; then
      tar xvzf prom-6.11-all-platforms.tar.gz 
      rm prom-6.11-all-platforms.tar.gz
 fi
+cp ../*.sh .
+rm prom_dependencies.sh
 popd

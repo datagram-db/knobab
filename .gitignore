@@ -10,3 +10,7 @@ test/*
 *.pdf
 *.dot
 dist/libantlr4-runtime.a
+competitors/SQLMinerBenchmarker/target/*
+competitors/SQLMinerBenchmarker/log/*.tab
+competitors/SQLMinerBenchmarker/.idea
+competitors/SQLMinerBenchmarker/.idea/*

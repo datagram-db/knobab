@@ -505,6 +505,9 @@ void MAXSatPipeline::data_pipeline_first(const KnowledgeBase& kb) {
                     case ExistsQuery:
                         ref.second = kb.exists(kb.resolveCountingData(ref.first.label), ref.first.numeric_argument);
                         break;
+                    case AtomQuery:
+                        ref.second = kb.exists(ref.first.label);
+                        break;
                     case AbsenceQuery:
                         ref.second = kb.absence(kb.resolveCountingData(ref.first.label), ref.first.numeric_argument);
                         break;
@@ -514,7 +517,7 @@ void MAXSatPipeline::data_pipeline_first(const KnowledgeBase& kb) {
                     case EndsQuery:
                         ref.second = kb.endsOrig<std::pair<uint32_t, uint16_t>, double>(ref.first.label).traceApproximations;
                         break;
-                    //case AtomQuery:
+                    //
                     //    // TODO: ref.second = kb.exists<std::pair<uint32_t, uint16_t>, double>(ref.first.label).traceApproximations;
                     //    break;
                     default:
