@@ -630,15 +630,10 @@ void MAXSatPipeline::data_pipeline_first(const KnowledgeBase& kb) {
                         break;
 
                     case Q_NEXT:
-                        if (formula->isTimed) {
-                            // TODO
-                        } else {
-                            formula->result = next(formula->args.at(0)->result);
-                        }
+                        formula->result = next(formula->args.at(0)->result);
                         break;
 
                     case Q_FALSE:
-                        // Empty result by default
                         formula->result.clear();
                         break;
 
@@ -678,13 +673,19 @@ void MAXSatPipeline::data_pipeline_first(const KnowledgeBase& kb) {
 
                     case Q_BOX:
                         if (formula->isTimed) {
-                            // TODO
+                            // TODO! better implementation
                         } else {
                             formula->result = global(formula->args.at(0)->result, kb.act_table_by_act_id.trace_length);
                         }
                         break;
                     case Q_DIAMOND:
-                        break;
+                        if (formula->isTimed)
+                            formula->result = future_logic_timed(formula->args[0]->result);
+                        else {
+                            formula->result = future_logic_untimed(formula->args[0]->result);
+                        }
+
+
                     case Q_UNTIL:
                         if (formula->isTimed) {
                             // TODO
