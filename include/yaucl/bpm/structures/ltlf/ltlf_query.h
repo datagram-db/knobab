@@ -32,7 +32,7 @@ enum ltlf_query_t {
     Q_ABSENCE
 };
 
-#include <knobab/dataStructures/LeafType.h>
+#include <knobab/operators/semantics.h>
 
 struct ltlf_query {
     bool isTimed = false;

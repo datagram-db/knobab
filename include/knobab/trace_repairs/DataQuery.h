@@ -10,7 +10,7 @@
 #include <yaucl/hashing/hashing.h>
 #include <yaucl/hashing/hash_combine.h>
 #include <yaucl/structures/default_constructors.h>
-#include <knobab/dataStructures/LeafType.h>
+#include <knobab/operators/semantics.h>
 
 enum DataQueryType {
     ExistsQuery,

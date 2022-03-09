@@ -23,4 +23,17 @@ static const std::vector<uint16_t> maxVec(max,max);
 
 using dataContainer = std::vector<std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>>;
 
+enum LeafType {
+    ActivationLeaf,
+    TargetLeaf,
+    NoneLeaf,
+    NotALeaf,
+    MatchActivationTarget
+};
+
+#include <vector>
+#include <utility>
+
+using partial_result = std::vector<std::pair<std::pair<uint32_t , uint16_t>, double>>;
+
 #endif //KNOBAB_SEMANTICS_H
