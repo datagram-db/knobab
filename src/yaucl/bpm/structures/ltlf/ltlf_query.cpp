@@ -142,6 +142,7 @@ ltlf_query* ltlf_query_manager::simplify(const ltlf& expr,  bool isTimed) {
 
         result= getQuerySemiInstantiated(expr.rewritten_act, isTimed, result, areArgsTimed, ARGS, casusu, joinCondition,
                                         isAct);
+        result->isLeaf = expr.leafType;
         conversion_map_for_subexpressions[q] =result;
         return result;
     }
@@ -288,10 +289,11 @@ void ltlf_query_manager::finalize_unions(const std::vector<ltlf_query*>& W) {
 
         }
         ltlf_query* q = simplify(r, true);
-        q->isLeaf = NotALeaf;
+        auto tmpValue = atomsToDecomposeInUnion[ref.first]->isLeaf;
+        q->isLeaf = tmpValue;
         *atomsToDecomposeInUnion[ref.first] = *q;
         //delete q; //this will not delete the other nodes, recursively. TODO: this should be done in clear() and avoid leaks
-        atomsToDecomposeInUnion[ref.first]->isLeaf = NotALeaf;
+        atomsToDecomposeInUnion[ref.first]->isLeaf = tmpValue;
     }
 
     // Making ready for the parallelization of the query execution by setting it into layers
@@ -304,6 +306,7 @@ void ltlf_query_manager::finalize_unions(const std::vector<ltlf_query*>& W) {
             adj->parentMin = std::min(adj->parentMin, subFormula->dis);
         }
     }
+
     for (const auto& subFormula: topological_order) {
         Q[subFormula->dis].emplace_back(subFormula);
     }
