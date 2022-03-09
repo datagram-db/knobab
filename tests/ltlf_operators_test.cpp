@@ -19,7 +19,8 @@ auto sizes = curr.parent_path().parent_path() / "data" /"testing"/"ltlf" / (base
 ss.open(filename);\
 std::ifstream fs{sizes};                                               \
 char c;                                                         \
-fs >> pos >> c >> neg;\
+fs >> pos >> c >> neg;                                          \
+env.doStats = false;                                            \
 env.load_log(TAB_SEPARATED_EVENTS, true, filename, false, ss);\
 }\
 \

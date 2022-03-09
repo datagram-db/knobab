@@ -52,7 +52,7 @@ semantic_atom_set evaluate_easy_prop_to_atoms(const easy_prop &prop,
 struct Environment {
     /// Creating an instance of the knowledge base, that is going to store all the traces in the log!
 
-
+    bool doStats = true;
     KnowledgeBase db;
     AtomizingPipeline ap;
     GroundingStrategyConf grounding_conf;
