@@ -22,21 +22,29 @@ After compiling the tool with CMake, the final project is delivered as a server(
   OPTIONS:
 
       -h, --help                        Display this help menu
+      This group is all exclusive:
+      -l[Log], --log=[Log]              The Log, in human readable format, to
+                                        load into the knowledgebase
+      -x[XES], --xes=[XES]              The Log in xes format to load into the
+                                        knowledgebase
       You can use the following
       parameters
         -s, --server                      Runs the HTTP server for visualizing
                                           the internal representation of both
                                           the knowledge base and the associated
                                           query plan
-      -l[Log], --log=[Log]              The Log to load into the knowledgebase
       -d[Models/Queries...],
       --declare=[Models/Queries...]     The queries expressed as Declare models
       -b[Benchmark File],
       --csv=[Benchmark File]            Appends the current result data into a
                                         benchmark file
+      -s[SQLMinerDump],
+      --sqlminer=[SQLMinerDump]         If present, specifies the dump for the
+                                        SQL miner representation
 
     This free and open software program implements the MaxSat problem via a
     Knowledge Base, KnoBAB. Nicer things are still to come!
+
 ```
 
 In order to run multiple queries stored in different files over one single model, you can run this command:

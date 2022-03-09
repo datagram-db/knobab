@@ -20,6 +20,7 @@
 
 
 void whole_testing(const std::string& log_file = "data/testing/log.txt",
+                   log_data_format format = HUMAN_READABLE_YAUCL,
                    const std::vector<std::string>& declare_files = {"data/testing/SimpleComposition.txt"},
                    bool doDebugServer = false,
                    const std::string& benchmarking_file = "",
@@ -33,7 +34,7 @@ void whole_testing(const std::string& log_file = "data/testing/log.txt",
     }
 
     std::cout << "Loading the log file: " << log_file << std::endl;
-    env.load_log(HUMAN_READABLE_YAUCL, true, log_file, false);
+    env.load_log(format, true, log_file, false);
     if (!sqlminer_dump_dir.empty()) {
         env.dump_log_for_sqlminer(sqlminer_dump_dir);
     }
@@ -611,15 +612,21 @@ void sam_testing() {
 int main(int argc, char **argv) {
 
     bool setUpServer = false;
+    log_data_format format = HUMAN_READABLE_YAUCL;
     std::string log_file = "data/testing/log.txt";
     std::string benchmark = "";
     std::string sql_miner_dump_folder = "";
     std::vector<std::string> queriesV{"data/testing/SimpleComposition.txt"};
     args::ArgumentParser parser("KnoBAB  (c) 2020-2022 by Giacomo Bergami & Samuel 'Sam' Appleby.", "This free and open software program implements the MaxSat problem via a Knowledge Base, KnoBAB. Nicer things are still to come!");
     args::HelpFlag help(parser, "help", "Display this help menu", {'h', "help"});
+
+    args::Group file_format(parser, "This group is all exclusive:", args::Group::Validators::Xor);
+    args::ValueFlag<std::string> logFile(parser, "Log", "The Log, in human readable format, to load into the knowledgebase", {'l', "log"});
+    args::ValueFlag<std::string> xesFile(parser, "XES", "The Log in xes format to load into the knowledgebase", {'x', "xes"});
+
     args::Group group(parser, "You can use the following parameters", args::Group::Validators::DontCare, args::Options::Global);
     args::Flag server(group, "server", "Runs the HTTP server for visualizing the internal representation of both the knowledge base and the associated query plan", {'s', "server"});
-    args::ValueFlag<std::string> logFile(parser, "Log", "The Log to load into the knowledgebase", {'l', "log"});
+
     args::ValueFlagList<std::string> queries(parser, "Models/Queries", "The queries expressed as Declare models", {'d', "declare"});
     args::ValueFlag<std::string> benchmarkFile(parser, "Benchmark File", "Appends the current result data into a benchmark file", {'b', "csv"});
     args::ValueFlag<std::string>  sqlMinerDump(parser, "SQLMinerDump", "If present, specifies the dump for the SQL miner representation", {'s', "sqlminer"});
@@ -644,6 +651,11 @@ int main(int argc, char **argv) {
     }
     if (logFile) {
         log_file = args::get(logFile);
+        format = HUMAN_READABLE_YAUCL;
+    }
+    if (xesFile) {
+        log_file = args::get(xesFile);
+        format = XES1;
     }
     if (queries) {
         queriesV.clear();
@@ -656,7 +668,7 @@ int main(int argc, char **argv) {
     if (sqlMinerDump) {
         sql_miner_dump_folder = args::get(sqlMinerDump);
     }
-    whole_testing(log_file, queriesV, setUpServer, benchmark, sql_miner_dump_folder);
+    whole_testing(log_file, format, queriesV, setUpServer, benchmark, sql_miner_dump_folder);
 
     //generate_nonunary_templates();
     //test_data_query();
