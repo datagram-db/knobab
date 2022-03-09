@@ -36,4 +36,33 @@ enum LeafType {
 
 using partial_result = std::vector<std::pair<std::pair<uint32_t , uint16_t>, double>>;
 
+template <typename T>
+std::vector<uint16_t> populateAndReturnEvents(T it1, T it2){
+    std::vector<uint16_t> vec;
+
+    for(auto itr = it1; itr != it2; ++itr){
+        for(const auto& r2 : itr->second.second){
+            vec.push_back(r2);
+        }
+    }
+
+    std::sort( vec.begin(), vec.end() );
+    vec.erase( std::unique( vec.begin(), vec.end() ), vec.end());
+
+    return vec;
+}
+
+template <typename T> void populateAndReturnEvents(T it1, T it2, std::vector<uint16_t>& vec){
+    vec.clear();
+
+    for(auto itr = it1; itr != it2; ++itr){
+        for(const auto& r2 : itr->second.second){
+            vec.push_back(r2);
+        }
+    }
+
+    std::sort( vec.begin(), vec.end() );
+    vec.erase( std::unique( vec.begin(), vec.end() ), vec.end());
+}
+
 #endif //KNOBAB_SEMANTICS_H

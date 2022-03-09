@@ -334,20 +334,7 @@ dataContainer next(const TableSection &section) {
     return temp;
 }
 
-std::vector<uint16_t> populateAndReturnEvents(auto it1, auto it2, const PredicateManager* manager = nullptr){
-    std::vector<uint16_t> vec;
 
-    for(auto itr = it1; itr != it2; ++itr){
-        for(const auto& r2 : itr->second.second){
-            vec.push_back(r2);
-        }
-    }
-
-    std::sort( vec.begin(), vec.end() );
-    vec.erase( std::unique( vec.begin(), vec.end() ), vec.end());
-
-    return vec;
-}
 
 template<typename TableSection> inline
 dataContainer global(const uint32_t &traceId, const uint16_t &startEventId, const uint16_t& endEventId, const TableSection &section) {

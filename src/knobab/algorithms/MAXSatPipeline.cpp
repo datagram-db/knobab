@@ -52,7 +52,7 @@ void MAXSatPipeline::pipeline(CNFDeclareDataAware* model,
     /// Extracting the predicates from both the LTLf semantics and the data extracted from it
     {
         auto start = std::chrono::system_clock::now();
-        data_chunk(model, atomization);
+        data_chunk(model, atomization, kb);
         auto end = std::chrono::system_clock::now();
         auto elapsed =
                 std::chrono::duration<double, std::milli>(end - start);
@@ -61,7 +61,7 @@ void MAXSatPipeline::pipeline(CNFDeclareDataAware* model,
 
     {
         auto start = std::chrono::system_clock::now();
-        data_pipeline_first(kb);
+        actual_query_running(kb);
         auto end = std::chrono::system_clock::now();
         auto elapsed =
                 std::chrono::duration<double, std::milli>(end - start);
@@ -71,7 +71,8 @@ void MAXSatPipeline::pipeline(CNFDeclareDataAware* model,
 }
 
 void MAXSatPipeline::data_chunk(CNFDeclareDataAware *model,
-                                const AtomizingPipeline& atomization) {
+                                const AtomizingPipeline& atomization,
+                                const KnowledgeBase& kb) {
 
     if (!model) return;
     std::vector<std::pair<std::pair<trace_t, event_t>, double>> empty_result{};
@@ -94,7 +95,7 @@ void MAXSatPipeline::data_chunk(CNFDeclareDataAware *model,
                     collection[LEFT_ATOM] = {false};
                     localExtract(atomization, toUseAtoms, ref, item.left_decomposed_atoms, LEFT_ATOM, false);
                     qm.getQuerySemiInstantiated(LDA, false, formula, true, nullptr, formula->casusu, nullptr,
-                                             false);
+                                             false, (KnowledgeBase*)&kb);
                 }
             } else if (item.casusu == End) {
                 formula = qm.end1(item.left_act, item.left_decomposed_atoms);
@@ -106,7 +107,7 @@ void MAXSatPipeline::data_chunk(CNFDeclareDataAware *model,
                     collection[LEFT_ATOM] = {false};
                     localExtract(atomization, toUseAtoms, ref, collection, item.left_decomposed_atoms, LEFT_ATOM);
                     qm.getQuerySemiInstantiated(LDA, false, formula, true, nullptr, formula->casusu, nullptr,
-                                                false);
+                                                false, (KnowledgeBase*)&kb);
                 }
             } else if (item.casusu == Existence) {
                 formula = qm.exists(item.left_act, item.left_decomposed_atoms, item.n);
@@ -118,7 +119,7 @@ void MAXSatPipeline::data_chunk(CNFDeclareDataAware *model,
                     collection[LEFT_ATOM] = {false};
                     localExtract(atomization, toUseAtoms, ref, collection, item.left_decomposed_atoms, LEFT_ATOM);
                     qm.getQuerySemiInstantiated(LDA, false, formula, true, nullptr, formula->casusu, nullptr,
-                                                false);
+                                                false, (KnowledgeBase*)&kb);
                 }
             } else if (item.casusu == Absence) {
                 formula = qm.absence(item.left_act, item.left_decomposed_atoms, item.n);
@@ -130,7 +131,7 @@ void MAXSatPipeline::data_chunk(CNFDeclareDataAware *model,
                     collection[LEFT_ATOM] = {false};
                     localExtract(atomization, toUseAtoms, ref, collection, item.left_decomposed_atoms, LEFT_ATOM);
                     qm.getQuerySemiInstantiated(LDA, false, formula, true, nullptr, formula->casusu, nullptr,
-                                                false);
+                                                false, (KnowledgeBase*)&kb);
                 }
             }
 
@@ -157,7 +158,7 @@ void MAXSatPipeline::data_chunk(CNFDeclareDataAware *model,
                     // Reconstructing the join
                     tmp.instantiateJoinCondition(item.conjunctive_map);
                     // Creating the formula
-                    local_formula = qm.simplify(tmp);
+                    local_formula = qm.simplify(tmp, false, (KnowledgeBase*)&kb);
                 } else {
                     // Otherwise,
                 }
@@ -175,7 +176,7 @@ void MAXSatPipeline::data_chunk(CNFDeclareDataAware *model,
 
     for (auto& ref : atomToFormulaId)
         remove_duplicates(ref.second);
-    qm.finalize_unions(W); // Time Computational Complexity: Squared on the size of the atoms
+    qm.finalize_unions(W, (KnowledgeBase*)&kb); // Time Computational Complexity: Squared on the size of the atoms
 
     /////////////////////////////// DEBUGGING
     for (const auto& ref : W) {
@@ -409,10 +410,10 @@ static inline dataContainer local_intersection(const std::set<size_t> &vecs,
     return finalResult;
 }
 
-static inline void local_union(const std::set<size_t> &vecs,
-                                        const std::vector<partial_result>& results,
-                                        dataContainer& result,
-                                        LeafType isLeaf) {
+static inline void data_merge(const std::set<size_t> &vecs,
+                              const std::vector<partial_result>& results,
+                              dataContainer& result,
+                              LeafType isLeaf) {
     if (vecs.empty()) {
         result.clear();
         return;
@@ -446,61 +447,103 @@ static inline void local_union(const std::set<size_t> &vecs,
 }
 
 static inline void local_union(const ltlf_query* q, dataContainer& last_union, bool isTimed = true) {
-    if ((!q) || (q->args.empty())) {
+    size_t N = q->args.size();
+    if ((!q) || (N == 0)) {
         last_union.clear();
         return;
-    }
-    auto it = q->args.begin();
-    last_union = (*it)->result;
-    dataContainer curr_union;
-    for (std::size_t i = 1; i < q->args.size(); ++i) {
-        it++;
-        auto ref = (*it)->result;
+    } else if (N == 1) {
+        last_union = q->args.at(1)->result;
+    } else if (N == 2) {
+        last_union.clear();
+        auto& arg1 = q->args.at(0);
+        auto& arg2 = q->args.at(1);
         if (isTimed)
-            setUnion(last_union.begin(), last_union.end(),
-                     ref.begin(), ref.end(),
-                     std::back_inserter(curr_union),
-                     Aggregators::maxSimilarity<double, double, double>);
+            setUnion(arg1->result.begin(), arg1->result.end(),
+                            arg2->result.begin(), arg2->result.end(),
+                            std::back_inserter(last_union),
+                            Aggregators::maxSimilarity<double, double, double>,
+                     q->joinCondition.isTruth() ? nullptr : &q->joinCondition);
         else
-            setUnionUntimed(last_union.begin(), last_union.end(),
-                     ref.begin(), ref.end(),
-                     std::back_inserter(curr_union),
-                     Aggregators::maxSimilarity<double, double, double>);
-        std::swap(last_union, curr_union);
-        curr_union.clear();
+            setUnionUntimed(arg1->result.begin(), arg1->result.end(),
+                                   arg2->result.begin(), arg2->result.end(),
+                                   std::back_inserter(last_union),
+                                   Aggregators::maxSimilarity<double, double, double>,
+                            q->joinCondition.isTruth() ? nullptr : &q->joinCondition);
+    } else {
+        auto it = q->args.begin();
+        last_union = (*it)->result;
+        dataContainer curr_union;
+        for (std::size_t i = 1; i < q->args.size(); ++i) {
+            it++;
+            auto ref = (*it)->result;
+            if (isTimed)
+                setUnion(last_union.begin(), last_union.end(),
+                         ref.begin(), ref.end(),
+                         std::back_inserter(curr_union),
+                         Aggregators::maxSimilarity<double, double, double>);
+            else
+                setUnionUntimed(last_union.begin(), last_union.end(),
+                                ref.begin(), ref.end(),
+                                std::back_inserter(curr_union),
+                                Aggregators::maxSimilarity<double, double, double>);
+            std::swap(last_union, curr_union);
+            curr_union.clear();
+        }
     }
 }
 
 static inline void local_intersection(const ltlf_query* q, dataContainer& last_union, bool isTimed = true) {
-    if ((!q) || (q->args.empty())) {
+    size_t N = q->args.size();
+    if ((!q) || (N == 0)) {
         last_union.clear();
         return;
-    }
-    auto it = q->args.begin();
-    last_union = (*it)->result;
-    dataContainer curr_union;
-    for (std::size_t i = 1; i < q->args.size(); ++i) {
-        it++;
-        auto ref = (*it)->result;
+    } else if (N == 1) {
+        last_union = q->args.at(0)->result;
+    } else if (N == 2) {
+        auto& arg1 = q->args.at(0);
+        auto& arg2 = q->args.at(1);
+        last_union.clear();
         if (isTimed)
-            setIntersection(last_union.begin(), last_union.end(),
-                 ref.begin(), ref.end(),
-                 std::back_inserter(curr_union),
-                 Aggregators::maxSimilarity<double, double, double>);
+            setIntersection(arg1->result.begin(), arg1->result.end(),
+                            arg2->result.begin(), arg2->result.end(),
+                            std::back_inserter(last_union),
+                            Aggregators::maxSimilarity<double, double, double>,
+                                    q->joinCondition.isTruth() ? nullptr : &q->joinCondition);
         else
-            setIntersectionUntimed(last_union.begin(), last_union.end(),
-                            ref.begin(), ref.end(),
-                            std::back_inserter(curr_union),
-                            Aggregators::maxSimilarity<double, double, double>);
-        std::swap(last_union, curr_union);
-        curr_union.clear();
+            setIntersectionUntimed(arg1->result.begin(), arg1->result.end(),
+                                   arg2->result.begin(), arg2->result.end(),
+                                   std::back_inserter(last_union),
+                                   Aggregators::maxSimilarity<double, double, double>,
+                                   q->joinCondition.isTruth() ? nullptr : &q->joinCondition);
+    } else {
+        assert(q->joinCondition.isTruth());
+        auto it = q->args.begin();
+        last_union = (*it)->result;
+        dataContainer curr_union;
+        for (std::size_t i = 1; i < N; ++i) {
+            it++;
+            auto ref = (*it)->result;
+            if (isTimed)
+                setIntersection(last_union.begin(), last_union.end(),
+                                ref.begin(), ref.end(),
+                                std::back_inserter(curr_union),
+                                Aggregators::maxSimilarity<double, double, double>);
+            else
+                setIntersectionUntimed(last_union.begin(), last_union.end(),
+                                       ref.begin(), ref.end(),
+                                       std::back_inserter(curr_union),
+                                       Aggregators::maxSimilarity<double, double, double>);
+            std::swap(last_union, curr_union);
+            curr_union.clear();
+        }
     }
+
 }
 
 
 
 
-void MAXSatPipeline::data_pipeline_first(const KnowledgeBase& kb) {
+void MAXSatPipeline::actual_query_running(const KnowledgeBase& kb) {
 
     // 1. Performing the query over each single predicate that we have extracted, so not to duplicate the data access
     if (barrier_to_range_queries > 0) {
@@ -645,13 +688,15 @@ void MAXSatPipeline::data_pipeline_first(const KnowledgeBase& kb) {
                         break;
 
                     case Q_ACT:
+                        // This shall collect the temporary results from the previous data computation
                         // This never has a theta condition to consider
-                        local_union(formula->partial_results, results_cache, formula->result, formula->isLeaf);
+                        data_merge(formula->partial_results, results_cache, formula->result, formula->isLeaf);
                         break;
 
                     case Q_INIT:
                         // This never has a theta condition to consider
-                        local_union(formula->partial_results, results_cache, formula->result, formula->isLeaf);
+                        // This will only work when data conditions are also considered
+                        data_merge(formula->partial_results, results_cache, formula->result, formula->isLeaf);
                         formula->result.erase(std::remove_if(formula->result.begin(),
                                                              formula->result.end(),
                                                   [](const auto&  x){return x.first.second > 0;}),
@@ -660,7 +705,8 @@ void MAXSatPipeline::data_pipeline_first(const KnowledgeBase& kb) {
 
                     case Q_END:
                         // This never has a theta condition to consider
-                        local_union(formula->partial_results, results_cache, formula->result, formula->isLeaf);
+                        // This will only work when data conditions are also considered
+                        data_merge(formula->partial_results, results_cache, formula->result, formula->isLeaf);
                         formula->result.erase(std::remove_if(formula->result.begin(),
                                                              formula->result.end(),
                                                              [kb](const auto&  x){return x.first.second < kb.act_table_by_act_id.trace_length.at(x.first.first)-1;}),
@@ -684,16 +730,16 @@ void MAXSatPipeline::data_pipeline_first(const KnowledgeBase& kb) {
                         if (formula->isTimed) {
                             // TODO! better implementation
                         } else {
-                            formula->result = global(formula->args.at(0)->result, kb.act_table_by_act_id.trace_length);
+                            global_logic_untimed(formula->args.at(0)->result, kb.act_table_by_act_id.trace_length, formula->result);
                         }
                         break;
 
                     case Q_DIAMOND:
                         assert(formula->args.size() == 1);
                         if (formula->isTimed)
-                             future_logic_timed(formula->args[0]->result, formula->result);
+                             future_logic_timed(formula->args[0]->result, kb.act_table_by_act_id.trace_length, formula->result);
                         else {
-                             future_logic_untimed(formula->args[0]->result, formula->result);
+                             future_logic_untimed(formula->args[0]->result, kb.act_table_by_act_id.trace_length, formula->result);
                         }
                         break;
 
@@ -719,10 +765,11 @@ void MAXSatPipeline::data_pipeline_first(const KnowledgeBase& kb) {
 
                         break;
                     case Q_EXISTS: {
+                        // Exists, but only when you have data conditions
                         bool isFirstIteration = true;
                         uint32_t traceId = 0;
                         uint16_t eventCount = 0;
-                        local_union(formula->partial_results, results_cache, tmp_result, formula->isLeaf);
+                        data_merge(formula->partial_results, results_cache, tmp_result, formula->isLeaf);
                         for (auto ref = tmp_result.begin(); ref != tmp_result.end(); ) {
                             if (isFirstIteration) {
                                 traceId = ref->first.first;
@@ -745,10 +792,11 @@ void MAXSatPipeline::data_pipeline_first(const KnowledgeBase& kb) {
                     } break;
 
                     case Q_ABSENCE: {
+                        // Absence, but only when you have data conditions
                         bool isFirstIteration = true;
                         uint32_t traceId = 0;
                         uint16_t eventCount = 0;
-                        local_union(formula->partial_results, results_cache, tmp_result, formula->isLeaf);
+                        data_merge(formula->partial_results, results_cache, tmp_result, formula->isLeaf);
                         for (auto ref = tmp_result.begin(); ref != tmp_result.end(); ) {
                             if (isFirstIteration) {
                                 traceId = ref->first.first;

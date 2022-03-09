@@ -59,14 +59,6 @@ void ltlf_query::associateDataQueryIdsToFormulaByAtom(const std::string &x, size
 #include <magic_enum.hpp>
 
 
-
-
-/*std::unordered_map<std::pair<ltlf, bool>, ltlf_query*> ltlf_query_manager::conversion_map_for_subexpressions;
-std::unordered_map<ltlf_query*, size_t> ltlf_query_manager::counter;
-std::map<size_t, std::vector<ltlf_query*>> ltlf_query_manager::Q;
-std::vector<ltlf_query*> ltlf_query_manager::atomsToDecomposeInUnion;
-std::set<ltlf_query*> ltlf_query_manager::VSet;*/
-
 void ltlf_query_manager::generateGraph(std::map<ltlf_query*, std::vector<ltlf_query*>>& ref, ltlf_query*q) const {
     auto it = ref.emplace(q, q->args);
     if (it.second) {
@@ -115,7 +107,7 @@ std::string ltlf_query_manager::generateGraph() const {
     return json.dump(4);
 }
 
-ltlf_query* ltlf_query_manager::simplify(const ltlf& expr,  bool isTimed) {
+ltlf_query* ltlf_query_manager::simplify(const ltlf& expr,  bool isTimed, KnowledgeBase* ptr) {
     assert((expr.casusu != NEG_OF) && (expr.casusu != NUMERIC_ATOM));
     std::pair<ltlf, bool> q{expr, isTimed};
     auto it = conversion_map_for_subexpressions.find(q);
@@ -141,7 +133,7 @@ ltlf_query* ltlf_query_manager::simplify(const ltlf& expr,  bool isTimed) {
         bool isAct = expr.casusu==ACT;
 
         result= getQuerySemiInstantiated(expr.rewritten_act, isTimed, result, areArgsTimed, ARGS, casusu, joinCondition,
-                                        isAct);
+                                        isAct, ptr);
         result->isLeaf = expr.leafType;
         conversion_map_for_subexpressions[q] =result;
         return result;
@@ -154,11 +146,12 @@ ltlf_query *ltlf_query_manager::getQuerySemiInstantiated(const std::vector<std::
                                                          bool areArgsTimed, const std::vector<ltlf> *ARGS,
                                                          const ltlf_query_t &casusu,
                                                          const std::vector<std::unordered_map<std::string, DataPredicate>> *joinCondition,
-                                                         bool isAct) {
+                                                         bool isAct,
+                                                         KnowledgeBase* ptr) {
     //if (insert) VSet.insert(result);
     //size_t h = 0;
     if (ARGS) for (const auto& arg : *ARGS) {
-        auto cp = simplify(arg, areArgsTimed);
+        auto cp = simplify(arg, areArgsTimed, ptr);
         //h = std::max(cp.second, h);
         result->args.emplace_back(cp);
     }
@@ -175,7 +168,7 @@ ltlf_query *ltlf_query_manager::getQuerySemiInstantiated(const std::vector<std::
                 }
             }
         }
-        result->joinCondition = {sdp,nullptr};
+        result->joinCondition = {sdp,ptr};
     }
     result->isTimed = isTimed;
     //assert((expr.casusu != ACT) || (!expr.rewritten_act.empty()));
@@ -253,7 +246,7 @@ ltlf_query *ltlf_query_manager::end1(const std::string &atom, std::unordered_set
     return immediateQueries(atom, predicates, "@declare_end1_", Q_END, 0);
 }
 
-void ltlf_query_manager::finalize_unions(const std::vector<ltlf_query*>& W) {
+void ltlf_query_manager::finalize_unions(const std::vector<ltlf_query*>& W, KnowledgeBase* ptr) {
     std::vector<std::set<std::string>> unionToDecompose;
     for (const auto& ptr : atomsToDecomposeInUnion)
         unionToDecompose.emplace_back(ptr->atom);
@@ -288,7 +281,7 @@ void ltlf_query_manager::finalize_unions(const std::vector<ltlf_query*>& W) {
                 }
 
         }
-        ltlf_query* q = simplify(r, true);
+        ltlf_query* q = simplify(r, true, ptr);
         auto tmpValue = atomsToDecomposeInUnion[ref.first]->isLeaf;
         q->isLeaf = tmpValue;
         *atomsToDecomposeInUnion[ref.first] = *q;
