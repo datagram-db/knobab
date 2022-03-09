@@ -8,7 +8,7 @@
 #include "yaucl/strings/serializers.h"
 #include "knobab/utilities/Aggregators.h"
 #include "knobab/dataStructures/TraceData.h"
-#include "knobab/utilities/LTLFOperators.h"
+#include "knobab/operators/LTLFOperators.h"
 
 #include "knobab/Environment.h"
 

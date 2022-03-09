@@ -5,6 +5,6 @@
 #ifndef KNOBAB_SETOPERATORS_H
 #define KNOBAB_SETOPERATORS_H
 
-#include "LTLFOperators.h"
+#include "knobab/operators/LTLFOperators.h"
 
 #endif //KNOBAB_SETOPERATORS_H
