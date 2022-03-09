@@ -108,15 +108,16 @@ struct ltlf_query_manager {
                      const std::string &prefix, const ltlf_query_t &casus,
                      size_t numeric_arg);
 
-    void finalize_unions(const std::vector<ltlf_query*>& W);
+    void finalize_unions(const std::vector<ltlf_query*>& W, KnowledgeBase* ptr);
 
-    ltlf_query*  simplify(const ltlf& expr,  bool isTimed = false);
+    ltlf_query*  simplify(const ltlf& expr,  bool isTimed = false, KnowledgeBase* ptr = nullptr);
 
     ltlf_query *getQuerySemiInstantiated(const std::vector<std::string> &expr, bool isTimed,
                                          ltlf_query *result, bool areArgsTimed, const std::vector<ltlf> *ARGS,
                                          const ltlf_query_t &casusu,
                                          const std::vector<std::unordered_map<std::string, DataPredicate>> *joinCondition,
-                                         bool isAct);
+                                         bool isAct,
+                                         KnowledgeBase* ptr);
 };
 
 std::ostream & human_readable_ltlf_printing(std::ostream &os, const ltlf_query* syntax);
