@@ -58,6 +58,7 @@ enum formula_t {
 #include <vector>
 #include <ostream>
 #include <yaucl/bpm/structures/ltlf/PropositionalizedAtomsSet.h>
+#include <knobab/operators/semantics.h>
 #include "yaucl/bpm/structures/commons/DataPredicate.h"
 
 
@@ -72,6 +73,7 @@ struct ltlf {
     bool                   is_join_condition_place = false;
     DataPredicate          numeric_atom;
     std::vector<std::unordered_map<std::string, DataPredicate>> joinCondition;
+    LeafType               leafType = LeafType::NoneLeaf;
 
     // C++ constructors
     ltlf();

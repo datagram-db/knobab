@@ -160,8 +160,15 @@ std::unordered_set<std::string> ltlf::mark_join_condition(const std::string& lef
     switch (casusu) {
         case ACT: {
             if ((!is_negated) && ((act == left) || (act == right))) {
-                return {act};
-            } else return  {};
+                if (act == left) {
+                    leafType = ActivationLeaf;
+                    return {act};
+                } else if (act == right) {
+                    leafType = TargetLeaf;
+                    return {act};
+                }
+            }
+            return {};
         }
         case NEG_OF:
             assert(false);
