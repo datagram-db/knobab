@@ -62,19 +62,19 @@ public:
         return final_nodes;
     }
 
-    std::vector<std::vector<EdgeLabel>> generative(size_t limitSize = 3, size_t max_per_limit = 50) {
-        std::vector<size_t> Arg(limitSize, 0);
+    std::unordered_set<std::vector<EdgeLabel>> generative(size_t limitSize = 3, size_t max_per_limit = 50) {
+        std::vector<size_t> Arg(getNodeIds().size(), 0);
         std::queue<std::pair<size_t, std::vector<EdgeLabel>>> Q;
-        std::vector<std::vector<EdgeLabel>> EL;
+        std::unordered_set<std::vector<EdgeLabel>> EL;
         for (size_t i : init())
             Q.emplace(i, std::vector<EdgeLabel>{});
         while (!Q.empty()) {
             std::pair<size_t, std::vector<EdgeLabel>> cp = Q.front();
             Q.pop();
             if ((cp.second.size() <= limitSize)) {
-                if (final_nodes.contains(cp.first) && (cp.second.size() > 0) && (Arg[cp.second.size()] < max_per_limit)) {
-                    Arg[cp.second.size()]++;
-                    EL.emplace_back(cp.second);
+                if (final_nodes.contains(cp.first) && (cp.second.size() > 0) /*&& (Arg[cp.first] < max_per_limit)*/) {
+                    //Arg[cp.first]++;
+                    EL.emplace(cp.second);
                 }
                 for (auto cp2 : outgoingEdges(cp.first)) {
                     std::vector<EdgeLabel> el{cp.second};
@@ -348,6 +348,32 @@ public:
             }
         }
         os << "}";
+    }
+
+    void removeStatesNotLeadingToAcceptance() {
+        //return;
+#if 1
+        std::unordered_set<size_t> reached, all;
+        auto allNodeIds = getNodeIds();
+        all.insert(allNodeIds.begin(), allNodeIds.end());
+
+        // Preserving only the nodes reachable from the initial nodes potentially leading to final states
+        for (size_t initial : getNodeIds()) {
+            std::unordered_set<size_t> visited_src_dst;
+            FlexibleGraph<NodeElement, EdgeLabel>::g.DFSUtil(initial, visited_src_dst);
+            if (!unordered_intersection(visited_src_dst, final_nodes).empty())//Preserving the nodes only if I am able to at least reach one final state
+                reached.insert(initial);
+        }
+
+        std::unordered_set<size_t> candidatesForRemoval = unordered_difference(all, reached);
+
+        // std::cerr << "Removal candidates: #" << candidatesForRemoval.size() << std::endl;
+        for (size_t nodeToBeRemoved : candidatesForRemoval) {
+            removed_nodes.insert(nodeToBeRemoved);
+            initial_nodes.erase(nodeToBeRemoved);
+            final_nodes.erase(nodeToBeRemoved);
+        }
+#endif
     }
 
     void pruneUnreachableNodes() {

@@ -124,7 +124,7 @@ FlexibleFA<std::vector<NodeElement>, EdgeLabel> minimizeDFA(const FlexibleFA<Nod
         for (const auto& cp : cl.calculateEquivalenceClass()) {
             std::cout <<  graph.getNodeLabel(cp.first) << std::endl;
             for (const auto& x : cp.second) {
-                std::cout << "\t -" <<  graph.getNodeLabel(x) << "[internal id, not displayed label= "<< x << "]" << std::endl;
+                //std::cout << "\t -" <<  graph.getNodeLabel(x) << "[internal id, not displayed label= "<< x << "]" << std::endl;
             }
             equivalentNodes.insert(cp.second.begin(), cp.second.end());
             auto it = nodeToId.emplace(cp.second, vCount);
@@ -149,10 +149,10 @@ FlexibleFA<std::vector<NodeElement>, EdgeLabel> minimizeDFA(const FlexibleFA<Nod
         result.addToInitialNodesFromId(nodeToId.at(full_eq_class.at(ini)));
     }
     for (const auto& node : nodeToId) {
-        std::cout << "{" ;
+        /*std::cout << "{" ;
         for (size_t id : node.first)
             std::cout << id << ",";
-        std::cout << "}"  << std::endl;
+        std::cout << "}"  << std::endl;*/
 
 #if 1
         for (const std::pair<EdgeLabel, std::unordered_set<size_t>>& eOut :

@@ -15,8 +15,9 @@ DeclareTemplateCollect::DeclareTemplateCollect(const std::filesystem::path& cach
        }
     }
 }
-
+#ifndef PYTHON_WORKS
 #include <cassert>
+#endif
 #include <knobab/flloat_deps/ParseFFLOATDot.h>
 
 NodeLabelBijectionFA<std::string, easy_prop>
@@ -30,26 +31,35 @@ DeclareTemplateCollect::getDeclareTemplate(const declare_templates type, size_t 
         name = name + "_" + std::to_string(nargs) ;
         std::filesystem::path cache_file = element / name;
         if (!std::filesystem::exists(cache_file)) {
-            // if the file is not in cache: create it!
-            ltlf input_forumla;
-            if (isUnaryPredicate(type)) {
-                input_forumla = DeclareDataAware::unary(type, left_act, nargs).toFiniteSemantics();
-            } else {
-                input_forumla = DeclareDataAware::binary(type, left_act, right_act).toFiniteSemantics();
-            }
 
-            std::stringstream s;
-            s << input_forumla;
-            std::string dot_graph = callable(s.str());
-            {
-                std::ofstream file{cache_file};
-                file << dot_graph;
-            }
-            ParseFFLOATDot graph_loader;
-            std::istringstream strm{dot_graph};
-            auto tmp = graph_loader.parse(strm);
-            graph_map[cp] = tmp;
-            return tmp;
+#ifndef PYTHON_WORKS
+            assert(false && "File missing from cache!");
+#else
+        // if the file is not in cache: create it!
+        ltlf input_forumla;
+        if (isUnaryPredicate(type)) {
+            input_forumla = DeclareDataAware::unary(type, left_act, nargs).toFiniteSemantics();
+        } else {
+            input_forumla = DeclareDataAware::binary(type, left_act, right_act).toFiniteSemantics();
+        }
+
+        std::stringstream s;
+        s << input_forumla;
+        std::string dot_graph = callable(s.str());
+        {
+            std::ofstream file{cache_file};
+            file << dot_graph;
+        }
+        ParseFFLOATDot graph_loader;
+         std::istringstream strm{dot_graph};
+        auto tmp = graph_loader.parse(strm);
+        graph_map[cp] = tmp;
+
+
+        return tmp;
+#endif
+
+
         } else {
             ParseFFLOATDot graph_loader;
             std::ifstream  strm{cache_file};

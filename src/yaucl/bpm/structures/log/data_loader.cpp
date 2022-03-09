@@ -175,6 +175,29 @@ void load_xes_with_data(const std::string &filename, std::istream &file, bool lo
 
 #include "yaucl/bpm/structures/log/DataTraceParse.h"
 
+void load_act_stream_to_knowledge_base(std::istream &stream, const std::string &filename, KnowledgeBase &tv) {
+    std::string line;
+    tv.enterLog(filename, filename);
+    size_t trace_count = 0;
+    size_t timestamp = 0;
+    while (std::getline(stream, line)) {
+        size_t event_count = 1;
+        size_t traceId = tv.enterTrace(std::to_string(trace_count));
+        event_count = 0;
+
+        std::istringstream iss(line);
+        std::string token;
+        while(std::getline(iss, token, '\t')) {
+            size_t eid = tv.enterEvent(timestamp++, token);
+        }
+
+        event_count = 0;
+        tv.exitTrace(traceId);
+        trace_count++;
+    }
+    tv.exitLog(filename, filename);
+}
+
 void load_into_knowledge_base(log_data_format format, bool loadData, std::istream &stream, KnowledgeBase &output,
                               const std::string &filename) {
     trace_visitor* tv = (trace_visitor*)&output;
@@ -186,6 +209,8 @@ void load_into_knowledge_base(log_data_format format, bool loadData, std::istrea
         }
         case XES1:
             load_xes_with_data(filename, stream, loadData, tv); break;
+        case TAB_SEPARATED_EVENTS:
+            load_act_stream_to_knowledge_base(stream, filename, output);
     }
 }
 
