@@ -645,10 +645,12 @@ void MAXSatPipeline::data_pipeline_first(const KnowledgeBase& kb) {
                         break;
 
                     case Q_ACT:
+                        // This never has a theta condition to consider
                         local_union(formula->partial_results, results_cache, formula->result, formula->isLeaf);
                         break;
 
                     case Q_INIT:
+                        // This never has a theta condition to consider
                         local_union(formula->partial_results, results_cache, formula->result, formula->isLeaf);
                         formula->result.erase(std::remove_if(formula->result.begin(),
                                                              formula->result.end(),
@@ -657,6 +659,7 @@ void MAXSatPipeline::data_pipeline_first(const KnowledgeBase& kb) {
                         break;
 
                     case Q_END:
+                        // This never has a theta condition to consider
                         local_union(formula->partial_results, results_cache, formula->result, formula->isLeaf);
                         formula->result.erase(std::remove_if(formula->result.begin(),
                                                              formula->result.end(),
@@ -665,33 +668,38 @@ void MAXSatPipeline::data_pipeline_first(const KnowledgeBase& kb) {
                         break;
 
                     case Q_AND:
-                        // TODO: theta
+                        assert(formula->args.size() == 2);
                         local_intersection(formula, formula->result, formula->isTimed);
                         break;
 
                     case Q_OR:
                     case Q_XOR:
-                        // TODO: theta
+                        assert(formula->args.size() == 2);
                         local_union(formula, formula->result, formula->isTimed);
                         break;
 
 
                     case Q_BOX:
+                        assert(formula->args.size() == 1);
                         if (formula->isTimed) {
                             // TODO! better implementation
                         } else {
                             formula->result = global(formula->args.at(0)->result, kb.act_table_by_act_id.trace_length);
                         }
                         break;
+
                     case Q_DIAMOND:
+                        assert(formula->args.size() == 1);
                         if (formula->isTimed)
                              future_logic_timed(formula->args[0]->result, formula->result);
                         else {
                              future_logic_untimed(formula->args[0]->result, formula->result);
                         }
+                        break;
 
 
                     case Q_UNTIL:
+                        assert(formula->args.size() == 2);
                         if (formula->isTimed) {
                             // TODO
                         } else {
@@ -701,6 +709,8 @@ void MAXSatPipeline::data_pipeline_first(const KnowledgeBase& kb) {
                                                     formula->joinCondition.isTruth() ? nullptr : &formula->joinCondition);
                         }
                         break;
+
+
                     case Q_RELEASE:
                         assert(false);
                         break;

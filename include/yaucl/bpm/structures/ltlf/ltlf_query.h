@@ -36,17 +36,13 @@ enum ltlf_query_t {
 
 struct ltlf_query {
     bool isTimed = false;
-    bool extractActivationTargetConditions = false;
     ltlf_query_t casusu = Q_TRUE;
     std::vector<ltlf_query*> args;
     std::set<std::string> atom;
     std::set<size_t> partial_results;
-    bool hasResult = false;
     size_t result_id = 0;
     PredicateManager joinCondition;
     LeafType isLeaf = NotALeaf;
-    bool hasPremamentMark, hasTempMark;
-
     size_t numeric_arg = 0;
     size_t parentMin = std::numeric_limits<size_t>::max(), parentMax = 0, dis = 0;
 
