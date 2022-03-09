@@ -555,6 +555,7 @@ dataContainer release(const uint32_t &traceId,
     return result;
 }
 
+
 template<typename TableSection> inline
 dataContainer until(const TableSection &aSection, const TableSection &bSection, const std::vector<size_t>& lengths, const PredicateManager* manager = nullptr) {
     auto lower = bSection.begin();
@@ -631,62 +632,6 @@ dataContainer until(const TableSection &aSection, const TableSection &bSection, 
             }
 
         }
-
-
-#if 0
-
-
-        aIt = std::lower_bound(aEn, upperA, std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>{{currentTraceId, 0}, {0, {}}});
-        aEn = std::upper_bound(aIt, upperA, std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>{{currentTraceId, lengths.at(currentTraceId)-1}, {1, maxVec}});
-
-
-
-        for( ; aIt != aEn; aIt++) {
-            if (aIt->first.second == 0) {
-                temp.emplace_back(*aIt);
-            } else {
-                localUpper = std::upper_bound(localUpper, upper, std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>{{currentTraceId, aIt->first.second-1},  {1, maxVec}});
-                if(lower == localUpper){
-                    // Rationale: (1)
-                    // if the condition does not hold for a time [startEventId, aIt->first.second-1], it is because one event makes it not hold.
-                    // Therefore, it should never hold even if you are extending the data that you have.
-                    break;
-                } else {
-                    const uint32_t dist = std::distance(lower, localUpper - 1);
-                    std::vector<uint16_t> V;
-                    if(dist == ((aIt->first.second)-1)){
-                        if (manager) {
-                            for (uint16_t activationEvent : aIt->second.second) {
-                                Fut.second = activationEvent;
-                                e1 = manager->GetPayloadDataFromEvent(Fut);
-                                for (auto curr = lower; curr != localUpper; curr++) {
-                                    Prev.first = curr->first.first;
-                                    for (uint16_t targetEvent : curr->second.second) {
-                                        Prev.second = targetEvent;
-                                        e2 = manager->GetPayloadDataFromEvent(Prev);
-                                        if (!manager->checkValidity(e1, e2)) {
-                                            break;
-                                        } else {
-                                            V.emplace_back(targetEvent);
-                                        }
-                                    }
-                                }
-                            }
-                            V.insert(V.begin(), aIt->second.second.begin(), aIt->second.second.end());
-                        } else {
-                            V = populateAndReturnEvents(lower, localUpper);
-                            V.insert(V.begin(), aIt->second.second.begin(), aIt->second.second.end());
-                        }
-                        temp.emplace_back(std::pair<uint32_t, uint16_t>{currentTraceId, 0}, std::pair<double, std::vector<uint16_t>>{1,V});
-                    } else {
-                        // For (1)
-                        break;
-                    }
-                }
-            }
-
-        }
-#endif
         lower = localUpper;
     }
 
