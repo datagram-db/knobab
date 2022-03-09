@@ -5,7 +5,7 @@
 #ifndef KNOBAB_DECLARECLAUSES_H
 #define KNOBAB_DECLARECLAUSES_H
 
-#include "knobab/utilities/LTLFOperators.h"
+#include "knobab/operators/LTLFOperators.h"
 #include "Aggregators.h"
 
 

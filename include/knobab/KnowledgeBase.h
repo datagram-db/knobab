@@ -30,7 +30,7 @@ enum ParsingState {
 
 #include <bitset>
 #include <knobab/trace_repairs/DataQuery.h>
-#include <knobab/utilities/LTLFOperators.h>
+#include <knobab/operators/LTLFOperators.h>
 
 
 using trace_set = std::bitset<sizeof(uint32_t)>;
@@ -231,6 +231,8 @@ public:
     dataContainer init(const std::string& act, bool doExtractEvent, const double minThreshold = 1) const;
     dataContainer ends(const std::string& act, bool doExtractEvent, const double minThreshold = 1) const;
     std::vector<std::pair<std::pair<trace_t, event_t>, double>> exists(const std::string& act) const;
+
+    [[deprecated]] dataContainer exists(const std::string& act, bool markEventsForMatch) const;
 
     template <typename traceIdentifier, typename traceValue>
     TraceData<traceIdentifier, traceValue> initOrig(const std::string& act, const double minThreshold = 1) const{
