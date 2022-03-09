@@ -99,25 +99,28 @@ void Environment::load_log(log_data_format format, bool loadData, const std::str
     size_t frequency_of_trace_length = 0;
     size_t previousLength = 0;
     std::multiset<size_t> O;
-    for (const size_t i : db.act_table_by_act_id.trace_length) {
-        trace_avg += i;
-        trace_pow2 += std::pow(i, 2);
-        O.insert(i);
 
-    }
-    for (size_t len : O) {
-        size_t currFreq = O.count(len);
-        if (currFreq > frequency_of_trace_length) {
-            frequency_of_trace_length = currFreq;
-            previousLength = len;
+    if (doStats) {
+        for (const size_t i : db.act_table_by_act_id.trace_length) {
+            trace_avg += i;
+            trace_pow2 += std::pow(i, 2);
+            O.insert(i);
+
         }
-    }
-    trace_avg = trace_avg / N;
+        for (size_t len : O) {
+            size_t currFreq = O.count(len);
+            if (currFreq > frequency_of_trace_length) {
+                frequency_of_trace_length = currFreq;
+                previousLength = len;
+            }
+        }
+        trace_avg = trace_avg / N;
 
-    experiment_logger.log_trace_average_length = trace_avg;
-    experiment_logger.log_trace_variance = (trace_pow2 / N) - std::pow(trace_avg, 2);
-    experiment_logger.most_frequent_trace_length = previousLength;
-    experiment_logger.trace_length_frequency = frequency_of_trace_length;
+        experiment_logger.log_trace_average_length = trace_avg;
+        experiment_logger.log_trace_variance = (trace_pow2 / N) - std::pow(trace_avg, 2);
+        experiment_logger.most_frequent_trace_length = previousLength;
+        experiment_logger.trace_length_frequency = frequency_of_trace_length;
+    }
 }
 
 void Environment::set_atomization_parameters(const std::string &fresh_atom_label, size_t mslength) {
