@@ -202,6 +202,7 @@ ltlf ltlf::replace_with(const std::unordered_map<std::pair<bool, std::string>, s
             auto it = map.find({is_negated, act});
             assert(it != map.end());
             auto a = *this;
+            a.leafType = leafType;
             std::copy(it->second.begin(), it->second.end(), std::back_inserter(a.rewritten_act));
             return a;
         }
@@ -579,8 +580,8 @@ bool ltlf::operator==(const ltlf &rhs) const {
     bool ca = casusu == rhs.casusu;
     if (!ca) return false;
 
-    bool preliminar = (act == rhs.act) &&(is_negated == rhs.is_negated) && (rewritten_act == rhs.rewritten_act) && (joinCondition == rhs.joinCondition);
-    if (!preliminar) return false;
+    bool preliminary = (act == rhs.act) &&(is_negated == rhs.is_negated) && (rewritten_act == rhs.rewritten_act) && (joinCondition == rhs.joinCondition) && (leafType == rhs.leafType);
+    if (!preliminary) return false;
 
     switch (casusu) {
         case LAST:

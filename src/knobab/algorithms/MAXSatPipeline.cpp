@@ -409,10 +409,14 @@ static inline dataContainer local_intersection(const std::set<size_t> &vecs,
     return finalResult;
 }
 
-static inline dataContainer local_union(const std::set<size_t> &vecs,
+static inline void local_union(const std::set<size_t> &vecs,
                                         const std::vector<partial_result>& results,
+                                        dataContainer& result,
                                         LeafType isLeaf) {
-    if (vecs.empty()) return {};
+    if (vecs.empty()) {
+        result.clear();
+        return;
+    }
     auto it = vecs.begin();
     auto last_intersection = results.at(*it);
     partial_result curr_intersection;
@@ -427,26 +431,27 @@ static inline dataContainer local_union(const std::set<size_t> &vecs,
     }
 
     // TODO: better done through views!
-    dataContainer  finalResult;
     for (auto it = last_intersection.begin(); it != last_intersection.end(); it = last_intersection.erase(it)) {
         switch (isLeaf) {
             case ActivationLeaf:
             case TargetLeaf:
-                finalResult.emplace_back(it->first, std::make_pair(it->second, std::vector<uint16_t>{it->first.second}));
+                result.emplace_back(it->first, std::make_pair(it->second, std::vector<uint16_t>{it->first.second}));
                 break;
             default:
-                finalResult.emplace_back(it->first, std::make_pair(it->second, std::vector<uint16_t>{}));
+                result.emplace_back(it->first, std::make_pair(it->second, std::vector<uint16_t>{}));
                 break;
         }
     }
 
-    return finalResult;
 }
 
-static inline dataContainer local_union(const ltlf_query* q, bool isTimed = true) {
-    if ((!q) || (q->args.empty())) return {};
+static inline void local_union(const ltlf_query* q, dataContainer& last_union, bool isTimed = true) {
+    if ((!q) || (q->args.empty())) {
+        last_union.clear();
+        return;
+    }
     auto it = q->args.begin();
-    auto last_union = (*it)->result;
+    last_union = (*it)->result;
     dataContainer curr_union;
     for (std::size_t i = 1; i < q->args.size(); ++i) {
         it++;
@@ -464,13 +469,15 @@ static inline dataContainer local_union(const ltlf_query* q, bool isTimed = true
         std::swap(last_union, curr_union);
         curr_union.clear();
     }
-    return last_union;
 }
 
-static inline dataContainer local_intersection(const ltlf_query* q, bool isTimed = true) {
-    if ((!q) || (q->args.empty())) return {};
+static inline void local_intersection(const ltlf_query* q, dataContainer& last_union, bool isTimed = true) {
+    if ((!q) || (q->args.empty())) {
+        last_union.clear();
+        return;
+    }
     auto it = q->args.begin();
-    auto last_union = (*it)->result;
+    last_union = (*it)->result;
     dataContainer curr_union;
     for (std::size_t i = 1; i < q->args.size(); ++i) {
         it++;
@@ -488,7 +495,6 @@ static inline dataContainer local_intersection(const ltlf_query* q, bool isTimed
         std::swap(last_union, curr_union);
         curr_union.clear();
     }
-    return last_union;
 }
 
 
@@ -639,11 +645,11 @@ void MAXSatPipeline::data_pipeline_first(const KnowledgeBase& kb) {
                         break;
 
                     case Q_ACT:
-                        formula->result = local_union(formula->partial_results, results_cache, formula->isLeaf);
+                        local_union(formula->partial_results, results_cache, formula->result, formula->isLeaf);
                         break;
 
                     case Q_INIT:
-                        formula->result = local_union(formula->partial_results, results_cache, formula->isLeaf);
+                        local_union(formula->partial_results, results_cache, formula->result, formula->isLeaf);
                         formula->result.erase(std::remove_if(formula->result.begin(),
                                                              formula->result.end(),
                                                   [](const auto&  x){return x.first.second > 0;}),
@@ -651,7 +657,7 @@ void MAXSatPipeline::data_pipeline_first(const KnowledgeBase& kb) {
                         break;
 
                     case Q_END:
-                        formula->result = local_union(formula->partial_results, results_cache, formula->isLeaf);
+                        local_union(formula->partial_results, results_cache, formula->result, formula->isLeaf);
                         formula->result.erase(std::remove_if(formula->result.begin(),
                                                              formula->result.end(),
                                                              [kb](const auto&  x){return x.first.second < kb.act_table_by_act_id.trace_length.at(x.first.first)-1;}),
@@ -660,13 +666,13 @@ void MAXSatPipeline::data_pipeline_first(const KnowledgeBase& kb) {
 
                     case Q_AND:
                         // TODO: theta
-                        formula->result = local_intersection(formula, formula->isTimed);
+                        local_intersection(formula, formula->result, formula->isTimed);
                         break;
 
                     case Q_OR:
                     case Q_XOR:
                         // TODO: theta
-                        formula->result = local_union(formula, formula->isTimed);
+                        local_union(formula, formula->result, formula->isTimed);
                         break;
 
 
@@ -706,7 +712,7 @@ void MAXSatPipeline::data_pipeline_first(const KnowledgeBase& kb) {
                         bool isFirstIteration = true;
                         uint32_t traceId = 0;
                         uint16_t eventCount = 0;
-                        tmp_result = local_union(formula->partial_results, results_cache, formula->isLeaf);
+                        local_union(formula->partial_results, results_cache, tmp_result, formula->isLeaf);
                         for (auto ref = tmp_result.begin(); ref != tmp_result.end(); ) {
                             if (isFirstIteration) {
                                 traceId = ref->first.first;
@@ -732,7 +738,7 @@ void MAXSatPipeline::data_pipeline_first(const KnowledgeBase& kb) {
                         bool isFirstIteration = true;
                         uint32_t traceId = 0;
                         uint16_t eventCount = 0;
-                        tmp_result = local_union(formula->partial_results, results_cache, formula->isLeaf);
+                        local_union(formula->partial_results, results_cache, tmp_result, formula->isLeaf);
                         for (auto ref = tmp_result.begin(); ref != tmp_result.end(); ) {
                             if (isFirstIteration) {
                                 traceId = ref->first.first;
@@ -761,9 +767,12 @@ void MAXSatPipeline::data_pipeline_first(const KnowledgeBase& kb) {
     }
 
     if (!qm.Q.empty()) {
+        // Only one possibility, for MaxSAT
         ltlf_query conjunction;
         conjunction.args = qm.Q.begin()->second;
-        this->result = local_intersection(&conjunction, false);
+        local_intersection(&conjunction, this->result, false);
+
+        // Others should follow, like the one for maximum satisfiability, for computing
     } else {
     }
 
