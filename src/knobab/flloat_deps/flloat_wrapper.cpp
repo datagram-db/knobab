@@ -20,11 +20,9 @@ FLLOAT::FLLOAT() {
 
 std::string FLLOAT::operator()(const std::string &ltlf) {
 #ifdef PYTHON_WORKS
-    //std::cout << ltlf << std::endl;
     python::object parser = flloat_parser_ltlf.attr("LTLfParser")();
     return boost::python::extract<std::string>(parser(ltlf).attr("to_automaton")().attr("to_graphviz")().attr("__str__")())();
 #else
     assert(false);
-    return "";
 #endif
 }

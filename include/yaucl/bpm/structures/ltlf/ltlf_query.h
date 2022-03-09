@@ -24,10 +24,10 @@ enum ltlf_query_t {
     Q_DIAMOND,
     Q_UNTIL,
     Q_RELEASE,
-    Q_LAST,
+    Q_LAST, // TODO: atomless
 
     Q_INIT,
-    Q_END,
+    Q_END,      // With an atom
     Q_EXISTS,
     Q_ABSENCE
 };

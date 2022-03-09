@@ -185,36 +185,12 @@ void Environment::first_atomize_model() {
     experiment_logger.model_atomization_time = atomize_model(ap, grounding);
 }
 
+
+
 semantic_atom_set Environment::evaluate_easy_prop_to_atoms(const easy_prop &prop,
                                                            //const std::unordered_map<std::string, std::string> &bogus_act_to_atom,
                                                            const std::unordered_map<std::string, semantic_atom_set> &bogus_act_to_set) {
-    switch (prop.casusu) {
-        case easy_prop::E_P_AND:
-            assert(prop.args.size() == 2);
-            assert(!prop.isAtomNegated);
-            return unordered_intersection(evaluate_easy_prop_to_atoms( prop.args.at(0)/*, bogus_act_to_atom*/, bogus_act_to_set),
-                                          evaluate_easy_prop_to_atoms( prop.args.at(1)/*, bogus_act_to_atom*/, bogus_act_to_set) );
-        case easy_prop::E_P_OR: {
-            assert(prop.args.size() == 2);
-            assert(!prop.isAtomNegated);
-            semantic_atom_set S = evaluate_easy_prop_to_atoms( prop.args.at(0)/*, bogus_act_to_atom*/, bogus_act_to_set);
-            auto tmp = evaluate_easy_prop_to_atoms( prop.args.at(1)/*, bogus_act_to_atom*/, bogus_act_to_set);
-            S.insert(tmp.begin(), tmp.end());
-            return S;
-        }
-        case easy_prop::E_P_ATOM:
-            assert(prop.args.empty());
-            assert(bogus_act_to_set.contains(prop.single_atom_if_any));
-            if (prop.isAtomNegated) {
-                return unordered_difference(getSigmaAll(), bogus_act_to_set.at(prop.single_atom_if_any));
-            } else {
-                return bogus_act_to_set.at(prop.single_atom_if_any);
-            }
-        case easy_prop::E_P_TRUE:
-            return getSigmaAll();
-        default: //case easy_prop::E_P_FALSE:
-            return {};
-    }
+    ::evaluate_easy_prop_to_atoms(prop, bogus_act_to_set, getSigmaAll());
 }
 
 FlexibleFA<size_t, std::string> Environment::declare_to_graph_for_patterns(const DeclareDataAware &decl) {

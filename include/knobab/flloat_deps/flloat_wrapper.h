@@ -14,7 +14,7 @@
 
 
 class FLLOAT {
-#ifdef PTHON_WORKS
+#ifdef PYTHON_WORKS
     boost::python::object flloat_parser_ltlf, flloat_ltlf;
 #endif
 public:
