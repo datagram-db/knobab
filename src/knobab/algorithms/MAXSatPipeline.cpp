@@ -770,6 +770,7 @@ void MAXSatPipeline::actual_query_running(const KnowledgeBase& kb) {
                         uint32_t traceId = 0;
                         uint16_t eventCount = 0;
                         data_merge(formula->partial_results, results_cache, tmp_result, formula->isLeaf);
+                        std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>> cp{{0,0}, {1.0, {}}};
                         for (auto ref = tmp_result.begin(); ref != tmp_result.end(); ) {
                             if (isFirstIteration) {
                                 traceId = ref->first.first;
@@ -778,7 +779,8 @@ void MAXSatPipeline::actual_query_running(const KnowledgeBase& kb) {
                             } else {
                                 if ((traceId != ref->first.first)) {
                                     if ((eventCount >= formula->numeric_arg)) {
-                                        formula->result.emplace_back(std::make_pair(traceId, 0), std::make_pair(1.0, std::vector<uint16_t >{}));
+                                        cp.first.first = traceId;
+                                        formula->result.emplace_back(cp);
                                     }
                                     traceId = ref->first.first;
                                     eventCount = 1;
@@ -787,7 +789,8 @@ void MAXSatPipeline::actual_query_running(const KnowledgeBase& kb) {
                             ref = tmp_result.erase(ref);
                         }
                         if ((eventCount >= formula->numeric_arg)) {
-                            formula->result.emplace_back(std::make_pair(traceId, 0), std::make_pair(1.0, std::vector<uint16_t >{}));
+                            cp.first.first = traceId;
+                            formula->result.emplace_back(cp);
                         }
                     } break;
 
@@ -797,6 +800,7 @@ void MAXSatPipeline::actual_query_running(const KnowledgeBase& kb) {
                         uint32_t traceId = 0;
                         uint16_t eventCount = 0;
                         data_merge(formula->partial_results, results_cache, tmp_result, formula->isLeaf);
+                        std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>> cp{{0,0}, {1.0, {}}};
                         for (auto ref = tmp_result.begin(); ref != tmp_result.end(); ) {
                             if (isFirstIteration) {
                                 traceId = ref->first.first;
@@ -805,7 +809,8 @@ void MAXSatPipeline::actual_query_running(const KnowledgeBase& kb) {
                             } else {
                                 if ((traceId != ref->first.first)) {
                                     if ((eventCount >= formula->numeric_arg)) {
-                                        formula->result.emplace_back(std::make_pair(traceId, 0), std::make_pair(1.0, std::vector<uint16_t >{}));
+                                        cp.first.first = traceId;
+                                        formula->result.emplace_back(cp);
                                     }
                                     traceId = ref->first.first;
                                     eventCount = 1;
@@ -814,7 +819,8 @@ void MAXSatPipeline::actual_query_running(const KnowledgeBase& kb) {
                             ref = tmp_result.erase(ref);
                         }
                         if ((eventCount >= formula->numeric_arg)) {
-                            formula->result.emplace_back(std::make_pair(traceId, 0), std::make_pair(1.0, std::vector<uint16_t >{}));
+                            cp.first.first = traceId;
+                            formula->result.emplace_back(cp);
                         }
                         formula->result = negateUntimed(formula->result, kb.act_table_by_act_id.trace_length, false);
                     } break;
