@@ -775,7 +775,11 @@ void MAXSatPipeline::actual_query_running(const KnowledgeBase& kb) {
                     case Q_UNTIL:
                         assert(formula->args.size() == 2);
                         if (formula->isTimed) {
-                            // TODO
+                            until_logic_timed(formula->args.at(0)->result,
+                                                formula->args.at(1)->result,
+                                                kb.act_table_by_act_id.trace_length,
+                                                formula->result,
+                                                formula->joinCondition.isTruth() ? nullptr : &formula->joinCondition);
                         } else {
                             until_logic_untimed(formula->args.at(0)->result,
                                                     formula->args.at(1)->result,
@@ -785,73 +789,21 @@ void MAXSatPipeline::actual_query_running(const KnowledgeBase& kb) {
                         }
                         break;
 
-
                     case Q_RELEASE:
                         assert(false);
                         break;
+
                     case Q_LAST:
+                        // TODO
                         break;
 
                         break;
                     case Q_EXISTS: {
-                        // Exists, but only when you have data conditions
-                        /*bool isFirstIteration = true;
-                        uint32_t traceId = 0;
-                        uint16_t eventCount = 0;
-                        data_merge(formula->partial_results, results_cache, tmp_result, formula->isLeaf);
-                        std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>> cp{{0,0}, {1.0, {}}};
-                        for (auto ref = tmp_result.begin(); ref != tmp_result.end(); ) {
-                            if (isFirstIteration) {
-                                traceId = ref->first.first;
-                                eventCount = 1;
-                                isFirstIteration = false;
-                            } else {
-                                if ((traceId != ref->first.first)) {
-                                    if ((eventCount >= formula->numeric_arg)) {
-                                        cp.first.first = traceId;
-                                        formula->result.emplace_back(cp);
-                                    }
-                                    traceId = ref->first.first;
-                                    eventCount = 1;
-                                } else eventCount++;
-                            }
-                            ref = tmp_result.erase(ref);
-                        }
-                        if ((eventCount >= formula->numeric_arg)) {
-                            cp.first.first = traceId;
-                            formula->result.emplace_back(cp);
-                        }*/
                         absence_or_exists(formula, results_cache);
                     } break;
 
                     case Q_ABSENCE: {
-                        // Absence, but only when you have data conditions
-                        /*bool isFirstIteration = true;
-                        uint32_t traceId = 0;
-                        uint16_t eventCount = 0;
-                        data_merge(formula->partial_results, results_cache, tmp_result, formula->isLeaf);
-                        std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>> cp{{0,0}, {1.0, {}}};
-                        for (auto ref = tmp_result.begin(); ref != tmp_result.end(); ) {
-                            if (isFirstIteration) {
-                                traceId = ref->first.first;
-                                eventCount = 1;
-                                isFirstIteration = false;
-                            } else {
-                                if ((traceId != ref->first.first)) {
-                                    if ((eventCount >= formula->numeric_arg)) {
-                                        cp.first.first = traceId;
-                                        formula->result.emplace_back(cp);
-                                    }
-                                    traceId = ref->first.first;
-                                    eventCount = 1;
-                                } else eventCount++;
-                            }
-                            ref = tmp_result.erase(ref);
-                        }
-                        if ((eventCount >= formula->numeric_arg)) {
-                            cp.first.first = traceId;
-                            formula->result.emplace_back(cp);
-                        }*/
+                        // The difference with absence is that, if it is absent, then it shall not be there with the same number
                         absence_or_exists(formula, results_cache);
                         formula->result = negateUntimed(formula->result, kb.act_table_by_act_id.trace_length, false);
                     } break;

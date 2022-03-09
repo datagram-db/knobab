@@ -5,12 +5,30 @@ include_directories(submodules/rapidxml-1.13)
 include_directories(submodules/thread-pool)
 include_directories(submodules/cpp-httplib)
 
+add_subdirectory(submodules/args)
+include_directories(submodules/args)
+
 set(CMAKE_THREAD_PREFER_PTHREAD TRUE)
 set(THREADS_PREFER_PTHREAD_FLAG TRUE)
 find_package(Threads REQUIRED)
 
+set(Boost_USE_STATIC_LIBS        ON)
+set(Boost_USE_MULTITHREADED      ON)
+set(Boost_USE_STATIC_RUNTIME    OFF)
+find_package(Boost 1.74 COMPONENTS python)
+find_package(PythonLibs)
 
-#set(UTF8_TESTS OFF)
+if(Boost_FOUND AND PYTHONLIBS_FOUND)
+    include_directories(${Boost_INCLUDE_DIRS})
+    include_directories(${PYTHON_INCLUDE_DIRS})
+    set(CppPythonBindings ${Boost_LIBRARIES} ${PYTHON_LIBRARIES})
+    add_compile_definitions(PYTHON_WORKS)
+else()
+    message(WARNING "Compiling without the Python support for C++!")
+    set(CppPythonBindings "")
+endif()
+
+        #set(UTF8_TESTS OFF)
 add_subdirectory(submodules/antlr4/runtime/Cpp)
 include_directories(submodules/antlr4/runtime/Cpp/runtime/src)
 include_directories(antlr4/cpp/antlr4)
@@ -141,21 +159,23 @@ add_library(knobab_flloat STATIC
         src/knobab/flloat_deps/FLLOATPropListener.cpp
         src/knobab/flloat_deps/FLLOATPropParser.cpp
         src/knobab/flloat_deps/FLLOATPropVisitor.cpp
-        src/knobab/flloat_deps/FLLOATSimplePropParser.cpp src/knobab/flloat_deps/DeclareTemplateCollect.cpp include/knobab/flloat_deps/DeclareTemplateCollect.h)
-target_link_libraries(knobab_flloat #${Boost_LIBRARIES} ${PYTHON_LIBRARIES}
-                                    yaucl_bpm yaucl_graph)
+        src/knobab/flloat_deps/FLLOATSimplePropParser.cpp
+        src/knobab/flloat_deps/DeclareTemplateCollect.cpp
+        include/knobab/flloat_deps/DeclareTemplateCollect.h)
+target_link_libraries(knobab_flloat ${CppPythonBindings} yaucl_bpm yaucl_graph)
+
+
 
 add_subdirectory(submodules/backward-cpp)
 add_executable(server main.cpp ) #${BACKWARD_ENABLE})
 
-
-
-add_subdirectory(submodules/args)
-include_directories(submodules/args)
-target_link_libraries(server Threads::Threads yaml-cpp  knobab antlr4_static #${Boost_LIBRARIES} ${PYTHON_LIBRARIES} aaltaf
+target_link_libraries(server Threads::Threads yaml-cpp  knobab antlr4_static ${CppPythonBindings}
                                   yaucl_stringutils yaucl_numeric yaucl_hashing yaucl_data yaucl_bpm yaucl_graph knobab_flloat yaucl_structures)
+add_backward(server)
 
- add_backward(server)
+add_executable(tests_generator tests_generator.cpp) #${BACKWARD_ENABLE})
+target_link_libraries(tests_generator knobab
+        yaucl_stringutils yaucl_numeric yaucl_hashing yaucl_data yaucl_bpm yaucl_graph knobab_flloat yaucl_structures)
 
 enable_testing ()
 include(FetchContent)

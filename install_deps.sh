@@ -5,4 +5,6 @@ pip install git+https://github.com/whitemech/flloat.git
 
 ## Pulling the repositories
 git submodule update --init --recursive
+chmod +x generate_ltlf_patterns.py
+./generate_ltlf_patterns
 ##git submodule update --recursive --remote

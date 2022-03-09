@@ -224,6 +224,8 @@ KnowledgeBase test_kb(const KnowledgeBase::no_antlr_log& L, const std::string &s
 }
 
 #include <random>
+#include <knobab/flloat_deps/ParseFFLOATDot.h>
+
 
 template <typename T>
 size_t
@@ -609,8 +611,8 @@ void sam_testing() {
 }
 
 
-int main(int argc, char **argv) {
 
+int main(int argc, char **argv) {
     bool setUpServer = false;
     log_data_format format = HUMAN_READABLE_YAUCL;
     std::string log_file = "data/testing/log.txt";
@@ -623,6 +625,7 @@ int main(int argc, char **argv) {
     args::Group file_format(parser, "This group is all exclusive:", args::Group::Validators::AtMostOne);
     args::ValueFlag<std::string> logFile(file_format, "Log", "The Log, in human readable format, to load into the knowledgebase", {'l', "log"});
     args::ValueFlag<std::string> xesFile(file_format, "XES", "The Log in xes format to load into the knowledgebase", {'x', "xes"});
+    args::ValueFlag<std::string> tabFile(file_format, "TAB", "The Log in a tab separated format, with no event payload, to load into the knowledgebase", {'t', "tab"});
 
     args::Group group(parser, "You can use the following parameters", args::Group::Validators::DontCare, args::Options::Global);
     args::Flag server(group, "server", "Runs the HTTP server for visualizing the internal representation of both the knowledge base and the associated query plan", {'s', "server"});
