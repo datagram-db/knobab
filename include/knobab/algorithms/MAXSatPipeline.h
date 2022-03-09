@@ -67,9 +67,8 @@ struct MAXSatPipeline {
                   const KnowledgeBase& kb);
 
     void clear();
-    void data_chunk(CNFDeclareDataAware* model,
-                    const AtomizingPipeline& atomization);
-    void data_pipeline_first( const KnowledgeBase& kb);
+    void data_chunk(CNFDeclareDataAware* model, const AtomizingPipeline& atomization, const KnowledgeBase& kb);
+    void actual_query_running(const KnowledgeBase& kb);
 
     void
     localExtract(const AtomizingPipeline &atomization,
