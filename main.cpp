@@ -620,16 +620,15 @@ int main(int argc, char **argv) {
     args::ArgumentParser parser("KnoBAB  (c) 2020-2022 by Giacomo Bergami & Samuel 'Sam' Appleby.", "This free and open software program implements the MaxSat problem via a Knowledge Base, KnoBAB. Nicer things are still to come!");
     args::HelpFlag help(parser, "help", "Display this help menu", {'h', "help"});
 
-    args::Group file_format(parser, "This group is all exclusive:", args::Group::Validators::Xor);
-    args::ValueFlag<std::string> logFile(parser, "Log", "The Log, in human readable format, to load into the knowledgebase", {'l', "log"});
-    args::ValueFlag<std::string> xesFile(parser, "XES", "The Log in xes format to load into the knowledgebase", {'x', "xes"});
+    args::Group file_format(parser, "This group is all exclusive:", args::Group::Validators::AtMostOne);
+    args::ValueFlag<std::string> logFile(file_format, "Log", "The Log, in human readable format, to load into the knowledgebase", {'l', "log"});
+    args::ValueFlag<std::string> xesFile(file_format, "XES", "The Log in xes format to load into the knowledgebase", {'x', "xes"});
 
     args::Group group(parser, "You can use the following parameters", args::Group::Validators::DontCare, args::Options::Global);
     args::Flag server(group, "server", "Runs the HTTP server for visualizing the internal representation of both the knowledge base and the associated query plan", {'s', "server"});
-
-    args::ValueFlagList<std::string> queries(parser, "Models/Queries", "The queries expressed as Declare models", {'d', "declare"});
-    args::ValueFlag<std::string> benchmarkFile(parser, "Benchmark File", "Appends the current result data into a benchmark file", {'b', "csv"});
-    args::ValueFlag<std::string>  sqlMinerDump(parser, "SQLMinerDump", "If present, specifies the dump for the SQL miner representation", {'s', "sqlminer"});
+    args::ValueFlagList<std::string> queries(group, "Models/Queries", "The queries expressed as Declare models", {'d', "declare"});
+    args::ValueFlag<std::string> benchmarkFile(group, "Benchmark File", "Appends the current result data into a benchmark file", {'b', "csv"});
+    args::ValueFlag<std::string>  sqlMinerDump(group, "SQLMinerDump", "If present, specifies the dump for the SQL miner representation", {'s', "sqlminer"});
 
     try {
         parser.ParseCLI(argc, argv);
