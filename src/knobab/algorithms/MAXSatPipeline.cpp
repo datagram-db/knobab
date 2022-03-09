@@ -6,6 +6,7 @@
 #include <knobab/predicates/SimpleDataPredicate.h>
 #include <knobab/predicates/PredicateManager.h>
 #include <knobab/utilities/SetOperators.h>
+#include <knobab/operators/simple_ltlf_operators.h>
 #include "knobab/algorithms/MAXSatPipeline.h"
 
 
@@ -663,13 +664,11 @@ void MAXSatPipeline::data_pipeline_first(const KnowledgeBase& kb) {
                         break;
 
                     case Q_OR:
+                    case Q_XOR:
                         // TODO: theta
                         formula->result = local_union(formula, formula->isTimed);
                         break;
 
-                    case Q_XOR:
-                        formula->result = local_union(formula, formula->isTimed);
-                        break;
 
                     case Q_BOX:
                         if (formula->isTimed) {
@@ -680,9 +679,9 @@ void MAXSatPipeline::data_pipeline_first(const KnowledgeBase& kb) {
                         break;
                     case Q_DIAMOND:
                         if (formula->isTimed)
-                            formula->result = future_logic_timed(formula->args[0]->result);
+                             future_logic_timed(formula->args[0]->result, formula->result);
                         else {
-                            formula->result = future_logic_untimed(formula->args[0]->result);
+                             future_logic_untimed(formula->args[0]->result, formula->result);
                         }
 
 

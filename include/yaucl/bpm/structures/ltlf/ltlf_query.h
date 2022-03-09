@@ -9,7 +9,7 @@
 #include <string>
 #include <yaucl/bpm/structures/ltlf/ltlf.h>
 #include <knobab/predicates/PredicateManager.h>
-#include <knobab/utilities/LTLFOperators.h>
+#include <knobab/operators/LTLFOperators.h>
 
 
 enum ltlf_query_t {
