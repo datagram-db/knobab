@@ -700,7 +700,7 @@ int main(int argc, char **argv) {
 
     // --sqlminer=/home/giacomo/IdeaProjects/JavaConcurrentAPI/SQLMinerBenchmarker/log --log=data/testing/log_response.txt --declare=data/testing/response.powerdecl --server
 
-    // --tab=data/testing/ltlf/WeakUntil
+    // --tab=data/testing/ltlf/WeakUntil --sqlminer=/home/giacomo/IdeaProjects/JavaConcurrentAPI/SQLMinerBenchmarker/log
 
     return 0;
 }
