@@ -98,7 +98,7 @@ public class SQLMinerServer {
             final BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(path), StandardCharsets.UTF_8));
 
             // Removing the header;
-            br.readLine();
+            //br.readLine();
 
             // Reading the first line after the header
             String ln = br.readLine();
