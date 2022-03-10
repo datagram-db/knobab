@@ -14,3 +14,5 @@ competitors/SQLMinerBenchmarker/target/*
 competitors/SQLMinerBenchmarker/log/*.tab
 competitors/SQLMinerBenchmarker/.idea
 competitors/SQLMinerBenchmarker/.idea/*
+competitors/SQLMinerBenchmarker/conf/postgresql.properties
+*.csv
