@@ -21,6 +21,12 @@ AND NOT EXISTS(SELECT * FROM log1 b, log1 c WHERE c.trace_id = a.trace_id AND c.
 GROUP BY x.taska , x.taskb
 HAVING (CAST(COUNT(*) AS FLOAT) / CAST((SELECT COUNT(*) FROM log1 WHERE task LIKE taskb) AS FLOAT)) > 0.7
 
+-- AB = 01111111111111111101 = 18 / 20 = 0.900 ?
+-- AC = 0111 = 3 / 4 = 0.75
+-- BA = 000000001000100010001 = 4 / 21 = 0.190 ?
+-- CA = 000000001000000000000 = 1 / 21 = 0.0476
+-- CB = 00000100000000000000 = 1 / 20 = 0.05
+
 --With confidence
 SELECT taska, taskb,
 (CAST(COUNT(*) AS FLOAT) / CAST((SELECT COUNT(*) FROM log1 WHERE task LIKE taskb) AS FLOAT)) AS Support,
