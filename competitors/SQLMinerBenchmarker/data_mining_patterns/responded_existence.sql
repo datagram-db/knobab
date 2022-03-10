@@ -19,6 +19,13 @@ WHERE a.task = x.taskb AND EXISTS (SELECT * FROM log1 b WHERE b.task = x.taska A
 GROUP BY x.taska, x.taskb
 HAVING (CAST(COUNT(*) AS FLOAT) / CAST((SELECT COUNT(*) FROM log1 WHERE Task LIKE taska) AS FLOAT)) > 0.7
 
+-- AB = 010101111111111111111 = 18 / 21 = 0.857 ?
+-- AC = 001010100000000000000 = 3 / 21 = 0.142
+-- BA = 01111111111111111111 = 19 / 20 = 0.95 ?
+-- BC = 00000100000000000000 = 1 / 20 = 0.05
+-- CA = 0111 = 3 / 4 = 0.75 ?
+-- CB = 0001 = 1 / 4 = 0.25
+
 -- With confidence
 SELECT taska, taskb,
 (CAST(COUNT(*) AS FLOAT) / CAST((SELECT COUNT(*) FROM log1 WHERE Task LIKE taska) AS FLOAT)) AS Support,
