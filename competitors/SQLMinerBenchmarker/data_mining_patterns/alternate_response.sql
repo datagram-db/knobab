@@ -1,3 +1,5 @@
+-- TODO Not working for AB, log_until.txt
+
 -- SELECT 'alternateResponse', TaskA, TaskB,
 -- (CAST(COUNT(*) AS FLOAT) / CAST((SELECT COUNT(*) FROM Log WHERE Task LIKE TaskA) AS FLOAT)) AS Support,
 -- ((CAST(COUNT( *) AS FLOAT) / CAST( (SELECT COUNT(*) FROM Log WHERE Task LIKE TaskA) AS FLOAT)) * (CAST((SELECT COUNT(*) FROM (SELECT Instance FROM Log WHERE Task LIKE TaskA
@@ -18,6 +20,12 @@ WHERE a.task = x.taska AND EXISTS (SELECT * FROM log1 b WHERE b.task = x.taskb A
 AND NOT EXISTS(SELECT * FROM log1 b , log1 c WHERE c.trace_id = a.trace_id AND c.task = x.taska AND b.trace_id = a.trace_id AND b.task = x.taskb AND c.time > a.time AND c.time < b.time)
 GROUP BY x.taska , x.taskb
 HAVING (CAST(COUNT(*) AS FLOAT) /CAST( (SELECT COUNT(*) FROM log1 WHERE task LIKE taska) AS FLOAT)) > 0.7
+
+-- AB = 010101010111111110011 = 14 / 21 = 0.667 ?
+-- AC = 001010010000000000000 = 3 / 21 = 0.143
+-- BA = 00001101001000101010 = 7 / 20 = 0.35
+-- CA = 0001 = 1 / 4 = 0.25
+-- CB = 0001 = 1 / 4 = 0.25
 
 -- With confidence
 SELECT taska, taskb,

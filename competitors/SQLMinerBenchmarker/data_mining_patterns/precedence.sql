@@ -1,3 +1,5 @@
+-- TODO Might be working, log_until.txt
+
 -- SELECT 'Precedence', TaskA, TaskB,
 -- (CAST(COUNT(*) AS FLOAT) / CAST((SELECT COUNT(*) FROM Log WHERE Task LIKE TaskB) AS FLOAT)) AS Support,
 -- ((CAST(COUNT(*) AS FLOAT) / CAST((SELECT COUNT(*) FROM Log WHERE Task LIKE TaskB) AS FLOAT)) * (CAST((SELECT COUNT(*) FROM (SELECT Instance FROM Log WHERE Task LIKE TaskB
@@ -16,6 +18,12 @@ FROM log1 a, (SELECT a.task AS taska, b.task AS taskb FROM log1 a, log1 b WHERE 
 WHERE a.task = x.taskb AND EXISTS (SELECT * FROM log1 b WHERE b.task = x.taska AND b.trace_id = a.trace_id AND b.time < a.time)
 GROUP BY x.taska , x.taskb
 HAVING (CAST(COUNT(*) AS FLOAT) /CAST( (SELECT COUNT(*) FROM log1 WHERE task LIKE taskb) AS FLOAT)) > 0.7
+
+-- AB = 01111111111111111111 = 19 / 20 = 0.95
+-- AC = 0111 = 3 / 4 = 0.75
+-- BA = 000000101010101010001 = 7 / 21 = 0.333
+-- CA = 000000001000000000000 = 1 / 21 = 0.0476
+-- CB = 00000100000000000000 = 1 / 20 = 0.05
 
 -- With confidence
 SELECT taska, taskb,
