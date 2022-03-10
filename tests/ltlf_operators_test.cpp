@@ -122,7 +122,6 @@ TEST_F(Diamond_tests, timed) {
 }
 
 TEST(Until)
-
 TEST_F(Until_tests, basic) {
     auto a = env.db.exists("a", true);
     auto b = env.db.exists("b", true);
@@ -130,4 +129,39 @@ TEST_F(Until_tests, basic) {
     dataContainer result;
     until_logic_untimed(a, b, env.db.act_table_by_act_id.trace_length, result);
     EXPECT_EQ(pos, result.size());
+}
+
+
+TEST_F(Until_tests, timed) {
+    Environment env2;
+    env2.doStats = false;
+    auto a = env.db.exists("a", true);
+    auto b = env.db.exists("b", true);
+    dataContainer result;
+    until_logic_timed(a, b, env.db.act_table_by_act_id.trace_length, result);
+    EXPECT_TRUE(!result.empty());
+    size_t resultSize = result.size();
+    env2.db.enterLog("until_test_timed", "until_test_timed");
+    size_t trace_count = 0;
+    size_t timestamp = 0;
+    for (auto it = result.begin(); it != result.end(); it++) {
+        auto &trace = traces.at(it->first.first);
+        auto beg = trace.begin() + it->first.second;
+        auto end = trace.end();
+        size_t traceId = env2.db.enterTrace(std::to_string(trace_count));
+        for (auto beg = trace.begin() + it->first.second, end = trace.end(); beg != end; beg++) {
+            env2.db.enterEvent(timestamp++, *beg);
+        }
+        env2.db.exitTrace(traceId);
+        trace_count++;
+    }
+    result.clear();
+    env2.db.exitLog("until_test_timed", "until_test_timed");
+    env2.db.index_data_structures(false);
+    assert(result.empty());
+    a = env2.db.exists("a", true);
+    b = env2.db.exists("b", true);
+    until_logic_untimed(a, b, env2.db.act_table_by_act_id.trace_length, result);
+    EXPECT_EQ(trace_count, result.size());
+    EXPECT_EQ(resultSize, result.size());
 }

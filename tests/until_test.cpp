@@ -22,10 +22,8 @@ protected:
             env.load_log(HUMAN_READABLE_YAUCL, true, file.string(), false, if_);
         }
     }
-
     Environment env;
 };
-
 
 TEST_F(until_tests, basic) {
     auto a = env.db.exists("A", true);
@@ -65,4 +63,43 @@ TEST_F(until_tests, logic_pm) {
     until_logic_untimed(a, b, env.db.act_table_by_act_id.getTraceLengths(), result, &pm);
     for (const auto& ref : result)
         EXPECT_TRUE(expectedTraces.contains(ref.first.first));
+}
+
+#define DATA_EMPLACE_BACK(l,trace,event,...)     (l).emplace_back(std::make_pair((trace),(event)), std::make_pair((1.0),std::vector<uint16_t>{ __VA_ARGS__}));
+
+TEST_F(until_tests, logic_timed) {
+    auto a = env.db.exists("A", true);
+    auto b = env.db.exists("B", true);
+    dataContainer result, expected;
+    DATA_EMPLACE_BACK(expected, 1, 0, 0)
+    DATA_EMPLACE_BACK(expected, 3, 0, 0, 1)
+    DATA_EMPLACE_BACK(expected, 3, 1, 1)
+    DATA_EMPLACE_BACK(expected, 5, 0, 0, 1)
+    DATA_EMPLACE_BACK(expected, 5, 1, 1)
+    DATA_EMPLACE_BACK(expected, 7, 0, 0, 1)
+    DATA_EMPLACE_BACK(expected, 7, 1, 1)
+    DATA_EMPLACE_BACK(expected, 9, 0, 0, 1)
+    DATA_EMPLACE_BACK(expected, 9, 1, 1)
+    DATA_EMPLACE_BACK(expected, 9, 3, 3, 4)
+    DATA_EMPLACE_BACK(expected, 9, 4, 4)
+    DATA_EMPLACE_BACK(expected, 10, 0, 0, 1)
+    DATA_EMPLACE_BACK(expected, 10, 1, 1)
+    DATA_EMPLACE_BACK(expected, 10, 2, 2, 3)
+    DATA_EMPLACE_BACK(expected, 10, 3, 3)
+    DATA_EMPLACE_BACK(expected, 11, 0, 0, 1)
+    DATA_EMPLACE_BACK(expected, 11, 1, 1)
+    DATA_EMPLACE_BACK(expected, 11, 3, 3, 4)
+    DATA_EMPLACE_BACK(expected, 11, 4, 4)
+    DATA_EMPLACE_BACK(expected, 12, 0, 0, 1)
+    DATA_EMPLACE_BACK(expected, 12, 1, 1)
+    DATA_EMPLACE_BACK(expected, 12, 2, 2, 3)
+    DATA_EMPLACE_BACK(expected, 12, 3, 3)
+    DATA_EMPLACE_BACK(expected, 13, 0, 0, 1, 2, 3)
+    DATA_EMPLACE_BACK(expected, 13, 1, 1, 2, 3)
+    DATA_EMPLACE_BACK(expected, 13, 2, 2, 3)
+    DATA_EMPLACE_BACK(expected, 13, 3, 3)
+    DATA_EMPLACE_BACK(expected, 13, 4, 4, 5)
+    DATA_EMPLACE_BACK(expected, 13, 5, 5)
+    until_logic_timed(a, b, env.db.act_table_by_act_id.getTraceLengths(), result, nullptr);
+    EXPECT_TRUE(result == expected);
 }
