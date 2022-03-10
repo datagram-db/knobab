@@ -189,6 +189,8 @@ inline void global_logic_untimed(const dataContainer &section, const std::vector
     }
 }
 
+#include <iostream>
+#include <queue>
 
 /**
  *
@@ -224,37 +226,46 @@ inline void until_logic_timed(const dataContainer &aSection, const dataContainer
         uint32_t currentTraceId = localUpper->first.first;
         cpAIt.first.first = cpLocalUpper.first.first = cpAEn.first.first = cpResult.first.first = currentTraceId;
         cpLocalUpper.first.second = lengths.at(currentTraceId);
+        cpAIt.first.second = 0;
 
         localUpper = std::upper_bound(lower, upper, cpLocalUpper);
         aIt = std::lower_bound(aIt, upperA, cpAIt);
         aEn = aIt;
+        std::queue<decltype(aEn)> nextCandidateQueue;
 
-        for( ; lower != localUpper; lower++) {
+        while (lower != localUpper) {
             Fut.first = lower->first.first;
             if (lower->first.second == 0) {
                 temp.emplace_back(*lower);
             } else {
-                cpAEn.first.second = lower->first.second-1;
+                cpAEn.first.second = lower->first.second;
                 aEn = std::upper_bound(aEn, upperA, cpAEn);
+                if (aEn->first.first == currentTraceId)
+                    nextCandidateQueue.emplace(aEn);
                 if(aIt == aEn){
                     // Rationale: (1)
                     // if the condition does not hold for a time [startEventId, lower->first.second-1], it is because
                     // one event makes it not hold. Therefore, it should never hold even if you are extending the data
                     // that you have.
                     setUntilHolds = true;
-                    cpAIt.first.second = lower->first.second;
-                    aIt = std::lower_bound(aEn, upperA, cpAIt);
-                    aEn = aIt;
+                    if (nextCandidateQueue.empty()) break;
+                    aIt = nextCandidateQueue.front();
+                    nextCandidateQueue.pop();
+                    cpAEn.first.second = lower->first.second;
+                    aEn = std::upper_bound(aEn, upperA, cpAEn);
+                    if (aEn->first.first == currentTraceId)
+                        nextCandidateQueue.emplace(aEn);
+                    lower++;
                     continue;
                 } else {
-                    const uint32_t dist = std::distance(aIt, aEn - 1);
+                    const uint32_t dist = std::distance(aIt, aEn);
                     cpResult.second.second.clear();
                     if (setUntilHolds) {
                         untilHolds = aIt->first.second;
                         setUntilHolds = false;
                     }
 
-                    if(dist == ((lower->first.second))-1){
+                    if(dist == ((lower->first.second)-aIt->first.second)){
                         if (manager) {
                             bool hasFail = false;
                             for (uint16_t activationEvent : lower->second.second) {
@@ -276,7 +287,20 @@ inline void until_logic_timed(const dataContainer &aSection, const dataContainer
                                     }
                                 }
                             }
-                            if (hasFail) break;
+                            if (hasFail) {
+                                setUntilHolds = true;
+                                if (nextCandidateQueue.empty()) break;
+                                aIt = nextCandidateQueue.front();
+                                nextCandidateQueue.pop();
+                                ///aIt = aEn;
+                                ///aIt--;
+                                cpAEn.first.second = lower->first.second;
+                                aEn = std::upper_bound(aEn, upperA, cpAEn);
+                                if (aEn->first.first == currentTraceId)
+                                    nextCandidateQueue.emplace(aEn);
+                                lower++;
+                                continue;
+                            }
                             std::sort(cpResult.second.second.begin(), cpResult.second.second.end());
                             cpResult.second.second.erase(std::unique(cpResult.second.second.begin(), cpResult.second.second.end()), cpResult.second.second.end());
                             cpResult.second.second.insert(cpResult.second.second.begin(), lower->second.second.begin(), lower->second.second.end());
@@ -284,21 +308,29 @@ inline void until_logic_timed(const dataContainer &aSection, const dataContainer
                             populateAndReturnEvents(aIt, aEn, cpResult.second.second);
                             cpResult.second.second.insert(cpResult.second.second.begin(), lower->second.second.begin(), lower->second.second.end());
                         }
+                        remove_duplicates(cpResult.second.second);
                         for (uint16_t i = untilHolds; i<=lower->first.second; i++) {
                             cpResult.first.second = i;
                             temp.emplace_back(cpResult);
+                            cpResult.second.second.erase(cpResult.second.second.begin());
                         }
                     } else {
                         // For (1)
                         setUntilHolds = true;
-                        cpAIt.first.second = lower->first.second;
-                        aIt = std::lower_bound(aEn, upperA, cpAIt);
-                        aEn = aIt;
+                        if (nextCandidateQueue.empty()) break;
+                        aIt = nextCandidateQueue.front();
+                        nextCandidateQueue.pop();
+                        ///aIt = aEn;
+                        ///aIt--;
+                        cpAEn.first.second = lower->first.second;
+                        aEn = std::upper_bound(aEn, upperA, cpAEn);
+                        if (aEn->first.first == currentTraceId)
+                            nextCandidateQueue.emplace(aEn);
                         continue;
                     }
                 }
             }
-
+            lower++;
         }
 
         lower = localUpper;
@@ -329,6 +361,7 @@ inline void until_logic_untimed(const dataContainer &aSection, const dataContain
         uint32_t currentTraceId = localUpper->first.first;
         cpAIt.first.first = cpLocalUpper.first.first = cpAEn.first.first = cpResult.first.first = currentTraceId;
         cpLocalUpper.first.second = lengths.at(currentTraceId);
+        cpAIt.first.second = 0;
 
         localUpper = std::upper_bound(lower, upper, cpLocalUpper);
         aIt = std::lower_bound(aIt, upperA, cpAIt);
