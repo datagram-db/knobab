@@ -39,7 +39,7 @@ inline void future_logic_timed(const dataContainer &section, const std::vector<s
         dataContainer toBeReversed;
         auto it = lower+std::distance(lower,upper)-1;
         bool isBegin = true;
-        for (int64_t i = (upper-1)->first.second; i >= 0; i--) {
+        for (int64_t i = (upper-1)->first.second; (i >= 0) && (it >= lower); i--) {
             first.second = i;
             if (it->first.second == i) {
                 second.first = std::max(it->second.first, second.first);
@@ -74,7 +74,6 @@ inline void future_logic_untimed(const dataContainer &section, const std::vector
     result.clear();
     auto lower = section.begin(), upper = section.begin();
     auto end = section.end();
-    constexpr auto max16 = std::numeric_limits<uint16_t>::max();
 
     std::pair<uint32_t, uint16_t> first{0, 0};
     std::pair<double, std::vector<uint16_t>> second{0.0, {}};
@@ -116,7 +115,7 @@ inline void global_logic_timed(const dataContainer &section, const std::vector<s
     constexpr auto max16 = std::numeric_limits<uint16_t>::max();
 
     std::pair<uint32_t, uint16_t> first;
-    std::pair<double, std::vector<uint16_t>> second{0.0, 0.0};
+    std::pair<double, std::vector<uint16_t>> second{1.0, 0.0};
     std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>> cp{{0,0}, {1.0, {}}};
 
     while(upper != end){
@@ -133,9 +132,9 @@ inline void global_logic_timed(const dataContainer &section, const std::vector<s
         bool isBegin = true;
         for (int64_t i = (upper-1)->first.second; i >= 0; i--) {
             first.second = i;
-            const uint32_t dist = std::distance(it, upper - 1);
+            const uint32_t dist = std::distance(it, upper);
 
-            if(dist == (cp.first.second - it->first.second)){
+            if((cp.first.first == it->first.first) && (dist == (cp.first.second - it->first.second))){
                 second.first = std::min(it->second.first, second.first);
                 second.second.insert(second.second.begin(), it->second.second.begin(), it->second.second.end());
                 remove_duplicates(second.second);
