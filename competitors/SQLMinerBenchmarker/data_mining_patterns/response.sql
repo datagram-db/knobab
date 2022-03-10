@@ -1,3 +1,5 @@
+-- TODO Might be working, log_until.txt
+
 -- SELECT 'response', TaskA , TaskB ,
 -- (CAST(COUNT(*) AS FLOAT) /CAST( (SELECT COUNT(*) FROM Log WHERE Task LIKE TaskA) AS FLOAT)) AS Support,
 -- ((CAST(COUNT(*) AS FLOAT) /CAST((SELECT COUNT(*) FROM Log WHERE Task LIKE TaskA) AS FLOAT) ) * (CAST( (SELECT COUNT( *) FROM (SELECT Instance FROM Log WHERE Task LIKE TaskA

@@ -1,3 +1,5 @@
+-- TODO Might be working, log_until.txt
+
 -- SELECT 'Precedence', TaskA, TaskB,
 -- (CAST(COUNT(*) AS FLOAT) / CAST((SELECT COUNT(*) FROM Log WHERE Task LIKE TaskB) AS FLOAT)) AS Support,
 -- ((CAST(COUNT(*) AS FLOAT) / CAST((SELECT COUNT(*) FROM Log WHERE Task LIKE TaskB) AS FLOAT)) * (CAST((SELECT COUNT(*) FROM (SELECT Instance FROM Log WHERE Task LIKE TaskB
