@@ -1,3 +1,5 @@
+-- TODO Not working for AB and BA, log_until.txt
+
 -- SELECT 'chainPrecedence', TaskA, TaskB,
 -- (CAST(COUNT(*) AS FLOAT) / CAST((SELECT COUNT(*) FROM Log WHERE Task LIKE TaskB) AS FLOAT)) AS Support,
 -- ((CAST(COUNT(*) AS FLOAT) / CAST((SELECT COUNT(*) FROM Log WHERE Task LIKE TaskB) AS FLOAT)) * (CAST((SELECT COUNT(*) FROM (SELECT Instance FROM Log WHERE Task LIKE TaskB
@@ -18,6 +20,11 @@ WHERE a.task = x.taskb AND EXISTS (SELECT * FROM log1 b WHERE b.task = x.taska A
 AND NOT EXISTS(SELECT * FROM log1 b, log1 c WHERE c.trace_id = a.trace_id AND b.trace_id = a.trace_id AND b.task = x.taska AND c.time < a.time AND c.time > b.time)
 GROUP BY x.taska , x.taskb
 HAVING (CAST(COUNT(*) AS FLOAT) / CAST((SELECT COUNT(*) FROM log1 WHERE task LIKE taskb) AS FLOAT)) > 0.7
+
+-- AB = 01110010101101011111 = 15 / 21 = 0.714 ?
+-- AC = 0111 = 3 / 4 = 0.75
+-- BA = 000000101010101010001 = 7 / 21 = 0.333 ?
+-- CB = 00000100000000000000 = 1 / 20 = 0.05
 
 --With confidence
 SELECT taska, taskb,

@@ -217,7 +217,7 @@ KnowledgeBase test_kb(const KnowledgeBase::no_antlr_log& L, const std::string &s
     /// Indexing the data structures
     /// TODO: these indices might be written in secondary memory as well!
     db.index_data_structures(true);
-    
+
 
     /// Debugging purposes: checking whether the thing that I obtain by printing corresponds to the one that I obtained before.
     /// This is just an isomorphism proof, that states that I can always reconstruct the original information from the
@@ -598,8 +598,8 @@ void sam_testing() {
     dataContainer chainResponse = DChainResponse(aOccurences, bOccurences, bOccurences, db.act_table_by_act_id.getTraceLengths(),nullptr);
     std::cout << "========ChainResponse=========" << std::endl << chainResponse << std::endl;
     std::flush(std::cout);
-  
-  
+
+
     dataContainer chainPrecedence = DChainPrecedence(aOccurences, bOccurences, aOccurences, /*db.getNotFirstElements(),*/ db.getLastElements(), db.act_table_by_act_id.getTraceLengths(),nullptr);
     std::cout << "========ChainPrecedence=========" << std::endl << chainPrecedence << std::endl;
     std::flush(std::cout);
@@ -699,7 +699,9 @@ int main(int argc, char **argv) {
     // --sqlminer /home/giacomo/IdeaProjects/JavaConcurrentAPI/SQLMinerBenchmarker/log --log data/testing/log_until.txt
 
     // --sqlminer=/home/giacomo/IdeaProjects/JavaConcurrentAPI/SQLMinerBenchmarker/log --log=data/testing/log_response.txt --declare=data/testing/response.powerdecl --server
-
+    // --sqlminer=C:/Users/Sam/Documents/Codebases/knobabBenchmark/knobab/competitors/SQLMinerBenchmarker/log --csv=test.csv --log=data/testing/log_response.txt
+    // --sqlminer=C:/Users/Sam/Documents/Codebases/knobabBenchmark/knobab/competitors/SQLMinerBenchmarker/log --csv=test.csv --xes=data/testing/xes/concept_drift_detection_10000.xes
+    //  https://ieee-dataport.org/open-access/synthetic-event-logs-concept-drift-detection
     // --tab=data/testing/ltlf/WeakUntil --sqlminer=/home/giacomo/IdeaProjects/JavaConcurrentAPI/SQLMinerBenchmarker/log
 
     return 0;
