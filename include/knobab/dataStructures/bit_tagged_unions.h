@@ -1,4 +1,3 @@
-#include <stdint.h>
 
 #ifndef KNOBAB_BIT_TAGGED_UNIONS_H
 #define KNOBAB_BIT_TAGGED_UNIONS_H
@@ -38,8 +37,8 @@
 #define FIELD1(N,...)   EXPAND(FIELD_ ## N(__VA_ARGS__))
 #define FIELD(N, ...)   FIELD1(N, __VA_ARGS__)
 
-#define REVERSE_1(a) a;
-#define REVERSE_2(a,b) b;a;
+#define REVERSE_1(a)        a;
+#define REVERSE_2(a,b)      b;a;
 #define REVERSE_3(a,...) EXPAND(REVERSE_2(__VA_ARGS__));a;
 #define REVERSE_4(a,...) EXPAND(REVERSE_3(__VA_ARGS__));a;
 #define REVERSE_5(a,...) EXPAND(REVERSE_4(__VA_ARGS__));a;

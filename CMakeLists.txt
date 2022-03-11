@@ -50,7 +50,7 @@ include_directories(include)
 add_library(knobab STATIC
         src/knobab/trace_repairs/MarkedEvent.cpp
         src/knobab/algorithms/MAXSatPipeline.cpp
-        src/knobab/oid.cpp
+        src/knobab/dataStructures/oid.cpp
         src/knobab/CountTemplate.cpp
         src/knobab/ActTable.cpp
         src/knobab/AttributeTable.cpp
@@ -167,7 +167,7 @@ target_link_libraries(knobab_flloat ${CppPythonBindings} yaucl_bpm yaucl_graph)
 
 
 add_subdirectory(submodules/backward-cpp)
-add_executable(server main.cpp ) #${BACKWARD_ENABLE})
+add_executable(server main.cpp src/knobab/dataStructures/TaggedMatchedEvents.cpp include/knobab/dataStructures/TaggedMatchedEvents.h) #${BACKWARD_ENABLE})
 
 target_link_libraries(server Threads::Threads yaml-cpp  knobab antlr4_static ${CppPythonBindings}
                                   yaucl_stringutils yaucl_numeric yaucl_hashing yaucl_data yaucl_bpm yaucl_graph knobab_flloat yaucl_structures)
