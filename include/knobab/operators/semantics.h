@@ -15,7 +15,7 @@
 #include <yaucl/structures/set_operations.h>
 
 constexpr event_t max = std::numeric_limits<event_t>::max();
-static const std::vector<event_t> maxVec(max,max);
+static const MarkedEventsVector maxVec(max,MAX_MARKED_EVENT());
 
 #include <knobab/predicates/PredicateManager.h>
 #include <knobab/utilities/Aggregators.h>
@@ -25,20 +25,22 @@ static const std::vector<event_t> maxVec(max,max);
 
 
 enum LeafType {
-    ActivationLeaf,
-    TargetLeaf,
-    NoneLeaf,
-    NotALeaf,
-    MatchActivationTarget
+    ActivationLeaf = 1,
+    TargetLeaf = 2,
+    NoneLeaf = 0,
+    NotALeaf = 4,
+    MatchActivationTarget = 3
 };
+
+
 
 #include <vector>
 #include <utility>
 
 
 template <typename T>
-std::vector<uint16_t> populateAndReturnEvents(T it1, T it2){
-    std::vector<uint16_t> vec;
+MarkedEventsVector populateAndReturnEvents(T it1, T it2){
+    MarkedEventsVector vec;
 
     for(auto itr = it1; itr != it2; ++itr){
         for(const auto& r2 : itr->second.second){
@@ -52,7 +54,7 @@ std::vector<uint16_t> populateAndReturnEvents(T it1, T it2){
     return vec;
 }
 
-template <typename T> void populateAndReturnEvents(T it1, T it2, std::vector<uint16_t>& vec){
+template <typename T> void populateAndReturnEvents(T it1, T it2, MarkedEventsVector& vec){
     vec.clear();
 
     for(auto itr = it1; itr != it2; ++itr){
