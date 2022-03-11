@@ -39,7 +39,7 @@ TEST_F(until_tests, logic) {
     auto b = env.db.exists("B", NoneLeaf);
     std::set<uint32_t> expectedTraces{1,3,5,7,9,10,11,12,13};
     Result result;
-    until_logic_untimed(a, b, env.db.act_table_by_act_id.getTraceLengths(), result, nullptr);
+    until_logic_untimed(a, b, result, nullptr, env.db.act_table_by_act_id.trace_length);
     for (const auto& ref : result)
         EXPECT_TRUE(expectedTraces.contains(ref.first.first));
 }
@@ -60,7 +60,7 @@ TEST_F(until_tests, logic_pm) {
     PredicateManager pm{{{{"x", "y", LT}}}, &env.db};
     std::set<uint32_t> expectedTraces{1,3,5,7,13};
     Result result;
-    until_logic_untimed(a, b, env.db.act_table_by_act_id.getTraceLengths(), result, &pm);
+    until_logic_untimed(a, b, result, &pm, env.db.act_table_by_act_id.trace_length);
     for (const auto& ref : result)
         EXPECT_TRUE(expectedTraces.contains(ref.first.first));
 }
@@ -102,7 +102,7 @@ TEST_F(until_tests, logic_timed) {
     DATA_EMPLACE_BACK(expected, 13, 3)
     DATA_EMPLACE_BACK(expected, 13, 4)
     DATA_EMPLACE_BACK(expected, 13, 5)
-        until_logic_timed(a, b, env.db.act_table_by_act_id.getTraceLengths(), result, nullptr);
+        until_logic_timed(a, b, result, nullptr, env.db.act_table_by_act_id.trace_length);
         EXPECT_TRUE(result == expected);
     }
 
@@ -139,7 +139,7 @@ TEST_F(until_tests, logic_timed) {
         DATA_EMPLACE_BACK(expected, 13, 3, marked_event::target(3))
         DATA_EMPLACE_BACK(expected, 13, 4, marked_event::target(5))
         DATA_EMPLACE_BACK(expected, 13, 5, marked_event::target(5))
-        until_logic_timed(a, b, env.db.act_table_by_act_id.getTraceLengths(), result, nullptr);
+        until_logic_timed(a, b, result, nullptr, env.db.act_table_by_act_id.trace_length);
         EXPECT_EQ(result, expected);
     }
 
@@ -178,7 +178,7 @@ TEST_F(until_tests, logic_timed) {
         DATA_EMPLACE_BACK(expected, 13, 5, marked_event::target(5))
         for (auto& ref : expected)
             std::sort(ref.second.second.begin(), ref.second.second.end());
-        until_logic_timed(a, b, env.db.act_table_by_act_id.getTraceLengths(), result, nullptr);
+        until_logic_timed(a, b, result, nullptr, env.db.act_table_by_act_id.trace_length);
         EXPECT_EQ(result, expected);
     }
 

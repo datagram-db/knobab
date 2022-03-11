@@ -7,88 +7,166 @@
 
 #include <knobab/operators/semantics.h>
 
-#if 0
+/**
+ * @author Samuel 'Sam' Appleby, Giacomo Bergami
+ *
+ * @param lhs
+ * @param rhs
+ * @param out
+ * @param manager
+ */
+inline void or_logic_timed(const Result& lhs, const Result& rhs, Result& out, const PredicateManager *manager = nullptr, const std::vector<size_t>& lengths = {}) {
+    auto first1 = lhs.begin(), first2 = rhs.begin(),
+            last1 = lhs.end(), last2 = rhs.end();
+    env e1, e2;
+    ResultIndex pair, pair1;
+    bool hasMatch;
+    ResultRecord result{{0, 0}, {0.0, {}}};
+
+    for (; first1 != last1; /*++d_first*/) {
+        if (first2 == last2) {
+            std::copy(first1, last1, std::back_inserter(out));
+            return;
+        }
+        if (first1->first > first2->first) {
+            out.emplace_back(*first2++);
+        } else if (first1->first < first2->first) {
+            out.emplace_back(*first1++);
+        } else {
+            pair.first = first1->first.first;
+            pair1.first = first2->first.first;
+            result.first = first1->first;
+            result.second.first = std::min(first1->second.first, first2->second.first);
+            result.second.second.clear();
+            hasMatch = false;
+
+            if (manager) {
+                e1 = manager->GetPayloadDataFromEvent(pair);
+                e2 = manager->GetPayloadDataFromEvent(pair1);
+
+                for (const marked_event &elem: first1->second.second) {
+                    if (!IS_MARKED_EVENT_ACTIVATION(elem)) continue;
+                    pair.second = GET_ACTIVATION_EVENT(elem);
+
+                    for (const marked_event &elem1: first2->second.second) {
+                        if (!IS_MARKED_EVENT_TARGET(elem1)) continue;
+                        pair1.second = GET_TARGET_EVENT(elem1);
+
+                        if (manager->checkValidity(e1, e2)) {
+                            hasMatch = true;
+                            result.second.second.emplace_back(marked_event::join(pair.second, pair1.second));
+                        }
+                    }
+                }
+            } else {
+                hasMatch = true;
+                result.second.second = first1->second.second;
+                result.second.second.insert(result.second.second.end(), first2->second.second.begin(), first2->second.second.end());
+            }
+
+            if (hasMatch) {
+                remove_duplicates(result.second.second);
+                out.emplace_back(result);
+            }
+
+            first1++;
+            first2++;
+        }
+    }
+    std::copy(first2, last2, std::back_inserter(out));
+}
+
 /**
  *
  * @author Samuel 'Sam' Appleby, Giacomo Bergami
  *
- * @param section
- * @param lengths
- * @param result
+ * @param lhs
+ * @param rhs
+ * @param out
+ * @param manager
  */
-void inline union_logic_untimed(const Result& lhs, const Result& rhs, Result& result, std::function<double(double, double)> aggr,
-                                const PredicateManager *manager = nullptr, bool dropMatches = false) {
-    auto first1 = lhs.begin(), last1 = lhs.end(), first2 = rhs.begin(), last2 = rhs.end();
-    std::map<uint32_t, Result> group1 = GroupByKeyExtractor<decltype(first1), uint32_t, ResultRecord>(
-            first1, last1, [](const auto &p) { return p.first.first; });
+inline void or_logic_untimed(const Result& lhs, const Result& rhs,
+                     Result& out,
+                     const PredicateManager *manager = nullptr) {
+     auto first1 = lhs.begin(), first2 = rhs.begin(),
+             last1 = lhs.end(), last2 = rhs.end();
+     std::map<uint32_t, Result> group1 = GroupByKeyExtractor<decltype(first1), uint32_t, ResultRecord>(
+             first1, last1,
+             [](const ResultRecord &p) {
+                 return p.first.first;
+             });
 
-    std::map<uint32_t, Result> group2 = GroupByKeyExtractor<decltype(first2), uint32_t, ResultRecord>(
-            first2, last2, [](const auto &p) { return p.first.first; });
+     std::map<uint32_t, Result> group2 = GroupByKeyExtractor<decltype(first2), uint32_t, ResultRecord>(
+             first2, last2,
+             [](const ResultRecord &p) {
+                 return p.first.first;
+             });
 
     env e1, e2;
-    ResultIndex pair, pair1;
+    std::pair<uint32_t, uint16_t> pair, pair1;
     auto start1 = group1.begin(), end1 = group1.end();
     auto start2 = group2.begin(), end2 = group2.end();
-    ResultRecord val;
+    ResultRecord result{{0, 0}, {0.0, {}}};
+    bool hasMatch;
 
     for (; start1 != end1; /*++d_first*/) {
         if (start2 == end2) {
             while (start1 != end1) {
                 for (const auto &cont1: start1->second) {
-                    result.emplace_back(cont1);
+                    out.emplace_back(cont1);
                 }
                 start1++;
             }
-            return;
+            return /*d_first*/;
         } else if (start1->first > start2->first) {
             for (const auto &cont1: start2->second) {
-                result.emplace_back(cont1);
+                out.emplace_back(cont1);
             }
             start2++;
         } else if (start1->first < start2->first) {
             for (const auto &cont1: start1->second) {
-                result.emplace_back(cont1);
+                out.emplace_back(cont1);
             }
             start1++;
         } else {
-            pair.first = val.first.first = start1->first;
+            result.first.first = pair.first = start1->first;
+            result.second.first = 0.0;
+            result.second.second.clear();
             pair1.first = start2->first;
+            e1 = manager->GetPayloadDataFromEvent(pair);
+            e2 = manager->GetPayloadDataFromEvent(pair1);
+            hasMatch = false;
+
             for (const auto &cont1: start1->second) {
                 for (const auto &cont2: start2->second) {
+                    result.second.first = std::max(std::min(first1->second.first, first2->second.first), result.second.first);
                     if (manager) {
                         for (const auto &elem: cont1.second.second) {
                             if (!IS_MARKED_EVENT_ACTIVATION(elem)) continue;
                             pair.second = GET_ACTIVATION_EVENT(elem);
                             for (const auto &elem1: cont2.second.second) {
-                                if (!IS_MARKED_EVENT_TARGET(elem)) continue;
+                                if (!IS_MARKED_EVENT_TARGET(elem1)) continue;
                                 pair1.second = GET_TARGET_EVENT(elem1);
-                                e1 = manager->GetPayloadDataFromEvent(pair);
-                                e2 = manager->GetPayloadDataFromEvent(pair1);
 
                                 if (manager->checkValidity(e1, e2)) {
-                                    val.second.first = aggr(cont1.second.first, cont2.second.first);
-                                    if (!dropMatches) {
-                                        val.second.second = {pair.second, pair1.second};
-                                    } else {
-                                        val.second.second.clear();
-                                    }
-                                    result.emplace_back(val);
+                                    hasMatch = true;
+                                    result.second.second.emplace_back(marked_event::join(pair.second, pair1.second));
                                 }
                             }
                         }
                     } else {
-                        // NOTE: that will discard potential activation and target conditions, and just put the two events where the situation holds.
-                        val.second.second.clear();
-                        if (!dropMatches) {
-                            first1->second.second;
-                            val.second.second.insert(val.second.second.end(), first2->second.second.begin(), first2->second.second.end());
-                            remove_duplicates(val.second.second);
-                        }
-                        val.second.first = aggr(cont1.second.first, cont2.second.first);
-                        result.emplace_back(val);
+                        hasMatch = true;
+                        result.second.second = first1->second.second;
+                        result.second.second.insert(result.second.second.end(), first2->second.second.begin(), first2->second.second.end());
                     }
                 }
             }
+
+            if (hasMatch) {
+                remove_duplicates(result.second.second);
+                out.emplace_back(result);
+            }
+
             start1++;
             start2++;
         }
@@ -96,14 +174,172 @@ void inline union_logic_untimed(const Result& lhs, const Result& rhs, Result& re
 
     while (start2 != end2) {
         for (const auto &cont1: start2->second) {
-
-            result.emplace_back(cont1);
+            out.emplace_back(cont1);
         }
         start2++;
     }
-    //return d_first;
 }
-#endif
+
+/**
+ * @author Samuel 'Sam' Appleby, Giacomo Bergami
+ *
+ * @param lhs
+ * @param rhs
+ * @param out
+ * @param manager
+ * @param dropMatches
+ */
+inline void and_logic_timed(const Result& lhs, const Result& rhs,
+                            Result& out,
+                            const PredicateManager *manager = nullptr, const std::vector<size_t>& lengths = {}) {
+    auto first1 = lhs.begin(), first2 = rhs.begin(),
+            last1 = lhs.end(), last2 = rhs.end();
+    env e1, e2;
+    ResultIndex pair, pair1;
+    ResultRecord result{{0, 0}, {1.0, {}}};
+    bool hasMatch;
+
+    for (; first1 != last1; /*++d_first*/) {
+        if (first2 == last2)
+            return /*d_first*/;
+        if (first1->first > first2->first) {
+            first2++;
+        } else if (first1->first < first2->first) {
+            first1++;
+        } else {
+            pair.first = first1->first.first;
+            result.first = first1->first;
+            result.second.first = std::min(first1->second.first, first2->second.first);
+            result.second.second.clear();
+            pair1.first = first2->first.first;
+            hasMatch = false;
+
+            if (manager) {
+                for (const marked_event &elem: first1->second.second) {
+                    if (!IS_MARKED_EVENT_ACTIVATION(elem)) continue;
+                    pair.second = GET_ACTIVATION_EVENT(elem);
+
+                    for (const marked_event &elem1: first2->second.second) {
+                        if (!IS_MARKED_EVENT_TARGET(elem1)) continue;
+                        pair1.second = GET_TARGET_EVENT(elem1);
+
+                        e1 = manager->GetPayloadDataFromEvent(pair);
+                        e2 = manager->GetPayloadDataFromEvent(pair1);
+
+                        if (manager->checkValidity(e1, e2)) {
+                            hasMatch = true;
+
+                            result.second.second.emplace_back(marked_event::join(pair.second, pair1.second));
+                        }
+                    }
+                }
+            } else {
+                hasMatch = true;
+                result.second.second = first1->second.second;
+                result.second.second.insert(result.second.second.end(), first2->second.second.begin(), first2->second.second.end());
+            }
+
+            if (hasMatch) {
+                remove_duplicates(result.second.second);
+                out.emplace_back(result);
+            }
+
+            first1++;
+            first2++;
+        }
+    }
+}
+
+/**
+ *
+ * @author Samuel 'Sam' Appleby, Giacomo Bergami
+ *
+ * @param lhs
+ * @param rhs
+ * @param out
+ * @param manager
+ * @param dropMatches
+ */
+inline void and_logic_untimed(const Result& lhs, const Result& rhs,
+                                   Result& out,
+                                   const PredicateManager *manager = nullptr, const std::vector<size_t>& lengths = {}) {
+    auto first1 = lhs.begin(), first2 = rhs.begin(),
+         last1 = lhs.end(), last2 = rhs.end();
+    std::map<uint32_t, Result> group1 = GroupByKeyExtractor<decltype(first1), uint32_t, ResultRecord>(
+            first1, last1,
+            [](const ResultRecord &p) {
+                return p.first.first;
+            });
+
+    std::map<uint32_t, Result> group2 = GroupByKeyExtractor<decltype(first2), uint32_t, ResultRecord>(
+            first2, last2,
+            [](const ResultRecord &p) {
+                return p.first.first;
+            });
+
+    env e1, e2;
+    std::pair<uint32_t, uint16_t> pair, pair1;
+    auto start1 = group1.begin(), end1 = group1.end();
+    auto start2 = group2.begin(), end2 = group2.end();
+    bool hasMatch;
+    ResultRecord result{{0, 0}, {1.0, {}}};
+
+    for (; start1 != end1; /*++d_first*/) {
+        if (start2 == end2) {
+            return /*d_first*/;
+        } else if (start1->first > start2->first) {
+            start2++;
+        } else if (start1->first < start2->first) {
+            start1++;
+        } else {
+            result.first.first = pair.first = start1->first;
+            result.second.first = 1.0;
+            result.second.second.clear();
+            pair1.first = start2->first;
+            hasMatch = false;
+
+            for (const auto &cont1: start1->second) {
+                for (const auto &cont2: start2->second) {
+                    result.second.first = std::max(std::min(first1->second.first, first2->second.first), result.second.first);
+                    if (manager) {
+                        for (const auto &elem: cont1.second.second) {
+                            if (!IS_MARKED_EVENT_ACTIVATION(elem)) continue;
+                            pair.second = GET_ACTIVATION_EVENT(elem);
+
+                            for (const auto &elem1: cont2.second.second) {
+                                if (!IS_MARKED_EVENT_TARGET(elem1)) continue;
+                                pair1.second = GET_TARGET_EVENT(elem1);
+
+                                e1 = manager->GetPayloadDataFromEvent(pair);
+                                e2 = manager->GetPayloadDataFromEvent(pair1);
+
+                                if (manager->checkValidity(e1, e2)) {
+                                    hasMatch = true;
+                                    result.second.second.emplace_back(marked_event::join(pair.second, pair1.second));
+                                }
+                            }
+                        }
+                    } else {
+                        hasMatch = true;
+
+                        result.second.second = first1->second.second;
+                        result.second.second.insert(result.second.second.end(), first2->second.second.begin(), first2->second.second.end());
+                    }
+
+
+                }
+            }
+
+            if (hasMatch) {
+                remove_duplicates(result.second.second);
+                out.emplace_back(result);
+            }
+
+            start1++;
+            start2++;
+        }
+    }
+}
 
 /**
  *
@@ -113,7 +349,7 @@ void inline union_logic_untimed(const Result& lhs, const Result& rhs, Result& re
  * @param lengths
  * @param result
  */
-inline void future_logic_timed(const Result &section, const std::vector<size_t>& lengths, Result& result) {
+inline void future_logic_timed(const Result &section, Result& result, const std::vector<size_t>& lengths) {
     //std::cout << section << std::endl;
     //dataContainer temp {};
     result.clear();
@@ -167,7 +403,7 @@ inline void future_logic_timed(const Result &section, const std::vector<size_t>&
  * @param lengths
  * @param result
  */
-inline void future_logic_untimed(const Result &section, const std::vector<size_t>& lengths, Result& result) {
+inline void future_logic_untimed(const Result &section, Result& result, const std::vector<size_t>& lengths) {
     //dataContainer temp {};
     result.clear();
     auto lower = section.begin(), upper = section.begin();
@@ -204,7 +440,7 @@ inline void future_logic_untimed(const Result &section, const std::vector<size_t
  * @param lengths
  * @param result
  */
-inline void global_logic_timed(const Result &section, const std::vector<size_t>& lengths, Result& result) {
+inline void global_logic_timed(const Result &section, Result& result, const std::vector<size_t>& lengths = {}) {
     //std::cout << section << std::endl;
     //dataContainer temp {};
     result.clear();
@@ -260,7 +496,7 @@ inline void global_logic_timed(const Result &section, const std::vector<size_t>&
  * @param lengths
  * @param result
  */
-inline void global_logic_untimed(const Result &section, const std::vector<size_t>& lengths, Result& result) {
+inline void global_logic_untimed(const Result &section, Result& result, const std::vector<size_t>& lengths = {}) {
     auto lower = section.begin(), upper = section.begin();
     auto end = section.end();
     result.clear();
@@ -298,7 +534,7 @@ inline void global_logic_untimed(const Result &section, const std::vector<size_t
  * @param lengths
  * @param result
  */
-inline void until_logic_timed(const Result &aSection, const Result &bSection, const std::vector<size_t>& lengths, Result& temp, const PredicateManager* manager = nullptr) {
+inline void until_logic_timed(const Result &aSection, const Result &bSection, Result& temp, const PredicateManager* manager = nullptr, const std::vector<size_t>& lengths = {}) {
     auto lower = bSection.begin();
     auto localUpper = lower;
     auto upper = bSection.end();
@@ -401,9 +637,6 @@ inline void until_logic_timed(const Result &aSection, const Result &bSection, co
                                 lower++;
                                 continue;
                             }
-//                            std::sort(cpResult.second.second.begin(), cpResult.second.second.end());
-//                            cpResult.second.second.erase(std::unique(cpResult.second.second.begin(), cpResult.second.second.end()), cpResult.second.second.end());
-//                            cpResult.second.second.insert(cpResult.second.second.begin(), lower->second.second.begin(), lower->second.second.end());
                         } else {
                             populateAndReturnEvents(aIt, aEn, cpResult.second.second);
                             cpResult.second.second.insert(cpResult.second.second.begin(), lower->second.second.begin(), lower->second.second.end());
@@ -417,10 +650,7 @@ inline void until_logic_timed(const Result &aSection, const Result &bSection, co
                             cpResult.first.second = i;
                             temp.emplace_back(cpResult);
                             if (hasMatch && (i < lower->first.second)) {
-//                                assert(IS_MARKED_EVENT_ACTIVATION(*it) || IS_MARKED_EVENT_MATCH(*it));
-//                                assert(GET_ACTIVATION_EVENT(*it) == i);
                                 it = cpResult.second.second.erase(it);
-//                                itEnd = std::upper_bound(it, itAllEnd, manager ? marked_event::join(lower->first.second-1, lower->first.second) : marked_event::activation(lower->first.second-1));
                             }
                         }
                     } else {
@@ -447,7 +677,7 @@ inline void until_logic_timed(const Result &aSection, const Result &bSection, co
 }
 
 
-inline void until_logic_untimed(const Result &aSection, const Result &bSection, const std::vector<size_t>& lengths, Result& temp, const PredicateManager* manager = nullptr) {
+inline void until_logic_untimed(const Result &aSection, const Result &bSection, Result& temp, const PredicateManager* manager = nullptr, const std::vector<size_t>& lengths = {}) {
     auto lower = bSection.begin();
     auto localUpper = lower;
     auto upper = bSection.end();
@@ -518,9 +748,6 @@ inline void until_logic_untimed(const Result &aSection, const Result &bSection, 
                                 }
                             }
                             if (hasFail) break;
-//                            std::sort(cpResult.second.second.begin(), cpResult.second.second.end());
-//                            cpResult.second.second.erase(std::unique(cpResult.second.second.begin(), cpResult.second.second.end()), cpResult.second.second.end());
-//                            cpResult.second.second.insert(cpResult.second.second.begin(), lower->second.second.begin(), lower->second.second.end());
                         } else {
                             populateAndReturnEvents(aIt, aEn, cpResult.second.second);
                             cpResult.second.second.insert(cpResult.second.second.begin(), lower->second.second.begin(), lower->second.second.end());
@@ -537,19 +764,6 @@ inline void until_logic_untimed(const Result &aSection, const Result &bSection, 
 
         lower = localUpper;
     }
-}
-
-
-inline void weakUntil_logic_untimed(const Result &aSection,
-                                    const Result &bSection,
-                                    const std::vector<size_t>& lengths,
-                                    Result& result,
-                                    const PredicateManager* manager = nullptr) {
-    Result untilR, globally;
-    until_logic_untimed(aSection, bSection, lengths, untilR, manager);
-    global_logic_untimed(aSection, lengths, globally);
-    //TODO: setUnionUntimed(untilR.begin(), untilR.end(), globally.begin(), globally.end(), std::back_inserter(result), Aggregators::joinSimilarity<double, double, double>, nullptr);
-    //TODO: return result;
 }
 
 
