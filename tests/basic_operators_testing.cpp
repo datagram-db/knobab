@@ -306,11 +306,26 @@ TEST_F(basic_operators, intersections_untimed_matches) {
         for (const auto& ref : result)
             EXPECT_TRUE(traces.contains(ref.first.first));
 
-        and_logic_untimed(a, b, resultLogic, nullptr);
+
+        long long t1,t2;
+        {
+            auto start = std::chrono::high_resolution_clock::now();
+            and_logic_untimed(a, b, resultLogic, nullptr);
+            auto elapsed = std::chrono::high_resolution_clock::now() - start;
+            t1 = std::chrono::duration_cast<std::chrono::microseconds>(
+                    elapsed).count();
+        }
         EXPECT_EQ(result, resultLogic);
 
-        and_fast_untimed(a, b, resultFast, nullptr);
+        {
+            auto start = std::chrono::high_resolution_clock::now();
+            and_fast_untimed(a, b, resultFast, nullptr);
+            auto elapsed = std::chrono::high_resolution_clock::now() - start;
+            t2 = std::chrono::duration_cast<std::chrono::microseconds>(
+                    elapsed).count();
+        }
         EXPECT_EQ(result, resultFast);
+        EXPECT_GE(t1,t2); // benchmark assumption
     }
 
 }
@@ -327,11 +342,25 @@ TEST_F(basic_operators, unions_untimed_matches) {
         for (const auto& ref : result)
             EXPECT_TRUE(traces.contains(ref.first.first));
 
-        or_logic_untimed(a, b, resultLogic, nullptr);
+        long long t1,t2;
+        {
+            auto start = std::chrono::high_resolution_clock::now();
+            or_logic_untimed(a, b, resultLogic, nullptr);
+            auto elapsed = std::chrono::high_resolution_clock::now() - start;
+            t1 = std::chrono::duration_cast<std::chrono::microseconds>(
+                    elapsed).count();
+        }
         EXPECT_EQ(result, resultLogic);
 
-        or_fast_untimed(a, b, resultFast, nullptr);
+        {
+            auto start = std::chrono::high_resolution_clock::now();
+            or_fast_untimed(a, b, resultFast, nullptr);
+            auto elapsed = std::chrono::high_resolution_clock::now() - start;
+            t2 = std::chrono::duration_cast<std::chrono::microseconds>(
+                    elapsed).count();
+        }
         EXPECT_EQ(result, resultFast);
+        EXPECT_GE(t1,t2); // benchmark assumption
     }
 
 }
