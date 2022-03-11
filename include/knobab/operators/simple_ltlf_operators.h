@@ -23,7 +23,7 @@ inline void or_logic_timed(const Result& lhs, const Result& rhs, Result& out, co
     bool hasMatch;
     ResultRecord result{{0, 0}, {0.0, {}}};
 
-    for (; first1 != last1; /*++d_first*/) {
+    while (first1 != last1) {
         if (first2 == last2) {
             std::copy(first1, last1, std::back_inserter(out));
             return;
@@ -41,9 +41,6 @@ inline void or_logic_timed(const Result& lhs, const Result& rhs, Result& out, co
             hasMatch = false;
 
             if (manager) {
-                e1 = manager->GetPayloadDataFromEvent(pair);
-                e2 = manager->GetPayloadDataFromEvent(pair1);
-
                 for (const marked_event &elem: first1->second.second) {
                     if (!IS_MARKED_EVENT_ACTIVATION(elem)) continue;
                     pair.second = GET_ACTIVATION_EVENT(elem);
@@ -52,6 +49,8 @@ inline void or_logic_timed(const Result& lhs, const Result& rhs, Result& out, co
                         if (!IS_MARKED_EVENT_TARGET(elem1)) continue;
                         pair1.second = GET_TARGET_EVENT(elem1);
 
+                        e1 = manager->GetPayloadDataFromEvent(pair);
+                        e2 = manager->GetPayloadDataFromEvent(pair1);
                         if (manager->checkValidity(e1, e2)) {
                             hasMatch = true;
                             result.second.second.emplace_back(marked_event::join(pair.second, pair1.second));
@@ -109,32 +108,24 @@ inline void or_logic_untimed(const Result& lhs, const Result& rhs,
     ResultRecord result{{0, 0}, {0.0, {}}};
     bool hasMatch;
 
-    for (; start1 != end1; /*++d_first*/) {
+    while (start1 != end1) {
         if (start2 == end2) {
             while (start1 != end1) {
-                for (const auto &cont1: start1->second) {
-                    out.emplace_back(cont1);
-                }
+                std::copy(start1->second.begin(), start1->second.end(), std::back_inserter(out));
                 start1++;
             }
-            return /*d_first*/;
+            return;
         } else if (start1->first > start2->first) {
-            for (const auto &cont1: start2->second) {
-                out.emplace_back(cont1);
-            }
+            std::copy(start2->second.begin(), start2->second.end(), std::back_inserter(out));
             start2++;
         } else if (start1->first < start2->first) {
-            for (const auto &cont1: start1->second) {
-                out.emplace_back(cont1);
-            }
+            std::copy(start1->second.begin(), start1->second.end(), std::back_inserter(out));
             start1++;
         } else {
             result.first.first = pair.first = start1->first;
             result.second.first = 0.0;
             result.second.second.clear();
             pair1.first = start2->first;
-            e1 = manager->GetPayloadDataFromEvent(pair);
-            e2 = manager->GetPayloadDataFromEvent(pair1);
             hasMatch = false;
 
             for (const auto &cont1: start1->second) {
@@ -148,6 +139,8 @@ inline void or_logic_untimed(const Result& lhs, const Result& rhs,
                                 if (!IS_MARKED_EVENT_TARGET(elem1)) continue;
                                 pair1.second = GET_TARGET_EVENT(elem1);
 
+                                e1 = manager->GetPayloadDataFromEvent(pair);
+                                e2 = manager->GetPayloadDataFromEvent(pair1);
                                 if (manager->checkValidity(e1, e2)) {
                                     hasMatch = true;
                                     result.second.second.emplace_back(marked_event::join(pair.second, pair1.second));
@@ -173,9 +166,7 @@ inline void or_logic_untimed(const Result& lhs, const Result& rhs,
     }
 
     while (start2 != end2) {
-        for (const auto &cont1: start2->second) {
-            out.emplace_back(cont1);
-        }
+        std::copy(start2->second.begin(), start2->second.end(), std::back_inserter(out));
         start2++;
     }
 }
@@ -199,7 +190,7 @@ inline void and_logic_timed(const Result& lhs, const Result& rhs,
     ResultRecord result{{0, 0}, {1.0, {}}};
     bool hasMatch;
 
-    for (; first1 != last1; /*++d_first*/) {
+    while (first1 != last1) {
         if (first2 == last2)
             return /*d_first*/;
         if (first1->first > first2->first) {
@@ -225,10 +216,8 @@ inline void and_logic_timed(const Result& lhs, const Result& rhs,
 
                         e1 = manager->GetPayloadDataFromEvent(pair);
                         e2 = manager->GetPayloadDataFromEvent(pair1);
-
                         if (manager->checkValidity(e1, e2)) {
                             hasMatch = true;
-
                             result.second.second.emplace_back(marked_event::join(pair.second, pair1.second));
                         }
                     }
@@ -284,7 +273,7 @@ inline void and_logic_untimed(const Result& lhs, const Result& rhs,
     bool hasMatch;
     ResultRecord result{{0, 0}, {1.0, {}}};
 
-    for (; start1 != end1; /*++d_first*/) {
+    while (start1 != end1) {
         if (start2 == end2) {
             return /*d_first*/;
         } else if (start1->first > start2->first) {
@@ -312,7 +301,6 @@ inline void and_logic_untimed(const Result& lhs, const Result& rhs,
 
                                 e1 = manager->GetPayloadDataFromEvent(pair);
                                 e2 = manager->GetPayloadDataFromEvent(pair1);
-
                                 if (manager->checkValidity(e1, e2)) {
                                     hasMatch = true;
                                     result.second.second.emplace_back(marked_event::join(pair.second, pair1.second));
@@ -341,6 +329,21 @@ inline void and_logic_untimed(const Result& lhs, const Result& rhs,
     }
 }
 
+inline void next_logical(const Result &section, Result& temp, const std::vector<size_t>& lengths = {}) {
+    temp.clear();
+    ResultIndex idx;
+
+    auto itr = section.begin();
+    while (itr != section.end()) {
+        idx = itr->first;
+        if(idx.second > 0){
+            idx.second--;
+            temp.emplace_back(idx, itr->second);
+        }
+        itr++;
+    }
+}
+
 /**
  *
  * @author Giacomo Bergami
@@ -350,12 +353,9 @@ inline void and_logic_untimed(const Result& lhs, const Result& rhs,
  * @param result
  */
 inline void future_logic_timed(const Result &section, Result& result, const std::vector<size_t>& lengths) {
-    //std::cout << section << std::endl;
-    //dataContainer temp {};
     result.clear();
     auto lower = section.begin(), upper = section.begin();
     auto end = section.end();
-    constexpr auto max16 = std::numeric_limits<uint16_t>::max();
 
     ResultIndex first;
     ResultRecordSemantics second{0.0, 0.0};
@@ -440,13 +440,10 @@ inline void future_logic_untimed(const Result &section, Result& result, const st
  * @param lengths
  * @param result
  */
-inline void global_logic_timed(const Result &section, Result& result, const std::vector<size_t>& lengths = {}) {
-    //std::cout << section << std::endl;
-    //dataContainer temp {};
+inline void global_logic_timed(const Result &section, Result& result, const std::vector<size_t>& lengths) {
     result.clear();
     auto lower = section.begin(), upper = section.begin();
     auto end = section.end();
-    constexpr auto max16 = std::numeric_limits<uint16_t>::max();
 
     ResultIndex first;
     ResultRecordSemantics second{1.0, 0.0};
@@ -463,7 +460,6 @@ inline void global_logic_timed(const Result &section, Result& result, const std:
 
         Result toBeReversed;
         auto it = lower+std::distance(lower,upper)-1;
-        bool isBegin = true;
         for (int64_t i = (upper-1)->first.second; i >= 0; i--) {
             first.second = i;
             const uint32_t dist = std::distance(it, upper);
@@ -496,12 +492,12 @@ inline void global_logic_timed(const Result &section, Result& result, const std:
  * @param lengths
  * @param result
  */
-inline void global_logic_untimed(const Result &section, Result& result, const std::vector<size_t>& lengths = {}) {
+inline void global_logic_untimed(const Result &section, Result& result, const std::vector<size_t>& lengths) {
     auto lower = section.begin(), upper = section.begin();
     auto end = section.end();
     result.clear();
 
-    ResultIndex first{0, 0}, firstLast;
+    ResultIndex first{0, 0};
     ResultRecordSemantics second{1.0, {}};
     ResultRecord cp{{0,0}, {1.0, {}}};
 
@@ -550,7 +546,6 @@ inline void until_logic_timed(const Result &aSection, const Result &bSection, Re
     ResultRecord cpAEn{{0, 0}, {1.0, maxVec}};
     ResultRecord cpResult{{0, 0}, {1.0, {}}};
 
-    ///dataContainer temp {};
     env e1, e2;
     std::pair<uint32_t, uint16_t> Fut, Prev;
     temp.clear();
@@ -628,8 +623,6 @@ inline void until_logic_timed(const Result &aSection, const Result &bSection, Re
                                 if (nextCandidateQueue.empty()) break;
                                 aIt = nextCandidateQueue.front();
                                 nextCandidateQueue.pop();
-                                ///aIt = aEn;
-                                ///aIt--;
                                 cpAEn.first.second = lower->first.second;
                                 aEn = std::upper_bound(aEn, upperA, cpAEn);
                                 if (aEn->first.first == currentTraceId)
@@ -659,8 +652,6 @@ inline void until_logic_timed(const Result &aSection, const Result &bSection, Re
                         if (nextCandidateQueue.empty()) break;
                         aIt = nextCandidateQueue.front();
                         nextCandidateQueue.pop();
-                        ///aIt = aEn;
-                        ///aIt--;
                         cpAEn.first.second = lower->first.second;
                         aEn = std::upper_bound(aEn, upperA, cpAEn);
                         if (aEn->first.first == currentTraceId)
@@ -691,7 +682,6 @@ inline void until_logic_untimed(const Result &aSection, const Result &bSection, 
     ResultRecord cpAEn{{0, 0}, {1.0, maxVec}};
     ResultRecord cpResult{{0, 0}, {1.0, {}}};
 
-    ///dataContainer temp {};
     env e1, e2;
     std::pair<uint32_t, uint16_t> Fut, Prev;
     temp.clear();

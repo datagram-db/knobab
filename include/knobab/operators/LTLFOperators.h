@@ -484,9 +484,10 @@ Result negateUntimed(TableSection &data_untimed, const std::vector<size_t> &leng
     auto first2 = data_untimed.begin(), last2 = data_untimed.end();
     for (; first1 != last1; ) {
         if (first2 == last2) {
-            do {
+            while (first1 != last1) {
                 result.emplace_back(std::make_pair(first1++, 0), std::make_pair(1.0, MarkedEventsVector{}));
-            } while (first1 != last1);
+            }
+            return result;
         }
         if (first1 > first2->first.first) {
             first2++;
