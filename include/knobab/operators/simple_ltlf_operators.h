@@ -59,8 +59,14 @@ inline void or_logic_timed(const Result& lhs, const Result& rhs, Result& out, co
                 }
             } else {
                 hasMatch = true;
-                result.second.second = first1->second.second;
-                result.second.second.insert(result.second.second.end(), first2->second.second.begin(), first2->second.second.end());
+                if (!first1->second.second.empty())
+                    result.second.second.insert(result.second.second.end(), first1->second.second.begin(), first1->second.second.end());
+                else
+                    result.second.second.emplace_back(marked_event::activation(first1->first.second));
+                if (!first2->second.second.empty())
+                    result.second.second.insert(result.second.second.end(), first2->second.second.begin(), first2->second.second.end());
+                else
+                    result.second.second.emplace_back(marked_event::target(first2->first.second));
             }
 
             if (hasMatch) {
@@ -149,8 +155,8 @@ inline void or_logic_untimed(const Result& lhs, const Result& rhs,
                         }
                     } else {
                         hasMatch = true;
-                        result.second.second = first1->second.second;
-                        result.second.second.insert(result.second.second.end(), first2->second.second.begin(), first2->second.second.end());
+                        result.second.second.insert(result.second.second.end(), cont1.second.second.begin(), cont1.second.second.end());
+                        result.second.second.insert(result.second.second.end(), cont2.second.second.begin(), cont2.second.second.end());
                     }
                 }
             }
@@ -224,7 +230,7 @@ inline void and_logic_timed(const Result& lhs, const Result& rhs,
                 }
             } else {
                 hasMatch = true;
-                result.second.second = first1->second.second;
+                result.second.second.insert(result.second.second.end(), first1->second.second.begin(), first1->second.second.end());
                 result.second.second.insert(result.second.second.end(), first2->second.second.begin(), first2->second.second.end());
             }
 
@@ -309,12 +315,9 @@ inline void and_logic_untimed(const Result& lhs, const Result& rhs,
                         }
                     } else {
                         hasMatch = true;
-
-                        result.second.second = first1->second.second;
-                        result.second.second.insert(result.second.second.end(), first2->second.second.begin(), first2->second.second.end());
+                        result.second.second.insert(result.second.second.end(), cont1.second.second.begin(), cont1.second.second.end());
+                        result.second.second.insert(result.second.second.end(), cont2.second.second.begin(), cont2.second.second.end());
                     }
-
-
                 }
             }
 
