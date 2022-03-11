@@ -6,15 +6,11 @@
 
 #include "yaucl/bpm/structures/log/data_loader.h"
 #include "yaucl/strings/serializers.h"
-#include "knobab/utilities/Aggregators.h"
-#include "knobab/dataStructures/TraceData.h"
 #include "knobab/operators/LTLFOperators.h"
 
 #include "knobab/Environment.h"
 
-
 #include <yaml-cpp/yaml.h>
-#include <knobab/Environment.h>
 #include <yaucl/graphs/algorithms/minimizeDFA.h>
 #include <yaucl/graphs/graph_join_pm_conversion.h>
 
