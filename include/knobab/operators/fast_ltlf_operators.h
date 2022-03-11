@@ -33,10 +33,11 @@ inline void or_fast_untimed(const Result& lhs, const Result& rhs, Result& out, c
     auto first1 = lhs.begin(), first2 = rhs.begin(),
             last1 = lhs.end(), last2 = rhs.end();
     env e1, e2;
-    std::pair<uint32_t, uint16_t> pair, pair1;
     ResultRecord result{{0, 0}, {0.0, {}}};
     ResultRecord idx{{0, 0}, {0.0, {}}};
     ResultIndex pair, pair1;
+    bool hasMatch, completeInsertionRight;
+    auto join = marked_event::join(0, 0);
     while (first1 != last1) {
         if (first2 == last2) {
             std::copy(first1, last1, std::back_inserter(out));
@@ -54,6 +55,8 @@ inline void or_fast_untimed(const Result& lhs, const Result& rhs, Result& out, c
             result.first = first1->first;
             result.second.first = std::min(first1->second.first, first2->second.first);
             result.second.second.clear();
+            hasMatch = completeInsertionRight = false;
+            decltype(endFirst1) endFirst2;
             for (; first1 != endFirst1; first1++) {
                 auto dx = first2;
                 do {
@@ -71,24 +74,34 @@ inline void or_fast_untimed(const Result& lhs, const Result& rhs, Result& out, c
                                 e2 = manager->GetPayloadDataFromEvent(pair1);
                                 if (manager->checkValidity(e1, e2)) {
                                     hasMatch = true;
-                                    result.second.second.emplace_back(marked_event::join(pair.second, pair1.second));
+                                    join.id.parts.left = pair.second;
+                                    join.id.parts.right = pair1.second;
+                                    result.second.second.emplace_back(join);
                                 }
                             }
                         }
                     } else {
                         hasMatch = true;
-                        result.second.second = first1->second.second;
-                        result.second.second.insert(result.second.second.end(), first2->second.second.begin(), first2->second.second.end());
-                    }
-
-                    if (hasMatch) {
-                        remove_duplicates(result.second.second);
-                        out.emplace_back(result);
+                        if (!completeInsertionRight) {
+                            result.second.second.insert(result.second.second.end(), dx->second.second.begin(), dx->second.second.end());
+                        }
                     }
 
                     dx++;
                 } while ((dx != last2) && (dx->first.first == localTrace));
+                endFirst2 = dx;
+
+                if (!manager) {
+                    result.second.second.insert(result.second.second.end(), first1->second.second.begin(), first1->second.second.end());
+                    completeInsertionRight = true;
+                }
             }
+
+            if (hasMatch) {
+                remove_duplicates(result.second.second);
+                out.emplace_back(result);
+            }
+            first2 = endFirst2;
         }
     }
     std::copy(first2, last2, std::back_inserter(out));
@@ -116,30 +129,33 @@ inline void and_fast_timed(const Result& lhs, const Result& rhs, Result& out, co
  * @param out
  * @param manager
  */
-inline void or_fast_untimed(const Result& lhs, const Result& rhs, Result& out, const PredicateManager *manager = nullptr, const std::vector<size_t>& lengths = {}) {
+inline void and_fast_untimed(const Result& lhs, const Result& rhs, Result& out, const PredicateManager *manager = nullptr, const std::vector<size_t>& lengths = {}) {
     auto first1 = lhs.begin(), first2 = rhs.begin(),
             last1 = lhs.end(), last2 = rhs.end();
     env e1, e2;
-    std::pair<uint32_t, uint16_t> pair, pair1;
     ResultRecord result{{0, 0}, {0.0, {}}};
     ResultRecord idx{{0, 0}, {0.0, {}}};
     ResultIndex pair, pair1;
+    auto join = marked_event::join(0, 0);
+    bool hasMatch, completeInsertionRight;
     while (first1 != last1) {
         if (first2 == last2) {
             return;
         }
         if (first1->first.first > first2->first.first) {
-            first2++
+            first2++;
         } else if (first1->first.first < first2->first.first) {
-            first1++
+            first1++;
         } else {
             auto localTrace = first1->first.first;
             idx.first.first = first1->first.first+1; // pointing towards the next trace
             auto endFirst1 = std::upper_bound(first1, last1, idx);
+            decltype(endFirst1) endFirst2;
             pair.first = pair1.first = localTrace;
             result.first = first1->first;
             result.second.first = std::min(first1->second.first, first2->second.first);
             result.second.second.clear();
+            hasMatch = completeInsertionRight = false;
             for (; first1 != endFirst1; first1++) {
                 auto dx = first2;
                 do {
@@ -157,30 +173,41 @@ inline void or_fast_untimed(const Result& lhs, const Result& rhs, Result& out, c
                                 e2 = manager->GetPayloadDataFromEvent(pair1);
                                 if (manager->checkValidity(e1, e2)) {
                                     hasMatch = true;
-                                    result.second.second.emplace_back(marked_event::join(pair.second, pair1.second));
+                                    join.id.parts.left = pair.second;
+                                    join.id.parts.right = pair1.second;
+                                    result.second.second.emplace_back(join);
                                 }
                             }
                         }
                     } else {
                         hasMatch = true;
-                        result.second.second = first1->second.second;
-                        result.second.second.insert(result.second.second.end(), first2->second.second.begin(), first2->second.second.end());
-                    }
-
-                    if (hasMatch) {
-                        remove_duplicates(result.second.second);
-                        out.emplace_back(result);
+                        if (!completeInsertionRight) {
+                            result.second.second.insert(result.second.second.end(), dx->second.second.begin(), dx->second.second.end());
+                        }
                     }
 
                     dx++;
                 } while ((dx != last2) && (dx->first.first == localTrace));
+
+                endFirst2 = dx;
+                if (!manager){
+                    completeInsertionRight = true;
+                    result.second.second.insert(result.second.second.end(), first1->second.second.begin(), first1->second.second.end());
+                }
             }
+
+            if (hasMatch) {
+                remove_duplicates(result.second.second);
+                out.emplace_back(result);
+            }
+
+            first2 = endFirst2;
         }
     }
 }
 
 inline void next_fast(const Result &section, Result& temp, const std::vector<size_t>& lengths = {}) {
-    logical_next(section, temp, lengths);
+    next_logical(section, temp, lengths);
 }
 
 /**

@@ -31,9 +31,6 @@ OutputIt setUnion(InputIt1 first1, InputIt1 last1, InputIt2 first2, InputIt2 las
             hasMatch = false;
 
             if (manager) {
-                e1 = manager->GetPayloadDataFromEvent(pair);
-                e2 = manager->GetPayloadDataFromEvent(pair1);
-
                 for (const marked_event &elem: first1->second.second) {
                     if (!IS_MARKED_EVENT_ACTIVATION(elem)) continue;
                     pair.second = GET_ACTIVATION_EVENT(elem);
@@ -41,10 +38,11 @@ OutputIt setUnion(InputIt1 first1, InputIt1 last1, InputIt2 first2, InputIt2 las
                     for (const marked_event &elem1: first2->second.second) {
                         if (!IS_MARKED_EVENT_TARGET(elem1)) continue;
                         pair1.second = GET_TARGET_EVENT(elem1);
+                        e1 = manager->GetPayloadDataFromEvent(pair);
+                        e2 = manager->GetPayloadDataFromEvent(pair1);
 
                         if (manager->checkValidity(e1, e2)) {
                             hasMatch = true;
-                            double aggrV = aggr(first1->second.first, first2->second.first);
                             if (!dropMatches) {
                                 result.second.second.emplace_back(marked_event::join(pair.second, pair1.second));
                             }
@@ -54,7 +52,7 @@ OutputIt setUnion(InputIt1 first1, InputIt1 last1, InputIt2 first2, InputIt2 las
             } else {
                 hasMatch = true;
                 if (!dropMatches) {
-                    result.second.second = first1->second.second;
+                    result.second.second.insert(result.second.second.end(), first1->second.second.begin(), first1->second.second.end());
                     result.second.second.insert(result.second.second.end(), first2->second.second.begin(), first2->second.second.end());
                 }
             }
@@ -97,34 +95,27 @@ setUnionUntimed(InputIt1 first1, InputIt1 last1, InputIt2 first2, InputIt2 last2
     for (; start1 != end1; ++d_first) {
         if (start2 == end2) {
             while (start1 != end1) {
-                for (const auto &cont1: start1->second) {
-                    *d_first = cont1;
-                }
+                std::copy(start1->second.begin(), start1->second.end(), d_first);
                 start1++;
             }
             return d_first;
         } else if (start1->first > start2->first) {
-            for (const auto &cont1: start2->second) {
-                *d_first = cont1;
-            }
+            std::copy(start2->second.begin(), start2->second.end(), d_first);
             start2++;
         } else if (start1->first < start2->first) {
-            for (const auto &cont1: start1->second) {
-                *d_first = cont1;
-            }
+            std::copy(start1->second.begin(), start1->second.end(), d_first);
             start1++;
         } else {
             result.first.first = pair.first = start1->first;
             result.second.first = 0.0;
             result.second.second.clear();
             pair1.first = start2->first;
-            e1 = manager->GetPayloadDataFromEvent(pair);
-            e2 = manager->GetPayloadDataFromEvent(pair1);
             hasMatch = false;
 
             for (const auto &cont1: start1->second) {
                 for (const auto &cont2: start2->second) {
                     result.second.first = std::max(aggr(first1->second.first, first2->second.first), result.second.first);
+
                     if (manager) {
                         for (const auto &elem: cont1.second.second) {
                             if (!IS_MARKED_EVENT_ACTIVATION(elem)) continue;
@@ -132,37 +123,23 @@ setUnionUntimed(InputIt1 first1, InputIt1 last1, InputIt2 first2, InputIt2 last2
                             for (const auto &elem1: cont2.second.second) {
                                 if (!IS_MARKED_EVENT_TARGET(elem1)) continue;
                                 pair1.second = GET_TARGET_EVENT(elem1);
+                                e1 = manager->GetPayloadDataFromEvent(pair);
+                                e2 = manager->GetPayloadDataFromEvent(pair1);
 
                                 if (manager->checkValidity(e1, e2)) {
                                     hasMatch = true;
                                     if (!dropMatches) {
-//                                        *d_first = std::make_pair(std::pair<uint32_t, uint16_t>{pair.first, 0},
-//                                                                  std::pair<double, std::vector<uint16_t>>{
-//                                                                          aggr(cont1.second.first, cont2.second.first),
-//                                                                          {}});
-//                                    } else {
                                         result.second.second.emplace_back(marked_event::join(pair.second, pair1.second));
-//                                        *d_first = std::make_pair(std::pair<uint32_t, uint16_t>{pair.first, 0},
-//                                                                  std::pair<double, std::vector<uint16_t>>{
-//                                                                          aggr(cont1.second.first, cont2.second.first),
-//                                                                          {pair.second, pair1.second}});
                                     }
                                 }
                             }
                         }
                     } else {
                         hasMatch = true;
-                        // NOTE: that will discard potential activation and target conditions, and just put the two events where the situation holds.
-                        //std::vector<uint16_t> V;
                         if (!dropMatches) {
-                            result.second.second = first1->second.second;
-                            result.second.second.insert(result.second.second.end(), first1->second.second.begin(), first1->second.second.end());
-                            result.second.second.insert(result.second.second.end(), first2->second.second.begin(), first2->second.second.end());
+                            result.second.second.insert(result.second.second.end(), cont1.second.second.begin(), cont1.second.second.end());
+                            result.second.second.insert(result.second.second.end(), cont2.second.second.begin(), cont2.second.second.end());
                         }
-//                        *d_first = result;
-//                        *d_first = std::make_pair(std::pair<uint32_t, uint16_t>{pair.first, 0},
-//                                                  std::pair<double, std::vector<uint16_t>>{
-//                                                          aggr(cont1.second.first, cont2.second.first), V});
                     }
                 }
             }
@@ -178,9 +155,7 @@ setUnionUntimed(InputIt1 first1, InputIt1 last1, InputIt2 first2, InputIt2 last2
     }
 
     while (start2 != end2) {
-        for (const auto &cont1: start2->second) {
-            *d_first = cont1;
-        }
+        std::copy(start2->second.begin(), start2->second.end(), d_first);
         start2++;
     }
     return d_first;
@@ -224,28 +199,17 @@ OutputIt setIntersection(InputIt1 first1, InputIt1 last1, InputIt2 first2, Input
                         if (manager->checkValidity(e1, e2)) {
                             hasMatch = true;
                             if (!dropMatches) {
-                                hasMatch = true;
-                                if (!dropMatches) {
-                                    result.second.second.emplace_back(marked_event::join(pair.second, pair1.second));
-                                }
-//                                *d_first = std::make_pair(first1->first, std::pair<double, std::vector<uint16_t>>{
-//                                        aggr(first1->second.first, first2->second.first), {}});
-//                            } else {
-//                                *d_first = std::make_pair(first1->first, std::pair<double, std::vector<uint16_t>>{
-//                                        aggr(first1->second.first, first2->second.first), {pair.second, pair1.second}});
+                                result.second.second.emplace_back(marked_event::join(pair.second, pair1.second));
                             }
                         }
                     }
                 }
             } else {
-                ///std::vector<uint16_t> V;
                 hasMatch = true;
                 if (!dropMatches) {
-                    result.second.second = first1->second.second;
+                    result.second.second.insert(result.second.second.end(), first1->second.second.begin(), first1->second.second.end());
                     result.second.second.insert(result.second.second.end(), first2->second.second.begin(), first2->second.second.end());
                 }
-//                *d_first = std::make_pair(first1->first, std::pair<double, std::vector<uint16_t>>{
-//                        aggr(first1->second.first, first2->second.first), V});
             }
 
             if (hasMatch) {
@@ -301,11 +265,11 @@ OutputIt setIntersectionUntimed(InputIt1 first1, InputIt1 last1, InputIt2 first2
             for (const auto &cont1: start1->second) {
                 for (const auto &cont2: start2->second) {
                     result.second.first = std::min(aggr(first1->second.first, first2->second.first), result.second.first);
+
                     if (manager) {
                         for (const auto &elem: cont1.second.second) {
                             if (!IS_MARKED_EVENT_ACTIVATION(elem)) continue;
                             pair.second = GET_ACTIVATION_EVENT(elem);
-
                             for (const auto &elem1: cont2.second.second) {
                                 if (!IS_MARKED_EVENT_TARGET(elem1)) continue;
                                 pair1.second = GET_TARGET_EVENT(elem1);
@@ -317,34 +281,17 @@ OutputIt setIntersectionUntimed(InputIt1 first1, InputIt1 last1, InputIt2 first2
                                     hasMatch = true;
                                     if (!dropMatches) {
                                         result.second.second.emplace_back(marked_event::join(pair.second, pair1.second));
-//                                        *d_first = std::make_pair(std::pair<uint32_t, uint16_t>{pair.first, 0},
-//                                                                  std::pair<double, std::vector<uint16_t>>{
-//                                                                          aggr(cont1.second.first, cont2.second.first),
-//                                                                          {}});
-//                                    } else {
-//                                        *d_first = std::make_pair(std::pair<uint32_t, uint16_t>{pair.first, 0},
-//                                                                  std::pair<double, std::vector<uint16_t>>{
-//                                                                          aggr(cont1.second.first, cont2.second.first),
-//                                                                          {pair.second, pair1.second}});
                                     }
                                 }
                             }
                         }
                     } else {
-                        // NOTE: that will discard potential activation and target conditions, and just put the two events where the situation holds.
-                        //std::vector<uint16_t> V;
                         hasMatch = true;
                         if (!dropMatches) {
-                            result.second.second = first1->second.second;
-                            result.second.second.insert(result.second.second.end(), first2->second.second.begin(), first2->second.second.end());
+                            result.second.second.insert(result.second.second.end(), cont1.second.second.begin(), cont1.second.second.end());
+                            result.second.second.insert(result.second.second.end(), cont2.second.second.begin(), cont2.second.second.end());
                         }
-//                        *d_first = std::make_pair(std::pair<uint32_t, uint16_t>{pair.first, 0},
-//                                                  std::pair<double, std::vector<uint16_t>>{
-//                                                          aggr(cont1.second.first, cont2.second.first),
-//                                                          V});
                     }
-
-
                 }
             }
 
