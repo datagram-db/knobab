@@ -51,7 +51,7 @@ struct MAXSatPipeline {
 
 
     // DATA
-    dataContainer result;
+    Result result;
     ssize_t maxPartialResultId = -1;
     std::unordered_map<DataQuery, size_t> data_offset;
     std::vector<std::pair<DataQuery, std::vector<std::pair<std::pair<trace_t, event_t>, double>>>> data_accessing;

@@ -44,7 +44,7 @@ std::vector<std::vector<std::string>> traces;\
 TEST(Box)
 TEST_F(Box_tests, untimed) {
     auto a = env.db.exists("a", true);
-    dataContainer result;
+    Result result;
     global_logic_untimed(a, env.db.act_table_by_act_id.trace_length, result);
     EXPECT_EQ(pos, result.size());
 }
@@ -53,7 +53,7 @@ TEST_F(Box_tests, timed) {
     Environment env2;
     env2.doStats = false;
     auto a = env.db.exists("a", true);
-    dataContainer result;
+    Result result;
     global_logic_timed(a, env.db.act_table_by_act_id.trace_length, result);
     EXPECT_TRUE(!result.empty());
     size_t resultSize = result.size();
@@ -85,7 +85,7 @@ TEST(Diamond)
 TEST_F(Diamond_tests, basic) {
     auto a = env.db.exists("a", true);
 
-    dataContainer result;
+    Result result;
     future_logic_untimed(a, env.db.act_table_by_act_id.trace_length, result);
     EXPECT_EQ(pos, result.size());
 }
@@ -93,7 +93,7 @@ TEST_F(Diamond_tests, timed) {
     Environment env2;
     env2.doStats = false;
     auto a = env.db.exists("a", true);
-    dataContainer result;
+    Result result;
     future_logic_timed(a, env.db.act_table_by_act_id.trace_length, result);
     EXPECT_TRUE(!result.empty());
     size_t resultSize = result.size();
@@ -126,7 +126,7 @@ TEST_F(Until_tests, basic) {
     auto a = env.db.exists("a", true);
     auto b = env.db.exists("b", true);
 
-    dataContainer result;
+    Result result;
     until_logic_untimed(a, b, env.db.act_table_by_act_id.trace_length, result);
     EXPECT_EQ(pos, result.size());
 }
@@ -137,7 +137,7 @@ TEST_F(Until_tests, timed) {
     env2.doStats = false;
     auto a = env.db.exists("a", true);
     auto b = env.db.exists("b", true);
-    dataContainer result;
+    Result result;
     until_logic_timed(a, b, env.db.act_table_by_act_id.trace_length, result);
     EXPECT_TRUE(!result.empty());
     size_t resultSize = result.size();

@@ -298,9 +298,9 @@ void MAXSatPipeline::localExtract(const AtomizingPipeline &atomization, std::vec
 }
 
 
-static inline void setUnion(const partial_result& lhs,
-                            const partial_result& rhs,
-                            std::back_insert_iterator<partial_result> d_first) {
+static inline void setUnion(const PartialResult& lhs,
+                            const PartialResult& rhs,
+                            std::back_insert_iterator<PartialResult> d_first) {
     env e1, e2;
     auto first1 = lhs.begin(), last1 = lhs.end(), first2 = rhs.begin(), last2 = rhs.end();
     std::pair<uint32_t, uint16_t> pair, pair1;
@@ -325,9 +325,9 @@ static inline void setUnion(const partial_result& lhs,
     std::copy(first2, last2, d_first);
 }
 
-static inline void setIntersection(const partial_result& lhs,
-                                   const partial_result& rhs,
-                                    std::back_insert_iterator<partial_result> d_first) {
+static inline void setIntersection(const PartialResult& lhs,
+                                   const PartialResult& rhs,
+                                    std::back_insert_iterator<PartialResult> d_first) {
     env e1, e2;
     auto first1 = lhs.begin(), last1 = lhs.end(), first2 = rhs.begin(), last2 = rhs.end();
     std::pair<uint32_t, uint16_t> pair, pair1;
@@ -368,12 +368,12 @@ std::vector<std::pair<std::pair<trace_t, event_t>, double>> local_intersection(c
     return last_intersection;
 }
 
-static inline partial_result local_intersection(const std::set<size_t> &vecs,
-                                               const std::vector<partial_result>& results) {
+static inline PartialResult local_intersection(const std::set<size_t> &vecs,
+                                               const std::vector<PartialResult>& results) {
     if (vecs.empty()) return {};
     auto it = vecs.begin();
     auto last_intersection = results.at(*it);
-    partial_result curr_intersection;
+    PartialResult curr_intersection;
     for (std::size_t i = 1; i < vecs.size(); ++i) {
         it++;
         auto& ref = results.at(*it);
@@ -387,14 +387,14 @@ static inline partial_result local_intersection(const std::set<size_t> &vecs,
     return last_intersection;
 }
 
-static inline dataContainer local_intersection(const std::set<size_t> &vecs,
-                                               const std::vector<partial_result>& results,
-                                               LeafType isLeaf) {
+static inline Result local_intersection(const std::set<size_t> &vecs,
+                                        const std::vector<PartialResult>& results,
+                                        LeafType isLeaf) {
     if (vecs.empty()) return {};
-    partial_result last_intersection = local_intersection(vecs, results);
+    PartialResult last_intersection = local_intersection(vecs, results);
 
     // TODO: better done through views!
-    dataContainer  finalResult;
+    Result  finalResult;
     for (auto it = last_intersection.begin(); it != last_intersection.end(); it = last_intersection.erase(it)) {
         switch (isLeaf) {
             case ActivationLeaf:
@@ -411,8 +411,8 @@ static inline dataContainer local_intersection(const std::set<size_t> &vecs,
 }
 
 static inline void data_merge(const std::set<size_t> &vecs,
-                              const std::vector<partial_result>& results,
-                              dataContainer& result,
+                              const std::vector<PartialResult>& results,
+                              Result& result,
                               LeafType isLeaf) {
     if (vecs.empty()) {
         result.clear();
@@ -420,7 +420,7 @@ static inline void data_merge(const std::set<size_t> &vecs,
     }
     auto it = vecs.begin();
     auto last_intersection = results.at(*it);
-    partial_result curr_intersection;
+    PartialResult curr_intersection;
     for (std::size_t i = 1; i < vecs.size(); ++i) {
         it++;
         auto ref = results.at(*it);
@@ -446,7 +446,7 @@ static inline void data_merge(const std::set<size_t> &vecs,
 
 }
 
-static inline void local_union(const ltlf_query* q, dataContainer& last_union, bool isTimed = true) {
+static inline void local_union(const ltlf_query* q, Result& last_union, bool isTimed = true) {
     size_t N = q->args.size();
     if ((!q) || (N == 0)) {
         last_union.clear();
@@ -472,7 +472,7 @@ static inline void local_union(const ltlf_query* q, dataContainer& last_union, b
     } else {
         auto it = q->args.begin();
         last_union = (*it)->result;
-        dataContainer curr_union;
+        Result curr_union;
         for (std::size_t i = 1; i < q->args.size(); ++i) {
             it++;
             auto ref = (*it)->result;
@@ -492,7 +492,7 @@ static inline void local_union(const ltlf_query* q, dataContainer& last_union, b
     }
 }
 
-static inline void local_intersection(const ltlf_query* q, dataContainer& last_union, bool isTimed = true) {
+static inline void local_intersection(const ltlf_query* q, Result& last_union, bool isTimed = true) {
     size_t N = q->args.size();
     if ((!q) || (N == 0)) {
         last_union.clear();
@@ -519,7 +519,7 @@ static inline void local_intersection(const ltlf_query* q, dataContainer& last_u
         assert(q->joinCondition.isTruth());
         auto it = q->args.begin();
         last_union = (*it)->result;
-        dataContainer curr_union;
+        Result curr_union;
         for (std::size_t i = 1; i < N; ++i) {
             it++;
             auto ref = (*it)->result;
@@ -540,11 +540,11 @@ static inline void local_intersection(const ltlf_query* q, dataContainer& last_u
 
 }
 
-static inline void absence_or_exists(ltlf_query* formula, const std::vector<partial_result>& results_cache) {
+static inline void absence_or_exists(ltlf_query* formula, const std::vector<PartialResult>& results_cache) {
     bool isFirstIteration = true;
     uint32_t traceId = 0;
     uint16_t eventCount = 0;
-    dataContainer tmp_result;
+    Result tmp_result;
     data_merge(formula->partial_results, results_cache, tmp_result, formula->isLeaf);
     std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>> cp{{0,0}, {1.0, {}}};
     for (auto ref = tmp_result.begin(); ref != tmp_result.end(); ) {
@@ -578,7 +578,7 @@ void MAXSatPipeline::actual_query_running(const KnowledgeBase& kb) {
         PARALLELIZE_LOOP_BEGIN(pool, 0, barrier_to_range_queries, a, b)
             for (size_t i = a; i < b; i++) {
                 auto& ref = data_accessing.at(i);
-                // TODO: Given the query in ref.first, put the result in ref.second
+                // TODO: Given the query in ref.first, put the Result in ref.second
                 switch (ref.first.type) {
                     case ExistsQuery:
                         ref.second = kb.exists(kb.resolveCountingData(ref.first.label), ref.first.numeric_argument);
@@ -590,10 +590,10 @@ void MAXSatPipeline::actual_query_running(const KnowledgeBase& kb) {
                         ref.second = kb.absence(kb.resolveCountingData(ref.first.label), ref.first.numeric_argument);
                         break;
                     case InitQuery:
-                        ref.second = kb.initOrig<std::pair<uint32_t, uint16_t>, double>(ref.first.label).traceApproximations;
+                        ref.second = kb.initOrig(ref.first.label);
                         break;
                     case EndsQuery:
-                        ref.second = kb.endsOrig<std::pair<uint32_t, uint16_t>, double>(ref.first.label).traceApproximations;
+                        ref.second = kb.endsOrig(ref.first.label);
                         break;
                     //
                     //    // TODO: ref.second = kb.exists<std::pair<uint32_t, uint16_t>, double>(ref.first.label).traceApproximations;
@@ -647,7 +647,7 @@ void MAXSatPipeline::actual_query_running(const KnowledgeBase& kb) {
     std::cout << set_decomposition_result << std::endl;
     size_t isFromFurtherDecomposition = set_decomposition_result.minimal_common_subsets.size();
 
-    std::vector<partial_result> resultOfS(set_decomposition_result.minimal_common_subsets.size()+set_decomposition_result.minimal_common_subsets_composition.size());
+    std::vector<PartialResult> resultOfS(set_decomposition_result.minimal_common_subsets.size() + set_decomposition_result.minimal_common_subsets_composition.size());
     PARALLELIZE_LOOP_BEGIN(pool, 0,set_decomposition_result.minimal_common_subsets.size(), lb, ub)
         for (size_t i = lb; i < ub; i++) {
             auto& S = set_decomposition_result.minimal_common_subsets.at(i);
@@ -671,7 +671,7 @@ void MAXSatPipeline::actual_query_running(const KnowledgeBase& kb) {
 //    }
 
     ///results_cache.resize(toUseAtoms.size());
-    std::vector<partial_result> results_cache(std::max(toUseAtoms.size(), resultOfS.size()), partial_result{});
+    std::vector<PartialResult> results_cache(std::max(toUseAtoms.size(), resultOfS.size()), PartialResult{});
     PARALLELIZE_LOOP_BEGIN(pool, 0,set_decomposition_result.decomposedIndexedSubsets.size(), lb, ub)
         for (size_t j = lb; j < ub; j++) {
             auto& ref = set_decomposition_result.decomposedIndexedSubsets.at(j);
@@ -697,7 +697,7 @@ void MAXSatPipeline::actual_query_running(const KnowledgeBase& kb) {
 
     auto it = qm.Q.rbegin(), en = qm.Q.rend();
     for (; it != en; it++) {
-        dataContainer tmp_result;
+        Result tmp_result;
 
         PARALLELIZE_LOOP_BEGIN(pool, 0, it->second.size(), lb, ub)
             for (size_t j = lb; j < ub; j++) {

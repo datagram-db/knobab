@@ -659,8 +659,8 @@ std::vector<std::pair<std::pair<trace_t, event_t>, double>> KnowledgeBase::exist
 }
 
 
-dataContainer KnowledgeBase::exists(const std::string &act, bool markEventsForMatch) const {
-    dataContainer foundData;
+Result KnowledgeBase::exists(const std::string &act, bool markEventsForMatch) const {
+    Result foundData;
     std::pair<uint32_t, uint16_t> timePair;
     std::pair<double, std::vector<uint16_t>> dataPair{1.0, {}};
     if (markEventsForMatch) dataPair.second.emplace_back(0);
@@ -785,7 +785,7 @@ std::vector<std::pair<trace_t, event_t>> KnowledgeBase::exact_range_query(DataPr
 
 void KnowledgeBase::exact_range_query(const std::string &var,
                                       const std::unordered_map<std::string, std::vector<size_t>> &actToPredId,
-                                      std::vector<std::pair<DataQuery, partial_result>> &Qs,
+                                      std::vector<std::pair<DataQuery, PartialResult>> &Qs,
                                       const std::optional<uint16_t> &temporalTimeMatch,
                                       double approxConstant) const {
 
@@ -819,7 +819,7 @@ void KnowledgeBase::exact_range_query(const std::string &var,
                 else {
                     auto& refQ = Qs.at(qId);
                     LeafType qT = refQ.first.t;
-                    partial_result& S = refQ.second;
+                    PartialResult& S = refQ.second;
                     size_t N = std::distance(tmpRef.first, tmpRef.second);
                     //std::vector<uint16_t> W;
                     /*switch (qT) {
@@ -857,8 +857,8 @@ void KnowledgeBase::exact_range_query(const std::string &var,
     }
 }
 
-const dataContainer KnowledgeBase::getLastElements() const {
-    dataContainer elems{};
+const Result KnowledgeBase::getLastElements() const {
+    Result elems{};
     for (const std::pair<ActTable::record *, ActTable::record *> &rec: act_table_by_act_id.secondary_index) {
         const uint32_t traceId = rec.second->entry.id.parts.trace_id;
         uint16_t eventId = rec.second->entry.id.parts.event_id;
@@ -873,8 +873,8 @@ const dataContainer KnowledgeBase::getLastElements() const {
     return elems;
 }
 
-const dataContainer KnowledgeBase::getNotFirstElements() {
-    dataContainer elems{};
+const Result KnowledgeBase::getNotFirstElements() {
+    Result elems{};
 
     auto itr = act_table_by_act_id.secondary_index.begin();
     while (itr != act_table_by_act_id.secondary_index.end()) {
@@ -899,19 +899,19 @@ const dataContainer KnowledgeBase::getNotFirstElements() {
     return elems;
 }
 
-dataContainer KnowledgeBase::init(const std::string &act, bool doExtractEvent, const double minThreshold) const {
+Result KnowledgeBase::init(const std::string &act, bool doExtractEvent, const double minThreshold) const {
     return initOrEnds(act, true, doExtractEvent, minThreshold);
 }
 
-dataContainer KnowledgeBase::ends(const std::string &act, bool doExtractEvent, const double minThreshold) const {
+Result KnowledgeBase::ends(const std::string &act, bool doExtractEvent, const double minThreshold) const {
     return initOrEnds(act, false, doExtractEvent, minThreshold);
 }
 
-dataContainer
+Result
 KnowledgeBase::initOrEnds(const std::string &act, bool beginOrEnd, bool doExtractEvent, const double minThreshold) const {
-    dataContainer foundData;
+    Result foundData;
 
-    dataContainer tracePair;
+    Result tracePair;
     const uint16_t& mappedVal = getMappedValueFromAction(act);
 
     if(mappedVal < 0){

@@ -10,10 +10,12 @@
 #include <limits>
 #include <vector>
 
+#include <knobab/dataStructures/oid.h>
+#include <knobab/dataStructures/TraceData.h>
 #include <yaucl/structures/set_operations.h>
 
-const uint16_t max = std::numeric_limits<uint16_t>::max();
-static const std::vector<uint16_t> maxVec(max,max);
+constexpr event_t max = std::numeric_limits<event_t>::max();
+static const std::vector<event_t> maxVec(max,max);
 
 #include <knobab/predicates/PredicateManager.h>
 #include <knobab/utilities/Aggregators.h>
@@ -21,7 +23,6 @@ static const std::vector<uint16_t> maxVec(max,max);
 #include <map>
 #include <functional>
 
-using dataContainer = std::vector<std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>>;
 
 enum LeafType {
     ActivationLeaf,
@@ -34,7 +35,6 @@ enum LeafType {
 #include <vector>
 #include <utility>
 
-using partial_result = std::vector<std::pair<std::pair<uint32_t , uint16_t>, double>>;
 
 template <typename T>
 std::vector<uint16_t> populateAndReturnEvents(T it1, T it2){
