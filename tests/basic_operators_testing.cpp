@@ -6,11 +6,7 @@
 #define CTEST_SEGFAULT
 
 #include <vector>
-#include <yaucl/structures/set_operations.h>
 #include <knobab/Environment.h>
-#include <fstream>
-#include <filesystem>
-
 #include <gtest/gtest.h>
 #include "log_for_tests.h"
 

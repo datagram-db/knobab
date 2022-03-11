@@ -17,6 +17,6 @@
  * You should have received a copy of the GNU General Public License
  * along with bpm21. If not, see <http://www.gnu.org/licenses/>.
  */
- Response(A, x > 0.0 && y > 5.0, B, y <= 0.0)
- Response(B, y <= 0.0, C, true) where y < x
- Precedence(B, y <= 0.0, A, z > 5.0) //where y < x
+ Response("A", var "x" > 0.0 && var "y" > 5.0, "B", var "y" <= 0.0)
+ Response("B", var "y" <= 0.0, "C", true) where var "y" < var "x"
+ Precedence("B", var "y" <= 0.0, "A", var "z" > 5.0) //where y < x

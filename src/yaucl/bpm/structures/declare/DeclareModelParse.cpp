@@ -167,7 +167,7 @@ antlrcpp::Any DeclareModelParse::visitFields(DADParser::FieldsContext *ctx) {
         if (prop.isNotNull()) {
             std::pair<std::string,
                     std::vector<std::unordered_map<std::string, DataPredicate>>> cp;
-            cp.first = ctx->LABEL()->getText();
+            cp.first = UNESCAPE(ctx->STRING()->getText());
             cp.second = visit(ctx->prop()).as<std::vector<std::unordered_map<std::string, DataPredicate>>>();
             return {cp};
         } else {
@@ -276,15 +276,15 @@ antlrcpp::Any DeclareModelParse::visitAtom_conj(DADParser::Atom_conjContext *ctx
 antlrcpp::Any DeclareModelParse::visitAtom(DADParser::AtomContext *ctx) {
     if (ctx) {
         DataPredicate pred;
-        auto vec = ctx->VAR();
-        pred.var = vec.at(0)->getText();
+        auto vars = ctx->var();
+        pred.var = UNESCAPE(vars.at(0)->STRING()->getText());
         pred.casusu = visit(ctx->rel()).as<numeric_atom_cases>();
         if (ctx->STRING()) {
             pred.value = UNESCAPE(ctx->STRING()->getText());
         } else if (ctx->NUMBER()) {
             pred.value = std::stod(ctx->NUMBER()->getText());
-        } else if (vec.size() > 1) {
-            pred.varRHS = vec.at(1)->getText();
+        } else if (vars.size() > 1) {
+            pred.varRHS = UNESCAPE(vars.at(1)->STRING()->getText());
         } else {
             pred.value = 0.0;
         }

@@ -25,7 +25,7 @@ declare: name=LABEL '(' (fields ',')+ fields ')' ('where' prop)? #nary_prop
        | name=LABEL '(' fields ',' INTNUMBER ')' #unary_prop
        ;
 
-fields: label=LABEL ',' prop;
+fields: label=STRING ',' prop;
 
 prop  : prop_within_dijunction '||' prop  #disj
       | prop_within_dijunction            #conj_or_atom
@@ -36,7 +36,7 @@ prop_within_dijunction : atom                              #in_atom
                        | atom '&&' prop_within_dijunction  #atom_conj
                        ;
 
-atom : (isnegated='~')? VAR rel (NUMBER | STRING | leftvar=VAR) ;
+atom : (isnegated='~')? var rel (NUMBER | STRING | leftvar=var) ;
 
 rel   : '<' #lt
       | '<=' #leq
@@ -46,12 +46,13 @@ rel   : '<' #lt
       | '!=' #neq
       ;
 
-VAR: ('a'..'z')+;
+
+var: 'var' STRING;
 LABEL: ('A'..'Z')[a-zA-Z]*;
 INTNUMBER : ('0'..'9')+ ;
 NUMBER : '-'? INTNUMBER ('.' INTNUMBER)?;
 STRING : '"' (~[\\"] | '\\' [\\"])* '"';
-SPACE : [ \t\n]+ -> skip;
+SPACE : [ \t\r\n]+ -> skip;
 
 COMMENT
     : '/*' .*? '*/' -> skip
