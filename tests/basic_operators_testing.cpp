@@ -8,18 +8,18 @@
 #include <vector>
 #include <knobab/Environment.h>
 #include <gtest/gtest.h>
-#include <knobab/operators/simple_ltlf_operators.h>
+#include <knobab/operators/fast_ltlf_operators.h>
 #include "log_for_tests.h"
 
 class basic_operators : public testing::Test {
 protected:
     void SetUp() override {
-        ss << log1;
-        env.load_log(HUMAN_READABLE_YAUCL, true, "log1.txt", false, ss);
+        std::filesystem::path curr = std::filesystem::current_path().parent_path().parent_path() / "data" / "testing" / "log.txt";
+        std::ifstream file{curr};
+        env.load_log(HUMAN_READABLE_YAUCL, true, curr.filename(), false, file);
     }
 
     Environment env;
-    std::stringstream ss;
 };
 
 #define DATA_EMPLACE_BACK(l,trace,event,isMatch)    do { (l).emplace_back(std::make_pair((trace),(event)), std::make_pair((1.0),MarkedEventsVector{})); if (isMatch) (l).back().second.second.emplace_back(marked_event::activation(event));} while (false)
@@ -293,3 +293,45 @@ TEST_F(basic_operators, globally_untimed) {
     }
 }
 
+TEST_F(basic_operators, intersections_untimed_matches) {
+
+    for (size_t i = 0; i<4; i++) {
+        auto a = env.db.exists("A", i/2 ? ActivationLeaf : NoneLeaf),
+                b = env.db.exists("B", i%2 ? TargetLeaf : NoneLeaf);
+        Result result, resultLogic, resultFast;
+
+        setIntersectionUntimed(a.begin(), a.end(), b.begin(), b.end(), std::back_inserter(result),  Aggregators::maxSimilarity<double,double,double>, nullptr);
+        std::unordered_set<uint32_t> traces{3,5,7,8,9,10,11,12};
+        EXPECT_TRUE(!result.empty());
+        for (const auto& ref : result)
+            EXPECT_TRUE(traces.contains(ref.first.first));
+
+        and_logic_untimed(a, b, resultLogic, nullptr);
+        EXPECT_EQ(result, resultLogic);
+
+        and_fast_untimed(a, b, resultFast, nullptr);
+        EXPECT_EQ(result, resultFast);
+    }
+
+}
+
+TEST_F(basic_operators, unions_untimed_matches) {
+    for (size_t i = 0; i<4; i++) {
+        auto a = env.db.exists("A", i/2 ? ActivationLeaf : NoneLeaf),
+                b = env.db.exists("B", i%2 ? TargetLeaf : NoneLeaf);
+        Result result, resultLogic, resultFast;
+
+        setUnionUntimed(a.begin(), a.end(), b.begin(), b.end(), std::back_inserter(result),  Aggregators::maxSimilarity<double,double,double>, nullptr);
+        std::unordered_set<uint32_t> traces{0,1,3,4,5,6,7,8,9,10,11,12};
+        EXPECT_TRUE(!result.empty());
+        for (const auto& ref : result)
+            EXPECT_TRUE(traces.contains(ref.first.first));
+
+        or_logic_untimed(a, b, resultLogic, nullptr);
+        EXPECT_EQ(result, resultLogic);
+
+        or_fast_untimed(a, b, resultFast, nullptr);
+        EXPECT_EQ(result, resultFast);
+    }
+
+}
