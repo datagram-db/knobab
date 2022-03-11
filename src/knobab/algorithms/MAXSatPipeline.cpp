@@ -398,11 +398,12 @@ static inline Result local_intersection(const std::set<size_t> &vecs,
     for (auto it = last_intersection.begin(); it != last_intersection.end(); it = last_intersection.erase(it)) {
         switch (isLeaf) {
             case ActivationLeaf:
+                finalResult.emplace_back(it->first, std::make_pair(it->second, MarkedEventsVector{marked_event::activation(it->first.second)}));
             case TargetLeaf:
-                finalResult.emplace_back(it->first, std::make_pair(it->second, std::vector<uint16_t>{it->first.second}));
+                finalResult.emplace_back(it->first, std::make_pair(it->second, MarkedEventsVector{marked_event::target(it->first.second)}));
                 break;
             default:
-                finalResult.emplace_back(it->first, std::make_pair(it->second, std::vector<uint16_t>{}));
+                finalResult.emplace_back(it->first, std::make_pair(it->second, MarkedEventsVector{}));
                 break;
         }
     }
@@ -435,11 +436,12 @@ static inline void data_merge(const std::set<size_t> &vecs,
     for (auto it = last_intersection.begin(); it != last_intersection.end(); it = last_intersection.erase(it)) {
         switch (isLeaf) {
             case ActivationLeaf:
+                result.emplace_back(it->first, std::make_pair(it->second, MarkedEventsVector{marked_event::activation(it->first.second)}));
             case TargetLeaf:
-                result.emplace_back(it->first, std::make_pair(it->second, std::vector<uint16_t>{it->first.second}));
+                result.emplace_back(it->first, std::make_pair(it->second, MarkedEventsVector{marked_event::target(it->first.second)}));
                 break;
             default:
-                result.emplace_back(it->first, std::make_pair(it->second, std::vector<uint16_t>{}));
+                result.emplace_back(it->first, std::make_pair(it->second, MarkedEventsVector{}));
                 break;
         }
     }
@@ -546,7 +548,7 @@ static inline void absence_or_exists(ltlf_query* formula, const std::vector<Part
     uint16_t eventCount = 0;
     Result tmp_result;
     data_merge(formula->partial_results, results_cache, tmp_result, formula->isLeaf);
-    std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>> cp{{0,0}, {1.0, {}}};
+    ResultRecord cp{{0,0}, {1.0, {}}};
     for (auto ref = tmp_result.begin(); ref != tmp_result.end(); ) {
         if (isFirstIteration) {
             traceId = ref->first.first;

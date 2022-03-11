@@ -206,8 +206,8 @@ public:
      * First part of the pipeline *
      ******************************/
 
-    const Result getLastElements() const;
-    const Result getNotFirstElements();
+    const Result getLastElements(LeafType leafType = NoneLeaf) const;
+    const Result getNotFirstElements(LeafType leafType);
 
     uint16_t getMappedValueFromAction(const std::string &act) const;
     std::pair<const uint32_t, const uint32_t> resolveCountingData(const std::string &act) const;
@@ -230,7 +230,7 @@ public:
     Result ends(const std::string& act, bool doExtractEvent, const double minThreshold = 1) const;
     std::vector<std::pair<std::pair<trace_t, event_t>, double>> exists(const std::string& act) const;
 
-    [[deprecated]] Result exists(const std::string& act, bool markEventsForMatch) const;
+    [[deprecated]] Result exists(const std::string& act, LeafType markEventsForMatch) const;
 
     //template <typename traceIdentifier, typename traceValue>
     PartialResult initOrig(const std::string& act, const double minThreshold = 1) const{
