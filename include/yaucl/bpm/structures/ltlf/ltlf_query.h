@@ -61,7 +61,7 @@ struct ltlf_query {
     bool operator==(const ltlf_query &rhs) const;
     bool operator!=(const ltlf_query &rhs) const;
 
-    dataContainer result;
+    Result result;
 };
 
 namespace std {

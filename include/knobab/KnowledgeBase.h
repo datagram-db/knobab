@@ -206,21 +206,19 @@ public:
      * First part of the pipeline *
      ******************************/
 
-    const dataContainer getLastElements() const;
-
-    const dataContainer getNotFirstElements();
-
+    const Result getLastElements() const;
+    const Result getNotFirstElements();
 
     uint16_t getMappedValueFromAction(const std::string &act) const;
     std::pair<const uint32_t, const uint32_t> resolveCountingData(const std::string &act) const;
-    std::vector<std::pair<std::pair<trace_t, event_t>, double>> range_query(DataPredicate prop, double min_threshold = 1.0, const double c = 2.0) const;
+    PartialResult range_query(DataPredicate prop, double min_threshold = 1.0, const double c = 2.0) const;
 
     // Second part of the pipeline
-    std::vector<std::pair<std::pair<trace_t, event_t>, double>>  exists(const std::pair<const uint32_t, const uint32_t>& indexes, const uint16_t& amount) const;
-    std::vector<std::pair<std::pair<trace_t, event_t>, double>> absence(const std::pair<const uint32_t, const uint32_t>& indexes, const uint16_t& amount) const;
+    PartialResult exists(const std::pair<const uint32_t, const uint32_t>& indexes, const uint16_t& amount) const;
+    PartialResult absence(const std::pair<const uint32_t, const uint32_t>& indexes, const uint16_t& amount) const;
 
 
-    std::vector<std::pair<std::pair<trace_t, event_t>, double>> exists(const std::pair<const uint32_t, const uint32_t>& indexes) const {
+    PartialResult exists(const std::pair<const uint32_t, const uint32_t>& indexes) const {
         std::vector<std::pair<std::pair<trace_t, event_t>, double>> foundElems;
         for (auto it = count_table.table.begin() + indexes.first; it != count_table.table.begin() + indexes.second + 1; ++it) {
             foundElems.emplace_back(std::pair<trace_t, event_t>{it->id.parts.trace_id, 0}, 1.0);
@@ -228,27 +226,27 @@ public:
         return foundElems;
     }
 
-    dataContainer init(const std::string& act, bool doExtractEvent, const double minThreshold = 1) const;
-    dataContainer ends(const std::string& act, bool doExtractEvent, const double minThreshold = 1) const;
+    Result init(const std::string& act, bool doExtractEvent, const double minThreshold = 1) const;
+    Result ends(const std::string& act, bool doExtractEvent, const double minThreshold = 1) const;
     std::vector<std::pair<std::pair<trace_t, event_t>, double>> exists(const std::string& act) const;
 
-    [[deprecated]] dataContainer exists(const std::string& act, bool markEventsForMatch) const;
+    [[deprecated]] Result exists(const std::string& act, bool markEventsForMatch) const;
 
-    template <typename traceIdentifier, typename traceValue>
-    TraceData<traceIdentifier, traceValue> initOrig(const std::string& act, const double minThreshold = 1) const{
-        return existsAtOrig<traceIdentifier, traceValue>(act, 0, minThreshold);
+    //template <typename traceIdentifier, typename traceValue>
+    PartialResult initOrig(const std::string& act, const double minThreshold = 1) const{
+        return existsAtOrig(act, 0, minThreshold);
     }
 
-    template <typename traceIdentifier, typename traceValue>
-    TraceData<traceIdentifier, traceValue> endsOrig(const std::string& act, const double minThreshold = 1) const{
-        return existsAtOrig<traceIdentifier, traceValue>(act, MAX_UINT16, minThreshold);
+    //template <typename traceIdentifier, typename traceValue>
+    PartialResult endsOrig(const std::string& act, const double minThreshold = 1) const{
+        return existsAtOrig(act, MAX_UINT16, minThreshold);
     }
 
-    template <typename traceIdentifier, typename traceValue>
-    TraceData<traceIdentifier, traceValue> existsAtOrig(const std::string& act, const uint16_t& eventId, const double minThreshold = 1) const{
+    PartialResult existsAtOrig(const std::string& act, const uint16_t& eventId, const double minThreshold = 1) const {
         uint16_t approxConstant = MAX_UINT16 / 2;
-        TraceData<traceIdentifier, traceValue> foundData;
-        std::pair<traceIdentifier, traceValue> tracePair;
+        PartialResult foundData;
+        PartialResultRecord tracePair;
+
         const uint16_t& mappedVal = getMappedValueFromAction(act);
         if(mappedVal < 0){
             return foundData;
@@ -259,22 +257,24 @@ public:
         }
         for (auto it = act_table_by_act_id.table.begin() + indexes.first; it != act_table_by_act_id.table.begin() + indexes.second + 1; ++it) {
             auto L = act_table_by_act_id.trace_length.at(it->entry.id.parts.trace_id);
-            float satisfiability = getSatisifiabilityBetweenValues(((L <= 1) ? 0 : eventId), cast_to_float2(it->entry.id.parts.event_id, L), approxConstant);
-            if(satisfiability >= minThreshold) {
-                foundData.getTraceApproximations().emplace_back(std::pair<std::pair<uint32_t, uint16_t>, double>({it->entry.id.parts.trace_id, it->entry.id.parts.event_id}, satisfiability));
+            tracePair.second = getSatisifiabilityBetweenValues(((L <= 1) ? 0 : eventId), cast_to_float2(it->entry.id.parts.event_id, L), approxConstant);
+            if(tracePair.second >= minThreshold) {
+                tracePair.first.first = it->entry.id.parts.trace_id;
+                tracePair.first.second = it->entry.id.parts.event_id;
+                foundData.emplace_back(tracePair);
             }
         }
         return foundData;
     }
 
 
-    dataContainer initOrEnds(const std::string& act, bool beginOrEnd, bool doExtractEvent, const double minThreshold = 1) const;
+    Result initOrEnds(const std::string& act, bool beginOrEnd, bool doExtractEvent, const double minThreshold = 1) const;
 
     std::vector<std::pair<trace_t, event_t>> exact_range_query(DataPredicate prop) const;
 
     void exact_range_query(const std::string &var,
                            const std::unordered_map<std::string, std::vector<size_t>> &actToPredId,
-                           std::vector<std::pair<DataQuery, partial_result>> &Qs,
+                           std::vector<std::pair<DataQuery, PartialResult>> &Qs,
                            const std::optional<uint16_t> &temporalTimeMatch = std::optional<uint16_t>{},
                            double minApproxTime = 1)  const;
 #if 0

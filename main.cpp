@@ -400,15 +400,15 @@ void sam_testing() {
 
     //std::unordered_map<uint32_t, double> found = db.exists(data, searchAmount);
     //std::cout << "========EXISTS " + toSearch + " " + std::to_string(searchAmount) + "TIMES========="  << std::endl << "RESULT: " << std::endl << found << std::endl;
-    dataContainer initAVec = db.init(toSearch, minThreshHold);
+    Result initAVec = db.init(toSearch, minThreshHold);
     //std::cout << "========Init " + toSearch + "=========" << std::endl << std::setw(8) << "Result: " << initAVec << std::endl;
 
-    dataContainer endsAVec = db.ends(toSearch, minThreshHold);
+    Result endsAVec = db.ends(toSearch, minThreshHold);
     //std::cout << "========Ends " + toSearch + "=========" << std::endl << std::setw(8) << "Result: " << endsAVec << std::endl << std::endl;
 
 //
     std::cout << "========SET OPERATORS=========" << std::endl;
-    dataContainer timedUnionNoPred, timedUnionWithPred, untimedUnionNoPred, untimedUnionWithPred;
+    Result timedUnionNoPred, timedUnionWithPred, untimedUnionNoPred, untimedUnionWithPred;
     setUnion( initAVec.begin(), initAVec.end(), endsAVec.begin(), endsAVec.end(),
              std::back_inserter(timedUnionNoPred), Aggregators::maxSimilarity<double, double, double>);
     setUnion( initAVec.begin(), initAVec.end(), endsAVec.begin(), endsAVec.end(),
@@ -427,7 +427,7 @@ void sam_testing() {
     std::cout << "========Union untimed with predicate=========" << std::endl << std::setw(9) << "Between: " << initAVec << std::endl << std::setw(9) << "and: "
               << endsAVec << std::endl << std::setw(9) << "Result: " << untimedUnionWithPred << std::endl;
 
-    dataContainer timedIntersectionNoPred, timedIntersectionWithPred, untimedIntersectionNoPred, untimedIntersectionWithPred;
+    Result timedIntersectionNoPred, timedIntersectionWithPred, untimedIntersectionNoPred, untimedIntersectionWithPred;
     setIntersection( initAVec.begin(), initAVec.end(), endsAVec.begin(), endsAVec.end(),
                     std::back_inserter(timedIntersectionNoPred), Aggregators::joinSimilarity<double, double, double>);
     setIntersection( initAVec.begin(), initAVec.end(), endsAVec.begin(), endsAVec.end(),
@@ -474,7 +474,7 @@ void sam_testing() {
 */
 
     //aaab from trace 0
-    dataContainer aOccurences{}, bOccurences{}, aBOccurences{};
+    Result aOccurences{}, bOccurences{}, aBOccurences{};
     aOccurences.emplace_back(std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>({0, 0}, {1, {0}}));
     aOccurences.emplace_back(std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>({0, 1}, {1, {1}}));
     aOccurences.emplace_back(std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>({0, 2}, {1, {2}}));
@@ -508,7 +508,7 @@ void sam_testing() {
     std::cout << "========Until========" << std::endl << std::setw(14) << "Temporal: " << until(0, 0, 2, aOccurences, bOccurences) << std::endl << std::setw(14) << "Non-Temporal: " << until(aOccurences, bOccurences, db.act_table_by_act_id.getTraceLengths()) << std::endl << std::endl;
 
     std::cout << "========SET OPERATORS=========" << std::endl;
-    dataContainer e1, e2, e3, e4, e5, e6, e7, e8;
+    Result e1, e2, e3, e4, e5, e6, e7, e8;
     setUnion( aOccurences.begin(), aOccurences.end(), bOccurences.begin(), bOccurences.end(), std::back_inserter(e1), Aggregators::maxSimilarity<double, double, double>);
     setUnion( aOccurences.begin(), aOccurences.end(), bOccurences.begin(), bOccurences.end(), std::back_inserter(e2), Aggregators::maxSimilarity<double, double, double>,&predManager);
     setUnionUntimed( aOccurences.begin(), aOccurences.end(), bOccurences.begin(), bOccurences.end(), std::back_inserter(e3), Aggregators::maxSimilarity<double, double, double>);
@@ -636,7 +636,7 @@ int main(int argc, char **argv) {
     args::Flag server(group, "server", "Runs the HTTP server for visualizing the internal representation of both the knowledge base and the associated query plan", {'s', "server"});
     args::Flag do_notcompute_trace_Stats(group, "do_not_compute_trace_stats", "Whether the code will lose time in calculating the statistics for the traces", {'n', "nostats"});
     args::ValueFlagList<std::string> queries(group, "Models/Queries", "The queries expressed as Declare models", {'d', "declare"});
-    args::ValueFlag<std::string> benchmarkFile(group, "Benchmark File", "Appends the current result data into a benchmark file", {'b', "csv"});
+    args::ValueFlag<std::string> benchmarkFile(group, "Benchmark File", "Appends the current Result data into a benchmark file", {'b', "csv"});
     args::ValueFlag<std::string>  sqlMinerDump(group, "SQLMinerDump", "If present, specifies the dump for the SQL miner representation", {'s', "sqlminer"});
 
     try {

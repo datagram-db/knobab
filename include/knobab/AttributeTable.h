@@ -6,7 +6,7 @@
 #define BZDB_ATTRIBUTETABLE_H
 
 #include <string>
-#include <knobab/oid.h>
+#include <knobab/dataStructures/oid.h>
 #include <variant>
 #include <yaucl/bpm/structures/commons/DataPredicate.h>
 #include <optional>

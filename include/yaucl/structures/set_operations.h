@@ -138,6 +138,8 @@ std::ostream& operator<<(std::ostream& os, const std::vector<T> &s)
 
 #include <map>
 #include <functional>
+#include <cassert>
+
 template <typename Iterator, typename Key, typename Value>
 std::map<Key, std::vector<Value>> GroupByKeyExtractor(Iterator begin, Iterator end, std::function<Key(const Value&)> keyExtractor)
 {
