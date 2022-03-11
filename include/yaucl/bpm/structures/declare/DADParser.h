@@ -1,5 +1,5 @@
 
-// Generated from /home/giacomo/projects/knobab/src/yaucl/bpm/structures/declare/DAD.g by ANTLR 4.9.3
+// Generated from ./src/yaucl/bpm/structures/declare/DAD.g by ANTLR 4.9.3
 
 #pragma once
 
@@ -14,13 +14,13 @@ public:
   enum {
     T__0 = 1, T__1 = 2, T__2 = 3, T__3 = 4, T__4 = 5, T__5 = 6, T__6 = 7, 
     T__7 = 8, T__8 = 9, T__9 = 10, T__10 = 11, T__11 = 12, T__12 = 13, T__13 = 14, 
-    VAR = 15, LABEL = 16, INTNUMBER = 17, NUMBER = 18, STRING = 19, SPACE = 20, 
+    T__14 = 15, LABEL = 16, INTNUMBER = 17, NUMBER = 18, STRING = 19, SPACE = 20, 
     COMMENT = 21, LINE_COMMENT = 22
   };
 
   enum {
     RuleData_aware_declare = 0, RuleDeclare = 1, RuleFields = 2, RuleProp = 3, 
-    RuleProp_within_dijunction = 4, RuleAtom = 5, RuleRel = 6
+    RuleProp_within_dijunction = 4, RuleAtom = 5, RuleRel = 6, RuleVar = 7
   };
 
   explicit DADParser(antlr4::TokenStream *input);
@@ -39,7 +39,8 @@ public:
   class PropContext;
   class Prop_within_dijunctionContext;
   class AtomContext;
-  class RelContext; 
+  class RelContext;
+  class VarContext; 
 
   class  Data_aware_declareContext : public antlr4::ParserRuleContext {
   public:
@@ -107,7 +108,7 @@ public:
     FieldsContext(antlr4::ParserRuleContext *parent, size_t invokingState);
     virtual size_t getRuleIndex() const override;
     PropContext *prop();
-    antlr4::tree::TerminalNode *LABEL();
+    antlr4::tree::TerminalNode *STRING();
 
     virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
     virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
@@ -207,11 +208,11 @@ public:
   class  AtomContext : public antlr4::ParserRuleContext {
   public:
     antlr4::Token *isnegated = nullptr;
-    antlr4::Token *leftvar = nullptr;
+    DADParser::VarContext *leftvar = nullptr;
     AtomContext(antlr4::ParserRuleContext *parent, size_t invokingState);
     virtual size_t getRuleIndex() const override;
-    std::vector<antlr4::tree::TerminalNode *> VAR();
-    antlr4::tree::TerminalNode* VAR(size_t i);
+    std::vector<VarContext *> var();
+    VarContext* var(size_t i);
     RelContext *rel();
     antlr4::tree::TerminalNode *NUMBER();
     antlr4::tree::TerminalNode *STRING();
@@ -299,6 +300,21 @@ public:
   };
 
   RelContext* rel();
+
+  class  VarContext : public antlr4::ParserRuleContext {
+  public:
+    VarContext(antlr4::ParserRuleContext *parent, size_t invokingState);
+    virtual size_t getRuleIndex() const override;
+    antlr4::tree::TerminalNode *STRING();
+
+    virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
+    virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
+
+    virtual antlrcpp::Any accept(antlr4::tree::ParseTreeVisitor *visitor) override;
+   
+  };
+
+  VarContext* var();
 
 
 private:

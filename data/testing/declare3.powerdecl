@@ -17,5 +17,5 @@
  * You should have received a copy of the GNU General Public License
  * along with bpm21. If not, see <http://www.gnu.org/licenses/>.
  */
- Precedence(A, x > 0.0, B, y <= 0.0)
- Precedence(B, y <= 0.0, A, true)
+ Precedence("A", var "x" > 0.0, "B", var "y" <= 0.0)
+ Precedence("B", var "y" <= 0.0, "A", true)

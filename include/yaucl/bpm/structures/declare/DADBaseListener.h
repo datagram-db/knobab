@@ -1,11 +1,11 @@
 
-// Generated from /home/giacomo/projects/knobab/src/yaucl/bpm/structures/declare/DAD.g by ANTLR 4.9.3
+// Generated from ./src/yaucl/bpm/structures/declare/DAD.g by ANTLR 4.9.3
 
 #pragma once
 
 
 #include "antlr4-runtime.h"
-#include "DADListener.h"
+#include <yaucl/bpm/structures/declare/DADListener.h>
 
 
 /**
@@ -63,6 +63,9 @@ public:
 
   virtual void enterNeq(DADParser::NeqContext * /*ctx*/) override { }
   virtual void exitNeq(DADParser::NeqContext * /*ctx*/) override { }
+
+  virtual void enterVar(DADParser::VarContext * /*ctx*/) override { }
+  virtual void exitVar(DADParser::VarContext * /*ctx*/) override { }
 
 
   virtual void enterEveryRule(antlr4::ParserRuleContext * /*ctx*/) override { }
