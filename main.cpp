@@ -392,6 +392,7 @@ void generate_traces(const std::string& log_file = "data/testing/nologolog.txt",
 
 
 void sam_testing() {
+#ifdef VERSION_BEFORE_SHIFT
     KnowledgeBase db = test_kb(LogTrace, "", "");
     PredicateManager predManager({predicates}, &db);
 
@@ -611,7 +612,8 @@ void sam_testing() {
     dataContainer negationChainSuccession = NegationChainSuccession(aOccurences, bOccurences,  bOccurences, aOccurences, db.getLastElements(), db.act_table_by_act_id.getTraceLengths(),nullptr);
     std::cout << "========NegationChainSuccession=========" << std::endl << negationChainSuccession << std::endl;
     std::flush(std::cout);
-  #endif
+#endif
+#endif
 }
 
 

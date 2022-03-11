@@ -659,11 +659,27 @@ std::vector<std::pair<std::pair<trace_t, event_t>, double>> KnowledgeBase::exist
 }
 
 
-Result KnowledgeBase::exists(const std::string &act, bool markEventsForMatch) const {
+Result KnowledgeBase::exists(const std::string &act, LeafType leafType) const {
     Result foundData;
-    std::pair<uint32_t, uint16_t> timePair;
-    std::pair<double, std::vector<uint16_t>> dataPair{1.0, {}};
-    if (markEventsForMatch) dataPair.second.emplace_back(0);
+    ResultRecord result{{0,0}, {1.0, {}}};
+//    std::pair<uint32_t, uint16_t> timePair;
+//    std::pair<double, std::vector<uint16_t>> dataPair{1.0, {}};
+
+    bool marked_event_type = (((short)leafType)>=1) && (((short)leafType)<=3);
+    switch (leafType) {
+        case ActivationLeaf:
+            result.second.second.push_back(marked_event::activation(0));
+            break;
+        case TargetLeaf:
+            result.second.second.push_back(marked_event::target(0));
+            break;
+        case MatchActivationTarget:
+            result.second.second.push_back(marked_event::join(0, 0));
+            break;
+        default:
+            break;
+    }
+
     const uint16_t& mappedVal = getMappedValueFromAction(act);
     if(mappedVal < 0){
         return foundData;
@@ -673,11 +689,17 @@ Result KnowledgeBase::exists(const std::string &act, bool markEventsForMatch) co
         return foundData;
     }
     for (auto it = act_table_by_act_id.table.begin() + indexes.first; it != act_table_by_act_id.table.begin() + indexes.second + 1; ++it) {
-        timePair.first = it->entry.id.parts.trace_id;
-        timePair.second = it->entry.id.parts.event_id;
-        if (markEventsForMatch)
-            dataPair.second[0] = timePair.second;
-        foundData.emplace_back(timePair, dataPair);
+        result.first.first = it->entry.id.parts.trace_id;
+        result.first.second = it->entry.id.parts.event_id;
+
+        if (marked_event_type) {
+            auto& ref = result.second.second[0];
+            SET_EVENT(ref, result.first.second);
+        }
+
+//        if (markEventsForMatch)
+//            dataPair.second[0] = timePair.second;
+        foundData.emplace_back(result);
     }
     return foundData;
 }
@@ -857,40 +879,72 @@ void KnowledgeBase::exact_range_query(const std::string &var,
     }
 }
 
-const Result KnowledgeBase::getLastElements() const {
+const Result KnowledgeBase::getLastElements(LeafType leafType) const {
     Result elems{};
-    for (const std::pair<ActTable::record *, ActTable::record *> &rec: act_table_by_act_id.secondary_index) {
-        const uint32_t traceId = rec.second->entry.id.parts.trace_id;
-        uint16_t eventId = rec.second->entry.id.parts.event_id;
-        eventId = getPositionFromEventId({traceId, eventId});
-        const std::pair<uint32_t, uint16_t> traceEventPair{traceId, eventId};
+    ResultRecord result{{0,0}, {1, {}}};
+    bool marked_event_type = (((short)leafType)>=1) && (((short)leafType)<=3);
+    switch (leafType) {
+        case ActivationLeaf:
+            result.second.second.push_back(marked_event::activation(0));
+            break;
+        case TargetLeaf:
+            result.second.second.push_back(marked_event::target(0));
+            break;
+        case MatchActivationTarget:
+            result.second.second.push_back(marked_event::join(0, 0));
+            break;
+        default:
+            break;
+    }
 
-        elems.push_back(
-                std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>{traceEventPair,
-                                                                                                   {1, {eventId}}});
+    for (const std::pair<ActTable::record *, ActTable::record *> &rec: act_table_by_act_id.secondary_index) {
+        result.first.first = rec.second->entry.id.parts.trace_id;
+        result.first.second = rec.second->entry.id.parts.event_id;
+        result.first.second = getPositionFromEventId(result.first);
+        ///const std::pair<uint32_t, uint16_t> traceEventPair{traceId, eventId};
+
+        if (marked_event_type) {
+            auto& ref = result.second.second[0];
+            SET_EVENT(ref, result.first.second);
+        }
+        elems.push_back(result);
     }
 
     return elems;
 }
 
-const Result KnowledgeBase::getNotFirstElements() {
+const Result KnowledgeBase::getNotFirstElements(LeafType leafType) {
     Result elems{};
+    ResultRecord result{{0,0}, {1, {}}};
+    bool marked_event_type = (((short)leafType)>=1) && (((short)leafType)<=3);
+    switch (leafType) {
+        case ActivationLeaf:
+            result.second.second.push_back(marked_event::activation(0));
+            break;
+        case TargetLeaf:
+            result.second.second.push_back(marked_event::target(0));
+            break;
+        case MatchActivationTarget:
+            result.second.second.push_back(marked_event::join(0, 0));
+            break;
+        default:
+            break;
+    }
 
     auto itr = act_table_by_act_id.secondary_index.begin();
     while (itr != act_table_by_act_id.secondary_index.end()) {
         auto currentElem = itr->first;
 
         while (currentElem = currentElem->next) {
-            const uint32_t traceId = currentElem->entry.id.parts.trace_id;
-            uint16_t eventId = currentElem->entry.id.parts.event_id;
-            eventId = getPositionFromEventId({traceId, eventId});
-            const std::pair<uint32_t, uint16_t> traceEventPair{traceId, eventId};
+            result.first.first = currentElem->entry.id.parts.trace_id;
+            result.first.second = currentElem->entry.id.parts.event_id;
+            result.first.second = getPositionFromEventId(result.first);
 
-            elems.push_back(
-                    std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>{
-                            traceEventPair,
-                            {1, {eventId}}});
-
+            if (marked_event_type) {
+                auto& ref = result.second.second[0];
+                SET_EVENT(ref, result.first.second);
+            }
+            elems.push_back(result);
         }
 
         ++itr;
@@ -918,9 +972,9 @@ KnowledgeBase::initOrEnds(const std::string &act, bool beginOrEnd, bool doExtrac
         return foundData;
     }
 
-    std::pair<uint32_t, uint16_t> eventPair;
-    std::pair<double, std::vector<uint16_t>> dataPair{1.0, {}};
-    if (doExtractEvent) dataPair.second.emplace_back(0);
+    ResultIndex eventPair;
+    ResultRecordSemantics dataPair{1.0, {}};
+    if (doExtractEvent) dataPair.second.emplace_back(marked_event::left(0));
     std::pair<const uint32_t , const uint32_t> indexes = act_table_by_act_id.resolve_index(mappedVal);
 
     if(indexes.first < 0){
@@ -937,7 +991,7 @@ KnowledgeBase::initOrEnds(const std::string &act, bool beginOrEnd, bool doExtrac
             dataPair.first = satisfiability;
             eventPair.first = it->entry.id.parts.trace_id;
             eventPair.second = it->entry.id.parts.event_id;
-            if (doExtractEvent) dataPair.second[0] =  eventPair.second;
+            if (doExtractEvent) dataPair.second[0].id.parts.left = eventPair.second;
             foundData.emplace_back(eventPair, dataPair);
         }
     }
@@ -945,14 +999,14 @@ KnowledgeBase::initOrEnds(const std::string &act, bool beginOrEnd, bool doExtrac
     return foundData;
 }
 
-std::vector<std::pair<std::pair<trace_t, event_t>, double>> KnowledgeBase::exists(const std::string &act) const {
-    std::vector<std::pair<std::pair<trace_t, event_t>, double>> foundData;
-    std::pair<uint32_t, uint16_t> timePair;
+PartialResult KnowledgeBase::exists(const std::string &act) const {
+    PartialResult foundData;
+    ResultIndex timePair;
     const uint16_t& mappedVal = getMappedValueFromAction(act);
     if(mappedVal < 0){
         return foundData;
     }
-    std::pair<const uint32_t , const uint32_t> indexes = act_table_by_act_id.resolve_index(mappedVal);
+    auto indexes = act_table_by_act_id.resolve_index(mappedVal);
     if(indexes.first < 0){
         return foundData;
     }
@@ -964,9 +1018,9 @@ std::vector<std::pair<std::pair<trace_t, event_t>, double>> KnowledgeBase::exist
     return foundData;
 }
 
-std::vector<std::pair<std::pair<trace_t, event_t>, double>>
-KnowledgeBase::absence(const std::pair<const uint32_t, const uint32_t> &indexes, const uint16_t &amount) const {
-    std::vector<std::pair<std::pair<trace_t, event_t>, double>> foundElems;
+PartialResult
+KnowledgeBase::absence(const std::pair<const uint32_t, const uint32_t> &indexes, const event_t &amount) const {
+    PartialResult foundElems;
 
     for (auto it = count_table.table.begin() + indexes.first; it != count_table.table.begin() + indexes.second + 1; ++it) {
         //uint16_t approxConstant = act_table_by_act_id.getTraceLength(it->id.parts.trace_id) / 2;

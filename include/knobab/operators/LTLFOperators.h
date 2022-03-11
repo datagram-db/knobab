@@ -11,7 +11,9 @@ template<typename InputIt1, typename InputIt2, typename OutputIt, typename Aggre
 OutputIt setUnion(InputIt1 first1, InputIt1 last1, InputIt2 first2, InputIt2 last2,
                   OutputIt d_first, Aggregation aggr, const PredicateManager *manager = nullptr, bool dropMatches = false) {
     env e1, e2;
-    std::pair<uint32_t, uint16_t> pair, pair1;
+    ResultIndex pair, pair1;
+    bool hasMatch;
+    ResultRecord result{{0, 0}, {0.0, {}}};
 
     for (; first1 != last1; ++d_first) {
         if (first2 == last2)
@@ -23,38 +25,43 @@ OutputIt setUnion(InputIt1 first1, InputIt1 last1, InputIt2 first2, InputIt2 las
         } else {
             pair.first = first1->first.first;
             pair1.first = first2->first.first;
+            result.first = first1->first;
+            result.second.first = aggr(first1->second.first, first2->second.first);
+            result.second.second.clear();
+            hasMatch = false;
 
             if (manager) {
                 e1 = manager->GetPayloadDataFromEvent(pair);
                 e2 = manager->GetPayloadDataFromEvent(pair1);
 
-                for (const auto &elem: first1->second.second) {
-                    pair.second = elem;
+                for (const marked_event &elem: first1->second.second) {
+                    if (!IS_MARKED_EVENT_ACTIVATION(elem)) continue;
+                    pair.second = GET_ACTIVATION_EVENT(elem);
 
-                    for (const auto &elem1: first2->second.second) {
-                        pair1.second = elem1;
+                    for (const marked_event &elem1: first2->second.second) {
+                        if (!IS_MARKED_EVENT_TARGET(elem1)) continue;
+                        pair1.second = GET_TARGET_EVENT(elem1);
 
                         if (manager->checkValidity(e1, e2)) {
+                            hasMatch = true;
                             double aggrV = aggr(first1->second.first, first2->second.first);
-                            if (dropMatches) {
-                                *d_first = std::make_pair(first1->first, std::pair<double, std::vector<uint16_t>>{
-                                        aggr(first1->second.first, first2->second.first), {elem, elem1}});
-                            } else {
-                                *d_first = std::make_pair(first1->first, std::pair<double, std::vector<uint16_t>>{
-                                        aggr(first1->second.first, first2->second.first), {}});
+                            if (!dropMatches) {
+                                result.second.second.emplace_back(marked_event::join(pair.second, pair1.second));
                             }
                         }
                     }
                 }
             } else {
-                std::vector<uint16_t> V;
+                hasMatch = true;
                 if (!dropMatches) {
-                    first1->second.second;
-                    V.insert(V.end(), first2->second.second.begin(), first2->second.second.end());
-                    remove_duplicates(V);
+                    result.second.second = first1->second.second;
+                    result.second.second.insert(result.second.second.end(), first2->second.second.begin(), first2->second.second.end());
                 }
-                *d_first = std::make_pair(first1->first, std::pair<double, std::vector<uint16_t>>{
-                        aggr(first1->second.first, first2->second.first), V});
+            }
+
+            if (hasMatch) {
+                remove_duplicates(result.second.second);
+                *d_first = result;
             }
 
             first1++;
@@ -68,15 +75,15 @@ template<typename InputIt1, typename InputIt2, typename OutputIt, typename Aggre
 OutputIt
 setUnionUntimed(InputIt1 first1, InputIt1 last1, InputIt2 first2, InputIt2 last2, OutputIt d_first, Aggregation aggr,
                 const PredicateManager *manager = nullptr, bool dropMatches = false) {
-    std::map<uint32_t, Result> group1 = GroupByKeyExtractor<InputIt1, uint32_t, std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>>(
+    std::map<uint32_t, Result> group1 = GroupByKeyExtractor<InputIt1, uint32_t, ResultRecord>(
             first1, last1,
-            [](const std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>> &p) {
+            [](const ResultRecord &p) {
                 return p.first.first;
             });
 
-    std::map<uint32_t, Result> group2 = GroupByKeyExtractor<InputIt2, uint32_t, std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>>(
+    std::map<uint32_t, Result> group2 = GroupByKeyExtractor<InputIt2, uint32_t, ResultRecord>(
             first2, last2,
-            [](const std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>> &p) {
+            [](const ResultRecord &p) {
                 return p.first.first;
             });
 
@@ -84,6 +91,8 @@ setUnionUntimed(InputIt1 first1, InputIt1 last1, InputIt2 first2, InputIt2 last2
     std::pair<uint32_t, uint16_t> pair, pair1;
     auto start1 = group1.begin(), end1 = group1.end();
     auto start2 = group2.begin(), end2 = group2.end();
+    ResultRecord result{{0, 0}, {0.0, {}}};
+    bool hasMatch;
 
     for (; start1 != end1; ++d_first) {
         if (start2 == end2) {
@@ -105,47 +114,62 @@ setUnionUntimed(InputIt1 first1, InputIt1 last1, InputIt2 first2, InputIt2 last2
             }
             start1++;
         } else {
-            pair.first = start1->first;
+            result.first.first = pair.first = start1->first;
+            result.second.first = 0.0;
+            result.second.second.clear();
             pair1.first = start2->first;
+            e1 = manager->GetPayloadDataFromEvent(pair);
+            e2 = manager->GetPayloadDataFromEvent(pair1);
+            hasMatch = false;
+
             for (const auto &cont1: start1->second) {
                 for (const auto &cont2: start2->second) {
+                    result.second.first = std::max(aggr(first1->second.first, first2->second.first), result.second.first);
                     if (manager) {
                         for (const auto &elem: cont1.second.second) {
-                            pair.second = elem;
+                            if (!IS_MARKED_EVENT_ACTIVATION(elem)) continue;
+                            pair.second = GET_ACTIVATION_EVENT(elem);
                             for (const auto &elem1: cont2.second.second) {
-                                pair1.second = elem1;
-                                e1 = manager->GetPayloadDataFromEvent(pair);
-                                e2 = manager->GetPayloadDataFromEvent(pair1);
+                                if (!IS_MARKED_EVENT_TARGET(elem1)) continue;
+                                pair1.second = GET_TARGET_EVENT(elem1);
 
                                 if (manager->checkValidity(e1, e2)) {
-                                    if (dropMatches) {
-                                        *d_first = std::make_pair(std::pair<uint32_t, uint16_t>{pair.first, 0},
-                                                                  std::pair<double, std::vector<uint16_t>>{
-                                                                          aggr(cont1.second.first, cont2.second.first),
-                                                                          {}});
-                                    } else {
-
-                                        *d_first = std::make_pair(std::pair<uint32_t, uint16_t>{pair.first, 0},
-                                                                  std::pair<double, std::vector<uint16_t>>{
-                                                                          aggr(cont1.second.first, cont2.second.first),
-                                                                          {pair.second, pair1.second}});
+                                    hasMatch = true;
+                                    if (!dropMatches) {
+//                                        *d_first = std::make_pair(std::pair<uint32_t, uint16_t>{pair.first, 0},
+//                                                                  std::pair<double, std::vector<uint16_t>>{
+//                                                                          aggr(cont1.second.first, cont2.second.first),
+//                                                                          {}});
+//                                    } else {
+                                        result.second.second.emplace_back(marked_event::join(pair.second, pair1.second));
+//                                        *d_first = std::make_pair(std::pair<uint32_t, uint16_t>{pair.first, 0},
+//                                                                  std::pair<double, std::vector<uint16_t>>{
+//                                                                          aggr(cont1.second.first, cont2.second.first),
+//                                                                          {pair.second, pair1.second}});
                                     }
                                 }
                             }
                         }
                     } else {
+                        hasMatch = true;
                         // NOTE: that will discard potential activation and target conditions, and just put the two events where the situation holds.
-                        std::vector<uint16_t> V;
+                        //std::vector<uint16_t> V;
                         if (!dropMatches) {
-                            first1->second.second;
-                            V.insert(V.end(), first2->second.second.begin(), first2->second.second.end());
-                            remove_duplicates(V);
+                            result.second.second = first1->second.second;
+                            result.second.second.insert(result.second.second.end(), first1->second.second.begin(), first1->second.second.end());
+                            result.second.second.insert(result.second.second.end(), first2->second.second.begin(), first2->second.second.end());
                         }
-                        *d_first = std::make_pair(std::pair<uint32_t, uint16_t>{pair.first, 0},
-                                                  std::pair<double, std::vector<uint16_t>>{
-                                                          aggr(cont1.second.first, cont2.second.first), V});
+//                        *d_first = result;
+//                        *d_first = std::make_pair(std::pair<uint32_t, uint16_t>{pair.first, 0},
+//                                                  std::pair<double, std::vector<uint16_t>>{
+//                                                          aggr(cont1.second.first, cont2.second.first), V});
                     }
                 }
+            }
+
+            if (hasMatch) {
+                remove_duplicates(result.second.second);
+                *d_first = result;
             }
 
             start1++;
@@ -166,7 +190,9 @@ template<typename InputIt1, typename InputIt2, typename OutputIt, typename Aggre
 OutputIt setIntersection(InputIt1 first1, InputIt1 last1, InputIt2 first2, InputIt2 last2,
                          OutputIt d_first, Aggregation aggr, const PredicateManager *manager = nullptr, bool dropMatches = false) {
     env e1, e2;
-    std::pair<uint32_t, uint16_t> pair, pair1;
+    ResultIndex pair, pair1;
+    ResultRecord result{{0, 0}, {1.0, {}}};
+    bool hasMatch;
 
     for (; first1 != last1; ++d_first) {
         if (first2 == last2)
@@ -177,38 +203,54 @@ OutputIt setIntersection(InputIt1 first1, InputIt1 last1, InputIt2 first2, Input
             first1++;
         } else {
             pair.first = first1->first.first;
+            result.first = first1->first;
+            result.second.first = aggr(first1->second.first, first2->second.first);
+            result.second.second.clear();
             pair1.first = first2->first.first;
+            hasMatch = false;
 
             if (manager) {
-                for (const auto &elem: first1->second.second) {
-                    pair.second = elem;
+                for (const marked_event &elem: first1->second.second) {
+                    if (!IS_MARKED_EVENT_ACTIVATION(elem)) continue;
+                    pair.second = GET_ACTIVATION_EVENT(elem);
 
-                    for (const auto &elem1: first2->second.second) {
-                        pair1.second = elem1;
+                    for (const marked_event &elem1: first2->second.second) {
+                        if (!IS_MARKED_EVENT_TARGET(elem1)) continue;
+                        pair1.second = GET_TARGET_EVENT(elem1);
 
                         e1 = manager->GetPayloadDataFromEvent(pair);
                         e2 = manager->GetPayloadDataFromEvent(pair1);
 
                         if (manager->checkValidity(e1, e2)) {
-                            if (dropMatches) {
-                                *d_first = std::make_pair(first1->first, std::pair<double, std::vector<uint16_t>>{
-                                        aggr(first1->second.first, first2->second.first), {}});
-                            } else {
-                                *d_first = std::make_pair(first1->first, std::pair<double, std::vector<uint16_t>>{
-                                        aggr(first1->second.first, first2->second.first), {pair.second, pair1.second}});
+                            hasMatch = true;
+                            if (!dropMatches) {
+                                hasMatch = true;
+                                if (!dropMatches) {
+                                    result.second.second.emplace_back(marked_event::join(pair.second, pair1.second));
+                                }
+//                                *d_first = std::make_pair(first1->first, std::pair<double, std::vector<uint16_t>>{
+//                                        aggr(first1->second.first, first2->second.first), {}});
+//                            } else {
+//                                *d_first = std::make_pair(first1->first, std::pair<double, std::vector<uint16_t>>{
+//                                        aggr(first1->second.first, first2->second.first), {pair.second, pair1.second}});
                             }
                         }
                     }
                 }
             } else {
-                std::vector<uint16_t> V;
+                ///std::vector<uint16_t> V;
+                hasMatch = true;
                 if (!dropMatches) {
-                    V = first1->second.second;
-                    V.insert(V.end(), first2->second.second.begin(), first2->second.second.end());
-                    remove_duplicates(V);
+                    result.second.second = first1->second.second;
+                    result.second.second.insert(result.second.second.end(), first2->second.second.begin(), first2->second.second.end());
                 }
-                *d_first = std::make_pair(first1->first, std::pair<double, std::vector<uint16_t>>{
-                        aggr(first1->second.first, first2->second.first), V});
+//                *d_first = std::make_pair(first1->first, std::pair<double, std::vector<uint16_t>>{
+//                        aggr(first1->second.first, first2->second.first), V});
+            }
+
+            if (hasMatch) {
+                remove_duplicates(result.second.second);
+                *d_first = result;
             }
 
             first1++;
@@ -223,15 +265,15 @@ OutputIt setIntersectionUntimed(InputIt1 first1, InputIt1 last1, InputIt2 first2
                                 Aggregation aggr,
                                 const PredicateManager *manager = nullptr,
                                 bool dropMatches = false) {
-    std::map<uint32_t, Result> group1 = GroupByKeyExtractor<InputIt1, uint32_t, std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>>(
+    std::map<uint32_t, Result> group1 = GroupByKeyExtractor<InputIt1, uint32_t, ResultRecord>(
             first1, last1,
-            [](const std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>> &p) {
+            [](const ResultRecord &p) {
                 return p.first.first;
             });
 
-    std::map<uint32_t, Result> group2 = GroupByKeyExtractor<InputIt2, uint32_t, std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>>(
+    std::map<uint32_t, Result> group2 = GroupByKeyExtractor<InputIt2, uint32_t, ResultRecord>(
             first2, last2,
-            [](const std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>> &p) {
+            [](const ResultRecord &p) {
                 return p.first.first;
             });
 
@@ -239,6 +281,8 @@ OutputIt setIntersectionUntimed(InputIt1 first1, InputIt1 last1, InputIt2 first2
     std::pair<uint32_t, uint16_t> pair, pair1;
     auto start1 = group1.begin(), end1 = group1.end();
     auto start2 = group2.begin(), end2 = group2.end();
+    bool hasMatch;
+    ResultRecord result{{0, 0}, {1.0, {}}};
 
     for (; start1 != end1; ++d_first) {
         if (start2 == end2) {
@@ -248,50 +292,65 @@ OutputIt setIntersectionUntimed(InputIt1 first1, InputIt1 last1, InputIt2 first2
         } else if (start1->first < start2->first) {
             start1++;
         } else {
-            pair.first = start1->first;
+            result.first.first = pair.first = start1->first;
+            result.second.first = 1.0;
+            result.second.second.clear();
             pair1.first = start2->first;
+            hasMatch = false;
+
             for (const auto &cont1: start1->second) {
                 for (const auto &cont2: start2->second) {
+                    result.second.first = std::max(aggr(first1->second.first, first2->second.first), result.second.first);
                     if (manager) {
                         for (const auto &elem: cont1.second.second) {
-                            pair.second = elem;
+                            if (!IS_MARKED_EVENT_ACTIVATION(elem)) continue;
+                            pair.second = GET_ACTIVATION_EVENT(elem);
 
                             for (const auto &elem1: cont2.second.second) {
-                                pair1.second = elem1;
+                                if (!IS_MARKED_EVENT_TARGET(elem1)) continue;
+                                pair1.second = GET_TARGET_EVENT(elem1);
+
                                 e1 = manager->GetPayloadDataFromEvent(pair);
                                 e2 = manager->GetPayloadDataFromEvent(pair1);
 
                                 if (manager->checkValidity(e1, e2)) {
-                                    if (dropMatches) {
-                                        *d_first = std::make_pair(std::pair<uint32_t, uint16_t>{pair.first, 0},
-                                                                  std::pair<double, std::vector<uint16_t>>{
-                                                                          aggr(cont1.second.first, cont2.second.first),
-                                                                          {}});
-                                    } else {
-                                        *d_first = std::make_pair(std::pair<uint32_t, uint16_t>{pair.first, 0},
-                                                                  std::pair<double, std::vector<uint16_t>>{
-                                                                          aggr(cont1.second.first, cont2.second.first),
-                                                                          {pair.second, pair1.second}});
+                                    hasMatch = true;
+                                    if (!dropMatches) {
+                                        result.second.second.emplace_back(marked_event::join(pair.second, pair1.second));
+//                                        *d_first = std::make_pair(std::pair<uint32_t, uint16_t>{pair.first, 0},
+//                                                                  std::pair<double, std::vector<uint16_t>>{
+//                                                                          aggr(cont1.second.first, cont2.second.first),
+//                                                                          {}});
+//                                    } else {
+//                                        *d_first = std::make_pair(std::pair<uint32_t, uint16_t>{pair.first, 0},
+//                                                                  std::pair<double, std::vector<uint16_t>>{
+//                                                                          aggr(cont1.second.first, cont2.second.first),
+//                                                                          {pair.second, pair1.second}});
                                     }
                                 }
                             }
                         }
                     } else {
                         // NOTE: that will discard potential activation and target conditions, and just put the two events where the situation holds.
-                        std::vector<uint16_t> V;
+                        //std::vector<uint16_t> V;
+                        hasMatch = true;
                         if (!dropMatches) {
-                            V = first1->second.second;
-                            V.insert(V.end(), first2->second.second.begin(), first2->second.second.end());
-                            remove_duplicates(V);
+                            result.second.second = first1->second.second;
+                            result.second.second.insert(result.second.second.end(), first2->second.second.begin(), first2->second.second.end());
                         }
-                        *d_first = std::make_pair(std::pair<uint32_t, uint16_t>{pair.first, 0},
-                                                  std::pair<double, std::vector<uint16_t>>{
-                                                          aggr(cont1.second.first, cont2.second.first),
-                                                          V});
+//                        *d_first = std::make_pair(std::pair<uint32_t, uint16_t>{pair.first, 0},
+//                                                  std::pair<double, std::vector<uint16_t>>{
+//                                                          aggr(cont1.second.first, cont2.second.first),
+//                                                          V});
                     }
 
 
                 }
+            }
+
+            if (hasMatch) {
+                remove_duplicates(result.second.second);
+                *d_first = result;
             }
 
             start1++;
@@ -302,16 +361,18 @@ OutputIt setIntersectionUntimed(InputIt1 first1, InputIt1 last1, InputIt2 first2
     return d_first;
 }
 
+#define SCAN_MIN_MAX(traceId, startEventId, min, max, lower, upper, section) RESULT_RECORD_MIN(min, traceId, startEventId); RESULT_RECORD_MIN(max, traceId, startEventId); auto lower = std::lower_bound(section.begin(), section.end(), min); auto upper = std::upper_bound(lower, section.end(), max);
+
 template<typename TableSection> inline
 Result next(const uint32_t &traceId, const uint16_t &startEventId, const uint16_t& endEventId, const TableSection &section) {
-    auto lower = std::lower_bound(section.begin(), section.end(), std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>{{traceId, startEventId},  {0, {}}});
-    auto upper = std::upper_bound(lower, section.end(), std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>{{traceId, endEventId},  {1, maxVec}});
-
+    SCAN_MIN_MAX(traceId, startEventId, min, max, lower, upper, section)
+    ResultIndex idx{traceId, 0};
     Result temp {};
-
     while (lower != upper) {
-        if(lower->first.second > 0){
-            temp.emplace_back(std::pair<uint32_t, uint16_t>{traceId, lower->first.second - 1}, lower->second);
+        idx.second = lower->first.second;
+        if(idx.second > 0){
+            idx.second--;
+            temp.emplace_back(idx, lower->second);
         }
         lower++;
     }
@@ -322,11 +383,14 @@ Result next(const uint32_t &traceId, const uint16_t &startEventId, const uint16_
 template<typename TableSection> inline
 Result next(const TableSection &section) {
     Result temp;
+    ResultIndex idx;
 
     auto itr = section.begin();
     while (itr != section.end()) {
-        if(itr->first.second > 0){
-            temp.emplace_back(std::pair<uint32_t, uint16_t>{itr->first.first, itr->first.second - 1}, itr->second);
+        idx = itr->first;
+        if(idx.second > 0){
+            idx.second--;
+            temp.emplace_back(idx, itr->second);
         }
         itr++;
     }
@@ -338,11 +402,10 @@ Result next(const TableSection &section) {
 
 template<typename TableSection> inline
 Result global(const uint32_t &traceId, const uint16_t &startEventId, const uint16_t& endEventId, const TableSection &section) {
-    auto lower = std::lower_bound(section.begin(), section.end(), std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>{{traceId, startEventId},  {0, {}}});
-    auto upper = std::upper_bound(lower, section.end(), std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>{{traceId, endEventId},  {1, maxVec}});
-
+//    auto lower = std::lower_bound(section.begin(), section.end(), std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>{{traceId, startEventId},  {0, {}}});
+//    auto upper = std::upper_bound(lower, section.end(), std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>{{traceId, endEventId},  {1, maxVec}});
+    SCAN_MIN_MAX(traceId, startEventId, min, max, lower, upper, section)
     Result temp {};
-
     if(lower == upper){
         return temp;
     }
@@ -350,7 +413,7 @@ Result global(const uint32_t &traceId, const uint16_t &startEventId, const uint1
     const uint32_t dist = std::distance(lower, upper - 1);
 
     if(dist == (endEventId - startEventId)){
-        std::vector<uint16_t> vec = populateAndReturnEvents(lower, upper);
+        auto vec = populateAndReturnEvents(lower, upper);
         temp.emplace_back(std::pair<uint32_t, uint16_t>{traceId, startEventId}, std::pair<double, std::vector<uint16_t>>{1,vec});
     }
 
@@ -362,18 +425,23 @@ Result global(const TableSection &section, const std::vector<size_t>& lengths) {
     Result temp {};
     auto lower = section.begin(), upper = section.begin();
     auto end = section.end();
+    ResultRecord result;
+    ResultRecord var{{0,0}, {1.0,{}}};
+    ResultRecord maxVar{{0,0}, {0,{}}};
 
     while(upper != end){
         uint32_t currentTraceId = upper->first.first;
+        var.first.first = maxVar.first.first = result.first.first = currentTraceId;
+        maxVar.first.second = lengths.at(currentTraceId);
 
-        lower = upper;//std::lower_bound(upper, section.end(), std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>{{currentTraceId, 0}, {0, {}}});
-        upper = std::upper_bound(lower, section.end(), std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>{{currentTraceId, lengths[currentTraceId] - 1}, {1, maxVec}});
+        lower = upper;
+        upper = std::upper_bound(lower, section.end(), maxVar);
 
         const uint32_t dist = std::distance(lower, upper - 1);
 
         if(dist == lengths[currentTraceId] - 1){
-            std::vector<uint16_t> vec = populateAndReturnEvents(lower, upper);
-            temp.emplace_back(std::pair<uint32_t, uint16_t>{currentTraceId, 0}, std::pair<double, std::vector<uint16_t>>{1, vec});
+            var.second.second = populateAndReturnEvents(lower, upper);
+            temp.emplace_back(var);
         }
     }
 
@@ -385,17 +453,19 @@ Result global(const TableSection &section, const std::vector<size_t>& lengths) {
 
 template<typename TableSection> inline
 Result future(const uint32_t &traceId, const uint16_t &startEventId, const uint16_t& endEventId, const TableSection &section) {
-    auto lower = std::lower_bound(section.begin(), section.end(), std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>{{traceId, startEventId}, {0, {}}});
-    auto upper = std::upper_bound(section.begin(), section.end(), std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>{{traceId, endEventId}, {1, maxVec}});
-
+//    auto lower = std::lower_bound(section.begin(), section.end(), std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>{{traceId, startEventId}, {0, {}}});
+//    auto upper = std::upper_bound(section.begin(), section.end(), std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>{{traceId, endEventId}, {1, maxVec}});
+    SCAN_MIN_MAX(traceId, startEventId, min, max, lower, upper, section)
     Result  temp {};
+    ResultIndex idx{traceId, 0};
 
     if(lower == upper){
         return temp;
     }
 
     while (lower != upper) {
-        temp.emplace_back(std::pair<uint32_t, uint16_t>{traceId, lower->first.second}, lower->second);
+        idx.second = lower->first.second;
+        temp.emplace_back(idx, lower->second);
         lower++;
     }
 
@@ -415,13 +485,13 @@ Result negateUntimed(TableSection &data_untimed, const std::vector<size_t> &leng
     for (; first1 != last1; ) {
         if (first2 == last2) {
             do {
-                result.emplace_back(std::make_pair(first1++, 0), std::make_pair(1.0, std::vector<uint16_t>{}));
+                result.emplace_back(std::make_pair(first1++, 0), std::make_pair(1.0, MarkedEventsVector{}));
             } while (first1 != last1);
         }
         if (first1 > first2->first.first) {
             first2++;
         } else if (first1 < first2->first.first) {
-            result.emplace_back(std::make_pair(first1, 0), std::make_pair(1.0, std::vector<uint16_t>{}));
+            result.emplace_back(std::make_pair(first1, 0), std::make_pair(1.0, MarkedEventsVector{}));
             first1++;
         } else {
             // MEMO: if you want to preserve the condition where it didn't hold for repairs or givin advices, then you should return a result having 0, and containing the result of the match
@@ -447,12 +517,15 @@ Result until(const uint32_t &traceId,
 
              const PredicateManager* manager = nullptr) {
 
-    auto lower = std::lower_bound(bSection.begin(), bSection.end(), std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>{{traceId, startEventId}, {0, {}}});
-    //auto localUpper = lower;
-    auto upper = std::upper_bound(lower, bSection.end(), std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>{{traceId, endEventId},  {1, maxVec}});
+    SCAN_MIN_MAX(traceId, startEventId, min, max, lower, upper, bSection)
+//
+//    auto lower = std::lower_bound(bSection.begin(), bSection.end(), std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>{{traceId, startEventId}, {0, {}}});
+//    //auto localUpper = lower;
+//    auto upper = std::upper_bound(lower, bSection.end(), std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>{{traceId, endEventId},  {1, maxVec}});
     if(lower == upper){
         return {};
     }
+    ResultRecord result{{traceId, startEventId}, {1, {}}};
 
     auto aIt = std::lower_bound(aSection.begin(), aSection.end(), std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>{{traceId, startEventId}, {0, {}}});
     auto aEn = aIt;//std::upper_bound(aIt, aSection.end(), std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>{{traceId, endEventId}, {1, maxVec}});
@@ -474,32 +547,35 @@ Result until(const uint32_t &traceId,
                 // Therefore, it should never hold even if you are extending the data that you have.
                 return temp;
             } else {
+                result.second.second.clear();
                 const uint32_t dist = std::distance(aIt, aEn - 1);
-                std::vector<uint16_t> V;
+                //MarkedEventsVector V;
                 if(dist == ((lower->first.second) - startEventId)-1){
                     if (manager) {
-                        for (uint16_t activationEvent : lower->second.second) {
-                            Fut.second = activationEvent;
+                        for (marked_event& activationEvent : lower->second.second) {
+                            if (!IS_MARKED_EVENT_TARGET(activationEvent)) continue;
+                            Fut.second = GET_TARGET_EVENT(activationEvent);
                             e1 = manager->GetPayloadDataFromEvent(Fut);
                             for (auto curr = aIt; curr != aEn; curr++) {
                                 Prev.first = curr->first.first;
-                                for (uint16_t targetEvent : curr->second.second) {
-                                    Prev.second = targetEvent;
+                                for (marked_event& targetEvent : curr->second.second) {
+                                    if (!IS_MARKED_EVENT_ACTIVATION(targetEvent)) continue;
+                                    Prev.second = GET_ACTIVATION_EVENT(targetEvent);
                                     e2 = manager->GetPayloadDataFromEvent(Prev);
                                     if (!manager->checkValidity(e2, e1)) {
                                         return temp;
                                     } else {
-                                        V.emplace_back(targetEvent);
+                                        result.second.second.emplace_back(targetEvent);
                                     }
                                 }
                             }
                         }
-                        V.insert(V.begin(), lower->second.second.begin(), lower->second.second.end());
+                        ///V.insert(V.begin(), lower->second.second.begin(), lower->second.second.end());
                     } else {
-                        V = populateAndReturnEvents(aIt, aEn);
-                        V.insert(V.begin(), lower->second.second.begin(), lower->second.second.end());
+                        result.second.second = populateAndReturnEvents(aIt, aEn);
+                        result.second.second.insert(result.second.second.begin(), lower->second.second.begin(), lower->second.second.end());
                     }
-                    temp.emplace_back(std::pair<uint32_t, uint16_t>{traceId, startEventId}, std::pair<double, std::vector<uint16_t>>{1,V});
+                    temp.emplace_back(result);
                 } else {
                     // For (1)
                     return temp;
@@ -569,22 +645,27 @@ Result until(const TableSection &aSection, const TableSection &bSection, const s
     Result temp {};
     env e1, e2;
     std::pair<uint32_t, uint16_t> Fut, Prev;
+    ResultRecord rU{{0, 0}, {0, {}}};
+    ResultRecord rD{{0, 0}, {0, {}}};
+    ResultRecord rMV{{0, 0}, {1, maxVec}};
 
     while (lower != upper) {
         uint32_t currentTraceId = localUpper->first.first;
+        rMV.first.first = rD.first.first = rU.first.first = currentTraceId;
+        rU.first.second = lengths.at(currentTraceId);
 
-        //std::lower_bound(localUpper, upper, std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>{{currentTraceId, 0}, {0, {}}});
-        localUpper = std::upper_bound(lower, upper, std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>{{currentTraceId, lengths[currentTraceId] - 1}, {1, maxVec}});
+        localUpper = std::upper_bound(lower, upper, rU);
 
-        aIt = std::lower_bound(aIt, upperA, std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>{{currentTraceId, 0}, {0, {}}});
-        aEn = aIt;//std::upper_bound(aIt, aSection.end(), std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>{{traceId, endEventId}, {1, maxVec}});
+        aIt = std::lower_bound(aIt, upperA, rD);
+        aEn = aIt;
 
         for( ; lower != localUpper; lower++) {
             Fut.first = lower->first.first;
             if (lower->first.second == 0) {
                 temp.emplace_back(*lower);
             } else {
-                aEn = std::upper_bound(aEn, upperA, std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>{{currentTraceId, lower->first.second-1},  {1, maxVec}});
+                rMV.first.second = lower->first.second-1;
+                aEn = std::upper_bound(aEn, upperA, rMV);
                 if(aIt == aEn){
                     // Rationale: (1)
                     // if the condition does not hold for a time [startEventId, lower->first.second-1], it is because one event makes it not hold.
@@ -592,25 +673,27 @@ Result until(const TableSection &aSection, const TableSection &bSection, const s
                     break;
                 } else {
                     const uint32_t dist = std::distance(aIt, aEn - 1);
-                    std::vector<uint16_t> V;
+                    MarkedEventsVector V;
                     if(dist == ((lower->first.second))-1){
                         if (manager) {
                             bool hasFail = false;
-                            for (uint16_t activationEvent : lower->second.second) {
+                            for (const marked_event& activationEvent : lower->second.second) {
                                 if (hasFail) break;
-                                Fut.second = activationEvent;
+                                if (!IS_MARKED_EVENT_TARGET(activationEvent)) continue;
+                                Fut.second = GET_TARGET_EVENT(activationEvent);
                                 e1 = manager->GetPayloadDataFromEvent(Fut);
                                 for (auto curr = aIt; curr != aEn; curr++) {
                                     if (hasFail) break;
                                     Prev.first = curr->first.first;
-                                    for (uint16_t targetEvent : curr->second.second) {
-                                        Prev.second = targetEvent;
+                                    for (const marked_event& targetEvent : curr->second.second) {
+                                        if (!IS_MARKED_EVENT_ACTIVATION(targetEvent)) continue;
+                                        Prev.second = GET_ACTIVATION_EVENT(targetEvent);
                                         e2 = manager->GetPayloadDataFromEvent(Prev);
                                         if (!manager->checkValidity(e2, e1)) {
                                             hasFail = true;
                                             break;
                                         } else {
-                                            V.emplace_back(targetEvent);
+                                            V.emplace_back(marked_event::join(Fut.second, Prev.first));
                                         }
                                     }
                                 }
@@ -623,7 +706,7 @@ Result until(const TableSection &aSection, const TableSection &bSection, const s
                             V = populateAndReturnEvents(aIt, aEn);
                             V.insert(V.begin(), lower->second.second.begin(), lower->second.second.end());
                         }
-                        temp.emplace_back(std::pair<uint32_t, uint16_t>{currentTraceId, 0}, std::pair<double, std::vector<uint16_t>>{1,V});
+                        temp.emplace_back(std::pair<uint32_t, uint16_t>{currentTraceId, 0}, std::pair<double, MarkedEventsVector>{1,V});
                     } else {
                         // For (1)
                         break;

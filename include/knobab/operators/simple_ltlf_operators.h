@@ -7,6 +7,7 @@
 
 #include <knobab/operators/semantics.h>
 
+#if 0
 /**
  *
  * @author Samuel 'Sam' Appleby, Giacomo Bergami
@@ -18,23 +19,17 @@
 void inline union_logic_untimed(const Result& lhs, const Result& rhs, Result& result, std::function<double(double, double)> aggr,
                                 const PredicateManager *manager = nullptr, bool dropMatches = false) {
     auto first1 = lhs.begin(), last1 = lhs.end(), first2 = rhs.begin(), last2 = rhs.end();
-    std::map<uint32_t, Result> group1 = GroupByKeyExtractor<decltype(first1), uint32_t, std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>>(
-            first1, last1,
-            [](const std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>> &p) {
-                return p.first.first;
-            });
+    std::map<uint32_t, Result> group1 = GroupByKeyExtractor<decltype(first1), uint32_t, ResultRecord>(
+            first1, last1, [](const auto &p) { return p.first.first; });
 
-    std::map<uint32_t, Result> group2 = GroupByKeyExtractor<decltype(first2), uint32_t, std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>>(
-            first2, last2,
-            [](const std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>> &p) {
-                return p.first.first;
-            });
+    std::map<uint32_t, Result> group2 = GroupByKeyExtractor<decltype(first2), uint32_t, ResultRecord>(
+            first2, last2, [](const auto &p) { return p.first.first; });
 
     env e1, e2;
-    std::pair<uint32_t, uint16_t> pair, pair1;
+    ResultIndex pair, pair1;
     auto start1 = group1.begin(), end1 = group1.end();
     auto start2 = group2.begin(), end2 = group2.end();
-    std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>> val;
+    ResultRecord val;
 
     for (; start1 != end1; /*++d_first*/) {
         if (start2 == end2) {
@@ -62,9 +57,11 @@ void inline union_logic_untimed(const Result& lhs, const Result& rhs, Result& re
                 for (const auto &cont2: start2->second) {
                     if (manager) {
                         for (const auto &elem: cont1.second.second) {
-                            pair.second = elem;
+                            if (!IS_MARKED_EVENT_ACTIVATION(elem)) continue;
+                            pair.second = GET_ACTIVATION_EVENT(elem);
                             for (const auto &elem1: cont2.second.second) {
-                                pair1.second = elem1;
+                                if (!IS_MARKED_EVENT_TARGET(elem)) continue;
+                                pair1.second = GET_TARGET_EVENT(elem1);
                                 e1 = manager->GetPayloadDataFromEvent(pair);
                                 e2 = manager->GetPayloadDataFromEvent(pair1);
 
@@ -106,6 +103,7 @@ void inline union_logic_untimed(const Result& lhs, const Result& rhs, Result& re
     }
     //return d_first;
 }
+#endif
 
 /**
  *
@@ -123,9 +121,9 @@ inline void future_logic_timed(const Result &section, const std::vector<size_t>&
     auto end = section.end();
     constexpr auto max16 = std::numeric_limits<uint16_t>::max();
 
-    std::pair<uint32_t, uint16_t> first;
-    std::pair<double, std::vector<uint16_t>> second{0.0, 0.0};
-    std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>> cp{{0,0}, {1.0, {}}};
+    ResultIndex first;
+    ResultRecordSemantics second{0.0, 0.0};
+    ResultRecord cp{{0,0}, {1.0, {}}};
 
     while(upper != end){
         uint32_t currentTraceId = upper->first.first;
@@ -175,9 +173,9 @@ inline void future_logic_untimed(const Result &section, const std::vector<size_t
     auto lower = section.begin(), upper = section.begin();
     auto end = section.end();
 
-    std::pair<uint32_t, uint16_t> first{0, 0};
-    std::pair<double, std::vector<uint16_t>> second{0.0, {}};
-    std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>> cp{{0,0}, {1.0, {}}};
+    ResultIndex first{0, 0};
+    ResultRecordSemantics second{0.0, {}};
+    ResultRecord cp{{0,0}, {1.0, {}}};
 
     while(upper != end){
         uint32_t currentTraceId = upper->first.first;
@@ -214,9 +212,9 @@ inline void global_logic_timed(const Result &section, const std::vector<size_t>&
     auto end = section.end();
     constexpr auto max16 = std::numeric_limits<uint16_t>::max();
 
-    std::pair<uint32_t, uint16_t> first;
-    std::pair<double, std::vector<uint16_t>> second{1.0, 0.0};
-    std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>> cp{{0,0}, {1.0, {}}};
+    ResultIndex first;
+    ResultRecordSemantics second{1.0, 0.0};
+    ResultRecord cp{{0,0}, {1.0, {}}};
 
     while(upper != end){
         uint32_t currentTraceId = upper->first.first;
@@ -267,9 +265,9 @@ inline void global_logic_untimed(const Result &section, const std::vector<size_t
     auto end = section.end();
     result.clear();
 
-    std::pair<uint32_t, uint16_t> first{0, 0}, firstLast;
-    std::pair<double, std::vector<uint16_t>> second{1.0, {}};
-    std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>> cp{{0,0}, {1.0, {}}};
+    ResultIndex first{0, 0}, firstLast;
+    ResultRecordSemantics second{1.0, {}};
+    ResultRecord cp{{0,0}, {1.0, {}}};
 
     while(upper != end){
         uint32_t currentTraceId = upper->first.first;
@@ -311,10 +309,10 @@ inline void until_logic_timed(const Result &aSection, const Result &bSection, co
     bool setUntilHolds;
     uint16_t untilHolds;
 
-    std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>> cpAIt{{0, 0}, {0, {}}};
-    std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>> cpLocalUpper{{0, 0}, {1.0, {}}};
-    std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>> cpAEn{{0, 0}, {1.0, maxVec}};
-    std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>> cpResult{{0, 0}, {1.0, {}}};
+    ResultRecord cpAIt{{0, 0}, {0, {}}};
+    ResultRecord cpLocalUpper{{0, 0}, {1.0, {}}};
+    ResultRecord cpAEn{{0, 0}, {1.0, maxVec}};
+    ResultRecord cpResult{{0, 0}, {1.0, {}}};
 
     ///dataContainer temp {};
     env e1, e2;
@@ -368,21 +366,23 @@ inline void until_logic_timed(const Result &aSection, const Result &bSection, co
                     if(dist == ((lower->first.second)-aIt->first.second)){
                         if (manager) {
                             bool hasFail = false;
-                            for (uint16_t activationEvent : lower->second.second) {
+                            for (auto& activationEvent : lower->second.second) {
                                 if (hasFail) break;
-                                Fut.second = activationEvent;
+                                if (!IS_MARKED_EVENT_TARGET(activationEvent)) continue;
+                                Fut.second = GET_TARGET_EVENT(activationEvent);
                                 e1 = manager->GetPayloadDataFromEvent(Fut);
                                 for (auto curr = aIt; curr != aEn; curr++) {
                                     if (hasFail) break;
                                     Prev.first = curr->first.first;
-                                    for (uint16_t targetEvent : curr->second.second) {
-                                        Prev.second = targetEvent;
+                                    for (auto& targetEvent : curr->second.second) {
+                                        if (!IS_MARKED_EVENT_ACTIVATION(targetEvent)) continue;
+                                        Prev.second = GET_ACTIVATION_EVENT(targetEvent);
                                         e2 = manager->GetPayloadDataFromEvent(Prev);
                                         if (!manager->checkValidity(e2, e1)) {
                                             hasFail = true;
                                             break;
                                         } else {
-                                            cpResult.second.second.emplace_back(targetEvent);
+                                            cpResult.second.second.emplace_back(marked_event::join(Fut.second, Prev.second));
                                         }
                                     }
                                 }
@@ -401,18 +401,27 @@ inline void until_logic_timed(const Result &aSection, const Result &bSection, co
                                 lower++;
                                 continue;
                             }
-                            std::sort(cpResult.second.second.begin(), cpResult.second.second.end());
-                            cpResult.second.second.erase(std::unique(cpResult.second.second.begin(), cpResult.second.second.end()), cpResult.second.second.end());
-                            cpResult.second.second.insert(cpResult.second.second.begin(), lower->second.second.begin(), lower->second.second.end());
+//                            std::sort(cpResult.second.second.begin(), cpResult.second.second.end());
+//                            cpResult.second.second.erase(std::unique(cpResult.second.second.begin(), cpResult.second.second.end()), cpResult.second.second.end());
+//                            cpResult.second.second.insert(cpResult.second.second.begin(), lower->second.second.begin(), lower->second.second.end());
                         } else {
                             populateAndReturnEvents(aIt, aEn, cpResult.second.second);
                             cpResult.second.second.insert(cpResult.second.second.begin(), lower->second.second.begin(), lower->second.second.end());
                         }
                         remove_duplicates(cpResult.second.second);
+                        auto itAllEnd = cpResult.second.second.end();
+                        auto it = std::lower_bound(cpResult.second.second.begin(), itAllEnd, manager ? marked_event::join(untilHolds, lower->first.second) : marked_event::activation(untilHolds));
+                        auto itEnd = std::upper_bound(it, itAllEnd, manager ? marked_event::join(lower->first.second-1, lower->first.second) : marked_event::activation(lower->first.second-1));
+                        bool hasMatch = it != itEnd;
                         for (uint16_t i = untilHolds; i<=lower->first.second; i++) {
                             cpResult.first.second = i;
                             temp.emplace_back(cpResult);
-                            cpResult.second.second.erase(cpResult.second.second.begin());
+                            if (hasMatch && (i < lower->first.second)) {
+//                                assert(IS_MARKED_EVENT_ACTIVATION(*it) || IS_MARKED_EVENT_MATCH(*it));
+//                                assert(GET_ACTIVATION_EVENT(*it) == i);
+                                it = cpResult.second.second.erase(it);
+//                                itEnd = std::upper_bound(it, itAllEnd, manager ? marked_event::join(lower->first.second-1, lower->first.second) : marked_event::activation(lower->first.second-1));
+                            }
                         }
                     } else {
                         // For (1)
@@ -447,10 +456,10 @@ inline void until_logic_untimed(const Result &aSection, const Result &bSection, 
     auto aEn = aSection.begin();
     auto upperA = aSection.end();
 
-    std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>> cpAIt{{0, 0}, {0, {}}};
-    std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>> cpLocalUpper{{0, 0}, {1.0, {}}};
-    std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>> cpAEn{{0, 0}, {1.0, maxVec}};
-    std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>> cpResult{{0, 0}, {1.0, {}}};
+    ResultRecord cpAIt{{0, 0}, {0, {}}};
+    ResultRecord cpLocalUpper{{0, 0}, {1.0, {}}};
+    ResultRecord cpAEn{{0, 0}, {1.0, maxVec}};
+    ResultRecord cpResult{{0, 0}, {1.0, {}}};
 
     ///dataContainer temp {};
     env e1, e2;
@@ -484,32 +493,34 @@ inline void until_logic_untimed(const Result &aSection, const Result &bSection, 
                     const uint32_t dist = std::distance(aIt, aEn - 1);
                     cpResult.second.second.clear();
 
-                    if(dist == ((lower->first.second))-1){
+                    if(dist == ((lower->first.second))-1) {
                         if (manager) {
                             bool hasFail = false;
-                            for (uint16_t activationEvent : lower->second.second) {
+                            for (auto& activationEvent : lower->second.second) {
                                 if (hasFail) break;
-                                Fut.second = activationEvent;
+                                if (!IS_MARKED_EVENT_TARGET(activationEvent)) continue;
+                                Fut.second = GET_TARGET_EVENT(activationEvent);
                                 e1 = manager->GetPayloadDataFromEvent(Fut);
                                 for (auto curr = aIt; curr != aEn; curr++) {
                                     if (hasFail) break;
                                     Prev.first = curr->first.first;
-                                    for (uint16_t targetEvent : curr->second.second) {
-                                        Prev.second = targetEvent;
+                                    for (auto& targetEvent : curr->second.second) {
+                                        if (!IS_MARKED_EVENT_ACTIVATION(targetEvent)) continue;
+                                        Prev.second = GET_ACTIVATION_EVENT(targetEvent);
                                         e2 = manager->GetPayloadDataFromEvent(Prev);
                                         if (!manager->checkValidity(e2, e1)) {
                                             hasFail = true;
                                             break;
                                         } else {
-                                            cpResult.second.second.emplace_back(targetEvent);
+                                            cpResult.second.second.emplace_back(marked_event::join(Fut.second, Prev.second));
                                         }
                                     }
                                 }
                             }
                             if (hasFail) break;
-                            std::sort(cpResult.second.second.begin(), cpResult.second.second.end());
-                            cpResult.second.second.erase(std::unique(cpResult.second.second.begin(), cpResult.second.second.end()), cpResult.second.second.end());
-                            cpResult.second.second.insert(cpResult.second.second.begin(), lower->second.second.begin(), lower->second.second.end());
+//                            std::sort(cpResult.second.second.begin(), cpResult.second.second.end());
+//                            cpResult.second.second.erase(std::unique(cpResult.second.second.begin(), cpResult.second.second.end()), cpResult.second.second.end());
+//                            cpResult.second.second.insert(cpResult.second.second.begin(), lower->second.second.begin(), lower->second.second.end());
                         } else {
                             populateAndReturnEvents(aIt, aEn, cpResult.second.second);
                             cpResult.second.second.insert(cpResult.second.second.begin(), lower->second.second.begin(), lower->second.second.end());
