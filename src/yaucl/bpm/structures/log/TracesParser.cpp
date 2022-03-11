@@ -1,5 +1,5 @@
 
-// Generated from src/yaucl/bpm/structures/log/Traces.g by ANTLR 4.9.3
+// Generated from src/yaucl/bpm/structures/log/Traces.g4 by ANTLR 4.9.3
 
 
 #include "TracesListener.h"
@@ -20,7 +20,7 @@ TracesParser::~TracesParser() {
 }
 
 std::string TracesParser::getGrammarFileName() const {
-  return "Traces.g";
+  return "Traces.g4";
 }
 
 const std::vector<std::string>& TracesParser::getRuleNames() const {

@@ -86,7 +86,7 @@ inline void or_logic_timed(const Result& lhs, const Result& rhs, Result& out, co
  */
 inline void or_logic_untimed(const Result& lhs, const Result& rhs,
                      Result& out,
-                     const PredicateManager *manager = nullptr) {
+                     const PredicateManager *manager = nullptr, const std::vector<size_t>& lengths = {}) {
      auto first1 = lhs.begin(), first2 = rhs.begin(),
              last1 = lhs.end(), last2 = rhs.end();
      std::map<uint32_t, Result> group1 = GroupByKeyExtractor<decltype(first1), uint32_t, ResultRecord>(
