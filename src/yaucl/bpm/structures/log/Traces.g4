@@ -31,7 +31,7 @@ LABEL: ('A'..'Z')[a-zA-Z]*;
 INTNUMBER : ('0'..'9')+ ;
 NUMBER : INTNUMBER ('.' INTNUMBER)?;
 STRING : '"' (~[\\"] | '\\' [\\"])* '"';
-SPACE : [ \t\n]+ -> skip;
+SPACE : [ \t\n\r]+ -> skip;
 
 COMMENT
     : '/*' .*? '*/' -> skip

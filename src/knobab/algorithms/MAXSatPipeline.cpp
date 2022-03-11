@@ -186,6 +186,7 @@ void MAXSatPipeline::data_chunk(CNFDeclareDataAware *model,
 
     remove_duplicates(toUseAtoms);
 
+    // TODO: AtomQuery is not required, as range queries already have the atom information!
     // Just the Act iteration
     auto toUseAtomsEnd = std::stable_partition(toUseAtoms.begin(), toUseAtoms.end(), [&](const auto& x) { return atomization.act_atoms.contains(x); });
     for (auto it = toUseAtoms.begin(); it != toUseAtomsEnd; it++) {
