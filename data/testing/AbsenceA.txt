@@ -1,1 +1,1 @@
-Absence(A, x >= 0.0, 2)
+Absence("A", var "x" >= 0.0, 2)

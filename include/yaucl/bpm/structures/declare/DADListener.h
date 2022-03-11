@@ -1,11 +1,11 @@
 
-// Generated from /home/giacomo/projects/knobab/src/yaucl/bpm/structures/declare/DAD.g by ANTLR 4.9.3
+// Generated from ./src/yaucl/bpm/structures/declare/DAD.g by ANTLR 4.9.3
 
 #pragma once
 
 
 #include "antlr4-runtime.h"
-#include "DADParser.h"
+#include <yaucl/bpm/structures/declare/DADParser.h>
 
 
 /**
@@ -61,6 +61,9 @@ public:
 
   virtual void enterNeq(DADParser::NeqContext *ctx) = 0;
   virtual void exitNeq(DADParser::NeqContext *ctx) = 0;
+
+  virtual void enterVar(DADParser::VarContext *ctx) = 0;
+  virtual void exitVar(DADParser::VarContext *ctx) = 0;
 
 
 };

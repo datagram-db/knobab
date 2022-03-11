@@ -1,2 +1,2 @@
-Init(A, true, 1)
-End(B, true, 1)
+Init("A", true, 1)
+End("B", true, 1)
