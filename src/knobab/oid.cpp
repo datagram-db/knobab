@@ -2,7 +2,7 @@
 // Created by giacomo on 26/12/20.
 //
 
-#include <knobab//oid.h>
+#include <knobab/dataStructures/oid.h>
 
 oid::oid() : oid(0) {}
 

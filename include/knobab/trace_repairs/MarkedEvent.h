@@ -6,7 +6,7 @@
 #define KNOBAB_MARKEDEVENT_H
 
 
-#include <knobab/oid.h>
+#include <knobab/dataStructures/oid.h>
 #include <knobab/trace_repairs/DataQuery.h>
 
 struct MarkedEvent {

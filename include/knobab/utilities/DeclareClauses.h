@@ -10,182 +10,182 @@
 
 
 
-dataContainer DChoice(const dataContainer& a, const dataContainer& b, const PredicateManager* manager = nullptr){
-    dataContainer futureA = future(a);
-    dataContainer futureB = future(b);
+Result DChoice(const Result& a, const Result& b, const PredicateManager* manager = nullptr){
+    Result futureA = future(a);
+    Result futureB = future(b);
 
-    dataContainer futureAOrFutureB {};
+    Result futureAOrFutureB {};
     setUnionUntimed( futureA.begin(), futureA.end(), futureB.begin(), futureB.end(), std::back_inserter(futureAOrFutureB), Aggregators::maxSimilarity<double, double, double>, manager);
     return futureAOrFutureB;
 }
 
 
 
-dataContainer ResponseExistence(const dataContainer& a, const dataContainer& notA, const dataContainer& b, const std::vector<size_t>& lengths, const PredicateManager* manager = nullptr){
-    dataContainer futureA = future(a);
-    dataContainer futureB = future(b);
+Result ResponseExistence(const Result& a, const Result& notA, const Result& b, const std::vector<size_t>& lengths, const PredicateManager* manager = nullptr){
+    Result futureA = future(a);
+    Result futureB = future(b);
 
-    dataContainer globalNotA = global(notA, lengths);
+    Result globalNotA = global(notA, lengths);
 
-    dataContainer aAndB{};
+    Result aAndB{};
     setIntersectionUntimed( futureA.begin(), futureA.end(), futureB.begin(), futureB.end(), std::back_inserter(aAndB), Aggregators::maxSimilarity<double, double, double>, manager);
 
-    dataContainer globalNotAOrAndB;
+    Result globalNotAOrAndB;
     setUnionUntimed( globalNotA.begin(), globalNotA.end(), aAndB.begin(), aAndB.end(), std::back_inserter(globalNotAOrAndB), Aggregators::maxSimilarity<double, double, double>, manager);
     return globalNotAOrAndB;
 }
 
-dataContainer Coexistence(const dataContainer& a, const dataContainer& notA, const dataContainer& b, const dataContainer& notB, const std::vector<size_t>& lengths, const PredicateManager* manager = nullptr){
-    dataContainer respExAB = ResponseExistence(a, notA, b, lengths, manager);
-    dataContainer respExBA = ResponseExistence(b, notB,a, lengths, manager);
+Result Coexistence(const Result& a, const Result& notA, const Result& b, const Result& notB, const std::vector<size_t>& lengths, const PredicateManager* manager = nullptr){
+    Result respExAB = ResponseExistence(a, notA, b, lengths, manager);
+    Result respExBA = ResponseExistence(b, notB, a, lengths, manager);
 
-    dataContainer respExABAndRespExBA {};
+    Result respExABAndRespExBA {};
     setIntersectionUntimed( respExAB.begin(), respExAB.end(), respExBA.begin(), respExBA.end(), std::back_inserter(respExABAndRespExBA), Aggregators::maxSimilarity<double, double, double>, nullptr);
     return respExABAndRespExBA;
 }
 
-dataContainer NotCoexistence(const dataContainer& notA, const dataContainer& notB, const std::vector<size_t>& lengths){
-    dataContainer globalNotA = global(notA, lengths);
-    dataContainer globalNotB = global(notB, lengths);
+Result NotCoexistence(const Result& notA, const Result& notB, const std::vector<size_t>& lengths){
+    Result globalNotA = global(notA, lengths);
+    Result globalNotB = global(notB, lengths);
 
-    dataContainer globalNotAOrGlobalNotB {};
+    Result globalNotAOrGlobalNotB {};
     setUnionUntimed( globalNotA.begin(), globalNotA.end(), globalNotB.begin(), globalNotB.end(), std::back_inserter(globalNotAOrGlobalNotB), Aggregators::maxSimilarity<double, double, double>, nullptr);
     return globalNotAOrGlobalNotB;
 }
 
 
 
-dataContainer NotCoexistence(const dataContainer& A, const dataContainer& B, const std::vector<size_t>& lengths, const PredicateManager* predMan, bool preserveNegatedFacts = true) {
-    dataContainer Fa = future(A);
-    dataContainer Fb = future(B);
+Result NotCoexistence(const Result& A, const Result& B, const std::vector<size_t>& lengths, const PredicateManager* predMan, bool preserveNegatedFacts = true) {
+    Result Fa = future(A);
+    Result Fb = future(B);
 
-    dataContainer FaAbdFb {};
+    Result FaAbdFb {};
     setIntersectionUntimed( Fa.begin(), Fa.end(), Fb.begin(), Fb.end(), std::back_inserter(FaAbdFb), Aggregators::maxSimilarity<double, double, double>, predMan);
 
-    //dataContainer result = negateUntimed(FaAbdFb, lengths);
+    //dataContainer Result = negateUntimed(FaAbdFb, lengths);
     return negateUntimed(FaAbdFb, lengths, preserveNegatedFacts);
 }
 
-dataContainer ExclusiveChoice(const dataContainer& a, const dataContainer& notA, const dataContainer& b, const dataContainer& notB, const std::vector<size_t>& lengths){
-    dataContainer choiceAB = DChoice(a, b, nullptr);
-    dataContainer globalNotAOrGlobalNotB = NotCoexistence(notA, notB, lengths);
+Result ExclusiveChoice(const Result& a, const Result& notA, const Result& b, const Result& notB, const std::vector<size_t>& lengths){
+    Result choiceAB = DChoice(a, b, nullptr);
+    Result globalNotAOrGlobalNotB = NotCoexistence(notA, notB, lengths);
 
-    dataContainer choiceABAndGlobalNotAOrGlobalNotB {};
+    Result choiceABAndGlobalNotAOrGlobalNotB {};
     setIntersectionUntimed( choiceAB.begin(), choiceAB.end(), globalNotAOrGlobalNotB.begin(), globalNotAOrGlobalNotB.end(), std::back_inserter(choiceABAndGlobalNotAOrGlobalNotB), Aggregators::maxSimilarity<double, double, double>, nullptr);
     return choiceABAndGlobalNotAOrGlobalNotB;
 }
 
-dataContainer ExclusiveChoice(const dataContainer& a, const dataContainer& notA, const dataContainer& b, const dataContainer& notB, const std::vector<size_t>& lengths, const PredicateManager* manager, bool preserveNegatedFacts = true){
-    dataContainer choiceAB = DChoice(a, b, manager);
-    dataContainer globalNotAOrGlobalNotB = NotCoexistence(a, b, lengths, manager, preserveNegatedFacts);
+Result ExclusiveChoice(const Result& a, const Result& notA, const Result& b, const Result& notB, const std::vector<size_t>& lengths, const PredicateManager* manager, bool preserveNegatedFacts = true){
+    Result choiceAB = DChoice(a, b, manager);
+    Result globalNotAOrGlobalNotB = NotCoexistence(a, b, lengths, manager, preserveNegatedFacts);
 
-    dataContainer choiceABAndGlobalNotAOrGlobalNotB {};
+    Result choiceABAndGlobalNotAOrGlobalNotB {};
     setIntersectionUntimed( choiceAB.begin(), choiceAB.end(), globalNotAOrGlobalNotB.begin(), globalNotAOrGlobalNotB.end(), std::back_inserter(choiceABAndGlobalNotAOrGlobalNotB), Aggregators::maxSimilarity<double, double, double>, nullptr);
     return choiceABAndGlobalNotAOrGlobalNotB;
 }
 
-dataContainer DChainResponse(const dataContainer& a, const dataContainer& notA, const dataContainer& b, const std::vector<size_t>& lengths, const PredicateManager* manager){
-    dataContainer nextB = next(b);
-    dataContainer aAndNextB {};
+Result DChainResponse(const Result& a, const Result& notA, const Result& b, const std::vector<size_t>& lengths, const PredicateManager* manager){
+    Result nextB = next(b);
+    Result aAndNextB {};
     setIntersection( a.begin(), a.end(), nextB.begin(), nextB.end(), std::back_inserter(aAndNextB), Aggregators::maxSimilarity<double, double, double>, manager);
 
-    dataContainer notAOrAAndNextB{};
+    Result notAOrAAndNextB{};
     setUnion( aAndNextB.begin(), aAndNextB.end(), notA.begin(), notA.end(), std::back_inserter(notAOrAAndNextB), Aggregators::maxSimilarity<double, double, double>, manager);
 
-    dataContainer result = global(notAOrAAndNextB, lengths);
+    Result result = global(notAOrAAndNextB, lengths);
     return result;
 }
 
-dataContainer DChainPrecedence(const dataContainer& a, const dataContainer& b, const dataContainer& notB, const dataContainer& lastElems, const std::vector<size_t>& lengths, const PredicateManager* manager){
-    dataContainer aORB {};
+Result DChainPrecedence(const Result& a, const Result& b, const Result& notB, const Result& lastElems, const std::vector<size_t>& lengths, const PredicateManager* manager){
+    Result aORB {};
     setUnion( a.begin(), a.end(), b.begin(), b.end(), std::back_inserter(aORB), Aggregators::maxSimilarity<double, double, double>, manager);
 
-    dataContainer filteredLastElems {};
+    Result filteredLastElems {};
     setIntersection( lastElems.begin(), lastElems.end(), aORB.begin(), aORB.end(), std::back_inserter(filteredLastElems), Aggregators::maxSimilarity<double, double, double>, manager);
 
-    dataContainer nextNotB = next(notB);
-    dataContainer nextNotBOrLast;
+    Result nextNotB = next(notB);
+    Result nextNotBOrLast;
     setUnion( nextNotB.begin(), nextNotB.end(), filteredLastElems.begin(), filteredLastElems.end(), std::back_inserter(nextNotBOrLast), Aggregators::maxSimilarity<double, double, double>, manager);
 
-    dataContainer nextB = next(b);
-    dataContainer nextBAndA {};
+    Result nextB = next(b);
+    Result nextBAndA {};
     setIntersection( nextB.begin(), nextB.end(), a.begin(), a.end(), std::back_inserter(nextBAndA), Aggregators::maxSimilarity<double, double, double>, manager);
 
-    dataContainer nextNotBOrLastOrNextBAndA{};
+    Result nextNotBOrLastOrNextBAndA{};
     setUnion( nextNotBOrLast.begin(), nextNotBOrLast.end(), nextBAndA.begin(), nextBAndA.end(), std::back_inserter(nextNotBOrLastOrNextBAndA), Aggregators::maxSimilarity<double, double, double>, manager);
 
-    dataContainer result = global(nextNotBOrLastOrNextBAndA, lengths);
+    Result result = global(nextNotBOrLastOrNextBAndA, lengths);
     return result;
 }
 
 
-dataContainer DChainPrecedence_with_initial_constraint(const dataContainer& a, const dataContainer& b, const dataContainer& notB, const dataContainer& notFirstElems, const dataContainer& lastElems, const std::vector<size_t>& lengths, const PredicateManager* manager){
-    dataContainer aORB {};
+Result DChainPrecedence_with_initial_constraint(const Result& a, const Result& b, const Result& notB, const Result& notFirstElems, const Result& lastElems, const std::vector<size_t>& lengths, const PredicateManager* manager){
+    Result aORB {};
     setUnion( a.begin(), a.end(), b.begin(), b.end(), std::back_inserter(aORB), Aggregators::maxSimilarity<double, double, double>, manager);
 
-    dataContainer filteredNotFirstElems {};
+    Result filteredNotFirstElems {};
     setIntersection( notFirstElems.begin(), notFirstElems.end(), aORB.begin(), aORB.end(), std::back_inserter(filteredNotFirstElems), Aggregators::maxSimilarity<double, double, double>, manager);
 
-    dataContainer filteredLastElems {};
+    Result filteredLastElems {};
     setIntersection( lastElems.begin(), lastElems.end(), aORB.begin(), aORB.end(), std::back_inserter(filteredLastElems), Aggregators::maxSimilarity<double, double, double>, manager);
 
-    dataContainer nextNotB = next(notB);
-    dataContainer nextNotBOrLast;
+    Result nextNotB = next(notB);
+    Result nextNotBOrLast;
     setUnion( nextNotB.begin(), nextNotB.end(), filteredLastElems.begin(), filteredLastElems.end(), std::back_inserter(nextNotBOrLast), Aggregators::maxSimilarity<double, double, double>, manager);
 
-    dataContainer notFirstOrNotB;
+    Result notFirstOrNotB;
     setUnion( notB.begin(), notB.end(), filteredNotFirstElems.begin(), filteredNotFirstElems.end(), std::back_inserter(notFirstOrNotB), Aggregators::maxSimilarity<double, double, double>, manager);
 
-    dataContainer nextNotBOrLastAndNotFirstOrNotB;
+    Result nextNotBOrLastAndNotFirstOrNotB;
     setIntersection( nextNotBOrLast.begin(), nextNotBOrLast.end(), notFirstOrNotB.begin(), notFirstOrNotB.end(), std::back_inserter(nextNotBOrLastAndNotFirstOrNotB), Aggregators::maxSimilarity<double, double, double>, manager);
 
-    dataContainer nextB = next(b);
-    dataContainer nextBAndA {};
+    Result nextB = next(b);
+    Result nextBAndA {};
     setIntersection( nextB.begin(), nextB.end(), a.begin(), a.end(), std::back_inserter(nextBAndA), Aggregators::maxSimilarity<double, double, double>, manager);
 
-    dataContainer nextNotBOrLastAndNotFirstOrNotBOrNextBAndA{};
+    Result nextNotBOrLastAndNotFirstOrNotBOrNextBAndA{};
     setUnion( nextNotBOrLastAndNotFirstOrNotB.begin(), nextNotBOrLastAndNotFirstOrNotB.end(), nextBAndA.begin(), nextBAndA.end(), std::back_inserter(nextNotBOrLastAndNotFirstOrNotBOrNextBAndA), Aggregators::maxSimilarity<double, double, double>, manager);
 
-    dataContainer result = global(nextNotBOrLastAndNotFirstOrNotBOrNextBAndA, lengths);
+    Result result = global(nextNotBOrLastAndNotFirstOrNotBOrNextBAndA, lengths);
     return result;
 }
 
-dataContainer DChainSuccession(const dataContainer& a,  const dataContainer& notA, const dataContainer& b, const dataContainer& notB, const dataContainer& lastElems, const std::vector<size_t>& lengths, const PredicateManager* manager){
-    dataContainer chainResponse = DChainResponse(a, notA, b, lengths, manager);
-    dataContainer chainPrecedence = DChainPrecedence(a, b, notB, lastElems, lengths,manager);
+Result DChainSuccession(const Result& a, const Result& notA, const Result& b, const Result& notB, const Result& lastElems, const std::vector<size_t>& lengths, const PredicateManager* manager){
+    Result chainResponse = DChainResponse(a, notA, b, lengths, manager);
+    Result chainPrecedence = DChainPrecedence(a, b, notB, lastElems, lengths, manager);
 
-    dataContainer chainResponseAndChainPrecedence {};
+    Result chainResponseAndChainPrecedence {};
     setIntersection( chainResponse.begin(), chainResponse.end(), chainPrecedence.begin(), chainPrecedence.end(), std::back_inserter(chainResponseAndChainPrecedence), Aggregators::maxSimilarity<double, double, double>, manager);
     return chainResponseAndChainPrecedence;
 }
 
-dataContainer DChainSuccession_with_initial_constraint(const dataContainer& a,  const dataContainer& notA, const dataContainer& b, const dataContainer& notB, const dataContainer& notLastElems, const dataContainer& lastElems, const std::vector<size_t>& lengths, const PredicateManager* manager){
-    dataContainer chainResponse = DChainResponse(a, notA, b, lengths, manager);
-    dataContainer chainPrecedence = DChainPrecedence_with_initial_constraint(a, b, notB, notLastElems, lastElems, lengths,manager);
+Result DChainSuccession_with_initial_constraint(const Result& a, const Result& notA, const Result& b, const Result& notB, const Result& notLastElems, const Result& lastElems, const std::vector<size_t>& lengths, const PredicateManager* manager){
+    Result chainResponse = DChainResponse(a, notA, b, lengths, manager);
+    Result chainPrecedence = DChainPrecedence_with_initial_constraint(a, b, notB, notLastElems, lastElems, lengths, manager);
 
-    dataContainer chainResponseAndChainPrecedence {};
+    Result chainResponseAndChainPrecedence {};
     setIntersection( chainResponse.begin(), chainResponse.end(), chainPrecedence.begin(), chainPrecedence.end(), std::back_inserter(chainResponseAndChainPrecedence), Aggregators::maxSimilarity<double, double, double>, manager);
     return chainResponseAndChainPrecedence;
 }
 
-dataContainer NegationChainSuccession(const dataContainer& a,  const dataContainer& notA, const dataContainer& b, const dataContainer& notB, const dataContainer& lastElems, const std::vector<size_t>& lengths, const PredicateManager* manager){
-    dataContainer aORB {};
+Result NegationChainSuccession(const Result& a, const Result& notA, const Result& b, const Result& notB, const Result& lastElems, const std::vector<size_t>& lengths, const PredicateManager* manager){
+    Result aORB {};
     setUnion( a.begin(), a.end(), b.begin(), b.end(), std::back_inserter(aORB), Aggregators::maxSimilarity<double, double, double>, manager);
 
-    dataContainer filteredLastElems {};
+    Result filteredLastElems {};
     setIntersection( lastElems.begin(), lastElems.end(), aORB.begin(), aORB.end(), std::back_inserter(filteredLastElems), Aggregators::maxSimilarity<double, double, double>, manager);
 
-    dataContainer nextNotB = next(notB);
-    dataContainer nextNotBOrLast;
+    Result nextNotB = next(notB);
+    Result nextNotBOrLast;
     setUnion( nextNotB.begin(), nextNotB.end(), filteredLastElems.begin(), filteredLastElems.end(), std::back_inserter(nextNotBOrLast), Aggregators::maxSimilarity<double, double, double>, manager);
 
-    dataContainer aAndNextNotBOrLast;
+    Result aAndNextNotBOrLast;
     setIntersection( nextNotBOrLast.begin(), nextNotBOrLast.end(), a.begin(), a.end(), std::back_inserter(aAndNextNotBOrLast), Aggregators::maxSimilarity<double, double, double>, manager);
 
-    dataContainer notAOrAAndNextNotB{};
+    Result notAOrAAndNextNotB{};
     setUnion( aAndNextNotBOrLast.begin(), aAndNextNotBOrLast.end(), notA.begin(), notA.end(), std::back_inserter(notAOrAAndNextNotB), Aggregators::maxSimilarity<double, double, double>, manager);
 
-    dataContainer result = global(notAOrAAndNextNotB, lengths);
+    Result result = global(notAOrAAndNextNotB, lengths);
     return result;
 }
 

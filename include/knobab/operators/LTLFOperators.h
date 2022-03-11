@@ -68,13 +68,13 @@ template<typename InputIt1, typename InputIt2, typename OutputIt, typename Aggre
 OutputIt
 setUnionUntimed(InputIt1 first1, InputIt1 last1, InputIt2 first2, InputIt2 last2, OutputIt d_first, Aggregation aggr,
                 const PredicateManager *manager = nullptr, bool dropMatches = false) {
-    std::map<uint32_t, dataContainer> group1 = GroupByKeyExtractor<InputIt1, uint32_t, std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>>(
+    std::map<uint32_t, Result> group1 = GroupByKeyExtractor<InputIt1, uint32_t, std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>>(
             first1, last1,
             [](const std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>> &p) {
                 return p.first.first;
             });
 
-    std::map<uint32_t, dataContainer> group2 = GroupByKeyExtractor<InputIt2, uint32_t, std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>>(
+    std::map<uint32_t, Result> group2 = GroupByKeyExtractor<InputIt2, uint32_t, std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>>(
             first2, last2,
             [](const std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>> &p) {
                 return p.first.first;
@@ -223,13 +223,13 @@ OutputIt setIntersectionUntimed(InputIt1 first1, InputIt1 last1, InputIt2 first2
                                 Aggregation aggr,
                                 const PredicateManager *manager = nullptr,
                                 bool dropMatches = false) {
-    std::map<uint32_t, dataContainer> group1 = GroupByKeyExtractor<InputIt1, uint32_t, std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>>(
+    std::map<uint32_t, Result> group1 = GroupByKeyExtractor<InputIt1, uint32_t, std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>>(
             first1, last1,
             [](const std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>> &p) {
                 return p.first.first;
             });
 
-    std::map<uint32_t, dataContainer> group2 = GroupByKeyExtractor<InputIt2, uint32_t, std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>>(
+    std::map<uint32_t, Result> group2 = GroupByKeyExtractor<InputIt2, uint32_t, std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>>(
             first2, last2,
             [](const std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>> &p) {
                 return p.first.first;
@@ -303,11 +303,11 @@ OutputIt setIntersectionUntimed(InputIt1 first1, InputIt1 last1, InputIt2 first2
 }
 
 template<typename TableSection> inline
-dataContainer next(const uint32_t &traceId, const uint16_t &startEventId, const uint16_t& endEventId, const TableSection &section) {
+Result next(const uint32_t &traceId, const uint16_t &startEventId, const uint16_t& endEventId, const TableSection &section) {
     auto lower = std::lower_bound(section.begin(), section.end(), std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>{{traceId, startEventId},  {0, {}}});
     auto upper = std::upper_bound(lower, section.end(), std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>{{traceId, endEventId},  {1, maxVec}});
 
-    dataContainer temp {};
+    Result temp {};
 
     while (lower != upper) {
         if(lower->first.second > 0){
@@ -320,8 +320,8 @@ dataContainer next(const uint32_t &traceId, const uint16_t &startEventId, const 
 }
 
 template<typename TableSection> inline
-dataContainer next(const TableSection &section) {
-    dataContainer temp;
+Result next(const TableSection &section) {
+    Result temp;
 
     auto itr = section.begin();
     while (itr != section.end()) {
@@ -337,11 +337,11 @@ dataContainer next(const TableSection &section) {
 
 
 template<typename TableSection> inline
-dataContainer global(const uint32_t &traceId, const uint16_t &startEventId, const uint16_t& endEventId, const TableSection &section) {
+Result global(const uint32_t &traceId, const uint16_t &startEventId, const uint16_t& endEventId, const TableSection &section) {
     auto lower = std::lower_bound(section.begin(), section.end(), std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>{{traceId, startEventId},  {0, {}}});
     auto upper = std::upper_bound(lower, section.end(), std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>{{traceId, endEventId},  {1, maxVec}});
 
-    dataContainer temp {};
+    Result temp {};
 
     if(lower == upper){
         return temp;
@@ -358,8 +358,8 @@ dataContainer global(const uint32_t &traceId, const uint16_t &startEventId, cons
 }
 
 template<typename TableSection> inline
-dataContainer global(const TableSection &section, const std::vector<size_t>& lengths) {
-    dataContainer temp {};
+Result global(const TableSection &section, const std::vector<size_t>& lengths) {
+    Result temp {};
     auto lower = section.begin(), upper = section.begin();
     auto end = section.end();
 
@@ -384,11 +384,11 @@ dataContainer global(const TableSection &section, const std::vector<size_t>& len
 
 
 template<typename TableSection> inline
-dataContainer future(const uint32_t &traceId, const uint16_t &startEventId, const uint16_t& endEventId, const TableSection &section) {
+Result future(const uint32_t &traceId, const uint16_t &startEventId, const uint16_t& endEventId, const TableSection &section) {
     auto lower = std::lower_bound(section.begin(), section.end(), std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>{{traceId, startEventId}, {0, {}}});
     auto upper = std::upper_bound(section.begin(), section.end(), std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>{{traceId, endEventId}, {1, maxVec}});
 
-    dataContainer  temp {};
+    Result  temp {};
 
     if(lower == upper){
         return temp;
@@ -403,13 +403,13 @@ dataContainer future(const uint32_t &traceId, const uint16_t &startEventId, cons
 }
 
 template<typename TableSection> inline
-dataContainer future(const TableSection &section) {
+Result future(const TableSection &section) {
     return section;
 }
 
 template<typename TableSection> inline
-dataContainer negateUntimed(TableSection &data_untimed, const std::vector<size_t> &lengths, bool preserveNegatedFacts = true) {
-    dataContainer result;
+Result negateUntimed(TableSection &data_untimed, const std::vector<size_t> &lengths, bool preserveNegatedFacts = true) {
+    Result result;
     size_t first1 = 0, last1 = lengths.size();
     auto first2 = data_untimed.begin(), last2 = data_untimed.end();
     for (; first1 != last1; ) {
@@ -438,14 +438,14 @@ dataContainer negateUntimed(TableSection &data_untimed, const std::vector<size_t
 }
 
 template<typename TableSection> inline
-dataContainer until(const uint32_t &traceId,
-                    const uint16_t &startEventId,
-                    const uint16_t& endEventId,
+Result until(const uint32_t &traceId,
+             const uint16_t &startEventId,
+             const uint16_t& endEventId,
 
-                    const TableSection &aSection,
-                    const TableSection &bSection,
+             const TableSection &aSection,
+             const TableSection &bSection,
 
-                    const PredicateManager* manager = nullptr) {
+             const PredicateManager* manager = nullptr) {
 
     auto lower = std::lower_bound(bSection.begin(), bSection.end(), std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>{{traceId, startEventId}, {0, {}}});
     //auto localUpper = lower;
@@ -458,7 +458,7 @@ dataContainer until(const uint32_t &traceId,
     auto aEn = aIt;//std::upper_bound(aIt, aSection.end(), std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>{{traceId, endEventId}, {1, maxVec}});
     auto aEnd = aSection.end();
 
-    dataContainer temp {};
+    Result temp {};
     env e1, e2;
     std::pair<uint32_t, uint16_t> Fut, Prev;
 
@@ -513,33 +513,33 @@ dataContainer until(const uint32_t &traceId,
 }
 
 template<typename TableSection> inline
-dataContainer weakUntil(const uint32_t &traceId,
-                    const uint16_t &startEventId,
-                    const uint16_t& endEventId,
+Result weakUntil(const uint32_t &traceId,
+                 const uint16_t &startEventId,
+                 const uint16_t& endEventId,
 
-                    const TableSection &aSection,
-                    const TableSection &bSection,
+                 const TableSection &aSection,
+                 const TableSection &bSection,
 
-                    const PredicateManager* manager = nullptr) {
-    dataContainer result;
-    dataContainer untilR = until(traceId, startEventId, endEventId, aSection, bSection, manager);
-    dataContainer globally = global(traceId, startEventId, endEventId, aSection);
+                 const PredicateManager* manager = nullptr) {
+    Result result;
+    Result untilR = until(traceId, startEventId, endEventId, aSection, bSection, manager);
+    Result globally = global(traceId, startEventId, endEventId, aSection);
     setUnion(untilR.begin(), untilR.end(), globally.begin(), globally.end(), std::back_inserter(result), Aggregators::joinSimilarity<double, double, double>, nullptr);
     return result;
 }
 
 template<typename TableSection> inline
-dataContainer release(const uint32_t &traceId,
-                        const uint16_t &startEventId,
-                        const uint16_t& endEventId,
+Result release(const uint32_t &traceId,
+               const uint16_t &startEventId,
+               const uint16_t& endEventId,
 
-                        const TableSection &aSection,
-                        const TableSection &bSection,
+               const TableSection &aSection,
+               const TableSection &bSection,
 
-                        const PredicateManager* manager = nullptr) {
+               const PredicateManager* manager = nullptr) {
 
-    dataContainer newB;
-    dataContainer result;
+    Result newB;
+    Result result;
     setIntersection(aSection.begin(), aSection.end(),
                     bSection.begin(), bSection.end(),
                     std::back_inserter(newB),
@@ -557,7 +557,7 @@ dataContainer release(const uint32_t &traceId,
 
 
 template<typename TableSection> inline
-dataContainer until(const TableSection &aSection, const TableSection &bSection, const std::vector<size_t>& lengths, const PredicateManager* manager = nullptr) {
+Result until(const TableSection &aSection, const TableSection &bSection, const std::vector<size_t>& lengths, const PredicateManager* manager = nullptr) {
     auto lower = bSection.begin();
     auto localUpper = lower;
     auto upper = bSection.end();
@@ -566,7 +566,7 @@ dataContainer until(const TableSection &aSection, const TableSection &bSection, 
     auto aEn = aSection.begin();
     auto upperA = aSection.end();
 
-    dataContainer temp {};
+    Result temp {};
     env e1, e2;
     std::pair<uint32_t, uint16_t> Fut, Prev;
 
@@ -639,25 +639,25 @@ dataContainer until(const TableSection &aSection, const TableSection &bSection, 
 }
 
 template<typename TableSection> inline
-dataContainer weakUntil(const TableSection &aSection,
-                               const TableSection &bSection,
-                               const std::vector<size_t>& lengths,
-                               const PredicateManager* manager = nullptr) {
-    dataContainer result;
-    dataContainer untilR = until(aSection, bSection, manager);
-    dataContainer globally = global(aSection, lengths);
+Result weakUntil(const TableSection &aSection,
+                 const TableSection &bSection,
+                 const std::vector<size_t>& lengths,
+                 const PredicateManager* manager = nullptr) {
+    Result result;
+    Result untilR = until(aSection, bSection, manager);
+    Result globally = global(aSection, lengths);
     setUnionUntimed(untilR.begin(), untilR.end(), globally.begin(), globally.end(), std::back_inserter(result), Aggregators::joinSimilarity<double, double, double>, nullptr);
     return result;
 }
 
 template<typename TableSection> inline
-dataContainer release(const TableSection &psi,
-                      const TableSection &phi,
-                      const std::vector<size_t>& lengths,
-                      const PredicateManager* manager = nullptr) {
+Result release(const TableSection &psi,
+               const TableSection &phi,
+               const std::vector<size_t>& lengths,
+               const PredicateManager* manager = nullptr) {
 
-    dataContainer intersection;
-    dataContainer result;
+    Result intersection;
+    Result result;
     setIntersectionUntimed(psi.begin(), psi.end(),
                            phi.begin(), phi.end(),
                            std::back_inserter(intersection),

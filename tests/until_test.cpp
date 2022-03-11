@@ -38,7 +38,7 @@ TEST_F(until_tests, logic) {
     auto a = env.db.exists("A", true);
     auto b = env.db.exists("B", true);
     std::set<uint32_t> expectedTraces{1,3,5,7,9,10,11,12,13};
-    dataContainer result;
+    Result result;
     until_logic_untimed(a, b, env.db.act_table_by_act_id.getTraceLengths(), result, nullptr);
     for (const auto& ref : result)
         EXPECT_TRUE(expectedTraces.contains(ref.first.first));
@@ -59,7 +59,7 @@ TEST_F(until_tests, logic_pm) {
     auto b = env.db.exists("B", true);
     PredicateManager pm{{{{"x", "y", LT}}}, &env.db};
     std::set<uint32_t> expectedTraces{1,3,5,7,13};
-    dataContainer result;
+    Result result;
     until_logic_untimed(a, b, env.db.act_table_by_act_id.getTraceLengths(), result, &pm);
     for (const auto& ref : result)
         EXPECT_TRUE(expectedTraces.contains(ref.first.first));
@@ -70,7 +70,7 @@ TEST_F(until_tests, logic_pm) {
 TEST_F(until_tests, logic_timed) {
     auto a = env.db.exists("A", true);
     auto b = env.db.exists("B", true);
-    dataContainer result, expected;
+    Result result, expected;
     DATA_EMPLACE_BACK(expected, 1, 0, 0)
     DATA_EMPLACE_BACK(expected, 3, 0, 0, 1)
     DATA_EMPLACE_BACK(expected, 3, 1, 1)

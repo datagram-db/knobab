@@ -33,7 +33,7 @@ TEST_F(basic_operators, A) {
 
         auto resultA = env.db.exists("A", value);
 
-        dataContainer A;
+        Result A;
         DATA_EMPLACE_BACK(A, 0, 0, value);
         DATA_EMPLACE_BACK(A, 3, 0, value);
         DATA_EMPLACE_BACK(A, 4, 0, value);
@@ -62,7 +62,7 @@ TEST_F(basic_operators, B) {
 
         auto resultA = env.db.exists("B", value);
 
-        dataContainer A;
+        Result A;
         DATA_EMPLACE_BACK(A, 1, 0, value);
         DATA_EMPLACE_BACK(A, 3, 1, value);
         DATA_EMPLACE_BACK(A, 5, 1, value);
@@ -92,7 +92,7 @@ TEST_F(basic_operators, C) {
 
         auto resultA = env.db.exists("C", value);
 
-        dataContainer A;
+        Result A;
         DATA_EMPLACE_BACK(A, 2, 0, value);
         DATA_EMPLACE_BACK(A, 4, 1, value);
         DATA_EMPLACE_BACK(A, 6, 1, value);
@@ -108,7 +108,7 @@ TEST_F(basic_operators, init_act) {
 
         {
             auto resultA = env.db.init("A", value);
-            dataContainer A;
+            Result A;
             DATA_EMPLACE_BACK(A, 0, 0, value);
             DATA_EMPLACE_BACK(A, 3, 0, value);
             DATA_EMPLACE_BACK(A, 4, 0, value);
@@ -125,14 +125,14 @@ TEST_F(basic_operators, init_act) {
 
         {
             auto resultA = env.db.init("B", value);
-            dataContainer A;
+            Result A;
             DATA_EMPLACE_BACK(A, 1, 0, value);
             EXPECT_EQ(resultA, A);
         }
 
         {
             auto resultA = env.db.init("C", value);
-            dataContainer A;
+            Result A;
             DATA_EMPLACE_BACK(A, 2, 0, value);
             EXPECT_EQ(resultA, A);
         }
@@ -145,7 +145,7 @@ TEST_F(basic_operators, end_act) {
 
         {
             auto resultA = env.db.ends("A", value);
-            dataContainer A;
+            Result A;
             DATA_EMPLACE_BACK(A, 0, 0, value);
             DATA_EMPLACE_BACK(A, 7, 3, value);
             DATA_EMPLACE_BACK(A, 8, 3, value);
@@ -154,7 +154,7 @@ TEST_F(basic_operators, end_act) {
 
         {
             auto resultA =  env.db.ends("B", value);
-            dataContainer A;
+            Result A;
             DATA_EMPLACE_BACK(A, 1, 0, value);
             DATA_EMPLACE_BACK(A, 3, 1, value);
             DATA_EMPLACE_BACK(A, 5, 1, value);
@@ -167,7 +167,7 @@ TEST_F(basic_operators, end_act) {
 
         {
             auto resultA =  env.db.ends("C", value);
-            dataContainer A;
+            Result A;
             DATA_EMPLACE_BACK(A, 2, 0, value);
             DATA_EMPLACE_BACK(A, 4, 1, value);
             DATA_EMPLACE_BACK(A, 6, 1, value);
@@ -182,7 +182,7 @@ TEST_F(basic_operators, next_act) {
 
         {
             auto resultA = next(env.db.exists("A", value));
-            dataContainer A;
+            Result A;
             DATA_DECREMENT_EMPLACE_BACK(A, 7, 3, value);
             DATA_DECREMENT_EMPLACE_BACK(A, 8, 3, value);
             DATA_DECREMENT_EMPLACE_BACK(A, 9, 3, value);
@@ -194,7 +194,7 @@ TEST_F(basic_operators, next_act) {
 
         {
             auto resultA = next(env.db.exists("B", value));
-            dataContainer A;
+            Result A;
             DATA_DECREMENT_EMPLACE_BACK(A, 3, 1, value);
             DATA_DECREMENT_EMPLACE_BACK(A, 5, 1, value);
             DATA_DECREMENT_EMPLACE_BACK(A, 7, 1, value);
@@ -217,7 +217,7 @@ TEST_F(basic_operators, next_act) {
 
         {
             auto resultA = next(env.db.exists("C", value));
-            dataContainer A;
+            Result A;
             DATA_DECREMENT_EMPLACE_BACK(A, 4, 1, value);
             DATA_DECREMENT_EMPLACE_BACK(A, 6, 1, value);
             DATA_DECREMENT_EMPLACE_BACK(A, 8, 1, value);
@@ -229,7 +229,7 @@ TEST_F(basic_operators, next_act) {
 TEST_F(basic_operators, no_multiple_labels) {
     {
         // A and B shall never appear at the same time
-        dataContainer result;
+        Result result;
         auto resultA = (env.db.exists("A", true));
         auto resultB = (env.db.exists("B", true));
         setIntersection(resultA.begin(), resultA.end(), resultB.begin(), resultB.end(), std::back_inserter(result), Aggregators::maxSimilarity<double,double,double>, nullptr);
@@ -238,7 +238,7 @@ TEST_F(basic_operators, no_multiple_labels) {
 
     {
         // A and B shall never appear in the next time
-        dataContainer result;
+        Result result;
         auto resultA = next(env.db.exists("A", true));
         auto resultB = next(env.db.exists("B", true));
         setIntersection(resultA.begin(), resultA.end(), resultB.begin(), resultB.end(), std::back_inserter(result), Aggregators::maxSimilarity<double,double,double>, nullptr);
@@ -256,7 +256,7 @@ TEST_F(basic_operators, no_multiple_labels) {
 
     {
         // A and_{where x<y} next B
-        dataContainer result, expected;
+        Result result, expected;
         PredicateManager pm{{{{"x", "y", LT}}}, &env.db};
         auto resultA = (env.db.exists("A", true));
         auto resultB = next(env.db.exists("B", true));
@@ -279,15 +279,15 @@ TEST_F(basic_operators, no_multiple_labels) {
 TEST_F(basic_operators, globally_untimed) {
     {
         auto result = global(env.db.exists("A", true), env.db.act_table_by_act_id.getTraceLengths());
-        EXPECT_EQ(result, dataContainer {std::make_pair(std::make_pair(0,0), std::make_pair(1.0, std::vector<uint16_t>{0}))});
+        EXPECT_EQ(result, Result {std::make_pair(std::make_pair(0, 0), std::make_pair(1.0, std::vector<uint16_t>{0}))});
     }
     {
         auto result = global(env.db.exists("B", true), env.db.act_table_by_act_id.getTraceLengths());
-        EXPECT_EQ(result, dataContainer {std::make_pair(std::make_pair(1,0), std::make_pair(1.0, std::vector<uint16_t>{0}))});
+        EXPECT_EQ(result, Result {std::make_pair(std::make_pair(1, 0), std::make_pair(1.0, std::vector<uint16_t>{0}))});
     }
     {
         auto result = global(env.db.exists("C", true), env.db.act_table_by_act_id.getTraceLengths());
-        EXPECT_EQ(result, dataContainer {std::make_pair(std::make_pair(2,0), std::make_pair(1.0, std::vector<uint16_t>{0}))});
+        EXPECT_EQ(result, Result {std::make_pair(std::make_pair(2, 0), std::make_pair(1.0, std::vector<uint16_t>{0}))});
     }
 }
 

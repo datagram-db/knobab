@@ -9,13 +9,113 @@
 
 /**
  *
+ * @author Samuel 'Sam' Appleby, Giacomo Bergami
+ *
+ * @param section
+ * @param lengths
+ * @param result
+ */
+void inline union_logic_untimed(const Result& lhs, const Result& rhs, Result& result, std::function<double(double, double)> aggr,
+                                const PredicateManager *manager = nullptr, bool dropMatches = false) {
+    auto first1 = lhs.begin(), last1 = lhs.end(), first2 = rhs.begin(), last2 = rhs.end();
+    std::map<uint32_t, Result> group1 = GroupByKeyExtractor<decltype(first1), uint32_t, std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>>(
+            first1, last1,
+            [](const std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>> &p) {
+                return p.first.first;
+            });
+
+    std::map<uint32_t, Result> group2 = GroupByKeyExtractor<decltype(first2), uint32_t, std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>>(
+            first2, last2,
+            [](const std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>> &p) {
+                return p.first.first;
+            });
+
+    env e1, e2;
+    std::pair<uint32_t, uint16_t> pair, pair1;
+    auto start1 = group1.begin(), end1 = group1.end();
+    auto start2 = group2.begin(), end2 = group2.end();
+    std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>> val;
+
+    for (; start1 != end1; /*++d_first*/) {
+        if (start2 == end2) {
+            while (start1 != end1) {
+                for (const auto &cont1: start1->second) {
+                    result.emplace_back(cont1);
+                }
+                start1++;
+            }
+            return;
+        } else if (start1->first > start2->first) {
+            for (const auto &cont1: start2->second) {
+                result.emplace_back(cont1);
+            }
+            start2++;
+        } else if (start1->first < start2->first) {
+            for (const auto &cont1: start1->second) {
+                result.emplace_back(cont1);
+            }
+            start1++;
+        } else {
+            pair.first = val.first.first = start1->first;
+            pair1.first = start2->first;
+            for (const auto &cont1: start1->second) {
+                for (const auto &cont2: start2->second) {
+                    if (manager) {
+                        for (const auto &elem: cont1.second.second) {
+                            pair.second = elem;
+                            for (const auto &elem1: cont2.second.second) {
+                                pair1.second = elem1;
+                                e1 = manager->GetPayloadDataFromEvent(pair);
+                                e2 = manager->GetPayloadDataFromEvent(pair1);
+
+                                if (manager->checkValidity(e1, e2)) {
+                                    val.second.first = aggr(cont1.second.first, cont2.second.first);
+                                    if (!dropMatches) {
+                                        val.second.second = {pair.second, pair1.second};
+                                    } else {
+                                        val.second.second.clear();
+                                    }
+                                    result.emplace_back(val);
+                                }
+                            }
+                        }
+                    } else {
+                        // NOTE: that will discard potential activation and target conditions, and just put the two events where the situation holds.
+                        val.second.second.clear();
+                        if (!dropMatches) {
+                            first1->second.second;
+                            val.second.second.insert(val.second.second.end(), first2->second.second.begin(), first2->second.second.end());
+                            remove_duplicates(val.second.second);
+                        }
+                        val.second.first = aggr(cont1.second.first, cont2.second.first);
+                        result.emplace_back(val);
+                    }
+                }
+            }
+            start1++;
+            start2++;
+        }
+    }
+
+    while (start2 != end2) {
+        for (const auto &cont1: start2->second) {
+
+            result.emplace_back(cont1);
+        }
+        start2++;
+    }
+    //return d_first;
+}
+
+/**
+ *
  * @author Giacomo Bergami
  *
  * @param section
  * @param lengths
  * @param result
  */
-inline void future_logic_timed(const dataContainer &section, const std::vector<size_t>& lengths, dataContainer& result) {
+inline void future_logic_timed(const Result &section, const std::vector<size_t>& lengths, Result& result) {
     //std::cout << section << std::endl;
     //dataContainer temp {};
     result.clear();
@@ -36,7 +136,7 @@ inline void future_logic_timed(const dataContainer &section, const std::vector<s
         lower = upper;
         upper = std::upper_bound(lower, section.end(), cp);
 
-        dataContainer toBeReversed;
+        Result toBeReversed;
         auto it = lower+std::distance(lower,upper)-1;
         bool isBegin = true;
         for (int64_t i = (upper-1)->first.second; (i >= 0) && (it >= lower); i--) {
@@ -69,7 +169,7 @@ inline void future_logic_timed(const dataContainer &section, const std::vector<s
  * @param lengths
  * @param result
  */
-inline void future_logic_untimed(const dataContainer &section, const std::vector<size_t>& lengths, dataContainer& result) {
+inline void future_logic_untimed(const Result &section, const std::vector<size_t>& lengths, Result& result) {
     //dataContainer temp {};
     result.clear();
     auto lower = section.begin(), upper = section.begin();
@@ -106,7 +206,7 @@ inline void future_logic_untimed(const dataContainer &section, const std::vector
  * @param lengths
  * @param result
  */
-inline void global_logic_timed(const dataContainer &section, const std::vector<size_t>& lengths, dataContainer& result) {
+inline void global_logic_timed(const Result &section, const std::vector<size_t>& lengths, Result& result) {
     //std::cout << section << std::endl;
     //dataContainer temp {};
     result.clear();
@@ -127,7 +227,7 @@ inline void global_logic_timed(const dataContainer &section, const std::vector<s
         lower = upper;
         upper = std::upper_bound(lower, section.end(), cp);
 
-        dataContainer toBeReversed;
+        Result toBeReversed;
         auto it = lower+std::distance(lower,upper)-1;
         bool isBegin = true;
         for (int64_t i = (upper-1)->first.second; i >= 0; i--) {
@@ -162,7 +262,7 @@ inline void global_logic_timed(const dataContainer &section, const std::vector<s
  * @param lengths
  * @param result
  */
-inline void global_logic_untimed(const dataContainer &section, const std::vector<size_t>& lengths, dataContainer& result) {
+inline void global_logic_untimed(const Result &section, const std::vector<size_t>& lengths, Result& result) {
     auto lower = section.begin(), upper = section.begin();
     auto end = section.end();
     result.clear();
@@ -200,7 +300,7 @@ inline void global_logic_untimed(const dataContainer &section, const std::vector
  * @param lengths
  * @param result
  */
-inline void until_logic_timed(const dataContainer &aSection, const dataContainer &bSection, const std::vector<size_t>& lengths, dataContainer& temp, const PredicateManager* manager = nullptr) {
+inline void until_logic_timed(const Result &aSection, const Result &bSection, const std::vector<size_t>& lengths, Result& temp, const PredicateManager* manager = nullptr) {
     auto lower = bSection.begin();
     auto localUpper = lower;
     auto upper = bSection.end();
@@ -338,7 +438,7 @@ inline void until_logic_timed(const dataContainer &aSection, const dataContainer
 }
 
 
-inline void until_logic_untimed(const dataContainer &aSection, const dataContainer &bSection, const std::vector<size_t>& lengths, dataContainer& temp, const PredicateManager* manager = nullptr) {
+inline void until_logic_untimed(const Result &aSection, const Result &bSection, const std::vector<size_t>& lengths, Result& temp, const PredicateManager* manager = nullptr) {
     auto lower = bSection.begin();
     auto localUpper = lower;
     auto upper = bSection.end();
@@ -427,5 +527,19 @@ inline void until_logic_untimed(const dataContainer &aSection, const dataContain
         lower = localUpper;
     }
 }
+
+
+inline void weakUntil_logic_untimed(const Result &aSection,
+                                    const Result &bSection,
+                                    const std::vector<size_t>& lengths,
+                                    Result& result,
+                                    const PredicateManager* manager = nullptr) {
+    Result untilR, globally;
+    until_logic_untimed(aSection, bSection, lengths, untilR, manager);
+    global_logic_untimed(aSection, lengths, globally);
+    //TODO: setUnionUntimed(untilR.begin(), untilR.end(), globally.begin(), globally.end(), std::back_inserter(result), Aggregators::joinSimilarity<double, double, double>, nullptr);
+    //TODO: return result;
+}
+
 
 #endif //KNOBAB_SIMPLE_LTLF_OPERATORS_H
