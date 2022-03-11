@@ -758,18 +758,18 @@ void MAXSatPipeline::actual_query_running(const KnowledgeBase& kb) {
                     case Q_BOX:
                         assert(formula->args.size() == 1);
                         if (formula->isTimed) {
-                            global_logic_timed(formula->args.at(0)->result, kb.act_table_by_act_id.trace_length, formula->result);
+                            global_logic_timed(formula->args.at(0)->result, formula->result, kb.act_table_by_act_id.trace_length);
                         } else {
-                            global_logic_untimed(formula->args.at(0)->result, kb.act_table_by_act_id.trace_length, formula->result);
+                            global_logic_untimed(formula->args.at(0)->result, formula->result, kb.act_table_by_act_id.trace_length);
                         }
                         break;
 
                     case Q_DIAMOND:
                         assert(formula->args.size() == 1);
                         if (formula->isTimed)
-                             future_logic_timed(formula->args[0]->result, kb.act_table_by_act_id.trace_length, formula->result);
+                             future_logic_timed(formula->args[0]->result, formula->result, kb.act_table_by_act_id.trace_length);
                         else {
-                             future_logic_untimed(formula->args[0]->result, kb.act_table_by_act_id.trace_length, formula->result);
+                             future_logic_untimed(formula->args[0]->result, formula->result, kb.act_table_by_act_id.trace_length);
                         }
                         break;
 
@@ -779,15 +779,15 @@ void MAXSatPipeline::actual_query_running(const KnowledgeBase& kb) {
                         if (formula->isTimed) {
                             until_logic_timed(formula->args.at(0)->result,
                                                 formula->args.at(1)->result,
-                                                kb.act_table_by_act_id.trace_length,
                                                 formula->result,
-                                                formula->joinCondition.isTruth() ? nullptr : &formula->joinCondition);
+                                                formula->joinCondition.isTruth() ? nullptr : &formula->joinCondition,
+                                              kb.act_table_by_act_id.trace_length);
                         } else {
                             until_logic_untimed(formula->args.at(0)->result,
                                                     formula->args.at(1)->result,
-                                                    kb.act_table_by_act_id.trace_length,
                                                     formula->result,
-                                                    formula->joinCondition.isTruth() ? nullptr : &formula->joinCondition);
+                                                    formula->joinCondition.isTruth() ? nullptr : &formula->joinCondition,
+                                                kb.act_table_by_act_id.trace_length);
                         }
                         break;
 

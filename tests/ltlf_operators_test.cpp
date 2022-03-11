@@ -45,7 +45,7 @@ TEST(Box)
 TEST_F(Box_tests, untimed) {
     auto a = env.db.exists("a", ActivationLeaf);
     Result result;
-    global_logic_untimed(a, env.db.act_table_by_act_id.trace_length, result);
+    global_logic_untimed(a, result, env.db.act_table_by_act_id.trace_length);
     EXPECT_EQ(pos, result.size());
 }
 
@@ -54,7 +54,7 @@ TEST_F(Box_tests, timed) {
     env2.doStats = false;
     auto a = env.db.exists("a", ActivationLeaf);
     Result result;
-    global_logic_timed(a, env.db.act_table_by_act_id.trace_length, result);
+    global_logic_timed(a, result, env.db.act_table_by_act_id.trace_length);
     EXPECT_TRUE(!result.empty());
     size_t resultSize = result.size();
     env2.db.enterLog("box_test_timed", "box_test_timed");
@@ -76,7 +76,7 @@ TEST_F(Box_tests, timed) {
     env2.db.index_data_structures(false);
     assert(result.empty());
     a = env2.db.exists("a", ActivationLeaf);
-    global_logic_untimed(a, env2.db.act_table_by_act_id.trace_length, result);
+    global_logic_untimed(a, result, env2.db.act_table_by_act_id.trace_length);
     EXPECT_EQ(trace_count, result.size());
     EXPECT_EQ(resultSize, result.size());
 }
@@ -86,7 +86,7 @@ TEST_F(Diamond_tests, basic) {
     auto a = env.db.exists("a", ActivationLeaf);
 
     Result result;
-    future_logic_untimed(a, env.db.act_table_by_act_id.trace_length, result);
+    future_logic_untimed(a, result, env.db.act_table_by_act_id.trace_length);
     EXPECT_EQ(pos, result.size());
 }
 TEST_F(Diamond_tests, timed) {
@@ -94,7 +94,7 @@ TEST_F(Diamond_tests, timed) {
     env2.doStats = false;
     auto a = env.db.exists("a", ActivationLeaf);
     Result result;
-    future_logic_timed(a, env.db.act_table_by_act_id.trace_length, result);
+    future_logic_timed(a, result, env.db.act_table_by_act_id.trace_length);
     EXPECT_TRUE(!result.empty());
     size_t resultSize = result.size();
     env2.db.enterLog("diamond_test_timed", "diamond_test_timed");
@@ -116,7 +116,7 @@ TEST_F(Diamond_tests, timed) {
     env2.db.index_data_structures(false);
     assert(result.empty());
     a = env2.db.exists("a", ActivationLeaf);
-    future_logic_untimed(a, env2.db.act_table_by_act_id.trace_length, result);
+    future_logic_untimed(a, result, env2.db.act_table_by_act_id.trace_length);
     EXPECT_EQ(trace_count, result.size());
     EXPECT_EQ(resultSize, result.size());
 }
@@ -126,7 +126,7 @@ TEST_F(Until_tests, basic) {
     auto a = env.db.exists("a", ActivationLeaf);
     auto b = env.db.exists("b", TargetLeaf);
     Result result;
-    until_logic_untimed(a, b, env.db.act_table_by_act_id.trace_length, result);
+    until_logic_untimed(a, b, result, nullptr, env.db.act_table_by_act_id.trace_length);
     EXPECT_EQ(pos, result.size());
 }
 
@@ -137,7 +137,7 @@ TEST_F(Until_tests, timed) {
     auto a = env.db.exists("a", ActivationLeaf);
     auto b = env.db.exists("b", TargetLeaf);
     Result result;
-    until_logic_timed(a, b, env.db.act_table_by_act_id.trace_length, result);
+    until_logic_timed(a, b, result, nullptr, env.db.act_table_by_act_id.trace_length);
     EXPECT_TRUE(!result.empty());
     size_t resultSize = result.size();
     env2.db.enterLog("until_test_timed", "until_test_timed");
@@ -160,7 +160,7 @@ TEST_F(Until_tests, timed) {
     assert(result.empty());
     a = env2.db.exists("a", ActivationLeaf);
     b = env2.db.exists("b", TargetLeaf);
-    until_logic_untimed(a, b, env2.db.act_table_by_act_id.trace_length, result);
+    until_logic_untimed(a, b, result, nullptr, env2.db.act_table_by_act_id.trace_length);
     EXPECT_EQ(trace_count, result.size());
     EXPECT_EQ(resultSize, result.size());
 }

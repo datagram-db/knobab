@@ -300,7 +300,7 @@ OutputIt setIntersectionUntimed(InputIt1 first1, InputIt1 last1, InputIt2 first2
 
             for (const auto &cont1: start1->second) {
                 for (const auto &cont2: start2->second) {
-                    result.second.first = std::max(aggr(first1->second.first, first2->second.first), result.second.first);
+                    result.second.first = std::min(aggr(first1->second.first, first2->second.first), result.second.first);
                     if (manager) {
                         for (const auto &elem: cont1.second.second) {
                             if (!IS_MARKED_EVENT_ACTIVATION(elem)) continue;
