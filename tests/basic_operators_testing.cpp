@@ -8,6 +8,7 @@
 #include <vector>
 #include <knobab/Environment.h>
 #include <gtest/gtest.h>
+#include <knobab/operators/simple_ltlf_operators.h>
 #include "log_for_tests.h"
 
 class basic_operators : public testing::Test {
@@ -228,15 +229,23 @@ TEST_F(basic_operators, no_multiple_labels) {
         auto resultB = (env.db.exists("B", TargetLeaf));
         setIntersection(resultA.begin(), resultA.end(), resultB.begin(), resultB.end(), std::back_inserter(result), Aggregators::maxSimilarity<double,double,double>, nullptr);
         EXPECT_TRUE(result.empty());
+
+        Result alResult;
+        and_logic_timed(resultA, resultB, alResult, nullptr);
+        EXPECT_TRUE(alResult.empty());
     }
 
     {
         // A and B shall never appear in the next time
         Result result;
-        auto resultA = (env.db.exists("A", ActivationLeaf));
-        auto resultB = (env.db.exists("B", TargetLeaf));
+        auto resultA = next(env.db.exists("A", ActivationLeaf));
+        auto resultB = next(env.db.exists("B", TargetLeaf));
         setIntersection(resultA.begin(), resultA.end(), resultB.begin(), resultB.end(), std::back_inserter(result), Aggregators::maxSimilarity<double,double,double>, nullptr);
         EXPECT_TRUE(result.empty());
+
+        Result alResult;
+        and_logic_timed(resultA, resultB, alResult, nullptr);
+        EXPECT_TRUE(alResult.empty());
     }
 
     {
@@ -250,7 +259,7 @@ TEST_F(basic_operators, no_multiple_labels) {
 
     {
         // A and_{where x<y} next B
-        Result result, expected;
+        Result result, alResult, expected;
         PredicateManager pm{{{{"x", "y", LT}}}, &env.db};
         auto resultA = (env.db.exists("A", ActivationLeaf));
         auto resultB = next(env.db.exists("B", TargetLeaf));
@@ -263,6 +272,9 @@ TEST_F(basic_operators, no_multiple_labels) {
         DATA_EMPLACE_BACK(expected, 7, 0, false);
         expected.back().second.second.emplace_back(marked_event::join(0,1));
         EXPECT_EQ(result, expected);
+
+        and_logic_timed(resultA, resultB, alResult, &pm);
+        EXPECT_EQ(alResult, expected);
     }
 }
 
