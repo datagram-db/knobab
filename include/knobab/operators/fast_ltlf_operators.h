@@ -15,7 +15,70 @@
  * @param manager
  */
 inline void or_fast_timed(const Result& lhs, const Result& rhs, Result& out, const PredicateManager *manager = nullptr, const std::vector<size_t>& lengths = {}) {
-    or_logic_timed(lhs, rhs, out, manager, lengths);
+    auto first1 = lhs.begin(), first2 = rhs.begin(),
+            last1 = lhs.end(), last2 = rhs.end();
+    env e1, e2;
+    ResultIndex pair, pair1;
+    bool hasMatch;
+    ResultRecord result{{0, 0}, {0.0, {}}};
+    auto join = marked_event::join(0,0);
+    std::unordered_set<std::string> cache;
+
+    while (first1 != last1) {
+        if (first2 == last2) {
+            std::copy(first1, last1, std::back_inserter(out));
+            return;
+        }
+        if (first1->first > first2->first) {
+            out.emplace_back(*first2++);
+        } else if (first1->first < first2->first) {
+            out.emplace_back(*first1++);
+        } else {
+            pair.first = first1->first.first;
+            //pair1.first = first2->first.first;
+            result.first = first1->first;
+            result.second.first = std::min(first1->second.first, first2->second.first);
+            result.second.second.clear();
+            hasMatch = false;
+
+            if (manager) {
+                for (const marked_event &elem: first1->second.second) {
+                    if (!IS_MARKED_EVENT_ACTIVATION(elem)) continue;
+                    join.id.parts.left = pair.second = GET_ACTIVATION_EVENT(elem);
+                    e1 = manager->GetPayloadDataFromEvent(pair.first, pair.second, true, cache);
+
+                    for (const marked_event &elem1: first2->second.second) {
+                        if (!IS_MARKED_EVENT_TARGET(elem1)) continue;
+                        join.id.parts.right = GET_TARGET_EVENT(elem1);
+
+                        if (manager->checkValidity(e1, first2->first.first, join.id.parts.right)) {
+                            hasMatch = true;
+                            result.second.second.emplace_back(join);
+                        }
+                    }
+                }
+            } else {
+                hasMatch = true;
+                if (!first1->second.second.empty())
+                    result.second.second.insert(result.second.second.end(), first1->second.second.begin(), first1->second.second.end());
+                else
+                    result.second.second.emplace_back(marked_event::activation(first1->first.second));
+                if (!first2->second.second.empty())
+                    result.second.second.insert(result.second.second.end(), first2->second.second.begin(), first2->second.second.end());
+                else
+                    result.second.second.emplace_back(marked_event::target(first2->first.second));
+            }
+
+            if (hasMatch) {
+                remove_duplicates(result.second.second);
+                out.emplace_back(result);
+            }
+
+            first1++;
+            first2++;
+        }
+    }
+    std::copy(first2, last2, std::back_inserter(out));
 }
 
 /**
@@ -36,6 +99,7 @@ inline void or_fast_untimed(const Result& lhs, const Result& rhs, Result& out, c
     ResultRecord result{{0, 0}, {0.0, {}}};
     ResultRecord idx{{0, 0}, {0.0, {}}};
     ResultIndex pair, pair1;
+    std::unordered_set<std::string> cache;
     bool hasMatch, completeInsertionRight;
     auto join = marked_event::join(0, 0);
     while (first1 != last1) {
@@ -64,18 +128,15 @@ inline void or_fast_untimed(const Result& lhs, const Result& rhs, Result& out, c
                     if (manager) {
                         for (const marked_event &elem: first1->second.second) {
                             if (!IS_MARKED_EVENT_ACTIVATION(elem)) continue;
-                            pair.second = GET_ACTIVATION_EVENT(elem);
+                            join.id.parts.left = pair.second = GET_ACTIVATION_EVENT(elem);
+                            e1 = manager->GetPayloadDataFromEvent(pair.first, pair.second, true, cache);
 
                             for (const marked_event &elem1: first2->second.second) {
                                 if (!IS_MARKED_EVENT_TARGET(elem1)) continue;
-                                pair1.second = GET_TARGET_EVENT(elem1);
+                                join.id.parts.right = pair1.second = GET_TARGET_EVENT(elem1);
 
-                                e1 = manager->GetPayloadDataFromEvent(pair);
-                                e2 = manager->GetPayloadDataFromEvent(pair1);
-                                if (manager->checkValidity(e1, e2)) {
+                                if (manager->checkValidity(e1, localTrace, join.id.parts.right)) {
                                     hasMatch = true;
-                                    join.id.parts.left = pair.second;
-                                    join.id.parts.right = pair1.second;
                                     result.second.second.emplace_back(join);
                                 }
                             }
@@ -116,7 +177,61 @@ inline void or_fast_untimed(const Result& lhs, const Result& rhs, Result& out, c
  * @param manager
  */
 inline void and_fast_timed(const Result& lhs, const Result& rhs, Result& out, const PredicateManager *manager = nullptr, const std::vector<size_t>& lengths = {}) {
-    and_logic_timed(lhs, rhs, out, manager, lengths);
+    auto first1 = lhs.begin(), first2 = rhs.begin(),
+            last1 = lhs.end(), last2 = rhs.end();
+    env e1, e2;
+    ResultIndex pair, pair1;
+    ResultRecord result{{0, 0}, {1.0, {}}};
+    bool hasMatch;
+    marked_event join = marked_event::join(0,0);
+    std::unordered_set<std::string> cache;
+
+    while (first1 != last1) {
+        if (first2 == last2)
+            return /*d_first*/;
+        if (first1->first > first2->first) {
+            first2++;
+        } else if (first1->first < first2->first) {
+            first1++;
+        } else {
+            pair.first = first1->first.first;
+            result.first = first1->first;
+            result.second.first = std::min(first1->second.first, first2->second.first);
+            result.second.second.clear();
+            pair1.first = first2->first.first;
+            hasMatch = false;
+
+            if (manager) {
+                for (const marked_event &elem: first1->second.second) {
+                    if (!IS_MARKED_EVENT_ACTIVATION(elem)) continue;
+                    join.id.parts.left = pair.second = GET_ACTIVATION_EVENT(elem);
+                    e1 = manager->GetPayloadDataFromEvent(pair.first, pair.second, true, cache);
+
+                    for (const marked_event &elem1: first2->second.second) {
+                        if (!IS_MARKED_EVENT_TARGET(elem1)) continue;
+                        join.id.parts.right = pair1.second = GET_TARGET_EVENT(elem1);
+
+                        if (manager->checkValidity(e1, first2->first.first, join.id.parts.right)) {
+                            hasMatch = true;
+                            result.second.second.emplace_back(join);
+                        }
+                    }
+                }
+            } else {
+                hasMatch = true;
+                result.second.second.insert(result.second.second.end(), first1->second.second.begin(), first1->second.second.end());
+                result.second.second.insert(result.second.second.end(), first2->second.second.begin(), first2->second.second.end());
+            }
+
+            if (hasMatch) {
+                remove_duplicates(result.second.second);
+                out.emplace_back(result);
+            }
+
+            first1++;
+            first2++;
+        }
+    }
 }
 
 /**
@@ -138,6 +253,7 @@ inline void and_fast_untimed(const Result& lhs, const Result& rhs, Result& out, 
     ResultIndex pair, pair1;
     auto join = marked_event::join(0, 0);
     bool hasMatch, completeInsertionRight;
+    std::unordered_set<std::string> cache;
     while (first1 != last1) {
         if (first2 == last2) {
             return;
@@ -163,18 +279,15 @@ inline void and_fast_untimed(const Result& lhs, const Result& rhs, Result& out, 
                     if (manager) {
                         for (const marked_event &elem: first1->second.second) {
                             if (!IS_MARKED_EVENT_ACTIVATION(elem)) continue;
-                            pair.second = GET_ACTIVATION_EVENT(elem);
+                            join.id.parts.left = pair.second = GET_ACTIVATION_EVENT(elem);
+                            e1 = manager->GetPayloadDataFromEvent(pair.first, pair.second, true, cache);
 
                             for (const marked_event &elem1: first2->second.second) {
                                 if (!IS_MARKED_EVENT_TARGET(elem1)) continue;
-                                pair1.second = GET_TARGET_EVENT(elem1);
+                                join.id.parts.right = GET_TARGET_EVENT(elem1);
 
-                                e1 = manager->GetPayloadDataFromEvent(pair);
-                                e2 = manager->GetPayloadDataFromEvent(pair1);
-                                if (manager->checkValidity(e1, e2)) {
+                                if (manager->checkValidity(e1, localTrace, join.id.parts.right)) {
                                     hasMatch = true;
-                                    join.id.parts.left = pair.second;
-                                    join.id.parts.right = pair1.second;
                                     result.second.second.emplace_back(join);
                                 }
                             }
@@ -300,5 +413,168 @@ inline void negated_fast_timed(const Result &section, Result& result, const std:
         }
     }
 }
+
+/**
+ *
+ * @author Samuel 'Sam' Appleby, Giacomo Bergami
+ *
+ * @param aCurrent
+ * @param aEnd
+ * @param bCurrent
+ * @param bEnd
+ * @param d_first
+ * @param aggr
+ * @param manager
+ */
+inline void aAndFutureB_timed(const Result& aResult, const Result& bResult, Result& result, const PredicateManager *manager = nullptr, const std::vector<size_t>& lengths = {}) {
+    if (bResult.empty()) {
+        result.clear();
+        return;
+    }
+    auto bCurrent = bResult.begin(), bEnd = bResult.end();
+    ResultRecord rcx;
+    marked_event join = marked_event::join(0,0);
+    bool hasMatch;
+    std::unordered_set<std::string> cache;
+
+    for (auto aCurrent = aResult.begin(), aEnd = aResult.end(); aCurrent != aEnd; /*++d_first*/) {
+        /* Our iterators should never be pointing at the same event */
+        // assert(aCurrent != bCurrent);
+
+        if (aCurrent->first > bCurrent->first) {
+            bCurrent++;
+        } else {
+            auto newItr = bCurrent;
+            rcx.first = aCurrent->first;
+            rcx.second.second.clear();
+            rcx.second.first = 1.0;
+            hasMatch = false;
+
+            while (newItr != bEnd) {
+                if(newItr->first.first != aCurrent->first.first){
+                    break;
+                }
+                if (manager) {
+                    for (const auto &elem: aCurrent->second.second) {
+                        if (!IS_MARKED_EVENT_ACTIVATION(elem)) continue;
+                        join.id.parts.left = GET_ACTIVATION_EVENT(elem);
+                        env e1 = manager->GetPayloadDataFromEvent(aCurrent->first.first, join.id.parts.left, true, cache);
+                        for (const auto &elem1: newItr->second.second) {
+                            if (!IS_MARKED_EVENT_TARGET(elem1)) continue;
+                            join.id.parts.right = GET_TARGET_EVENT(elem1);
+
+                            if (manager->checkValidity(e1, newItr->first.first, join.id.parts.right)) {
+                                hasMatch = true;
+                                rcx.second.second.push_back(join);
+                                rcx.second.first *= (1.0 - std::min(aCurrent->second.first, newItr->second.first));
+                            }
+                        }
+                    }
+                } else {
+                    hasMatch = true;
+                    rcx.second.second.insert(rcx.second.second.end(), newItr->second.second.begin(), newItr->second.second.end());
+                }
+
+                newItr++;
+            }
+
+            if (hasMatch) {
+                if (!manager) rcx.second.second.insert(rcx.second.second.end(), aCurrent->second.second.begin(), aCurrent->second.second.end());
+                remove_duplicates(rcx.second.second);
+                if (manager) rcx.second.first = 1.0 - rcx.second.first;
+                result.emplace_back(rcx);
+            }
+
+            if (aCurrent->first == bCurrent->first) {
+                bCurrent++;
+            }
+
+            aCurrent++;
+        }
+    }
+}
+
+
+inline void aAndNextGloballyB_timed(const Result& a, const Result& b,Result& result, const PredicateManager *manager = nullptr, const std::vector<size_t> lengths = {}) {
+    if (b.empty()) {
+        result.clear();
+        return;
+    }
+    auto bCurrent = b.begin(), bEnd = b.end();
+    ResultRecord rcx;
+    marked_event join = marked_event::join(0,0);
+    bool hasMatch;
+    std::unordered_set<std::string> cache;
+
+    for (auto aCurrent = a.begin(), aEnd = a.end(); aCurrent != aEnd; ) {
+
+        if (aCurrent->first > bCurrent->first) {
+            bCurrent++;
+        } else {
+            auto newItr = bCurrent;
+            rcx.first = aCurrent->first;
+            rcx.second.second.clear();
+            rcx.second.first = 1.0;
+            hasMatch = false;
+
+            if(newItr->first == aCurrent->first){
+                newItr++;
+            }
+
+            if(newItr->first.second - aCurrent->first.second == 1){
+                std::vector<uint16_t> activations{};
+                double cumulativeApprox = 1;
+
+                uint16_t count = 0;
+
+                while (newItr != bEnd) {
+                    if(newItr->first.first != aCurrent->first.first){
+                        break;
+                    }
+                    if (manager) {
+                        for (const auto &elem: aCurrent->second.second) {
+                            if (!IS_MARKED_EVENT_ACTIVATION(elem)) continue;
+                            join.id.parts.left = GET_ACTIVATION_EVENT(elem);
+                            env e1 = manager->GetPayloadDataFromEvent(aCurrent->first.first, join.id.parts.left, true, cache);
+                            for (const auto &elem1: newItr->second.second) {
+                                if (!IS_MARKED_EVENT_TARGET(elem1)) continue;
+                                join.id.parts.right = GET_TARGET_EVENT(elem1);
+
+                                if (manager->checkValidity(e1, newItr->first.first, join.id.parts.right)) {
+                                    rcx.second.second.push_back(join);
+                                    rcx.second.first *= (1.0 - std::min(aCurrent->second.first, newItr->second.first));
+                                    count++;
+                                }
+                            }
+                        }
+                    } else {
+
+                        hasMatch = true;
+                        rcx.second.second.insert(rcx.second.second.end(), newItr->second.second.begin(), newItr->second.second.end());
+                    }
+
+                    newItr++;
+                }
+
+                hasMatch = hasMatch && (count == lengths.at( aCurrent->first.first) - 1 - aCurrent->first.second);
+            }
+
+            if (hasMatch) {
+                if (!manager) rcx.second.second.insert(rcx.second.second.end(), aCurrent->second.second.begin(), aCurrent->second.second.end());
+                remove_duplicates(rcx.second.second);
+                if (manager) rcx.second.first = 1.0 - rcx.second.first;
+                result.emplace_back(rcx);
+            }
+
+            if (aCurrent->first == bCurrent->first) {
+                bCurrent++;
+            }
+
+            aCurrent++;
+        }
+    }
+
+}
+
 
 #endif //KNOBAB_FAST_LTLF_OPERATORS_H

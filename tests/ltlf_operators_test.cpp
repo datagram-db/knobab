@@ -63,8 +63,6 @@ TEST_F(Box_tests, timed) {
     size_t timestamp = 0;
     for (auto it = result.begin(); it != result.end(); it++) {
         auto &trace = traces.at(it->first.first);
-        auto beg = trace.begin() + it->first.second;
-        auto end = trace.end();
         size_t traceId = env2.db.enterTrace(std::to_string(trace_count));
         for (auto beg = trace.begin() + it->first.second, end = trace.end(); beg != end; beg++) {
             env2.db.enterEvent(timestamp++, *beg);
@@ -103,8 +101,6 @@ TEST_F(Diamond_tests, timed) {
     size_t timestamp = 0;
     for (auto it = result.begin(); it != result.end(); it++) {
         auto &trace = traces.at(it->first.first);
-        auto beg = trace.begin() + it->first.second;
-        auto end = trace.end();
         size_t traceId = env2.db.enterTrace(std::to_string(trace_count));
         for (auto beg = trace.begin() + it->first.second, end = trace.end(); beg != end; beg++) {
             env2.db.enterEvent(timestamp++, *beg);
@@ -146,8 +142,6 @@ TEST_F(Until_tests, timed) {
     size_t timestamp = 0;
     for (auto it = result.begin(); it != result.end(); it++) {
         auto &trace = traces.at(it->first.first);
-        auto beg = trace.begin() + it->first.second;
-        auto end = trace.end();
         size_t traceId = env2.db.enterTrace(std::to_string(trace_count));
         for (auto beg = trace.begin() + it->first.second, end = trace.end(); beg != end; beg++) {
             env2.db.enterEvent(timestamp++, *beg);
@@ -205,3 +199,5 @@ TEST_F(Until_tests, negated_timed) {
     EXPECT_EQ(until.size() + resultF.size(), tot);
     EXPECT_EQ(result, resultF);
 }
+
+
