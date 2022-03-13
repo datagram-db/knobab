@@ -521,9 +521,10 @@ inline void aAndNextGloballyB_timed(const Result& a, const Result& b,Result& res
                 newItr++;
             }
 
-            if(newItr->first.second - aCurrent->first.second == 1){
+            if (newItr == bEnd) return;
+
+            if((newItr->first.first == aCurrent->first.first) && (newItr->first.second - aCurrent->first.second == 1)){
                 std::vector<uint16_t> activations{};
-                double cumulativeApprox = 1;
 
                 uint16_t count = 0;
 
@@ -544,11 +545,12 @@ inline void aAndNextGloballyB_timed(const Result& a, const Result& b,Result& res
                                     rcx.second.second.push_back(join);
                                     rcx.second.first *= (1.0 - std::min(aCurrent->second.first, newItr->second.first));
                                     count++;
+                                    hasMatch = true;
                                 }
                             }
                         }
                     } else {
-
+                        count++;
                         hasMatch = true;
                         rcx.second.second.insert(rcx.second.second.end(), newItr->second.second.begin(), newItr->second.second.end());
                     }
