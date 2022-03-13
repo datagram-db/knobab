@@ -18,7 +18,7 @@
 #ifndef _DB_BZ_OID
 #define _DB_BZ_OID 1
 
-#include <knobab/dataStructures/bit_tagged_unions.h>
+#include <yaucl/structures/bit_tagged_unions.h>
 #include <ostream>
 
 using trace_t = uint32_t;

@@ -516,7 +516,7 @@ inline void global_logic_untimed(const Result &section, Result& result, const st
         const uint32_t dist = std::distance(lower, upper - 1);
 
         if(dist == cp.first.second - 1){
-            populateAndReturnEvents(lower, upper, second.second);
+            populateAndReturnEvents(lower, upper, second.second, false);
             result.emplace_back(first, second);
         }
     }
@@ -544,6 +544,8 @@ inline void until_logic_timed(const Result &aSection, const Result &bSection, Re
     bool setUntilHolds;
     uint16_t untilHolds;
 
+    auto join = marked_event::join(0,0);
+    auto activation = marked_event::activation(0);
     ResultRecord cpAIt{{0, 0}, {0, {}}};
     ResultRecord cpLocalUpper{{0, 0}, {1.0, {}}};
     ResultRecord cpAEn{{0, 0}, {1.0, maxVec}};
@@ -616,7 +618,9 @@ inline void until_logic_timed(const Result &aSection, const Result &bSection, Re
                                             hasFail = true;
                                             break;
                                         } else {
-                                            cpResult.second.second.emplace_back(marked_event::join(Fut.second, Prev.second));
+                                            join.id.parts.left = Fut.second;
+                                            join.id.parts.right = Prev.second;
+                                            cpResult.second.second.emplace_back(join);
                                         }
                                     }
                                 }
@@ -634,13 +638,17 @@ inline void until_logic_timed(const Result &aSection, const Result &bSection, Re
                                 continue;
                             }
                         } else {
-                            populateAndReturnEvents(aIt, aEn, cpResult.second.second);
-                            cpResult.second.second.insert(cpResult.second.second.begin(), lower->second.second.begin(), lower->second.second.end());
+                            populateAndReturnEvents(aIt, aEn, cpResult.second.second, false);
+                            cpResult.second.second.insert(cpResult.second.second.end(), lower->second.second.begin(), lower->second.second.end());
                         }
                         remove_duplicates(cpResult.second.second);
                         auto itAllEnd = cpResult.second.second.end();
-                        auto it = std::lower_bound(cpResult.second.second.begin(), itAllEnd, manager ? marked_event::join(untilHolds, lower->first.second) : marked_event::activation(untilHolds));
-                        auto itEnd = std::upper_bound(it, itAllEnd, manager ? marked_event::join(lower->first.second-1, lower->first.second) : marked_event::activation(lower->first.second-1));
+                        activation.id.parts.left = join.id.parts.left = untilHolds;
+                        join.id.parts.right = lower->first.second;
+                        auto it = std::lower_bound(cpResult.second.second.begin(), itAllEnd, manager ? join : activation);
+                        activation.id.parts.left = join.id.parts.left = lower->first.second-1;
+                        join.id.parts.right = lower->first.second;
+                        auto itEnd = std::upper_bound(it, itAllEnd, manager ? join : activation);
                         bool hasMatch = it != itEnd;
                         for (uint16_t i = untilHolds; i<=lower->first.second; i++) {
                             cpResult.first.second = i;
@@ -688,6 +696,7 @@ inline void until_logic_untimed(const Result &aSection, const Result &bSection, 
     env e1, e2;
     std::pair<uint32_t, uint16_t> Fut, Prev;
     temp.clear();
+    auto join = marked_event::join(0,0);
 
     while (lower != upper) {
         uint32_t currentTraceId = localUpper->first.first;
@@ -735,16 +744,19 @@ inline void until_logic_untimed(const Result &aSection, const Result &bSection, 
                                             hasFail = true;
                                             break;
                                         } else {
-                                            cpResult.second.second.emplace_back(marked_event::join(Fut.second, Prev.second));
+                                            join.id.parts.left = Fut.second;
+                                            join.id.parts.right = Prev.second;
+                                            cpResult.second.second.emplace_back(join);
                                         }
                                     }
                                 }
                             }
                             if (hasFail) break;
                         } else {
-                            populateAndReturnEvents(aIt, aEn, cpResult.second.second);
-                            cpResult.second.second.insert(cpResult.second.second.begin(), lower->second.second.begin(), lower->second.second.end());
+                            populateAndReturnEvents(aIt, aEn, cpResult.second.second, false);
+                            cpResult.second.second.insert(cpResult.second.second.end(), lower->second.second.begin(), lower->second.second.end());
                         }
+                        remove_duplicates(cpResult.second.second);
                         temp.emplace_back(cpResult);
                     } else {
                         // For (1)

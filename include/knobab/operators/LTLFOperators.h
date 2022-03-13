@@ -428,6 +428,7 @@ template<typename TableSection> inline
 Result negateUntimed(TableSection &data_untimed, const std::vector<size_t> &lengths, bool preserveNegatedFacts = true) {
     Result result;
     size_t first1 = 0, last1 = lengths.size();
+    ResultRecord rc{{0, 0}, {1.0, {}}};
     auto first2 = data_untimed.begin(), last2 = data_untimed.end();
     for (; first1 != last1; ) {
         if (first2 == last2) {
@@ -437,18 +438,44 @@ Result negateUntimed(TableSection &data_untimed, const std::vector<size_t> &leng
             return result;
         }
         if (first1 > first2->first.first) {
+            if (preserveNegatedFacts) {
+                auto tmp = *first2;
+                tmp.second.first = 1.0 - tmp.second.first;
+                result.push_back(tmp);
+            }
             first2++;
         } else if (first1 < first2->first.first) {
             result.emplace_back(std::make_pair(first1, 0), std::make_pair(1.0, MarkedEventsVector{}));
             first1++;
         } else {
             // MEMO: if you want to preserve the condition where it didn't hold for repairs or givin advices, then you should return a result having 0, and containing the result of the match
-            if (preserveNegatedFacts || (first2->second.first <= std::numeric_limits<double>::epsilon())) {
-                auto tmp = *first2;
-                tmp.second.first = 1.0 - tmp.second.first;
-                result.push_back(tmp);
+            if (preserveNegatedFacts) {
+                rc.first.first = first1;
+                while (first2 != last2 && (first2->first.first != first1)) {
+                    rc.second.second.insert(rc.second.second.end(), first2->second.second.begin(), first2->second.second.end());
+                    rc.second.first *= first2->second.first;
+                    first2++;
+                }
+                rc.second.first = 1.0 - rc.second.first;
+                remove_duplicates(rc.second.second);
+                result.push_back(rc);
             }
             first1++;
+            first2++;
+        }
+    }
+    if (preserveNegatedFacts) {
+        if (first2 != last2) {
+            trace_t currTraceId = first2->first.first;
+            rc.first.first = currTraceId;
+            while ((first2 != last2) && (first2->first.first == currTraceId)) {
+                rc.second.second.insert(rc.second.second.end(), first2->second.second.begin(), first2->second.second.end());
+                rc.second.first *= first2->second.first;
+                first2++;
+            }
+            rc.second.first = 1.0 - rc.second.first;
+            remove_duplicates(rc.second.second);
+            result.push_back(rc);
             first2++;
         }
     }
