@@ -234,3 +234,52 @@ TEST_F(until_tests, aAndFutureBTimed) {
     EXPECT_GE((t1+t3), t4); // benchmarking assumption
 }
 
+TEST_F(until_tests, aAndNextGloballyBTimed) {
+    auto a = env.db.exists("A", ActivationLeaf);
+    auto b = env.db.exists("B", TargetLeaf);
+
+    Result nextGlobalB, aAndXGB1, aAndXGB2, fast;
+
+
+    long long t1,t2,t3,t4;
+    {
+        Result globalB;
+        auto start = std::chrono::high_resolution_clock::now();
+        global_logic_timed(b, globalB, env.db.act_table_by_act_id.trace_length);
+        next_fast(globalB, nextGlobalB, env.db.act_table_by_act_id.trace_length);
+        auto elapsed = std::chrono::high_resolution_clock::now() - start;
+        t1 = std::chrono::duration_cast<std::chrono::microseconds>(
+                elapsed).count();
+    }
+
+    {
+        auto start = std::chrono::high_resolution_clock::now();
+        and_logic_timed(a, nextGlobalB, aAndXGB1, nullptr, env.db.act_table_by_act_id.trace_length);
+        auto elapsed = std::chrono::high_resolution_clock::now() - start;
+        t2 = std::chrono::duration_cast<std::chrono::microseconds>(
+                elapsed).count();
+    }
+
+    {
+        auto start = std::chrono::high_resolution_clock::now();
+        and_fast_timed(a, nextGlobalB, aAndXGB2, nullptr, env.db.act_table_by_act_id.trace_length);
+        auto elapsed = std::chrono::high_resolution_clock::now() - start;
+        t3 = std::chrono::duration_cast<std::chrono::microseconds>(
+                elapsed).count();
+    }
+
+    nextGlobalB.clear();
+    EXPECT_EQ(aAndXGB1, aAndXGB2);
+
+    {
+        auto start = std::chrono::high_resolution_clock::now();
+        aAndNextGloballyB_timed(a, b, fast, nullptr, env.db.act_table_by_act_id.trace_length);
+        auto elapsed = std::chrono::high_resolution_clock::now() - start;
+        t4 = std::chrono::duration_cast<std::chrono::microseconds>(
+                elapsed).count();
+    }
+
+    EXPECT_EQ(fast, aAndXGB2);
+    EXPECT_GE((t1+t2), t4); // benchmarking assumption
+    EXPECT_GE((t1+t3), t4); // benchmarking assumption
+}
