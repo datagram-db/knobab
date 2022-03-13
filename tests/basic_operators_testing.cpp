@@ -364,3 +364,59 @@ TEST_F(basic_operators, unions_untimed_matches) {
     }
 
 }
+
+
+TEST_F(basic_operators, negatedUntimed) {
+    std::unordered_map<std::string, Result> resultSets;
+    resultSets["A"] = env.db.exists("A", NoneLeaf);
+    resultSets["B"] = env.db.exists("B", NoneLeaf);
+    resultSets["C"] = env.db.exists("C", NoneLeaf);
+
+    std::unordered_map<std::string, std::set<trace_t>> traceSets;
+    for (const auto& x : resultSets["A"])
+        traceSets["A"].insert(x.first.first);
+    for (const auto& x : resultSets["B"])
+        traceSets["B"].insert(x.first.first);
+    for (const auto& x : resultSets["C"])
+        traceSets["C"].insert(x.first.first);
+    std::set<trace_t> universe;
+    for (trace_t i = 0; i<env.db.act_table_by_act_id.trace_length.size(); i++)
+        universe.insert(i);
+
+    std::cout << " A = " <<  traceSets["A"] << std::endl;
+    std::cout << " B = " <<  traceSets["B"] << std::endl;
+    std::cout << " C = " <<  traceSets["C"] << std::endl;
+
+    Result result;
+    Result negated = negateUntimed(result, env.db.act_table_by_act_id.trace_length, true);
+    EXPECT_EQ(negated.size(), env.db.noTraces);
+
+    std::unordered_set<std::string> set{"A", "B", "C"};
+    for (const auto& v : powerset(set)) {
+        std::cout << v << std::endl;
+        Result input;
+        std::set<trace_t> inputTraces;
+        if (!v.empty()) {
+            auto it = v.begin();
+            while (it != v.end()) {
+                Result local;
+                std::set<trace_t> local2;
+                setUnion(input.begin(), input.end(), resultSets.at(*it).begin(), resultSets.at(*it).end(), std::back_inserter(local), Aggregators::maxSimilarity<double,double,double>);
+                std::set_union(inputTraces.begin(), inputTraces.end(), traceSets.at(*it).begin(), traceSets.at(*it).end(), std::inserter(local2, local2.begin()));
+                std::swap(local, input);
+                std::swap(local2, inputTraces);
+                it++;
+            }
+        }
+
+        std::set<trace_t> expectedOutput, linearized;
+        std::set_difference(universe.begin(), universe.end(), inputTraces.begin(), inputTraces.end(), std::inserter(expectedOutput, expectedOutput.begin()));
+
+        auto res = negateUntimed(input, env.db.act_table_by_act_id.trace_length, false);
+        for (const auto& ref : res) {
+            linearized.insert(ref.first.first);
+        }
+
+        EXPECT_EQ(expectedOutput, linearized);
+    }
+}
