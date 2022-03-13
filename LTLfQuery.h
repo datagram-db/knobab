@@ -15,7 +15,7 @@
 
 class LTLfQuery {
     struct bit_fields {
-        bool has_tehta : 1, preserve : 1;
+        bool has_theta : 1, preserve : 1, is_atom : 1;
     };
     enum __attribute__((__packed__)) type {
         INIT_Q = 0,

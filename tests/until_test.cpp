@@ -11,6 +11,7 @@
 
 #include <gtest/gtest.h>
 #include <knobab/operators/simple_ltlf_operators.h>
+#include <knobab/operators/fast_ltlf_operators.h>
 #include "log_for_tests.h"
 
 class until_tests : public testing::Test {
@@ -183,3 +184,53 @@ TEST_F(until_tests, logic_timed) {
     }
 
 }
+
+
+TEST_F(until_tests, aAndFutureBTimed) {
+    auto a = env.db.exists("A", ActivationLeaf);
+    auto b = env.db.exists("B", TargetLeaf);
+
+    Result futureB, aAndFutureB1, aAndFutureB2, fast;
+
+
+    long long t1,t2,t3,t4;
+    {
+        auto start = std::chrono::high_resolution_clock::now();
+        future_logic_timed(b, futureB, env.db.act_table_by_act_id.trace_length);
+        auto elapsed = std::chrono::high_resolution_clock::now() - start;
+        t1 = std::chrono::duration_cast<std::chrono::microseconds>(
+                elapsed).count();
+    }
+
+    {
+        auto start = std::chrono::high_resolution_clock::now();
+        and_logic_timed(a, futureB, aAndFutureB1, nullptr, env.db.act_table_by_act_id.trace_length);
+        auto elapsed = std::chrono::high_resolution_clock::now() - start;
+        t2 = std::chrono::duration_cast<std::chrono::microseconds>(
+                elapsed).count();
+    }
+
+    {
+        auto start = std::chrono::high_resolution_clock::now();
+        and_fast_timed(a, futureB, aAndFutureB2, nullptr, env.db.act_table_by_act_id.trace_length);
+        auto elapsed = std::chrono::high_resolution_clock::now() - start;
+        t3 = std::chrono::duration_cast<std::chrono::microseconds>(
+                elapsed).count();
+    }
+
+    futureB.clear();
+    EXPECT_EQ(aAndFutureB1, aAndFutureB2);
+
+    {
+        auto start = std::chrono::high_resolution_clock::now();
+        aAndFutureB_timed(a, b, fast, nullptr, env.db.act_table_by_act_id.trace_length);
+        auto elapsed = std::chrono::high_resolution_clock::now() - start;
+        t4 = std::chrono::duration_cast<std::chrono::microseconds>(
+                elapsed).count();
+    }
+
+    EXPECT_EQ(fast, aAndFutureB2);
+    EXPECT_GE((t1+t2), t4); // benchmarking assumption
+    EXPECT_GE((t1+t3), t4); // benchmarking assumption
+}
+

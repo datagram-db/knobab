@@ -14,6 +14,9 @@ struct PredicateManager {
     DEFAULT_CONSTRUCTORS(PredicateManager);
     PredicateManager(const std::vector<std::vector<SimpleDataPredicate>>& pred, const KnowledgeBase* k): predicates(pred) , kb(k){}
     bool checkValidity(const env &e1, const env &e2) const;
+    bool checkValidity(const env &e1, uint32_t t2, uint16_t e2) const;
+    bool checkValidity(uint32_t t1, uint16_t ea, const env &e2) const;
+
 
     bool operator==(const PredicateManager &rhs) const;
     bool operator!=(const PredicateManager &rhs) const;
@@ -39,6 +42,7 @@ struct PredicateManager {
     }
 
     env GetPayloadDataFromEvent(const std::pair<uint32_t , uint16_t>& pair) const;
+    env GetPayloadDataFromEvent(uint32_t first, uint16_t second, bool isLeft, std::unordered_set<std::string>& leftArgs) const;
 
 
     std::vector<std::vector<SimpleDataPredicate>> predicates;
