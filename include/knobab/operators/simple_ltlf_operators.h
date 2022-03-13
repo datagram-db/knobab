@@ -772,4 +772,40 @@ inline void until_logic_untimed(const Result &aSection, const Result &bSection, 
 }
 
 
+inline void negated_logic_untimed(const Result &section, Result& result, const std::vector<size_t>& lengths) {
+    auto first1 = section.begin(), last1 = section.end();
+    std::map<uint32_t, Result> group1 = GroupByKeyExtractor<decltype(first1), uint32_t, ResultRecord>(
+            first1, last1,
+            [](const ResultRecord &p) {
+                return p.first.first;
+            });
+    ResultRecord rcx{{0,0}, {1.0, {}}};
+    for (trace_t i = 0; i<lengths.size(); i++) {
+        if (!group1.contains(i)) {
+            rcx.first.first = i;
+            result.emplace_back(rcx);
+        }
+    }
+}
+
+
+inline void negated_logic_timed(const Result &section, Result& result, const std::vector<size_t>& lengths) {
+    auto first1 = section.begin(), last1 = section.end();
+    std::map<ResultIndex, Result> group1 = GroupByKeyExtractor<decltype(first1), ResultIndex, ResultRecord>(
+            first1, last1,
+            [](const ResultRecord &p) {
+                return p.first;
+            });
+    ResultRecord rcx{{0,0}, {1.0, {}}};
+    for (trace_t i = 0; i<lengths.size(); i++) {
+        rcx.first.first = i;
+        for (event_t j = 0, N = lengths.at(i); j<N; j++) {
+            rcx.first.second = j;
+            if (!group1.contains(rcx.first)) {
+                result.emplace_back(rcx);
+            }
+        }
+    }
+}
+
 #endif //KNOBAB_SIMPLE_LTLF_OPERATORS_H
