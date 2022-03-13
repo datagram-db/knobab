@@ -94,28 +94,6 @@ const std::vector<std::vector<size_t>> & ActTable::indexing1() { // todo: rename
     }
     builder.act_id_to_trace_id_and_time.clear(); // freeing some memory
     return builder.trace_id_to_event_id_to_offset;
-#if 0
-    // Phase 2, creating the secondary index, for accessing the beginning and the end of the trace from the table
-    for (size_t sigma_id = 0, M = builder.trace_id_to_event_id_to_offset.size(); sigma_id < M ; sigma_id++) {
-        auto& ref = builder.trace_id_to_event_id_to_offset[sigma_id];
-        for (size_t time = 0, T = ref.size(); time < T; time++) {
-            size_t offset = ref[time];
-            auto& real_ref = table[offset];
-            if (time == 0) {
-                assert(secondary_index.size() == sigma_id);
-                secondary_index.emplace_back(&real_ref, &table[ref.back()]);
-            }
-            if (time < T-1) {
-                real_ref.next = &table[ref.at(time+1)];
-            }
-            if (time > 0) {
-                real_ref.prev = &table[ref.at(time-1)];
-            }
-        }
-        //ref.clear();
-    }
-    //builder.trace_id_to_event_id_to_offset.clear();
-#endif
 }
 
 

@@ -94,12 +94,12 @@ void KnowledgeBase::index_data_structures(bool missingDataIndexing) {
     /// Creating the universe relationships, so to return it efficiently without taking too much time!
     universe.clear();
     universeApprox.clear();
-    for (event_t i = 0; i<noTraces; i++) {
+    /*for (event_t i = 0; i<noTraces; i++) {
         for (act_t j = 0, N = act_table_by_act_id.getTraceLength(i); j<N; j++) {
             universe.emplace_back(std::make_pair(i, j), 1.0);
             universeApprox.emplace_back(std::make_pair(i, j), maximum_reliability_for_insertion);
         }
-    }
+    }*/
     assert(std::is_sorted(universe.begin(), universe.end()));
 
     if (missingDataIndexing) {

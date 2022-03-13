@@ -243,4 +243,62 @@ inline void global_fast_untimed(const Result &section, Result& result, const std
     global_logic_untimed(section, result, lengths);
 }
 
+inline void negated_fast_untimed(const Result &section, Result& result, const std::vector<size_t>& lengths) {
+    size_t first1 = 0, last1 = lengths.size();
+    ResultRecord rc{{0, 0}, {1.0, {}}};
+    auto first2 = section.begin(), last2 = section.end();
+    for (; first1 != last1; ) {
+        if (first2 == last2) {
+            while (first1 != last1) {
+                rc.first.first = first1++;
+                result.emplace_back(rc);
+            }
+        }
+        if (first1 > first2->first.first) {
+            first2++;
+        } else if (first1 < first2->first.first) {
+            rc.first.first = first1++;
+            result.emplace_back(rc);
+        } else {
+            first1++;
+            first2++;
+        }
+    }
+}
+
+inline void negated_fast_timed(const Result &section, Result& result, const std::vector<size_t>& lengths) {
+    ResultIndex last1{lengths.size(), 0};
+    ResultRecord rc{{0, 0}, {1.0, {}}};
+    auto first2 = section.begin(), last2 = section.end();
+    for (; rc.first != last1; ) {
+        if (first2 == last2) {
+            while (rc.first != last1) {
+                result.emplace_back(rc);
+                rc.first.second++;
+                if (rc.first.second >= lengths.at(rc.first.first)) {
+                    rc.first.first++;
+                    rc.first.second = 0;
+                }
+            }
+        }
+        if (rc.first > first2->first) {
+            first2++;
+        } else if (rc.first < first2->first) {
+            result.emplace_back(rc);
+            rc.first.second++;
+            if (rc.first.second >= lengths.at(rc.first.first)) {
+                rc.first.first++;
+                rc.first.second = 0;
+            }
+        } else {
+            rc.first.second++;
+            if (rc.first.second >= lengths.at(rc.first.first)) {
+                rc.first.first++;
+                rc.first.second = 0;
+            }
+            first2++;
+        }
+    }
+}
+
 #endif //KNOBAB_FAST_LTLF_OPERATORS_H

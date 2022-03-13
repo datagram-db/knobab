@@ -8,6 +8,7 @@
 #include <knobab/Environment.h>
 #include <gtest/gtest.h>
 #include <knobab/operators/simple_ltlf_operators.h>
+#include <knobab/operators/fast_ltlf_operators.h>
 
 constexpr char tabChar = '\t';
 
@@ -21,7 +22,7 @@ auto sizes = curr.parent_path().parent_path() / "data" /"testing"/"ltlf" / (base
 ss.open(filename);\
 std::ifstream fs{sizes};                                               \
 char c;                                                         \
-fs >> pos >> c >> neg;                                          \
+fs >> pos >> neg;                                          \
 env.doStats = false;  env.index_missing_data = false;           \
 env.load_log(TAB_SEPARATED_EVENTS, true, filename, false, ss);  \
 ss.close(); ss.open(filename);                                  \
@@ -163,4 +164,44 @@ TEST_F(Until_tests, timed) {
     until_logic_untimed(a, b, result, nullptr, env2.db.act_table_by_act_id.trace_length);
     EXPECT_EQ(trace_count, result.size());
     EXPECT_EQ(resultSize, result.size());
+}
+
+TEST_F(Until_tests, negated_untimed) {
+    Environment env2;
+    env2.doStats = false;
+    auto a = env.db.exists("a", ActivationLeaf);
+    auto b = env.db.exists("b", TargetLeaf);
+    Result until, result, resultF;
+    until_logic_untimed(a, b, until, nullptr, env.db.act_table_by_act_id.trace_length);
+    negated_logic_untimed(until, result, env.db.act_table_by_act_id.trace_length);
+    std::unordered_set<size_t> S;
+    for (const auto& ref : result) S.insert(ref.first.first);
+    EXPECT_EQ(neg, S.size());
+
+    S.clear();
+    negated_fast_untimed(until, resultF, env.db.act_table_by_act_id.trace_length);
+    for (const auto& ref : resultF) S.insert(ref.first.first);
+    EXPECT_EQ(neg, S.size());
+    EXPECT_EQ(result, resultF);
+}
+
+TEST_F(Until_tests, negated_timed) {
+    Environment env2;
+    env2.doStats = false;
+    auto a = env.db.exists("a", ActivationLeaf);
+    auto b = env.db.exists("b", TargetLeaf);
+
+    Result until, result, resultF;
+    until_logic_timed(a, b, until, nullptr, env.db.act_table_by_act_id.trace_length);
+    negated_logic_timed(until, result, env.db.act_table_by_act_id.trace_length);
+
+    size_t tot = 0;
+    for (auto& ref : env.db.act_table_by_act_id.trace_length) tot += ref;
+
+    EXPECT_EQ(until.size() + result.size(), tot);
+
+    negated_fast_timed(until, resultF, env.db.act_table_by_act_id.trace_length);
+
+    EXPECT_EQ(until.size() + resultF.size(), tot);
+    EXPECT_EQ(result, resultF);
 }
