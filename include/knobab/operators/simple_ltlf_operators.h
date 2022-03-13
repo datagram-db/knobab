@@ -376,9 +376,9 @@ inline void future_logic_timed(const Result &section, Result& result, const std:
         Result toBeReversed;
         auto it = lower+std::distance(lower,upper)-1;
         bool isBegin = true;
-        for (int64_t i = (upper-1)->first.second; (i >= 0) && (it >= lower); i--) {
+        for (int64_t i = (upper-1)->first.second; (i >= 0); i--) {
             first.second = i;
-            if (it->first.second == i) {
+            if ((it >= lower) && (it->first.second == i)) {
                 second.first = std::max(it->second.first, second.first);
                 second.second.insert(second.second.begin(), it->second.second.begin(), it->second.second.end());
                 remove_duplicates(second.second);
@@ -806,6 +806,18 @@ inline void negated_logic_timed(const Result &section, Result& result, const std
             }
         }
     }
+}
+
+inline void implies_logic_timed(const Result &aSection, const Result &bSection, const Result &notaSection, Result& result, const PredicateManager* manager = nullptr, const std::vector<size_t>& lengths = {}) {
+    Result aTrue;
+    and_logic_timed(aSection, bSection, aTrue, manager, lengths);
+    or_logic_timed(aTrue, notaSection, result, nullptr, lengths);
+}
+
+inline void implies_logic_untimed(const Result &aSection, const Result &bSection, const Result &notaSection, Result& result, const PredicateManager* manager = nullptr, const std::vector<size_t>& lengths = {}) {
+    Result aTrue;
+    and_logic_untimed(aSection, bSection, aTrue, manager, lengths);
+    or_logic_untimed(aTrue, notaSection, result, nullptr, lengths);
 }
 
 #endif //KNOBAB_SIMPLE_LTLF_OPERATORS_H
