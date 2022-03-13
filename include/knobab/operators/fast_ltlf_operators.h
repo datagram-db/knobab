@@ -414,17 +414,16 @@ inline void negated_fast_timed(const Result &section, Result& result, const std:
     }
 }
 
+
 /**
  *
  * @author Samuel 'Sam' Appleby, Giacomo Bergami
  *
- * @param aCurrent
- * @param aEnd
- * @param bCurrent
- * @param bEnd
- * @param d_first
- * @param aggr
+ * @param aResult
+ * @param bResult
+ * @param result
  * @param manager
+ * @param lengths
  */
 inline void aAndFutureB_timed(const Result& aResult, const Result& bResult, Result& result, const PredicateManager *manager = nullptr, const std::vector<size_t>& lengths = {}) {
     if (bResult.empty()) {
@@ -495,6 +494,16 @@ inline void aAndFutureB_timed(const Result& aResult, const Result& bResult, Resu
 }
 
 
+/**
+ *
+ * @author Samuel 'Sam' Appleby, Giacomo Bergami
+ *
+ * @param aResult
+ * @param bResult
+ * @param result
+ * @param manager
+ * @param lengths
+ */
 inline void aAndNextGloballyB_timed(const Result& a, const Result& b,Result& result, const PredicateManager *manager = nullptr, const std::vector<size_t> lengths = {}) {
     if (b.empty()) {
         result.clear();
