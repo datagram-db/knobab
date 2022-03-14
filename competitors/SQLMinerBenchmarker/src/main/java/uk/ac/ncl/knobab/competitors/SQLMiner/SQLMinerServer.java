@@ -8,6 +8,7 @@ import uk.ac.ncl.knobab.competitors.SQLMiner.dbloader.tmptables.SourceTabLoader;
 import java.io.*;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.charset.StandardCharsets;
+import java.sql.SQLException;
 import java.util.*;
 
 public class SQLMinerServer {
@@ -45,8 +46,9 @@ public class SQLMinerServer {
     }
 
     // Loading the database into PostgreSQL
-    public static boolean loadDATAForSQLMiner() {
-        if (databaseConnection().isEmpty()) {
+    public static boolean loadDATAForSQLMiner() throws SQLException {
+        Optional<Database> x = databaseConnection();
+        if (x.isEmpty()) {
             if (!loadProperties()) return false;
             Optional<Database> opt = Database.openOrCreate(engine, dbname, username, password);
 
@@ -59,7 +61,18 @@ public class SQLMinerServer {
                 System.err.println("Error creating the new database (");
             }
             return true;
-        } else return false;
+        } else {
+            try {
+                var it = x.get().rawSqlQueryOpen(new File("/home/giacomo/IdeaProjects/JavaConcurrentAPI/SQLMinerBenchmarker/data_mining_patterns/response.sql"));
+                while (it.next()) {
+                    System.out.println(
+                            it.getString(1));
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            return false;
+        }
     }
 
     /**
@@ -93,12 +106,13 @@ public class SQLMinerServer {
     private static <T extends SourceTabLoader, Sub extends T> double instantiateTable(Database database, String table_name, File path, File tabSchema, int batchSize) {
         System.out.println("Creating table: "+table_name);
         LinkedHashMap<String, String> map = database.createTableFromTabFile(table_name, tabSchema);
+        if (map.size() == 2 && map.containsKey("__time") && map.containsKey("event_id")) return 0;
         try {
 
             final BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(path), StandardCharsets.UTF_8));
 
             // Removing the header;
-            //br.readLine();
+            br.readLine();
 
             // Reading the first line after the header
             String ln = br.readLine();
