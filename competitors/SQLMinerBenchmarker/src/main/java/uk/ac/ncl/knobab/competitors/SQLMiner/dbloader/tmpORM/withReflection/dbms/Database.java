@@ -398,6 +398,15 @@ public class Database implements AutoCloseable {
         return null;
     }
 
+    public ResultSet rawSqlQueryOpen(File file) throws IOException, SQLException {
+        Statement s = connection.createStatement();
+        return s.executeQuery(new String(Files.readAllBytes(file.toPath()),UTF_8));
+    }
+
+    public ResultSet rawSqlQuery(File file) throws IOException {
+        return rawSqlQuery(new String(Files.readAllBytes(file.toPath()),UTF_8));
+    }
+
     public boolean rawSqlCommand(String query) {
         try (Statement s = connection.createStatement()) {
             return s.execute(query);

@@ -6,7 +6,7 @@ import uk.ac.ncl.knobab.competitors.SQLMiner.dbloader.tmptables.SourceTabLoader;
 
 import java.io.File;
 
-@Table(sqlTable = "log1")
+@Table(sqlTable = "log")
 public class LogRecord extends SourceTabLoader {
 
     /**
