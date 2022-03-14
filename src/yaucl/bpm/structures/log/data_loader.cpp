@@ -26,7 +26,7 @@ void parse_payload(bool isTrace, rapidxml::xml_node<>* payloadNode, struct paylo
     constexpr std::basic_string_view concept_name{"concept:name"};
     constexpr std::basic_string_view timeTimestamp{"time:timestamp"};
     if (tag_name == "string") {
-        assert(attribute != concept_name);
+        //assert(attribute != concept_name);
         pay.strings[attribute] = value;
     } else if (tag_name == "float") {
         pay.floats[attribute] = (double)std::stod(value);
@@ -120,53 +120,73 @@ void load_xes_with_data(const std::string &filename, std::istream &file, bool lo
     constexpr std::basic_string_view concept_name{"concept:name"};
     constexpr std::basic_string_view timeTimestamp{"time:timestamp"};
     ///yaucl::bpm::log log;
-
+    size_t trace_id = 0;
     tv->enterLog(filename, filename);
 
     SIBLING_ITERATE(trace, root_node, "trace", false) {
-
         ///yaucl::bpm::trace& transaction = log.traces.emplace_back();
         long long int previous = 0;
         XML_SCAN_STEPS event_start = XML_SCAN_STEPS::LABELS_TRACE_INFO;
-        size_t trace_id = 0;
         bool hasTraceOpened = false;
-        tv->enterTrace(std::to_string(trace_id));
+        struct payload pay;
 
         SIBLING_ITERATE2(t, trace) {
             std::string tag_name  = t->name();
-            std::string trace_name = std::to_string(trace_id++);
+            //std::string trace_name = std::to_string(trace_id++);
             if (tag_name == "event") {
+                if (!hasTraceOpened) {
+                    hasTraceOpened = true;
+                    trace_id = tv->enterTrace(std::to_string(trace_id));
+                }
+                if (event_start == XML_SCAN_STEPS::TRACE_PAYLOAD) {
+                    // Before loading the event, I create a dummy event,
+                    // which will contain the trace payload information
+                    auto event_id = tv->enterEvent(0, "__trace__payload");
+                    for (auto &str: pay.strings) {
+                        tv->visitField(str.first, str.second);
+                    }
+                    for (auto &str: pay.booleans) {
+                        tv->visitField(str.first, str.second);
+                    }
+                    for (auto &str: pay.ints) {
+                        tv->visitField(str.first, str.second);
+                    }
+                    for (auto &str: pay.floats) {
+                        tv->visitField(str.first, str.second);
+                    }
+                    for (auto &str: pay.dates) {
+                        tv->visitField(str.first, str.second);
+                    }
+                    tv->exitEvent(event_id);
+                }
                 event_start = XML_SCAN_STEPS::EVENTS;
                 parse_event(t, tv, load_data);
             } else if (tag_name == "string") {
                 std::string attribute = GET_ATTRIBUTE(t, "key");
                 std::string value     = GET_ATTRIBUTE(t, "value");
                 if (attribute == concept_name) {
-                    assert(event_start == XML_SCAN_STEPS::LABELS_TRACE_INFO);
-                    trace_name = value;
+                    //assert(event_start == XML_SCAN_STEPS::LABELS_TRACE_INFO);
+                    //trace_name = value;
                 } else {
                     assert(event_start != XML_SCAN_STEPS::EVENTS);
                     if (event_start == XML_SCAN_STEPS::LABELS_TRACE_INFO) {
-                        trace_id = tv->enterTrace(trace_name);
+                        //trace_id = tv->enterTrace(trace_name);
                         event_start = XML_SCAN_STEPS::TRACE_PAYLOAD;
-                        hasTraceOpened = true;
                     }
-                    //if (load_data) parse_payload(true, t, tv);
+                    if (load_data) parse_payload(true, t, pay);
                 }
             } else {
                 assert(event_start != XML_SCAN_STEPS::EVENTS);
                 if (event_start == XML_SCAN_STEPS::LABELS_TRACE_INFO) {
-                    trace_id = tv->enterTrace(trace_name);
+                    //trace_id = tv->enterTrace(trace_name);
                     event_start = XML_SCAN_STEPS::TRACE_PAYLOAD;
-                    hasTraceOpened = true;
                 }
-                //if (load_data) parse_payload(true, t, tv);
+                if (load_data) parse_payload(true, t, pay);
             }
         }
 
         if (hasTraceOpened) {
             tv->exitTrace(trace_id);
-            hasTraceOpened = false;
         }
     }
 
