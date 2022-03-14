@@ -701,6 +701,7 @@ int main(int argc, char **argv) {
     // --sqlminer=C:/Users/Sam/Documents/Codebases/knobabBenchmark/knobab/competitors/SQLMinerBenchmarker/log --csv=test.csv --xes=data/testing/xes/concept_drift_detection_10000.xes
     //  https://ieee-dataport.org/open-access/synthetic-event-logs-concept-drift-detection
     // --tab=data/testing/ltlf/WeakUntil --sqlminer=/home/giacomo/IdeaProjects/JavaConcurrentAPI/SQLMinerBenchmarker/log
+// --tab=data/testing/ltlf/WeakUntil --nostats --sqlminer=/home/giacomo/IdeaProjects/JavaConcurrentAPI/SQLMinerBenchmarker/log
 
     return 0;
 }
