@@ -2,7 +2,7 @@
 // Created by giacomo on 15/03/2022.
 //
 
-#include "DeclareQueryLanguageParser.h"
+#include "knobab/queries/DeclareQueryLanguageParser.h"
 #include <knobab/queries/LTLfQueryParser.h>
 #include <knobab/queries/LTLfQueryLexer.h>
 #include <yaucl/data/json.h>
