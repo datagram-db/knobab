@@ -613,9 +613,19 @@ void sam_testing() {
 #endif
 }
 
+#include "DeclareQueryLanguageParser.h"
 
+void parse_declare_query_planner() {
+    DeclareQueryLanguageParser dqlp;
+    std::ifstream file{"scripts/logic_plan.queryplan"};
+    dqlp.parse(file);
+}
 
 int main(int argc, char **argv) {
+
+    parse_declare_query_planner();
+    exit(1);
+
     bool setUpServer = false;
     bool doStats = true;
     log_data_format format = HUMAN_READABLE_YAUCL;
