@@ -5,10 +5,13 @@
 #ifndef KNOBAB_LTLFQUERY_H
 #define KNOBAB_LTLFQUERY_H
 
+#include <set>
 #include <cstddef>
 #include <vector>
 #include <yaucl/structures/bit_tagged_unions.h>
 #include <yaucl/structures/default_constructors.h>
+#include <knobab/predicates/PredicateManager.h>
+#include <knobab/operators/semantics.h>
 
 #define DECLARE_TYPE_NONE   (0)
 #define DECLARE_TYPE_LEFT   (1)
@@ -43,15 +46,35 @@ struct LTLfQuery {
         NOT_QP = 12,
         AF_QPT = 13,
         AXG_QPT = 14,
-        FALSEHOOD_QPT = 15
+        FALSEHOOD_QP = 15
     };
     type t;
     short declare_type = 0;
     bit_fields fields;
-    size_t n;
-    std::vector<LTLfQuery> args;
+    size_t n; //numeric_arg
 
-    LTLfQuery() : t{FALSEHOOD_QPT}, declare_type{DECLARE_TYPE_NONE}, n{0}, fields{0} {}
+    /// Arguments used while compiling the declare clauses description from the script
+    std::vector<LTLfQuery> args_from_script;
+
+    // AFTER THE COMPILATION OF THE QUERY PLAN. TODO: to be inserted in the definition of hashing and equality
+    std::vector<LTLfQuery*> args;
+    std::set<std::string> atom;
+    std::set<size_t> partial_results;
+    size_t result_id = 0;
+    PredicateManager joinCondition;
+    size_t parentMin = std::numeric_limits<size_t>::max(), parentMax = 0, dis = 0;
+    Result result;
+    size_t currentLayer() const {
+        return parentMax + 1;
+    }
+    void associateDataQueryIdsToFormulaByAtom(const std::string &x, size_t l) {
+        if (atom.contains(x)) {
+            partial_results.emplace(l);
+        } else for (auto& child : args)
+                child->associateDataQueryIdsToFormulaByAtom(x, l);
+    }
+
+    LTLfQuery() : t{FALSEHOOD_QP}, declare_type{DECLARE_TYPE_NONE}, n{0}, fields{0} {}
     DEFAULT_COPY_ASSGN(LTLfQuery)
 
     bool operator==(const LTLfQuery &rhs) const;
@@ -91,7 +114,7 @@ namespace std {
         {
             using yaucl::hashing::hash_combine;
             size_t init = 31;
-            for (const auto& x : k.args)
+            for (const auto& x : k.args_from_script)
                 init = hash_combine<LTLfQuery>(init, x);
             size_t f= hash_combine<size_t>(hash_combine<unsigned char>(hash_combine<short>(hash_combine<size_t>(init, k.t), k.declare_type), k.fields.id.data), k.n);
             return f;
