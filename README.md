@@ -6,11 +6,11 @@
 
 ## Authors
 
- *  Giacomo Bergami (2020-)
- *  Samuel "Sam" Appleby (2022-) 
+*  Giacomo Bergami (2020-)
+*  Samuel "Sam" Appleby (2022-)
 
 
-# Configurations 
+# Configurations
 
 After compiling the tool with CMake, the final project is delivered as a server(.exe) executable. By running it with the `--help` argument, the following message will be displayed:
 
@@ -39,6 +39,11 @@ After compiling the tool with CMake, the final project is delivered as a server(
         -n, --nostats                     Whether the code will lose time in
                                           calculating the statistics for the
                                           traces
+        
+        -p[#threads],
+        --threads=[#threads]              [Ineffective: the program is compiled
+                                          in sequential mode]
+                                  
         -d[Models/Queries...],
         --declare=[Models/Queries...]     The queries expressed as Declare
                                           models
@@ -61,12 +66,19 @@ In order to run multiple queries stored in different files over one single model
 ./cmake-build-debug/server  --log "data/testing/log.txt" --declare "data/testing/SimpleComposition.txt" "data/testing/InitSingleA.txt" "data/testing/InitSingleC.txt" --csv test.csv 
 ```
 
+## CMake
+
+With respect to the CMake compilation flags, in order to mimick advanced JIT features from modern relational databases, such as PostgreSQL, we decided to exploit macros and compile time configuration to build KnoBAB with a specific configuration setting without relying on run-time code function calls. Some flags are explained in here:
+
+* ```PARALLEL```: activates the multithreaded query plan when available. After this, it is possible to exploit the `-p` flag to define the number of threads to be associated to the query plan.
+
 ## Windows
 
 ### Toolchain
- * CLion 2021.3.3
-   * CMake: Bundled (v 3.21.1)  
+* CLion 2021.3.3
+   * CMake: Bundled (v 3.21.1)
    * CMake Debug Generator: '''-G "Unix Makefiles"''''
- * Cygwin64 (v 3.3.4)
- * Cygwin GDB (v 10.2)
+* Cygwin64 (v 3.3.4)
+* Cygwin GDB (v 10.2)
  
+****

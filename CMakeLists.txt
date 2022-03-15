@@ -18,6 +18,13 @@ set(Boost_USE_STATIC_RUNTIME    OFF)
 find_package(Boost 1.74 COMPONENTS python)
 find_package(PythonLibs)
 
+if(NOT DEFINED PARALLEL)
+    message(WARNING "Compiling in sequential mode")
+else()
+    message(WARNING "Compiling in parallel mode")
+    add_compile_definitions(MAXSatPipeline_PARALLEL)
+endif()
+
 if(Boost_FOUND AND PYTHONLIBS_FOUND)
     include_directories(${Boost_INCLUDE_DIRS})
     include_directories(${PYTHON_INCLUDE_DIRS})
