@@ -1,5 +1,5 @@
 
-// Generated from ./src/yaucl/bpm/structures/declare/DAD.g by ANTLR 4.9.3
+// Generated from ../src/yaucl/bpm/structures/declare/DAD.g4 by ANTLR 4.9.3
 
 #pragma once
 
@@ -78,7 +78,7 @@ public:
     antlr4::Token *name = nullptr;
     std::vector<FieldsContext *> fields();
     FieldsContext* fields(size_t i);
-    antlr4::tree::TerminalNode *LABEL();
+    antlr4::tree::TerminalNode *STRING();
     PropContext *prop();
     virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
     virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
@@ -93,7 +93,7 @@ public:
     antlr4::Token *name = nullptr;
     FieldsContext *fields();
     antlr4::tree::TerminalNode *INTNUMBER();
-    antlr4::tree::TerminalNode *LABEL();
+    antlr4::tree::TerminalNode *STRING();
     virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
     virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
 

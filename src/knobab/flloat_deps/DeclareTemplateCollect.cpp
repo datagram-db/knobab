@@ -21,13 +21,12 @@ DeclareTemplateCollect::DeclareTemplateCollect(const std::filesystem::path& cach
 #include <knobab/flloat_deps/ParseFFLOATDot.h>
 
 NodeLabelBijectionFA<std::string, easy_prop>
-DeclareTemplateCollect::getDeclareTemplate(const declare_templates type, size_t nargs) {
+DeclareTemplateCollect::getDeclareTemplate(const declare_templates& type, size_t nargs) {
     auto cp = std::make_pair(type, nargs);
     auto it = graph_map.find(cp);
     if (it == graph_map.end()) {
         // Checking if the file is in cache
-        std::string_view w = magic_enum::enum_name(type);
-        std::string name{w.data(), w.size()};
+        std::string name{type};
         name = name + "_" + std::to_string(nargs) ;
         std::filesystem::path cache_file = element / name;
         if (!std::filesystem::exists(cache_file)) {

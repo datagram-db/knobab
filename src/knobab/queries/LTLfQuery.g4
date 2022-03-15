@@ -11,7 +11,7 @@ has_args : 'args' INTNUMBER;
 
 query : INIT TIMED? declare_arguments                                            #init
       | END  TIMED? declare_arguments                                            #end
-      | EXISTS TIMED? declare_arguments INTNUMBER                                #exists
+      | EXISTS TIMED? NEGATED? declare_arguments INTNUMBER                                #exists
       | ABSENCE TIMED? declare_arguments INTNUMBER                               #absence
       | NEXT query                                                        #next
       |<assoc=right> query OR TIMED? THETA? query                                      #or
@@ -21,7 +21,7 @@ query : INIT TIMED? declare_arguments                                           
       |<assoc=right> query UNTIL TIMED? THETA?  query                                             #until
       | BOX TIMED?  query                                                           #box
       | DIAMOND TIMED?   query                                                           #diamond
-      | '!' TIMED? query PRESERVE?                                                 #not
+      | NEGATED TIMED? query PRESERVE?                                                 #not
       | '(' query ')'                                                       #paren
       |<assoc=right> query '&Ft' THETA? query                                             #and_future
       |<assoc=right> query '&XGt' THETA? query                                            #and_next_globally
@@ -52,6 +52,7 @@ THETA: 'THETA';
 LEFT : 'L';
 RIGHT: 'R';
 MIDDLE: 'M';
+NEGATED: '~';
 INTNUMBER : ('0'..'9')+ ;
 STRING : '"' (~[\\"] | '\\' [\\"])* '"';
 SPACE : [ \t\n\r]+ -> skip;

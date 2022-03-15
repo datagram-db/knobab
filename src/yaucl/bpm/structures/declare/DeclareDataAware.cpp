@@ -53,7 +53,7 @@ inline void print_dnf(std::ostream &os, const std::vector<std::unordered_map<std
 
 
 std::ostream &operator<<(std::ostream &os, const DeclareDataAware &aware) {
-    os << magic_enum::enum_name(aware.casusu);
+    os << /*magic_enum::enum_name*/(aware.casusu);
     os << '(' << aware.left_act << ", ";
     if (aware.dnf_left_map.empty())
         os << "true";
@@ -273,38 +273,18 @@ toFiniteSemantics(declare_templates casusu, size_t n, const std::string &left_ac
     }
 }
 */
-bool isUnaryPredicate(declare_templates type) {
-    switch (type) {
-        case Existence:
-        case Absence:
-        //case Absence2:
-        case End:
-        case Init:
-            return true;
-        default:
-            return false;
-    }
+bool isUnaryPredicate(const declare_templates& type) {
+    return type == "Existence" || type == "Absence" || type == "End" || type == "Init";
 }
 
-bool isPredicateNegative(declare_templates type) {
-    switch(type) {
-        case NotCoExistence:
-        case NegSuccession:
-        case NegChainSuccession:
-        //case Absence2:
-        case Absence:
-        case ExlChoice:
-        case AltPrecedence:
-        case AltResponse:
-        case AltSuccession:
-            return true;
-        default:
-            return false;
-    }
+bool isPredicateNegative(const declare_templates& type) {
+    return type == "NotCoExistence" || type == "NegSuccession" || type == "NegChainSuccession" || type == "Absence" || type == "ExlChoice" || type == "AltPrecedence" || type == "AltResponse" || type == "AltSuccession";
 }
-
 
 ltlf DeclareDataAware::toFiniteSemantics(bool isForGraph) const {
+    DEBUG_ASSERT(false);
+    return ltlf::True().negate();
+#if 0
     ltlf left =  //left_decomposed_atoms.empty() ?
                  (dnf_left_map.empty() ?
             ltlf::Act(left_act) :
@@ -318,7 +298,7 @@ ltlf DeclareDataAware::toFiniteSemantics(bool isForGraph) const {
     }
 
     switch (casusu) {
-        case Existence:
+        case "Existence":
             if (n > 1) {
                 return ltlf::Diamond(
                         ltlf::And(left, ltlf::Next(doExistence(n - 1, left_act, dnf_left_map).toFiniteSemantics(isForGraph))),isForGraph
@@ -405,13 +385,14 @@ ltlf DeclareDataAware::toFiniteSemantics(bool isForGraph) const {
         case NegChainSuccession:
             return ltlf::Box(ltlf::Equivalent(left, ltlf::Next(right.negate())), isForGraph);
     }
+#endif
 }
 
 DeclareDataAware DeclareDataAware::doExistence(size_t n, const std::string &left_act,
                                                const std::vector<std::unordered_map<std::string, DataPredicate>> &dnf_left_map) {
     DeclareDataAware sol;
     sol.n = n;
-    sol.casusu = Existence;
+    sol.casusu = "Existence";
     sol.left_act = left_act;
     sol.dnf_left_map = dnf_left_map;
     return sol;
@@ -421,7 +402,7 @@ DeclareDataAware DeclareDataAware::doAbsence(size_t n, const std::string &left_a
                                              const std::vector<std::unordered_map<std::string, DataPredicate>> &dnf_left_map) {
     DeclareDataAware sol;
     sol.n = n;
-    sol.casusu = Absence;
+    sol.casusu = "Absence";
     sol.left_act = left_act;
     sol.dnf_left_map = dnf_left_map;
     return sol;
@@ -434,7 +415,7 @@ DeclareDataAware DeclareDataAware::parse_declare_non_data_string(const std::stri
     ssize_t pos = line.find('[');
     DEBUG_ASSERT(pos != std::string::npos);
     std::string pattern_name = line.substr(0, pos);
-    pattern.casusu = magic_enum::enum_cast<declare_templates>(pattern_name).value();
+    pattern.casusu = pattern_name;//magic_enum::enum_cast<declare_templates>(pattern_name).value();
 
     pattern_name = line.substr(pos+1);
     pos = pattern_name.find(',');
@@ -485,7 +466,7 @@ bool DeclareDataAware::operator!=(const DeclareDataAware &rhs) const {
     return !(rhs == *this);
 }
 
-DeclareDataAware DeclareDataAware::unary(declare_templates t, const std::string &argument, size_t n = 1) {
+DeclareDataAware DeclareDataAware::unary(const declare_templates& t, const std::string &argument, size_t n = 1) {
     DEBUG_ASSERT(isUnaryPredicate(t));
     DeclareDataAware result;
     result.casusu = t;
@@ -494,7 +475,7 @@ DeclareDataAware DeclareDataAware::unary(declare_templates t, const std::string 
     return result;
 }
 
-DeclareDataAware DeclareDataAware::binary(declare_templates t, const std::string &left, const std::string right) {
+DeclareDataAware DeclareDataAware::binary(const declare_templates& t, const std::string &left, const std::string right) {
     DEBUG_ASSERT(!isUnaryPredicate(t));
     DeclareDataAware result;
     result.casusu = t;

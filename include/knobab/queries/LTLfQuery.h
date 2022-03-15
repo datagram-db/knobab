@@ -15,12 +15,14 @@
 #define DECLARE_TYPE_RIGHT  (2)
 #define DECLARE_TYPE_MIDDLE  (3)
 
-TAGGED_UNION_WITH_ENCAPSULATION_BEGIN(unsigned char, bit_fields, 0, 4, bool has_theta : 1, bool preserve : 1, bool is_atom : 1, bool is_timed:1)
-    (bool has_theta, bool preserve, bool is_atom,bool is_timed)  {
+TAGGED_UNION_WITH_ENCAPSULATION_BEGIN(unsigned char, bit_fields, 0, 6, bool has_theta : 1, bool preserve : 1, bool is_atom : 1, bool is_timed:1, bool is_negated:1, bool is_numbered:1)
+    (bool has_theta, bool preserve, bool is_atom, bool is_timed, bool is_negated, bool is_numbered)  {
         id.parts.has_theta = has_theta;
         id.parts.preserve = preserve;
         id.parts.is_atom = is_atom;
         id.parts.is_timed = is_timed;
+        id.parts.is_negated = is_negated;
+        id.parts.is_numbered = is_numbered;
     }
 TAGGED_UNION_ENCAPSULATOR_END
 
@@ -57,7 +59,7 @@ struct LTLfQuery {
 
     static LTLfQuery qINIT(short declare_argument, bool isTimed);
     static LTLfQuery qEND(short declare_argument, bool isTimed);
-    static LTLfQuery qEXISTS(size_t narg, short declare_argument, bool isTimed);
+    static LTLfQuery qEXISTS(size_t narg, short declare_argument, bool isTimed, bool isNegated);
     static LTLfQuery qABSENCE(size_t narg, short declare_argument, bool isTimed);
     static LTLfQuery qNEXT(const LTLfQuery& arg, bool isTimed);
     static LTLfQuery qNOT(const LTLfQuery& arg, bool isTimed, bool preserve);
@@ -70,7 +72,13 @@ struct LTLfQuery {
     static LTLfQuery qUNTIL(const LTLfQuery& lhs, const LTLfQuery& rhs, bool isTimed, bool hasTheta);
     static LTLfQuery qBOX(const LTLfQuery& lhs, bool isTimed);
     static LTLfQuery qDIAMOND(const LTLfQuery& lhs, bool isTimed);
+
+
 };
+
+#include <ostream>
+
+std::ostream& operator<<(std::ostream& os, const LTLfQuery& );
 
 #include <yaucl/hashing/vector_hash.h>
 #include <yaucl/hashing/hash_combine.h>

@@ -23,6 +23,8 @@ MAXSatPipeline::MAXSatPipeline(size_t nThreads)
 #endif
 {
     // TODO: with different specifications
+    DEBUG_ASSERT(false);
+#if 0
     for (declare_templates t : magic_enum::enum_values<declare_templates>()) {
         if (isUnaryPredicate(t)) continue;/*
         ltlf_semantics.emplace(t, DeclareDataAware::unary(t, LEFT_ATOM, 1)
@@ -33,6 +35,7 @@ MAXSatPipeline::MAXSatPipeline(size_t nThreads)
                 .toFiniteSemantics(false)
                 .nnf(false)).first->second.mark_join_condition(LEFT_ATOM, RIGHT_ATOM);
     }
+#endif
 }
 
 void MAXSatPipeline::clear() {
@@ -86,7 +89,7 @@ void MAXSatPipeline::data_chunk(CNFDeclareDataAware *model,
             if (!ref.empty()) continue; // Ignoring already visited patterns
 
             ltlf_query *formula;
-            if (item.casusu == Init) {
+            if (item.casusu == "Init") {
                 formula = qm.init1(item.left_act, item.left_decomposed_atoms);
                 if ((item.left_decomposed_atoms.size() == 1) && (*item.left_decomposed_atoms.begin() == item.left_act)) {
                     generateAtomQuery(toUseAtoms, empty_result, item, formula, InitQuery, 0);
@@ -98,7 +101,7 @@ void MAXSatPipeline::data_chunk(CNFDeclareDataAware *model,
                     qm.getQuerySemiInstantiated(LDA, false, formula, true, nullptr, formula->casusu, nullptr,
                                              false, (KnowledgeBase*)&kb);
                 }
-            } else if (item.casusu == End) {
+            } else if (item.casusu == "End") {
                 formula = qm.end1(item.left_act, item.left_decomposed_atoms);
                 if ((item.left_decomposed_atoms.size() == 1) && (*item.left_decomposed_atoms.begin() == item.left_act)) {
                     generateAtomQuery(toUseAtoms, empty_result, item, formula, EndsQuery, 0);
@@ -110,7 +113,7 @@ void MAXSatPipeline::data_chunk(CNFDeclareDataAware *model,
                     qm.getQuerySemiInstantiated(LDA, false, formula, true, nullptr, formula->casusu, nullptr,
                                                 false, (KnowledgeBase*)&kb);
                 }
-            } else if (item.casusu == Existence) {
+            } else if (item.casusu == "Existence") {
                 formula = qm.exists(item.left_act, item.left_decomposed_atoms, item.n);
                 if ((item.left_decomposed_atoms.size() == 1) && (*item.left_decomposed_atoms.begin() == item.left_act)) {
                     generateAtomQuery(toUseAtoms, empty_result, item, formula, ExistsQuery, item.n);
@@ -122,7 +125,7 @@ void MAXSatPipeline::data_chunk(CNFDeclareDataAware *model,
                     qm.getQuerySemiInstantiated(LDA, false, formula, true, nullptr, formula->casusu, nullptr,
                                                 false, (KnowledgeBase*)&kb);
                 }
-            } else if (item.casusu == Absence) {
+            } else if (item.casusu == "Absence") {
                 formula = qm.absence(item.left_act, item.left_decomposed_atoms, item.n);
                 if ((item.left_decomposed_atoms.size() == 1) && (*item.left_decomposed_atoms.begin() == item.left_act)) {
                     generateAtomQuery(toUseAtoms, empty_result, item, formula, AbsenceQuery, item.n);
@@ -134,10 +137,7 @@ void MAXSatPipeline::data_chunk(CNFDeclareDataAware *model,
                     qm.getQuerySemiInstantiated(LDA, false, formula, true, nullptr, formula->casusu, nullptr,
                                                 false, (KnowledgeBase*)&kb);
                 }
-            }
-
-
-            else {
+            } else {
                 // Parameters
                 bool hasRight = true;
 
