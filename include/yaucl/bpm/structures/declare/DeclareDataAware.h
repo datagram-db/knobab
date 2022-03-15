@@ -67,27 +67,81 @@ bool isPredicateNegative(const std::string& type);
 #include <yaucl/hashing/vector_hash.h>
 #include <yaucl/hashing/hash_combine.h>
 #include <ostream>
-#include <yaucl/bpm/structures/ltlf/ltlf.h>
+//#include <yaucl/bpm/structures/ltlf/ltlf.h>
+
+/**
+ * @author Samuel 'Sam' Appleby
+ */
+using env = std::unordered_map<std::string, union_minimal>;
+
+/**
+ *
+ * Imported from the 'SimpleDataPredicate'
+ * @author Samuel 'Sam' Appleby
+ *
+ * @param e1
+ * @param e2
+ * @param lhs
+ * @param rhs
+ * @param casusu
+ * @return
+ */
+inline bool test_decomposed_data_predicate(const env& e1, const env& e2, const std::string& lhs, const std::string& rhs, const numeric_atom_cases& casusu) {
+    auto temp1 = e1.find(lhs), temp2 = e2.find(rhs);
+    if((temp1 == e1.end()) || (temp2 == e2.end())){
+        return false;
+    }
+
+    switch (casusu) {
+        case LT:
+            return temp1->second < temp2->second;
+        case LEQ:
+            return temp1->second <= temp2->second;
+        case GT:
+            return temp1->second > temp2->second;
+        case GEQ:
+            return temp1->second >= temp2->second;
+        case EQ:
+            return temp1->second == temp2->second;
+        case NEQ:
+            return temp1->second != temp2->second;
+        case TTRUE:
+            return true;
+        default:
+            return false;
+
+    }
+}
+
 
 void print_conj(std::ostream &os, const std::unordered_map<std::string, DataPredicate>& map);
 void print_dnf(std::ostream &os, const std::vector<std::unordered_map<std::string, DataPredicate>>& map);
-
-ltlf map_conj(const std::unordered_map<std::string, DataPredicate> &map);
-ltlf map_disj(const std::vector<std::unordered_map<std::string, DataPredicate>> &map);
+//ltlf map_conj(const std::unordered_map<std::string, DataPredicate> &map);
+//ltlf map_disj(const std::vector<std::unordered_map<std::string, DataPredicate>> &map);
+class KnowledgeBase;
 
 struct DeclareDataAware {
     declare_templates casusu;
     size_t n;
     std::string left_act, right_act;
+    const KnowledgeBase* kb = nullptr;
 
     // Each map represents a conjunction among different atoms over distinct variables, while the vector represents the disjunction
     std::vector<std::unordered_map<std::string, DataPredicate>> dnf_left_map, dnf_right_map, conjunctive_map;
     std::unordered_set<std::string> left_decomposed_atoms, right_decomposed_atoms;
 
     DEFAULT_CONSTRUCTORS(DeclareDataAware)
+    DeclareDataAware(const std::vector<std::vector<DataPredicate>>& predicate, const KnowledgeBase* kb) : kb{kb} {
+        for (const auto& ref : predicate) {
+            auto& res = conjunctive_map.emplace_back();
+            for (const auto& x : ref) {
+                res.emplace(x.var, x);
+            }
+        }
+    }
+
     static DeclareDataAware unary(const declare_templates&, const std::string& argument, size_t n);
     static DeclareDataAware binary(const declare_templates& t, const std::string& left, const std::string right);
-
     static DeclareDataAware doExistence(size_t n, const std::string& left_act, const std::vector<std::unordered_map<std::string, DataPredicate>>& dnf_left_map);
     static DeclareDataAware doAbsence(size_t n, const std::string& left_act, const std::vector<std::unordered_map<std::string, DataPredicate>>& dnf_left_map);
 
@@ -97,8 +151,50 @@ struct DeclareDataAware {
     bool operator==(const DeclareDataAware &rhs) const;
     bool operator!=(const DeclareDataAware &rhs) const;
 
+    /**
+     * Imported from the 'PredicateManager'
+     * @author Samuel 'Sam' Appleby
+     *
+     * @param e1
+     * @param e2
+     * @return
+     */
+    bool checkValidity(const env &e1, const env &e2) const;
+    bool checkValidity(const env &e1, uint32_t t2, uint16_t e2) const;
+    bool checkValidity(uint32_t t1, uint16_t ea, const env &e2) const;
 
-    ltlf toFiniteSemantics(bool isForGraph = true) const;
+    /**
+     * @author Samuel 'Sam' Appleby
+     * @return
+     */
+    bool isTruth() const {
+        return conjunctive_map.empty();
+    }
+
+    /**
+     * Imported from the 'PredicateManager'
+     * @author Samuel 'Sam' Appleby
+     *
+     * @param pair
+     * @return
+     */
+    env GetPayloadDataFromEvent(const std::pair<uint32_t , uint16_t>& pair) const;
+    env GetPayloadDataFromEvent(uint32_t first, uint16_t second, bool isLeft, std::unordered_set<std::string>& leftArgs) const;
+
+    DeclareDataAware flip() const {
+        //Flipping only the relevant part
+        DeclareDataAware result;
+        for (const auto& ref : conjunctive_map) {
+            auto inner = result.conjunctive_map.emplace_back();
+            for (const auto& ref2 : ref) {
+                inner.emplace(ref2.first, ref2.second.flip());
+            }
+        }
+        result.kb = this->kb;
+        return result;
+    }
+
+    //[[deprecated]] ltlf toFiniteSemantics(bool isForGraph = true) const;
 
     template <typename Lambda>
     std::unordered_set<std::string> collectLeftAttributes(Lambda outResult,

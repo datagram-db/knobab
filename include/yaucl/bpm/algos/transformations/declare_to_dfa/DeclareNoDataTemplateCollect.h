@@ -14,6 +14,8 @@
 #include <sstream>
 #include <magic_enum.hpp>
 #include <fstream>
+#include <yaucl/bpm/structures/ltlf/ltlf.h>
+
 
 graph_join_pm ReplaceABWithProperLabels(const std::string& dot,
                                         std::unordered_map<std::string, std::string> *ptr,
@@ -61,6 +63,8 @@ public:
      */
     template<typename T>
     void run(const std::unordered_set<std::string>& SigmaAll) {
+        DEBUG_ASSERT(false);
+#if 0
         T callable;
         if (!isAdding) return;
         for (const auto& template_cp : allTemplates) {
@@ -122,6 +126,7 @@ public:
             }
         }
         isAdding = false;
+#endif
     }
 
     /**

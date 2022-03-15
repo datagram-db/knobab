@@ -2,8 +2,11 @@
 // Created by Sam on 15/02/2022.
 //
 
+
 #include "knobab/predicates/SimpleDataPredicate.h"
 
+
+#if 0
 SimpleDataPredicate::SimpleDataPredicate(const std::string &l, const std::string &r, const numeric_atom_cases &c) {
     lhs = l;
     rhs = r;
@@ -11,7 +14,7 @@ SimpleDataPredicate::SimpleDataPredicate(const std::string &l, const std::string
 }
 
 bool SimpleDataPredicate::operator()(const env &e1, const env &e2) const {
-    auto temp1 = e1.find(lhs), temp2 = e2.find(rhs);
+    /*auto temp1 = e1.find(lhs), temp2 = e2.find(rhs);
     if((temp1 == e1.end()) || (temp2 == e2.end())){
         return false;
     }
@@ -34,7 +37,8 @@ bool SimpleDataPredicate::operator()(const env &e1, const env &e2) const {
         default:
             return false;
             
-    }
+    }*/
+    return test_decomposed_data_predicate(e1, e2, lhs, rhs, casusu);
 }
 
 bool SimpleDataPredicate::operator==(const SimpleDataPredicate &right) const {
@@ -46,3 +50,4 @@ bool SimpleDataPredicate::operator==(const SimpleDataPredicate &right) const {
 bool SimpleDataPredicate::operator!=(const SimpleDataPredicate &rhs) const {
     return !(rhs == *this);
 }
+#endif

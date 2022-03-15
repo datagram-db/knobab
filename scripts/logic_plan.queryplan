@@ -1,13 +1,13 @@
 auto-timed "logic" {
-     template "exists1" := F (EXISTS L 1)
-     template "absence1" := ~ (EXISTS L 1) PRESERVE
-     template "absence2" := ~ (F ((EXISTS L 1) AND (F (EXISTS L 1)))) PRESERVE
-     template "choice" args 2 := (F (EXISTS L 1)) OR THETA (F (EXISTS R 1))
+     template "exists1"       :=   F (EXISTS L 1)
+     template "absence1"      := ~ (EXISTS L 1) PRESERVE
+     template "absence2"      := ~ (F ((EXISTS L 1) AND (F (EXISTS L 1)))) PRESERVE
+     template "choice" args 2 :=   (F (EXISTS L 1)) OR THETA (F (EXISTS R 1))
 }
 
 "efficient" {
-     template "exists1":= (EXISTS L 1)
-     template "absence1" := ABSENCE L 1
-     template "absence2" := ABSENCE L 2
+     template "exists1"       := (EXISTS L 1)
+     template "absence1"      := ABSENCE L 1
+     template "absence2"      := ABSENCE L 2
      template "choice" args 2 := (EXISTS t L 1) OR THETA (EXISTS t R 1)
 }

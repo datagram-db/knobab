@@ -317,7 +317,9 @@ antlrcpp::Any DeclareModelParse::visitNeq(DADParser::NeqContext *ctx) {
 }
 
 ltlf DeclareModelParse::load_model_to_semantics(std::istream &stream, bool is_simplified_xes) {
+    DEBUG_ASSERT(false);
     ltlf formula = ltlf::True();
+#if 0
     std::vector<DeclareDataAware> V;
     if (is_simplified_xes) {
         V = DeclareDataAware::load_simplified_declare_model(stream);
@@ -335,5 +337,6 @@ ltlf DeclareModelParse::load_model_to_semantics(std::istream &stream, bool is_si
             formula = ltlf::And(x.toFiniteSemantics()/*.simplify()*/, formula);
         }
     }
+#endif
     return formula;
 }
