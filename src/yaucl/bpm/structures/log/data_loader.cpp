@@ -9,6 +9,7 @@
 #include "yaucl/bpm/structures/log/data_loader.h"
 #include "yaucl/data/xml.h"
 #include "yaucl/numeric/numeric_base.h"
+#include <yaucl/functional/assert.h>
 
 struct payload {
     std::unordered_map<std::string, std::string> strings;
@@ -36,7 +37,7 @@ void parse_payload(bool isTrace, rapidxml::xml_node<>* payloadNode, struct paylo
         pay.booleans[attribute] = (value == "true");
     }  else if (tag_name == "date") {
         if (!isTrace) {
-            assert(attribute != timeTimestamp);
+            DEBUG_ASSERT(attribute != timeTimestamp);
         }
         pay.dates[attribute] = (double)yaucl::numeric::parse8601(value);
     }
@@ -55,7 +56,7 @@ enum XML_SCAN_STEPS {
 void parse_event(rapidxml::xml_node<>* event, trace_visitor* tv, bool load_data) {
     constexpr std::basic_string_view concept_name{"concept:name"};
     constexpr std::basic_string_view timeTimestamp{"time:timestamp"};
-    assert(tv);
+    DEBUG_ASSERT(tv);
     static size_t event_id = 0;
     bool hasEventOpened = false;
     bool isNewEvent = true;
@@ -113,7 +114,7 @@ void parse_event(rapidxml::xml_node<>* event, trace_visitor* tv, bool load_data)
 }
 
 void load_xes_with_data(const std::string &filename, std::istream &file, bool load_data, trace_visitor *tv) {
-    assert(tv);
+    DEBUG_ASSERT(tv);
     rapidxml::xml_document<> doc;
     std::vector<char> buffer;
     rapidxml::xml_node<> *root_node =  yaucl::data::init_XML_parse(file, "log", doc, buffer);
@@ -165,10 +166,10 @@ void load_xes_with_data(const std::string &filename, std::istream &file, bool lo
                 std::string attribute = GET_ATTRIBUTE(t, "key");
                 std::string value     = GET_ATTRIBUTE(t, "value");
                 if (attribute == concept_name) {
-                    //assert(event_start == XML_SCAN_STEPS::LABELS_TRACE_INFO);
+                    //DEBUG_ASSERT(event_start == XML_SCAN_STEPS::LABELS_TRACE_INFO);
                     //trace_name = value;
                 } else {
-                    assert(event_start != XML_SCAN_STEPS::EVENTS);
+                    DEBUG_ASSERT(event_start != XML_SCAN_STEPS::EVENTS);
                     if (event_start == XML_SCAN_STEPS::LABELS_TRACE_INFO) {
                         //trace_id = tv->enterTrace(trace_name);
                         event_start = XML_SCAN_STEPS::TRACE_PAYLOAD;
@@ -176,7 +177,7 @@ void load_xes_with_data(const std::string &filename, std::istream &file, bool lo
                     if (load_data) parse_payload(true, t, pay);
                 }
             } else {
-                assert(event_start != XML_SCAN_STEPS::EVENTS);
+                DEBUG_ASSERT(event_start != XML_SCAN_STEPS::EVENTS);
                 if (event_start == XML_SCAN_STEPS::LABELS_TRACE_INFO) {
                     //trace_id = tv->enterTrace(trace_name);
                     event_start = XML_SCAN_STEPS::TRACE_PAYLOAD;

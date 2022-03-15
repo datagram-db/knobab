@@ -21,6 +21,7 @@
 
 #include <magic_enum.hpp>
 #include <yaucl/data/xml.h>
+#include <yaucl/functional/assert.h>
 #include "yaucl/bpm/structures/declare/DeclareDataAware.h"
 
 inline void print_conj(std::ostream &os, const std::unordered_map<std::string, DataPredicate> &map) {
@@ -99,7 +100,7 @@ std::ostream &operator<<(std::ostream &os, const DeclareDataAware &aware) {
 ltlf map_conj(const std::unordered_map<std::string, DataPredicate> &map) {
     ltlf result = ltlf::True();
     size_t i = 0, N = map.size();
-    for (const std::pair<std::string, DataPredicate>& elem : map) {
+    for (const auto& elem : map) {
         if (i == 0) {
             result = ltlf::Interval(elem.second);
         } else {
@@ -431,20 +432,20 @@ DeclareDataAware DeclareDataAware::parse_declare_non_data_string(const std::stri
     std::string nextLine;
 
     ssize_t pos = line.find('[');
-    assert(pos != std::string::npos);
+    DEBUG_ASSERT(pos != std::string::npos);
     std::string pattern_name = line.substr(0, pos);
     pattern.casusu = magic_enum::enum_cast<declare_templates>(pattern_name).value();
 
     pattern_name = line.substr(pos+1);
     pos = pattern_name.find(',');
-    assert(pos != std::string::npos);
+    DEBUG_ASSERT(pos != std::string::npos);
     pattern.left_act = pattern_name.substr(0, pos);
     STRIP_ALL_SPACES(pattern.left_act);
     TO_LOWER(pattern.left_act);
 
     pattern_name = pattern_name.substr(pos+1);
     pos = pattern_name.find(']');
-    assert(pos != std::string::npos);
+    DEBUG_ASSERT(pos != std::string::npos);
     std::string second_or_number = pattern_name.substr(0, pos);
     STRIP_ALL_SPACES(second_or_number);
 
@@ -485,7 +486,7 @@ bool DeclareDataAware::operator!=(const DeclareDataAware &rhs) const {
 }
 
 DeclareDataAware DeclareDataAware::unary(declare_templates t, const std::string &argument, size_t n = 1) {
-    assert(isUnaryPredicate(t));
+    DEBUG_ASSERT(isUnaryPredicate(t));
     DeclareDataAware result;
     result.casusu = t;
     result.left_act = argument;
@@ -494,7 +495,7 @@ DeclareDataAware DeclareDataAware::unary(declare_templates t, const std::string 
 }
 
 DeclareDataAware DeclareDataAware::binary(declare_templates t, const std::string &left, const std::string right) {
-    assert(!isUnaryPredicate(t));
+    DEBUG_ASSERT(!isUnaryPredicate(t));
     DeclareDataAware result;
     result.casusu = t;
     result.left_act = left;

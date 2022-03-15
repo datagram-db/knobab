@@ -26,6 +26,7 @@
 #include "knobab/flloat_deps/FLLOATSimplePropParser.h"
 #include <knobab/flloat_deps/FLLOATPropLexer.h>
 #include <yaucl/bpm/structures/commons/easy_prop.h>
+#include <yaucl/functional/assert.h>
 
 easy_prop FLLOATSimplePropParser::parse(std::istream &stream) {
     antlr4::ANTLRInputStream input(stream);
@@ -51,7 +52,7 @@ antlrcpp::Any FLLOATSimplePropParser::visitAtom(FLLOATPropParser::AtomContext *c
 antlrcpp::Any FLLOATSimplePropParser::visitNegation(FLLOATPropParser::NegationContext *context) {
     if (context) {
         auto tmp = visit(context->statement()).as<easy_prop>();
-        assert((tmp.casusu == easy_prop::E_P_ATOM) && (!tmp.isAtomNegated));
+        DEBUG_ASSERT((tmp.casusu == easy_prop::E_P_ATOM) && (!tmp.isAtomNegated));
         tmp.isAtomNegated = true;
         return {tmp};
     }
@@ -67,7 +68,7 @@ antlrcpp::Any FLLOATSimplePropParser::visitParen(FLLOATPropParser::ParenContext 
 
 antlrcpp::Any FLLOATSimplePropParser::visitOr(FLLOATPropParser::OrContext *context) {
     if (context) {
-        assert(context->statement().size() == 2);
+        DEBUG_ASSERT(context->statement().size() == 2);
         easy_prop ep;
         ep.casusu = easy_prop::E_P_OR;
         ep.isAtomNegated = false;
@@ -88,7 +89,7 @@ antlrcpp::Any FLLOATSimplePropParser::visitBot(FLLOATPropParser::BotContext *con
 
 antlrcpp::Any FLLOATSimplePropParser::visitAnd(FLLOATPropParser::AndContext *context) {
     if (context) {
-        assert(context->statement().size() == 2);
+        DEBUG_ASSERT(context->statement().size() == 2);
         easy_prop ep;
         ep.casusu = easy_prop::E_P_AND;
         ep.isAtomNegated = false;

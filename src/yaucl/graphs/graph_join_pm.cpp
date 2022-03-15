@@ -3,6 +3,7 @@
 //
 #include <yaucl/strings/serializers.h>
 #include "yaucl/graphs/graph_join_pm.h"
+#include <yaucl/functional/assert.h>
 
 graph_join_pm::graph_join_pm() : V_size{0}, E_size{0}, doesAcceptEmptyString{false} {}
 
@@ -33,17 +34,13 @@ size_t add_node(graph_join_pm &graph, const std::string &node_label, bool is_sta
     }
     (graph).V_size++;
     ///assert((graph).V_size == result.id+1);
-    assert(init_id == result.id);
+    DEBUG_ASSERT(init_id == result.id);
     return result.id;
 }
 
-
-
-#include <cassert>
-
 adjacency_entry &resolve_node(graph_join_pm &g, size_t id) {
     auto& ref = g.vertex_id_secondary_index.at(id);
-    assert(g.vertex_hash_primary_index.at(ref.first).at(ref.second).id == id);
+    DEBUG_ASSERT(g.vertex_hash_primary_index.at(ref.first).at(ref.second).id == id);
     return g.vertex_hash_primary_index.at(ref.first).at(ref.second);
 }
 
@@ -133,7 +130,7 @@ void do_heavy_debug(graph_join_pm &graph, size_t id) {
     }
     if (!found) {
         std::cerr << " ERROR: id " << id << " was not found! " << std::endl;
-        assert(found);
+        DEBUG_ASSERT(found);
     }
     if (test) {
         auto& ref = graph.vertex_id_secondary_index.at(id);
@@ -165,11 +162,11 @@ void do_heavy_debug(graph_join_pm &graph, size_t id) {
             }
         }
     }
-    assert(test);
+    DEBUG_ASSERT(test);
 }
 
 void do_heavy_debug(graph_join_pm &graph) {
-    assert(graph.V_size == graph.vertex_id_secondary_index.size());
+    DEBUG_ASSERT(graph.V_size == graph.vertex_id_secondary_index.size());
     ///std::cout << "{[";
     for (size_t i = 0, N = graph.V_size; i<N; i++) {
         ///std::cout << i << ", ";
@@ -240,9 +237,9 @@ outgoing_join(const std::string &label,
 #ifdef DEBUG
         do_heavy_debug(graph);
 #endif
-        assert(result.id == node_id);
+        DEBUG_ASSERT(result.id == node_id);
         if (result.is_starting)
-            assert(left.is_starting && right.is_starting);
+            DEBUG_ASSERT(left.is_starting && right.is_starting);
         else {
             result.is_starting = left.is_starting && right.is_starting;
             if (result.is_starting)
@@ -275,7 +272,7 @@ outgoing_join(const std::string &label,
 
 
     auto& result = resolve_node(graph, node_id);
-    assert(result.outgoing_hash_to_outgoingNodeIdWithWeight.empty());
+    DEBUG_ASSERT(result.outgoing_hash_to_outgoingNodeIdWithWeight.empty());
     std::swap(result.outgoing_hash_to_outgoingNodeIdWithWeight, outgoing_hash_to_outgoingNodeIdWithWeight);
     return result.id;
 }
@@ -342,7 +339,7 @@ void graph_join_intermediate(graph_join_pm &left, graph_join_pm &right,
                                                                for (const auto& cp : ref2.outgoing_hash_to_outgoingNodeIdWithWeight) {
                                                                    for (size_t i = 0, N = cp.second.size(); i<N; i++) {
                                                                        auto opt = vertex_map.hasValue(cp.second.at(i).first);
-                                                                       assert(opt);
+                                                                       DEBUG_ASSERT(opt);
                                                                        std::pair<size_t, size_t> cp2 = opt.value()->first;
                                                                        stack.push(cp2);
                                                                    }
@@ -384,7 +381,7 @@ void graph_join_intermediate(graph_join_pm &left, graph_join_pm &right,
             for (const auto& cp : ref2.outgoing_hash_to_outgoingNodeIdWithWeight) {
                 for (size_t i = 0, N = cp.second.size(); i<N; i++) {
                     auto opt = vertex_map.hasValue(cp.second.at(i).first);
-                    assert(opt);
+                    DEBUG_ASSERT(opt);
                     std::pair<size_t, size_t> cp2 = opt.value()->first;
 #ifdef DEBUG
                     std::cout << " In Stack: " << cp.second.at(i).first << " as <"<< cp2.first << ", " << cp2.second << ">" << std::endl;

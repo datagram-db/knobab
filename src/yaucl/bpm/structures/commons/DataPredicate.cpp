@@ -61,6 +61,8 @@ DataPredicate::DataPredicate(const std::string &var, numeric_atom_cases casusu, 
 
 
 #include <cassert>
+#include <yaucl/functional/assert.h>
+
 
 std::ostream &operator<<(std::ostream &os, const DataPredicate &predicate) {
     if ((predicate.casusu == TTRUE) ) {
@@ -68,7 +70,7 @@ std::ostream &operator<<(std::ostream &os, const DataPredicate &predicate) {
             os << "true";
     } else if (predicate.casusu == INTERVAL) {
         double isString = std::holds_alternative<std::string>(predicate.value);
-        assert(predicate.varRHS.empty() && predicate.labelRHS.empty());
+        DEBUG_ASSERT(predicate.varRHS.empty() && predicate.labelRHS.empty());
 
         if (isString)
             os << std::quoted(std::get<std::string>(predicate.value).c_str());
@@ -198,7 +200,7 @@ bool DataPredicate::intersect_with(const DataPredicate& predicate) {
         *this = predicate;
         return true;
     }
-    assert(var == predicate.var && label == predicate.label);
+    DEBUG_ASSERT(var == predicate.var && label == predicate.label);
     if (predicate.isBiVariableCondition()) {
         BiVariableConditions.emplace_back(predicate);
         return true;
@@ -217,7 +219,7 @@ bool DataPredicate::intersect_with(const DataPredicate& predicate) {
 
                 case EQ:
                     // The intersection of equality should consider that the equivalence is among identical values
-                    assert(value == predicate.value);
+                    DEBUG_ASSERT(value == predicate.value);
                     break;
 
                 case NEQ:
@@ -305,7 +307,7 @@ void DataPredicate::asInterval() {
 }
 
 bool DataPredicate::testOverSingleVariable(const std::string &val) const {
-    assert(!isBiVariableCondition());
+    DEBUG_ASSERT(!isBiVariableCondition());
     bool isString = std::holds_alternative<std::string>(value);
     if (!isString) return false;
     std::string current = std::get<std::string>(value);
@@ -332,7 +334,7 @@ bool DataPredicate::testOverSingleVariable(const std::string &val) const {
 }
 
 bool DataPredicate::testOverSingleVariable(double val) const {
-    assert(!isBiVariableCondition());
+    DEBUG_ASSERT(!isBiVariableCondition());
     bool isDouble = std::holds_alternative<double>(value);
     if (!isDouble) return false;
     double current = std::get<double>(value);
@@ -392,7 +394,7 @@ bool DataPredicate::isStringPredicate() const {
         return false;
     bool isString = std::holds_alternative<std::string>(value);
     if (casusu == INTERVAL)
-        assert(isString == std::holds_alternative<std::string>(value_upper_bound));
+        DEBUG_ASSERT(isString == std::holds_alternative<std::string>(value_upper_bound));
     return isString;
 }
 
@@ -401,14 +403,14 @@ bool DataPredicate::isDoublePredicate() const {
         return false;
     bool isString = std::holds_alternative<double>(value);
     if (casusu == INTERVAL)
-        assert(isString == std::holds_alternative<double>(value_upper_bound));
+        DEBUG_ASSERT(isString == std::holds_alternative<double>(value_upper_bound));
     return isString;
 }
 
 
 std::variant<std::vector<std::pair<std::string, std::string>>,
         std::vector<std::pair<double, double>>> DataPredicate::decompose_single_variable_into_intervals() const {
-    assert(!isBiVariableCondition());
+    DEBUG_ASSERT(!isBiVariableCondition());
     bool isString = isStringPredicate();
     std::variant<std::vector<std::pair<std::string, std::string>>,
             std::vector<std::pair<double, double>>> result;
@@ -534,7 +536,7 @@ DataPredicate::DataPredicate(const std::string &label, const std::string &var, c
 
 std::variant<std::vector<std::pair<std::string, std::string>>,
         std::vector<std::pair<double, double>>> DataPredicate::decompose_single_variable_into_intervals_with_missing() const {
-    assert(!isBiVariableCondition());
+    DEBUG_ASSERT(!isBiVariableCondition());
     bool isString = isStringPredicate();
     std::variant<std::vector<std::pair<std::string, std::string>>,
             std::vector<std::pair<double, double>>> result;
@@ -663,9 +665,9 @@ DataPredicate::DataPredicate(const std::string &label, const std::string &var, u
 
 DataPredicate DataPredicate::instantiateRHSWith(const union_minimal& val) const {
     // This RHS instantiation is not applicable to intervals, which have no RHS variable
-    assert(casusu != INTERVAL);
+    DEBUG_ASSERT(casusu != INTERVAL);
     // In order to run this method, I shall have the rhs variable
-    assert(!varRHS.empty());
+    DEBUG_ASSERT(!varRHS.empty());
     DataPredicate cpy = *this;
     cpy.varRHS.clear();
     cpy.labelRHS.clear();
@@ -674,8 +676,8 @@ DataPredicate DataPredicate::instantiateRHSWith(const union_minimal& val) const 
 }
 
 DataPredicate DataPredicate::reverseBiVariablePredicate() const {
-    assert(casusu != INTERVAL);
-    assert(!varRHS.empty());
+    DEBUG_ASSERT(casusu != INTERVAL);
+    DEBUG_ASSERT(!varRHS.empty());
     DataPredicate cpy = *this;
     std::swap(cpy.var, cpy.varRHS);
     std::swap(cpy.label, cpy.labelRHS);

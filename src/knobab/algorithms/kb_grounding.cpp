@@ -6,6 +6,7 @@
 #include <knobab/predicates/testing_predicates.h>
 #include <yaucl/functional/iterators.h>
 #include <yaucl/bpm/algos/transformations/grounding.h>
+#include <yaucl/functional/assert.h>
 
 GroundingStrategyConf::GroundingStrategyConf() : strategy1{ALWAYS_EXPAND_LESS_TOTAL_VALUES},  doPreliminaryFill{true}, trace_ids{}, I_A_x{}, ignoreActForAttributes{false}
 {}
@@ -78,8 +79,8 @@ inline DisjunctiveDeclareDataAware GroundWhereStrategy(GroundingStrategyConf& co
         if (conf.strategy1 == GroundingStrategyConf::ALWAYS_EXPAND_LESS_TOTAL_VALUES)
             I_Y_right = conf.I_x;
     } else {
-        assert(conf.I_A_x.contains(left_act));
-        assert(conf.I_A_x.contains(right_act));
+        DEBUG_ASSERT(conf.I_A_x.contains(left_act));
+        DEBUG_ASSERT(conf.I_A_x.contains(right_act));
         I_X_left = conf.I_A_x.at(left_act);
         if (conf.strategy1 == GroundingStrategyConf::ALWAYS_EXPAND_LESS_TOTAL_VALUES)
             I_Y_right = conf.I_A_x.at(right_act);
@@ -135,7 +136,7 @@ inline DisjunctiveDeclareDataAware GroundWhereStrategy(GroundingStrategyConf& co
     auto cartesianResult = yaucl::iterators::cartesian(toCartesianProduct, [](const auto& x) {return true;});
     for (const auto& toMap : cartesianResult) {
         size_t N = toMap.size();
-        assert(N == names.size());
+        DEBUG_ASSERT(N == names.size());
         std::unordered_map<std::string, union_minimal> map;
         for (size_t i = 0; i<N; i++) {
             auto val = toMap[i];

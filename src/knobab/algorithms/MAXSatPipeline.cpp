@@ -7,6 +7,7 @@
 #include <knobab/predicates/PredicateManager.h>
 #include <knobab/utilities/SetOperators.h>
 #include <knobab/operators/simple_ltlf_operators.h>
+#include <yaucl/functional/assert.h>
 #include "knobab/algorithms/MAXSatPipeline.h"
 
 
@@ -207,13 +208,13 @@ void MAXSatPipeline::data_chunk(CNFDeclareDataAware *model,
     // Iterating other the remaining non-act atoms, that is, the data predicate+label ones
     for (auto it = toUseAtomsEnd, en = toUseAtoms.end(); it != en; it++) {
         auto interval_to_interval_queries_to_intersect = atomization.atom_to_conjunctedPredicates.find(*it);
-        assert(interval_to_interval_queries_to_intersect != atomization.atom_to_conjunctedPredicates.end());
+        DEBUG_ASSERT(interval_to_interval_queries_to_intersect != atomization.atom_to_conjunctedPredicates.end());
 
         std::vector<size_t> tmpRanges;
         for (const auto& interval_data_query : interval_to_interval_queries_to_intersect->second) {
             // Sanity Checks
-            assert(interval_data_query.casusu == INTERVAL);
-            assert(interval_data_query.BiVariableConditions.empty());
+            DEBUG_ASSERT(interval_data_query.casusu == INTERVAL);
+            DEBUG_ASSERT(interval_data_query.BiVariableConditions.empty());
 
             //       splits the RangeQuery by clause.var (as they are going to be on different tables),
             //       clause.label (as the ranges are ordered by act and then by value) and then sort
@@ -274,7 +275,7 @@ MAXSatPipeline::localExtract(const AtomizingPipeline &atomization,
                              std::unordered_map<std::string, std::unordered_set<bool>> &collection,
                              const std::unordered_set<std::string> &decomposition,
                              const std::string &collectionMapKey) {
-    assert(!decomposition.empty());
+    DEBUG_ASSERT(!decomposition.empty());
     auto it = collection.find(collectionMapKey);
     if (it != collection.end()) {
         for (bool isNegated : it->second) {
@@ -519,7 +520,7 @@ static inline void local_intersection(const ltlf_query* q, Result& last_union, b
                                    Aggregators::maxSimilarity<double, double, double>,
                                    q->joinCondition.isTruth() ? nullptr : &q->joinCondition);
     } else {
-        assert(q->joinCondition.isTruth());
+        DEBUG_ASSERT(q->joinCondition.isTruth());
         auto it = q->args.begin();
         last_union = (*it)->result;
         Result curr_union;
@@ -602,7 +603,7 @@ void MAXSatPipeline::actual_query_running(const KnowledgeBase& kb) {
                     //    // TODO: ref.second = kb.exists<std::pair<uint32_t, uint16_t>, double>(ref.first.label).traceApproximations;
                     //    break;
                     default:
-                        assert(false); // This should be dealt in (B)
+                        DEBUG_ASSERT(false); // This should be dealt in (B)
                 }
             }
         PARALLELIZE_LOOP_END
@@ -707,7 +708,7 @@ void MAXSatPipeline::actual_query_running(const KnowledgeBase& kb) {
                 auto formula = it->second.at(j); // TODO: run this query
                 switch (formula->casusu) {
                     case Q_TRUE:
-                        assert(false);
+                        DEBUG_ASSERT(false);
                         break;
 
                     case Q_NEXT:
@@ -745,19 +746,19 @@ void MAXSatPipeline::actual_query_running(const KnowledgeBase& kb) {
                         break;
 
                     case Q_AND:
-                        assert(formula->args.size() == 2);
+                        DEBUG_ASSERT(formula->args.size() == 2);
                         local_intersection(formula, formula->result, formula->isTimed);
                         break;
 
                     case Q_OR:
                     case Q_XOR:
-                        assert(formula->args.size() == 2);
+                        DEBUG_ASSERT(formula->args.size() == 2);
                         local_union(formula, formula->result, formula->isTimed);
                         break;
 
 
                     case Q_BOX:
-                        assert(formula->args.size() == 1);
+                        DEBUG_ASSERT(formula->args.size() == 1);
                         if (formula->isTimed) {
                             global_logic_timed(formula->args.at(0)->result, formula->result, kb.act_table_by_act_id.trace_length);
                         } else {
@@ -766,7 +767,7 @@ void MAXSatPipeline::actual_query_running(const KnowledgeBase& kb) {
                         break;
 
                     case Q_DIAMOND:
-                        assert(formula->args.size() == 1);
+                        DEBUG_ASSERT(formula->args.size() == 1);
                         if (formula->isTimed)
                              future_logic_timed(formula->args[0]->result, formula->result, kb.act_table_by_act_id.trace_length);
                         else {
@@ -776,7 +777,7 @@ void MAXSatPipeline::actual_query_running(const KnowledgeBase& kb) {
 
 
                     case Q_UNTIL:
-                        assert(formula->args.size() == 2);
+                        DEBUG_ASSERT(formula->args.size() == 2);
                         if (formula->isTimed) {
                             until_logic_timed(formula->args.at(0)->result,
                                                 formula->args.at(1)->result,
@@ -793,7 +794,7 @@ void MAXSatPipeline::actual_query_running(const KnowledgeBase& kb) {
                         break;
 
                     case Q_RELEASE:
-                        assert(false);
+                        DEBUG_ASSERT(false);
                         break;
 
                     case Q_LAST:

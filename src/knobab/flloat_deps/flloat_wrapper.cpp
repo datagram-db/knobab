@@ -4,7 +4,7 @@
 
 
 #include "knobab//flloat_deps/flloat_wrapper.h"
-#include <cassert>
+#include <yaucl/functional/assert.h>
 
 #ifdef PYTHON_WORKS
 namespace python = boost::python;
@@ -23,6 +23,6 @@ std::string FLLOAT::operator()(const std::string &ltlf) {
     python::object parser = flloat_parser_ltlf.attr("LTLfParser")();
     return boost::python::extract<std::string>(parser(ltlf).attr("to_automaton")().attr("to_graphviz")().attr("__str__")())();
 #else
-    assert(false);
+    DEBUG_ASSERT(false);
 #endif
 }

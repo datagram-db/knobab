@@ -5,11 +5,12 @@
 #include "yaucl/bpm/algos/transformations/declare_to_dfa/DeclareNoDataTemplateCollect.h"
 #include <magic_enum.hpp>
 #include <yaucl/graphs/graph_join_pm_conversion.h>
+#include <yaucl/functional/assert.h>
 
 
 DeclareNoDataTemplateCollect::DeclareNoDataTemplateCollect(bool doPrune, const std::string &base_serialization_path) : doPrune(doPrune), isAdding(true), base_serialization_path{base_serialization_path} {
     if (std::filesystem::exists(base_serialization_path)) {
-        assert(std::filesystem::is_directory(base_serialization_path));
+        DEBUG_ASSERT(std::filesystem::is_directory(base_serialization_path));
     } else {
         std::filesystem::create_directories(base_serialization_path);
     }
@@ -51,15 +52,15 @@ TemplateCollectResult DeclareNoDataTemplateCollect::buildUpModel(const std::vect
         return {};
     } else {
         auto& zeroModel = Model.at(0);
-        assert(allTemplates.contains(std::make_pair(zeroModel.casusu, zeroModel.n)));
-        assert(allTemplates[std::make_pair(zeroModel.casusu, zeroModel.n)].contains(zeroModel));
+        DEBUG_ASSERT(allTemplates.contains(std::make_pair(zeroModel.casusu, zeroModel.n)));
+        DEBUG_ASSERT(allTemplates[std::make_pair(zeroModel.casusu, zeroModel.n)].contains(zeroModel));
         auto& currGraph = template_to_graph.at(zeroModel);
         TemplateCollectResult result;
         conditionalPruningGraph(doPrune, true, result, currGraph);
         for (size_t j = 1; j<M; j++) {
             auto& zeroModelJ = Model.at(j);
-            assert(allTemplates.contains(std::make_pair(zeroModelJ.casusu, zeroModelJ.n)));
-            assert(allTemplates[std::make_pair(zeroModelJ.casusu, zeroModelJ.n)].contains(zeroModelJ));
+            DEBUG_ASSERT(allTemplates.contains(std::make_pair(zeroModelJ.casusu, zeroModelJ.n)));
+            DEBUG_ASSERT(allTemplates[std::make_pair(zeroModelJ.casusu, zeroModelJ.n)].contains(zeroModelJ));
             auto& currGraph2 = template_to_graph.at(zeroModelJ);
             conditionalPruningGraph(doPrune, false, result, currGraph2);
         }

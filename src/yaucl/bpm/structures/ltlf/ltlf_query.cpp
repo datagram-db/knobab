@@ -49,14 +49,14 @@ bool ltlf_query::operator!=(const ltlf_query &rhs) const {
 
 void ltlf_query::associateDataQueryIdsToFormulaByAtom(const std::string &x, size_t l) {
     if (atom.contains(x)) {
-        //assert(args.empty());
+        //DEBUG_ASSERT(args.empty());
         partial_results.emplace(l);
     } else for (auto& child : args)
             child->associateDataQueryIdsToFormulaByAtom(x, l);
 }
 
-#include <cassert>
 #include <magic_enum.hpp>
+#include <yaucl/functional/assert.h>
 
 
 void ltlf_query_manager::generateGraph(std::map<ltlf_query*, std::vector<ltlf_query*>>& ref, ltlf_query*q) const {
@@ -108,7 +108,7 @@ std::string ltlf_query_manager::generateGraph() const {
 }
 
 ltlf_query* ltlf_query_manager::simplify(const ltlf& expr,  bool isTimed, KnowledgeBase* ptr) {
-    assert((expr.casusu != NEG_OF) && (expr.casusu != NUMERIC_ATOM));
+    DEBUG_ASSERT((expr.casusu != NEG_OF) && (expr.casusu != NUMERIC_ATOM));
     std::pair<ltlf, bool> q{expr, isTimed};
     auto it = conversion_map_for_subexpressions.find(q);
     if (it != conversion_map_for_subexpressions.end()) {
@@ -121,7 +121,7 @@ ltlf_query* ltlf_query_manager::simplify(const ltlf& expr,  bool isTimed, Knowle
         const std::vector<ltlf>* ARGS = &expr.args;
         ltlf_query_t casusu;
         if (expr.is_exclusive) {
-            assert(expr.casusu == OR);
+            DEBUG_ASSERT(expr.casusu == OR);
             casusu = Q_XOR;
         } else {
             std::string v{magic_enum::enum_name(expr.casusu)};
@@ -162,7 +162,7 @@ ltlf_query *ltlf_query_manager::getQuerySemiInstantiated(const std::vector<std::
         for (const auto& inConj : *joinCondition) {
             auto& x = sdp.emplace_back();
             for (const auto& pref : inConj) {
-                //assert(pref.second.BiVariableConditions.empty());
+                //DEBUG_ASSERT(pref.second.BiVariableConditions.empty());
                 for (const auto& refx : pref.second.BiVariableConditions ) {
                     x.emplace_back(refx.var, refx.varRHS, refx.casusu);
                 }
@@ -171,7 +171,7 @@ ltlf_query *ltlf_query_manager::getQuerySemiInstantiated(const std::vector<std::
         result->joinCondition = {sdp,ptr};
     }
     result->isTimed = isTimed;
-    //assert((expr.casusu != ACT) || (!expr.rewritten_act.empty()));
+    //DEBUG_ASSERT((expr.casusu != ACT) || (!expr.rewritten_act.empty()));
     if (isAct){
         atomsToDecomposeInUnion.emplace_back(result);
     }

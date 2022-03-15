@@ -26,6 +26,7 @@
 #include <yaucl/bpm/structures/declare/DeclareModelParse.h>
 #include <yaucl/data/json.h>
 #include <yaucl/bpm/structures/declare/DADLexer.h>
+#include <yaucl/functional/assert.h>
 
 DeclareModelParse::DeclareModelParse() /*: do_renaming{true}*/ {}
 
@@ -120,11 +121,11 @@ antlrcpp::Any DeclareModelParse::visitNary_prop(DADParser::Nary_propContext *ctx
             dda.conjunctive_map = conjAny.as<std::vector<std::unordered_map<std::string, DataPredicate>>>();
             for (auto& ref : dda.conjunctive_map) {
                 for (auto& cp : ref) {
-                    assert(cp.second.casusu == numeric_atom_cases::TTRUE); // That is, no data interval should be provided in here!
+                    DEBUG_ASSERT(cp.second.casusu == numeric_atom_cases::TTRUE); // That is, no data interval should be provided in here!
                     cp.second.label = dda.left_act;
                     cp.second.labelRHS = dda.right_act;
                     for (auto& subitem : cp.second.BiVariableConditions) {
-                        assert(subitem.isBiVariableCondition()); // in the conjunction after where, all the predicates should be among variables, only!
+                        DEBUG_ASSERT(subitem.isBiVariableCondition()); // in the conjunction after where, all the predicates should be among variables, only!
                         subitem.label = dda.left_act;
                         subitem.labelRHS = dda.right_act;
                     }
