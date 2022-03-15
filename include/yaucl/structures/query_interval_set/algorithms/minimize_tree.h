@@ -28,6 +28,7 @@
 
 #include <yaucl/structures/query_interval_set/algorithms/find_interval.h>
 #include <yaucl/functional/removeIndicesFromVector.h>
+#include <yaucl/functional/assert.h>
 #include <stack>
 
 /**
@@ -49,7 +50,7 @@ template<typename T, typename PrevNext> void minimize_tree(const PrevNext& index
         std::pair<node_recur<T>*, size_t> ptr = dfs_tree_visit.top();
         ///std::cout << " * " << *ptr.first << "@child = " << ptr.second << std::endl;
         if (ptr.first->children.empty())
-            assert(false); // this should never happen, as the algorithm directly visit the leaves from the parent (*)
+            DEBUG_ASSERT(false); // this should never happen, as the algorithm directly visit the leaves from the parent (*)
         else {
             size_t currentChild = ptr.second;
             size_t N = ptr.first->children.size();
@@ -166,7 +167,7 @@ template<typename T, typename PrevNext> void minimize_tree(const PrevNext& index
                     // If I can transfer some nodes, do it!
                     std::pair<node_recur<T>*, size_t> top = dfs_tree_visit.top();
                     dfs_tree_visit.pop();
-                    assert(&top.first->children.at(top.second-1) == ptr.first);
+                    DEBUG_ASSERT(&top.first->children.at(top.second-1) == ptr.first);
                     size_t copySize = ptr.first->children.size();
 
                     if ((top.first != &node) || (top.first->isPointed)) {

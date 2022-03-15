@@ -95,7 +95,7 @@ FlexibleFA<std::vector<NodeElement>, EdgeLabel> minimizeDFA(const FlexibleFA<Nod
                 if (!Xfound) {
                     for (const std::pair<size_t, size_t> &cp3 : L) {
                         auto it = M.find(cp3);
-                        assert(!std::holds_alternative<bool>(it->second));
+                        DEBUG_ASSERT(!std::holds_alternative<bool>(it->second));
                         std::get<std::unordered_set<std::pair<size_t, size_t>>>(it->second).insert(cp2.first);
                     }
                 }
@@ -164,10 +164,10 @@ FlexibleFA<std::vector<NodeElement>, EdgeLabel> minimizeDFA(const FlexibleFA<Nod
                 S.insert(f.begin(), f.end());
             }
             auto it = nodeToId.find(S);
-            assert(it != nodeToId.end());
+            DEBUG_ASSERT(it != nodeToId.end());
 #else
             auto it = nodeToId.find(eOut.second);
-            // TODO: assert(it != nodeToId.end());
+            // TODO: DEBUG_ASSERT(it != nodeToId.end());
             if (it != nodeToId.end())
 #endif
             /*std::cout << "{" ;

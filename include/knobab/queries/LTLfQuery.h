@@ -11,32 +11,37 @@
 #define DECLARE_TYPE_NONE   (0)
 #define DECLARE_TYPE_LEFT   (1)
 #define DECLARE_TYPE_RIGHT  (2)
+#define DECLARE_TYPE_MIDDLE  (2)
 
 
-class LTLfQuery {
+struct LTLfQuery {
     struct bit_fields {
         bool has_theta : 1, preserve : 1, is_atom : 1;
     };
     enum __attribute__((__packed__)) type {
-        INIT_Q = 0,
-        END_Q = 1,
-        EXISTS_Q = 2,
-        ABSENCE_Q = 3,
-        NEXT_Q = 4,
-        OR_Q = 5,
-        AND_Q = 6,
-        IMPL_Q = 7,
-        U_Q = 8,
-        G_Q = 9,
-        F_Q = 10,
-        NOTU_Q = 11
+        INIT_QP = 0,
+        END_QP = 1,
+        EXISTS_QP = 2,
+        ABSENCE_QP = 3,
+        NEXT_QP = 4,
+        OR_QP = 5,
+        AND_QP = 6,
+        IMPL_QP = 7,
+        IFTE_QP = 8,
+        U_QP = 9,
+        G_QP = 10,
+        F_QP = 11,
+        NOT_QP = 12,
+        AF_QPT = 13,
+        AXG_QPT = 14,
+        FALSEHOOD_QPT = 15
     };
     type t;
     short declare_type = 0;
     bit_fields fields = {0};
     size_t n;
 
-    void test();
+    LTLfQuery() : t{FALSEHOOD_QPT}, declare_type{DECLARE_TYPE_NONE}, n{0}, fields{0} {}
 };
 
 

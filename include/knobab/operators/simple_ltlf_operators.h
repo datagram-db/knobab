@@ -347,6 +347,8 @@ inline void next_logical(const Result &section, Result& temp, const std::vector<
     }
 }
 
+#include <yaucl/functional/assert.h>
+
 /**
  *
  * @author Giacomo Bergami
@@ -385,7 +387,7 @@ inline void future_logic_timed(const Result &section, Result& result, const std:
                 if (isBegin) isBegin = false;
                 it--;
             } else {
-                assert(!isBegin);
+                DEBUG_ASSERT(!isBegin);
             }
             toBeReversed.emplace_back(first, second);
         }
