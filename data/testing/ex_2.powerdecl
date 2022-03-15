@@ -17,7 +17,7 @@
  * You should have received a copy of the GNU General Public License
  * along with bpm21. If not, see <http://www.gnu.org/licenses/>.
  */
-Response("A", true, B, var "x" > 0.0)
-Response("A", true, B, var "x" > var "y" && var "x" < 2.0)
-Response("A", true, B, var "x" > var "y") where var "z" < var "x" && var "z" > var "y" && var "x" > var "y"
-Existence("B", var "x" > 3.0, 1)
+"Response"("A", true, B, var "x" > 0.0)
+"Response"("A", true, B, var "x" > var "y" && var "x" < 2.0)
+"Response"("A", true, B, var "x" > var "y") where var "z" < var "x" && var "z" > var "y" && var "x" > var "y"
+"Existence"("B", var "x" > 3.0, 1)

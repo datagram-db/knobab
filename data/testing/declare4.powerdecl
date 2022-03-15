@@ -17,6 +17,6 @@
  * You should have received a copy of the GNU General Public License
  * along with bpm21. If not, see <http://www.gnu.org/licenses/>.
  */
-Init("A", var "x" > 5.0, 1)
-Init("B", var "y" < 2.0, 1)
-Init("C", var "z" = 3.0, 1)
+"Init"("A", var "x" > 5.0, 1)
+"Init"("B", var "y" < 2.0, 1)
+"Init"("C", var "z" = 3.0, 1)
