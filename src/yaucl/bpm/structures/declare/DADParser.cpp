@@ -1,10 +1,11 @@
 
-// Generated from ./src/yaucl/bpm/structures/declare/DAD.g by ANTLR 4.9.3
+// Generated from ../src/yaucl/bpm/structures/declare/DAD.g4 by ANTLR 4.9.3
 
 
-#include <yaucl/bpm/structures/declare/DADListener.h>
-#include <yaucl/bpm/structures/declare/DADVisitor.h>
-#include <yaucl/bpm/structures/declare/DADParser.h>
+#include "yaucl/bpm/structures/declare/DADListener.h"
+#include "yaucl/bpm/structures/declare/DADVisitor.h"
+
+#include "yaucl/bpm/structures/declare/DADParser.h"
 
 
 using namespace antlrcpp;
@@ -19,7 +20,7 @@ DADParser::~DADParser() {
 }
 
 std::string DADParser::getGrammarFileName() const {
-  return "DAD.g";
+  return "DAD.g4";
 }
 
 const std::vector<std::string>& DADParser::getRuleNames() const {
@@ -87,7 +88,7 @@ DADParser::Data_aware_declareContext* DADParser::data_aware_declare() {
     setState(19);
     _errHandler->sync(this);
     _la = _input->LA(1);
-    while (_la == DADParser::LABEL) {
+    while (_la == DADParser::STRING) {
       setState(16);
       declare();
       setState(21);
@@ -130,8 +131,8 @@ DADParser::FieldsContext* DADParser::Nary_propContext::fields(size_t i) {
   return getRuleContext<DADParser::FieldsContext>(i);
 }
 
-tree::TerminalNode* DADParser::Nary_propContext::LABEL() {
-  return getToken(DADParser::LABEL, 0);
+tree::TerminalNode* DADParser::Nary_propContext::STRING() {
+  return getToken(DADParser::STRING, 0);
 }
 
 DADParser::PropContext* DADParser::Nary_propContext::prop() {
@@ -167,8 +168,8 @@ tree::TerminalNode* DADParser::Unary_propContext::INTNUMBER() {
   return getToken(DADParser::INTNUMBER, 0);
 }
 
-tree::TerminalNode* DADParser::Unary_propContext::LABEL() {
-  return getToken(DADParser::LABEL, 0);
+tree::TerminalNode* DADParser::Unary_propContext::STRING() {
+  return getToken(DADParser::STRING, 0);
 }
 
 DADParser::Unary_propContext::Unary_propContext(DeclareContext *ctx) { copyFrom(ctx); }
@@ -211,7 +212,7 @@ DADParser::DeclareContext* DADParser::declare() {
       _localctx = _tracker.createInstance<DADParser::Nary_propContext>(_localctx);
       enterOuterAlt(_localctx, 1);
       setState(22);
-      antlrcpp::downCast<Nary_propContext *>(_localctx)->name = match(DADParser::LABEL);
+      antlrcpp::downCast<Nary_propContext *>(_localctx)->name = match(DADParser::STRING);
       setState(23);
       match(DADParser::T__0);
       setState(27); 
@@ -255,7 +256,7 @@ DADParser::DeclareContext* DADParser::declare() {
       _localctx = _tracker.createInstance<DADParser::Unary_propContext>(_localctx);
       enterOuterAlt(_localctx, 2);
       setState(37);
-      antlrcpp::downCast<Unary_propContext *>(_localctx)->name = match(DADParser::LABEL);
+      antlrcpp::downCast<Unary_propContext *>(_localctx)->name = match(DADParser::STRING);
       setState(38);
       match(DADParser::T__0);
       setState(39);
@@ -1075,7 +1076,7 @@ DADParser::Initializer::Initializer() {
        0x3, 0x2, 0x2, 0x2, 0x12, 0x14, 0x5, 0x4, 0x3, 0x2, 0x13, 0x12, 0x3, 
        0x2, 0x2, 0x2, 0x14, 0x17, 0x3, 0x2, 0x2, 0x2, 0x15, 0x13, 0x3, 0x2, 
        0x2, 0x2, 0x15, 0x16, 0x3, 0x2, 0x2, 0x2, 0x16, 0x3, 0x3, 0x2, 0x2, 
-       0x2, 0x17, 0x15, 0x3, 0x2, 0x2, 0x2, 0x18, 0x19, 0x7, 0x12, 0x2, 
+       0x2, 0x17, 0x15, 0x3, 0x2, 0x2, 0x2, 0x18, 0x19, 0x7, 0x15, 0x2, 
        0x2, 0x19, 0x1d, 0x7, 0x3, 0x2, 0x2, 0x1a, 0x1b, 0x5, 0x6, 0x4, 0x2, 
        0x1b, 0x1c, 0x7, 0x4, 0x2, 0x2, 0x1c, 0x1e, 0x3, 0x2, 0x2, 0x2, 0x1d, 
        0x1a, 0x3, 0x2, 0x2, 0x2, 0x1e, 0x1f, 0x3, 0x2, 0x2, 0x2, 0x1f, 0x1d, 
@@ -1083,7 +1084,7 @@ DADParser::Initializer::Initializer() {
        0x2, 0x2, 0x2, 0x21, 0x22, 0x5, 0x6, 0x4, 0x2, 0x22, 0x25, 0x7, 0x5, 
        0x2, 0x2, 0x23, 0x24, 0x7, 0x6, 0x2, 0x2, 0x24, 0x26, 0x5, 0x8, 0x5, 
        0x2, 0x25, 0x23, 0x3, 0x2, 0x2, 0x2, 0x25, 0x26, 0x3, 0x2, 0x2, 0x2, 
-       0x26, 0x2f, 0x3, 0x2, 0x2, 0x2, 0x27, 0x28, 0x7, 0x12, 0x2, 0x2, 
+       0x26, 0x2f, 0x3, 0x2, 0x2, 0x2, 0x27, 0x28, 0x7, 0x15, 0x2, 0x2, 
        0x28, 0x29, 0x7, 0x3, 0x2, 0x2, 0x29, 0x2a, 0x5, 0x6, 0x4, 0x2, 0x2a, 
        0x2b, 0x7, 0x4, 0x2, 0x2, 0x2b, 0x2c, 0x7, 0x13, 0x2, 0x2, 0x2c, 
        0x2d, 0x7, 0x5, 0x2, 0x2, 0x2d, 0x2f, 0x3, 0x2, 0x2, 0x2, 0x2e, 0x18, 

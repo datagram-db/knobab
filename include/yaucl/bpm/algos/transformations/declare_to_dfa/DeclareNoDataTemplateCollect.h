@@ -65,8 +65,8 @@ public:
         if (!isAdding) return;
         for (const auto& template_cp : allTemplates) {
             std::pair<declare_templates, size_t> template_ = template_cp.first;
-            std::string_view w = magic_enum::enum_name(template_.first);
-            std::string name{w.data(), w.size()};
+            //std::string_view w = magic_enum::enum_name(template_.first);
+            std::string name{template_.first};
             name = name + "_" + std::to_string(template_.second) ;
             ltlf input_forumla;
 
@@ -75,34 +75,24 @@ public:
             std::vector<std::string>                                  Names;
             std::unordered_set<std::string> tmpSigmaAll{"a", "b"};
 
-            switch (template_.first) {
-                case Existence:
-                case Absence:
-                //case Absence2:
-                //case Exactly:
-                case End:
-                case Init:
-                    input_forumla = DeclareDataAware::unary(template_.first,  "a", template_.second).toFiniteSemantics();
-                    for (const auto& template_actual: Sequentialised) {
-                        std::unordered_map<std::string, std::string> M;
-                        M["a"] = template_actual.left_act;
-                        VM.emplace_back(M);
-                        Names.emplace_back(name+"["+template_actual.left_act+"]");
-                    }
-                    break;
-
-                default:
-                    input_forumla = DeclareDataAware::binary(template_.first, "a", "b").toFiniteSemantics();
-                    for (const auto& template_actual: Sequentialised) {
-                        std::unordered_map<std::string, std::string> M;
-                        M["a"] = template_actual.left_act;
-                        M["b"] = template_actual.right_act;
-                        Names.emplace_back(name+"["+template_actual.left_act+", "+template_actual.right_act+"]");
-                        VM.emplace_back(M);
-                    }
-                    break;
+            if (isUnaryPredicate(template_.first)) {
+                input_forumla = DeclareDataAware::unary(template_.first,  "a", template_.second).toFiniteSemantics();
+                for (const auto& template_actual: Sequentialised) {
+                    std::unordered_map<std::string, std::string> M;
+                    M["a"] = template_actual.left_act;
+                    VM.emplace_back(M);
+                    Names.emplace_back(name+"["+template_actual.left_act+"]");
+                }
+            } else {
+                input_forumla = DeclareDataAware::binary(template_.first, "a", "b").toFiniteSemantics();
+                for (const auto& template_actual: Sequentialised) {
+                    std::unordered_map<std::string, std::string> M;
+                    M["a"] = template_actual.left_act;
+                    M["b"] = template_actual.right_act;
+                    Names.emplace_back(name+"["+template_actual.left_act+", "+template_actual.right_act+"]");
+                    VM.emplace_back(M);
+                }
             }
-
 
             std::cout << name << std::endl;
             std::stringstream s;

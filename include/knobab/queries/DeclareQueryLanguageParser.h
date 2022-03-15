@@ -30,7 +30,6 @@ inline unsigned char decleare_templates_determine(LTLfQueryParser::Declare_argum
 #define ASSERT_ON_GIVEN_TIMING(b)       DEBUG_ASSERT(((b) == fromNowOnTimed))
 
 struct DeclareQueryLanguageParser : public LTLfQueryVisitor {
-
     bool fromNowOnTimed = false;
     bool isAutoTimed = false;
     std::stack<bool> fromNowOnTimedStack;
@@ -39,7 +38,10 @@ struct DeclareQueryLanguageParser : public LTLfQueryVisitor {
 
     void parse(std::istream& stream);
 
+    /// VISITORS
     LTLfQuery visitQuery(LTLfQueryParser::QueryContext *pContext);
+
+    /// Inherited visitors
     antlrcpp::Any visitInit(LTLfQueryParser::InitContext *context) override;
     antlrcpp::Any visitEnd(LTLfQueryParser::EndContext *context) override;
     antlrcpp::Any visitAbsence(LTLfQueryParser::AbsenceContext *context) override;
@@ -57,6 +59,7 @@ struct DeclareQueryLanguageParser : public LTLfQueryVisitor {
     antlrcpp::Any visitUntil(LTLfQueryParser::UntilContext *context) override;
     antlrcpp::Any visitIfte(LTLfQueryParser::IfteContext *context) override;
 
+    /// Useless inherited visitors
     antlrcpp::Any visitQuery_plan(LTLfQueryParser::Query_planContext *context) override { return {}; }
     antlrcpp::Any visitDeclare_syntax(LTLfQueryParser::Declare_syntaxContext *context) override { return {}; }
     antlrcpp::Any visitHas_args(LTLfQueryParser::Has_argsContext *context) override { return {}; }
