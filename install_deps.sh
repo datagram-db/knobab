@@ -6,6 +6,5 @@ pip install opyenxes==0.3.0
 
 ## Pulling the repositories
 git submodule update --init --recursive
-chmod +x generate_ltlf_patterns.py
-./generate_ltlf_patterns
-##git submodule update --recursive --remote
+chmod +x ./scripts/generate_ltlf_patterns.py
+./scripts/generate_ltlf_patterns.py
