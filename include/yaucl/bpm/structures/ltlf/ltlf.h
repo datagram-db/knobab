@@ -123,13 +123,13 @@ struct ltlf {
     PropositionalizedAtomsSet possibleActionsUpToNext() const;
 
 
-    void instantiateJoinCondition(const
-                                  std::vector<std::unordered_map<std::string, DataPredicate>>& ref ) {
-        if (is_join_condition_place)
-            joinCondition = ref;
-        for (auto& arg : args)
-            arg.instantiateJoinCondition(ref);
-    }
+//    void instantiateJoinCondition(const
+//                                  std::vector<std::unordered_map<std::string, DataPredicate>>& ref ) {
+//        if (is_join_condition_place)
+//            joinCondition = ref;
+//        for (auto& arg : args)
+//            arg.instantiateJoinCondition(ref);
+//    }
     std::unordered_set<std::string> mark_join_condition(const std::string& left, const std::string& right);
     ltlf replace_with(const std::unordered_map<std::pair<bool, std::string>, std::unordered_set<std::string>>& map, bool isForGraph = false);
     struct ltlf replace_with(const std::unordered_map<std::string, ltlf>& map) const;

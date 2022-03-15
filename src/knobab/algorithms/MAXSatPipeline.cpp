@@ -17,16 +17,19 @@ std::string MAXSatPipeline::RIGHT_ATOM{"b"};
 
 
 
-MAXSatPipeline::MAXSatPipeline(size_t nThreads)
+MAXSatPipeline::MAXSatPipeline(const std::string& plan_file, const std::string& plan, size_t nThreads)
 #ifdef MAXSatPipeline_PARALLEL
     : pool(nThreads)
 #endif
 {
     // Equivalent to the old expansion of the declare formula into LTLF, and then into the negated normal form.
-    std::filesystem::path p = "scripts";
-    p = p / "logic_plan.queryplan";
-    std::ifstream file{p};
+    std::ifstream file{plan_file};
     dqlp.parse(file);
+    auto it = dqlp.planname_to_declare_to_ltlf.find(plan);
+    if (it == dqlp.planname_to_declare_to_ltlf.end()) {
+        throw std::runtime_error(plan+": the plan is missing from the script file!");
+    }
+    ptr = &it->second;
 }
 
 void MAXSatPipeline::clear() {
@@ -72,16 +75,36 @@ void MAXSatPipeline::data_chunk(CNFDeclareDataAware *model,
     if (!model) return;
     std::vector<std::pair<std::pair<trace_t, event_t>, double>> empty_result{};
     declare_model = model;
-    std::vector<ltlf_query *> W;
+    std::vector<LTLfQuery*> W;
     //label_set_t visitedAtoms;
     for (auto& it : declare_model->singleElementOfConjunction) {
         for (auto& item : it.elementsInDisjunction) {
-            item.kb = &kb; // Setting the knowledge base, so to exploit it for join queries
+            // Skipping already-met definitions: those will only duplicate the code to be run!
+            auto cp = declare_atomization.insert(item);
+            if (!cp.second) continue;
+
+            // Setting the knowledge base, so to exploit it for join queries
+            item.kb = &kb;
+
+            // Getting the definition of Declare from the Query rewriter
+            auto it2 = ptr->find(item.casusu);
+            if (it2 == ptr->end()) {
+                throw std::runtime_error(item.casusu+": missing from the loaded query decomposition");
+            }
+
+            LTLfQuery* formula = qm.simplify(maxFormulaId,
+                                             it2->second,
+                                             cp.first->isTruth() ? nullptr : (const DeclareDataAware *) &cp.first,
+                                             atomization.atom_universe,
+                                             item.left_decomposed_atoms,
+                                             item.right_decomposed_atoms,
+                                             toUseAtoms,
+                                             atomToFormulaId);
 
             ///// OLD PART OF THE CODE!!!!!!!!!!!!!!
-            auto& ref = declare_atomization[item];
-            if (!ref.empty()) continue; // Ignoring already visited patterns
 
+
+#if 0
             ltlf_query *formula;
             if (item.casusu == "Init") {
                 formula = qm.init1(item.left_act, item.left_decomposed_atoms);
@@ -161,11 +184,11 @@ void MAXSatPipeline::data_chunk(CNFDeclareDataAware *model,
                 // Returned result
                 formula = local_formula;
             }
-
+#endif
             fomulaidToFormula.emplace_back(formula);
             maxFormulaId++;
             W.emplace_back(formula);
-            human_readable_ltlf_printing(std::cout, formula) << std::endl; //todo: debugging
+            std::cout << *formula << std::endl;  //todo: debugging
         }
     }
 
@@ -175,10 +198,9 @@ void MAXSatPipeline::data_chunk(CNFDeclareDataAware *model,
 
     /////////////////////////////// DEBUGGING
     for (const auto& ref : W) {
-        human_readable_ltlf_printing(std::cout, ref) << std::endl;
+        std::cout << *ref << std::endl;
     }
     /////////////////////////////////////////
-
     remove_duplicates(toUseAtoms);
 
     // TODO: AtomQuery is not required, as range queries already have the atom information!
@@ -237,7 +259,7 @@ void MAXSatPipeline::data_chunk(CNFDeclareDataAware *model,
 void
 MAXSatPipeline::generateAtomQuery(std::vector<std::string> &toUseAtoms,
                                   std::vector<std::pair<std::pair<trace_t, event_t>, double>> &empty_result,
-                                  DeclareDataAware &item, ltlf_query *formula, DataQueryType r,
+                                  DeclareDataAware &item, LTLfQuery *formula, DataQueryType r,
                                   size_t numeric_argument) {
     size_t offset;
     auto q = DataQuery::AtomQueries(r, item.left_act);
@@ -410,7 +432,7 @@ static inline Result local_intersection(const std::set<size_t> &vecs,
 static inline void data_merge(const std::set<size_t> &vecs,
                               const std::vector<PartialResult>& results,
                               Result& result,
-                              LeafType isLeaf) {
+                              declare_type_t isLeaf) {
     if (vecs.empty()) {
         result.clear();
         return;
@@ -431,9 +453,9 @@ static inline void data_merge(const std::set<size_t> &vecs,
     // TODO: better done through views!
     for (auto it = last_intersection.begin(); it != last_intersection.end(); it = last_intersection.erase(it)) {
         switch (isLeaf) {
-            case ActivationLeaf:
+            case DECLARE_TYPE_LEFT:
                 result.emplace_back(it->first, std::make_pair(it->second, MarkedEventsVector{marked_event::activation(it->first.second)}));
-            case TargetLeaf:
+            case DECLARE_TYPE_RIGHT:
                 result.emplace_back(it->first, std::make_pair(it->second, MarkedEventsVector{marked_event::target(it->first.second)}));
                 break;
             default:
@@ -444,7 +466,7 @@ static inline void data_merge(const std::set<size_t> &vecs,
 
 }
 
-static inline void local_union(const ltlf_query* q, Result& last_union, bool isTimed = true) {
+static inline void local_union(const LTLfQuery* q, Result& last_union, bool isTimed = true) {
     size_t N = q->args.size();
     if ((!q) || (N == 0)) {
         last_union.clear();
@@ -460,13 +482,13 @@ static inline void local_union(const ltlf_query* q, Result& last_union, bool isT
                             arg2->result.begin(), arg2->result.end(),
                             std::back_inserter(last_union),
                             Aggregators::maxSimilarity<double, double, double>,
-                     q->joinCondition.isTruth() ? nullptr : &q->joinCondition);
+                     q->joinCondition);
         else
             setUnionUntimed(arg1->result.begin(), arg1->result.end(),
                                    arg2->result.begin(), arg2->result.end(),
                                    std::back_inserter(last_union),
                                    Aggregators::maxSimilarity<double, double, double>,
-                            q->joinCondition.isTruth() ? nullptr : &q->joinCondition);
+                            q->joinCondition);
     } else {
         auto it = q->args.begin();
         last_union = (*it)->result;
@@ -490,7 +512,7 @@ static inline void local_union(const ltlf_query* q, Result& last_union, bool isT
     }
 }
 
-static inline void local_intersection(const ltlf_query* q, Result& last_union, bool isTimed = true) {
+static inline void local_intersection(const LTLfQuery* q, Result& last_union, bool isTimed = true) {
     size_t N = q->args.size();
     if ((!q) || (N == 0)) {
         last_union.clear();
@@ -505,16 +527,14 @@ static inline void local_intersection(const ltlf_query* q, Result& last_union, b
             setIntersection(arg1->result.begin(), arg1->result.end(),
                             arg2->result.begin(), arg2->result.end(),
                             std::back_inserter(last_union),
-                            Aggregators::maxSimilarity<double, double, double>,
-                                    q->joinCondition.isTruth() ? nullptr : &q->joinCondition);
+                            Aggregators::maxSimilarity<double, double, double>, q->joinCondition);
         else
             setIntersectionUntimed(arg1->result.begin(), arg1->result.end(),
                                    arg2->result.begin(), arg2->result.end(),
                                    std::back_inserter(last_union),
-                                   Aggregators::maxSimilarity<double, double, double>,
-                                   q->joinCondition.isTruth() ? nullptr : &q->joinCondition);
+                                   Aggregators::maxSimilarity<double, double, double>, q->joinCondition);
     } else {
-        DEBUG_ASSERT(q->joinCondition.isTruth());
+        DEBUG_ASSERT(q->joinCondition);
         auto it = q->args.begin();
         last_union = (*it)->result;
         Result curr_union;
@@ -538,12 +558,12 @@ static inline void local_intersection(const ltlf_query* q, Result& last_union, b
 
 }
 
-static inline void absence_or_exists(ltlf_query* formula, const std::vector<PartialResult>& results_cache) {
+static inline void absence_or_exists(LTLfQuery* formula, const std::vector<PartialResult>& results_cache) {
     bool isFirstIteration = true;
     uint32_t traceId = 0;
     uint16_t eventCount = 0;
     Result tmp_result;
-    data_merge(formula->partial_results, results_cache, tmp_result, formula->isLeaf);
+    data_merge(formula->partial_results, results_cache, tmp_result, formula->declare_type);
     ResultRecord cp{{0,0}, {1.0, {}}};
     for (auto ref = tmp_result.begin(); ref != tmp_result.end(); ) {
         if (isFirstIteration) {
@@ -552,7 +572,7 @@ static inline void absence_or_exists(ltlf_query* formula, const std::vector<Part
             isFirstIteration = false;
         } else {
             if ((traceId != ref->first.first)) {
-                if ((eventCount >= formula->numeric_arg)) {
+                if ((eventCount >= formula->n)) {
                     cp.first.first = traceId;
                     formula->result.emplace_back(cp);
                 }
@@ -562,7 +582,7 @@ static inline void absence_or_exists(ltlf_query* formula, const std::vector<Part
         }
         ref = tmp_result.erase(ref);
     }
-    if ((eventCount >= formula->numeric_arg)) {
+    if ((eventCount >= formula->n)) {
         cp.first.first = traceId;
         formula->result.emplace_back(cp);
     }
@@ -697,6 +717,7 @@ void MAXSatPipeline::actual_query_running(const KnowledgeBase& kb) {
     for (; it != en; it++) {
         Result tmp_result;
 
+#if OLD_VERSION_OF_THE_LOOP
         PARALLELIZE_LOOP_BEGIN(pool, 0, it->second.size(), lb, ub)
             for (size_t j = lb; j < ub; j++) {
                 auto formula = it->second.at(j); // TODO: run this query
@@ -808,15 +829,17 @@ void MAXSatPipeline::actual_query_running(const KnowledgeBase& kb) {
                 }
             }
         PARALLELIZE_LOOP_END
+#endif
         // TODO: parallelized run over the it->second, and store the results
     }
 
     if (!qm.Q.empty()) {
         // Only one possibility, for MaxSAT
-        ltlf_query conjunction;
+        LTLfQuery conjunction;
         conjunction.args = qm.Q.begin()->second;
+#if OLD_VERSION_OF_THE_LOOP
         local_intersection(&conjunction, this->result, false);
-
+#endif
         // Others should follow, like the one for maximum satisfiability, for computing
     } else {
     }
