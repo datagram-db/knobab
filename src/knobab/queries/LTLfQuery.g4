@@ -1,10 +1,9 @@
 grammar LTLfQuery;
 
-query_plan : ('extensions' LPAREN declare_operator+ RPAREN)?
-             ('declare' LPAREN declare_syntax+ RPAREN)?
+query_plan : (STRING LPAREN declare_syntax+ RPAREN)?
            ;
 
-declare_syntax : 'clause' LABEL '#args' INTNUMBER ('with' 'counter')? ':=' query;
+declare_syntax : 'template' LABEL ('args' INTNUMBER)? ('counter' INTNUMBER)? ':=' query;
 
 query : 'INIT' declare_arguments                                            #init
       | 'END'  declare_arguments                                            #end
@@ -13,18 +12,18 @@ query : 'INIT' declare_arguments                                            #ini
       | 'NEXT' query                                                        #next
       | query 'OR' THETA? query                                             #or
       | query 'AND' THETA? query                                            #and
-      | query '=>' THETA? query                                             #ifte
+      | query '=>' THETA? query                                             #implication
+      | 'IF' query 'then' query THETA? 'ELSE' query                         #ifte
       | query 'U' THETA?  query                                             #ifte
       | 'G' query                                                           #box
       | 'F' query                                                           #diamond
       | '!' query PRESERVE?                                                 #ifte
-      | 'expand' STRING ((query ',')* query) THETA? INTNUMBER? PRESERVE?    #callExpansion
       | '(' query ')'                                                       #paren
+      | query '&F' query THETA?                                             #and_future
+      | query '&XG' query THETA?                                            #and_next_globally
       ;
 
-declare_operator : 'let ' STRING (declare_arguments | declare_arguments+ THETA?) INTNUMBER? PRESERVE? ':=' query ;
-
-declare_arguments : LEFT | RIGHT;
+declare_arguments : LEFT | MIDDLE | RIGHT;
 
 LABEL: ('A'..'Z')[a-zA-Z]*;
 LPAREN : '{';
@@ -33,6 +32,7 @@ PRESERVE: 'PRESERVE';
 THETA: 'THETA';
 LEFT : 'L';
 RIGHT: 'R';
+MIDDLE: 'M';
 INTNUMBER : ('0'..'9')+ ;
 STRING : '"' (~[\\"] | '\\' [\\"])* '"';
 SPACE : [ \t\n\r]+ -> skip;
