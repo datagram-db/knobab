@@ -97,6 +97,7 @@ std::ostream &operator<<(std::ostream &os, const DeclareDataAware &aware) {
     return os;
 }
 
+/*
 ltlf map_conj(const std::unordered_map<std::string, DataPredicate> &map) {
     ltlf result = ltlf::True();
     size_t i = 0, N = map.size();
@@ -128,7 +129,7 @@ ltlf map_disj(const std::vector<std::unordered_map<std::string, DataPredicate>> 
 
 
 
-/*
+
 ltlf
 toFiniteSemantics(declare_templates casusu, size_t n, const std::string &left_act, const std::string &right_act) {
     ltlf left = ltlf::Act(left_act).setBeingCompound(true);
@@ -280,11 +281,11 @@ bool isUnaryPredicate(const declare_templates& type) {
 bool isPredicateNegative(const declare_templates& type) {
     return type == "NotCoExistence" || type == "NegSuccession" || type == "NegChainSuccession" || type == "Absence" || type == "ExlChoice" || type == "AltPrecedence" || type == "AltResponse" || type == "AltSuccession";
 }
+#if 0
 
 ltlf DeclareDataAware::toFiniteSemantics(bool isForGraph) const {
     DEBUG_ASSERT(false);
     return ltlf::True().negate();
-#if 0
     ltlf left =  //left_decomposed_atoms.empty() ?
                  (dnf_left_map.empty() ?
             ltlf::Act(left_act) :
@@ -385,8 +386,9 @@ ltlf DeclareDataAware::toFiniteSemantics(bool isForGraph) const {
         case NegChainSuccession:
             return ltlf::Box(ltlf::Equivalent(left, ltlf::Next(right.negate())), isForGraph);
     }
-#endif
 }
+#endif
+
 
 DeclareDataAware DeclareDataAware::doExistence(size_t n, const std::string &left_act,
                                                const std::vector<std::unordered_map<std::string, DataPredicate>> &dnf_left_map) {
@@ -485,3 +487,158 @@ DeclareDataAware DeclareDataAware::binary(const declare_templates& t, const std:
     return result;
 }
 
+#include <knobab/KnowledgeBase.h>
+
+bool DeclareDataAware::checkValidity(const env &e1, const env &e2) const {
+    if (conjunctive_map.empty()) return true;
+    for(const auto& pred_withConj : conjunctive_map){
+        bool result = true;
+        for (const auto& pred : pred_withConj) {
+            if(!test_decomposed_data_predicate(e1, e2, pred.second.var, pred.second.varRHS, pred.second.casusu)){
+                result = false;
+                break;
+            }
+        }
+        if (result) return true;
+    }
+    return false;
+}
+
+bool DeclareDataAware::checkValidity(uint32_t t1, uint16_t e1, const env &e2) const {
+    if (conjunctive_map.empty()) return true;
+    for(const auto& pred_withConj : conjunctive_map){
+        bool result = true;
+        for (const auto & pred : pred_withConj) {
+            bool test = false;
+            auto temp1 = e2.find(pred.second.varRHS);
+            if (temp1 == e2.end())
+                test = false;
+            else {
+                auto temp2_a = kb->attribute_name_to_table.find(pred.second.var);
+                if (temp2_a != kb->attribute_name_to_table.end()) {
+                    size_t offset = kb->act_table_by_act_id.getBuilder().trace_id_to_event_id_to_offset.at(t1).at(e1);
+                    std::optional<union_minimal> data = temp2_a->second.resolve_record_if_exists2(offset);
+                    if (data.has_value()) {
+                        auto lhs = data.value();
+                        switch (pred.second.casusu) {
+                            case LT:
+                                test = lhs < temp1->second ; break;
+                            case LEQ:
+                                test = lhs <= temp1->second; break;
+                            case GT:
+                                test = lhs > temp1->second; break;
+                            case GEQ:
+                                test =  lhs >= temp1->second; break;
+                            case EQ:
+                                test =  lhs == temp1->second; break;
+                            case NEQ:
+                                test =  lhs != temp1->second; break;
+                            case TTRUE:
+                                test =  true; break;
+                            default:
+                                test =  false; break;
+                        }
+                    } else
+                        test = false;
+                } else {
+                    test = false;
+                }
+            }
+            if(!test){
+                result = false;
+                break;
+            }
+        }
+        if (result) return true;
+    }
+    return false;
+}
+
+bool DeclareDataAware::checkValidity(const env &e1, uint32_t t2, uint16_t e2) const {
+    if (conjunctive_map.empty()) return true;
+    for(const auto& pred_withConj : conjunctive_map){
+        bool result = true;
+        for (const auto& pred : pred_withConj) {
+            bool test = false;
+            auto temp1 = e1.find(pred.second.var);
+            if (temp1 == e1.end())
+                test = false;
+            else {
+                auto temp2_a = kb->attribute_name_to_table.find(pred.second.varRHS);
+                if (temp2_a != kb->attribute_name_to_table.end()) {
+                    size_t offset = kb->act_table_by_act_id.getBuilder().trace_id_to_event_id_to_offset.at(t2).at(e2);
+                    std::optional<union_minimal> data = temp2_a->second.resolve_record_if_exists2(offset);
+                    if (data.has_value()) {
+                        auto rhs = data.value();
+                        switch (pred.second.casusu) {
+                            case LT:
+                                test = temp1->second < rhs; break;
+                            case LEQ:
+                                test =  temp1->second <= rhs; break;
+                            case GT:
+                                test =  temp1->second > rhs; break;
+                            case GEQ:
+                                test =  temp1->second >= rhs; break;
+                            case EQ:
+                                test =  temp1->second == rhs; break;
+                            case NEQ:
+                                test =  temp1->second != rhs; break;
+                            case TTRUE:
+                                test =  true; break;
+                            default:
+                                test =  false; break;
+                        }
+                    } else
+                        test = false;
+                } else {
+                    test = false;
+                }
+            }
+            if(!test){
+                result = false;
+                break;
+            }
+        }
+        if (result) return true;
+    }
+    return false;
+}
+
+env DeclareDataAware::GetPayloadDataFromEvent(const std::pair<uint32_t, uint16_t> &pair) const {
+    env environment;
+
+    for(const auto& p : kb->attribute_name_to_table){
+        size_t offset = kb->act_table_by_act_id.getBuilder().trace_id_to_event_id_to_offset.at(pair.first).at(pair.second);
+        std::optional<union_minimal> data = p.second.resolve_record_if_exists2(offset);
+        if(data.has_value()) {
+            environment[p.first] = data.value();
+        }
+    }
+
+    return environment;
+}
+
+env DeclareDataAware::GetPayloadDataFromEvent(uint32_t first, uint16_t second, bool isLeft, std::unordered_set<std::string>& cache) const {
+    env environment;
+
+    if (cache.empty()) {
+        for(const auto& pred_withConj : conjunctive_map){
+            for (const auto & pred : pred_withConj) {
+                cache.insert(isLeft ? pred.second.var : pred.second.varRHS);
+            }
+        }
+    }
+
+    for (const auto& x : cache) {
+        auto it = kb->attribute_name_to_table.find(x);
+        if (it != kb->attribute_name_to_table.end()) {
+            size_t offset = kb->act_table_by_act_id.getBuilder().trace_id_to_event_id_to_offset.at(first).at(second);
+            std::optional<union_minimal> data = it->second.resolve_record_if_exists2(offset);
+            if(data.has_value()) {
+                environment[x] = data.value();
+            }
+        }
+    }
+
+    return environment;
+}

@@ -158,6 +158,8 @@ ltlf_query *ltlf_query_manager::getQuerySemiInstantiated(const std::vector<std::
     //h++;
     result->casusu = casusu;
     if (joinCondition) {
+        throw std::runtime_error("REPLACE OLD CONVERSION FROM SIMPLE DATA PREDICATE WITH JUST ASSIGNMENT!");
+#if 0
         std::vector<std::vector<SimpleDataPredicate>> sdp;
         for (const auto& inConj : *joinCondition) {
             auto& x = sdp.emplace_back();
@@ -169,6 +171,7 @@ ltlf_query *ltlf_query_manager::getQuerySemiInstantiated(const std::vector<std::
             }
         }
         result->joinCondition = {sdp,ptr};
+#endif
     }
     result->isTimed = isTimed;
     //DEBUG_ASSERT((expr.casusu != ACT) || (!expr.rewritten_act.empty()));

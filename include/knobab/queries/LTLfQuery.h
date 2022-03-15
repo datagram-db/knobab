@@ -10,13 +10,13 @@
 #include <vector>
 #include <yaucl/structures/bit_tagged_unions.h>
 #include <yaucl/structures/default_constructors.h>
-#include <knobab/predicates/PredicateManager.h>
 #include <knobab/operators/semantics.h>
 
 #define DECLARE_TYPE_NONE   (0)
 #define DECLARE_TYPE_LEFT   (1)
 #define DECLARE_TYPE_RIGHT  (2)
 #define DECLARE_TYPE_MIDDLE  (3)
+
 
 TAGGED_UNION_WITH_ENCAPSULATION_BEGIN(unsigned char, bit_fields, 0, 6, bool has_theta : 1, bool preserve : 1, bool is_atom : 1, bool is_timed:1, bool is_negated:1, bool is_numbered:1)
     (bool has_theta, bool preserve, bool is_atom, bool is_timed, bool is_negated, bool is_numbered)  {
@@ -61,7 +61,7 @@ struct LTLfQuery {
     std::set<std::string> atom;
     std::set<size_t> partial_results;
     size_t result_id = 0;
-    PredicateManager joinCondition;
+    DeclareDataAware* joinCondition;
     size_t parentMin = std::numeric_limits<size_t>::max(), parentMax = 0, dis = 0;
     Result result;
     size_t currentLayer() const {
