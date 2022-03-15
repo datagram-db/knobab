@@ -22,20 +22,11 @@ MAXSatPipeline::MAXSatPipeline(size_t nThreads)
     : pool(nThreads)
 #endif
 {
-    // TODO: with different specifications
-    DEBUG_ASSERT(false);
-#if 0
-    for (declare_templates t : magic_enum::enum_values<declare_templates>()) {
-        if (isUnaryPredicate(t)) continue;/*
-        ltlf_semantics.emplace(t, DeclareDataAware::unary(t, LEFT_ATOM, 1)
-                .toFiniteSemantics(false)
-                .nnf(false)).first->second.mark_join_condition(LEFT_ATOM, RIGHT_ATOM);
-        else */
-        ltlf_semantics.emplace(t, DeclareDataAware::binary(t, LEFT_ATOM, RIGHT_ATOM)
-                .toFiniteSemantics(false)
-                .nnf(false)).first->second.mark_join_condition(LEFT_ATOM, RIGHT_ATOM);
-    }
-#endif
+    // Equivalent to the old expansion of the declare formula into LTLF, and then into the negated normal form.
+    std::filesystem::path p = "scripts";
+    p = p / "logic_plan.queryplan";
+    std::ifstream file{p};
+    dqlp.parse(file);
 }
 
 void MAXSatPipeline::clear() {
@@ -86,8 +77,6 @@ void MAXSatPipeline::data_chunk(CNFDeclareDataAware *model,
     for (auto& it : declare_model->singleElementOfConjunction) {
         for (auto& item : it.elementsInDisjunction) {
             item.kb = &kb; // Setting the knowledge base, so to exploit it for join queries
-
-
 
             ///// OLD PART OF THE CODE!!!!!!!!!!!!!!
             auto& ref = declare_atomization[item];

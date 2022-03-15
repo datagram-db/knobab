@@ -11,6 +11,7 @@
 #include "knobab/trace_repairs/DataQuery.h"
 #include "yaucl/bpm/structures/ltlf/ltlf_query.h"
 #include <yaucl/numeric/ssize_t.h>
+#include <knobab/queries/DeclareQueryLanguageParser.h>
 
 //#define MAXSatPipeline_PARALLEL
 
@@ -37,6 +38,8 @@ struct MAXSatPipeline {
 
     double declare_to_ltlf_time = 0.0;
     double ltlf_query_time = 0.0;
+    DeclareQueryLanguageParser dqlp;
+
 
     CNFDeclareDataAware* declare_model = nullptr;
     static std::string LEFT_ATOM, RIGHT_ATOM;
@@ -46,7 +49,7 @@ struct MAXSatPipeline {
     size_t maxFormulaId = 0;
     std::vector<ltlf_query*> fomulaidToFormula;
 
-    MAXSatPipeline(size_t nThreads);
+    MAXSatPipeline(const std::string& preferred_plan_name, size_t nThreads);
     DEFAULT_COPY_ASSGN(MAXSatPipeline)
 
 

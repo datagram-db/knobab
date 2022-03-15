@@ -49,7 +49,7 @@ struct LTLfQuery {
         FALSEHOOD_QP = 15
     };
     type t;
-    short declare_type = 0;
+    unsigned char declare_type = 0;
     bit_fields fields;
     size_t n; //numeric_arg
 
@@ -95,9 +95,36 @@ struct LTLfQuery {
     static LTLfQuery qUNTIL(const LTLfQuery& lhs, const LTLfQuery& rhs, bool isTimed, bool hasTheta);
     static LTLfQuery qBOX(const LTLfQuery& lhs, bool isTimed);
     static LTLfQuery qDIAMOND(const LTLfQuery& lhs, bool isTimed);
-
-
 };
+
+inline void appendData(LTLfQuery& q,
+                       const std::unordered_set<std::string>& atom_universe,
+                       const std::unordered_set<std::string>& left,
+                       const std::unordered_set<std::string>& right) {
+    if (q.declare_type == DECLARE_TYPE_LEFT) {
+        if (q.fields.id.parts.is_negated) {
+            for (const auto& x : atom_universe) {
+                if (!left.contains(x))
+                    q.atom.insert(x);
+            }
+        } else {
+            q.atom.insert(left.begin(), left.end());
+        }
+    } else if (q.declare_type == DECLARE_TYPE_RIGHT) {
+        if (q.fields.id.parts.is_negated) {
+            for (const auto& x : atom_universe) {
+                if (!right.contains(x))
+                    q.atom.insert(x);
+            }
+        } else {
+            q.atom.insert(right.begin(), right.end());
+        }
+    } else {
+        throw std::runtime_error("ERROR: unexpected case for the moment!");
+    }
+    for (auto& args : q.args_from_script)
+        appendData(args, atom_universe, left, right);
+}
 
 #include <ostream>
 

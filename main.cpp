@@ -19,7 +19,8 @@ void whole_testing(const std::string& log_file = "data/testing/log.txt",
                    const std::string& benchmarking_file = "",
                    const std::string& sqlminer_dump_dir = "",
                    bool doStats = true,
-                   size_t noThreads = 1) {
+                   size_t noThreads = 1,
+                   const std::string& script_for_decomposition = "scripts/logic_plan.queryplan") {
     Environment env;
     env.clear();
     env.doStats = doStats;
@@ -63,7 +64,7 @@ void whole_testing(const std::string& log_file = "data/testing/log.txt",
         env.print_grounded_model(std::cout); // DEBUG
         //////////////////////////////////////////////////////////////////
 
-        auto ref = env.query_model(noThreads);
+        auto ref = env.query_model(script_for_decomposition, noThreads);
         std::cout << ref.result << std::endl;
         std::cout << env.experiment_logger << std::endl;
         if (doDebugServer) {
@@ -615,7 +616,9 @@ void sam_testing() {
 
 void parse_declare_query_planner() {
     DeclareQueryLanguageParser dqlp;
-    std::ifstream file{"scripts/logic_plan.queryplan"};
+    std::filesystem::path p = "scripts";
+    p = p / "logic_plan.queryplan";
+    std::ifstream file{p};
     dqlp.parse(file);
     for (const auto& ref : dqlp.planname_to_declare_to_ltlf) {
         std::cout << "Query plan name: " << ref.first << std::endl;
@@ -634,6 +637,7 @@ int main(int argc, char **argv) {
     bool doStats = true;
     log_data_format format = HUMAN_READABLE_YAUCL;
     std::string log_file = "data/testing/log.txt";
+    std::string scripts = "scripts/logic_plan.queryplan"
     std::string benchmark = "";
     std::string sql_miner_dump_folder = "";
     std::vector<std::string> queriesV{};
@@ -655,6 +659,7 @@ int main(int argc, char **argv) {
     args::ValueFlag<size_t> parallel(group, "#threads", "[Ineffective: the program is compiled in sequential mode]", {'p', "threads"});
 #endif
     args::ValueFlagList<std::string> queries(group, "Models/Queries", "The queries expressed as Declare models", {'d', "declare"});
+    args::ValueFlag<std::string> decomposition(group, "Script", "specifies the path where to load the declare LTLf decomposition model", {'c', "declareDecomposition"});
     args::ValueFlag<std::string> benchmarkFile(group, "Benchmark File", "Appends the current Result data into a benchmark file", {'b', "csv"});
     args::ValueFlag<std::string>  sqlMinerDump(group, "SQLMinerDump", "If present, specifies the dump for the SQL miner representation", {'s', "sqlminer"});
 
@@ -702,13 +707,16 @@ int main(int argc, char **argv) {
     if (sqlMinerDump) {
         sql_miner_dump_folder = args::get(sqlMinerDump);
     }
+    if (decomposition) {
+        scripts = args::get(decomposition);
+    }
 #ifdef MAXSatPipeline_PARALLEL
     if (parallel) {
         no_threads = args::get(parallel);
     }
     args::ValueFlag<size_t> parallel(group, "#threads", "Specifies the number of the threads to be run over the query plan", {'p', "threads"});
 #endif
-    whole_testing(log_file, format, queriesV, setUpServer, benchmark, sql_miner_dump_folder, doStats, no_threads);
+    whole_testing(log_file, format, queriesV, setUpServer, benchmark, sql_miner_dump_folder, doStats, no_threads, decomposition);
 
     //generate_nonunary_templates();
     //test_data_query();
