@@ -85,6 +85,11 @@ void MAXSatPipeline::data_chunk(CNFDeclareDataAware *model,
     //label_set_t visitedAtoms;
     for (auto& it : declare_model->singleElementOfConjunction) {
         for (auto& item : it.elementsInDisjunction) {
+            item.kb = &kb; // Setting the knowledge base, so to exploit it for join queries
+
+
+
+            ///// OLD PART OF THE CODE!!!!!!!!!!!!!!
             auto& ref = declare_atomization[item];
             if (!ref.empty()) continue; // Ignoring already visited patterns
 
