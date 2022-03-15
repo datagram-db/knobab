@@ -5,6 +5,7 @@
 #ifndef KNOBAB_ENVIRONMENT_H
 #define KNOBAB_ENVIRONMENT_H
 
+#include <yaucl/functional/assert.h>
 #include <knobab/KnowledgeBase.h>
 #include <knobab/algorithms/atomization_pipeline.h>
 #include <knobab/algorithms/kb_grounding.h>
@@ -22,21 +23,21 @@ semantic_atom_set evaluate_easy_prop_to_atoms(const easy_prop &prop,
                                               const std::unordered_set<std::string>& sigma) {
     switch (prop.casusu) {
         case easy_prop::E_P_AND:
-            assert(prop.args.size() == 2);
-            assert(!prop.isAtomNegated);
+            DEBUG_ASSERT(prop.args.size() == 2);
+            DEBUG_ASSERT(!prop.isAtomNegated);
             return unordered_intersection(evaluate_easy_prop_to_atoms( prop.args.at(0)/*, bogus_act_to_atom*/, bogus_act_to_set, sigma),
                                           evaluate_easy_prop_to_atoms( prop.args.at(1)/*, bogus_act_to_atom*/, bogus_act_to_set, sigma) );
         case easy_prop::E_P_OR: {
-            assert(prop.args.size() == 2);
-            assert(!prop.isAtomNegated);
+            DEBUG_ASSERT(prop.args.size() == 2);
+            DEBUG_ASSERT(!prop.isAtomNegated);
             semantic_atom_set S = evaluate_easy_prop_to_atoms( prop.args.at(0)/*, bogus_act_to_atom*/, bogus_act_to_set, sigma);
             auto tmp = evaluate_easy_prop_to_atoms( prop.args.at(1)/*, bogus_act_to_atom*/, bogus_act_to_set, sigma);
             S.insert(tmp.begin(), tmp.end());
             return S;
         }
         case easy_prop::E_P_ATOM:
-            assert(prop.args.empty());
-            assert(bogus_act_to_set.contains(prop.single_atom_if_any));
+            DEBUG_ASSERT(prop.args.empty());
+            DEBUG_ASSERT(bogus_act_to_set.contains(prop.single_atom_if_any));
             if (prop.isAtomNegated) {
                 return unordered_difference(sigma, bogus_act_to_set.at(prop.single_atom_if_any));
             } else {

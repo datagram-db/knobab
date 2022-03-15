@@ -8,7 +8,7 @@
 #include <vector>
 #include <unordered_map>
 #include <stdexcept>
-#include <cassert>
+#include <yaucl/functional/assert.h>
 
 namespace yaucl {
     namespace structures {
@@ -50,7 +50,7 @@ namespace yaucl {
                 }
             }
             const T&  get(size_t elem) const {
-                assert(int_to_T.size() > elem);
+                DEBUG_ASSERT(int_to_T.size() > elem);
                 return int_to_T.at(elem);
             }
         };
