@@ -8,7 +8,10 @@ bool LTLfQuery::operator==(const LTLfQuery &rhs) const {
     return t == rhs.t &&
            declare_type == rhs.declare_type &&
            fields == rhs.fields &&
-           n == rhs.n;
+           n == rhs.n &&
+           args_from_script == rhs.args_from_script &&
+           atom == rhs.atom &&
+           joinCondition == rhs.joinCondition;
 }
 
 bool LTLfQuery::operator!=(const LTLfQuery &rhs) const {
@@ -79,7 +82,7 @@ LTLfQuery LTLfQuery::qINIT(short declare_argument, bool isTimed) {
     q.declare_type = declare_argument;
     q.fields.id.parts.has_theta = false;
     q.fields.id.parts.preserve = false;
-    q.fields.id.parts.is_atom = false;
+    q.fields.id.parts.is_atom = true;
     q.fields.id.parts.is_negated = false;
     q.fields.id.parts.is_timed = isTimed;
     q.fields.id.parts.is_numbered = false;
@@ -93,7 +96,7 @@ LTLfQuery LTLfQuery::qEND(short declare_argument, bool isTimed) {
     q.declare_type = declare_argument;
     q.fields.id.parts.has_theta = false;
     q.fields.id.parts.preserve = false;
-    q.fields.id.parts.is_atom = false;
+    q.fields.id.parts.is_atom = true;
     q.fields.id.parts.is_negated = false;
     q.fields.id.parts.is_timed = isTimed;
     q.fields.id.parts.is_numbered = false;
@@ -107,7 +110,7 @@ LTLfQuery LTLfQuery::qEXISTS(size_t narg, short declare_argument, bool isTimed, 
     q.declare_type = declare_argument;
     q.fields.id.parts.has_theta = false;
     q.fields.id.parts.preserve = false;
-    q.fields.id.parts.is_atom = false;
+    q.fields.id.parts.is_atom = true;
     q.fields.id.parts.is_timed = isTimed;
     q.fields.id.parts.is_negated = isNegated;
     q.fields.id.parts.is_numbered = true;
@@ -121,7 +124,7 @@ LTLfQuery LTLfQuery::qABSENCE(size_t narg, short declare_argument, bool isTimed)
     q.declare_type = declare_argument;
     q.fields.id.parts.has_theta = false;
     q.fields.id.parts.preserve = false;
-    q.fields.id.parts.is_atom = false;
+    q.fields.id.parts.is_atom = true;
     q.fields.id.parts.is_negated = false;
     q.fields.id.parts.is_timed = isTimed;
     q.fields.id.parts.is_numbered = true;

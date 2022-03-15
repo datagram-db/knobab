@@ -5,12 +5,12 @@
 #ifndef KNOBAB_LTLF_QUERY_H
 #define KNOBAB_LTLF_QUERY_H
 
+#if 0
 #include <vector>
 #include <string>
 #include <yaucl/bpm/structures/ltlf/ltlf.h>
 #include <knobab/predicates/PredicateManager.h>
 #include <knobab/operators/LTLFOperators.h>
-
 
 enum ltlf_query_t {
     Q_TRUE,
@@ -86,18 +86,36 @@ namespace std {
 
 #include <nlohmann/json.hpp>
 #include <magic_enum.hpp>
+#endif
+
+#include <knobab/queries/LTLfQuery.h>
+#include <unordered_map>
 
 struct ltlf_query_manager {
-    std::unordered_map<std::pair<ltlf, bool>, ltlf_query*> conversion_map_for_subexpressions;
-    std::map<size_t, std::vector<ltlf_query*>> Q;
-    std::unordered_map<ltlf_query*, size_t> counter;
-    std::vector<ltlf_query*> atomsToDecomposeInUnion;
+    std::unordered_map<LTLfQuery, LTLfQuery*> conversion_map_for_subexpressions;
+    std::map<size_t, std::vector<LTLfQuery*>> Q;
+    std::unordered_map<LTLfQuery*, size_t> counter;
+    std::vector<LTLfQuery*> atomsToDecomposeInUnion;
     //std::set<ltlf_query*> VSet;
 
-    void generateGraph(std::map<ltlf_query*, std::vector<ltlf_query*>>& ref, ltlf_query*q) const;
+    void generateGraph(std::map<LTLfQuery*, std::vector<LTLfQuery*>>& ref, LTLfQuery*q) const;
     std::string generateGraph() const;
 
     void clear();
+
+    LTLfQuery* simplify(const LTLfQuery& q);
+    LTLfQuery *simplify(size_t formulaId,
+                        const LTLfQuery &input,
+                        const DeclareDataAware *joinCondition,
+                        const std::unordered_set<std::string> &atom_universe,
+                        const std::unordered_set<std::string> &left,
+                        const std::unordered_set<std::string> &right,
+                        std::vector<std::string> &toUseAtoms,
+                        std::unordered_map<std::string , std::vector<size_t>>& atomToFormulaId);
+
+    void finalize_unions(const std::vector<LTLfQuery*>& W, KnowledgeBase* ptr);
+
+#if 0
     ltlf_query*  init1(const std::string& atom, std::unordered_set<std::string>& predicates);
     ltlf_query* end1(const std::string &atom, std::unordered_set<std::string> &predicates);
     ltlf_query *exists(const std::string &atom, std::unordered_set<std::string> &predicates, size_t atLeast);
@@ -108,7 +126,6 @@ struct ltlf_query_manager {
                      const std::string &prefix, const ltlf_query_t &casus,
                      size_t numeric_arg);
 
-    void finalize_unions(const std::vector<ltlf_query*>& W, KnowledgeBase* ptr);
 
     ltlf_query*  simplify(const ltlf& expr,  bool isTimed = false, KnowledgeBase* ptr = nullptr);
 
@@ -118,8 +135,9 @@ struct ltlf_query_manager {
                                          const std::vector<std::unordered_map<std::string, DataPredicate>> *joinCondition,
                                          bool isAct,
                                          KnowledgeBase* ptr);
+#endif
 };
 
-std::ostream & human_readable_ltlf_printing(std::ostream &os, const ltlf_query* syntax);
+//std::ostream & human_readable_ltlf_printing(std::ostream &os, const ltlf_query* syntax);
 
 #endif //KNOBAB_LTLF_QUERY_H

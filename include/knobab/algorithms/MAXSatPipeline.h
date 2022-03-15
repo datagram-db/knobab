@@ -39,18 +39,19 @@ struct MAXSatPipeline {
     double declare_to_ltlf_time = 0.0;
     double ltlf_query_time = 0.0;
     DeclareQueryLanguageParser dqlp;
-
+    std::unordered_map<std::string, LTLfQuery>* ptr = nullptr;
 
     CNFDeclareDataAware* declare_model = nullptr;
     static std::string LEFT_ATOM, RIGHT_ATOM;
 
-    std::unordered_map<declare_templates, ltlf> ltlf_semantics;
+    //std::unordered_map<declare_templates, ltlf> ltlf_semantics;
     std::unordered_map<std::string , std::vector<size_t>> atomToFormulaId;
     size_t maxFormulaId = 0;
-    std::vector<ltlf_query*> fomulaidToFormula;
+    std::vector<LTLfQuery*> fomulaidToFormula;
 
-    MAXSatPipeline(const std::string& preferred_plan_name, size_t nThreads);
+    MAXSatPipeline(const std::string& plan_file, const std::string& plan, size_t nThreads);
     DEFAULT_COPY_ASSGN(MAXSatPipeline)
+
 
 
     // DATA
@@ -59,7 +60,7 @@ struct MAXSatPipeline {
     std::unordered_map<DataQuery, size_t> data_offset;
     std::vector<std::pair<DataQuery, std::vector<std::pair<std::pair<trace_t, event_t>, double>>>> data_accessing;
     std::unordered_map<std::string, std::unordered_map<std::string,std::vector<size_t>>> data_accessing_range_query_to_offsets;
-    std::unordered_map<DeclareDataAware, std::unordered_map<std::pair<bool, std::string>, label_set_t>> declare_atomization;
+    std::unordered_set<DeclareDataAware> declare_atomization;
     std::vector<std::set<size_t>> atomToResultOffset;
     std::vector<std::string> toUseAtoms; // This is to ensure the insertion of unique elements to the map!
     size_t barrier_to_range_queries, barriers_to_atfo;
@@ -83,7 +84,7 @@ struct MAXSatPipeline {
     void
     generateAtomQuery(std::vector<std::string> &toUseAtoms,
                       std::vector<std::pair<std::pair<trace_t, event_t>, double>> &empty_result,
-                      DeclareDataAware &item, ltlf_query *formula, DataQueryType r,
+                      DeclareDataAware &item, LTLfQuery *formula, DataQueryType r,
                       size_t numeric_argument);
 
     void localExtract(const AtomizingPipeline &atomization, std::vector<std::string> &toUseAtoms,

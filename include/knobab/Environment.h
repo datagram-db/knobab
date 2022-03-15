@@ -111,7 +111,9 @@ public:
     /**
      * Performs a query over the setted model. The whole pipeline is returned as a result (e.g., debugging and server)
      */
-    MAXSatPipeline query_model(const std::string& script_for_decomposition, size_t noThreads);
+    MAXSatPipeline query_model(const std::string& script_for_decomposition,
+                               const std::string& preferred_plan,
+                               size_t noThreads);
 
     /**
      * Clears all of the bits and pieces, thus preparing into a novel test
