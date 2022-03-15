@@ -4,6 +4,4 @@
 
 #include "knobab/queries/LTLfQuery.h"
 
-void LTLfQuery::test() {
-    
-}
+

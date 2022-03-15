@@ -55,7 +55,7 @@ void approximated_topo_sort(graph_join_pm &g, std::vector<size_t> &order) {
 #include <yaucl/hashing/pair_hash.h>
 #include <yaucl/hashing/uset_hash.h>
 #include <yaucl/functional/iterators.h>
-#include <cassert>
+#include <yaucl/functional/assert.h>
 
 void rec_mark(std::unordered_map<std::pair<size_t, size_t>, std::vector<std::pair<size_t, size_t>>>& table,
               std::unordered_set<std::pair<size_t, size_t>>& marked,
@@ -63,7 +63,7 @@ void rec_mark(std::unordered_map<std::pair<size_t, size_t>, std::vector<std::pai
     if (cp.first > cp.second) std::swap(cp.first, cp.second);
     if (marked.insert(cp).second) {
         auto it = table.find(cp);
-        assert(it != table.end());
+        DEBUG_ASSERT(it != table.end());
         std::vector<std::pair<size_t, size_t>> V;
         std::swap(V, it->second);
         for (const auto& cp2 : V)
@@ -75,7 +75,7 @@ void rec_mark(std::unordered_map<std::pair<size_t, size_t>, std::vector<std::pai
 
 void getNodeClustersFromLabel(graph_join_pm &graph,
                               std::unordered_map<size_t, std::unordered_set<size_t>> &clustersPerClusteredNode) {
-    assert(graph.V_size == graph.vertex_id_secondary_index.size()); // Guaranteeing that the access is ok
+    DEBUG_ASSERT(graph.V_size == graph.vertex_id_secondary_index.size()); // Guaranteeing that the access is ok
 
     std::vector<size_t> order;
     std::unordered_map<std::pair<size_t, size_t>, std::vector<std::pair<size_t, size_t>>> table;
@@ -86,9 +86,9 @@ void getNodeClustersFromLabel(graph_join_pm &graph,
     for (size_t node_id = 0, N = graph.V_size; node_id<N; node_id++) {
         const std::pair<std::string, size_t>& cp  = graph.vertex_id_secondary_index.at(node_id);
         const std::string& label = cp.first;
-        assert(graph.vertex_hash_primary_index.contains(label));
+        DEBUG_ASSERT(graph.vertex_hash_primary_index.contains(label));
         auto& it2 = graph.vertex_hash_primary_index.at(label);
-        assert(it2.size() > cp.second);
+        DEBUG_ASSERT(it2.size() > cp.second);
         auto& ref = graph.vertex_hash_primary_index.at(label).at(cp.second);
         auto it = element_map_finalNotFinal.find(label);
         if (it == element_map_finalNotFinal.end()) {
@@ -166,12 +166,12 @@ void getNodeClustersFromLabel(graph_join_pm &graph,
 
             while ((it_left != e_left) && (it_right != e_right)) {
                 if (it_left->first < it_right->first)
-                    assert(false && "The two markings do not conicide!");
+                    DEBUG_ASSERT(false && "The two markings do not conicide!");
                 else if (it_left->first > it_right->first)
-                    assert(false && "The two markings do not conicide!");
+                    DEBUG_ASSERT(false && "The two markings do not conicide!");
                 else {
-                    assert(it_left->second.size() == 1);
-                    assert(it_right->second.size() == 1);
+                    DEBUG_ASSERT(it_left->second.size() == 1);
+                    DEBUG_ASSERT(it_right->second.size() == 1);
                     size_t ll = it_left->second.at(0).first;
                     size_t rr = it_right->second.at(0).first;
                     if (ll>rr) std::swap(ll, rr);
@@ -221,7 +221,7 @@ void minimize(graph_join_pm &g, graph_join_pm &result) {
     std::unordered_map<std::unordered_set<size_t>, size_t> mapped_id;
     std::unordered_map<size_t, size_t> old_id_to_id;
 
-    assert(g.vertex_id_secondary_index.size() == g.V_size);
+    DEBUG_ASSERT(g.vertex_id_secondary_index.size() == g.V_size);
     for (size_t node_id = 0, N = g.V_size; node_id<N; node_id++) {
         auto it = eq_rel.find(node_id);
         if (it == eq_rel.end()) {
@@ -243,16 +243,16 @@ void minimize(graph_join_pm &g, graph_join_pm &result) {
         }
     }
 
-    assert(g.vertex_id_secondary_index.size() == g.V_size);
+    DEBUG_ASSERT(g.vertex_id_secondary_index.size() == g.V_size);
     for (size_t node_id = 0, N = g.V_size; node_id<N; node_id++) {
-        assert(old_id_to_id.contains(node_id));
+        DEBUG_ASSERT(old_id_to_id.contains(node_id));
         size_t src_id = old_id_to_id.at(node_id);
         auto it = eq_rel.find(node_id);
         if (it == eq_rel.end()) {
             const auto& ref = resolve_node_const(g, node_id);
             for (const auto& x : ref.outgoing_hash_to_outgoingNodeIdWithWeight) {
                 for (const std::pair<size_t, double>& y : x.second) {
-                    assert(old_id_to_id.contains(y.first));
+                    DEBUG_ASSERT(old_id_to_id.contains(y.first));
                     size_t dst_id = old_id_to_id.at(y.first);
                     add_edge(result, src_id, dst_id, y.second);
                 }
@@ -264,7 +264,7 @@ void minimize(graph_join_pm &g, graph_join_pm &result) {
                 const auto& ref = resolve_node_const(g, node_id);
                 for (const auto& x : ref.outgoing_hash_to_outgoingNodeIdWithWeight) {
                     for (const std::pair<size_t, double>& y : x.second) {
-                        assert(old_id_to_id.contains(y.first));
+                        DEBUG_ASSERT(old_id_to_id.contains(y.first));
                         size_t dst_id = old_id_to_id.at(y.first);
                         add_edge(result, src_id, dst_id, y.second);
                     }

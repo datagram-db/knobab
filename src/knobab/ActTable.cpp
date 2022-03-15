@@ -40,30 +40,30 @@ bool ActTable::record::operator!=(const ActTable::record &rhs) const {
     return !(rhs == *this);
 }
 
-#include <cassert>
+#include <yaucl/functional/assert.h>
 #include <iostream>
 
 void ActTable::load_record(trace_t id, act_t act, time_t time) {
     {
         const size_t N = builder.act_id_to_trace_id_and_time.size();
-        //assert(N >= act);
+        //DEBUG_ASSERT(N >= act);
         if (N == act) {
             builder.act_id_to_trace_id_and_time.emplace_back().emplace_back(id, time);
         } else if (N > act){
-            //assert(builder.act_id_to_trace_id_and_time.size() > act);
+            //DEBUG_ASSERT(builder.act_id_to_trace_id_and_time.size() > act);
             builder.act_id_to_trace_id_and_time[act].emplace_back(id, time);
         }
     }
     {
         const size_t M = builder.trace_id_to_event_id_to_offset.size();
-        //assert(M >= id);
+        //DEBUG_ASSERT(M >= id);
         if (M == id) {
-            //assert(trace_length.size() == M);
+            //DEBUG_ASSERT(trace_length.size() == M);
             builder.trace_id_to_event_id_to_offset.emplace_back();
             trace_length.push_back(1);
         } else {
-            //assert((M-1) == id);
-            assert(trace_length.size() > id);
+            //DEBUG_ASSERT((M-1) == id);
+            DEBUG_ASSERT(trace_length.size() > id);
             trace_length[id]++;
         }
         builder.trace_id_to_event_id_to_offset[builder.trace_id_to_event_id_to_offset.size()-1].emplace_back(time);
@@ -72,6 +72,8 @@ void ActTable::load_record(trace_t id, act_t act, time_t time) {
 
 #include <cassert>
 #include <algorithm>
+#include <yaucl/functional/assert.h>
+
 
 void ActTable::sanityCheck() {
     //assert(std::is_sorted(table.begin(), table.end()));
@@ -106,7 +108,7 @@ void ActTable::indexing2() { // todo: rename as indexing, and remove expectedOrd
             size_t offset = ref[time];
             auto& real_ref = table[offset];
             if (time == 0) {
-                assert(secondary_index.size() == sigma_id);
+                DEBUG_ASSERT(secondary_index.size() == sigma_id);
                 secondary_index.emplace_back(&real_ref, &table[ref.back()]);
             }
             if (time < T-1) {

@@ -75,7 +75,7 @@ bool AttributeTable::assertVariant(const std::variant<double, size_t, long long 
 void
 AttributeTable::record_load(act_t act_id, const std::variant<double, size_t, long long int, std::string, bool> &val,
                             trace_t tid, event_t eid) {
-    assert(assertVariant(val));
+    DEBUG_ASSERT(assertVariant(val));
     while (elements.size() <= act_id)
         elements.emplace_back();
     elements[act_id][val].emplace_back(tid, eid);
@@ -170,15 +170,16 @@ std::ostream &AttributeTable::resolve_and_print(std::ostream &os, const Attribut
 #include <sstream>
 #include <magic_enum.hpp>
 #include <yaucl/structures/set_operations.h>
+#include <yaucl/functional/assert.h>
 
 
 AttributeTable::range_query_result AttributeTable::range_query(DataPredicate prop, ssize_t act, double min_threshold, const double c) const {
     // Just for consistency checking, I need to evaluate the predicate over the specific table. This is also for efficiency reasons
     // Plus, this has to be checked only if the predicate is not the always true predicate, forsooth!
 
-    assert((prop.casusu != TTRUE)); // Universal queries should be handled at the higher level: id est, I do not even attempt at returning the data if I know that
+    DEBUG_ASSERT((prop.casusu != TTRUE)); // Universal queries should be handled at the higher level: id est, I do not even attempt at returning the data if I know that
                                     // everything is always true!
-    assert((prop.var == this->attr_name));
+    DEBUG_ASSERT((prop.var == this->attr_name));
     bool isNotExactMatch = min_threshold < 1.0;
     if ((prop.casusu != INTERVAL)) {
         prop.asInterval();// If it is not an interval, make that as so, so we need to deal with only one case!
@@ -204,14 +205,14 @@ bool AttributeTable::range_query(size_t actId,
                                  bool isNotExactMatch,
                                  double min_threshold,
                                  double c) const {
-    assert(prop.casusu == INTERVAL); // At this stage, I should only have interval queries!
+    DEBUG_ASSERT(prop.casusu == INTERVAL); // At this stage, I should only have interval queries!
     if (actId > primary_index.size()) return false; // missing act
     auto it = primary_index.at(actId);
     if (it.first == it.second)
         return false; // missing attribute ~ for the meantime, we are not approximating the match on the attribute name, but we should in the future
     {
-        assert(table.size() >= it.first);
-        assert(table.size() >= it.second);
+        DEBUG_ASSERT(table.size() >= it.first);
+        DEBUG_ASSERT(table.size() >= it.second);
 
         const union_type prop_leftValue = cast_unions(type, prop.value);
         const union_type prop_rightValue = cast_unions(type, prop.value_upper_bound);
@@ -419,14 +420,14 @@ union_minimal resolveUnionMinimal(const AttributeTable &table, const AttributeTa
 std::pair<const AttributeTable::record *, const AttributeTable::record *>
  AttributeTable::exact_range_query(size_t actId, const DataPredicate &prop) const {
     std::pair<const AttributeTable::record *, const AttributeTable::record *> thisResult{nullptr, nullptr};
-    assert(prop.casusu == INTERVAL); // At this stage, I should only have interval queries!
+    DEBUG_ASSERT(prop.casusu == INTERVAL); // At this stage, I should only have interval queries!
     if (actId > primary_index.size()) return thisResult; // missing act
     auto it = primary_index.at(actId);
     if (it.first == it.second)
         return thisResult; // missing attribute ~ for the meantime, we are not approximating the match on the attribute name, but we should in the future
     {
-        assert(table.size() >= it.first);
-        assert(table.size() >= it.second);
+        DEBUG_ASSERT(table.size() >= it.first);
+        DEBUG_ASSERT(table.size() >= it.second);
 
         const union_type prop_leftValue = cast_unions(type, prop.value);
         const union_type prop_rightValue = cast_unions(type, prop.value_upper_bound);
@@ -480,8 +481,8 @@ AttributeTable::exact_range_query(const std::vector<std::pair<size_t, std::vecto
             for (size_t i = 0, N = cps.second.size(); i<N; i++)
                 actualResult.emplace_back(nullptr, nullptr);
         } else {
-            assert(table.size() >= it.first);
-            assert(table.size() >= it.second);
+            DEBUG_ASSERT(table.size() >= it.first);
+            DEBUG_ASSERT(table.size() >= it.second);
             const record* begin = table.data() + it.first;
             const record* end = table.data() + it.second;
 

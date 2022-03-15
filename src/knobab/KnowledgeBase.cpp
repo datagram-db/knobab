@@ -61,7 +61,7 @@ void KnowledgeBase::reconstruct_trace_with_data(std::ostream &os) const {
             for (const auto& attr_table : this->attribute_name_to_table) {
                 const AttributeTable::record* recordPtr = attr_table.second.resolve_record_if_exists(offset);
                 if (recordPtr) {
-                    assert(recordPtr->act_table_offset == offset);
+                    DEBUG_ASSERT(recordPtr->act_table_offset == offset);
                     os << attr_table.first << '=';
                     attr_table.second.resolve_and_print(os, *recordPtr);
                     os << ", ";
@@ -100,7 +100,7 @@ void KnowledgeBase::index_data_structures(bool missingDataIndexing) {
             universeApprox.emplace_back(std::make_pair(i, j), maximum_reliability_for_insertion);
         }
     }*/
-    assert(std::is_sorted(universe.begin(), universe.end()));
+    DEBUG_ASSERT(std::is_sorted(universe.begin(), universe.end()));
 
     if (missingDataIndexing) {
         std::cout << "NOW INDEXING 'MISSING DATA'" << std::endl;
@@ -158,10 +158,11 @@ void KnowledgeBase::index_data_structures(bool missingDataIndexing) {
 
 ///////////////// Event System
 #include <iostream>
+#include <yaucl/functional/assert.h>
 
 
 void KnowledgeBase::enterLog(const std::string &source, const std::string &name) {
-    assert(!this->alreadySet);
+    DEBUG_ASSERT(!this->alreadySet);
     this->source = source;
     this->name = name;
     this->alreadySet = true;
@@ -171,9 +172,9 @@ void KnowledgeBase::enterLog(const std::string &source, const std::string &name)
 }
 
 void KnowledgeBase::exitLog(const std::string &source, const std::string &name) {
-    assert(this->alreadySet);
-    assert(this->name == name);
-    assert(this->source == source);
+    DEBUG_ASSERT(this->alreadySet);
+    DEBUG_ASSERT(this->name == name);
+    DEBUG_ASSERT(this->source == source);
     status = FinishParsing;
     count_table.sort();
 }
@@ -187,7 +188,7 @@ size_t KnowledgeBase::enterTrace(const std::string &trace_label) {
 }
 
 void KnowledgeBase::exitTrace(size_t traceId) {
-    assert(noTraces == (traceId+1));
+    DEBUG_ASSERT(noTraces == (traceId+1));
     status = LogParsing;
 }
 
@@ -209,7 +210,7 @@ size_t KnowledgeBase::enterEvent(size_t chronos_tick, const std::string &event_l
 
 void KnowledgeBase::exitEvent(size_t event_id) {
     currentEventLabel.clear();
-    assert(currentEventId == (event_id+1));
+    DEBUG_ASSERT(currentEventId == (event_id+1));
     // using counting_reference to populate
     std::vector<std::pair<size_t, size_t>> cp;
     for (const auto& it : counting_reference)
@@ -222,16 +223,16 @@ void KnowledgeBase::exitEvent(size_t event_id) {
 
 void KnowledgeBase::enterData_part(bool isEvent) {
     if (isEvent)
-        assert(status == EventParsing);
+        DEBUG_ASSERT(status == EventParsing);
     else
-        assert(status == TraceParsing);
+        DEBUG_ASSERT(status == TraceParsing);
 }
 
 void KnowledgeBase::exitData_part(bool isEvent) {
     if (isEvent)
-        assert(status == EventParsing);
+        DEBUG_ASSERT(status == EventParsing);
     else
-        assert(status == TraceParsing);
+        DEBUG_ASSERT(status == TraceParsing);
 }
 
 void KnowledgeBase::visitField(const std::string &key, bool value) {
@@ -264,37 +265,9 @@ void KnowledgeBase::visitField(const std::string &key, double value) {
     else
         return;
     fillInAtGivenStep(key, value, type, ptr, ptr2, noTraces-1, currentEventId-1, currentEventLabel, actId);
-#if 0
-    if (status == EventParsing) {
-        auto it = attribute_name_to_table.find(key);
-        if (it == attribute_name_to_table.end()) {
-            attribute_name_to_table[key] = {key, DoubleAtt};
-            it = attribute_name_to_table.find(key);
-        } else if (it->second.type != DoubleAtt) {
-            std::string s{magic_enum::enum_name(it->second.type)};
-            throw std::runtime_error(key+" was already associated to " + s+", now it also have Double: FATAL ERROR!");
-        }
-        registerEventLabelSchema[currentEventLabel].insert(key);
-        it->second.record_load(actId, value, noTraces-1, currentEventId-1);
-    }
-#endif
 }
 
 void KnowledgeBase::visitField(const std::string &key, const std::string &value) {
-#if 0
-    if (status == EventParsing) {
-        auto it = attribute_name_to_table.find(key);
-        if (it == attribute_name_to_table.end()) {
-            attribute_name_to_table[key] = {key, StringAtt};
-            it = attribute_name_to_table.find(key);
-        } else if (it->second.type != StringAtt) {
-            std::string s{magic_enum::enum_name(it->second.type)};
-            throw std::runtime_error(key+" was already associated to " + s+", now it also have String: FATAL ERROR!");
-        }
-        registerEventLabelSchema[currentEventLabel].insert(key);
-        it->second.record_load(actId, value, noTraces-1, currentEventId-1);
-    }
-#endif
     constexpr AttributeTableType type = StringAtt;
     std::unordered_map<std::string, AttributeTable>* ptr = nullptr;
     std::unordered_map<std::string, std::unordered_set<std::string>>* ptr2 = nullptr;
@@ -311,20 +284,6 @@ void KnowledgeBase::visitField(const std::string &key, const std::string &value)
 }
 
 void KnowledgeBase::visitField(const std::string &key, size_t value) {
-#if 0
-    if (status == EventParsing) {
-        auto it = attribute_name_to_table.find(key);
-        if (it == attribute_name_to_table.end()) {
-            attribute_name_to_table[key] = {key, SizeTAtt};
-            it = attribute_name_to_table.find(key);
-        } else if (it->second.type != SizeTAtt) {
-            std::string s{magic_enum::enum_name(it->second.type)};
-            throw std::runtime_error(key+" was already associated to " + s+", now it also have Size_T: FATAL ERROR!");
-        }
-        registerEventLabelSchema[currentEventLabel].insert(key);
-        it->second.record_load(actId, value, noTraces-1, currentEventId-1);
-    }
-#endif
     constexpr AttributeTableType type = SizeTAtt;
     std::unordered_map<std::string, AttributeTable>* ptr = nullptr;
     std::unordered_map<std::string, std::unordered_set<std::string>>* ptr2 = nullptr;
@@ -483,8 +442,8 @@ KnowledgeBase::range_query(DataPredicate prop, double min_threshold, const doubl
     else
         prop.asInterval();
     constexpr size_t max_int = std::numeric_limits<size_t>::max();
-    assert(!prop.var.empty());
-    assert((min_threshold >= std::numeric_limits<double>::epsilon()) && (min_threshold <= 1.0)); // Cannot have a negative approximation, as the approximation is just a distance
+    DEBUG_ASSERT(!prop.var.empty());
+    DEBUG_ASSERT((min_threshold >= std::numeric_limits<double>::epsilon()) && (min_threshold <= 1.0)); // Cannot have a negative approximation, as the approximation is just a distance
     if (!prop.labelRHS.empty()) {
         std::stringstream sstr;
         sstr << "Predicate " << prop << ": cannot have a predicate over two distinct variables! ";
@@ -770,13 +729,13 @@ void KnowledgeBase::print_attribute_tables(std::ostream &os) const {
 }
 
 std::vector<std::pair<trace_t, event_t>> KnowledgeBase::exact_range_query(DataPredicate prop) const {
-    assert(prop.casusu != TTRUE);
+    DEBUG_ASSERT(prop.casusu != TTRUE);
     prop.asInterval();
     constexpr size_t max_int = std::numeric_limits<size_t>::max();
-    assert(!prop.var.empty());
-    assert(prop.labelRHS.empty());
-    assert(prop.exceptions.empty());
-    assert(prop.BiVariableConditions.empty());
+    DEBUG_ASSERT(!prop.var.empty());
+    DEBUG_ASSERT(prop.labelRHS.empty());
+    DEBUG_ASSERT(prop.exceptions.empty());
+    DEBUG_ASSERT(prop.BiVariableConditions.empty());
     auto it = attribute_name_to_table.find(prop.var);
     if (it == attribute_name_to_table.end()) {
         // if no attribute is there, for the exact match I assume that no value was matched
@@ -1076,7 +1035,7 @@ void KnowledgeBase::dump_for_sqlminer(std::ostream &log, std::ostream &payload, 
             while (it != en) {
                 const AttributeTable::record* recordPtr = it->second.resolve_record_if_exists(offset);
                 if (recordPtr) {
-                    assert(recordPtr->act_table_offset == offset);
+                    DEBUG_ASSERT(recordPtr->act_table_offset == offset);
                     it->second.resolve_and_print(payload, *recordPtr);
                 }
                 it++;

@@ -35,7 +35,7 @@ semantic_atom_set AtomizingPipeline::atom_decomposition(const std::string &act, 
     auto it = interval_map.find(act);
     if (it == interval_map.end()) {
         // If the atom is not associated to an interval, then return the atom itself
-        assert(act_atoms.contains(act));
+        DEBUG_ASSERT(act_atoms.contains(act));
         S.insert(act);
     } else {
         std::pair<std::string, size_t> cp; // convenience element, so not to re-allocate the memory all the time
@@ -56,7 +56,7 @@ semantic_atom_set AtomizingPipeline::interval_decomposition(const DataPredicate 
         for (const auto& cp : V) {
             for (const auto& I : ref.findInterval(cp.first, cp.second)) {
                 DataPredicate dp{pred.label, pred.var, I.first, I.second};
-                assert(Mcal.contains(dp));
+                DEBUG_ASSERT(Mcal.contains(dp));
                 auto v = Mcal.at(dp);
                 S.insert(v.begin(), v.end());
             }
@@ -67,7 +67,7 @@ semantic_atom_set AtomizingPipeline::interval_decomposition(const DataPredicate 
         for (const auto& cp : V) {
             for (const auto& I : ref.findInterval(cp.first, cp.second)) {
                 DataPredicate dp{pred.label, pred.var, I.first, I.second};
-                assert(Mcal.contains(dp));
+                DEBUG_ASSERT(Mcal.contains(dp));
                 auto v = Mcal.at(dp);
                 S.insert(v.begin(), v.end());
             }
@@ -112,6 +112,7 @@ std::ostream &operator<<(std::ostream &os, const AtomizingPipeline &pipeline) {
 }
 
 #include <chrono>
+#include <yaucl/functional/assert.h>
 
 
 double collect_data_from_declare_disjunctive_model(AtomizingPipeline &pipeline_data, const CNFDeclareDataAware &disjoint_model) {
@@ -123,12 +124,12 @@ double collect_data_from_declare_disjunctive_model(AtomizingPipeline &pipeline_d
             pipeline_data.act_universe.insert(declare_clause.left_act);
             if (!declare_clause.right_act.empty())
                 pipeline_data.act_universe.insert(declare_clause.right_act);
-            //assert(declare_clause.conjunctive_map.empty());
+            //DEBUG_ASSERT(declare_clause.conjunctive_map.empty());
             for (const auto& itemList : declare_clause.dnf_left_map) {
                 for (const auto& item : itemList) {
                     auto& formula_numeric_atom = item.second;
-                    assert(formula_numeric_atom.BiVariableConditions.empty());
-                    assert(formula_numeric_atom.varRHS.empty());
+                    DEBUG_ASSERT(formula_numeric_atom.BiVariableConditions.empty());
+                    DEBUG_ASSERT(formula_numeric_atom.varRHS.empty());
                     if (formula_numeric_atom.casusu == TTRUE) continue;
                     pipeline_data.map1[formula_numeric_atom.label][formula_numeric_atom.var].insert(formula_numeric_atom);
                     auto x = formula_numeric_atom.decompose_single_variable_into_intervals();
@@ -145,8 +146,8 @@ double collect_data_from_declare_disjunctive_model(AtomizingPipeline &pipeline_d
             for (const auto& itemList : declare_clause.dnf_right_map) {
                 for (const auto& item : itemList) {
                     auto& formula_numeric_atom = item.second;
-                    assert(formula_numeric_atom.BiVariableConditions.empty());
-                    assert(formula_numeric_atom.varRHS.empty());
+                    DEBUG_ASSERT(formula_numeric_atom.BiVariableConditions.empty());
+                    DEBUG_ASSERT(formula_numeric_atom.varRHS.empty());
                     if (formula_numeric_atom.casusu == TTRUE) continue;
                     pipeline_data.map1[formula_numeric_atom.label][formula_numeric_atom.var].insert(formula_numeric_atom);
                     auto x = formula_numeric_atom.decompose_single_variable_into_intervals();
@@ -292,7 +293,7 @@ double atomize_model(AtomizingPipeline &pipeline_data, CNFDeclareDataAware &disj
     auto t1 = std::chrono::high_resolution_clock::now();
     for ( auto& ref : disjoint_model.singleElementOfConjunction) {
         for ( auto& child : ref.elementsInDisjunction) {
-            //assert(child.conjunctive_map.empty());
+            //DEBUG_ASSERT(child.conjunctive_map.empty());
             child.left_decomposed_atoms = pipeline_data.atom_decomposition(child.left_act, false);
             if (!child.dnf_left_map.empty()) {
                 auto tmp = atomize_disjunction(pipeline_data, child.dnf_left_map);
@@ -317,7 +318,7 @@ double atomize_model(AtomizingPipeline &pipeline_data, CNFDeclareDataAware &disj
         for (size_t i = 0, N = pipeline_data.max_ctam_iteration.at(cp.first); i<N; i++) {
             cp.second = i;                     // cp = <Event Label, Offset>
             // Assertion: one atom should only appear once!
-            assert(pipeline_data.atom_to_conjunctedPredicates.emplace(pipeline_data.clause_to_atomization_map.at(cp),
+            DEBUG_ASSERT(pipeline_data.atom_to_conjunctedPredicates.emplace(pipeline_data.clause_to_atomization_map.at(cp),
                                                                       k.second.at(i)).second);
         }
     }
