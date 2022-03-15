@@ -16,11 +16,11 @@ void DeclareQueryLanguageParser::parse(std::istream &stream) {
     if (ptr) {
         for (const auto& query_plan : ptr->query_plan()) {
             std::string query_plan_name = UNESCAPE(query_plan->STRING()->getText());
-            bool doAutoTimed = query_plan->AUTO_TIMED();
+            auto& ref = planname_to_declare_to_ltlf[query_plan_name];
+            isAutoTimed = query_plan->AUTO_TIMED();
             for (const auto& declare : query_plan->declare_syntax()) {
-                std::string declare_template_name = UNESCAPE(declare->STRING()->getText());
-
-                LTLfQuery q = visitQuery(declare->query());
+                ref.emplace(UNESCAPE(declare->STRING()->getText()),
+                            visitQuery(declare->query()));
             }
         }
     }

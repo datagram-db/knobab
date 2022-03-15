@@ -66,6 +66,10 @@ include_directories(submodules/magic_enum/include)
 #set(CMAKE_CXX_COMPILER g++)
 include_directories(include)
 add_library(knobab STATIC
+        src/knobab/queries/LTLfQueryLexer.cpp
+        src/knobab/queries/LTLfQueryParser.cpp
+        src/knobab/queries/LTLfQueryListener.cpp
+        src/knobab/queries/LTLfQueryVisitor.cpp
         src/knobab/dataStructures/TaggedMatchedEvents.cpp
         include/knobab/dataStructures/TaggedMatchedEvents.h
         src/knobab/trace_repairs/MarkedEvent.cpp
