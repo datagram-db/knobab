@@ -27,6 +27,7 @@
 #include <yaucl/bpm/structures/log/TracesLexer.h>
 #include <yaucl/bpm/structures/log/TracesParser.h>
 #include <yaucl/data/json.h>
+#include <yaucl/functional/assert.h>
 
 //using namespace yaucl::bpm;
 
@@ -117,7 +118,7 @@ antlrcpp::Any yaucl::bpm::DataTraceParse::visitField(TracesParser::FieldContext 
         if (ctx->NUMBER()) {
             tv->visitField(ctx->VAR()->getText(), std::stod(ctx->NUMBER()->getText()));
         } else {
-            assert(ctx->STRING());
+            DEBUG_ASSERT(ctx->STRING());
             tv->visitField(ctx->VAR()->getText(), UNESCAPE(ctx->STRING()->getText()));
         }
     }

@@ -24,7 +24,7 @@
 //
 
 #include <yaucl/bpm/structures/ltlf/ltlf.h>
-#include <cassert>
+#include <yaucl/functional/assert.h>
 
 ltlf::ltlf() : casusu{TRUE}, is_negated{false}, is_compound_predicate{false}, is_exclusive{false} { }
 
@@ -147,7 +147,7 @@ std::ostream &operator<<(std::ostream &os, const ltlf &syntax) {
 }
 
 void ltlf::collectElements(std::unordered_map<std::string, std::unordered_set<bool>> &negation) const {
-    assert(casusu != NUMERIC_ATOM);
+    DEBUG_ASSERT(casusu != NUMERIC_ATOM);
     if (casusu == ACT) {
         negation[act].insert(is_negated);
     } else {
@@ -171,7 +171,7 @@ std::unordered_set<std::string> ltlf::mark_join_condition(const std::string& lef
             return {};
         }
         case NEG_OF:
-            assert(false);
+            DEBUG_ASSERT(false);
         case NEXT:
         case DIAMOND:
         case BOX:
@@ -200,7 +200,7 @@ ltlf ltlf::replace_with(const std::unordered_map<std::pair<bool, std::string>, s
         case ACT:
         {
             auto it = map.find({is_negated, act});
-            assert(it != map.end());
+            DEBUG_ASSERT(it != map.end());
             auto a = *this;
             a.leafType = leafType;
             std::copy(it->second.begin(), it->second.end(), std::back_inserter(a.rewritten_act));
@@ -259,7 +259,7 @@ struct ltlf ltlf::replace_with(const std::unordered_map<std::string, ltlf> &map)
                     f = f.negate();
                 return f.nnf();
             } else {
-                assert(false);
+                DEBUG_ASSERT(false);
             }
 
         case NEG_OF:
@@ -302,7 +302,7 @@ struct ltlf ltlf::replace_with_unique_name(const std::unordered_map<std::string,
                     f = f.negate();
                 return f;
             } else {
-                assert(false);
+                DEBUG_ASSERT(false);
             }
 
         case NEG_OF:
@@ -359,7 +359,7 @@ bool ltlf::easy_interpret(const std::string &map) const {
         case NEXT:
             return args.at(0).easy_interpret(map); // Stops the interpretation before the current element
         default:
-            assert(false);
+            DEBUG_ASSERT(false);
     }
 }
 
@@ -399,7 +399,7 @@ bool ltlf::containsElement(formula_t type, const ltlf& item, bool simplification
         case NEG_OF:
         case UNTIL:
         case RELEASE:
-            assert(false);
+            DEBUG_ASSERT(false);
         case OR: {
             return Or(args.at(0)._interpret2(map), args.at(1)._interpret2(map)).simplify();
         }
@@ -450,7 +450,7 @@ void ltlf::_actionsUpToNext(PropositionalizedAtomsSet &atoms, bool isTerminal) c
             break;
         case NEG_OF:
             std::cerr << "Error: this should be always called after negation normal form, so I should not be able to call this" << std::endl;
-            assert(false);
+            DEBUG_ASSERT(false);
         case NEXT:
             return;
             //args.at(0)._actionsUpToNext(atoms, false);
@@ -465,7 +465,7 @@ void ltlf::_actionsUpToNext(PropositionalizedAtomsSet &atoms, bool isTerminal) c
         case UNTIL:
         case RELEASE:
             std::cerr << "Error: this should be always called after next normal form, so I should not be able to call this" << std::endl;
-            assert(false);
+            DEBUG_ASSERT(false);
     }
 }
 
@@ -480,7 +480,7 @@ struct ltlf ltlf::_interpret(const std::unordered_set<std::string>& map) const {
         case NEG_OF:
         case UNTIL:
         case RELEASE:
-            assert(false);
+            DEBUG_ASSERT(false);
         case OR: {
             return Or(args.at(0)._interpret(map), args.at(1)._interpret(map)).simplify();
         }
@@ -805,7 +805,7 @@ struct ltlf ltlf::Interval(const DataPredicate &value) {
 ltlf map_disj(const std::unordered_set<std::string> &atoms) {
     std::vector<std::string> A{atoms.begin(), atoms.end()};
     std::sort(A.begin(), A.end());
-    assert(!atoms.empty());
+    DEBUG_ASSERT(!atoms.empty());
     bool isFirst = true;
     ltlf result;
     for (const auto& ref : A) {
@@ -884,7 +884,7 @@ ltl_formula* to_aaltaf_rec(const ltlf& syntax) {
         case ACT:
             tmp = create_var(syntax.act.c_str()); break;
         case NUMERIC_ATOM:
-            assert(false);
+            DEBUG_ASSERT(false);
         case NEG_OF:
             tmp = AALTAF_NOT(to_aaltaf_rec(syntax.args[0])); break;
         case OR:

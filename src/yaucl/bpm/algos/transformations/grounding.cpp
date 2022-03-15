@@ -6,6 +6,8 @@
 #include <yaucl/bpm/algos/transformations/grounding.h>
 #include <yaucl/bpm/structures/commons/testing_predicates.h>
 #include <iostream>
+#include <yaucl/functional/assert.h>
+
 
 yaucl::functional::optional_binary<DataPredicate>
 instantiateWithValues(const DataPredicate &toGround,
@@ -96,13 +98,13 @@ instantiateWithValues(const DataPredicate &toGround,
                       std::unordered_map<std::string, std::vector<DataPredicate>> &toIntersectAtAnUpperLevelLeft) {
     // Sanity check!
     // If there is a variable name on the right handside, I shall not have binary predicates assocated as siblings
-    assert(toGround.varRHS.empty() || toGround.BiVariableConditions.empty());
+    DEBUG_ASSERT(toGround.varRHS.empty() || toGround.BiVariableConditions.empty());
 
     switch (toGround.casusu) {
         case INTERVAL: {
             // If this is an interval, there should be no right variable!
             // Consistency checking for syntax
-            assert(toGround.varRHS.empty());
+            DEBUG_ASSERT(toGround.varRHS.empty());
             // If the map contains the value to be grounded as part of it, then
             // we will need to test the predicate
             auto it = mapL.find(toGround.var);
@@ -220,7 +222,7 @@ instantiateWithValues(const std::unordered_map<std::string, DataPredicate> &toGr
                       //,
         /*std::unordered_map<std::string, std::vector<DataPredicate>> &toIntersectAtAnUpperLevelRight,
         bool isAlwaysFromTheSameEventAndIntersectMap*/) {
-    assert(!toGround.empty());
+    DEBUG_ASSERT(!toGround.empty());
     std::unordered_map<std::string, DataPredicate> result;
     /**if (isAlwaysFromTheSameEventAndIntersectMap) {
         toIntersectAtAnUpperLevelLeft.clear();
@@ -232,7 +234,7 @@ instantiateWithValues(const std::unordered_map<std::string, DataPredicate> &toGr
         if (tmp.isInvalid())
             return {};
         else if (tmp.isValid()) {
-            assert(!result.contains(cp.first));
+            DEBUG_ASSERT(!result.contains(cp.first));
             if (tmp.isValidButMissing())
                 result.emplace(cp.first, DataPredicate{}); // inserting a true predicate
             else
@@ -240,12 +242,12 @@ instantiateWithValues(const std::unordered_map<std::string, DataPredicate> &toGr
         }
     }
     ///if (isAlwaysFromTheSameEventAndIntersectMap) {
-    ///    assert(toIntersectAtAnUpperLevelRight.empty());
+    ///    DEBUG_ASSERT(toIntersectAtAnUpperLevelRight.empty());
     if (isJoiningPass)
         *isJoiningPass = toIntersectAtAnUpperLevelLeft;
-        ///assert(toIntersectAtAnUpperLevelLeft.empty());
+        ///DEBUG_ASSERT(toIntersectAtAnUpperLevelLeft.empty());
     for (const auto &cp: toIntersectAtAnUpperLevelLeft) {
-        if (!isJoiningPass) assert(result.contains(cp.first));
+        if (!isJoiningPass) DEBUG_ASSERT(result.contains(cp.first));
         auto &ref = result[cp.first];
         for (const auto &item: cp.second) {
             if (!ref.intersect_with(item)) {
@@ -376,20 +378,20 @@ std::optional<DeclareDataAware> instantiateWithValues(
         for (const auto& map : tmp.value()) {
             bool isForLeft = false;
             bool isForRight = false;
-            assert(!map.empty());
+            DEBUG_ASSERT(!map.empty());
             for (const auto& varToPred : map) {
                 if (varToPred.second.casusu == TTRUE)
-                    assert(varToPred.second.BiVariableConditions.empty());
+                    DEBUG_ASSERT(varToPred.second.BiVariableConditions.empty());
                 if (varToPred.second.casusu != TTRUE) {
                     if ((!varToPred.second.varRHS.empty()) && ((!varToPred.second.var.empty()))) {
-                        assert(!varToPred.second.wasReversed);
+                        DEBUG_ASSERT(!varToPred.second.wasReversed);
                         isForLeft = true;
                         isForRight = true;
                     } else if (varToPred.second.varRHS.empty()) {
                         isForRight = isForRight || varToPred.second.wasReversed;
                         isForLeft = isForLeft || !isForRight;
                     } else
-                        assert(false); // unexpected case
+                        DEBUG_ASSERT(false); // unexpected case
                 }
             }
             if (isForLeft && isForRight)
@@ -399,7 +401,7 @@ std::optional<DeclareDataAware> instantiateWithValues(
             } else if (isForRight) {
                 onlyRight.emplace_back(map);
             } else
-                assert(false); // I shall not have true or false predicates at this stage!
+                DEBUG_ASSERT(false); // I shall not have true or false predicates at this stage!
         }
         updateMapsFromWhereConjunction(onlyLeft, result.dnf_left_map);
         updateMapsFromWhereConjunction(onlyRight, result.dnf_right_map);
@@ -435,7 +437,7 @@ std::optional<DeclareDataAware> instantiateWithValues(
         }
     }
 
-    assert(result.conjunctive_map.empty());
+    DEBUG_ASSERT(result.conjunctive_map.empty());
 
     return result;
 }

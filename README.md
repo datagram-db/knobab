@@ -71,6 +71,7 @@ In order to run multiple queries stored in different files over one single model
 With respect to the CMake compilation flags, in order to mimick advanced JIT features from modern relational databases, such as PostgreSQL, we decided to exploit macros and compile time configuration to build KnoBAB with a specific configuration setting without relying on run-time code function calls. Some flags are explained in here:
 
 * ```PARALLEL```: activates the multithreaded query plan when available. After this, it is possible to exploit the `-p` flag to define the number of threads to be associated to the query plan.
+* For efficiency purposes, assert constraints are expanded into the code only when the project is built in ```DEBUG``` mode. Otherwise (```RELEASE```), no assert check is performed, thus allowing a more expedite execution.
 
 ## Windows
 

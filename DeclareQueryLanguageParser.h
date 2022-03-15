@@ -5,9 +5,18 @@
 #ifndef KNOBAB_DECLAREQUERYLANGUAGEPARSER_H
 #define KNOBAB_DECLAREQUERYLANGUAGEPARSER_H
 
+#include <istream>
+#include <knobab/queries/LTLfQuery.h>
+#include <knobab/queries/LTLfQueryParser.h>
 
 class DeclareQueryLanguageParser {
 
+
+    void parse(std::istream& stream);
+
+    LTLfQuery visitQuery(LTLfQueryParser::QueryContext *pContext) {
+        if (!pContext) return LTLfQuery{}; // if the
+    }
 };
 
 

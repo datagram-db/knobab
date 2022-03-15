@@ -36,6 +36,7 @@ void Environment::clear() {
 #include <filesystem>
 #include <yaucl/graphs/algorithms/minimizeDFA.h>
 #include <yaucl/graphs/graph_join_pm_conversion.h>
+#include <yaucl/functional/assert.h>
 
 
 void Environment::load_model(const std::string &model_file) {
@@ -197,8 +198,8 @@ semantic_atom_set Environment::evaluate_easy_prop_to_atoms(const easy_prop &prop
 }
 
 FlexibleFA<size_t, std::string> Environment::declare_to_graph_for_patterns(const DeclareDataAware &decl) {
-    assert(!decl.left_decomposed_atoms.empty());
-    assert((isUnaryPredicate(decl.casusu)) || (!decl.right_decomposed_atoms.empty()));
+    DEBUG_ASSERT(!decl.left_decomposed_atoms.empty());
+    DEBUG_ASSERT((isUnaryPredicate(decl.casusu)) || (!decl.right_decomposed_atoms.empty()));
     /*{
         auto it = pattern_graph.find(decl);
         if (it != pattern_graph.end()) return it->second;

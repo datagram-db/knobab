@@ -8,6 +8,7 @@ include_directories(submodules/cpp-httplib)
 add_subdirectory(submodules/args)
 include_directories(submodules/args)
 
+
 set(CMAKE_THREAD_PREFER_PTHREAD TRUE)
 set(THREADS_PREFER_PTHREAD_FLAG TRUE)
 find_package(Threads REQUIRED)
@@ -24,6 +25,16 @@ else()
     message(WARNING "Compiling in parallel mode")
     add_compile_definitions(MAXSatPipeline_PARALLEL)
 endif()
+
+IF(CMAKE_BUILD_TYPE MATCHES Debug)
+    message(WARNING "Compiling in debug mode")
+    add_compile_definitions(DEBUG)
+    set(CMAKE_CXX_FLAGS_DEBUG "-g")
+else()
+    message(WARNING "Compiling in optimized mode. Level=2")
+    set(CMAKE_CXX_FLAGS_RELEASE "-O2")
+ENDIF(CMAKE_BUILD_TYPE MATCHES Debug)
+
 
 if(Boost_FOUND AND PYTHONLIBS_FOUND)
     include_directories(${Boost_INCLUDE_DIRS})
@@ -73,7 +84,7 @@ add_library(knobab STATIC
 
         include/knobab/algorithms/atomization_pipeline.h #src/knobab/Environment.cpp include/knobab/Environment.h
         include/knobab/utilities/Aggregators.h include/knobab/dataStructures/TraceData.h include/knobab/operators/LTLFOperators.h
-        src/knobab/Environment.cpp include/knobab/Environment.h src/knobab/trace_repairs/DataQuery.cpp include/knobab/trace_repairs/DataQuery.h src/knobab/utilities/LTLFOperators.cpp src/knobab/utilities/LoggerInformation.cpp include/knobab/utilities/LoggerInformation.h src/knobab/operators/simple_ltlf_operators.cpp include/knobab/operators/simple_ltlf_operators.h include/knobab/operators/semantics.h include/knobab/operators/fast_ltlf_operators.h LTLfQuery.cpp LTLfQuery.h)
+        src/knobab/Environment.cpp include/knobab/Environment.h src/knobab/trace_repairs/DataQuery.cpp include/knobab/trace_repairs/DataQuery.h src/knobab/utilities/LTLFOperators.cpp src/knobab/utilities/LoggerInformation.cpp include/knobab/utilities/LoggerInformation.h src/knobab/operators/simple_ltlf_operators.cpp include/knobab/operators/simple_ltlf_operators.h include/knobab/operators/semantics.h include/knobab/operators/fast_ltlf_operators.h src/knobab/queries/LTLfQuery.cpp include/knobab/queries/LTLfQuery.h DeclareQueryLanguageParser.cpp DeclareQueryLanguageParser.h)
 target_link_libraries(knobab yaml-cpp yaucl_structures)
 
 add_library(yaucl_numeric STATIC
