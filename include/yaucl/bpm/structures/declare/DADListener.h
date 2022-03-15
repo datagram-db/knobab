@@ -1,11 +1,11 @@
 
-// Generated from ./src/yaucl/bpm/structures/declare/DAD.g by ANTLR 4.9.3
+// Generated from ../src/yaucl/bpm/structures/declare/DAD.g4 by ANTLR 4.9.3
 
 #pragma once
 
 
 #include "antlr4-runtime.h"
-#include <yaucl/bpm/structures/declare/DADParser.h>
+#include "DADParser.h"
 
 
 /**

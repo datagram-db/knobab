@@ -21,8 +21,8 @@ grammar DAD;
 
 data_aware_declare: (declare)*;
 
-declare: name=LABEL '(' (fields ',')+ fields ')' ('where' prop)? #nary_prop
-       | name=LABEL '(' fields ',' INTNUMBER ')' #unary_prop
+declare: name=STRING '(' (fields ',')+ fields ')' ('where' prop)? #nary_prop
+       | name=STRING '(' fields ',' INTNUMBER ')' #unary_prop
        ;
 
 fields: label=STRING ',' prop;

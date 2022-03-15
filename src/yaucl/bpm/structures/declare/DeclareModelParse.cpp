@@ -134,8 +134,7 @@ antlrcpp::Any DeclareModelParse::visitNary_prop(DADParser::Nary_propContext *ctx
         }
 
         dda.n = 0;
-        dda.casusu =
-                magic_enum::enum_cast<declare_templates>(ctx->LABEL()->getText()).value();
+        dda.casusu = UNESCAPE(ctx->STRING()->getText());
     }
     return {dda};
 }
@@ -154,8 +153,7 @@ antlrcpp::Any DeclareModelParse::visitUnary_prop(DADParser::Unary_propContext *c
             }
         }
         dda.n = std::stoul(ctx->INTNUMBER()->getText());
-        dda.casusu =
-                magic_enum::enum_cast<declare_templates>(ctx->LABEL()->getText()).value();
+        dda.casusu = UNESCAPE(ctx->STRING()->getText());
     }
     return {dda};
 }

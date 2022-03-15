@@ -123,7 +123,7 @@ void test_data_query(const std::string& log_file = "data/testing/log_until.txt",
 
 
 
-
+#if 0
 void generate_nonunary_templates() {
     for (declare_templates t : magic_enum::enum_values<declare_templates>()) {
         if (isUnaryPredicate(t)) continue; // discarding unary predicates
@@ -383,6 +383,7 @@ void generate_traces(const std::string& log_file = "data/testing/nologolog.txt",
         }
     }
 }
+#endif
 
 
 void sam_testing() {
@@ -616,6 +617,12 @@ void parse_declare_query_planner() {
     DeclareQueryLanguageParser dqlp;
     std::ifstream file{"scripts/logic_plan.queryplan"};
     dqlp.parse(file);
+    for (const auto& ref : dqlp.planname_to_declare_to_ltlf) {
+        std::cout << "Query plan name: " << ref.first << std::endl;
+        for (const auto& x : ref.second) {
+            std::cout << "\t - " << x.first << " --> " << x.second << std::endl;
+        }
+    }
 }
 
 int main(int argc, char **argv) {

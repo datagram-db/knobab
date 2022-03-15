@@ -13,11 +13,11 @@ class  LTLfQueryParser : public antlr4::Parser {
 public:
   enum {
     T__0 = 1, T__1 = 2, T__2 = 3, T__3 = 4, T__4 = 5, T__5 = 6, T__6 = 7, 
-    T__7 = 8, T__8 = 9, INIT = 10, END = 11, EXISTS = 12, ABSENCE = 13, 
-    NEXT = 14, OR = 15, AND = 16, IF = 17, THEN = 18, ELSE = 19, UNTIL = 20, 
-    BOX = 21, DIAMOND = 22, AUTO_TIMED = 23, LPAREN = 24, RPAREN = 25, PRESERVE = 26, 
-    TIMED = 27, THETA = 28, LEFT = 29, RIGHT = 30, MIDDLE = 31, INTNUMBER = 32, 
-    STRING = 33, SPACE = 34, COMMENT = 35, LINE_COMMENT = 36
+    T__7 = 8, INIT = 9, END = 10, EXISTS = 11, ABSENCE = 12, NEXT = 13, 
+    OR = 14, AND = 15, IF = 16, THEN = 17, ELSE = 18, UNTIL = 19, BOX = 20, 
+    DIAMOND = 21, AUTO_TIMED = 22, LPAREN = 23, RPAREN = 24, PRESERVE = 25, 
+    TIMED = 26, THETA = 27, LEFT = 28, RIGHT = 29, MIDDLE = 30, NEGATED = 31, 
+    INTNUMBER = 32, STRING = 33, SPACE = 34, COMMENT = 35, LINE_COMMENT = 36
   };
 
   enum {
@@ -207,6 +207,7 @@ public:
   public:
     NotContext(QueryContext *ctx);
 
+    antlr4::tree::TerminalNode *NEGATED();
     QueryContext *query();
     antlr4::tree::TerminalNode *TIMED();
     antlr4::tree::TerminalNode *PRESERVE();
@@ -277,6 +278,7 @@ public:
     Declare_argumentsContext *declare_arguments();
     antlr4::tree::TerminalNode *INTNUMBER();
     antlr4::tree::TerminalNode *TIMED();
+    antlr4::tree::TerminalNode *NEGATED();
     virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
     virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
 

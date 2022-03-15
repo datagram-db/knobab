@@ -26,7 +26,7 @@
 
 /**
  * Definition of all the types of Declare statements
- */
+
 enum declare_templates {
     End,
     Init,
@@ -49,10 +49,12 @@ enum declare_templates {
     NotCoExistence,
     NegSuccession,
     NegChainSuccession
-};
+}; */
+#include <string>
+using declare_templates = std::string;
 
-bool isUnaryPredicate(declare_templates type);
-bool isPredicateNegative(declare_templates type);
+bool isUnaryPredicate(const std::string& type);
+bool isPredicateNegative(const std::string& type);
 
 //bool isUnaryPredicate(declare_templates t);
 
@@ -83,8 +85,8 @@ struct DeclareDataAware {
     std::unordered_set<std::string> left_decomposed_atoms, right_decomposed_atoms;
 
     DEFAULT_CONSTRUCTORS(DeclareDataAware)
-    static DeclareDataAware unary(declare_templates, const std::string& argument, size_t n);
-    static DeclareDataAware binary(declare_templates t, const std::string& left, const std::string right);
+    static DeclareDataAware unary(const declare_templates&, const std::string& argument, size_t n);
+    static DeclareDataAware binary(const declare_templates& t, const std::string& left, const std::string right);
 
     static DeclareDataAware doExistence(size_t n, const std::string& left_act, const std::vector<std::unordered_map<std::string, DataPredicate>>& dnf_left_map);
     static DeclareDataAware doAbsence(size_t n, const std::string& left_act, const std::vector<std::unordered_map<std::string, DataPredicate>>& dnf_left_map);

@@ -35,7 +35,7 @@ public:
      * @param nargs     Associated argument number
      * @return          Template graph
      */
-    NodeLabelBijectionFA<std::string, easy_prop> getDeclareTemplate(declare_templates type, size_t nargs);
+    NodeLabelBijectionFA<std::string, easy_prop> getDeclareTemplate(const declare_templates& type, size_t nargs);
 
 };
 
