@@ -9,18 +9,18 @@ declare_syntax : 'template' STRING has_args? ':=' query;
 
 has_args : 'args' INTNUMBER;
 
-query : 'INIT' declare_arguments                                            #init
-      | 'END'  declare_arguments                                            #end
-      | 'EXISTS' declare_arguments INTNUMBER                                #exists
-      | 'ABSENCE' declare_arguments INTNUMBER                               #absence
-      | 'NEXT' query                                                        #next
-      |<assoc=right> query 'OR' TIMED? THETA? query                                      #or
-      |<assoc=right> query 'AND' TIMED? THETA? query                                     #and
+query : INIT TIMED? declare_arguments                                            #init
+      | END  TIMED? declare_arguments                                            #end
+      | EXISTS TIMED? declare_arguments INTNUMBER                                #exists
+      | ABSENCE TIMED? declare_arguments INTNUMBER                               #absence
+      | NEXT query                                                        #next
+      |<assoc=right> query OR TIMED? THETA? query                                      #or
+      |<assoc=right> query AND TIMED? THETA? query                                     #and
       |<assoc=right> query '=>' TIMED? THETA? query                                      #implication
-      |<assoc=right> 'IF' TIMED? query 'THEN' query THETA? 'ELSE' query                  #ifte
-      |<assoc=right> query  'U' TIMED? THETA?  query                                             #until
-      | 'G' TIMED?  query                                                           #box
-      | 'F' TIMED?   query                                                           #diamond
+      |<assoc=right> IF TIMED? query THEN query THETA? ELSE query                  #ifte
+      |<assoc=right> query UNTIL TIMED? THETA?  query                                             #until
+      | BOX TIMED?  query                                                           #box
+      | DIAMOND TIMED?   query                                                           #diamond
       | '!' TIMED? query PRESERVE?                                                 #not
       | '(' query ')'                                                       #paren
       |<assoc=right> query '&Ft' THETA? query                                             #and_future
@@ -30,8 +30,20 @@ query : 'INIT' declare_arguments                                            #ini
 
 declare_arguments : LEFT | MIDDLE | RIGHT;
 
+INIT: 'INIT';
+END: 'END';
+EXISTS: 'EXISTS';
+ABSENCE: 'ABSENCE';
+NEXT : 'NEXT';
+OR : 'OR';
+AND: 'AND';
+IF : 'IF';
+THEN: 'THEN';
+ELSE: 'ELSE';
+UNTIL: 'U';
+BOX: 'G';
+DIAMOND : 'F';
 AUTO_TIMED: 'auto-timed';
-LABEL: ('A'..'Z')[a-zA-Z]*;
 LPAREN : '{';
 RPAREN : '}';
 PRESERVE: 'PRESERVE';
