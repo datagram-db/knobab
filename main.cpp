@@ -21,7 +21,8 @@ void whole_testing(const std::string& log_file = "data/testing/log.txt",
                    bool doDebugServer = false,
                    const std::string& benchmarking_file = "",
                    const std::string& sqlminer_dump_dir = "",
-                   bool doStats = true) {
+                   bool doStats = true,
+                   size_t noThreads = 1) {
     Environment env;
     env.clear();
     env.doStats = doStats;
@@ -65,7 +66,7 @@ void whole_testing(const std::string& log_file = "data/testing/log.txt",
         env.print_grounded_model(std::cout); // DEBUG
         //////////////////////////////////////////////////////////////////
 
-        auto ref = env.query_model(0);
+        auto ref = env.query_model(noThreads);
         std::cout << ref.result << std::endl;
         std::cout << env.experiment_logger << std::endl;
         if (doDebugServer) {
@@ -622,6 +623,7 @@ int main(int argc, char **argv) {
     std::string benchmark = "";
     std::string sql_miner_dump_folder = "";
     std::vector<std::string> queriesV{};
+    size_t no_threads = 1;
     args::ArgumentParser parser("KnoBAB  (c) 2020-2022 by Giacomo Bergami & Samuel 'Sam' Appleby.", "This free and open software program implements the MaxSat problem via a Knowledge Base, KnoBAB. Nicer things are still to come!");
     args::HelpFlag help(parser, "help", "Display this help menu", {'h', "help"});
 
@@ -633,6 +635,11 @@ int main(int argc, char **argv) {
     args::Group group(parser, "You can use the following parameters", args::Group::Validators::DontCare, args::Options::Global);
     args::Flag server(group, "server", "Runs the HTTP server for visualizing the internal representation of both the knowledge base and the associated query plan", {'s', "server"});
     args::Flag do_notcompute_trace_Stats(group, "do_not_compute_trace_stats", "Whether the code will lose time in calculating the statistics for the traces", {'n', "nostats"});
+#ifdef MAXSatPipeline_PARALLEL
+    args::ValueFlag<size_t> parallel(group, "#threads", "Specifies the number of the threads to be run over the query plan", {'p', "threads"});
+#else
+    args::ValueFlag<size_t> parallel(group, "#threads", "[Ineffective: the program is compiled in sequential mode]", {'p', "threads"});
+#endif
     args::ValueFlagList<std::string> queries(group, "Models/Queries", "The queries expressed as Declare models", {'d', "declare"});
     args::ValueFlag<std::string> benchmarkFile(group, "Benchmark File", "Appends the current Result data into a benchmark file", {'b', "csv"});
     args::ValueFlag<std::string>  sqlMinerDump(group, "SQLMinerDump", "If present, specifies the dump for the SQL miner representation", {'s', "sqlminer"});
@@ -681,7 +688,13 @@ int main(int argc, char **argv) {
     if (sqlMinerDump) {
         sql_miner_dump_folder = args::get(sqlMinerDump);
     }
-    whole_testing(log_file, format, queriesV, setUpServer, benchmark, sql_miner_dump_folder, doStats);
+#ifdef MAXSatPipeline_PARALLEL
+    if (parallel) {
+        no_threads = args::get(parallel);
+    }
+    args::ValueFlag<size_t> parallel(group, "#threads", "Specifies the number of the threads to be run over the query plan", {'p', "threads"});
+#endif
+    whole_testing(log_file, format, queriesV, setUpServer, benchmark, sql_miner_dump_folder, doStats, no_threads);
 
     //generate_nonunary_templates();
     //test_data_query();
