@@ -17,6 +17,7 @@
 #define DECLARE_TYPE_RIGHT  (2)
 #define DECLARE_TYPE_MIDDLE  (3)
 
+using declare_type_t = unsigned char;
 
 TAGGED_UNION_WITH_ENCAPSULATION_BEGIN(unsigned char, bit_fields, 0, 6, bool has_theta : 1, bool preserve : 1, bool is_atom : 1, bool is_timed:1, bool is_negated:1, bool is_numbered:1)
     (bool has_theta, bool preserve, bool is_atom, bool is_timed, bool is_negated, bool is_numbered)  {
@@ -49,7 +50,7 @@ struct LTLfQuery {
         FALSEHOOD_QP = 15
     };
     type t;
-    unsigned char declare_type = 0;
+    declare_type_t declare_type = 0;
     bit_fields fields;
     size_t n; //numeric_arg
 
@@ -61,7 +62,7 @@ struct LTLfQuery {
     std::set<std::string> atom;
     std::set<size_t> partial_results;
     size_t result_id = 0;
-    DeclareDataAware* joinCondition;
+    const DeclareDataAware* joinCondition;
     size_t parentMin = std::numeric_limits<size_t>::max(), parentMax = 0, dis = 0;
     Result result;
     size_t currentLayer() const {
@@ -74,7 +75,7 @@ struct LTLfQuery {
                 child->associateDataQueryIdsToFormulaByAtom(x, l);
     }
 
-    LTLfQuery() : t{FALSEHOOD_QP}, declare_type{DECLARE_TYPE_NONE}, n{0}, fields{0} {}
+    LTLfQuery() : t{FALSEHOOD_QP}, declare_type{DECLARE_TYPE_NONE}, n{0}, fields{0}, joinCondition{nullptr} {}
     DEFAULT_COPY_ASSGN(LTLfQuery)
 
     bool operator==(const LTLfQuery &rhs) const;
@@ -97,34 +98,7 @@ struct LTLfQuery {
     static LTLfQuery qDIAMOND(const LTLfQuery& lhs, bool isTimed);
 };
 
-inline void appendData(LTLfQuery& q,
-                       const std::unordered_set<std::string>& atom_universe,
-                       const std::unordered_set<std::string>& left,
-                       const std::unordered_set<std::string>& right) {
-    if (q.declare_type == DECLARE_TYPE_LEFT) {
-        if (q.fields.id.parts.is_negated) {
-            for (const auto& x : atom_universe) {
-                if (!left.contains(x))
-                    q.atom.insert(x);
-            }
-        } else {
-            q.atom.insert(left.begin(), left.end());
-        }
-    } else if (q.declare_type == DECLARE_TYPE_RIGHT) {
-        if (q.fields.id.parts.is_negated) {
-            for (const auto& x : atom_universe) {
-                if (!right.contains(x))
-                    q.atom.insert(x);
-            }
-        } else {
-            q.atom.insert(right.begin(), right.end());
-        }
-    } else {
-        throw std::runtime_error("ERROR: unexpected case for the moment!");
-    }
-    for (auto& args : q.args_from_script)
-        appendData(args, atom_universe, left, right);
-}
+
 
 #include <ostream>
 

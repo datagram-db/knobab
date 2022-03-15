@@ -455,7 +455,7 @@ void Environment::server(MAXSatPipeline& pipeline) {
         auto it = std::stoull(req.get_param_value("f",0));
         if (it != 0) {
             ss << "TraceId,EventId,Sim,{Events}" << std::endl;
-            for (const auto& ref : ((ltlf_query*)   it)->result) {
+            for (const auto& ref : ((LTLfQuery*)   it)->result) {
                 ss << ref.first.first << "," << ref.first.second << "," << ref.second << ",{TODO}" << std::endl;
             }
         }
@@ -523,8 +523,10 @@ void Environment::set_atomization_parameters(const std::filesystem::path &atomiz
     }
 }
 
-MAXSatPipeline Environment::query_model(const std::string& script_for_decomposition, size_t noThreads) {
-    MAXSatPipeline maxsat_pipeline(script_for_decomposition, noThreads);
+MAXSatPipeline Environment::query_model(const std::string& script_for_decomposition,
+                                        const std::string& preferred_plan,
+                                        size_t noThreads) {
+    MAXSatPipeline maxsat_pipeline(script_for_decomposition, preferred_plan, noThreads);
     maxsat_pipeline.pipeline(&grounding, ap, db);
     experiment_logger.model_declare_to_ltlf = maxsat_pipeline.declare_to_ltlf_time;
     experiment_logger.model_ltlf_query_time = maxsat_pipeline.ltlf_query_time;

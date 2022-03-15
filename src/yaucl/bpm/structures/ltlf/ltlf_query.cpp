@@ -3,12 +3,13 @@
 //
 
 #include "yaucl/bpm/structures/ltlf/ltlf_query.h"
+#include <stack>
 
-static inline void topological_sort(const std::vector<ltlf_query*>& W,
-                                    std::vector<ltlf_query*>& vertexOreder) {
-    std::unordered_set<ltlf_query*> toVisit{W.begin(), W.end()};
-    std::stack<std::pair<bool, ltlf_query*>> internalStack;
-    std::unordered_set<ltlf_query*> visited;
+static inline void topological_sort(const std::vector<LTLfQuery*>& W,
+                                    std::vector<LTLfQuery*>& vertexOreder) {
+    std::unordered_set<LTLfQuery*> toVisit{W.begin(), W.end()};
+    std::stack<std::pair<bool, LTLfQuery*>> internalStack;
+    std::unordered_set<LTLfQuery*> visited;
     //auto isEnd = adjMap.end();
     while (!toVisit.empty()) {
         auto first = toVisit.begin();
@@ -16,7 +17,7 @@ static inline void topological_sort(const std::vector<ltlf_query*>& W,
             internalStack.push(std::make_pair(false, *first));
         }
         while (!internalStack.empty()) {
-            std::pair<bool, ltlf_query*>  cp = internalStack.top();
+            std::pair<bool, LTLfQuery*>  cp = internalStack.top();
             internalStack.pop();
             toVisit.erase(cp.second);
             if (cp.first) {
@@ -36,30 +37,30 @@ static inline void topological_sort(const std::vector<ltlf_query*>& W,
     std::reverse(vertexOreder.begin(), vertexOreder.end());
 }
 
-bool ltlf_query::operator==(const ltlf_query &rhs) const {
-    return isTimed == rhs.isTimed &&
-           casusu == rhs.casusu &&
-           args == rhs.args &&
-           atom == rhs.atom;
-}
+//bool ltlf_query::operator==(const ltlf_query &rhs) const {
+//    return isTimed == rhs.isTimed &&
+//           casusu == rhs.casusu &&
+//           args == rhs.args &&
+//           atom == rhs.atom;
+//}
+//
+//bool ltlf_query::operator!=(const ltlf_query &rhs) const {
+//    return !(rhs == *this);
+//}
 
-bool ltlf_query::operator!=(const ltlf_query &rhs) const {
-    return !(rhs == *this);
-}
-
-void ltlf_query::associateDataQueryIdsToFormulaByAtom(const std::string &x, size_t l) {
-    if (atom.contains(x)) {
-        //DEBUG_ASSERT(args.empty());
-        partial_results.emplace(l);
-    } else for (auto& child : args)
-            child->associateDataQueryIdsToFormulaByAtom(x, l);
-}
+//void ltlf_query::associateDataQueryIdsToFormulaByAtom(const std::string &x, size_t l) {
+//    if (atom.contains(x)) {
+//        //DEBUG_ASSERT(args.empty());
+//        partial_results.emplace(l);
+//    } else for (auto& child : args)
+//            child->associateDataQueryIdsToFormulaByAtom(x, l);
+//}
 
 #include <magic_enum.hpp>
 #include <yaucl/functional/assert.h>
 
 
-void ltlf_query_manager::generateGraph(std::map<ltlf_query*, std::vector<ltlf_query*>>& ref, ltlf_query*q) const {
+void ltlf_query_manager::generateGraph(std::map<LTLfQuery*, std::vector<LTLfQuery*>>& ref, LTLfQuery*q) const {
     auto it = ref.emplace(q, q->args);
     if (it.second) {
         for (const auto& arg : q->args)
@@ -67,9 +68,10 @@ void ltlf_query_manager::generateGraph(std::map<ltlf_query*, std::vector<ltlf_qu
     }
 }
 
+#include <nlohmann/json.hpp>
 std::string ltlf_query_manager::generateGraph() const {
-    std::map<ltlf_query*, std::vector<ltlf_query*>> ref;
-    std::map<ltlf_query*,size_t> layerId;
+    std::map<LTLfQuery*, std::vector<LTLfQuery*>> ref;
+    std::map<LTLfQuery*,size_t> layerId;
     if (Q.empty()) return "{nodes: [], edges: []}";
     auto it = Q.begin();
     ref[nullptr] = it->second;
@@ -89,12 +91,13 @@ std::string ltlf_query_manager::generateGraph() const {
         nlohmann::json node;
         node["id"] = cp.first ? (size_t)cp.first : 0;
         node["group"] = layerId[cp.first];
-        if ((cp.first) && (cp.first->casusu==Q_ACT)) {
+        if ((cp.first) && (cp.first->fields.id.parts.is_atom)) {
             std::stringstream aa;
+            aa << (cp.first->fields.id.parts.is_timed ? "t" : "") << std::string(magic_enum::enum_name(cp.first->t));
             aa << cp.first->atom;
             node["label"] = aa.str();
         } else {
-            node["label"] = cp.first ? ((cp.first->isTimed ? "t" : "") + std::string(magic_enum::enum_name(cp.first->casusu))) : "Ensemble";
+            node["label"] = cp.first ? ((cp.first->fields.id.parts.is_timed ? "t" : "") + std::string(magic_enum::enum_name(cp.first->t))) : "Ensemble";
         }
         nodes.push_back(node);
         for (const auto& out : cp.second) {
@@ -107,81 +110,81 @@ std::string ltlf_query_manager::generateGraph() const {
     return json.dump(4);
 }
 
-ltlf_query* ltlf_query_manager::simplify(const ltlf& expr,  bool isTimed, KnowledgeBase* ptr) {
-    DEBUG_ASSERT((expr.casusu != NEG_OF) && (expr.casusu != NUMERIC_ATOM));
-    std::pair<ltlf, bool> q{expr, isTimed};
-    auto it = conversion_map_for_subexpressions.find(q);
-    if (it != conversion_map_for_subexpressions.end()) {
-        counter[it->second]++;
-        return it->second;
-    } else {
-        auto* result = new ltlf_query();
-        bool areArgsTimed = isTimed || (expr.casusu == BOX) || (expr.casusu == DIAMOND)
-                            || (expr.casusu == UNTIL) || (expr.casusu == RELEASE);
-        const std::vector<ltlf>* ARGS = &expr.args;
-        ltlf_query_t casusu;
-        if (expr.is_exclusive) {
-            DEBUG_ASSERT(expr.casusu == OR);
-            casusu = Q_XOR;
-        } else {
-            std::string v{magic_enum::enum_name(expr.casusu)};
-            v = "Q_" + v;
-            casusu = magic_enum::enum_cast<ltlf_query_t>(v).value();
-        }
-        const std::vector<std::unordered_map<std::string, DataPredicate>>* joinCondition =
-                expr.is_join_condition_place ? (&expr.joinCondition) : nullptr;
-        bool isAct = expr.casusu==ACT;
+//ltlf_query* ltlf_query_manager::simplify(const ltlf& expr,  bool isTimed, KnowledgeBase* ptr) {
+//    DEBUG_ASSERT((expr.casusu != NEG_OF) && (expr.casusu != NUMERIC_ATOM));
+//    std::pair<ltlf, bool> q{expr, isTimed};
+//    auto it = conversion_map_for_subexpressions.find(q);
+//    if (it != conversion_map_for_subexpressions.end()) {
+//        counter[it->second]++;
+//        return it->second;
+//    } else {
+//        auto* result = new ltlf_query();
+//        bool areArgsTimed = isTimed || (expr.casusu == BOX) || (expr.casusu == DIAMOND)
+//                            || (expr.casusu == UNTIL) || (expr.casusu == RELEASE);
+//        const std::vector<ltlf>* ARGS = &expr.args;
+//        ltlf_query_t casusu;
+//        if (expr.is_exclusive) {
+//            DEBUG_ASSERT(expr.casusu == OR);
+//            casusu = Q_XOR;
+//        } else {
+//            std::string v{magic_enum::enum_name(expr.casusu)};
+//            v = "Q_" + v;
+//            casusu = magic_enum::enum_cast<ltlf_query_t>(v).value();
+//        }
+//        const std::vector<std::unordered_map<std::string, DataPredicate>>* joinCondition =
+//                expr.is_join_condition_place ? (&expr.joinCondition) : nullptr;
+//        bool isAct = expr.casusu==ACT;
+//
+//        result= getQuerySemiInstantiated(expr.rewritten_act, isTimed, result, areArgsTimed, ARGS, casusu, joinCondition,
+//                                        isAct, ptr);
+//        result->isLeaf = expr.leafType;
+//        conversion_map_for_subexpressions[q] =result;
+//        return result;
+//    }
+//}
 
-        result= getQuerySemiInstantiated(expr.rewritten_act, isTimed, result, areArgsTimed, ARGS, casusu, joinCondition,
-                                        isAct, ptr);
-        result->isLeaf = expr.leafType;
-        conversion_map_for_subexpressions[q] =result;
-        return result;
-    }
-}
-
-ltlf_query *ltlf_query_manager::getQuerySemiInstantiated(const std::vector<std::string> &rewritten_act,
-                                                         bool isTimed,
-                                                         ltlf_query *result,
-                                                         bool areArgsTimed, const std::vector<ltlf> *ARGS,
-                                                         const ltlf_query_t &casusu,
-                                                         const std::vector<std::unordered_map<std::string, DataPredicate>> *joinCondition,
-                                                         bool isAct,
-                                                         KnowledgeBase* ptr) {
-    //if (insert) VSet.insert(result);
-    //size_t h = 0;
-    if (ARGS) for (const auto& arg : *ARGS) {
-        auto cp = simplify(arg, areArgsTimed, ptr);
-        //h = std::max(cp.second, h);
-        result->args.emplace_back(cp);
-    }
-    //h++;
-    result->casusu = casusu;
-    if (joinCondition) {
-        throw std::runtime_error("REPLACE OLD CONVERSION FROM SIMPLE DATA PREDICATE WITH JUST ASSIGNMENT!");
-#if 0
-        std::vector<std::vector<SimpleDataPredicate>> sdp;
-        for (const auto& inConj : *joinCondition) {
-            auto& x = sdp.emplace_back();
-            for (const auto& pref : inConj) {
-                //DEBUG_ASSERT(pref.second.BiVariableConditions.empty());
-                for (const auto& refx : pref.second.BiVariableConditions ) {
-                    x.emplace_back(refx.var, refx.varRHS, refx.casusu);
-                }
-            }
-        }
-        result->joinCondition = {sdp,ptr};
-#endif
-    }
-    result->isTimed = isTimed;
-    //DEBUG_ASSERT((expr.casusu != ACT) || (!expr.rewritten_act.empty()));
-    if (isAct){
-        atomsToDecomposeInUnion.emplace_back(result);
-    }
-    result->atom.insert(rewritten_act.begin(), rewritten_act.end());
-    counter.emplace(result, 1);
-    return result;
-}
+//LTLfQuery *ltlf_query_manager::getQuerySemiInstantiated(const std::vector<std::string> &rewritten_act,
+//                                                         bool isTimed,
+//                                                        LTLfQuery *result,
+//                                                         bool areArgsTimed, const std::vector<LTLfQuery> *ARGS,
+//                                                         const LTLfQuery &casusu,
+//                                                         const std::vector<std::unordered_map<std::string, DataPredicate>> *joinCondition,
+//                                                         bool isAct,
+//                                                         KnowledgeBase* ptr) {
+//    //if (insert) VSet.insert(result);
+//    //size_t h = 0;
+//    if (ARGS) for (const auto& arg : *ARGS) {
+//        auto cp = simplify(arg, areArgsTimed, ptr);
+//        //h = std::max(cp.second, h);
+//        result->args.emplace_back(cp);
+//    }
+//    //h++;
+//    result->t = casusu;
+//    if (joinCondition) {
+//        throw std::runtime_error("REPLACE OLD CONVERSION FROM SIMPLE DATA PREDICATE WITH JUST ASSIGNMENT!");
+//#if 0
+//        std::vector<std::vector<SimpleDataPredicate>> sdp;
+//        for (const auto& inConj : *joinCondition) {
+//            auto& x = sdp.emplace_back();
+//            for (const auto& pref : inConj) {
+//                //DEBUG_ASSERT(pref.second.BiVariableConditions.empty());
+//                for (const auto& refx : pref.second.BiVariableConditions ) {
+//                    x.emplace_back(refx.var, refx.varRHS, refx.casusu);
+//                }
+//            }
+//        }
+//        result->joinCondition = {sdp,ptr};
+//#endif
+//    }
+//    result->isTimed = isTimed;
+//    //DEBUG_ASSERT((expr.casusu != ACT) || (!expr.rewritten_act.empty()));
+//    if (isAct){
+//        atomsToDecomposeInUnion.emplace_back(result);
+//    }
+//    result->atom.insert(rewritten_act.begin(), rewritten_act.end());
+//    counter.emplace(result, 1);
+//    return result;
+//}
 
 void ltlf_query_manager::clear() {
     for (auto it = conversion_map_for_subexpressions.begin(); it != conversion_map_for_subexpressions.end(); it++) {
@@ -193,63 +196,63 @@ void ltlf_query_manager::clear() {
     counter.clear();
 }
 
-ltlf_query *ltlf_query_manager::init1(const std::string &atom, std::unordered_set<std::string> &predicates) {
-    return immediateQueries(atom, predicates, "@declare_init1_", Q_INIT, 0);
-}
+//ltlf_query *ltlf_query_manager::init1(const std::string &atom, std::unordered_set<std::string> &predicates) {
+//    return immediateQueries(atom, predicates, "@declare_init1_", Q_INIT, 0);
+//}
 
-ltlf_query *ltlf_query_manager::immediateQueries(const std::string &atom, std::unordered_set<std::string> &predicates,
-                                                 const std::string &prefix, const ltlf_query_t &casus,
-                                                 size_t numeric_arg) {
-    ltlf f = ltlf::Act(prefix + atom);
-    if (!predicates.empty()) {
-        ltlf A = ltlf::Act("bogus_"+atom);
-        A.rewritten_act.insert(A.rewritten_act.begin(), predicates.begin(), predicates.end());
-        f = ltlf::And(f, A);
-    }
-    std::pair<ltlf, bool> q{f, false};
-    auto it = conversion_map_for_subexpressions.find(q);
-    if (it != conversion_map_for_subexpressions.end()) {
-        counter[it->second]++;
-        return it->second;
-    } else {
-        ltlf_query* result = new ltlf_query();
-        result->casusu = casus;
-        result->isTimed = false;
-        if (predicates.empty())
-            result->atom.emplace(atom);
-        else
-            result->atom.insert(predicates.begin(), predicates.end());
-        //Q[0].emplace_back(result);
-        conversion_map_for_subexpressions[q] = result;
-        counter.emplace(result, 1);
-        result->numeric_arg = numeric_arg;
-        return result;
-    }
-}
+//ltlf_query *ltlf_query_manager::immediateQueries(const std::string &atom, std::unordered_set<std::string> &predicates,
+//                                                 const std::string &prefix, const ltlf_query_t &casus,
+//                                                 size_t numeric_arg) {
+//    ltlf f = ltlf::Act(prefix + atom);
+//    if (!predicates.empty()) {
+//        ltlf A = ltlf::Act("bogus_"+atom);
+//        A.rewritten_act.insert(A.rewritten_act.begin(), predicates.begin(), predicates.end());
+//        f = ltlf::And(f, A);
+//    }
+//    std::pair<ltlf, bool> q{f, false};
+//    auto it = conversion_map_for_subexpressions.find(q);
+//    if (it != conversion_map_for_subexpressions.end()) {
+//        counter[it->second]++;
+//        return it->second;
+//    } else {
+//        ltlf_query* result = new ltlf_query();
+//        result->casusu = casus;
+//        result->isTimed = false;
+//        if (predicates.empty())
+//            result->atom.emplace(atom);
+//        else
+//            result->atom.insert(predicates.begin(), predicates.end());
+//        //Q[0].emplace_back(result);
+//        conversion_map_for_subexpressions[q] = result;
+//        counter.emplace(result, 1);
+//        result->numeric_arg = numeric_arg;
+//        return result;
+//    }
+//}
 
-ltlf_query *ltlf_query_manager::absence(const std::string &atom, std::unordered_set<std::string> &predicates,
-                                        size_t atLeast) {
+//ltlf_query *ltlf_query_manager::absence(const std::string &atom, std::unordered_set<std::string> &predicates,
+//                                        size_t atLeast) {
+//
+//    return atLeast > 0 ?
+//           immediateQueries(atom, predicates, "@declare_absence"+std::to_string(atLeast)+"_", Q_ABSENCE, atLeast) :
+//           exists(atom, predicates, 1);
+//
+//}
+//
+//ltlf_query *ltlf_query_manager::exists(const std::string &atom, std::unordered_set<std::string> &predicates,
+//                                        size_t atLeast) {
+//
+//    return atLeast > 0 ?
+//               immediateQueries(atom, predicates, "@declare_exists"+std::to_string(atLeast)+"_", Q_EXISTS, atLeast) :
+//           absence(atom, predicates, 1);
+//
+//}
+//
+//ltlf_query *ltlf_query_manager::end1(const std::string &atom, std::unordered_set<std::string> &predicates) {
+//    return immediateQueries(atom, predicates, "@declare_end1_", Q_END, 0);
+//}
 
-    return atLeast > 0 ?
-           immediateQueries(atom, predicates, "@declare_absence"+std::to_string(atLeast)+"_", Q_ABSENCE, atLeast) :
-           exists(atom, predicates, 1);
-
-}
-
-ltlf_query *ltlf_query_manager::exists(const std::string &atom, std::unordered_set<std::string> &predicates,
-                                        size_t atLeast) {
-
-    return atLeast > 0 ?
-               immediateQueries(atom, predicates, "@declare_exists"+std::to_string(atLeast)+"_", Q_EXISTS, atLeast) :
-           absence(atom, predicates, 1);
-
-}
-
-ltlf_query *ltlf_query_manager::end1(const std::string &atom, std::unordered_set<std::string> &predicates) {
-    return immediateQueries(atom, predicates, "@declare_end1_", Q_END, 0);
-}
-
-void ltlf_query_manager::finalize_unions(const std::vector<ltlf_query*>& W, KnowledgeBase* ptr) {
+void ltlf_query_manager::finalize_unions(const std::vector<LTLfQuery*>& W, KnowledgeBase* ptr) {
     std::vector<std::set<std::string>> unionToDecompose;
     for (const auto& ptr : atomsToDecomposeInUnion)
         unionToDecompose.emplace_back(ptr->atom);
@@ -258,42 +261,42 @@ void ltlf_query_manager::finalize_unions(const std::vector<ltlf_query*>& W, Know
     for (const auto& ref : result.decomposedIndexedSubsets) {
         auto& f = atomsToDecomposeInUnion.at(ref.first);
         bool just = true;
-        ltlf r;
+        LTLfQuery r;
         for (size_t i : *ref.second) {
             if (i < isFromFurtherDecomposition) {
-                ltlf l;
-                l.casusu = ACT;
-                l.rewritten_act.insert(l.rewritten_act.end(), result.minimal_common_subsets.at(i).begin(), result.minimal_common_subsets.at(i).end());
+                auto l = LTLfQuery::qEXISTS(1, DECLARE_TYPE_NONE, true, false);
+                l.fields.id.parts.is_atom = false;
+                l.atom.insert(result.minimal_common_subsets.at(i).begin(), result.minimal_common_subsets.at(i).end());
                 if (just) {
                     r = l;
                     just = false;
                 } else {
-                    r = ltlf::Or(l, r);
+                    r = LTLfQuery::qOR(l, r, false, false);
                 }
             } else
                 for (size_t further : result.minimal_common_subsets_composition.at(i-isFromFurtherDecomposition)) {
-                    ltlf l;
-                    l.casusu = ACT;
-                    l.rewritten_act.insert(l.rewritten_act.end(), result.minimal_common_subsets.at(further).begin(), result.minimal_common_subsets.at(further).end());
+                    auto l = LTLfQuery::qEXISTS(1, DECLARE_TYPE_NONE, true, false);
+                    l.fields.id.parts.is_atom = false;
+                    l.atom.insert(result.minimal_common_subsets.at(further).begin(), result.minimal_common_subsets.at(further).end());
                     if (just) {
                         r = l;
                         just = false;
                     } else {
-                        r = ltlf::Or(l, r);
+                        r = LTLfQuery::qOR(l, r, false, false);
                     }
                 }
 
         }
-        ltlf_query* q = simplify(r, true, ptr);
-        auto tmpValue = atomsToDecomposeInUnion[ref.first]->isLeaf;
-        q->isLeaf = tmpValue;
+        LTLfQuery* q = simplify(r);
+        auto tmpValue = atomsToDecomposeInUnion[ref.first]->declare_type;
+        q->declare_type = tmpValue;
         *atomsToDecomposeInUnion[ref.first] = *q;
         //delete q; //this will not delete the other nodes, recursively. TODO: this should be done in clear() and avoid leaks
-        atomsToDecomposeInUnion[ref.first]->isLeaf = tmpValue;
+        atomsToDecomposeInUnion[ref.first]->declare_type = tmpValue;
     }
 
     // Making ready for the parallelization of the query execution by setting it into layers
-    std::vector<ltlf_query*> topological_order;
+    std::vector<LTLfQuery*> topological_order;
     topological_sort(W, topological_order);
     for (const auto& subFormula: topological_order) {
         for (const auto& adj : subFormula->args) {
@@ -308,78 +311,148 @@ void ltlf_query_manager::finalize_unions(const std::vector<ltlf_query*>& W, Know
     }
 }
 
-#include <yaucl/strings/serializers.h>
+LTLfQuery *ltlf_query_manager::simplify(size_t formulaId,
+                                        const LTLfQuery &input,
+                                        const DeclareDataAware *joinCondition,
+                                        const std::unordered_set<std::string> &atom_universe,
+                                        const std::unordered_set<std::string> &left,
+                                        const std::unordered_set<std::string> &right,
+                                        std::vector<std::string> &toUseAtoms,
+                                        std::unordered_map<std::string , std::vector<size_t>>& atomToFormulaId) {
+    LTLfQuery q;
+    q.t = input.t;
+    q.n = input.n;
+    q.declare_type = input.declare_type;
+    q.fields = input.fields;
+    q.fields.id.parts.is_negated = false; // after resolution, nothing is negated!
+    if (input.declare_type == DECLARE_TYPE_LEFT) {
+        if (input.fields.id.parts.is_negated) {
+            for (const auto& x : atom_universe) {
+                if (!left.contains(x)) {
+                    q.atom.insert(x);
+                    toUseAtoms.emplace_back(x);
+                    atomToFormulaId[x].emplace_back(formulaId);
+                }
+            }
+        } else {
+            for (const auto& x : left) {
+                q.atom.insert(x);
+                toUseAtoms.emplace_back(x);
+                atomToFormulaId[x].emplace_back(formulaId);
+            }
+        }
+    } else if (input.declare_type == DECLARE_TYPE_RIGHT) {
+        if (input.fields.id.parts.is_negated) {
+            for (const auto& x : atom_universe) {
+                if (!right.contains(x)) {
+                    q.atom.insert(x);
+                    toUseAtoms.emplace_back(x);
+                    atomToFormulaId[x].emplace_back(formulaId);
+                }
+            }
+        } else {
+            for (const auto& x : right) {
+                q.atom.insert(x);
+                toUseAtoms.emplace_back(x);
+                atomToFormulaId[x].emplace_back(formulaId);
+            }
+        }
+    } else {
+        throw std::runtime_error("ERROR: unexpected case for the moment!");
+    }
+    if (input.fields.id.parts.has_theta) {
+        q.joinCondition = joinCondition;
+    }
+    for (auto& args : input.args_from_script)
+        q.args.emplace_back(simplify(formulaId, args, joinCondition, atom_universe, left, right, toUseAtoms, atomToFormulaId));
 
-std::ostream & human_readable_ltlf_printing(std::ostream &os, const ltlf_query* syntax) {
-    std::string reset = "";
-    switch (syntax->casusu) {
-        case Q_INIT:
-            return os << "I" << syntax->atom << reset;
-        case Q_END:
-            return os << "F" << syntax->atom << reset;
-        case Q_ACT:
-            return os << "A" <<  syntax->atom << reset;
-        case Q_EXISTS:
-            return os << "Ex" <<  syntax->atom << reset;
-        case Q_ABSENCE:
-            return os << "Abs" <<  syntax->atom << reset;
-        case Q_OR:
-            os << "(";
-            human_readable_ltlf_printing(os, syntax->args.at(0));
-            os << ") ";
-            if (syntax->isTimed) os << 't';
-            if (!syntax->joinCondition.isTruth()) os << 'H';
-            os << ("∨ (");
-            return human_readable_ltlf_printing(os, syntax->args.at(1)) << ')' << reset;
-        case Q_XOR:
-            os << "(";
-            human_readable_ltlf_printing(os, syntax->args.at(0));
-            os << ") ";
-            if (syntax->isTimed) os << 't';
-            if (!syntax->joinCondition.isTruth()) os << 'H';
-            os << ("⊻ (");
-            return human_readable_ltlf_printing(os, syntax->args.at(1)) << ')' << reset;
-        case Q_AND:
-            os << "(";
-            human_readable_ltlf_printing(os, syntax->args.at(0));
-            os << ") ";
-            if (syntax->isTimed) os << 't';
-            if (!syntax->joinCondition.isTruth()) os << 'H';
-            os << ("∧ (");
-            return human_readable_ltlf_printing(os, syntax->args.at(1)) << ')' << reset;
-        case Q_NEXT:
-            if (syntax->isTimed) os << "t";
-            os << "○(";
-            return human_readable_ltlf_printing(os, syntax->args.at(0)) << ")" << reset;
-        case Q_UNTIL:
-            os << "(";
-            human_readable_ltlf_printing(os, syntax->args.at(0));
-            os << ") ";
-            if (syntax->isTimed) os << 't';
-            if (!syntax->joinCondition.isTruth()) os << 'H';
-            os << ("U (");
-            return human_readable_ltlf_printing(os, syntax->args.at(1)) << ')' << reset;
-        case Q_RELEASE:
-            os << "(";
-            human_readable_ltlf_printing(os, syntax->args.at(0));
-            os << ") ";
-            if (syntax->isTimed) os << 't';
-            if (!syntax->joinCondition.isTruth()) os << 'H';
-            os << ("R (");
-            return human_readable_ltlf_printing(os, syntax->args.at(1)) << ')' << reset;
-        case Q_TRUE:
-            return os << "true"<< reset;
-        case Q_BOX:
-            if (syntax->isTimed) os << "t";
-            os << "▢(";
-            return human_readable_ltlf_printing(os, syntax->args.at(0)) << ")" << reset;
-        case Q_DIAMOND:
-            if (syntax->isTimed) os << "t";
-            os << "◇(";
-            return human_readable_ltlf_printing(os, syntax->args.at(0)) << ")" << reset;
-        case Q_LAST:
-            return os << "LAST" << reset;
-        default:
-            return os << "false"<< reset;
+    return simplify(q);
+}
+
+LTLfQuery *ltlf_query_manager::simplify(const LTLfQuery &q) {
+    auto it = conversion_map_for_subexpressions.find(q);
+    if (it != conversion_map_for_subexpressions.end()) {
+        counter[it->second]++;
+        return it->second;
+    } else {
+        auto* ptr = new LTLfQuery();
+        *ptr = q;
+        return ptr;
     }
 }
+
+//#include <yaucl/strings/serializers.h>
+//
+//std::ostream & human_readable_ltlf_printing(std::ostream &os, const ltlf_query* syntax) {
+//    std::string reset = "";
+//    switch (syntax->casusu) {
+//        case Q_INIT:
+//            return os << "I" << syntax->atom << reset;
+//        case Q_END:
+//            return os << "F" << syntax->atom << reset;
+//        case Q_ACT:
+//            return os << "A" <<  syntax->atom << reset;
+//        case Q_EXISTS:
+//            return os << "Ex" <<  syntax->atom << reset;
+//        case Q_ABSENCE:
+//            return os << "Abs" <<  syntax->atom << reset;
+//        case Q_OR:
+//            os << "(";
+//            human_readable_ltlf_printing(os, syntax->args.at(0));
+//            os << ") ";
+//            if (syntax->isTimed) os << 't';
+//            if (!syntax->joinCondition.isTruth()) os << 'H';
+//            os << ("∨ (");
+//            return human_readable_ltlf_printing(os, syntax->args.at(1)) << ')' << reset;
+//        case Q_XOR:
+//            os << "(";
+//            human_readable_ltlf_printing(os, syntax->args.at(0));
+//            os << ") ";
+//            if (syntax->isTimed) os << 't';
+//            if (!syntax->joinCondition.isTruth()) os << 'H';
+//            os << ("⊻ (");
+//            return human_readable_ltlf_printing(os, syntax->args.at(1)) << ')' << reset;
+//        case Q_AND:
+//            os << "(";
+//            human_readable_ltlf_printing(os, syntax->args.at(0));
+//            os << ") ";
+//            if (syntax->isTimed) os << 't';
+//            if (!syntax->joinCondition.isTruth()) os << 'H';
+//            os << ("∧ (");
+//            return human_readable_ltlf_printing(os, syntax->args.at(1)) << ')' << reset;
+//        case Q_NEXT:
+//            if (syntax->isTimed) os << "t";
+//            os << "○(";
+//            return human_readable_ltlf_printing(os, syntax->args.at(0)) << ")" << reset;
+//        case Q_UNTIL:
+//            os << "(";
+//            human_readable_ltlf_printing(os, syntax->args.at(0));
+//            os << ") ";
+//            if (syntax->isTimed) os << 't';
+//            if (!syntax->joinCondition.isTruth()) os << 'H';
+//            os << ("U (");
+//            return human_readable_ltlf_printing(os, syntax->args.at(1)) << ')' << reset;
+//        case Q_RELEASE:
+//            os << "(";
+//            human_readable_ltlf_printing(os, syntax->args.at(0));
+//            os << ") ";
+//            if (syntax->isTimed) os << 't';
+//            if (!syntax->joinCondition.isTruth()) os << 'H';
+//            os << ("R (");
+//            return human_readable_ltlf_printing(os, syntax->args.at(1)) << ')' << reset;
+//        case Q_TRUE:
+//            return os << "true"<< reset;
+//        case Q_BOX:
+//            if (syntax->isTimed) os << "t";
+//            os << "▢(";
+//            return human_readable_ltlf_printing(os, syntax->args.at(0)) << ")" << reset;
+//        case Q_DIAMOND:
+//            if (syntax->isTimed) os << "t";
+//            os << "◇(";
+//            return human_readable_ltlf_printing(os, syntax->args.at(0)) << ")" << reset;
+//        case Q_LAST:
+//            return os << "LAST" << reset;
+//        default:
+//            return os << "false"<< reset;
+//    }
+//}
