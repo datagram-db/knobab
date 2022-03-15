@@ -44,7 +44,6 @@ struct PredicateManager {
     env GetPayloadDataFromEvent(const std::pair<uint32_t , uint16_t>& pair) const;
     env GetPayloadDataFromEvent(uint32_t first, uint16_t second, bool isLeft, std::unordered_set<std::string>& leftArgs) const;
 
-
     std::vector<std::vector<SimpleDataPredicate>> predicates;
     const KnowledgeBase* kb;
 };
