@@ -94,17 +94,7 @@ std::vector<std::pair<T,T>> insert_interval(const PrevNext& indexer, struct node
                             std::swap(currentRight, currentLeft);
                         //isCurrentUpdated = true;
                     }
-                } else
-#if 0
-                    if (list_ptr[i].min >= currentRight) {
-                    assert(false && "ERROR: unexpected case!");
-                    /*assert(currentLeft < list_ptr[i].min);
-                    //there is a partial overlap, perform the current overlap, and then continue next!
-                    q.emplace(currentLeft, list_ptr[i].max, &list_ptr[i]);
-                    currentLeft = indexer.getNext(list_ptr[i].max);*/
-                } else
-#endif
-                {
+                } else {
                     break;//assert(false && "ERROR: unexpected case!");
                 }
             }

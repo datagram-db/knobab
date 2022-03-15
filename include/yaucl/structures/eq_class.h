@@ -9,7 +9,6 @@
 #include <algorithm>
 #include <unordered_map>
 #include <set>
-#include <cassert>
 
 template<typename T>
 struct equivalence_class {

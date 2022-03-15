@@ -1,0 +1,14 @@
+//
+// Created by giacomo on 15/03/2022.
+//
+
+#ifndef KNOBAB_DECLAREQUERYLANGUAGEPARSER_H
+#define KNOBAB_DECLAREQUERYLANGUAGEPARSER_H
+
+
+class DeclareQueryLanguageParser {
+
+};
+
+
+#endif //KNOBAB_DECLAREQUERYLANGUAGEPARSER_H

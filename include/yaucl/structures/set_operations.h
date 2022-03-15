@@ -138,12 +138,12 @@ std::ostream& operator<<(std::ostream& os, const std::vector<T> &s)
 
 #include <map>
 #include <functional>
-#include <cassert>
+#include <yaucl/functional/assert.h>
 
 template <typename Iterator, typename Key, typename Value>
 std::map<Key, std::vector<Value>> GroupByKeyExtractor(Iterator begin, Iterator end, std::function<Key(const Value&)> keyExtractor)
 {
-    assert(std::is_sorted(begin, end));
+    DEBUG_ASSERT(std::is_sorted(begin, end));
     std::map<Key, std::vector<Value>> groups;
     decltype(end) upper;
 
@@ -164,7 +164,7 @@ std::map<Key, std::vector<Value>> GroupByKeyExtractor(Iterator begin, Iterator e
 template <typename Iterator, typename Key, typename Value>
 std::vector<std::pair<Key, std::vector<Value>>> GroupByKeyExtractorAsVector(Iterator begin, Iterator end, std::function<Key(const Value&)> keyExtractor)
 {
-    assert(std::is_sorted(begin, end));
+    DEBUG_ASSERT(std::is_sorted(begin, end));
     std::vector<std::pair<Key, std::vector<Value>>> groups;
     decltype(end) upper;
 
@@ -187,7 +187,7 @@ std::vector<std::pair<Key, std::vector<Value>>> GroupByKeyExtractorAsVector(Iter
 template <typename Iterator, typename Key, typename Value>
 std::vector<std::vector<Value>> GroupByKeyExtractorIgnoreKey(Iterator begin, Iterator end, std::function<Key(const Value&)> keyExtractor)
 {
-    assert(std::is_sorted(begin, end));
+    DEBUG_ASSERT(std::is_sorted(begin, end));
     std::vector<std::vector<Value>> groups;
     decltype(end) upper;
 

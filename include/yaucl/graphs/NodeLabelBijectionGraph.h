@@ -75,7 +75,7 @@ public:
         auto it = nodeLabel.find(node);
         if (it == nodeLabel.end()) {
             auto graphNode = g.add_node();
-            assert(nodeLabelInv.insert(std::make_pair((graphNode), node)).second);
+            DEBUG_ASSERT(nodeLabelInv.insert(std::make_pair((graphNode), node)).second);
             return nodeLabel.insert(std::make_pair(node, (graphNode))).first->second;
         } else {
             return it->second;
