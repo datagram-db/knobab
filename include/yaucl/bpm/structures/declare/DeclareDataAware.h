@@ -128,7 +128,7 @@ struct DeclareDataAware {
 
     // Each map represents a conjunction among different atoms over distinct variables, while the vector represents the disjunction
     std::vector<std::unordered_map<std::string, DataPredicate>> dnf_left_map, dnf_right_map, conjunctive_map;
-    std::unordered_set<std::string> left_decomposed_atoms, right_decomposed_atoms;
+    std::unordered_set<std::string> left_decomposed_atoms, right_decomposed_atoms; /// TODO: generalization to the number of the possible arguments of a declare clause
 
     DEFAULT_CONSTRUCTORS(DeclareDataAware)
     DeclareDataAware(const std::vector<std::vector<DataPredicate>>& predicate, const KnowledgeBase* kb) : kb{kb} {
