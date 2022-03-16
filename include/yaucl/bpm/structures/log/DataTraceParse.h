@@ -51,7 +51,8 @@ namespace yaucl {
             size_t trace_count = 0;
             size_t event_count = 0;
         public:
-            DataTraceParse() : tv{nullptr} {}
+            bool load_also_data;
+            DataTraceParse() : tv{nullptr}, load_also_data{true} {}
             ~DataTraceParse() {}
 
             void load(const std::string &stream_name, std::istream &stream, trace_visitor *tv);
