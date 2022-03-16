@@ -11,6 +11,7 @@
 
 struct LoggerInformation {
     std::string log_filename;
+    bool with_data;
     double log_loading_and_parsing_ms = -1.0;
     double log_indexing_ms = -1.0;
     size_t n_traces = 0;
@@ -22,6 +23,8 @@ struct LoggerInformation {
     size_t trace_length_frequency;
 
     std::string model_filename;
+    std::string queries_plan;
+    std::string operators_version;
     double model_parsing_ms = -1.0;
     size_t model_size = 0;
     double model_data_decomposition_time = -1.0;
