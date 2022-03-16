@@ -139,7 +139,7 @@ void load_xes_with_data(const std::string &filename, std::istream &file, bool lo
                     hasTraceOpened = true;
                     trace_id = tv->enterTrace(std::to_string(trace_id));
                 }
-                if (event_start == XML_SCAN_STEPS::TRACE_PAYLOAD) {
+                if ((event_start == XML_SCAN_STEPS::TRACE_PAYLOAD) && (load_data)) {
                     // Before loading the event, I create a dummy event,
                     // which will contain the trace payload information
                     auto event_id = tv->enterEvent(0, "__trace__payload");
@@ -220,12 +220,15 @@ void load_into_knowledge_base(log_data_format format, bool loadData, std::istrea
     switch (format) {
         case HUMAN_READABLE_YAUCL: {
             yaucl::bpm::DataTraceParse dp;
+            auto tmp = dp.load_also_data;
+            dp.load_also_data = loadData;
             dp.load(filename, stream, tv);
+            dp.load_also_data = tmp;
             break;
         }
         case XES1:
             load_xes_with_data(filename, stream, loadData, tv); break;
-        case TAB_SEPARATED_EVENTS:
+        case TAB_SEPARATED_EVENTS: // This never comes with data
             load_act_stream_to_knowledge_base(stream, filename, output); break;
     }
 }

@@ -22,7 +22,8 @@ void whole_testing(const std::string& log_file = "data/testing/log.txt",
                    size_t noThreads = 1,
                    const std::string& script_for_decomposition = "scripts/logic_plan.queryplan",
                    const std::string& preferredPlan = "efficient",
-                   const std::string& atomization_file = "") {
+                   const std::string& atomization_file = "",
+                   bool load_data = true) {
     Environment env;
     env.clear();
     env.doStats = doStats;
@@ -33,7 +34,7 @@ void whole_testing(const std::string& log_file = "data/testing/log.txt",
     }
 
     std::cout << "Loading the log file: " << log_file << std::endl;
-    env.load_log(format, true, log_file, false);
+    env.load_log(format, load_data, log_file, false);
     if (!sqlminer_dump_dir.empty()) {
         env.dump_log_for_sqlminer(sqlminer_dump_dir);
     }
@@ -639,6 +640,7 @@ int main(int argc, char **argv) {
 
     bool setUpServer = false;
     bool doStats = true;
+    bool do_data = true;
     log_data_format format = HUMAN_READABLE_YAUCL;
     std::string log_file = "data/testing/log.txt";
     std::string scripts = "scripts/logic_plan.queryplan";
@@ -658,6 +660,8 @@ int main(int argc, char **argv) {
 
     args::Group group(parser, "You can use the following parameters", args::Group::Validators::DontCare, args::Options::Global);
     args::Flag server(group, "server", "Runs the HTTP server for visualizing the internal representation of both the knowledge base and the associated query plan", {'s', "server"});
+    args::Flag no_data(group, "nodata", "Ignores the payload when loading the data", {'o', "nodata"});
+
     args::Flag do_notcompute_trace_Stats(group, "do_not_compute_trace_stats", "Whether the code will lose time in calculating the statistics for the traces", {'n', "nostats"});
 #ifdef MAXSatPipeline_PARALLEL
     args::ValueFlag<size_t> parallel(group, "#threads", "Specifies the number of the threads to be run over the query plan", {'p', "threads"});
@@ -724,13 +728,16 @@ int main(int argc, char **argv) {
     if (atomization_pipeline) {
         atomization_file = args::get(plan);
     }
+    if (no_data) {
+        do_data = false;
+    }
 #ifdef MAXSatPipeline_PARALLEL
     if (parallel) {
         no_threads = args::get(parallel);
     }
     args::ValueFlag<size_t> parallel(group, "#threads", "Specifies the number of the threads to be run over the query plan", {'p', "threads"});
 #endif
-    whole_testing(log_file, format, queriesV, setUpServer, benchmark, sql_miner_dump_folder, doStats, no_threads, scripts, planPreferred, atomization_file);
+    whole_testing(log_file, format, queriesV, setUpServer, benchmark, sql_miner_dump_folder, doStats, no_threads, scripts, planPreferred, atomization_file, do_data);
 
     //generate_nonunary_templates();
     //test_data_query();
@@ -750,6 +757,7 @@ int main(int argc, char **argv) {
     // --tab=data/testing/ltlf/WeakUntil --nostats --sqlminer=/home/giacomo/IdeaProjects/JavaConcurrentAPI/SQLMinerBenchmarker/log
     // --xes=/home/giacomo/Scaricati/hospital_corrected.xes --nostats --sqlminer=/home/giacomo/Scaricati/sump
 // --nostats --log=data/testing/log_response.txt --declare=data/testing/response.powerdecl
+// --nostats --log=data/testing/log_response.txt --declare=data/testing/InitDataA.txt --server
 
     return 0;
 }
