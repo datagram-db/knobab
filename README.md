@@ -41,9 +41,6 @@ After compiling the tool with CMake, the final project is delivered as a server(
         -n, --nostats                     Whether the code will lose time in
                                           calculating the statistics for the
                                           traces
-        -p[#threads],
-        --threads=[#threads]              [Ineffective: the program is compiled
-                                          in sequential mode]
         -d[Models/Queries...],
         --declare=[Models/Queries...]     The queries expressed as Declare
                                           models
@@ -68,8 +65,6 @@ After compiling the tool with CMake, the final project is delivered as a server(
 
     This free and open software program implements the MaxSat problem via a
     Knowledge Base, KnoBAB. Nicer things are still to come!
-
-
 
 ```
 
