@@ -34,12 +34,14 @@ MAXSatPipeline::MAXSatPipeline(const std::string& plan_file, const std::string& 
 }
 
 void MAXSatPipeline::clear() {
+    declare_to_query.clear();
     data_accessing.clear();
     declare_atomization.clear();
     atomToResultOffset.clear();
     toUseAtoms.clear();
     atomicPartIntersectionResult.clear();
     result.clear();
+    support_per_declare.clear();
 }
 
 void MAXSatPipeline::pipeline(CNFDeclareDataAware* model,
@@ -60,8 +62,10 @@ void MAXSatPipeline::pipeline(CNFDeclareDataAware* model,
 
     {
         auto start = std::chrono::system_clock::now();
-        actual_query_running(kb);
+        std::vector<PartialResult> pr = subqueriesRunning(kb);
+        actual_query_running(pr, kb);
         auto end = std::chrono::system_clock::now();
+        pr.clear();
         auto elapsed =
                 std::chrono::duration<double, std::milli>(end - start);
         ltlf_query_time = elapsed.count();
@@ -78,11 +82,15 @@ void MAXSatPipeline::data_chunk(CNFDeclareDataAware *model,
     declare_model = model;
     std::vector<LTLfQuery*> W;
     //label_set_t visitedAtoms;
+    size_t declareId = 0;
     for (auto& it : declare_model->singleElementOfConjunction) {
         for (auto& item : it.elementsInDisjunction) {
             // Skipping already-met definitions: those will only duplicate the code to be run!
-            auto cp = declare_atomization.insert(item);
-            if (!cp.second) continue;
+            auto cp = declare_atomization.emplace(item, declareId++);
+            if (!cp.second) {
+                declare_to_query.emplace_back(declare_to_query.at(cp.first->second));
+                continue;
+            }
 
             // Setting the knowledge base, so to exploit it for join queries
             item.kb = &kb;
@@ -99,7 +107,7 @@ void MAXSatPipeline::data_chunk(CNFDeclareDataAware *model,
             LTLfQuery* formula = qm.simplify(atomization.act_atoms,
                                              maxFormulaId,
                                              it2->second,
-                                             cp.first->isTruth() ? nullptr : (const DeclareDataAware *) &cp.first,
+                                             item.isTruth() ? nullptr : (const DeclareDataAware *) &item,
                                              atomization.atom_universe,
                                              item.left_decomposed_atoms,
                                              item.right_decomposed_atoms,
@@ -144,6 +152,7 @@ void MAXSatPipeline::data_chunk(CNFDeclareDataAware *model,
             fomulaidToFormula.emplace_back(formula);
             maxFormulaId++;
             W.emplace_back(formula);
+            declare_to_query.emplace_back(formula);
         }
     }
 
@@ -497,130 +506,7 @@ static inline void absence_or_exists(LTLfQuery* formula, const std::vector<Parti
 }
 
 
-void MAXSatPipeline::actual_query_running(const KnowledgeBase& kb) {
-
-    // 1. Performing the query over each single predicate that we have extracted, so not to duplicate the data access
-    if (barrier_to_range_queries > 0) {
-        PARALLELIZE_LOOP_BEGIN(pool, 0, barrier_to_range_queries, a, b)
-            for (size_t i = a; i < b; i++) {
-                auto& ref = data_accessing.at(i);
-                // TODO: Given the query in ref.first, put the Result in ref.second
-                switch (ref.first.type) {
-                    case ExistsQuery:
-                        ref.second = kb.exists(kb.resolveCountingData(ref.first.label), ref.first.numeric_argument);
-                        break;
-                    case AtomQuery:
-                        ref.second = kb.exists(ref.first.label);
-                        break;
-                    case AbsenceQuery:
-                        ref.second = kb.absence(kb.resolveCountingData(ref.first.label), ref.first.numeric_argument);
-                        break;
-                    case InitQuery:
-                        ref.second = kb.initOrig(ref.first.label);
-                        break;
-                    case EndsQuery:
-                        ref.second = kb.endsOrig(ref.first.label);
-                        break;
-                    //
-                    //    // TODO: ref.second = kb.exists<std::pair<uint32_t, uint16_t>, double>(ref.first.label).traceApproximations;
-                    //    break;
-                    default:
-                        DEBUG_ASSERT(false); // This should be dealt in (B)
-                }
-            }
-        PARALLELIZE_LOOP_END
-    }
-
-
-    // 2. Performing the queries over the range queries
-    if (!data_accessing_range_query_to_offsets.empty()) {
-#ifdef MAXSatPipeline_PARALLEL
-        // If this is a parallel execution, I can exploit the current library only if I have a vector. Otherwise,
-        // the map data structures are not safe for iteration
-        std::vector<std::pair<std::string, std::unordered_map<std::string,std::vector<size_t>>>> someVector;
-        std::transform(std::move_iterator(data_accessing_range_query_to_offsets.begin()),
-                       std::move_iterator(data_accessing_range_query_to_offsets.end()),
-                       std::back_inserter(someVector),
-                       [](auto&& entry){ return std::forward<decltype(entry)>(entry); });
-
-        PARALLELIZE_LOOP_BEGIN(pool, 0,someVector.size(), lb, ub)
-            for (size_t i = lb; i < ub; i++) {
-                auto& rangeQueryRefs = someVector.at(i);
-                kb.exact_range_query(rangeQueryRefs.first, rangeQueryRefs.second, data_accessing);
-            }
-        PARALLELIZE_LOOP_END
-
-        std::transform(std::move_iterator(someVector.begin()),
-                       std::move_iterator(someVector.end()),
-                       std::inserter(data_accessing_range_query_to_offsets, data_accessing_range_query_to_offsets.begin()),
-                       [](auto&& entry){ return std::forward<decltype(entry)>(entry); });
-#else
-        // If this is not in parallel mode, then there is no purpose to create a temporary vector for the parallelization:
-        // therefore, I can directly iterate over the map.
-        for (auto& rangeQueryRefs : data_accessing_range_query_to_offsets) {
-            kb.exact_range_query(rangeQueryRefs.first, rangeQueryRefs.second, data_accessing);
-        }
-#endif
-    }
-//
-//    for (const auto& da : data_accessing) {
-//        std::cout << da.first.label << '.' << da.first.var << " \\in [" << std::get<1>(da.first.lower_bound) << ',' << get<1>(da.first.upper_bound) << "] --> " << da.second << std::endl;
-//    }
-
-    // After accessing the data, we perform the interval intersection between these
-    // The computational complexity should be squared on the size of the atoms
-    auto set_decomposition_result = partition_sets(atomToResultOffset);
-    ///std::cout << set_decomposition_result << std::endl;
-    size_t isFromFurtherDecomposition = set_decomposition_result.minimal_common_subsets.size();
-
-    std::vector<PartialResult> resultOfS(set_decomposition_result.minimal_common_subsets.size() + set_decomposition_result.minimal_common_subsets_composition.size());
-    PARALLELIZE_LOOP_BEGIN(pool, 0,set_decomposition_result.minimal_common_subsets.size(), lb, ub)
-        for (size_t i = lb; i < ub; i++) {
-            auto& S = set_decomposition_result.minimal_common_subsets.at(i);
-//            std::cout << i << " is " << S << std::endl;
-            // resultOfS for collecting the intermediate computations
-            resultOfS[i] = local_intersection(S, data_accessing);
-        }
-    PARALLELIZE_LOOP_END
-
-    PARALLELIZE_LOOP_BEGIN(pool, 0,set_decomposition_result.minimal_common_subsets_composition.size(), lb, ub)
-        for (size_t i = lb; i < ub; i++) {
-            auto& S = set_decomposition_result.minimal_common_subsets_composition.at(i);
-            // Perform the intersection among all of the elements in S,
-            // using the intermediate results from resultOfSSecond
-            resultOfS[isFromFurtherDecomposition + i] = local_intersection(S, resultOfS);
-        }
-    PARALLELIZE_LOOP_END
-
-//    for (size_t i = 0; i<resultOfS.size(); i++) {
-//        std::cout << i << "->>->" << resultOfS.at(i) << std::endl;
-//    }
-
-    ///results_cache.resize(toUseAtoms.size());
-    std::vector<PartialResult> results_cache(std::max(toUseAtoms.size(), resultOfS.size()), PartialResult{});
-    PARALLELIZE_LOOP_BEGIN(pool, 0,set_decomposition_result.decomposedIndexedSubsets.size(), lb, ub)
-        for (size_t j = lb; j < ub; j++) {
-            auto& ref = set_decomposition_result.decomposedIndexedSubsets.at(j);
-//            std::cout << ref.first << "-@->" << *ref.second << std::endl;
-            // put the global intersection into a map representation.
-            // ref->first will correspond to the atom in that same position in toUseAtoms.
-            results_cache[ref.first] = local_intersection(*ref.second, resultOfS);
-        }
-    PARALLELIZE_LOOP_END
-
-    resultOfS.clear();
-//    for (size_t i = 0; i<results_cache.size(); i++) {
-//        std::cout << i << "-->" << results_cache.at(i) << std::endl;
-//    }
-
-    // Preparing the second phase of the pipeline, where the extracted data is going to be combined.
-    for (size_t i = 0, N = toUseAtoms.size(); i<N; i++) {
-        auto& atom = toUseAtoms.at(i);
-        for (size_t formulaId : atomToFormulaId.at(atom)) {
-            fomulaidToFormula.at(formulaId)->associateDataQueryIdsToFormulaByAtom(atom, i);// setting the partial results for the data pipeline
-        }
-    }
-
+void MAXSatPipeline::actual_query_running(const std::vector<PartialResult>& results_cache, const KnowledgeBase& kb) {
     /// Scanning the query plan starting from the leaves (rbegin) towards the actual declare formulae (rend)
     auto it = qm.Q.rbegin(), en = qm.Q.rend();
     for (; it != en; it++) {
@@ -790,18 +676,172 @@ void MAXSatPipeline::actual_query_running(const KnowledgeBase& kb) {
         PARALLELIZE_LOOP_END
     }
 
-    /// TODO: different enseble methods
 
     if (!qm.Q.empty()) {
-        // Only one possibility, for MaxSAT
-        LTLfQuery conjunction;
-        conjunction.args = qm.Q.begin()->second;
-#if OLD_VERSION_OF_THE_LOOP
-        local_intersection(&conjunction, this->result, false);
-#endif
-        // Others should follow, like the one for maximum satisfiability, for computing
-    } else {
+        switch (final_ensemble) {
+            case PerDeclareSupport: {
+                std::unordered_map<LTLfQuery*, double> visited;
+                for (const auto& declare : declare_to_query) {
+                    auto it = visited.emplace(declare, ((double)declare->result.size())/((double)kb.noTraces));
+                    support_per_declare.emplace_back(it.first->second);
+                }
+            } break;
+
+            case TraceMaximumSatisfiability: {
+                // Working under the assumption that all of the final Declare clauses are, at the root level, untimed operations
+                max_sat_per_trace.resize(kb.noTraces, 0.0);
+                for (const auto& q : qm.Q.begin()->second) {
+                    for (const auto& rx: q->result) {
+                        max_sat_per_trace[rx.first.first]++;
+                    }
+                }
+                for (auto& ref : max_sat_per_trace) {
+                    assert(ref <= declare_to_query.size());
+                    ref = ref / ((double)declare_to_query.size());
+                }
+            } break;
+
+            case TraceIntersection: {
+                LTLfQuery conjunction;
+                conjunction.args = qm.Q.begin()->second;
+                local_intersection(&conjunction, this->result, false);
+            } break;
+        }
+    }
+}
+
+std::vector<PartialResult> MAXSatPipeline::subqueriesRunning(const KnowledgeBase &kb) {// 1. Performing the query over each single predicate that we have extracted, so not to duplicate the data access
+    if (barrier_to_range_queries > 0) {
+        PARALLELIZE_LOOP_BEGIN(pool, 0, barrier_to_range_queries, a, b)
+            for (size_t i = a; i < b; i++) {
+                auto& ref = data_accessing.at(i);
+                // TODO: Given the query in ref.first, put the Result in ref.second
+                switch (ref.first.type) {
+                    case ExistsQuery:
+                        ref.second = kb.exists(kb.resolveCountingData(ref.first.label), ref.first.numeric_argument);
+                        break;
+                    case AtomQuery:
+                        ref.second = kb.exists(ref.first.label);
+                        break;
+                    case AbsenceQuery:
+                        ref.second = kb.absence(kb.resolveCountingData(ref.first.label), ref.first.numeric_argument);
+                        break;
+                    case InitQuery:
+                        ref.second = kb.initOrig(ref.first.label);
+                        break;
+                    case EndsQuery:
+                        ref.second = kb.endsOrig(ref.first.label);
+                        break;
+                    //
+                    //    // TODO: ref.second = kb.exists<std::pair<uint32_t, uint16_t>, double>(ref.first.label).traceApproximations;
+                    //    break;
+                    default:
+                        DEBUG_ASSERT(false); // This should be dealt in (B)
+                }
+            }
+        PARALLELIZE_LOOP_END
     }
 
+
+    // 2. Performing the queries over the range queries
+    if (!data_accessing_range_query_to_offsets.empty()) {
+#ifdef MAXSatPipeline_PARALLEL
+        // If this is a parallel execution, I can exploit the current library only if I have a vector. Otherwise,
+        // the map data structures are not safe for iteration
+        std::vector<std::pair<std::string, std::unordered_map<std::string,std::vector<size_t>>>> someVector;
+        std::transform(std::move_iterator(data_accessing_range_query_to_offsets.begin()),
+                       std::move_iterator(data_accessing_range_query_to_offsets.end()),
+                       std::back_inserter(someVector),
+                       [](auto&& entry){ return std::forward<decltype(entry)>(entry); });
+
+        PARALLELIZE_LOOP_BEGIN(pool, 0,someVector.size(), lb, ub)
+            for (size_t i = lb; i < ub; i++) {
+                auto& rangeQueryRefs = someVector.at(i);
+                kb.exact_range_query(rangeQueryRefs.first, rangeQueryRefs.second, data_accessing);
+            }
+        PARALLELIZE_LOOP_END
+
+        std::transform(std::move_iterator(someVector.begin()),
+                       std::move_iterator(someVector.end()),
+                       std::inserter(data_accessing_range_query_to_offsets, data_accessing_range_query_to_offsets.begin()),
+                       [](auto&& entry){ return std::forward<decltype(entry)>(entry); });
+#else
+        // If this is not in parallel mode, then there is no purpose to create a temporary vector for the parallelization:
+        // therefore, I can directly iterate over the map.
+        for (auto& rangeQueryRefs : data_accessing_range_query_to_offsets) {
+            kb.exact_range_query(rangeQueryRefs.first, rangeQueryRefs.second, data_accessing);
+        }
+#endif
+    }
+//
+//    for (const auto& da : data_accessing) {
+//        std::cout << da.first.label << '.' << da.first.var << " \\in [" << std::get<1>(da.first.lower_bound) << ',' << get<1>(da.first.upper_bound) << "] --> " << da.second << std::endl;
+//    }
+
+    // After accessing the data, we perform the interval intersection between these
+// The computational complexity should be squared on the size of the atoms
+    auto set_decomposition_result = partition_sets(atomToResultOffset);
+    ///std::cout << set_decomposition_result << std::endl;
+    size_t isFromFurtherDecomposition = set_decomposition_result.minimal_common_subsets.size();
+
+
+    std::vector<PartialResult> resultOfS(set_decomposition_result.minimal_common_subsets.size() + set_decomposition_result.minimal_common_subsets_composition.size());
+    PARALLELIZE_LOOP_BEGIN(pool, 0, set_decomposition_result.minimal_common_subsets.size(), lb, ub)
+        for (size_t i = lb; i < ub; i++) {
+            auto& S = set_decomposition_result.minimal_common_subsets.at(i);
+//            std::cout << i << " is " << S << std::endl;
+            // resultOfS for collecting the intermediate computations
+            resultOfS[i] = local_intersection(S, data_accessing);
+//            for (const auto x : S) {
+//                edges.emplace("data_accessing:"+std::to_string(x), "resultOfS:"+std::to_string(i));
+//            }
+        }
+    PARALLELIZE_LOOP_END
+
+    PARALLELIZE_LOOP_BEGIN(pool, 0, set_decomposition_result.minimal_common_subsets_composition.size(), lb, ub)
+        for (size_t i = lb; i < ub; i++) {
+            auto& S = set_decomposition_result.minimal_common_subsets_composition.at(i);
+            // Perform the intersection among all of the elements in S,
+            // using the intermediate results from resultOfSSecond
+            resultOfS[isFromFurtherDecomposition + i] = local_intersection(S, resultOfS);
+//            for (const auto x : S) {
+//                edges.emplace("resultOfS:"+std::to_string(x), "resultOfS:"+std::to_string(i));
+//            }
+        }
+    PARALLELIZE_LOOP_END
+
+//    for (size_t i = 0; i<resultOfS.size(); i++) {
+//        std::cout << i << "->>->" << resultOfS.at(i) << std::endl;
+//    }
+
+    ///results_cache.resize(toUseAtoms.size());
+    std::vector<PartialResult> results_cache(std::max(toUseAtoms.size(), resultOfS.size()), PartialResult{});
+    PARALLELIZE_LOOP_BEGIN(pool, 0, set_decomposition_result.decomposedIndexedSubsets.size(), lb, ub)
+        for (size_t j = lb; j < ub; j++) {
+            auto& ref = set_decomposition_result.decomposedIndexedSubsets.at(j);
+//            std::cout << ref.first << "-@->" << *ref.second << std::endl;
+            // put the global intersection into a map representation.
+            // ref->first will correspond to the atom in that same position in toUseAtoms.
+            results_cache[ref.first] = local_intersection(*ref.second, resultOfS);
+//            for (const auto x : *ref.second) {
+//                edges.emplace("resultOfS:"+std::to_string(x), "results_cache:"+std::to_string(ref.first));
+//            }
+        }
+    PARALLELIZE_LOOP_END
+
+    resultOfS.clear();
+//    for (size_t i = 0; i<results_cache.size(); i++) {
+//        std::cout << i << "-->" << results_cache.at(i) << std::endl;
+//    }
+
+    // Preparing the second phase of the pipeline, where the extracted data is going to be combined.
+    for (size_t i = 0, N = toUseAtoms.size(); i < N; i++) {
+        auto& atom = toUseAtoms.at(i);
+        for (size_t formulaId : atomToFormulaId.at(atom)) {
+            fomulaidToFormula.at(formulaId)->associateDataQueryIdsToFormulaByAtom(atom, i);// setting the partial results for the data pipeline
+        }
+    }
+
+    return results_cache;
 }
 

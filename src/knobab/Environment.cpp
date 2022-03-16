@@ -439,7 +439,7 @@ void Environment::server(MAXSatPipeline& pipeline) {
 
     svr.Get("/query_plan.json",[this, &pipeline](const httplib::Request& req, httplib::Response& res) {
         std::stringstream ss;
-        ss << pipeline.qm.generateGraph();
+        ss << pipeline.generateGraph();
         res.set_content(ss.str(), "text/json");
     });
     svr.Get("/graph.html",[this](const httplib::Request& req, httplib::Response& res) {
