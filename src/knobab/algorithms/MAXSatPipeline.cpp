@@ -92,6 +92,9 @@ void MAXSatPipeline::data_chunk(CNFDeclareDataAware *model,
                 throw std::runtime_error(item.casusu+": missing from the loaded query decomposition");
             }
 
+            // Caching the query, so to generate a pointer to an experssion that was already computed.
+            // The query plan manager will identfy the common expressions, and will let represent those only ones
+            // via caching and mapping.
             LTLfQuery* formula = qm.simplify(maxFormulaId,
                                              it2->second,
                                              cp.first->isTruth() ? nullptr : (const DeclareDataAware *) &cp.first,
@@ -101,24 +104,22 @@ void MAXSatPipeline::data_chunk(CNFDeclareDataAware *model,
                                              toUseAtoms,
                                              atomToFormulaId);
 
+            // Storing the expression that we analysed.
             fomulaidToFormula.emplace_back(formula);
             maxFormulaId++;
             W.emplace_back(formula);
         }
     }
 
-    std::cout << "Step1" << std::endl;
-
     for (auto& ref : atomToFormulaId)
         remove_duplicates(ref.second);
     qm.finalize_unions(W, (KnowledgeBase*)&kb); // Time Computational Complexity: Squared on the size of the atoms
 
-    std::cout << "Step2" << std::endl;
-    /////////////////////////////// DEBUGGING
+#ifdef DEBUG
     for (const auto& ref : W) {
         std::cout << *ref << std::endl;
     }
-    /////////////////////////////////////////
+#endif
     remove_duplicates(toUseAtoms);
 
     std::cout << "Step3" << std::endl;
@@ -140,9 +141,6 @@ void MAXSatPipeline::data_chunk(CNFDeclareDataAware *model,
     barrier_to_range_queries = data_accessing.size();
     barriers_to_atfo = atomToResultOffset.size();
 
-
-    std::cout << "Step4" << std::endl;
-
     // Iterating other the remaining non-act atoms, that is, the data predicate+label ones
     for (auto it = toUseAtomsEnd, en = toUseAtoms.end(); it != en; it++) {
         auto interval_to_interval_queries_to_intersect = atomization.atom_to_conjunctedPredicates.find(*it);
@@ -151,10 +149,9 @@ void MAXSatPipeline::data_chunk(CNFDeclareDataAware *model,
 
         std::vector<size_t> tmpRanges;
         for (const auto& interval_data_query : interval_to_interval_queries_to_intersect->second) {
-            std::cout << "Step5b" << std::endl;
             // Sanity Checks
-            assert(interval_data_query.casusu == INTERVAL);
-            assert(interval_data_query.BiVariableConditions.empty());
+            DEBUG_ASSERT(interval_data_query.casusu == INTERVAL);
+            DEBUG_ASSERT(interval_data_query.BiVariableConditions.empty());
 
             //       splits the RangeQuery by clause.var (as they are going to be on different tables),
             //       clause.label (as the ranges are ordered by act and then by value) and then sort
@@ -166,81 +163,20 @@ void MAXSatPipeline::data_chunk(CNFDeclareDataAware *model,
             size_t tmpDataAccessingSize =  data_accessing.size();
             auto find = data_offset.emplace(q, tmpDataAccessingSize);
             if (find.second){
-                std::cout << "Step5d" << std::endl;
                 maxPartialResultId = std::max(maxPartialResultId, (ssize_t)tmpDataAccessingSize);
                 tmpRanges.emplace_back(tmpDataAccessingSize);
                 data_accessing_range_query_to_offsets[interval_data_query.var][interval_data_query.label].emplace_back(tmpDataAccessingSize);
                 data_accessing.emplace_back(q, empty_result);
             } else {
-                std::cout << "Step5e" << std::endl;
                 maxPartialResultId = std::max(maxPartialResultId, (ssize_t)find.first->second);
                 tmpRanges.emplace_back(find.first->second);
             }
         }
-        std::cout << "Step5c" << std::endl;
+#ifdef DEBUG
         std::cout << atomToResultOffset.size() << "<=>" << interval_to_interval_queries_to_intersect->first << "-->" << tmpRanges << std::endl;
+#endif
         atomToResultOffset.emplace_back(tmpRanges.begin(), tmpRanges.end());
     }
-    std::cout << "Step5" << std::endl;
-}
-
-void
-MAXSatPipeline::generateAtomQuery(std::vector<std::string> &toUseAtoms,
-                                  std::vector<std::pair<std::pair<trace_t, event_t>, double>> &empty_result,
-                                  DeclareDataAware &item, LTLfQuery *formula, DataQueryType r,
-                                  size_t numeric_argument) {
-    size_t offset;
-    auto q = DataQuery::AtomQueries(r, item.left_act);
-    q.numeric_argument = numeric_argument;
-    size_t tmpDataAccessingSize = data_accessing.size();
-    auto find = data_offset.emplace(q, tmpDataAccessingSize);
-    if (find.second){
-        formula->partial_results.emplace(tmpDataAccessingSize); // TODO: removable
-        offset = tmpDataAccessingSize;
-        data_accessing.emplace_back(q, empty_result);
-    } else {
-        offset = (find.first->second);
-        formula->partial_results.emplace(find.first->second); // TODO: removable
-    }
-
-    if (/*(!item.left_decomposed_atoms.empty()) && */((item.left_decomposed_atoms.size() > 1) || (!item.left_decomposed_atoms.contains(item.left_act))))
-        /*toUseAtoms.emplace_back(item.left_act);
-    else*/
-        toUseAtoms.insert(toUseAtoms.end(), item.left_decomposed_atoms.begin(), item.left_decomposed_atoms.end());
-    atomToFormulaId[item.left_act].emplace_back(maxFormulaId);
-    atomToResultOffset.emplace_back(std::set<size_t>{offset});
-    maxPartialResultId = std::max(maxPartialResultId, (ssize_t)offset);
-}
-
-void
-MAXSatPipeline::localExtract(const AtomizingPipeline &atomization,
-                             std::vector<std::string> &toUseAtoms,
-                             std::unordered_map<std::pair<bool, std::string>, label_set_t> &ref,
-                             std::unordered_map<std::string, std::unordered_set<bool>> &collection,
-                             const std::unordered_set<std::string> &decomposition,
-                             const std::string &collectionMapKey) {
-    DEBUG_ASSERT(!decomposition.empty());
-    auto it = collection.find(collectionMapKey);
-    if (it != collection.end()) {
-        for (bool isNegated : it->second) {
-            localExtract(atomization, toUseAtoms, ref, decomposition, collectionMapKey, isNegated);
-        }
-    }
-}
-
-void MAXSatPipeline::localExtract(const AtomizingPipeline &atomization, std::vector<std::string> &toUseAtoms,
-                                  std::unordered_map<std::pair<bool, std::string>, label_set_t> &ref,
-                                  const std::unordered_set<std::string> &decomposition,
-                                  const std::string &collectionMapKey, bool isNegated) {
-    const auto& local_decomposition = ref.emplace(std::pair<bool, std::string>{isNegated, collectionMapKey},
-                                                  isNegated ?
-                                                  unordered_difference(atomization.atom_universe, decomposition)
-                                                            : decomposition).first->second;
-    for (const auto& x : local_decomposition) {
-        //toUseAtoms.insert(x);
-        atomToFormulaId[x].emplace_back(maxFormulaId);
-    }
-    toUseAtoms.insert(toUseAtoms.end(), local_decomposition.begin(), local_decomposition.end());
 }
 
 
