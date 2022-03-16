@@ -685,9 +685,40 @@ void MAXSatPipeline::actual_query_running(const KnowledgeBase& kb) {
                             break;
 
                         case LTLfQuery::IMPL_QP:
+                            if (formula->fields.id.parts.is_timed) {
+                                negated_logic_timed(formula->args[0]->result, tmp_result, kb.act_table_by_act_id.trace_length);
+                                implies_logic_timed(formula->args.at(0)->result,
+                                                    formula->args.at(1)->result,
+                                                    tmp_result,
+                                                    formula->result,
+                                                    formula->joinCondition,
+                                                    kb.act_table_by_act_id.trace_length);
+                            } else {
+                                negated_logic_untimed(formula->args[0]->result, tmp_result, kb.act_table_by_act_id.trace_length);
+                                implies_logic_untimed(formula->args.at(0)->result,
+                                                      formula->args.at(1)->result,
+                                                      tmp_result,
+                                                      formula->result,
+                                                      formula->joinCondition,
+                                                      kb.act_table_by_act_id.trace_length);
+                            }
                             break;
 
                         case LTLfQuery::IFTE_QP:
+                            if (formula->fields.id.parts.is_timed)
+                                implies_logic_timed(formula->args.at(0)->result,
+                                                  formula->args.at(1)->result,
+                                                    formula->args.at(2)->result,
+                                                  formula->result,
+                                                  formula->joinCondition,
+                                                  kb.act_table_by_act_id.trace_length);
+                            else
+                                implies_logic_untimed(formula->args.at(0)->result,
+                                                    formula->args.at(1)->result,
+                                                      formula->args.at(3)->result,
+                                                    formula->result,
+                                                    formula->joinCondition,
+                                                    kb.act_table_by_act_id.trace_length);
                             break;
 
                         case LTLfQuery::U_QP:
@@ -753,121 +784,6 @@ void MAXSatPipeline::actual_query_running(const KnowledgeBase& kb) {
                             break;
                     }
                 }
-
-                /// One possible implementation, just for the logical operators.
-                /// A different set of switch statements and of ways to do the unions/intersections should be exploited
-                /// for different specifications.
-
-
-
-#if OLD_VERSION_OF_THE_LOOP
-                switch (formula->casusu) {
-                    case Q_TRUE:
-                        DEBUG_ASSERT(false);
-                        break;
-
-                    case Q_NEXT:
-                        formula->result = next(formula->args.at(0)->result);
-                        break;
-
-                    case Q_FALSE:
-                        formula->result.clear();
-                        break;
-
-                    case Q_ACT:
-                        // This shall collect the temporary results from the previous data computation
-                        // This never has a theta condition to consider
-                        data_merge(formula->partial_results, results_cache, formula->result, formula->isLeaf);
-                        break;
-
-                    case Q_INIT:
-                        // This never has a theta condition to consider
-                        // This will only work when data conditions are also considered
-                        data_merge(formula->partial_results, results_cache, formula->result, formula->isLeaf);
-                        formula->result.erase(std::remove_if(formula->result.begin(),
-                                                             formula->result.end(),
-                                                  [](const auto&  x){return x.first.second > 0;}),
-                                              formula->result.end());
-                        break;
-
-                    case Q_END:
-                        // This never has a theta condition to consider
-                        // This will only work when data conditions are also considered
-                        data_merge(formula->partial_results, results_cache, formula->result, formula->isLeaf);
-                        formula->result.erase(std::remove_if(formula->result.begin(),
-                                                             formula->result.end(),
-                                                             [kb](const auto&  x){return x.first.second < kb.act_table_by_act_id.trace_length.at(x.first.first)-1;}),
-                                              formula->result.end());
-                        break;
-
-                    case Q_AND:
-                        DEBUG_ASSERT(formula->args.size() == 2);
-                        local_intersection(formula, formula->result, formula->isTimed);
-                        break;
-
-                    case Q_OR:
-                    case Q_XOR:
-                        DEBUG_ASSERT(formula->args.size() == 2);
-                        local_union(formula, formula->result, formula->isTimed);
-                        break;
-
-
-                    case Q_BOX:
-                        DEBUG_ASSERT(formula->args.size() == 1);
-                        if (formula->isTimed) {
-                            global_logic_timed(formula->args.at(0)->result, formula->result, kb.act_table_by_act_id.trace_length);
-                        } else {
-                            global_logic_untimed(formula->args.at(0)->result, formula->result, kb.act_table_by_act_id.trace_length);
-                        }
-                        break;
-
-                    case Q_DIAMOND:
-                        DEBUG_ASSERT(formula->args.size() == 1);
-                        if (formula->isTimed)
-                             future_logic_timed(formula->args[0]->result, formula->result, kb.act_table_by_act_id.trace_length);
-                        else {
-                             future_logic_untimed(formula->args[0]->result, formula->result, kb.act_table_by_act_id.trace_length);
-                        }
-                        break;
-
-
-                    case Q_UNTIL:
-                        DEBUG_ASSERT(formula->args.size() == 2);
-                        if (formula->isTimed) {
-                            until_logic_timed(formula->args.at(0)->result,
-                                                formula->args.at(1)->result,
-                                                formula->result,
-                                                formula->joinCondition.isTruth() ? nullptr : &formula->joinCondition,
-                                              kb.act_table_by_act_id.trace_length);
-                        } else {
-                            until_logic_untimed(formula->args.at(0)->result,
-                                                    formula->args.at(1)->result,
-                                                    formula->result,
-                                                    formula->joinCondition.isTruth() ? nullptr : &formula->joinCondition,
-                                                kb.act_table_by_act_id.trace_length);
-                        }
-                        break;
-
-                    case Q_RELEASE:
-                        DEBUG_ASSERT(false);
-                        break;
-
-                    case Q_LAST:
-                        // TODO
-                        break;
-
-                        break;
-                    case Q_EXISTS: {
-                        absence_or_exists(formula, results_cache);
-                    } break;
-
-                    case Q_ABSENCE: {
-                        // The difference with absence is that, if it is absent, then it shall not be there with the same number
-                        absence_or_exists(formula, results_cache);
-                        formula->result = negateUntimed(formula->result, kb.act_table_by_act_id.trace_length, false);
-                    } break;
-                }
-#endif
             }
         PARALLELIZE_LOOP_END
     }
