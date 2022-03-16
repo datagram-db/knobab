@@ -70,7 +70,23 @@ void whole_testing(const std::string& log_file = "data/testing/log.txt",
         //////////////////////////////////////////////////////////////////
 
         auto ref = env.query_model(script_for_decomposition, preferredPlan, noThreads);
-        std::cout << ref.result << std::endl;
+        switch (ref.final_ensemble) {
+            case PerDeclareSupport:
+                for (size_t i = 0; i<ref.support_per_declare.size(); i++) {
+                    std::cout << "Clause #" << i << ": " << (ref.support_per_declare.at(i)* 100.0) << "%" << std::endl;
+                }
+                break;
+
+            case TraceMaximumSatisfiability:
+                for (size_t i = 0; i<ref.max_sat_per_trace.size(); i++) {
+                    std::cout << "Trace #" << i << ": " << (ref.max_sat_per_trace.at(i)* 100.0) << "%" << std::endl;
+                }
+                break;
+
+            case TraceIntersection:
+                std::cout << ref.result << std::endl;
+                break;
+        }
         std::cout << env.experiment_logger << std::endl;
         if (doDebugServer) {
             env.server(ref);

@@ -74,6 +74,10 @@ struct Environment {
 
 public:
 
+    size_t getTraceNo() const {
+        return db.noTraces;
+    }
+
     LoggerInformation experiment_logger;
     double min_threshold = 1.0;
     double c = 2.0;
