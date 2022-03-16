@@ -327,8 +327,9 @@ double atomize_model(AtomizingPipeline &pipeline_data, CNFDeclareDataAware &disj
         for (size_t i = 0, N = pipeline_data.max_ctam_iteration.at(cp.first); i<N; i++) {
             cp.second = i;                     // cp = <Event Label, Offset>
             // Assertion: one atom should only appear once!
-            DEBUG_ASSERT(pipeline_data.atom_to_conjunctedPredicates.emplace(pipeline_data.clause_to_atomization_map.at(cp),
-                                                                      k.second.at(i)).second);
+            auto it = pipeline_data.atom_to_conjunctedPredicates.emplace(pipeline_data.clause_to_atomization_map.at(cp),
+                                                                         k.second.at(i));
+            DEBUG_ASSERT(it.second);
         }
     }
 

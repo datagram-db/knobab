@@ -101,99 +101,19 @@ void MAXSatPipeline::data_chunk(CNFDeclareDataAware *model,
                                              toUseAtoms,
                                              atomToFormulaId);
 
-#if 0
-            /// Old part of the code
-            ltlf_query *formula;
-            if (item.casusu == "Init") {
-                formula = qm.init1(item.left_act, item.left_decomposed_atoms);
-                if ((item.left_decomposed_atoms.size() == 1) && (*item.left_decomposed_atoms.begin() == item.left_act)) {
-                    generateAtomQuery(toUseAtoms, empty_result, item, formula, InitQuery, 0);
-                } else {
-                    std::unordered_map<std::string, std::unordered_set<bool>> collection;
-                    std::vector<std::string> LDA{item.left_decomposed_atoms.begin(), item.left_decomposed_atoms.end()};
-                    collection[LEFT_ATOM] = {false};
-                    localExtract(atomization, toUseAtoms, ref, item.left_decomposed_atoms, LEFT_ATOM, false);
-                    qm.getQuerySemiInstantiated(LDA, false, formula, true, nullptr, formula->casusu, nullptr,
-                                             false, (KnowledgeBase*)&kb);
-                }
-            } else if (item.casusu == "End") {
-                formula = qm.end1(item.left_act, item.left_decomposed_atoms);
-                if ((item.left_decomposed_atoms.size() == 1) && (*item.left_decomposed_atoms.begin() == item.left_act)) {
-                    generateAtomQuery(toUseAtoms, empty_result, item, formula, EndsQuery, 0);
-                } else {
-                    std::unordered_map<std::string, std::unordered_set<bool>> collection;
-                    std::vector<std::string> LDA{item.left_decomposed_atoms.begin(), item.left_decomposed_atoms.end()};
-                    collection[LEFT_ATOM] = {false};
-                    localExtract(atomization, toUseAtoms, ref, collection, item.left_decomposed_atoms, LEFT_ATOM);
-                    qm.getQuerySemiInstantiated(LDA, false, formula, true, nullptr, formula->casusu, nullptr,
-                                                false, (KnowledgeBase*)&kb);
-                }
-            } else if (item.casusu == "Existence") {
-                formula = qm.exists(item.left_act, item.left_decomposed_atoms, item.n);
-                if ((item.left_decomposed_atoms.size() == 1) && (*item.left_decomposed_atoms.begin() == item.left_act)) {
-                    generateAtomQuery(toUseAtoms, empty_result, item, formula, ExistsQuery, item.n);
-                } else {
-                    std::unordered_map<std::string, std::unordered_set<bool>> collection;
-                    std::vector<std::string> LDA{item.left_decomposed_atoms.begin(), item.left_decomposed_atoms.end()};
-                    collection[LEFT_ATOM] = {false};
-                    localExtract(atomization, toUseAtoms, ref, collection, item.left_decomposed_atoms, LEFT_ATOM);
-                    qm.getQuerySemiInstantiated(LDA, false, formula, true, nullptr, formula->casusu, nullptr,
-                                                false, (KnowledgeBase*)&kb);
-                }
-            } else if (item.casusu == "Absence") {
-                formula = qm.absence(item.left_act, item.left_decomposed_atoms, item.n);
-                if ((item.left_decomposed_atoms.size() == 1) && (*item.left_decomposed_atoms.begin() == item.left_act)) {
-                    generateAtomQuery(toUseAtoms, empty_result, item, formula, AbsenceQuery, item.n);
-                } else {
-                    std::unordered_map<std::string, std::unordered_set<bool>> collection;
-                    std::vector<std::string> LDA{item.left_decomposed_atoms.begin(), item.left_decomposed_atoms.end()};
-                    collection[LEFT_ATOM] = {false};
-                    localExtract(atomization, toUseAtoms, ref, collection, item.left_decomposed_atoms, LEFT_ATOM);
-                    qm.getQuerySemiInstantiated(LDA, false, formula, true, nullptr, formula->casusu, nullptr,
-                                                false, (KnowledgeBase*)&kb);
-                }
-            } else {
-                // Parameters
-                bool hasRight = true;
-
-
-                ltlf_query* local_formula;
-                auto& ltlf_sem = ltlf_semantics[item.casusu];
-                //std::vector<size_t> requirements;
-                std::unordered_map<std::string, std::unordered_set<bool>> collection;
-                ltlf_sem.collectElements(collection);
-
-                // Collecting all of the atoms, for then transferring those to the analysis per atom
-                localExtract(atomization, toUseAtoms, ref, collection, item.left_decomposed_atoms, LEFT_ATOM);
-                if (hasRight)
-                    localExtract(atomization, toUseAtoms, ref, collection, item.right_decomposed_atoms, RIGHT_ATOM);
-
-                // If it is a binary Declare operand, then I need to exploit the LTLf rewriting.
-                if (hasRight) {
-                    auto tmp = ltlf_sem.replace_with(ref);
-                    // Reconstructing the join
-                    tmp.instantiateJoinCondition(item.conjunctive_map);
-                    // Creating the formula
-                    local_formula = qm.simplify(tmp, false, (KnowledgeBase*)&kb);
-                } else {
-                    // Otherwise,
-                }
-
-                // Returned result
-                formula = local_formula;
-            }
-#endif
             fomulaidToFormula.emplace_back(formula);
             maxFormulaId++;
             W.emplace_back(formula);
-            std::cout << *formula << std::endl;  //todo: debugging
         }
     }
+
+    std::cout << "Step1" << std::endl;
 
     for (auto& ref : atomToFormulaId)
         remove_duplicates(ref.second);
     qm.finalize_unions(W, (KnowledgeBase*)&kb); // Time Computational Complexity: Squared on the size of the atoms
 
+    std::cout << "Step2" << std::endl;
     /////////////////////////////// DEBUGGING
     for (const auto& ref : W) {
         std::cout << *ref << std::endl;
@@ -201,6 +121,7 @@ void MAXSatPipeline::data_chunk(CNFDeclareDataAware *model,
     /////////////////////////////////////////
     remove_duplicates(toUseAtoms);
 
+    std::cout << "Step3" << std::endl;
     // TODO: AtomQuery is not required, as range queries already have the atom information!
     // Just the Act iteration
     auto toUseAtomsEnd = std::stable_partition(toUseAtoms.begin(), toUseAtoms.end(), [&](const auto& x) { return atomization.act_atoms.contains(x); });
@@ -219,16 +140,21 @@ void MAXSatPipeline::data_chunk(CNFDeclareDataAware *model,
     barrier_to_range_queries = data_accessing.size();
     barriers_to_atfo = atomToResultOffset.size();
 
+
+    std::cout << "Step4" << std::endl;
+
     // Iterating other the remaining non-act atoms, that is, the data predicate+label ones
     for (auto it = toUseAtomsEnd, en = toUseAtoms.end(); it != en; it++) {
         auto interval_to_interval_queries_to_intersect = atomization.atom_to_conjunctedPredicates.find(*it);
-        DEBUG_ASSERT(interval_to_interval_queries_to_intersect != atomization.atom_to_conjunctedPredicates.end());
+        if (interval_to_interval_queries_to_intersect == atomization.atom_to_conjunctedPredicates.end())
+            throw std::runtime_error(*it + ": element not in map");
 
         std::vector<size_t> tmpRanges;
         for (const auto& interval_data_query : interval_to_interval_queries_to_intersect->second) {
+            std::cout << "Step5b" << std::endl;
             // Sanity Checks
-            DEBUG_ASSERT(interval_data_query.casusu == INTERVAL);
-            DEBUG_ASSERT(interval_data_query.BiVariableConditions.empty());
+            assert(interval_data_query.casusu == INTERVAL);
+            assert(interval_data_query.BiVariableConditions.empty());
 
             //       splits the RangeQuery by clause.var (as they are going to be on different tables),
             //       clause.label (as the ranges are ordered by act and then by value) and then sort
@@ -240,18 +166,22 @@ void MAXSatPipeline::data_chunk(CNFDeclareDataAware *model,
             size_t tmpDataAccessingSize =  data_accessing.size();
             auto find = data_offset.emplace(q, tmpDataAccessingSize);
             if (find.second){
+                std::cout << "Step5d" << std::endl;
                 maxPartialResultId = std::max(maxPartialResultId, (ssize_t)tmpDataAccessingSize);
                 tmpRanges.emplace_back(tmpDataAccessingSize);
                 data_accessing_range_query_to_offsets[interval_data_query.var][interval_data_query.label].emplace_back(tmpDataAccessingSize);
                 data_accessing.emplace_back(q, empty_result);
             } else {
+                std::cout << "Step5e" << std::endl;
                 maxPartialResultId = std::max(maxPartialResultId, (ssize_t)find.first->second);
                 tmpRanges.emplace_back(find.first->second);
             }
         }
+        std::cout << "Step5c" << std::endl;
         std::cout << atomToResultOffset.size() << "<=>" << interval_to_interval_queries_to_intersect->first << "-->" << tmpRanges << std::endl;
         atomToResultOffset.emplace_back(tmpRanges.begin(), tmpRanges.end());
     }
+    std::cout << "Step5" << std::endl;
 }
 
 void
