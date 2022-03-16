@@ -88,6 +88,8 @@ inline DisjunctiveDeclareDataAware GroundWhereStrategy(GroundingStrategyConf& co
 
     if (conf.creamOffSingleValues) {
         // TODO: TESTING IF THIS ACTUALLY WORKS! (begin)
+        DEBUG_ASSERT(false);
+#if 0
         auto S = d.toFiniteSemantics().nnf().possibleActionsUpToNext();
         if (S.containsInSet(left_act)) {
             filter_some_values_from_disjunctive_map(d.dnf_left_map, I_X_left);
@@ -95,6 +97,7 @@ inline DisjunctiveDeclareDataAware GroundWhereStrategy(GroundingStrategyConf& co
         if (S.containsInSet(right_act)) {
             filter_some_values_from_disjunctive_map(d.dnf_right_map, I_Y_right);
         }
+#endif 
         // TODO: (end)
     }
 

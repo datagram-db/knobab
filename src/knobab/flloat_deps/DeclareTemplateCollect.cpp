@@ -34,6 +34,9 @@ DeclareTemplateCollect::getDeclareTemplate(const declare_templates& type, size_t
 #ifndef PYTHON_WORKS
             assert(false && "File missing from cache!");
 #else
+            throw std::runtime_error("ERROR: need to replace the finite semantics representation of DeclareDataAware with the one coming from the plans!");
+
+#if 0
         // if the file is not in cache: create it!
         ltlf input_forumla;
         if (isUnaryPredicate(type)) {
@@ -53,8 +56,9 @@ DeclareTemplateCollect::getDeclareTemplate(const declare_templates& type, size_t
          std::istringstream strm{dot_graph};
         auto tmp = graph_loader.parse(strm);
         graph_map[cp] = tmp;
+#endif
 
-
+            NodeLabelBijectionFA<std::string, easy_prop> tmp;
         return tmp;
 #endif
 

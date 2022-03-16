@@ -37,6 +37,8 @@ namespace antlr4 {
 //#include <utils/strings.h>
 #include <magic_enum.hpp>
 #include <fstream>
+#include <yaucl/bpm/structures/ltlf/ltlf.h>
+
 
 class DeclareModelParse : public DADBaseVisitor {
     ///bool do_renaming;

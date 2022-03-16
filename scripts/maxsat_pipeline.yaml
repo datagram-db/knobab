@@ -1,0 +1,5 @@
+ensemble: "PerDeclareSupport"
+decomposition_script: "scripts/logic_plan.queryplan"
+script_plan: "efficient"
+threads: 1
+operators: "FastOperator_v1"

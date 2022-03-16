@@ -1,2 +1,2 @@
-Init("A", var "x" >= 4.0, 1)
-End("B", var "z" > 0.0, 1)
+"Init"("A", var "x" >= 4.0, 1)
+//"End"("B", var "z" > 0.0, 1)

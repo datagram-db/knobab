@@ -65,6 +65,11 @@ struct Environment {
     DeclareTemplateCollect declare_to_graph;
     std::vector<DeclareDataAware> conjunctive_model;
 
+    EnsembleMethods strategy = PerDeclareSupport;
+    OperatorQueryPlan operators = AbidingLogic;
+    std::string script_for_decomposition;
+    std::string preferred_plan;
+    size_t noThreads;
 
     //std::unordered_map<DeclareDataAware, FlexibleFA<size_t, std::string>> pattern_graph;
 
@@ -73,6 +78,10 @@ struct Environment {
     void dump_log_for_sqlminer(const std::string &basicString);
 
 public:
+
+    size_t getTraceNo() const {
+        return db.noTraces;
+    }
 
     LoggerInformation experiment_logger;
     double min_threshold = 1.0;
@@ -111,7 +120,7 @@ public:
     /**
      * Performs a query over the setted model. The whole pipeline is returned as a result (e.g., debugging and server)
      */
-    MAXSatPipeline query_model(size_t noThreads);
+    MAXSatPipeline query_model();
 
     /**
      * Clears all of the bits and pieces, thus preparing into a novel test
@@ -146,7 +155,8 @@ public:
 
     void set_atomization_parameters(const std::filesystem::path& atomization_conf);
     void set_atomization_parameters(const std::string &fresh_atom_label = "p",
-                                    size_t mslength = MAXIMUM_STRING_LENGTH);
+                                    size_t mslength = MAXIMUM_STRING_LENGTH,
+                                    AtomizationStrategy strategy = AtomizeEverythingIfAnyDataPredicate);
 
     void set_grounding_parameters(const std::string& grounding_strategy);
     void set_grounding_parameters(bool doPreliminaryFill = true,
@@ -154,6 +164,8 @@ public:
                                   bool creamOffSingleValues = true,
                                   GroundingStrategyConf::pruning_strategy ps = GroundingStrategyConf::ALWAYS_EXPAND_LESS_TOTAL_VALUES
     );
+
+    void set_maxsat_parameters(const std::filesystem::path &atomization_conf);
 
     /**
      * Extracting the atomization tables from the recently loaded declare model

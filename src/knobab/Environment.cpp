@@ -3,7 +3,7 @@
 //
 
 #include "knobab/Environment.h"
-#include "yaucl/bpm/structures/ltlf/ltlf_query.h"
+#include "knobab/queries/LTLfQueryManager.h"
 
 semantic_atom_set Environment::getSigmaAll() const {
     semantic_atom_set S = ap.act_atoms;
@@ -124,9 +124,10 @@ void Environment::load_log(log_data_format format, bool loadData, const std::str
     }
 }
 
-void Environment::set_atomization_parameters(const std::string &fresh_atom_label, size_t mslength) {
+void Environment::set_atomization_parameters(const std::string &fresh_atom_label, size_t mslength, AtomizationStrategy strategy) {
     ap.fresh_atom_label = fresh_atom_label;
     ap.s_max = std::string(mslength, std::numeric_limits<char>::max());
+    ap.strategy = strategy;
     DataPredicate::MAX_STRING = ap.s_max;
     DataPredicate::msl = mslength;
 }
@@ -438,7 +439,7 @@ void Environment::server(MAXSatPipeline& pipeline) {
 
     svr.Get("/query_plan.json",[this, &pipeline](const httplib::Request& req, httplib::Response& res) {
         std::stringstream ss;
-        ss << pipeline.qm.generateGraph();
+        ss << pipeline.generateGraph();
         res.set_content(ss.str(), "text/json");
     });
     svr.Get("/graph.html",[this](const httplib::Request& req, httplib::Response& res) {
@@ -455,7 +456,7 @@ void Environment::server(MAXSatPipeline& pipeline) {
         auto it = std::stoull(req.get_param_value("f",0));
         if (it != 0) {
             ss << "TraceId,EventId,Sim,{Events}" << std::endl;
-            for (const auto& ref : ((ltlf_query*)   it)->result) {
+            for (const auto& ref : ((LTLfQuery*)   it)->result) {
                 ss << ref.first.first << "," << ref.first.second << "," << ref.second << ",{TODO}" << std::endl;
             }
         }
@@ -507,9 +508,34 @@ void Environment::set_grounding_parameters(const std::string &grounding_strategy
     }
 }
 
+void Environment::set_maxsat_parameters(const std::filesystem::path &atomization_conf) {
+    script_for_decomposition = "scripts/logic_plan.queryplan";
+    preferred_plan = "efficient";
+    noThreads = 1;
+    operators = AbidingLogic;
+    if (std::filesystem::exists((atomization_conf))) {
+        std::cout << "Loading the atomization configuration file: " << atomization_conf << std::endl;
+        YAML::Node n = YAML::LoadFile((atomization_conf).string());
+        if (n["script_plan"]) {
+            experiment_logger.queries_plan = preferred_plan = n["script_plan"].Scalar();
+        }
+        if (n["threads"]) {
+            experiment_logger.no_threads = noThreads = n["threads"].as<size_t>();
+        }
+        if (n["ensemble"]) {
+            strategy = magic_enum::enum_cast<EnsembleMethods>(n["ensemble"].Scalar()).value_or(strategy);
+        }
+        if (n["operators"]) {
+            experiment_logger.operators_version = n["operators"].Scalar();
+            operators = magic_enum::enum_cast<OperatorQueryPlan>(experiment_logger.operators_version).value_or(operators);
+        }
+    }
+}
+
 void Environment::set_atomization_parameters(const std::filesystem::path &atomization_conf) {
     std::string fresh_atom_label{"p"};
     size_t msl = 10;
+    AtomizationStrategy strategy = AtomizeEverythingIfAnyDataPredicate;
     if (std::filesystem::exists((atomization_conf))) {
         std::cout << "Loading the atomization configuration file: " << atomization_conf << std::endl;
         YAML::Node n = YAML::LoadFile((atomization_conf).string());
@@ -519,12 +545,17 @@ void Environment::set_atomization_parameters(const std::filesystem::path &atomiz
         if (n["MAXIMUM_STRING_LENGTH"]) {
             msl = n["MAXIMUM_STRING_LENGTH"].as<size_t>();
         }
-        set_atomization_parameters(fresh_atom_label, msl);
+        if (n["strategy"]) {
+            strategy = magic_enum::enum_cast<AtomizationStrategy>(n["strategy"].Scalar()).value_or(strategy);
+        }
+        set_atomization_parameters(fresh_atom_label, msl, strategy);
     }
 }
 
-MAXSatPipeline Environment::query_model(size_t noThreads) {
-    MAXSatPipeline maxsat_pipeline(noThreads);
+MAXSatPipeline Environment::query_model() {
+    MAXSatPipeline maxsat_pipeline(script_for_decomposition, preferred_plan, noThreads);
+    maxsat_pipeline.final_ensemble = strategy;
+    maxsat_pipeline.operators = operators;
     maxsat_pipeline.pipeline(&grounding, ap, db);
     experiment_logger.model_declare_to_ltlf = maxsat_pipeline.declare_to_ltlf_time;
     experiment_logger.model_ltlf_query_time = maxsat_pipeline.ltlf_query_time;

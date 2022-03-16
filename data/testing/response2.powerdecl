@@ -6,4 +6,4 @@
 "Response"("B", true, "C", true)
 "Response"("C", true, "A", true)
 "Response"("C", true, "B", true)
-"Response"("C", true, "C", true)
+"Response"("C", true, "C", var "x" > 0.0)
