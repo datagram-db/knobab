@@ -69,7 +69,7 @@ std::string LTLfQueryManager::generateGraph() const {
     auto& edges = json["edges"];
     for (const auto& cp : ref) {
         nlohmann::json node;
-        node["id"] = cp.first ? (size_t)cp.first : 0;
+        node["id"] = cp.first ?(size_t)cp.first : 0;
         node["group"] = layerId[cp.first];
         if ((cp.first) && (!cp.first->atom.empty())) {
             std::stringstream aa;
