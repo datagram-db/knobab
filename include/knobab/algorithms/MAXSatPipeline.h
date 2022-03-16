@@ -30,6 +30,11 @@ enum EnsembleMethods {
     TraceIntersection,
 };
 
+enum OperatorQueryPlan {
+    AbidingLogic,
+    FastOperator_v1
+};
+
 struct MAXSatPipeline {
     LTLfQueryManager qm;
 
@@ -57,6 +62,7 @@ struct MAXSatPipeline {
     DEFAULT_COPY_ASSGN(MAXSatPipeline)
 
     EnsembleMethods final_ensemble;
+    OperatorQueryPlan operators;
 
     // Ensemble methods' results
     Result result;
@@ -86,7 +92,8 @@ struct MAXSatPipeline {
 private:
     void data_chunk(CNFDeclareDataAware* model, const AtomizingPipeline& atomization, const KnowledgeBase& kb);
     std::vector<PartialResult> subqueriesRunning(const KnowledgeBase &kb);
-    void actual_query_running(const std::vector<PartialResult>& results_cache, const KnowledgeBase& kb);
+    void abidinglogic_query_running(const std::vector<PartialResult>& results_cache, const KnowledgeBase& kb);
+    void fast_v1_query_running(const std::vector<PartialResult>& results_cache, const KnowledgeBase& kb);
 
     size_t pushAtomDataQuery(const DataQuery &q, bool directlyFromCache);
 };

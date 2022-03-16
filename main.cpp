@@ -23,7 +23,8 @@ void whole_testing(const std::string& log_file = "data/testing/log.txt",
                    const std::string& script_for_decomposition = "scripts/logic_plan.queryplan",
                    const std::string& preferredPlan = "efficient",
                    const std::string& atomization_file = "",
-                   bool load_data = true) {
+                   bool load_data = true,
+                   const std::string& maxsat = "scripts/maxsat_pipeline.yaml") {
     Environment env;
     env.clear();
     env.doStats = doStats;
@@ -38,6 +39,7 @@ void whole_testing(const std::string& log_file = "data/testing/log.txt",
     if (!sqlminer_dump_dir.empty()) {
         env.dump_log_for_sqlminer(sqlminer_dump_dir);
     }
+
 
     if (declare_files.empty()) {
         std::cout << env.experiment_logger << std::endl;
@@ -59,6 +61,9 @@ void whole_testing(const std::string& log_file = "data/testing/log.txt",
             env.set_atomization_parameters(std::filesystem::path(atomization_file));
         //////////////////////////////////////////////////////////////////
 
+
+        env.set_maxsat_parameters(std::filesystem::path(maxsat));
+
         std::cout << "Loading the atomization tables given the model" << std::endl;
         env.init_atomize_tables();
         env.print_grounding_tables(std::cout);
@@ -69,7 +74,7 @@ void whole_testing(const std::string& log_file = "data/testing/log.txt",
         env.print_grounded_model(std::cout); // DEBUG
         //////////////////////////////////////////////////////////////////
 
-        auto ref = env.query_model(script_for_decomposition, preferredPlan, noThreads);
+        auto ref = env.query_model();
         switch (ref.final_ensemble) {
             case PerDeclareSupport:
                 for (size_t i = 0; i<ref.support_per_declare.size(); i++) {
@@ -662,6 +667,7 @@ int main(int argc, char **argv) {
     std::string scripts = "scripts/logic_plan.queryplan";
     std::string atomization_file = "scripts/atomization_pipeline.yaml";
     std::string planPreferred = "efficient";
+    std::string max_conf_file = "scripts/maxsat_pipeline.yaml";
     std::string benchmark = "";
     std::string sql_miner_dump_folder = "";
     std::vector<std::string> queriesV{};
@@ -690,6 +696,8 @@ int main(int argc, char **argv) {
     args::ValueFlag<std::string> atomization_pipeline(group, "YamlFile", "specifies the configuration file for the atomization pipeline", {'a', "atomization"});
     args::ValueFlag<std::string> benchmarkFile(group, "Benchmark File", "Appends the current Result data into a benchmark file", {'b', "csv"});
     args::ValueFlag<std::string>  sqlMinerDump(group, "SQLMinerDump", "If present, specifies the dump for the SQL miner representation", {'s', "sqlminer"});
+    args::ValueFlag<std::string>  maxSatConf(group, "MaxSatConfigurationFile", "If present, specifies the configurations for the maxsatpipeline", {'m', "maxsat"});
+
 
     try {
         parser.ParseCLI(argc, argv);
@@ -746,6 +754,9 @@ int main(int argc, char **argv) {
     }
     if (no_data) {
         do_data = false;
+    }
+    if (maxSatConf) {
+        max_conf_file = args::get(maxSatConf);
     }
 #ifdef MAXSatPipeline_PARALLEL
     if (parallel) {
