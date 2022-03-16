@@ -26,7 +26,14 @@ using string_map_t = std::unordered_map<std::string, std::unordered_map<std::str
 using label_set_t = std::unordered_set<std::string>;
 using semantic_atom_set = std::unordered_set<std::string>;
 
+enum AtomizationStrategy {
+    AtomizeEverythingIfAnyDataPredicate,
+    AtomizeOnlyOnDataPredicates
+};
+
 struct AtomizingPipeline {
+    AtomizationStrategy strategy = AtomizeEverythingIfAnyDataPredicate;
+
     label_var_atoms_map_t map1;
     double                d_min = DataPredicate::MIN_DOUBLE;
     double                d_max = DataPredicate::MAX_DOUBLE;

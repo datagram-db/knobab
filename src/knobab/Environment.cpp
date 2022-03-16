@@ -124,9 +124,10 @@ void Environment::load_log(log_data_format format, bool loadData, const std::str
     }
 }
 
-void Environment::set_atomization_parameters(const std::string &fresh_atom_label, size_t mslength) {
+void Environment::set_atomization_parameters(const std::string &fresh_atom_label, size_t mslength, AtomizationStrategy strategy) {
     ap.fresh_atom_label = fresh_atom_label;
     ap.s_max = std::string(mslength, std::numeric_limits<char>::max());
+    ap.strategy = strategy;
     DataPredicate::MAX_STRING = ap.s_max;
     DataPredicate::msl = mslength;
 }
@@ -510,6 +511,7 @@ void Environment::set_grounding_parameters(const std::string &grounding_strategy
 void Environment::set_atomization_parameters(const std::filesystem::path &atomization_conf) {
     std::string fresh_atom_label{"p"};
     size_t msl = 10;
+    AtomizationStrategy strategy = AtomizeEverythingIfAnyDataPredicate;
     if (std::filesystem::exists((atomization_conf))) {
         std::cout << "Loading the atomization configuration file: " << atomization_conf << std::endl;
         YAML::Node n = YAML::LoadFile((atomization_conf).string());
@@ -519,7 +521,10 @@ void Environment::set_atomization_parameters(const std::filesystem::path &atomiz
         if (n["MAXIMUM_STRING_LENGTH"]) {
             msl = n["MAXIMUM_STRING_LENGTH"].as<size_t>();
         }
-        set_atomization_parameters(fresh_atom_label, msl);
+        if (n["strategy"]) {
+            strategy = magic_enum::enum_cast<AtomizationStrategy>(n["strategy"].Scalar()).value_or(strategy);
+        }
+        set_atomization_parameters(fresh_atom_label, msl, strategy);
     }
 }
 

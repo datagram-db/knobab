@@ -148,7 +148,8 @@ public:
 
     void set_atomization_parameters(const std::filesystem::path& atomization_conf);
     void set_atomization_parameters(const std::string &fresh_atom_label = "p",
-                                    size_t mslength = MAXIMUM_STRING_LENGTH);
+                                    size_t mslength = MAXIMUM_STRING_LENGTH,
+                                    AtomizationStrategy strategy = AtomizeEverythingIfAnyDataPredicate);
 
     void set_grounding_parameters(const std::string& grounding_strategy);
     void set_grounding_parameters(bool doPreliminaryFill = true,
