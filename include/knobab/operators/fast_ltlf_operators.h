@@ -587,5 +587,16 @@ inline void aAndNextGloballyB_timed(const Result& a, const Result& b,Result& res
 
 }
 
+inline void implies_fast_timed(const Result &aSection, const Result &bSection, const Result &notaSection, Result& result, const PredicateManager* manager = nullptr, const std::vector<size_t>& lengths = {}) {
+    Result aTrue;
+    and_fast_timed(aSection, bSection, aTrue, manager, lengths);
+    or_fast_timed(aTrue, notaSection, result, nullptr, lengths);
+}
+
+inline void implies_fast_untimed(const Result &aSection, const Result &bSection, const Result &notaSection, Result& result, const PredicateManager* manager = nullptr, const std::vector<size_t>& lengths = {}) {
+    Result aTrue;
+    and_fast_untimed(aSection, bSection, aTrue, manager, lengths);
+    or_fast_untimed(aTrue, notaSection, result, nullptr, lengths);
+}
 
 #endif //KNOBAB_FAST_LTLF_OPERATORS_H

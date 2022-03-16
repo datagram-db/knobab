@@ -65,6 +65,11 @@ struct Environment {
     DeclareTemplateCollect declare_to_graph;
     std::vector<DeclareDataAware> conjunctive_model;
 
+    EnsembleMethods strategy = PerDeclareSupport;
+    OperatorQueryPlan operators = AbidingLogic;
+    std::string script_for_decomposition;
+    std::string preferred_plan;
+    size_t noThreads;
 
     //std::unordered_map<DeclareDataAware, FlexibleFA<size_t, std::string>> pattern_graph;
 
@@ -115,9 +120,7 @@ public:
     /**
      * Performs a query over the setted model. The whole pipeline is returned as a result (e.g., debugging and server)
      */
-    MAXSatPipeline query_model(const std::string& script_for_decomposition,
-                               const std::string& preferred_plan,
-                               size_t noThreads);
+    MAXSatPipeline query_model();
 
     /**
      * Clears all of the bits and pieces, thus preparing into a novel test
@@ -161,6 +164,8 @@ public:
                                   bool creamOffSingleValues = true,
                                   GroundingStrategyConf::pruning_strategy ps = GroundingStrategyConf::ALWAYS_EXPAND_LESS_TOTAL_VALUES
     );
+
+    void set_maxsat_parameters(const std::filesystem::path &atomization_conf);
 
     /**
      * Extracting the atomization tables from the recently loaded declare model

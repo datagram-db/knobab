@@ -44,6 +44,81 @@ void MAXSatPipeline::clear() {
     support_per_declare.clear();
 }
 
+
+static inline void local_logic_intersection(const LTLfQuery* q, Result& last_union, bool isTimed = true) {
+    size_t N = q->args.size();
+    if ((!q) || (N == 0)) {
+        last_union.clear();
+        return;
+    } else if (N == 1) {
+        last_union = q->args.at(0)->result;
+    } else if (N == 2) {
+        auto &arg1 = q->args.at(0);
+        auto &arg2 = q->args.at(1);
+        last_union.clear();
+        if (isTimed)
+            and_logic_timed(arg1->result,
+                            arg2->result,
+                            last_union, q->joinCondition);
+        else
+            and_logic_untimed(arg1->result,
+                                   arg2->result,
+                                   last_union, q->joinCondition);
+    } else {
+        DEBUG_ASSERT(q->joinCondition);
+        auto it = q->args.begin();
+        last_union = (*it)->result;
+        Result curr_union;
+        for (std::size_t i = 1; i < N; ++i) {
+            it++;
+            auto ref = (*it)->result;
+            if (isTimed)
+                and_logic_timed(last_union, ref, curr_union);
+            else
+                and_logic_untimed(last_union, ref, curr_union);
+            std::swap(last_union, curr_union);
+            curr_union.clear();
+        }
+    }
+}
+
+static inline void local_fast_intersection(const LTLfQuery* q, Result& last_union, bool isTimed = true) {
+    size_t N = q->args.size();
+    if ((!q) || (N == 0)) {
+        last_union.clear();
+        return;
+    } else if (N == 1) {
+        last_union = q->args.at(0)->result;
+    } else if (N == 2) {
+        auto &arg1 = q->args.at(0);
+        auto &arg2 = q->args.at(1);
+        last_union.clear();
+        if (isTimed)
+            and_fast_timed(arg1->result,
+                            arg2->result,
+                            last_union, q->joinCondition);
+        else
+            and_fast_untimed(arg1->result,
+                              arg2->result,
+                              last_union, q->joinCondition);
+    } else {
+        DEBUG_ASSERT(q->joinCondition);
+        auto it = q->args.begin();
+        last_union = (*it)->result;
+        Result curr_union;
+        for (std::size_t i = 1; i < N; ++i) {
+            it++;
+            auto ref = (*it)->result;
+            if (isTimed)
+                and_fast_timed(last_union, ref, curr_union);
+            else
+                and_fast_untimed(last_union, ref, curr_union);
+            std::swap(last_union, curr_union);
+            curr_union.clear();
+        }
+    }
+}
+
 void MAXSatPipeline::pipeline(CNFDeclareDataAware* model,
                        const AtomizingPipeline& atomization,
                        const KnowledgeBase& kb) {
@@ -63,7 +138,40 @@ void MAXSatPipeline::pipeline(CNFDeclareDataAware* model,
     {
         auto start = std::chrono::system_clock::now();
         std::vector<PartialResult> pr = subqueriesRunning(kb);
-        actual_query_running(pr, kb);
+        abidinglogic_query_running(pr, kb);
+
+        if (!qm.Q.empty()) {
+            switch (final_ensemble) {
+                case PerDeclareSupport: {
+                    std::unordered_map<LTLfQuery*, double> visited;
+                    for (const auto& declare : declare_to_query) {
+                        auto it = visited.emplace(declare, ((double)declare->result.size())/((double)kb.noTraces));
+                        support_per_declare.emplace_back(it.first->second);
+                    }
+                } break;
+
+                case TraceMaximumSatisfiability: {
+                    // Working under the assumption that all of the final Declare clauses are, at the root level, untimed operations
+                    max_sat_per_trace.resize(kb.noTraces, 0.0);
+                    for (const auto& q : qm.Q.begin()->second) {
+                        for (const auto& rx: q->result) {
+                            max_sat_per_trace[rx.first.first]++;
+                        }
+                    }
+                    for (auto& ref : max_sat_per_trace) {
+                        assert(ref <= declare_to_query.size());
+                        ref = ref / ((double)declare_to_query.size());
+                    }
+                } break;
+
+                case TraceIntersection: {
+                    LTLfQuery conjunction;
+                    conjunction.args = qm.Q.begin()->second;
+                    local_fast_intersection(&conjunction, this->result, false);
+                } break;
+            }
+        }
+
         auto end = std::chrono::system_clock::now();
         pr.clear();
         auto elapsed =
@@ -283,7 +391,7 @@ static inline void partialResultIntersection(const PartialResult& lhs,
 }
 
 static inline
-std::vector<std::pair<std::pair<trace_t, event_t>, double>> local_intersection(const std::set<size_t> &vecs,
+std::vector<std::pair<std::pair<trace_t, event_t>, double>> partialResultIntersection(const std::set<size_t> &vecs,
                                                                                const std::vector<std::pair<DataQuery, std::vector<std::pair<std::pair<trace_t, event_t>, double>>>>& results) {
     if (vecs.empty()) return {};
     auto it = vecs.begin();
@@ -301,7 +409,7 @@ std::vector<std::pair<std::pair<trace_t, event_t>, double>> local_intersection(c
     return last_intersection;
 }
 
-static inline PartialResult local_intersection(const std::set<size_t> &vecs,
+static inline PartialResult partialResultIntersection(const std::set<size_t> &vecs,
                                                const std::vector<PartialResult>& results) {
     if (vecs.empty()) return {};
     auto it = vecs.begin();
@@ -324,7 +432,7 @@ static inline Result local_intersection(const std::set<size_t> &vecs,
                                         const std::vector<PartialResult>& results,
                                         LeafType isLeaf) {
     if (vecs.empty()) return {};
-    PartialResult last_intersection = local_intersection(vecs, results);
+    PartialResult last_intersection = partialResultIntersection(vecs, results);
 
     // TODO: better done through views!
     Result  finalResult;
@@ -383,7 +491,7 @@ static inline void data_merge(const std::set<size_t> &vecs,
     }
 }
 
-static inline void local_union(const LTLfQuery* q, Result& last_union, bool isTimed = true) {
+static inline void local_logic_union(const LTLfQuery* q, Result& last_union, bool isTimed = true) {
     size_t N = q->args.size();
     if ((!q) || (N == 0)) {
         last_union.clear();
@@ -395,17 +503,15 @@ static inline void local_union(const LTLfQuery* q, Result& last_union, bool isTi
         auto& arg1 = q->args.at(0);
         auto& arg2 = q->args.at(1);
         if (isTimed)
-            setUnion(arg1->result.begin(), arg1->result.end(),
-                            arg2->result.begin(), arg2->result.end(),
-                            std::back_inserter(last_union),
-                            Aggregators::maxSimilarity<double, double, double>,
+            or_logic_timed(arg1->result,
+                            arg2->result,
+                           last_union,
                      q->joinCondition);
         else
-            setUnionUntimed(arg1->result.begin(), arg1->result.end(),
-                                   arg2->result.begin(), arg2->result.end(),
-                                   std::back_inserter(last_union),
-                                   Aggregators::maxSimilarity<double, double, double>,
-                            q->joinCondition);
+            or_logic_untimed(arg1->result,
+                             arg2->result,
+                             last_union,
+                             q->joinCondition);
     } else {
         auto it = q->args.begin();
         last_union = (*it)->result;
@@ -414,66 +520,106 @@ static inline void local_union(const LTLfQuery* q, Result& last_union, bool isTi
             it++;
             auto ref = (*it)->result;
             if (isTimed)
-                setUnion(last_union.begin(), last_union.end(),
-                         ref.begin(), ref.end(),
-                         std::back_inserter(curr_union),
-                         Aggregators::maxSimilarity<double, double, double>);
+                or_logic_timed(last_union,
+                         ref,
+                         curr_union);
             else
-                setUnionUntimed(last_union.begin(), last_union.end(),
-                                ref.begin(), ref.end(),
-                                std::back_inserter(curr_union),
-                                Aggregators::maxSimilarity<double, double, double>);
+                or_logic_untimed(last_union,
+                               ref,
+                               curr_union);
             std::swap(last_union, curr_union);
             curr_union.clear();
         }
     }
 }
 
-static inline void local_intersection(const LTLfQuery* q, Result& last_union, bool isTimed = true) {
+static inline void local_fast_union(const LTLfQuery* q, Result& last_union, bool isTimed = true) {
     size_t N = q->args.size();
     if ((!q) || (N == 0)) {
         last_union.clear();
         return;
     } else if (N == 1) {
-        last_union = q->args.at(0)->result;
+        last_union = q->args.at(1)->result;
     } else if (N == 2) {
+        last_union.clear();
         auto& arg1 = q->args.at(0);
         auto& arg2 = q->args.at(1);
-        last_union.clear();
         if (isTimed)
-            setIntersection(arg1->result.begin(), arg1->result.end(),
-                            arg2->result.begin(), arg2->result.end(),
-                            std::back_inserter(last_union),
-                            Aggregators::maxSimilarity<double, double, double>, q->joinCondition);
+            or_fast_timed(arg1->result,
+                           arg2->result,
+                           last_union,
+                           q->joinCondition);
         else
-            setIntersectionUntimed(arg1->result.begin(), arg1->result.end(),
-                                   arg2->result.begin(), arg2->result.end(),
-                                   std::back_inserter(last_union),
-                                   Aggregators::maxSimilarity<double, double, double>, q->joinCondition);
+            or_fast_untimed(arg1->result,
+                             arg2->result,
+                             last_union,
+                             q->joinCondition);
     } else {
-        DEBUG_ASSERT(q->joinCondition);
         auto it = q->args.begin();
         last_union = (*it)->result;
         Result curr_union;
-        for (std::size_t i = 1; i < N; ++i) {
+        for (std::size_t i = 1; i < q->args.size(); ++i) {
             it++;
             auto ref = (*it)->result;
             if (isTimed)
-                setIntersection(last_union.begin(), last_union.end(),
-                                ref.begin(), ref.end(),
-                                std::back_inserter(curr_union),
-                                Aggregators::maxSimilarity<double, double, double>);
+                or_fast_timed(last_union,
+                               ref,
+                               curr_union);
             else
-                setIntersectionUntimed(last_union.begin(), last_union.end(),
-                                       ref.begin(), ref.end(),
-                                       std::back_inserter(curr_union),
-                                       Aggregators::maxSimilarity<double, double, double>);
+                or_fast_untimed(last_union,
+                                 ref,
+                                 curr_union);
             std::swap(last_union, curr_union);
             curr_union.clear();
         }
     }
-
 }
+
+//static inline void local_intersection(const LTLfQuery* q, Result& last_union, bool isTimed = true) {
+//    size_t N = q->args.size();
+//    if ((!q) || (N == 0)) {
+//        last_union.clear();
+//        return;
+//    } else if (N == 1) {
+//        last_union = q->args.at(0)->result;
+//    } else if (N == 2) {
+//        auto& arg1 = q->args.at(0);
+//        auto& arg2 = q->args.at(1);
+//        last_union.clear();
+//        if (isTimed)
+//            setIntersection(arg1->result.begin(), arg1->result.end(),
+//                            arg2->result.begin(), arg2->result.end(),
+//                            std::back_inserter(last_union),
+//                            Aggregators::maxSimilarity<double, double, double>, q->joinCondition);
+//        else
+//            setIntersectionUntimed(arg1->result.begin(), arg1->result.end(),
+//                                   arg2->result.begin(), arg2->result.end(),
+//                                   std::back_inserter(last_union),
+//                                   Aggregators::maxSimilarity<double, double, double>, q->joinCondition);
+//    } else {
+//        DEBUG_ASSERT(q->joinCondition);
+//        auto it = q->args.begin();
+//        last_union = (*it)->result;
+//        Result curr_union;
+//        for (std::size_t i = 1; i < N; ++i) {
+//            it++;
+//            auto ref = (*it)->result;
+//            if (isTimed)
+//                setIntersection(last_union.begin(), last_union.end(),
+//                                ref.begin(), ref.end(),
+//                                std::back_inserter(curr_union),
+//                                Aggregators::maxSimilarity<double, double, double>);
+//            else
+//                setIntersectionUntimed(last_union.begin(), last_union.end(),
+//                                       ref.begin(), ref.end(),
+//                                       std::back_inserter(curr_union),
+//                                       Aggregators::maxSimilarity<double, double, double>);
+//            std::swap(last_union, curr_union);
+//            curr_union.clear();
+//        }
+//    }
+//
+//}
 
 static inline void absence_or_exists(LTLfQuery* formula, const std::vector<PartialResult>& results_cache) {
     bool isFirstIteration = true;
@@ -506,7 +652,7 @@ static inline void absence_or_exists(LTLfQuery* formula, const std::vector<Parti
 }
 
 
-void MAXSatPipeline::actual_query_running(const std::vector<PartialResult>& results_cache, const KnowledgeBase& kb) {
+void MAXSatPipeline::abidinglogic_query_running(const std::vector<PartialResult>& results_cache, const KnowledgeBase& kb) {
     /// Scanning the query plan starting from the leaves (rbegin) towards the actual declare formulae (rend)
     auto it = qm.Q.rbegin(), en = qm.Q.rend();
     for (; it != en; it++) {
@@ -558,18 +704,24 @@ void MAXSatPipeline::actual_query_running(const std::vector<PartialResult>& resu
                         case LTLfQuery::ABSENCE_QP:
                             // The difference with absence is that, if it is absent, then it shall not be there with the same number
                             absence_or_exists(formula, results_cache);
-                            formula->result = negateUntimed(formula->result, kb.act_table_by_act_id.trace_length, false);
+                            if (formula->fields.id.parts.preserve) {
+                                formula->result = negateUntimed(formula->result, kb.act_table_by_act_id.trace_length, true);
+                            } else {
+                                negated_logic_untimed(formula->result, tmp_result, kb.act_table_by_act_id.trace_length);
+                                std::swap(formula->result, tmp_result);
+                            }
+                            break;
 
                         case LTLfQuery::NEXT_QP:
                             formula->result = next(formula->args.at(0)->result);
                             break;
 
                         case LTLfQuery::OR_QP:
-                            local_union(formula, formula->result, formula->fields.id.parts.is_timed);
+                            local_fast_union(formula, formula->result, formula->fields.id.parts.is_timed);
                             break;
 
                         case LTLfQuery::AND_QP:
-                            local_intersection(formula, formula->result, formula->fields.id.parts.is_timed);
+                            local_logic_intersection(formula, formula->result, formula->fields.id.parts.is_timed);
                             break;
 
                         case LTLfQuery::IMPL_QP:
@@ -675,39 +827,6 @@ void MAXSatPipeline::actual_query_running(const std::vector<PartialResult>& resu
             }
         PARALLELIZE_LOOP_END
     }
-
-
-    if (!qm.Q.empty()) {
-        switch (final_ensemble) {
-            case PerDeclareSupport: {
-                std::unordered_map<LTLfQuery*, double> visited;
-                for (const auto& declare : declare_to_query) {
-                    auto it = visited.emplace(declare, ((double)declare->result.size())/((double)kb.noTraces));
-                    support_per_declare.emplace_back(it.first->second);
-                }
-            } break;
-
-            case TraceMaximumSatisfiability: {
-                // Working under the assumption that all of the final Declare clauses are, at the root level, untimed operations
-                max_sat_per_trace.resize(kb.noTraces, 0.0);
-                for (const auto& q : qm.Q.begin()->second) {
-                    for (const auto& rx: q->result) {
-                        max_sat_per_trace[rx.first.first]++;
-                    }
-                }
-                for (auto& ref : max_sat_per_trace) {
-                    assert(ref <= declare_to_query.size());
-                    ref = ref / ((double)declare_to_query.size());
-                }
-            } break;
-
-            case TraceIntersection: {
-                LTLfQuery conjunction;
-                conjunction.args = qm.Q.begin()->second;
-                local_intersection(&conjunction, this->result, false);
-            } break;
-        }
-    }
 }
 
 std::vector<PartialResult> MAXSatPipeline::subqueriesRunning(const KnowledgeBase &kb) {// 1. Performing the query over each single predicate that we have extracted, so not to duplicate the data access
@@ -791,7 +910,7 @@ std::vector<PartialResult> MAXSatPipeline::subqueriesRunning(const KnowledgeBase
             auto& S = set_decomposition_result.minimal_common_subsets.at(i);
 //            std::cout << i << " is " << S << std::endl;
             // resultOfS for collecting the intermediate computations
-            resultOfS[i] = local_intersection(S, data_accessing);
+            resultOfS[i] = partialResultIntersection(S, data_accessing);
 //            for (const auto x : S) {
 //                edges.emplace("data_accessing:"+std::to_string(x), "resultOfS:"+std::to_string(i));
 //            }
@@ -803,7 +922,7 @@ std::vector<PartialResult> MAXSatPipeline::subqueriesRunning(const KnowledgeBase
             auto& S = set_decomposition_result.minimal_common_subsets_composition.at(i);
             // Perform the intersection among all of the elements in S,
             // using the intermediate results from resultOfSSecond
-            resultOfS[isFromFurtherDecomposition + i] = local_intersection(S, resultOfS);
+            resultOfS[isFromFurtherDecomposition + i] = partialResultIntersection(S, resultOfS);
 //            for (const auto x : S) {
 //                edges.emplace("resultOfS:"+std::to_string(x), "resultOfS:"+std::to_string(i));
 //            }
@@ -822,7 +941,7 @@ std::vector<PartialResult> MAXSatPipeline::subqueriesRunning(const KnowledgeBase
 //            std::cout << ref.first << "-@->" << *ref.second << std::endl;
             // put the global intersection into a map representation.
             // ref->first will correspond to the atom in that same position in toUseAtoms.
-            results_cache[ref.first] = local_intersection(*ref.second, resultOfS);
+            results_cache[ref.first] = partialResultIntersection(*ref.second, resultOfS);
 //            for (const auto x : *ref.second) {
 //                edges.emplace("resultOfS:"+std::to_string(x), "results_cache:"+std::to_string(ref.first));
 //            }
@@ -845,3 +964,179 @@ std::vector<PartialResult> MAXSatPipeline::subqueriesRunning(const KnowledgeBase
     return results_cache;
 }
 
+void MAXSatPipeline::fast_v1_query_running(const std::vector<PartialResult>& results_cache, const KnowledgeBase& kb) {
+/// Scanning the query plan starting from the leaves (rbegin) towards the actual declare formulae (rend)
+    auto it = qm.Q.rbegin(), en = qm.Q.rend();
+    for (; it != en; it++) {
+        Result tmp_result;
+        PARALLELIZE_LOOP_BEGIN(pool, 0, it->second.size(), lb, ub)
+            for (size_t j = lb; j < ub; j++) {
+                auto formula = it->second.at(j); // TODO: run this query
+                if (!formula) continue;
+
+                if (formula->fields.id.parts.directly_from_cache) {
+                    ResultRecordSemantics R{1.0, {}};
+                    if (formula->declare_type == DECLARE_TYPE_LEFT) {
+                        R.second.emplace_back(marked_event::left(0));
+                    } else if (formula->declare_type == DECLARE_TYPE_RIGHT) {
+                        R.second.emplace_back(marked_event::right(0));
+                    }
+                    for (const auto& ref : data_accessing.at(formula->result_id).second) {
+                        if (formula->declare_type == DECLARE_TYPE_LEFT)
+                            R.second.at(0).id.parts.left = ref.first.second;
+                        else if (formula->declare_type == DECLARE_TYPE_RIGHT)
+                            R.second.at(0).id.parts.right = ref.first.second;
+                        formula->result.emplace_back(ref.first, R);
+                    }
+                } else {
+                    // Combine the results from the results_cache
+                    switch (formula->t) {
+                        case LTLfQuery::INIT_QP:
+                            data_merge(formula->partial_results, results_cache, formula->result, formula->declare_type);
+                            formula->result.erase(std::remove_if(formula->result.begin(),
+                                                                 formula->result.end(),
+                                                                 [](const auto&  x){return x.first.second > 0;}),
+                                                  formula->result.end());
+                            break;
+
+                        case LTLfQuery::END_QP:
+                            // This never has a theta condition to consider
+                            // This will only work when data conditions are also considered
+                            data_merge(formula->partial_results, results_cache, formula->result, formula->declare_type);
+                            formula->result.erase(std::remove_if(formula->result.begin(),
+                                                                 formula->result.end(),
+                                                                 [kb](const auto&  x){return x.first.second < kb.act_table_by_act_id.trace_length.at(x.first.first)-1;}),
+                                                  formula->result.end());
+                            break;
+
+                        case LTLfQuery::EXISTS_QP:
+                            absence_or_exists(formula, results_cache);
+                            break;
+
+                        case LTLfQuery::ABSENCE_QP:
+                            // The difference with absence is that, if it is absent, then it shall not be there with the same number
+                            absence_or_exists(formula, results_cache);
+                            if (formula->fields.id.parts.preserve) {
+                                formula->result = negateUntimed(formula->result, kb.act_table_by_act_id.trace_length, true);
+                            } else {
+                                negated_fast_untimed(formula->result, tmp_result, kb.act_table_by_act_id.trace_length);
+                                std::swap(formula->result, tmp_result);
+                            }
+                            break;
+
+                        case LTLfQuery::NEXT_QP:
+                            formula->result = next(formula->args.at(0)->result);
+                            break;
+
+                        case LTLfQuery::OR_QP:
+                            local_logic_union(formula, formula->result, formula->fields.id.parts.is_timed);
+                            break;
+
+                        case LTLfQuery::AND_QP:
+                            local_fast_intersection(formula, formula->result, formula->fields.id.parts.is_timed);
+                            break;
+
+                        case LTLfQuery::IMPL_QP:
+                            if (formula->fields.id.parts.is_timed) {
+                                negated_fast_timed(formula->args[0]->result, tmp_result, kb.act_table_by_act_id.trace_length);
+                                implies_fast_timed(formula->args.at(0)->result,
+                                                    formula->args.at(1)->result,
+                                                    tmp_result,
+                                                    formula->result,
+                                                    formula->joinCondition,
+                                                    kb.act_table_by_act_id.trace_length);
+                            } else {
+                                negated_fast_untimed(formula->args[0]->result, tmp_result, kb.act_table_by_act_id.trace_length);
+                                implies_fast_untimed(formula->args.at(0)->result,
+                                                      formula->args.at(1)->result,
+                                                      tmp_result,
+                                                      formula->result,
+                                                      formula->joinCondition,
+                                                      kb.act_table_by_act_id.trace_length);
+                            }
+                            break;
+
+                        case LTLfQuery::IFTE_QP:
+                            if (formula->fields.id.parts.is_timed)
+                                implies_fast_timed(formula->args.at(0)->result,
+                                                    formula->args.at(1)->result,
+                                                    formula->args.at(2)->result,
+                                                    formula->result,
+                                                    formula->joinCondition,
+                                                    kb.act_table_by_act_id.trace_length);
+                            else
+                                implies_fast_untimed(formula->args.at(0)->result,
+                                                      formula->args.at(1)->result,
+                                                      formula->args.at(3)->result,
+                                                      formula->result,
+                                                      formula->joinCondition,
+                                                      kb.act_table_by_act_id.trace_length);
+                            break;
+
+                        case LTLfQuery::U_QP:
+                            if (formula->fields.id.parts.is_timed)
+                                until_logic_timed(formula->args.at(0)->result,
+                                                  formula->args.at(1)->result,
+                                                  formula->result,
+                                                  formula->joinCondition,
+                                                  kb.act_table_by_act_id.trace_length);
+                            else
+                                until_logic_untimed(formula->args.at(0)->result,
+                                                    formula->args.at(1)->result,
+                                                    formula->result,
+                                                    formula->joinCondition,
+                                                    kb.act_table_by_act_id.trace_length);
+                            break;
+
+                        case LTLfQuery::G_QP:
+                            if (formula->fields.id.parts.is_timed)
+                                global_fast_timed(formula->args.at(0)->result, formula->result, kb.act_table_by_act_id.trace_length);
+                            else
+                                global_fast_untimed(formula->args.at(0)->result, formula->result, kb.act_table_by_act_id.trace_length);
+                            break;
+
+                        case LTLfQuery::F_QP:
+                            if (formula->fields.id.parts.is_timed)
+                                future_fast_timed(formula->args[0]->result, formula->result, kb.act_table_by_act_id.trace_length);
+                            else
+                                future_fast_untimed(formula->args[0]->result, formula->result, kb.act_table_by_act_id.trace_length);
+                            break;
+
+                        case LTLfQuery::NOT_QP:
+                            if (formula->fields.id.parts.is_timed)
+                                negated_fast_timed(formula->args[0]->result, formula->result, kb.act_table_by_act_id.trace_length);
+                            else
+                                negated_fast_untimed(formula->args[0]->result, formula->result, kb.act_table_by_act_id.trace_length);
+                            break;
+
+                        case LTLfQuery::AF_QPT:
+                            if (formula->fields.id.parts.is_timed)
+                                aAndFutureB_timed(formula->args.at(0)->result,
+                                                  formula->args.at(1)->result,
+                                                  formula->result,
+                                                  formula->joinCondition,
+                                                  kb.act_table_by_act_id.trace_length);
+                            else
+                                throw std::runtime_error("AndFuture is untimed: unexpected implementation!");
+                            break;
+
+                        case LTLfQuery::AXG_QPT:
+                            if (formula->fields.id.parts.is_timed)
+                                aAndNextGloballyB_timed(formula->args.at(0)->result,
+                                                        formula->args.at(1)->result,
+                                                        formula->result,
+                                                        formula->joinCondition,
+                                                        kb.act_table_by_act_id.trace_length);
+                            else
+                                throw std::runtime_error("AndNextGlobally is untimed: unexpected implementation!");
+                            break;
+
+                        case LTLfQuery::FALSEHOOD_QP:
+                            formula->result.clear();
+                            break;
+                    }
+                }
+            }
+                PARALLELIZE_LOOP_END
+    }
+}

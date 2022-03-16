@@ -508,6 +508,30 @@ void Environment::set_grounding_parameters(const std::string &grounding_strategy
     }
 }
 
+void Environment::set_maxsat_parameters(const std::filesystem::path &atomization_conf) {
+    script_for_decomposition = "scripts/logic_plan.queryplan";
+    preferred_plan = "efficient";
+    noThreads = 1;
+    operators = AbidingLogic;
+    if (std::filesystem::exists((atomization_conf))) {
+        std::cout << "Loading the atomization configuration file: " << atomization_conf << std::endl;
+        YAML::Node n = YAML::LoadFile((atomization_conf).string());
+        if (n["script_plan"]) {
+            experiment_logger.queries_plan = preferred_plan = n["script_plan"].Scalar();
+        }
+        if (n["threads"]) {
+            experiment_logger.no_threads = noThreads = n["threads"].as<size_t>();
+        }
+        if (n["ensemble"]) {
+            strategy = magic_enum::enum_cast<EnsembleMethods>(n["ensemble"].Scalar()).value_or(strategy);
+        }
+        if (n["operators"]) {
+            experiment_logger.operators_version = n["operators"].Scalar();
+            operators = magic_enum::enum_cast<OperatorQueryPlan>(experiment_logger.operators_version).value_or(operators);
+        }
+    }
+}
+
 void Environment::set_atomization_parameters(const std::filesystem::path &atomization_conf) {
     std::string fresh_atom_label{"p"};
     size_t msl = 10;
@@ -528,10 +552,10 @@ void Environment::set_atomization_parameters(const std::filesystem::path &atomiz
     }
 }
 
-MAXSatPipeline Environment::query_model(const std::string& script_for_decomposition,
-                                        const std::string& preferred_plan,
-                                        size_t noThreads) {
+MAXSatPipeline Environment::query_model() {
     MAXSatPipeline maxsat_pipeline(script_for_decomposition, preferred_plan, noThreads);
+    maxsat_pipeline.final_ensemble = strategy;
+    maxsat_pipeline.operators = operators;
     maxsat_pipeline.pipeline(&grounding, ap, db);
     experiment_logger.model_declare_to_ltlf = maxsat_pipeline.declare_to_ltlf_time;
     experiment_logger.model_ltlf_query_time = maxsat_pipeline.ltlf_query_time;
