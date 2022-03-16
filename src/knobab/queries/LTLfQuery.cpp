@@ -27,35 +27,31 @@ std::ostream& operator<<(std::ostream& os, const LTLfQuery& x) {
 
     switch (x.t) {
         case LTLfQuery::INIT_QP:
+            os << ((x.declare_type == 1)? 'L' : (x.declare_type==2 ? 'R' : 'M'));
             os << (x.fields.id.parts.is_timed ? t : ' ') << "Init";
             if (!x.atom.empty()) {
                 return os << x.atom;
-            } else {
-                return os << "{" << ((x.declare_type == 1)? 'L' : (x.declare_type==2 ? 'R' : 'M'))<< "}";
             }
 
         case LTLfQuery::END_QP:
+            os << ((x.declare_type == 1)? 'L' : (x.declare_type==2 ? 'R' : 'M'));
             os << (x.fields.id.parts.is_timed ? t : ' ') << "End";
             if (!x.atom.empty()) {
                 return os << x.atom;
-            } else {
-                return os << "{" << ((x.declare_type == 1)? 'L' : (x.declare_type==2 ? 'R' : 'M'))<< "}";
             }
 
         case LTLfQuery::EXISTS_QP:
+            os << ((x.declare_type == 1)? 'L' : (x.declare_type==2 ? 'R' : 'M'));
             os << (x.fields.id.parts.is_timed ? t : ' ') << (x.fields.id.parts.is_negated ? n : ' ') << "Exists" << x.n ;
             if (!x.atom.empty()) {
                 return os << x.atom;
-            } else {
-                return os << "{" << ((x.declare_type == 1)? 'L' : (x.declare_type==2 ? 'R' : 'M'))<< "}";
             }
 
         case LTLfQuery::ABSENCE_QP:
+            os << ((x.declare_type == 1)? 'L' : (x.declare_type==2 ? 'R' : 'M'));
             os << (x.fields.id.parts.is_timed ? t : ' ') << "Absence" << x.n;
             if (!x.atom.empty()) {
                 return os << x.atom;
-            } else {
-                return os << "{" << ((x.declare_type == 1)? 'L' : (x.declare_type==2 ? 'R' : 'M'))<< "}";
             }
 
         case LTLfQuery::NEXT_QP:
@@ -141,6 +137,7 @@ LTLfQuery LTLfQuery::qINIT(short declare_argument, bool isTimed) {
     q.fields.id.parts.is_timed = isTimed;
     q.fields.id.parts.is_numbered = false;
     q.fields.id.parts.is_queryplan = false;
+    q.fields.id.parts.directly_from_cache = false;
     return q;
 }
 
@@ -156,6 +153,7 @@ LTLfQuery LTLfQuery::qEND(short declare_argument, bool isTimed) {
     q.fields.id.parts.is_timed = isTimed;
     q.fields.id.parts.is_numbered = false;
     q.fields.id.parts.is_queryplan = false;
+    q.fields.id.parts.directly_from_cache = false;
     return q;
 }
 
@@ -171,6 +169,7 @@ LTLfQuery LTLfQuery::qEXISTS(size_t narg, short declare_argument, bool isTimed, 
     q.fields.id.parts.is_negated = isNegated;
     q.fields.id.parts.is_numbered = true;
     q.fields.id.parts.is_queryplan = false;
+    q.fields.id.parts.directly_from_cache = false;
     return q;
 }
 
@@ -186,6 +185,7 @@ LTLfQuery LTLfQuery::qABSENCE(size_t narg, short declare_argument, bool isTimed)
     q.fields.id.parts.is_timed = isTimed;
     q.fields.id.parts.is_numbered = true;
     q.fields.id.parts.is_queryplan = false;
+    q.fields.id.parts.directly_from_cache = false;
     return q;
 }
 
@@ -202,6 +202,7 @@ LTLfQuery LTLfQuery::qNEXT(const LTLfQuery& arg, bool isTimed) {
     q.fields.id.parts.is_numbered = false;
     q.args_from_script.emplace_back(arg);
     q.fields.id.parts.is_queryplan = false;
+    q.fields.id.parts.directly_from_cache = false;
     return q;
 }
 
@@ -218,6 +219,7 @@ LTLfQuery LTLfQuery::qNOT(const LTLfQuery& arg, bool isTimed, bool preserve) {
     q.fields.id.parts.is_numbered = false;
     q.args_from_script.emplace_back(arg);
     q.fields.id.parts.is_queryplan = false;
+    q.fields.id.parts.directly_from_cache = false;
     return q;
 }
 
@@ -235,6 +237,7 @@ LTLfQuery LTLfQuery::qOR(const LTLfQuery& lhs, const LTLfQuery& rhs, bool isTime
     q.args_from_script.emplace_back(lhs);
     q.args_from_script.emplace_back(rhs);
     q.fields.id.parts.is_queryplan = false;
+    q.fields.id.parts.directly_from_cache = false;
     return q;
 }
 
@@ -252,6 +255,7 @@ LTLfQuery LTLfQuery::qIMPLICATION(const LTLfQuery& lhs, const LTLfQuery& rhs, bo
     q.args_from_script.emplace_back(lhs);
     q.args_from_script.emplace_back(rhs);
     q.fields.id.parts.is_queryplan = false;
+    q.fields.id.parts.directly_from_cache = false;
     return q;
 }
 
@@ -270,6 +274,7 @@ LTLfQuery LTLfQuery::qIFTE(const LTLfQuery& lhs, const LTLfQuery& middle, const 
     q.args_from_script.emplace_back(middle);
     q.args_from_script.emplace_back(rhs);
     q.fields.id.parts.is_queryplan = false;
+    q.fields.id.parts.directly_from_cache = false;
     return q;
 }
 
@@ -287,6 +292,7 @@ LTLfQuery LTLfQuery::qAND(const LTLfQuery& lhs, const LTLfQuery& rhs, bool isTim
     q.args_from_script.emplace_back(lhs);
     q.args_from_script.emplace_back(rhs);
     q.fields.id.parts.is_queryplan = false;
+    q.fields.id.parts.directly_from_cache = false;
     return q;
 }
 
@@ -304,6 +310,7 @@ LTLfQuery LTLfQuery::qANDNEXTGLOBALLY(const LTLfQuery& lhs, const LTLfQuery& rhs
     q.args_from_script.emplace_back(lhs);
     q.args_from_script.emplace_back(rhs);
     q.fields.id.parts.is_queryplan = false;
+    q.fields.id.parts.directly_from_cache = false;
     return q;
 }
 
@@ -321,6 +328,7 @@ LTLfQuery LTLfQuery::qANDFUTURE(const LTLfQuery& lhs, const LTLfQuery& rhs, bool
     q.args_from_script.emplace_back(lhs);
     q.args_from_script.emplace_back(rhs);
     q.fields.id.parts.is_queryplan = false;
+    q.fields.id.parts.directly_from_cache = false;
     return q;
 }
 
@@ -338,6 +346,7 @@ LTLfQuery LTLfQuery::qUNTIL(const LTLfQuery& lhs, const LTLfQuery& rhs, bool isT
     q.args_from_script.emplace_back(lhs);
     q.args_from_script.emplace_back(rhs);
     q.fields.id.parts.is_queryplan = false;
+    q.fields.id.parts.directly_from_cache = false;
     return q;
 }
 
@@ -354,6 +363,7 @@ LTLfQuery LTLfQuery::qBOX(const LTLfQuery& lhs, bool isTimed) {
     q.fields.id.parts.is_numbered = false;
     q.args_from_script.emplace_back(lhs);
     q.fields.id.parts.is_queryplan = false;
+    q.fields.id.parts.directly_from_cache = false;
     return q;
 }
 
@@ -370,5 +380,6 @@ LTLfQuery LTLfQuery::qDIAMOND(const LTLfQuery& lhs, bool isTimed) {
     q.fields.id.parts.is_timed = isTimed;
     q.args_from_script.emplace_back(lhs);
     q.fields.id.parts.is_queryplan = false;
+    q.fields.id.parts.directly_from_cache = false;
     return q;
 }

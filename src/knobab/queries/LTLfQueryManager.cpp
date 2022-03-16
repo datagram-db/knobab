@@ -2,18 +2,8 @@
 // Created by giacomo on 16/02/2022.
 //
 
-#include "knobab/queries/ltlf_query.h"
+#include "knobab/queries/LTLfQueryManager.h"
 #include <stack>
-"bits/stl_stack.h"
-"bits/stl_algobase.h"
-"bits/stl_algo.h"
-"bits/allocator.h"
-"bits/stl_construct.h"
-"bits/stl_uninitialized.h"
-"bits/stl_deque.h"
-"bits/range_access.h"
-"bits/deque.tcc"
-"bits/stl_stack.h"
 
 static inline void topological_sort(const std::vector<LTLfQuery*>& W,
                                     std::vector<LTLfQuery*>& vertexOreder) {
@@ -50,7 +40,7 @@ static inline void topological_sort(const std::vector<LTLfQuery*>& W,
 #include <magic_enum.hpp>
 #include <yaucl/functional/assert.h>
 
-void ltlf_query_manager::generateGraph(std::map<LTLfQuery*, std::vector<LTLfQuery*>>& ref, LTLfQuery*q) const {
+void LTLfQueryManager::generateGraph(std::map<LTLfQuery*, std::vector<LTLfQuery*>>& ref, LTLfQuery*q) const {
     auto it = ref.emplace(q, q->args);
     if (it.second) {
         for (const auto& arg : q->args)
@@ -59,7 +49,7 @@ void ltlf_query_manager::generateGraph(std::map<LTLfQuery*, std::vector<LTLfQuer
 }
 
 #include <nlohmann/json.hpp>
-std::string ltlf_query_manager::generateGraph() const {
+std::string LTLfQueryManager::generateGraph() const {
     std::map<LTLfQuery*, std::vector<LTLfQuery*>> ref;
     std::map<LTLfQuery*,size_t> layerId;
     if (Q.empty()) return "{nodes: [], edges: []}";
@@ -81,10 +71,9 @@ std::string ltlf_query_manager::generateGraph() const {
         nlohmann::json node;
         node["id"] = cp.first ? (size_t)cp.first : 0;
         node["group"] = layerId[cp.first];
-        if ((cp.first) && (cp.first->fields.id.parts.is_atom)) {
+        if ((cp.first) && (!cp.first->atom.empty())) {
             std::stringstream aa;
-            aa << (cp.first->fields.id.parts.is_timed ? "t" : "") << std::string(magic_enum::enum_name(cp.first->t));
-            aa << cp.first->atom;
+            aa << *cp.first;
             node["label"] = aa.str();
         } else {
             node["label"] = cp.first ? ((cp.first->fields.id.parts.is_timed ? "t" : "") + std::string(magic_enum::enum_name(cp.first->t))) : "Ensemble";
@@ -100,7 +89,7 @@ std::string ltlf_query_manager::generateGraph() const {
     return json.dump(4);
 }
 
-void ltlf_query_manager::clear() {
+void LTLfQueryManager::clear() {
     for (auto it = conversion_map_for_subexpressions.begin(); it != conversion_map_for_subexpressions.end(); it++) {
         delete it->second;
         it = conversion_map_for_subexpressions.erase(it);
@@ -110,7 +99,7 @@ void ltlf_query_manager::clear() {
     counter.clear();
 }
 
-void ltlf_query_manager::finalize_unions(const std::vector<LTLfQuery*>& W, KnowledgeBase* ptr) {
+void LTLfQueryManager::finalize_unions(const std::vector<LTLfQuery*>& W, KnowledgeBase* ptr) {
     std::vector<std::set<std::string>> unionToDecompose;
     for (const auto& ptr : atomsToDecomposeInUnion)
         unionToDecompose.emplace_back(ptr->atom);
@@ -170,37 +159,35 @@ void ltlf_query_manager::finalize_unions(const std::vector<LTLfQuery*>& W, Knowl
 }
 
 #include <iostream>
-"bits/c++config.h"
-"bits/c++config.h"
-"bits/c++config.h"
 
-LTLfQuery *ltlf_query_manager::simplify(size_t formulaId,
-                                        const LTLfQuery &input,
-                                        const DeclareDataAware *joinCondition,
-                                        const std::unordered_set<std::string> &atom_universe,
-                                        const std::unordered_set<std::string> &left,
-                                        const std::unordered_set<std::string> &right,
-                                        std::vector<std::string> &toUseAtoms,
-                                        std::unordered_map<std::string , std::vector<size_t>>& atomToFormulaId) {
+LTLfQuery *LTLfQueryManager::simplify(const std::unordered_set<std::string>& atom,
+                                      size_t formulaId,
+                                      const LTLfQuery &input,
+                                      const DeclareDataAware *joinCondition,
+                                      const std::unordered_set<std::string> &atom_universe,
+                                      const std::unordered_set<std::string> &left,
+                                      const std::unordered_set<std::string> &right,
+                                      std::vector<std::string> &toUseAtoms,
+                                      std::unordered_map<std::string , std::vector<size_t>>& atomToFormulaId) {
     LTLfQuery q;
     q.t = input.t;
     q.n = input.n;
     q.declare_type = input.declare_type;
     q.fields = input.fields;
     q.fields.id.parts.is_negated = false; // after resolution, nothing is negated!
-    if (input.declare_type == DECLARE_TYPE_LEFT) {
+
+
+    if ((input.declare_type == DECLARE_TYPE_LEFT) || (input.declare_type == DECLARE_TYPE_NONE)) {
         if (input.fields.id.parts.is_negated) {
             for (const auto& x : atom_universe) {
                 if (!left.contains(x)) {
                     q.atom.insert(x);
-                    toUseAtoms.emplace_back(x);
                     atomToFormulaId[x].emplace_back(formulaId);
                 }
             }
         } else {
             for (const auto& x : left) {
                 q.atom.insert(x);
-                toUseAtoms.emplace_back(x);
                 atomToFormulaId[x].emplace_back(formulaId);
             }
         }
@@ -209,30 +196,30 @@ LTLfQuery *ltlf_query_manager::simplify(size_t formulaId,
             for (const auto& x : atom_universe) {
                 if (!right.contains(x)) {
                     q.atom.insert(x);
-                    toUseAtoms.emplace_back(x);
                     atomToFormulaId[x].emplace_back(formulaId);
                 }
             }
         } else {
             for (const auto& x : right) {
                 q.atom.insert(x);
-                toUseAtoms.emplace_back(x);
                 atomToFormulaId[x].emplace_back(formulaId);
             }
         }
     } else {
-        DEBUG_ASSERT(!q.fields.id.parts.is_atom);
+        //To be done at a future step: supporting three argument clauses
+        //DEBUG_ASSERT(!q.fields.id.parts.is_atom);
     }
+
     if (input.fields.id.parts.has_theta) {
         q.joinCondition = joinCondition;
     }
     for (auto& args : input.args_from_script)
-        q.args.emplace_back(simplify(formulaId, args, joinCondition, atom_universe, left, right, toUseAtoms, atomToFormulaId));
+        q.args.emplace_back(simplify(atom, formulaId, args, joinCondition, atom_universe, left, right, toUseAtoms, atomToFormulaId));
     q.fields.id.parts.is_queryplan = true;
     return simplify(q);
 }
 
-LTLfQuery *ltlf_query_manager::simplify(const LTLfQuery &q) {
+LTLfQuery *LTLfQueryManager::simplify(const LTLfQuery &q) {
     auto it = conversion_map_for_subexpressions.find(q);
     if (it != conversion_map_for_subexpressions.end()) {
         counter[it->second]++;
@@ -240,9 +227,6 @@ LTLfQuery *ltlf_query_manager::simplify(const LTLfQuery &q) {
     } else {
         auto* ptr = new LTLfQuery();
         *ptr = q;
-        if (q.fields.id.parts.is_atom){
-            atomsToDecomposeInUnion.emplace_back(ptr);
-        }
         counter.emplace(ptr, 1);
         assert(conversion_map_for_subexpressions.emplace(q, ptr).second);
         return ptr;

@@ -2,13 +2,13 @@
 // Created by giacomo on 16/02/2022.
 //
 
-#ifndef KNOBAB_LTLF_QUERY_H
-#define KNOBAB_LTLF_QUERY_H
+#ifndef KNOBAB_LTLFQUERYMANAGER_H
+#define KNOBAB_LTLFQUERYMANAGER_H
 
 #include <knobab/queries/LTLfQuery.h>
 #include <unordered_map>
 
-struct ltlf_query_manager {
+struct LTLfQueryManager {
     std::unordered_map<LTLfQuery, LTLfQuery*> conversion_map_for_subexpressions;
     std::map<size_t, std::vector<LTLfQuery*>> Q;
     std::unordered_map<LTLfQuery*, size_t> counter;
@@ -22,12 +22,9 @@ struct ltlf_query_manager {
      */
     void clear();
 
-    LTLfQuery* simplify(const LTLfQuery& q);
 
-    void finalize_unions(const std::vector<LTLfQuery*>& W, KnowledgeBase* ptr);
-
-private:
-    LTLfQuery *simplify(size_t formulaId,
+    LTLfQuery *simplify(const std::unordered_set<std::string>& atom,
+                        size_t formulaId,
                         const LTLfQuery &input,
                         const DeclareDataAware *joinCondition,
                         const std::unordered_set<std::string> &atom_universe,
@@ -35,7 +32,13 @@ private:
                         const std::unordered_set<std::string> &right,
                         std::vector<std::string> &toUseAtoms,
                         std::unordered_map<std::string , std::vector<size_t>>& atomToFormulaId);
+
+    void finalize_unions(const std::vector<LTLfQuery*>& W, KnowledgeBase* ptr);
+
+private:
+
+    LTLfQuery* simplify(const LTLfQuery& q);
 };
 
 
-#endif //KNOBAB_LTLF_QUERY_H
+#endif //KNOBAB_LTLFQUERYMANAGER_H

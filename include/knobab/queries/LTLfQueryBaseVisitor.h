@@ -5,7 +5,7 @@
 
 
 #include "antlr4-runtime.h"
-#include "LTLfQueryVisitor.h"
+#include "knobab/queries/LTLfQueryVisitor.h"
 
 
 /**
