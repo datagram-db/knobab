@@ -2,6 +2,6 @@
 // Generated from ../src/knobab/queries/LTLfQuery.g4 by ANTLR 4.9.3
 
 
-#include "LTLfQueryBaseVisitor.h"
+#include "knobab/queries/LTLfQueryBaseVisitor.h"
 
 

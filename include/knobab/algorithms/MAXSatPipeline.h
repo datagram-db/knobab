@@ -9,7 +9,7 @@
 #include <yaucl/bpm/structures/declare/CNFDeclareDataAware.h>
 #include "atomization_pipeline.h"
 #include "knobab/trace_repairs/DataQuery.h"
-#include "yaucl/bpm/structures/ltlf/ltlf_query.h"
+#include "knobab/queries/LTLfQueryManager.h"
 #include <yaucl/numeric/ssize_t.h>
 #include <knobab/queries/DeclareQueryLanguageParser.h>
 
@@ -27,7 +27,7 @@
 
 
 struct MAXSatPipeline {
-    ltlf_query_manager qm;
+    LTLfQueryManager qm;
 
 #ifdef MAXSatPipeline_PARALLEL
     // A global thread pool object, automatically determining the threads with the number of the architecture ones
@@ -74,6 +74,7 @@ struct MAXSatPipeline {
     void data_chunk(CNFDeclareDataAware* model, const AtomizingPipeline& atomization, const KnowledgeBase& kb);
     void actual_query_running(const KnowledgeBase& kb);
 
+    size_t pushAtomDataQuery(const DataQuery &q, bool directlyFromCache);
 };
 
 

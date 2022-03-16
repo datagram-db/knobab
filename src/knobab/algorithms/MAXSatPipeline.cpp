@@ -8,6 +8,7 @@
 #include <knobab/utilities/SetOperators.h>
 #include <knobab/operators/simple_ltlf_operators.h>
 #include <yaucl/functional/assert.h>
+#include <knobab/operators/fast_ltlf_operators.h>
 #include "knobab/algorithms/MAXSatPipeline.h"
 
 
@@ -59,7 +60,7 @@ void MAXSatPipeline::pipeline(CNFDeclareDataAware* model,
 
     {
         auto start = std::chrono::system_clock::now();
-        ///actual_query_running(kb);
+        actual_query_running(kb);
         auto end = std::chrono::system_clock::now();
         auto elapsed =
                 std::chrono::duration<double, std::milli>(end - start);
@@ -73,7 +74,7 @@ void MAXSatPipeline::data_chunk(CNFDeclareDataAware *model,
                                 const KnowledgeBase& kb) {
 
     if (!model) return;
-    std::vector<std::pair<std::pair<trace_t, event_t>, double>> empty_result{};
+    static std::vector<std::pair<std::pair<trace_t, event_t>, double>> empty_result{};
     declare_model = model;
     std::vector<LTLfQuery*> W;
     //label_set_t visitedAtoms;
@@ -95,7 +96,8 @@ void MAXSatPipeline::data_chunk(CNFDeclareDataAware *model,
             // Caching the query, so to generate a pointer to an experssion that was already computed.
             // The query plan manager will identfy the common expressions, and will let represent those only ones
             // via caching and mapping.
-            LTLfQuery* formula = qm.simplify(maxFormulaId,
+            LTLfQuery* formula = qm.simplify(atomization.act_atoms,
+                                             maxFormulaId,
                                              it2->second,
                                              cp.first->isTruth() ? nullptr : (const DeclareDataAware *) &cp.first,
                                              atomization.atom_universe,
@@ -103,6 +105,40 @@ void MAXSatPipeline::data_chunk(CNFDeclareDataAware *model,
                                              item.right_decomposed_atoms,
                                              toUseAtoms,
                                              atomToFormulaId);
+
+            // Setting specific untimed atom queries, that can be run directly and separatedly
+
+            if ((!formula->fields.id.parts.is_timed) && (atomization.act_atoms.contains(*formula->atom.begin()))) {
+                switch (formula->t) {
+                    case LTLfQuery::INIT_QP:{
+                        formula->result_id = pushAtomDataQuery(DataQuery::InitQuery(*formula->atom.begin()), true);
+                        formula->fields.id.parts.directly_from_cache = true;
+                        break;
+                    }
+                    case LTLfQuery::END_QP: {
+                        formula->result_id = pushAtomDataQuery(DataQuery::EndsQuery(*formula->atom.begin()), true);
+                        formula->fields.id.parts.directly_from_cache = true;
+                        break;
+                    }
+                    case LTLfQuery::EXISTS_QP: {
+                        formula->result_id = pushAtomDataQuery(DataQuery::ExistsQuery(*formula->atom.begin()), true);
+                        formula->fields.id.parts.directly_from_cache = true;
+                        break;
+                    }
+                    case LTLfQuery::ABSENCE_QP: {
+                        formula->result_id = pushAtomDataQuery(DataQuery::AbsenceQuery(*formula->atom.begin()), true);
+                        formula->fields.id.parts.directly_from_cache = true;
+                        break;
+                    }
+
+                    default: break;
+                }
+            } else {
+                // I need to decompose the atoms if and only if I do not need to compose those into multiple elements
+                qm.atomsToDecomposeInUnion.emplace_back(formula);
+                formula->fields.id.parts.directly_from_cache = false;
+                toUseAtoms.insert(toUseAtoms.end(), formula->atom.begin(), formula->atom.end());
+            }
 
             // Storing the expression that we analysed.
             fomulaidToFormula.emplace_back(formula);
@@ -114,29 +150,19 @@ void MAXSatPipeline::data_chunk(CNFDeclareDataAware *model,
     for (auto& ref : atomToFormulaId)
         remove_duplicates(ref.second);
     qm.finalize_unions(W, (KnowledgeBase*)&kb); // Time Computational Complexity: Squared on the size of the atoms
-
-#ifdef DEBUG
-    for (const auto& ref : W) {
-        std::cout << *ref << std::endl;
-    }
-#endif
+//
+//#ifdef DEBUG
+//    for (const auto& ref : W) {
+//        std::cout << *ref << std::endl;
+//    }
+//#endif
     remove_duplicates(toUseAtoms);
 
-    std::cout << "Step3" << std::endl;
     // TODO: AtomQuery is not required, as range queries already have the atom information!
     // Just the Act iteration
     auto toUseAtomsEnd = std::stable_partition(toUseAtoms.begin(), toUseAtoms.end(), [&](const auto& x) { return atomization.act_atoms.contains(x); });
     for (auto it = toUseAtoms.begin(); it != toUseAtomsEnd; it++) {
-        auto q = DataQuery::AtomQuery(*it);
-        size_t offset = data_accessing.size();
-        auto find = data_offset.emplace(q, offset);
-        if (find.second){
-            offset = data_accessing.size();
-            data_accessing.emplace_back(q, empty_result);
-        } else
-            offset = (find.first->second);
-        maxPartialResultId = std::max(maxPartialResultId, (ssize_t)offset);
-        atomToResultOffset.emplace_back(std::set<size_t>{offset});
+        pushAtomDataQuery(DataQuery::AtomQuery(*it), false);
     }
     barrier_to_range_queries = data_accessing.size();
     barriers_to_atfo = atomToResultOffset.size();
@@ -158,7 +184,7 @@ void MAXSatPipeline::data_chunk(CNFDeclareDataAware *model,
             //       the remainder by interval. By doing so, we are going to pay the access to clause.label
             //       only once, and we are going to scan the whole range at most linearly instead of performing
             //       at most linear scans for each predicate.
-            //       Then, the access can be parallelized by variable name, as they are going to query separated tables
+            //       Then, the access canfomulaidToFormula be parallelized by variable name, as they are going to query separated tables
             auto q = DataQuery::RangeQuery(interval_data_query.label, interval_data_query.var, interval_data_query.value, interval_data_query.value_upper_bound);
             size_t tmpDataAccessingSize =  data_accessing.size();
             auto find = data_offset.emplace(q, tmpDataAccessingSize);
@@ -172,11 +198,27 @@ void MAXSatPipeline::data_chunk(CNFDeclareDataAware *model,
                 tmpRanges.emplace_back(find.first->second);
             }
         }
-#ifdef DEBUG
-        std::cout << atomToResultOffset.size() << "<=>" << interval_to_interval_queries_to_intersect->first << "-->" << tmpRanges << std::endl;
-#endif
+//#ifdef DEBUG
+//        std::cout << atomToResultOffset.size() << "<=>" << interval_to_interval_queries_to_intersect->first << "-->" << tmpRanges << std::endl;
+//#endif
         atomToResultOffset.emplace_back(tmpRanges.begin(), tmpRanges.end());
     }
+}
+
+size_t MAXSatPipeline::pushAtomDataQuery(const DataQuery &q, bool directlyFromCache) {
+    static std::vector<std::pair<std::pair<trace_t, event_t>, double>> empty_result{};
+    size_t offset = data_accessing.size();
+    auto find = data_offset.emplace(q, offset);
+    if (find.second){
+        offset = data_accessing.size();
+        data_accessing.emplace_back(q, empty_result);
+    } else
+        offset = (find.first->second);
+    maxPartialResultId = std::max(maxPartialResultId, (ssize_t)offset);
+    if (!directlyFromCache) {
+        atomToResultOffset.emplace_back(std::set<size_t>{offset});
+    }
+    return offset;
 }
 
 
@@ -526,7 +568,7 @@ void MAXSatPipeline::actual_query_running(const KnowledgeBase& kb) {
     // After accessing the data, we perform the interval intersection between these
     // The computational complexity should be squared on the size of the atoms
     auto set_decomposition_result = partition_sets(atomToResultOffset);
-    std::cout << set_decomposition_result << std::endl;
+    ///std::cout << set_decomposition_result << std::endl;
     size_t isFromFurtherDecomposition = set_decomposition_result.minimal_common_subsets.size();
 
     std::vector<PartialResult> resultOfS(set_decomposition_result.minimal_common_subsets.size() + set_decomposition_result.minimal_common_subsets_composition.size());
@@ -573,18 +615,152 @@ void MAXSatPipeline::actual_query_running(const KnowledgeBase& kb) {
     for (size_t i = 0, N = toUseAtoms.size(); i<N; i++) {
         auto& atom = toUseAtoms.at(i);
         for (size_t formulaId : atomToFormulaId.at(atom)) {
-            fomulaidToFormula.at(formulaId)->associateDataQueryIdsToFormulaByAtom(atom, i);
+            fomulaidToFormula.at(formulaId)->associateDataQueryIdsToFormulaByAtom(atom, i);// setting the partial results for the data pipeline
         }
     }
 
+    /// Scanning the query plan starting from the leaves (rbegin) towards the actual declare formulae (rend)
     auto it = qm.Q.rbegin(), en = qm.Q.rend();
     for (; it != en; it++) {
         Result tmp_result;
-
-#if OLD_VERSION_OF_THE_LOOP
         PARALLELIZE_LOOP_BEGIN(pool, 0, it->second.size(), lb, ub)
             for (size_t j = lb; j < ub; j++) {
                 auto formula = it->second.at(j); // TODO: run this query
+                if (!formula) continue;
+
+                if (formula->fields.id.parts.directly_from_cache) {
+                    ResultRecordSemantics R{1.0, {}};
+                    if (formula->declare_type == DECLARE_TYPE_LEFT) {
+                        R.second.emplace_back(marked_event::left(0));
+                    } else if (formula->declare_type == DECLARE_TYPE_RIGHT) {
+                        R.second.emplace_back(marked_event::right(0));
+                    }
+                    for (const auto& ref : data_accessing.at(formula->result_id).second) {
+                        if (formula->declare_type == DECLARE_TYPE_LEFT)
+                            R.second.at(0).id.parts.left = ref.first.second;
+                        else if (formula->declare_type == DECLARE_TYPE_RIGHT)
+                            R.second.at(0).id.parts.right = ref.first.second;
+                        formula->result.emplace_back(ref.first, R);
+                    }
+                } else {
+                    // Combine the results from the results_cache
+                    switch (formula->t) {
+                        case LTLfQuery::INIT_QP:
+                            data_merge(formula->partial_results, results_cache, formula->result, formula->declare_type);
+                            formula->result.erase(std::remove_if(formula->result.begin(),
+                                                                 formula->result.end(),
+                                                                 [](const auto&  x){return x.first.second > 0;}),
+                                                  formula->result.end());
+                            break;
+
+                        case LTLfQuery::END_QP:
+                            // This never has a theta condition to consider
+                            // This will only work when data conditions are also considered
+                            data_merge(formula->partial_results, results_cache, formula->result, formula->declare_type);
+                            formula->result.erase(std::remove_if(formula->result.begin(),
+                                                                 formula->result.end(),
+                                                                 [kb](const auto&  x){return x.first.second < kb.act_table_by_act_id.trace_length.at(x.first.first)-1;}),
+                                                  formula->result.end());
+                            break;
+
+                        case LTLfQuery::EXISTS_QP:
+                            absence_or_exists(formula, results_cache);
+                            break;
+
+                        case LTLfQuery::ABSENCE_QP:
+                            // The difference with absence is that, if it is absent, then it shall not be there with the same number
+                            absence_or_exists(formula, results_cache);
+                            formula->result = negateUntimed(formula->result, kb.act_table_by_act_id.trace_length, false);
+
+                        case LTLfQuery::NEXT_QP:
+                            formula->result = next(formula->args.at(0)->result);
+                            break;
+
+                        case LTLfQuery::OR_QP:
+                            local_union(formula, formula->result, formula->fields.id.parts.is_timed);
+                            break;
+
+                        case LTLfQuery::AND_QP:
+                            local_intersection(formula, formula->result, formula->fields.id.parts.is_timed);
+                            break;
+
+                        case LTLfQuery::IMPL_QP:
+                            break;
+
+                        case LTLfQuery::IFTE_QP:
+                            break;
+
+                        case LTLfQuery::U_QP:
+                            if (formula->fields.id.parts.is_timed)
+                                until_logic_timed(formula->args.at(0)->result,
+                                                  formula->args.at(1)->result,
+                                                  formula->result,
+                                                  formula->joinCondition,
+                                                  kb.act_table_by_act_id.trace_length);
+                            else
+                                until_logic_untimed(formula->args.at(0)->result,
+                                                    formula->args.at(1)->result,
+                                                    formula->result,
+                                                    formula->joinCondition,
+                                                    kb.act_table_by_act_id.trace_length);
+                            break;
+
+                        case LTLfQuery::G_QP:
+                            if (formula->fields.id.parts.is_timed)
+                                global_logic_timed(formula->args.at(0)->result, formula->result, kb.act_table_by_act_id.trace_length);
+                            else
+                                global_logic_untimed(formula->args.at(0)->result, formula->result, kb.act_table_by_act_id.trace_length);
+                            break;
+
+                        case LTLfQuery::F_QP:
+                            if (formula->fields.id.parts.is_timed)
+                                future_logic_timed(formula->args[0]->result, formula->result, kb.act_table_by_act_id.trace_length);
+                            else
+                                future_logic_untimed(formula->args[0]->result, formula->result, kb.act_table_by_act_id.trace_length);
+                            break;
+
+                        case LTLfQuery::NOT_QP:
+                            if (formula->fields.id.parts.is_timed)
+                                negated_logic_timed(formula->args[0]->result, formula->result, kb.act_table_by_act_id.trace_length);
+                            else
+                                negated_logic_untimed(formula->args[0]->result, formula->result, kb.act_table_by_act_id.trace_length);
+                            break;
+
+                        case LTLfQuery::AF_QPT:
+                            if (formula->fields.id.parts.is_timed)
+                                aAndFutureB_timed(formula->args.at(0)->result,
+                                                  formula->args.at(1)->result,
+                                                  formula->result,
+                                                  formula->joinCondition,
+                                                  kb.act_table_by_act_id.trace_length);
+                            else
+                                throw std::runtime_error("AndFuture is untimed: unexpected implementation!");
+                            break;
+
+                        case LTLfQuery::AXG_QPT:
+                            if (formula->fields.id.parts.is_timed)
+                                aAndNextGloballyB_timed(formula->args.at(0)->result,
+                                                  formula->args.at(1)->result,
+                                                  formula->result,
+                                                  formula->joinCondition,
+                                                  kb.act_table_by_act_id.trace_length);
+                            else
+                                throw std::runtime_error("AndNextGlobally is untimed: unexpected implementation!");
+                            break;
+
+                        case LTLfQuery::FALSEHOOD_QP:
+                            formula->result.clear();
+                            break;
+                    }
+                }
+
+                /// One possible implementation, just for the logical operators.
+                /// A different set of switch statements and of ways to do the unions/intersections should be exploited
+                /// for different specifications.
+
+
+
+#if OLD_VERSION_OF_THE_LOOP
                 switch (formula->casusu) {
                     case Q_TRUE:
                         DEBUG_ASSERT(false);
@@ -691,11 +867,12 @@ void MAXSatPipeline::actual_query_running(const KnowledgeBase& kb) {
                         formula->result = negateUntimed(formula->result, kb.act_table_by_act_id.trace_length, false);
                     } break;
                 }
+#endif
             }
         PARALLELIZE_LOOP_END
-#endif
-        // TODO: parallelized run over the it->second, and store the results
     }
+
+    /// TODO: different enseble methods
 
     if (!qm.Q.empty()) {
         // Only one possibility, for MaxSAT
