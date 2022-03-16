@@ -19,9 +19,6 @@ void whole_testing(const std::string& log_file = "data/testing/log.txt",
                    const std::string& benchmarking_file = "",
                    const std::string& sqlminer_dump_dir = "",
                    bool doStats = true,
-                   size_t noThreads = 1,
-                   const std::string& script_for_decomposition = "scripts/logic_plan.queryplan",
-                   const std::string& preferredPlan = "efficient",
                    const std::string& atomization_file = "",
                    bool load_data = true,
                    const std::string& maxsat = "scripts/maxsat_pipeline.yaml") {
@@ -664,14 +661,11 @@ int main(int argc, char **argv) {
     bool do_data = true;
     log_data_format format = HUMAN_READABLE_YAUCL;
     std::string log_file = "data/testing/log.txt";
-    std::string scripts = "scripts/logic_plan.queryplan";
     std::string atomization_file = "scripts/atomization_pipeline.yaml";
-    std::string planPreferred = "efficient";
     std::string max_conf_file = "scripts/maxsat_pipeline.yaml";
     std::string benchmark = "";
     std::string sql_miner_dump_folder = "";
     std::vector<std::string> queriesV{};
-    size_t no_threads = 1;
     args::ArgumentParser parser("KnoBAB  (c) 2020-2022 by Giacomo Bergami & Samuel 'Sam' Appleby.", "This free and open software program implements the MaxSat problem via a Knowledge Base, KnoBAB. Nicer things are still to come!");
     args::HelpFlag help(parser, "help", "Display this help menu", {'h', "help"});
 
@@ -685,11 +679,6 @@ int main(int argc, char **argv) {
     args::Flag no_data(group, "nodata", "Ignores the payload when loading the data", {'o', "nodata"});
 
     args::Flag do_notcompute_trace_Stats(group, "do_not_compute_trace_stats", "Whether the code will lose time in calculating the statistics for the traces", {'n', "nostats"});
-#ifdef MAXSatPipeline_PARALLEL
-    args::ValueFlag<size_t> parallel(group, "#threads", "Specifies the number of the threads to be run over the query plan", {'p', "threads"});
-#else
-    args::ValueFlag<size_t> parallel(group, "#threads", "[Ineffective: the program is compiled in sequential mode]", {'p', "threads"});
-#endif
     args::ValueFlagList<std::string> queries(group, "Models/Queries", "The queries expressed as Declare models", {'d', "declare"});
     args::ValueFlag<std::string> decomposition(group, "Script", "specifies the path where to load the declare LTLf decomposition model", {'c', "declareDecomposition"});
     args::ValueFlag<std::string> plan(group, "Plan", "specifies the preferred plan to be run from the script", {'l', "plan"});
@@ -743,12 +732,6 @@ int main(int argc, char **argv) {
     if (sqlMinerDump) {
         sql_miner_dump_folder = args::get(sqlMinerDump);
     }
-    if (decomposition) {
-        scripts = args::get(decomposition);
-    }
-    if (plan) {
-        planPreferred = args::get(plan);
-    }
     if (atomization_pipeline) {
         atomization_file = args::get(plan);
     }
@@ -758,13 +741,7 @@ int main(int argc, char **argv) {
     if (maxSatConf) {
         max_conf_file = args::get(maxSatConf);
     }
-#ifdef MAXSatPipeline_PARALLEL
-    if (parallel) {
-        no_threads = args::get(parallel);
-    }
-    args::ValueFlag<size_t> parallel(group, "#threads", "Specifies the number of the threads to be run over the query plan", {'p', "threads"});
-#endif
-    whole_testing(log_file, format, queriesV, setUpServer, benchmark, sql_miner_dump_folder, doStats, no_threads, scripts, planPreferred, atomization_file, do_data);
+    whole_testing(log_file, format, queriesV, setUpServer, benchmark, sql_miner_dump_folder, doStats, atomization_file, do_data);
 
     //generate_nonunary_templates();
     //test_data_query();
