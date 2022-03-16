@@ -222,9 +222,9 @@ size_t MAXSatPipeline::pushAtomDataQuery(const DataQuery &q, bool directlyFromCa
 }
 
 
-static inline void setUnion(const PartialResult& lhs,
-                            const PartialResult& rhs,
-                            std::back_insert_iterator<PartialResult> d_first) {
+static inline void partialResultUnion(const PartialResult& lhs,
+                                      const PartialResult& rhs,
+                                      std::back_insert_iterator<PartialResult> d_first) {
     env e1, e2;
     auto first1 = lhs.begin(), last1 = lhs.end(), first2 = rhs.begin(), last2 = rhs.end();
     std::pair<uint32_t, uint16_t> pair, pair1;
@@ -249,9 +249,9 @@ static inline void setUnion(const PartialResult& lhs,
     std::copy(first2, last2, d_first);
 }
 
-static inline void setIntersection(const PartialResult& lhs,
-                                   const PartialResult& rhs,
-                                    std::back_insert_iterator<PartialResult> d_first) {
+static inline void partialResultIntersection(const PartialResult& lhs,
+                                             const PartialResult& rhs,
+                                             std::back_insert_iterator<PartialResult> d_first) {
     env e1, e2;
     auto first1 = lhs.begin(), last1 = lhs.end(), first2 = rhs.begin(), last2 = rhs.end();
     std::pair<uint32_t, uint16_t> pair, pair1;
@@ -283,9 +283,9 @@ std::vector<std::pair<std::pair<trace_t, event_t>, double>> local_intersection(c
     for (std::size_t i = 1; i < vecs.size(); ++i) {
         it++;
         auto ref = results.at(*it).second;
-        setIntersection(last_intersection,
-                              ref,
-                              std::back_inserter(curr_intersection));
+        partialResultIntersection(last_intersection,
+                                  ref,
+                                  std::back_inserter(curr_intersection));
         std::swap(last_intersection, curr_intersection);
         curr_intersection.clear();
     }
@@ -301,9 +301,9 @@ static inline PartialResult local_intersection(const std::set<size_t> &vecs,
     for (std::size_t i = 1; i < vecs.size(); ++i) {
         it++;
         auto& ref = results.at(*it);
-        setIntersection(last_intersection,
-                        ref,
-                        std::back_inserter(curr_intersection));
+        partialResultIntersection(last_intersection,
+                                  ref,
+                                  std::back_inserter(curr_intersection));
         std::swap(last_intersection, curr_intersection);
         curr_intersection.clear();
     }
@@ -349,27 +349,29 @@ static inline void data_merge(const std::set<size_t> &vecs,
     for (std::size_t i = 1; i < vecs.size(); ++i) {
         it++;
         auto ref = results.at(*it);
-        setUnion(last_intersection,
-                        ref,
-                        std::back_inserter(curr_intersection));
+        partialResultUnion(last_intersection,
+                           ref,
+                           std::back_inserter(curr_intersection));
         std::swap(last_intersection, curr_intersection);
         curr_intersection.clear();
     }
 
+    ResultRecord rcx;
+    if (isLeaf == DECLARE_TYPE_LEFT)
+        rcx.second.second.emplace_back(marked_event::activation(0));
+    else if (isLeaf == DECLARE_TYPE_RIGHT)
+        rcx.second.second.emplace_back(marked_event::target(0));
+
     // TODO: better done through views!
     for (auto it = last_intersection.begin(); it != last_intersection.end(); it = last_intersection.erase(it)) {
-        switch (isLeaf) {
-            case DECLARE_TYPE_LEFT:
-                result.emplace_back(it->first, std::make_pair(it->second, MarkedEventsVector{marked_event::activation(it->first.second)}));
-            case DECLARE_TYPE_RIGHT:
-                result.emplace_back(it->first, std::make_pair(it->second, MarkedEventsVector{marked_event::target(it->first.second)}));
-                break;
-            default:
-                result.emplace_back(it->first, std::make_pair(it->second, MarkedEventsVector{}));
-                break;
-        }
+        rcx.first = it->first;
+        rcx.second.first = it->second;
+        if (isLeaf == DECLARE_TYPE_LEFT)
+            rcx.second.second.at(0).id.parts.left = it->first.second;
+        else if (isLeaf == DECLARE_TYPE_RIGHT)
+            rcx.second.second.at(0).id.parts.right = it->first.second;
+        result.emplace_back(rcx);
     }
-
 }
 
 static inline void local_union(const LTLfQuery* q, Result& last_union, bool isTimed = true) {
@@ -800,7 +802,6 @@ void MAXSatPipeline::actual_query_running(const KnowledgeBase& kb) {
         // Others should follow, like the one for maximum satisfiability, for computing
     } else {
     }
-
 
 }
 
