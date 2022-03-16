@@ -2,8 +2,18 @@
 // Created by giacomo on 16/02/2022.
 //
 
-#include "yaucl/bpm/structures/ltlf/ltlf_query.h"
+#include "knobab/queries/ltlf_query.h"
 #include <stack>
+"bits/stl_stack.h"
+"bits/stl_algobase.h"
+"bits/stl_algo.h"
+"bits/allocator.h"
+"bits/stl_construct.h"
+"bits/stl_uninitialized.h"
+"bits/stl_deque.h"
+"bits/range_access.h"
+"bits/deque.tcc"
+"bits/stl_stack.h"
 
 static inline void topological_sort(const std::vector<LTLfQuery*>& W,
                                     std::vector<LTLfQuery*>& vertexOreder) {
@@ -160,6 +170,9 @@ void ltlf_query_manager::finalize_unions(const std::vector<LTLfQuery*>& W, Knowl
 }
 
 #include <iostream>
+"bits/c++config.h"
+"bits/c++config.h"
+"bits/c++config.h"
 
 LTLfQuery *ltlf_query_manager::simplify(size_t formulaId,
                                         const LTLfQuery &input,
