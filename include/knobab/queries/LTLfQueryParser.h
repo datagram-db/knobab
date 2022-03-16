@@ -140,8 +140,8 @@ public:
     InitContext(QueryContext *ctx);
 
     antlr4::tree::TerminalNode *INIT();
-    Declare_argumentsContext *declare_arguments();
     antlr4::tree::TerminalNode *TIMED();
+    Declare_argumentsContext *declare_arguments();
     virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
     virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
 
@@ -168,9 +168,9 @@ public:
     AbsenceContext(QueryContext *ctx);
 
     antlr4::tree::TerminalNode *ABSENCE();
-    Declare_argumentsContext *declare_arguments();
     antlr4::tree::TerminalNode *INTNUMBER();
     antlr4::tree::TerminalNode *TIMED();
+    Declare_argumentsContext *declare_arguments();
     virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
     virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
 
@@ -275,10 +275,10 @@ public:
     ExistsContext(QueryContext *ctx);
 
     antlr4::tree::TerminalNode *EXISTS();
-    Declare_argumentsContext *declare_arguments();
     antlr4::tree::TerminalNode *INTNUMBER();
     antlr4::tree::TerminalNode *TIMED();
     antlr4::tree::TerminalNode *NEGATED();
+    Declare_argumentsContext *declare_arguments();
     virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
     virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
 
@@ -290,8 +290,8 @@ public:
     EndContext(QueryContext *ctx);
 
     antlr4::tree::TerminalNode *END();
-    Declare_argumentsContext *declare_arguments();
     antlr4::tree::TerminalNode *TIMED();
+    Declare_argumentsContext *declare_arguments();
     virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
     virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
 

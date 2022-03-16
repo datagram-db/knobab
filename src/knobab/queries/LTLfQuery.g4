@@ -9,10 +9,10 @@ declare_syntax : 'template' STRING has_args? ':=' query;
 
 has_args : 'args' INTNUMBER;
 
-query : INIT TIMED? declare_arguments                                            #init
-      | END  TIMED? declare_arguments                                            #end
-      | EXISTS TIMED? NEGATED? declare_arguments INTNUMBER                                #exists
-      | ABSENCE TIMED? declare_arguments INTNUMBER                               #absence
+query : INIT TIMED? declare_arguments?                                            #init
+      | END  TIMED? declare_arguments?                                            #end
+      | EXISTS TIMED? NEGATED? declare_arguments? INTNUMBER                                #exists
+      | ABSENCE TIMED? declare_arguments? INTNUMBER                               #absence
       | NEXT query                                                        #next
       |<assoc=right> query OR TIMED? THETA? query                                      #or
       |<assoc=right> query AND TIMED? THETA? query                                     #and

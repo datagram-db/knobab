@@ -9,8 +9,9 @@
 #include <yaucl/bpm/structures/declare/CNFDeclareDataAware.h>
 #include "atomization_pipeline.h"
 #include "knobab/trace_repairs/DataQuery.h"
-#include "yaucl/bpm/structures/ltlf/ltlf_query.h"
+#include "knobab/queries/LTLfQueryManager.h"
 #include <yaucl/numeric/ssize_t.h>
+#include <knobab/queries/DeclareQueryLanguageParser.h>
 
 //#define MAXSatPipeline_PARALLEL
 
@@ -23,10 +24,19 @@
 #define PARALLELIZE_LOOP_END                                      } while(0);
 #endif
 
+enum EnsembleMethods {
+    PerDeclareSupport,
+    TraceMaximumSatisfiability,
+    TraceIntersection,
+};
 
+enum OperatorQueryPlan {
+    AbidingLogic,
+    FastOperator_v1
+};
 
 struct MAXSatPipeline {
-    ltlf_query_manager qm;
+    LTLfQueryManager qm;
 
 #ifdef MAXSatPipeline_PARALLEL
     // A global thread pool object, automatically determining the threads with the number of the architecture ones
@@ -34,29 +44,37 @@ struct MAXSatPipeline {
 #endif
 
     // Input
-
     double declare_to_ltlf_time = 0.0;
     double ltlf_query_time = 0.0;
+    DeclareQueryLanguageParser dqlp;
+    std::unordered_map<std::string, LTLfQuery>* ptr = nullptr;
+    std::vector<LTLfQuery*> declare_to_query;
 
     CNFDeclareDataAware* declare_model = nullptr;
     static std::string LEFT_ATOM, RIGHT_ATOM;
 
-    std::unordered_map<declare_templates, ltlf> ltlf_semantics;
+    //std::unordered_map<declare_templates, ltlf> ltlf_semantics;
     std::unordered_map<std::string , std::vector<size_t>> atomToFormulaId;
     size_t maxFormulaId = 0;
-    std::vector<ltlf_query*> fomulaidToFormula;
+    std::vector<LTLfQuery*> fomulaidToFormula;
 
-    MAXSatPipeline(size_t nThreads);
+    MAXSatPipeline(const std::string& plan_file, const std::string& plan, size_t nThreads);
     DEFAULT_COPY_ASSGN(MAXSatPipeline)
 
+    EnsembleMethods final_ensemble;
+    OperatorQueryPlan operators;
+
+    // Ensemble methods' results
+    Result result;
+    std::vector<double> support_per_declare;
+    std::vector<double> max_sat_per_trace;
 
     // DATA
-    Result result;
     ssize_t maxPartialResultId = -1;
     std::unordered_map<DataQuery, size_t> data_offset;
     std::vector<std::pair<DataQuery, std::vector<std::pair<std::pair<trace_t, event_t>, double>>>> data_accessing;
     std::unordered_map<std::string, std::unordered_map<std::string,std::vector<size_t>>> data_accessing_range_query_to_offsets;
-    std::unordered_map<DeclareDataAware, std::unordered_map<std::pair<bool, std::string>, label_set_t>> declare_atomization;
+    std::unordered_map<DeclareDataAware, size_t> declare_atomization;
     std::vector<std::set<size_t>> atomToResultOffset;
     std::vector<std::string> toUseAtoms; // This is to ensure the insertion of unique elements to the map!
     size_t barrier_to_range_queries, barriers_to_atfo;
@@ -67,26 +85,17 @@ struct MAXSatPipeline {
                   const KnowledgeBase& kb);
 
     void clear();
+
+
+    std::string generateGraph() const { return qm.generateGraph(); }
+
+private:
     void data_chunk(CNFDeclareDataAware* model, const AtomizingPipeline& atomization, const KnowledgeBase& kb);
-    void actual_query_running(const KnowledgeBase& kb);
+    std::vector<PartialResult> subqueriesRunning(const KnowledgeBase &kb);
+    void abidinglogic_query_running(const std::vector<PartialResult>& results_cache, const KnowledgeBase& kb);
+    void fast_v1_query_running(const std::vector<PartialResult>& results_cache, const KnowledgeBase& kb);
 
-    void
-    localExtract(const AtomizingPipeline &atomization,
-                 std::vector<std::string> &toUseAtoms,
-                 std::unordered_map<std::pair<bool, std::string>, label_set_t> &ref,
-                 std::unordered_map<std::string, std::unordered_set<bool>> &collection,
-                 const std::unordered_set<std::string> &decomposition, const std::string &collectionMapKey) ;
-
-    void
-    generateAtomQuery(std::vector<std::string> &toUseAtoms,
-                      std::vector<std::pair<std::pair<trace_t, event_t>, double>> &empty_result,
-                      DeclareDataAware &item, ltlf_query *formula, DataQueryType r,
-                      size_t numeric_argument);
-
-    void localExtract(const AtomizingPipeline &atomization, std::vector<std::string> &toUseAtoms,
-                      std::unordered_map<std::pair<bool, std::string>, label_set_t> &ref,
-                      const std::unordered_set<std::string> &decomposition, const std::string &collectionMapKey,
-                      bool isNegated);
+    size_t pushAtomDataQuery(const DataQuery &q, bool directlyFromCache);
 };
 
 

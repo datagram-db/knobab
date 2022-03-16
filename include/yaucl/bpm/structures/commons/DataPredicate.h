@@ -115,10 +115,20 @@ struct DataPredicate {
     DataPredicate(const std::string &var, numeric_atom_cases casusu, const std::string &value, const std::string &label = "");
     DataPredicate(const std::string &var, numeric_atom_cases casusu, const double &value, const std::string &label = "");
 
+    DataPredicate(const std::string& var, const std::string& varRHS, numeric_atom_cases casusu) : var{var}, varRHS{varRHS}, casusu{casusu} {}
     DataPredicate(const std::string& label, const std::string& var, double lb, double ub);
     DataPredicate(const std::string& label, const std::string& var, const std::string& lb, const std::string& ub);
     DataPredicate(const std::string &label, const std::string &var, union_minimal lb, union_minimal ub);
 
+    DataPredicate flip() const {
+        DataPredicate result;
+        result.var = varRHS;
+        result.varRHS = var;
+        result.casusu = casusu;
+        result.label = labelRHS;
+        result.labelRHS = label;
+        return result;
+    }
 
     friend std::ostream &operator<<(std::ostream &os, const DataPredicate &predicate);
     void asInterval();

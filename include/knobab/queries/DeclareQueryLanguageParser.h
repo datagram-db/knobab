@@ -9,6 +9,7 @@
 #include <knobab/queries/LTLfQuery.h>
 #include <knobab/queries/LTLfQueryParser.h>
 #include <knobab/queries/LTLfQueryVisitor.h>
+#include <yaucl/bpm/structures/declare/DeclareDataAware.h>
 #include <stack>
 
 inline unsigned char decleare_templates_determine(LTLfQueryParser::Declare_argumentsContext* ptr) {
@@ -40,6 +41,17 @@ struct DeclareQueryLanguageParser : public LTLfQueryVisitor {
 
     /// VISITORS
     LTLfQuery visitQuery(LTLfQueryParser::QueryContext *pContext);
+
+    void analyse(const std::string& approach, const DeclareDataAware& clause) {
+        auto it = planname_to_declare_to_ltlf.find(approach);
+        if (it == planname_to_declare_to_ltlf.end()) {
+            throw std::runtime_error(std::string("ERROR: plan name ").append(approach).append(" does not exist"));
+        }
+        auto it2 = it->second.find(clause.casusu);
+        if (it2 == it->second.end()) {
+            throw std::runtime_error(std::string("ERROR: plan name ").append(approach).append(" does not implement the specification for the clase ").append(clause.casusu));
+        }
+    }
 
     /// Inherited visitors
     antlrcpp::Any visitInit(LTLfQueryParser::InitContext *context) override;

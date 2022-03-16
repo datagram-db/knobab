@@ -14,6 +14,15 @@ DataQuery DataQuery::ExistsQuery(const std::string &atom, LeafType lt) {
     return returnable;
 }
 
+DataQuery DataQuery::AbsenceQuery(const std::string &atom, LeafType lt) {
+    DataQuery returnable;
+    DEBUG_ASSERT(!atom.empty());
+    returnable.label = atom;
+    returnable.type = DataQueryType::AbsenceQuery;
+    returnable.t = lt;
+    return returnable;
+}
+
 DataQuery DataQuery::AtomQueries (DataQueryType t, const std::string &atom, LeafType lt) {
     DataQuery returnable;
     DEBUG_ASSERT(!atom.empty());
@@ -28,6 +37,7 @@ DataQuery DataQuery::InitQuery(const std::string &atom) {
     DEBUG_ASSERT(!atom.empty());
     returnable.label = atom;
     returnable.type = DataQueryType::InitQuery;
+    returnable.t = NoneLeaf;
     return returnable;
 }
 
@@ -45,6 +55,7 @@ DataQuery DataQuery::EndsQuery(const std::string &atom) {
     DEBUG_ASSERT(!atom.empty());
     returnable.label = atom;
     returnable.type = DataQueryType::EndsQuery;
+    returnable.t = NoneLeaf;
     return returnable;
 }
 

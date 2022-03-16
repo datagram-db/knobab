@@ -293,19 +293,28 @@ double atomize_model(AtomizingPipeline &pipeline_data, CNFDeclareDataAware &disj
     auto t1 = std::chrono::high_resolution_clock::now();
     for ( auto& ref : disjoint_model.singleElementOfConjunction) {
         for ( auto& child : ref.elementsInDisjunction) {
-            //DEBUG_ASSERT(child.conjunctive_map.empty());
-            child.left_decomposed_atoms = pipeline_data.atom_decomposition(child.left_act, false);
-            if (!child.dnf_left_map.empty()) {
-                auto tmp = atomize_disjunction(pipeline_data, child.dnf_left_map);
-                child.left_decomposed_atoms = unordered_intersection(child.left_decomposed_atoms,
-                                              tmp);
+            if (child.dnf_left_map.empty() && (pipeline_data.strategy == AtomizeOnlyOnDataPredicates)) {
+                pipeline_data.act_atoms.insert(child.left_act);
+                child.left_decomposed_atoms.insert(child.left_act);
+            } else {
+                child.left_decomposed_atoms = pipeline_data.atom_decomposition(child.left_act, false);
+                if (!child.dnf_left_map.empty()) {
+                    auto tmp = atomize_disjunction(pipeline_data, child.dnf_left_map);
+                    child.left_decomposed_atoms = unordered_intersection(child.left_decomposed_atoms,
+                                                                         tmp);
+                }
             }
             if (!child.right_act.empty()) {
-                child.right_decomposed_atoms = pipeline_data.atom_decomposition(child.right_act, false);
-                if (!child.dnf_right_map.empty()) {
-                    auto tmp = atomize_disjunction(pipeline_data, child.dnf_right_map);
-                    child.right_decomposed_atoms = unordered_intersection(child.right_decomposed_atoms,
-                                                                          tmp);
+                if (child.dnf_right_map.empty() && (pipeline_data.strategy == AtomizeOnlyOnDataPredicates)) {
+                    pipeline_data.act_atoms.insert(child.right_act);
+                    child.right_decomposed_atoms.insert(child.right_act);
+                } else {
+                    child.right_decomposed_atoms = pipeline_data.atom_decomposition(child.right_act, false);
+                    if (!child.dnf_right_map.empty()) {
+                        auto tmp = atomize_disjunction(pipeline_data, child.dnf_right_map);
+                        child.right_decomposed_atoms = unordered_intersection(child.right_decomposed_atoms,
+                                                                              tmp);
+                    }
                 }
             }
         }
@@ -318,8 +327,9 @@ double atomize_model(AtomizingPipeline &pipeline_data, CNFDeclareDataAware &disj
         for (size_t i = 0, N = pipeline_data.max_ctam_iteration.at(cp.first); i<N; i++) {
             cp.second = i;                     // cp = <Event Label, Offset>
             // Assertion: one atom should only appear once!
-            DEBUG_ASSERT(pipeline_data.atom_to_conjunctedPredicates.emplace(pipeline_data.clause_to_atomization_map.at(cp),
-                                                                      k.second.at(i)).second);
+            auto it = pipeline_data.atom_to_conjunctedPredicates.emplace(pipeline_data.clause_to_atomization_map.at(cp),
+                                                                         k.second.at(i));
+            DEBUG_ASSERT(it.second);
         }
     }
 

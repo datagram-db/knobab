@@ -5,24 +5,30 @@
 #ifndef KNOBAB_LTLFQUERY_H
 #define KNOBAB_LTLFQUERY_H
 
+#include <set>
 #include <cstddef>
 #include <vector>
 #include <yaucl/structures/bit_tagged_unions.h>
 #include <yaucl/structures/default_constructors.h>
+#include <knobab/operators/semantics.h>
 
 #define DECLARE_TYPE_NONE   (0)
 #define DECLARE_TYPE_LEFT   (1)
 #define DECLARE_TYPE_RIGHT  (2)
 #define DECLARE_TYPE_MIDDLE  (3)
 
-TAGGED_UNION_WITH_ENCAPSULATION_BEGIN(unsigned char, bit_fields, 0, 6, bool has_theta : 1, bool preserve : 1, bool is_atom : 1, bool is_timed:1, bool is_negated:1, bool is_numbered:1)
-    (bool has_theta, bool preserve, bool is_atom, bool is_timed, bool is_negated, bool is_numbered)  {
+using declare_type_t = unsigned char;
+
+TAGGED_UNION_WITH_ENCAPSULATION_BEGIN(unsigned char, bit_fields, 0, 8, bool has_theta : 1, bool preserve : 1, bool is_atom : 1, bool is_timed:1, bool is_negated:1, bool is_numbered:1, bool is_queryplan:1, bool directly_from_cache:1)
+    (bool has_theta, bool preserve, bool is_atom, bool is_timed, bool is_negated, bool is_numbered, bool is_queryplan, bool directly_from_cache)  {
         id.parts.has_theta = has_theta;
         id.parts.preserve = preserve;
         id.parts.is_atom = is_atom;
         id.parts.is_timed = is_timed;
         id.parts.is_negated = is_negated;
         id.parts.is_numbered = is_numbered;
+        id.parts.is_queryplan = is_queryplan;
+        id.parts.directly_from_cache = directly_from_cache;
     }
 TAGGED_UNION_ENCAPSULATOR_END
 
@@ -43,15 +49,32 @@ struct LTLfQuery {
         NOT_QP = 12,
         AF_QPT = 13,
         AXG_QPT = 14,
-        FALSEHOOD_QPT = 15
+        FALSEHOOD_QP = 15
     };
     type t;
-    short declare_type = 0;
+    declare_type_t declare_type = 0;
     bit_fields fields;
-    size_t n;
-    std::vector<LTLfQuery> args;
+    size_t n; //numeric_arg
 
-    LTLfQuery() : t{FALSEHOOD_QPT}, declare_type{DECLARE_TYPE_NONE}, n{0}, fields{0} {}
+    /// Arguments used while compiling the declare clauses description from the script
+    std::vector<LTLfQuery> args_from_script;
+
+    // AFTER THE COMPILATION OF THE QUERY PLAN. TODO: to be inserted in the definition of hashing and equality
+    std::vector<LTLfQuery*> args;
+    std::set<std::string> atom;
+    std::set<size_t> partial_results;
+    size_t result_id = 0;
+    const DeclareDataAware* joinCondition;
+    size_t parentMin = std::numeric_limits<size_t>::max(), parentMax = 0, dis = 0;
+    Result result;
+    void associateDataQueryIdsToFormulaByAtom(const std::string &x, size_t l) {
+        if (atom.contains(x)) {
+            partial_results.emplace(l);
+        } else for (auto& child : args)
+                child->associateDataQueryIdsToFormulaByAtom(x, l);
+    }
+
+    LTLfQuery() : t{FALSEHOOD_QP}, declare_type{DECLARE_TYPE_NONE}, n{0}, fields{0}, joinCondition{nullptr} {}
     DEFAULT_COPY_ASSGN(LTLfQuery)
 
     bool operator==(const LTLfQuery &rhs) const;
@@ -72,9 +95,9 @@ struct LTLfQuery {
     static LTLfQuery qUNTIL(const LTLfQuery& lhs, const LTLfQuery& rhs, bool isTimed, bool hasTheta);
     static LTLfQuery qBOX(const LTLfQuery& lhs, bool isTimed);
     static LTLfQuery qDIAMOND(const LTLfQuery& lhs, bool isTimed);
-
-
 };
+
+
 
 #include <ostream>
 
@@ -91,7 +114,7 @@ namespace std {
         {
             using yaucl::hashing::hash_combine;
             size_t init = 31;
-            for (const auto& x : k.args)
+            for (const auto& x : k.args_from_script)
                 init = hash_combine<LTLfQuery>(init, x);
             size_t f= hash_combine<size_t>(hash_combine<unsigned char>(hash_combine<short>(hash_combine<size_t>(init, k.t), k.declare_type), k.fields.id.data), k.n);
             return f;

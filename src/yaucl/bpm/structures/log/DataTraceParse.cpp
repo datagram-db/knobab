@@ -54,11 +54,8 @@ void yaucl::bpm::DataTraceParse::load(const std::string &stream_name, std::istre
 }
 
 antlrcpp::Any yaucl::bpm::DataTraceParse::visitLog(TracesParser::LogContext *ctx) {
-    //std::cout << "Log visit starts" << std::endl;
-    //yaucl::bpm::log log;
     if (ctx) {
         for (const auto& ptr : ctx->trace()) {
-            //std::cout << "Trace i" << std::endl;
             visitTrace(ptr);
         }
     }
@@ -66,17 +63,14 @@ antlrcpp::Any yaucl::bpm::DataTraceParse::visitLog(TracesParser::LogContext *ctx
 }
 
 antlrcpp::Any yaucl::bpm::DataTraceParse::visitTrace(TracesParser::TraceContext *ctx) {
-    //yaucl::bpm::trace trace;
     if (ctx) {
         size_t event_count = 1;
         size_t traceId = tv->enterTrace(std::to_string(trace_count));
         isPayloadTrace = true;
-        //std::cout << "Visiting the data" << std::endl;
         visitData_part(ctx->data_part());
         isPayloadTrace = false;
         event_count = 0;
         for (const auto& ptr : ctx->event()) {
-            //std::cout << "Visiting the evebt" << std::endl;
             visitEvent(ptr);
         }
         event_count = 0;
@@ -88,7 +82,6 @@ antlrcpp::Any yaucl::bpm::DataTraceParse::visitTrace(TracesParser::TraceContext 
 
 antlrcpp::Any yaucl::bpm::DataTraceParse::visitEvent(TracesParser::EventContext *ctx) {
     if (ctx) {
-        //std::cout << "Event loading" << std::endl;
         const auto p1 = std::chrono::system_clock::now();
         unsigned long long int timestamp = std::chrono::duration_cast<std::chrono::hours>(p1.time_since_epoch()).count();
         size_t eid = tv->enterEvent(timestamp,ctx->LABEL()->getText());
@@ -102,8 +95,7 @@ antlrcpp::Any yaucl::bpm::DataTraceParse::visitEvent(TracesParser::EventContext 
 }
 
 antlrcpp::Any yaucl::bpm::DataTraceParse::visitData_part(TracesParser::Data_partContext *ctx) {
-    //std::unordered_map<std::string, std::variant<std::string, double>> map;
-    if (ctx) {
+    if (ctx && load_also_data) {
         for (const auto& ptr : ctx->field()) {
             visitField(ptr);
         }
