@@ -17,9 +17,16 @@ struct ltlf_query_manager {
     void generateGraph(std::map<LTLfQuery*, std::vector<LTLfQuery*>>& ref, LTLfQuery*q) const;
     std::string generateGraph() const;
 
+    /**
+     * Clears the manager, so to get ready with another query plan to be analysed
+     */
     void clear();
 
     LTLfQuery* simplify(const LTLfQuery& q);
+
+    void finalize_unions(const std::vector<LTLfQuery*>& W, KnowledgeBase* ptr);
+
+private:
     LTLfQuery *simplify(size_t formulaId,
                         const LTLfQuery &input,
                         const DeclareDataAware *joinCondition,
@@ -28,8 +35,6 @@ struct ltlf_query_manager {
                         const std::unordered_set<std::string> &right,
                         std::vector<std::string> &toUseAtoms,
                         std::unordered_map<std::string , std::vector<size_t>>& atomToFormulaId);
-
-    void finalize_unions(const std::vector<LTLfQuery*>& W, KnowledgeBase* ptr);
 };
 
 
