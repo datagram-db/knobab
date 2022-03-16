@@ -10,6 +10,7 @@ bool LTLfQuery::operator==(const LTLfQuery &rhs) const {
            fields == rhs.fields &&
            n == rhs.n &&
            args_from_script == rhs.args_from_script &&
+           args == rhs.args &&
            atom == rhs.atom &&
            joinCondition == rhs.joinCondition;
 }

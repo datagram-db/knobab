@@ -294,6 +294,7 @@ double atomize_model(AtomizingPipeline &pipeline_data, CNFDeclareDataAware &disj
     for ( auto& ref : disjoint_model.singleElementOfConjunction) {
         for ( auto& child : ref.elementsInDisjunction) {
             if (child.dnf_left_map.empty() && (pipeline_data.strategy == AtomizeOnlyOnDataPredicates)) {
+                pipeline_data.act_atoms.insert(child.left_act);
                 child.left_decomposed_atoms.insert(child.left_act);
             } else {
                 child.left_decomposed_atoms = pipeline_data.atom_decomposition(child.left_act, false);
@@ -305,6 +306,7 @@ double atomize_model(AtomizingPipeline &pipeline_data, CNFDeclareDataAware &disj
             }
             if (!child.right_act.empty()) {
                 if (child.dnf_right_map.empty() && (pipeline_data.strategy == AtomizeOnlyOnDataPredicates)) {
+                    pipeline_data.act_atoms.insert(child.right_act);
                     child.right_decomposed_atoms.insert(child.right_act);
                 } else {
                     child.right_decomposed_atoms = pipeline_data.atom_decomposition(child.right_act, false);
