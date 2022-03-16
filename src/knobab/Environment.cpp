@@ -3,7 +3,7 @@
 //
 
 #include "knobab/Environment.h"
-#include "yaucl/bpm/structures/ltlf/ltlf_query.h"
+#include "knobab/queries/LTLfQueryManager.h"
 
 semantic_atom_set Environment::getSigmaAll() const {
     semantic_atom_set S = ap.act_atoms;
