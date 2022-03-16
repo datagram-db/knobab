@@ -59,7 +59,7 @@ void MAXSatPipeline::pipeline(CNFDeclareDataAware* model,
 
     {
         auto start = std::chrono::system_clock::now();
-        actual_query_running(kb);
+        ///actual_query_running(kb);
         auto end = std::chrono::system_clock::now();
         auto elapsed =
                 std::chrono::duration<double, std::milli>(end - start);
@@ -101,10 +101,8 @@ void MAXSatPipeline::data_chunk(CNFDeclareDataAware *model,
                                              toUseAtoms,
                                              atomToFormulaId);
 
-            ///// OLD PART OF THE CODE!!!!!!!!!!!!!!
-
-
 #if 0
+            /// Old part of the code
             ltlf_query *formula;
             if (item.casusu == "Init") {
                 formula = qm.init1(item.left_act, item.left_decomposed_atoms);
@@ -191,8 +189,6 @@ void MAXSatPipeline::data_chunk(CNFDeclareDataAware *model,
             std::cout << *formula << std::endl;  //todo: debugging
         }
     }
-
-    exit(33);
 
     for (auto& ref : atomToFormulaId)
         remove_duplicates(ref.second);
