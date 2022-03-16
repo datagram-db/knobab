@@ -311,6 +311,8 @@ void ltlf_query_manager::finalize_unions(const std::vector<LTLfQuery*>& W, Knowl
     }
 }
 
+#include <iostream>
+
 LTLfQuery *ltlf_query_manager::simplify(size_t formulaId,
                                         const LTLfQuery &input,
                                         const DeclareDataAware *joinCondition,
@@ -366,6 +368,8 @@ LTLfQuery *ltlf_query_manager::simplify(size_t formulaId,
     for (auto& args : input.args_from_script)
         q.args.emplace_back(simplify(formulaId, args, joinCondition, atom_universe, left, right, toUseAtoms, atomToFormulaId));
     q.fields.id.parts.is_queryplan = true;
+    if (q.atom.contains("B"))
+        std::cout << "DEBUG" << std::endl;
     return simplify(q);
 }
 
@@ -377,6 +381,11 @@ LTLfQuery *ltlf_query_manager::simplify(const LTLfQuery &q) {
     } else {
         auto* ptr = new LTLfQuery();
         *ptr = q;
+        if (q.fields.id.parts.is_atom){
+            atomsToDecomposeInUnion.emplace_back(ptr);
+        }
+        counter.emplace(ptr, 1);
+        assert(conversion_map_for_subexpressions.emplace(q, ptr).second);
         return ptr;
     }
 }
@@ -441,7 +450,8 @@ LTLfQuery *ltlf_query_manager::simplify(const LTLfQuery &q) {
 //            os << ("R (");
 //            return human_readable_ltlf_printing(os, syntax->args.at(1)) << ')' << reset;
 //        case Q_TRUE:
-//            return os << "true"<< reset;
+//
+//    result->atom.insert(rewritten_act.begin(), rewritten_act.end());  return os << "true"<< reset;
 //        case Q_BOX:
 //            if (syntax->isTimed) os << "t";
 //            os << "▢(";
