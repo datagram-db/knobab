@@ -19,14 +19,15 @@
 
 using declare_type_t = unsigned char;
 
-TAGGED_UNION_WITH_ENCAPSULATION_BEGIN(unsigned char, bit_fields, 0, 6, bool has_theta : 1, bool preserve : 1, bool is_atom : 1, bool is_timed:1, bool is_negated:1, bool is_numbered:1)
-    (bool has_theta, bool preserve, bool is_atom, bool is_timed, bool is_negated, bool is_numbered)  {
+TAGGED_UNION_WITH_ENCAPSULATION_BEGIN(unsigned char, bit_fields, 0, 7, bool has_theta : 1, bool preserve : 1, bool is_atom : 1, bool is_timed:1, bool is_negated:1, bool is_numbered:1, bool is_queryplan:1)
+    (bool has_theta, bool preserve, bool is_atom, bool is_timed, bool is_negated, bool is_numbered, bool is_queryplan)  {
         id.parts.has_theta = has_theta;
         id.parts.preserve = preserve;
         id.parts.is_atom = is_atom;
         id.parts.is_timed = is_timed;
         id.parts.is_negated = is_negated;
         id.parts.is_numbered = is_numbered;
+        id.parts.is_queryplan = is_queryplan;
     }
 TAGGED_UNION_ENCAPSULATOR_END
 

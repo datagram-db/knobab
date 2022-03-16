@@ -21,7 +21,8 @@ void whole_testing(const std::string& log_file = "data/testing/log.txt",
                    bool doStats = true,
                    size_t noThreads = 1,
                    const std::string& script_for_decomposition = "scripts/logic_plan.queryplan",
-                   const std::string& preferredPlan = "efficient") {
+                   const std::string& preferredPlan = "efficient",
+                   const std::string& atomization_file = "") {
     Environment env;
     env.clear();
     env.doStats = doStats;
@@ -51,8 +52,10 @@ void whole_testing(const std::string& log_file = "data/testing/log.txt",
         env.print_grounded_model(std::cout); // DEBUG
         //////////////////////////////////////////////////////////////////
 
-        env.set_atomization_parameters("p", 10);
-        //env.set_atomization_parameters(std::filesystem::path(atomization_conf));
+        if (atomization_file.empty())
+            env.set_atomization_parameters("p", 10);
+        else
+            env.set_atomization_parameters(std::filesystem::path(atomization_file));
         //////////////////////////////////////////////////////////////////
 
         std::cout << "Loading the atomization tables given the model" << std::endl;
@@ -631,14 +634,15 @@ void parse_declare_query_planner() {
 
 int main(int argc, char **argv) {
 
-    parse_declare_query_planner();
-    exit(1);
+    //parse_declare_query_planner();
+    //exit(1);
 
     bool setUpServer = false;
     bool doStats = true;
     log_data_format format = HUMAN_READABLE_YAUCL;
     std::string log_file = "data/testing/log.txt";
     std::string scripts = "scripts/logic_plan.queryplan";
+    std::string atomization_file = "scripts/atomization_pipeline.yaml";
     std::string planPreferred = "efficient";
     std::string benchmark = "";
     std::string sql_miner_dump_folder = "";
@@ -663,7 +667,7 @@ int main(int argc, char **argv) {
     args::ValueFlagList<std::string> queries(group, "Models/Queries", "The queries expressed as Declare models", {'d', "declare"});
     args::ValueFlag<std::string> decomposition(group, "Script", "specifies the path where to load the declare LTLf decomposition model", {'c', "declareDecomposition"});
     args::ValueFlag<std::string> plan(group, "Plan", "specifies the preferred plan to be run from the script", {'l', "plan"});
-
+    args::ValueFlag<std::string> atomization_pipeline(group, "YamlFile", "specifies the configuration file for the atomization pipeline", {'a', "atomization"});
     args::ValueFlag<std::string> benchmarkFile(group, "Benchmark File", "Appends the current Result data into a benchmark file", {'b', "csv"});
     args::ValueFlag<std::string>  sqlMinerDump(group, "SQLMinerDump", "If present, specifies the dump for the SQL miner representation", {'s', "sqlminer"});
 
@@ -717,13 +721,16 @@ int main(int argc, char **argv) {
     if (plan) {
         planPreferred = args::get(plan);
     }
+    if (atomization_pipeline) {
+        atomization_file = args::get(plan);
+    }
 #ifdef MAXSatPipeline_PARALLEL
     if (parallel) {
         no_threads = args::get(parallel);
     }
     args::ValueFlag<size_t> parallel(group, "#threads", "Specifies the number of the threads to be run over the query plan", {'p', "threads"});
 #endif
-    whole_testing(log_file, format, queriesV, setUpServer, benchmark, sql_miner_dump_folder, doStats, no_threads, scripts, planPreferred);
+    whole_testing(log_file, format, queriesV, setUpServer, benchmark, sql_miner_dump_folder, doStats, no_threads, scripts, planPreferred, atomization_file);
 
     //generate_nonunary_templates();
     //test_data_query();
@@ -733,17 +740,16 @@ int main(int argc, char **argv) {
     //generate_traces();
     //ltlf_operators_testing();
     //sam_testing();
-
     // --declare data/testing/AbsenceA.txt --server --log data/testing/log_until.txt
-
     // --sqlminer /home/giacomo/IdeaProjects/JavaConcurrentAPI/SQLMinerBenchmarker/log --log data/testing/log_until.txt
-
     // --sqlminer=/home/giacomo/IdeaProjects/JavaConcurrentAPI/SQLMinerBenchmarker/log --log=data/testing/log_response.txt --declare=data/testing/response.powerdecl --server
     // --sqlminer=C:/Users/Sam/Documents/Codebases/knobabBenchmark/knobab/competitors/SQLMinerBenchmarker/log --csv=test.csv --log=data/testing/log_response.txt
     // --sqlminer=C:/Users/Sam/Documents/Codebases/knobabBenchmark/knobab/competitors/SQLMinerBenchmarker/log --csv=test.csv --xes=data/testing/xes/concept_drift_detection_10000.xes
     //  https://ieee-dataport.org/open-access/synthetic-event-logs-concept-drift-detection
     // --tab=data/testing/ltlf/WeakUntil --sqlminer=/home/giacomo/IdeaProjects/JavaConcurrentAPI/SQLMinerBenchmarker/log
-// --tab=data/testing/ltlf/WeakUntil --nostats --sqlminer=/home/giacomo/IdeaProjects/JavaConcurrentAPI/SQLMinerBenchmarker/log
+    // --tab=data/testing/ltlf/WeakUntil --nostats --sqlminer=/home/giacomo/IdeaProjects/JavaConcurrentAPI/SQLMinerBenchmarker/log
+    // --xes=/home/giacomo/Scaricati/hospital_corrected.xes --nostats --sqlminer=/home/giacomo/Scaricati/sump
+// --nostats --log=data/testing/log_response.txt --declare=data/testing/response.powerdecl
 
     return 0;
 }

@@ -358,14 +358,14 @@ LTLfQuery *ltlf_query_manager::simplify(size_t formulaId,
             }
         }
     } else {
-        throw std::runtime_error("ERROR: unexpected case for the moment!");
+        DEBUG_ASSERT(!q.fields.id.parts.is_atom);
     }
     if (input.fields.id.parts.has_theta) {
         q.joinCondition = joinCondition;
     }
     for (auto& args : input.args_from_script)
         q.args.emplace_back(simplify(formulaId, args, joinCondition, atom_universe, left, right, toUseAtoms, atomToFormulaId));
-
+    q.fields.id.parts.is_queryplan = true;
     return simplify(q);
 }
 
