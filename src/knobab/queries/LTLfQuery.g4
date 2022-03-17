@@ -9,27 +9,30 @@ declare_syntax : 'template' STRING has_args? ':=' query;
 
 has_args : 'args' INTNUMBER;
 
-query : INIT TIMED? declare_arguments?                                            #init
-      | END  TIMED? declare_arguments?                                            #end
-      | EXISTS TIMED? NEGATED? declare_arguments? INTNUMBER                                #exists
-      | ABSENCE TIMED? declare_arguments? INTNUMBER                               #absence
-      | NEXT query                                                        #next
+query : INIT TIMED?                      declare_arguments? declare_act_target?        #init
+      | END  TIMED?                      declare_arguments? declare_act_target?        #end
+      | EXISTS NEGATED? INTNUMBER TIMED? declare_arguments? declare_act_target?        #exists
+      | ABSENCE INTNUMBER TIMED?         declare_arguments? declare_act_target?        #absence
+      | NEXT query                                                                     #next
       |<assoc=right> query OR TIMED? THETA? query                                      #or
       |<assoc=right> query AND TIMED? THETA? query                                     #and
-      |<assoc=right> query '=>' TIMED? THETA? query                                      #implication
-      |<assoc=right> IF TIMED? query THEN query THETA? ELSE query                  #ifte
-      |<assoc=right> query UNTIL TIMED? THETA?  query                                             #until
-      | BOX TIMED?  query                                                           #box
-      | DIAMOND TIMED?   query                                                           #diamond
+      |<assoc=right> query '=>' TIMED? THETA? query                                    #implication
+      |<assoc=right> IF TIMED? query THEN query THETA? ELSE query                      #ifte
+      |<assoc=right> query UNTIL TIMED? THETA?  query                                  #until
+      | BOX TIMED?  query                                                              #box
+      | DIAMOND TIMED?   query                                                         #diamond
       | NEGATED TIMED? query PRESERVE?                                                 #not
-      | '(' query ')'                                                       #paren
-      |<assoc=right> query '&Ft' THETA? query                                             #and_future
-      |<assoc=right> query '&XGt' THETA? query                                            #and_next_globally
+      | '(' query ')'                                                                  #paren
+      |<assoc=right> query '&Ft' THETA? query                                          #and_future
+      |<assoc=right> query '&XGt' THETA? query                                         #and_next_globally
       ;
 
 
-declare_arguments : LEFT | MIDDLE | RIGHT;
+declare_arguments : '#' INTNUMBER;
+declare_act_target : ACTIVATION | TARGET;
 
+ACTIVATION: 'activation';
+TARGET: 'target';
 INIT: 'INIT';
 END: 'END';
 EXISTS: 'EXISTS';

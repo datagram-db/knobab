@@ -77,6 +77,9 @@ public:
   virtual void enterDeclare_arguments(LTLfQueryParser::Declare_argumentsContext *ctx) = 0;
   virtual void exitDeclare_arguments(LTLfQueryParser::Declare_argumentsContext *ctx) = 0;
 
+  virtual void enterDeclare_act_target(LTLfQueryParser::Declare_act_targetContext *ctx) = 0;
+  virtual void exitDeclare_act_target(LTLfQueryParser::Declare_act_targetContext *ctx) = 0;
+
 
 };
 

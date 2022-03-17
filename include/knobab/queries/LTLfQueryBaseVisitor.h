@@ -5,7 +5,7 @@
 
 
 #include "antlr4-runtime.h"
-#include "knobab/queries/LTLfQueryVisitor.h"
+#include "LTLfQueryVisitor.h"
 
 
 /**
@@ -96,6 +96,10 @@ public:
   }
 
   virtual antlrcpp::Any visitDeclare_arguments(LTLfQueryParser::Declare_argumentsContext *ctx) override {
+    return visitChildren(ctx);
+  }
+
+  virtual antlrcpp::Any visitDeclare_act_target(LTLfQueryParser::Declare_act_targetContext *ctx) override {
     return visitChildren(ctx);
   }
 

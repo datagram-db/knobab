@@ -94,9 +94,11 @@ struct AtomizingPipeline {
 private:
     size_t count_fresh_atoms = 0;
 };
+#include <yaucl/structures/any_to_uint_bimap.h>
 
 
-double collect_data_from_declare_disjunctive_model(AtomizingPipeline& pipeline_data, const CNFDeclareDataAware& disjoint_model);
+double collect_data_from_declare_disjunctive_model(const yaucl::structures::any_to_uint_bimap<std::string>& map, AtomizingPipeline& pipeline_data, const CNFDeclareDataAware& disjoint_model);
+
 
 double atomize_model(AtomizingPipeline& pipeline_data, CNFDeclareDataAware &disjoint_model);
 

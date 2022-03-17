@@ -61,6 +61,8 @@ public:
 
     virtual antlrcpp::Any visitDeclare_arguments(LTLfQueryParser::Declare_argumentsContext *context) = 0;
 
+    virtual antlrcpp::Any visitDeclare_act_target(LTLfQueryParser::Declare_act_targetContext *context) = 0;
+
 
 };
 

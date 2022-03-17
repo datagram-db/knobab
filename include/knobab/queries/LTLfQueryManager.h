@@ -5,6 +5,7 @@
 #ifndef KNOBAB_LTLFQUERYMANAGER_H
 #define KNOBAB_LTLFQUERYMANAGER_H
 
+#include <knobab/algorithms/atomization_pipeline.h>
 #include <knobab/queries/LTLfQuery.h>
 #include <unordered_map>
 
@@ -33,11 +34,12 @@ struct LTLfQueryManager {
                         std::vector<std::string> &toUseAtoms,
                         std::unordered_map<std::string , std::vector<size_t>>& atomToFormulaId);
 
-    void finalize_unions(const std::vector<LTLfQuery*>& W, KnowledgeBase* ptr);
+    void finalize_unions(const AtomizingPipeline& ap, std::vector<LTLfQuery*>& W, KnowledgeBase* ptr);
 
 private:
 
     LTLfQuery* simplify(const LTLfQuery& q);
+    LTLfQuery* simplifyRecursively(LTLfQuery &element_disjunction);
 };
 
 

@@ -58,9 +58,6 @@ void whole_testing(const std::string& log_file = "data/testing/log.txt",
             env.set_atomization_parameters(std::filesystem::path(atomization_file));
         //////////////////////////////////////////////////////////////////
 
-
-        env.set_maxsat_parameters(std::filesystem::path(maxsat));
-
         std::cout << "Loading the atomization tables given the model" << std::endl;
         env.init_atomize_tables();
         env.print_grounding_tables(std::cout);
@@ -71,6 +68,7 @@ void whole_testing(const std::string& log_file = "data/testing/log.txt",
         env.print_grounded_model(std::cout); // DEBUG
         //////////////////////////////////////////////////////////////////
 
+        env.set_maxsat_parameters(std::filesystem::path(maxsat));
         auto ref = env.query_model();
         switch (ref.final_ensemble) {
             case PerDeclareSupport:
@@ -762,6 +760,9 @@ int main(int argc, char **argv) {
     // --xes=/home/giacomo/Scaricati/hospital_corrected.xes --nostats --sqlminer=/home/giacomo/Scaricati/sump
 // --nostats --log=data/testing/log_response.txt --declare=data/testing/response.powerdecl
 // --nostats --log=data/testing/log_response.txt --declare=data/testing/InitDataA.txt --server
+
+// --xes=/home/giacomo/Scaricati/hospital_corrected.xes --nostats -o
+    // --tab=data/testing/declare/Response --nostats --nodata --declare=data/testing/declare/Response.powerdecl
 
     return 0;
 }

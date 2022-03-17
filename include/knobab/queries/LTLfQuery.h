@@ -52,9 +52,10 @@ struct LTLfQuery {
         FALSEHOOD_QP = 15
     };
     type t;
-    declare_type_t declare_type = 0;
+    declare_type_t declare_arg = 0; // Representation of a specific argument providing data/label condition
+    LeafType       isLeaf;           // Marking whether the query is going to be an activation or a target condition
     bit_fields fields;
-    size_t n; //numeric_arg
+    size_t n;                        // numeric_arg associated to the query type (exists, absence)
 
     /// Arguments used while compiling the declare clauses description from the script
     std::vector<LTLfQuery> args_from_script;
@@ -74,16 +75,16 @@ struct LTLfQuery {
                 child->associateDataQueryIdsToFormulaByAtom(x, l);
     }
 
-    LTLfQuery() : t{FALSEHOOD_QP}, declare_type{DECLARE_TYPE_NONE}, n{0}, fields{0}, joinCondition{nullptr} {}
+    LTLfQuery() : t{FALSEHOOD_QP}, declare_arg{DECLARE_TYPE_NONE}, isLeaf{NoneLeaf}, n{0}, fields{0}, joinCondition{nullptr} {}
     DEFAULT_COPY_ASSGN(LTLfQuery)
 
     bool operator==(const LTLfQuery &rhs) const;
     bool operator!=(const LTLfQuery &rhs) const;
 
-    static LTLfQuery qINIT(short declare_argument, bool isTimed);
-    static LTLfQuery qEND(short declare_argument, bool isTimed);
-    static LTLfQuery qEXISTS(size_t narg, short declare_argument, bool isTimed, bool isNegated);
-    static LTLfQuery qABSENCE(size_t narg, short declare_argument, bool isTimed);
+    static LTLfQuery qINIT(short declare_argument, LeafType marking, bool isTimed);
+    static LTLfQuery qEND(short declare_argument, LeafType marking, bool isTimed);
+    static LTLfQuery qEXISTS(size_t narg, short declare_argument, LeafType marking, bool isTimed, bool isNegated);
+    static LTLfQuery qABSENCE(size_t narg, short declare_argument, LeafType marking, bool isTimed);
     static LTLfQuery qNEXT(const LTLfQuery& arg, bool isTimed);
     static LTLfQuery qNOT(const LTLfQuery& arg, bool isTimed, bool preserve);
     static LTLfQuery qOR(const LTLfQuery& lhs, const LTLfQuery& rhs, bool isTimed, bool hasTheta);
@@ -96,7 +97,6 @@ struct LTLfQuery {
     static LTLfQuery qBOX(const LTLfQuery& lhs, bool isTimed);
     static LTLfQuery qDIAMOND(const LTLfQuery& lhs, bool isTimed);
 };
-
 
 
 #include <ostream>
@@ -116,7 +116,7 @@ namespace std {
             size_t init = 31;
             for (const auto& x : k.args_from_script)
                 init = hash_combine<LTLfQuery>(init, x);
-            size_t f= hash_combine<size_t>(hash_combine<unsigned char>(hash_combine<short>(hash_combine<size_t>(init, k.t), k.declare_type), k.fields.id.data), k.n);
+            size_t f= hash_combine<size_t>(hash_combine<unsigned char>(hash_combine<short>(hash_combine<size_t>(init, k.t), k.isLeaf), k.fields.id.data), k.n);
             return f;
         }
     };

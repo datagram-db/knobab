@@ -115,12 +115,16 @@ std::ostream &operator<<(std::ostream &os, const AtomizingPipeline &pipeline) {
 #include <yaucl/functional/assert.h>
 
 
-double collect_data_from_declare_disjunctive_model(AtomizingPipeline &pipeline_data, const CNFDeclareDataAware &disjoint_model) {
+double collect_data_from_declare_disjunctive_model(const yaucl::structures::any_to_uint_bimap<std::string>& map, AtomizingPipeline &pipeline_data, const CNFDeclareDataAware &disjoint_model) {
     // old: pipeline_scratch, init_pipeline(3)
     //std::cout << "Collecting the atoms from the formula" << std::endl;
     auto t1 = std::chrono::high_resolution_clock::now();
+    std::unordered_set<std::string> metAtomsGlobally;
     for (const auto& conjunction : disjoint_model.singleElementOfConjunction) {
         for (const auto& declare_clause : conjunction.elementsInDisjunction) {
+            metAtomsGlobally.emplace(declare_clause.left_act);
+            if (!declare_clause.right_act.empty())
+                metAtomsGlobally.emplace(declare_clause.right_act);
             pipeline_data.act_universe.insert(declare_clause.left_act);
             if (!declare_clause.right_act.empty())
                 pipeline_data.act_universe.insert(declare_clause.right_act);
@@ -177,10 +181,6 @@ double collect_data_from_declare_disjunctive_model(AtomizingPipeline &pipeline_d
     }
 
     if ((!pipeline_data.double_bulk_map.empty()) || (!(pipeline_data.string_bulk_map.empty()))) {
-        //decompose_and_atomize();
-
-        //std::cout << "Generating the distinct intervals from the elements" << std::endl;
-        //std::cout << " - strings " << std::endl;
         for (auto ref = pipeline_data.string_bulk_map.begin(); ref != pipeline_data.string_bulk_map.cend(); ){
             for (auto& ref2 : ref->second) {
                 std::vector<DataPredicate> result;
@@ -198,7 +198,6 @@ double collect_data_from_declare_disjunctive_model(AtomizingPipeline &pipeline_d
             ref = pipeline_data.string_bulk_map.erase(ref); // Clearing the map from bulk insertions while iterating.
         }
 
-        //std::cout << " - doubles " << std::endl;
         for (auto ref = pipeline_data.double_bulk_map.begin(); ref != pipeline_data.double_bulk_map.cend(); ){
             for (auto& ref2 : ref->second) {
                 std::vector<DataPredicate> result;
@@ -216,7 +215,6 @@ double collect_data_from_declare_disjunctive_model(AtomizingPipeline &pipeline_d
             ref = pipeline_data.double_bulk_map.erase(ref); // Clearing the map from bulk insertions while iterating.
         }
 
-        //std::cout << "Generating the interval composition box" << std::endl;
         for (auto& ref: pipeline_data.interval_map) {
             std::vector<std::vector<DataPredicate>> W;
             for (const auto& v : cartesian_product(ref.second)) {
@@ -234,6 +232,13 @@ double collect_data_from_declare_disjunctive_model(AtomizingPipeline &pipeline_d
                 }
             }
             pipeline_data.max_ctam_iteration[ref.first] = W.size();
+        }
+    }
+
+    for (const auto& key : map.T_to_int) {
+        if (!metAtomsGlobally.contains(key.first)) {
+            pipeline_data.act_atoms.insert(key.first);
+            pipeline_data.atom_universe.insert(key.first);
         }
     }
 
