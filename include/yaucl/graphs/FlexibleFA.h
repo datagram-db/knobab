@@ -62,10 +62,10 @@ public:
         return final_nodes;
     }
 
-    std::unordered_set<std::vector<EdgeLabel>> generative(size_t limitSize = 3, size_t max_per_limit = 50) {
+    std::set<std::vector<EdgeLabel>> generative(size_t limitSize = 3, size_t max_per_limit = 50) {
         std::vector<size_t> Arg(getNodeIds().size(), 0);
         std::queue<std::pair<size_t, std::vector<EdgeLabel>>> Q;
-        std::unordered_set<std::vector<EdgeLabel>> EL;
+        std::set<std::vector<EdgeLabel>> EL;
         for (size_t i : init())
             Q.emplace(i, std::vector<EdgeLabel>{});
         while (!Q.empty()) {

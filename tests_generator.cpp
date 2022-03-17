@@ -12,12 +12,12 @@
 
 struct GenerativePath {
     size_t maxN;
-    const std::unordered_set<std::vector<std::string>>& toAvoid;
+    const std::set<std::vector<std::string>>& toAvoid;
     const std::unordered_set<std::string>& sigma;
-    std::unordered_set<std::vector<std::string>> result;
+    std::set<std::vector<std::string>> result;
     std::vector<std::string> V;
 
-    GenerativePath(size_t maxN, const std::unordered_set<std::vector<std::string>> &toAvoid,
+    GenerativePath(size_t maxN, const std::set<std::vector<std::string>> &toAvoid,
                    const std::unordered_set<std::string> &sigma) : maxN(maxN), toAvoid(toAvoid), sigma(sigma), V(maxN, "") {}
 
     void run(size_t i=0) {
@@ -112,12 +112,29 @@ int main() {
     std::filesystem::path data = "data";
     std::filesystem::path cache_path = data / "cache" / "graph_pattern_cache";
     std::filesystem::path log_path = data / "testing" / "ltlf";
+    std::filesystem::path dec_path = data / "testing" / "declare";
 
     generatePatternLog(cache_path, log_path, "Until", 5);
     generatePatternLog(cache_path, log_path, "WeakUntil", 5);
     generatePatternLog(cache_path, log_path, "Release", 5);
     generatePatternLog(cache_path, log_path, "Box", 5);
     generatePatternLog(cache_path, log_path, "Diamond", 5);
+
+    generatePatternLog(cache_path, dec_path, "AltPrecedence", 5);
+    generatePatternLog(cache_path, dec_path, "AltResponse", 5);
+    generatePatternLog(cache_path, dec_path, "AltSuccession", 5);
+    generatePatternLog(cache_path, dec_path, "ChainPrecedence", 5);
+    generatePatternLog(cache_path, dec_path, "ChainResponse", 5);
+    generatePatternLog(cache_path, dec_path, "ChainSuccession", 5);
+    generatePatternLog(cache_path, dec_path, "CoExistence", 5);
+    generatePatternLog(cache_path, dec_path, "ExlChoice", 5);
+    generatePatternLog(cache_path, dec_path, "NegChainSuccession", 5);
+    generatePatternLog(cache_path, dec_path, "NegSuccession", 5);
+    generatePatternLog(cache_path, dec_path, "NotCoExistence", 5);
+    generatePatternLog(cache_path, dec_path, "Precedence", 5);
+    generatePatternLog(cache_path, dec_path, "RespExistence", 5);
+    generatePatternLog(cache_path, dec_path, "Response", 5);
+    generatePatternLog(cache_path, dec_path, "Succession", 5);
 
     return 0;
 }

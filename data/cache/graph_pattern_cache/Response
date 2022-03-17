@@ -3,8 +3,9 @@ digraph {
 	0 [root=true shape=doublecircle]
 	1
 	fake -> 0 [style=bold]
-	0 -> 0 [label=a]
-	0 -> 1 [label="~a"]
-	1 -> 1 [label=True]
+	1 -> 1 [label="~b"]
+	0 -> 0 [label="b | ~a"]
+	1 -> 0 [label=b]
+	0 -> 1 [label="a & ~b"]
 }
 
