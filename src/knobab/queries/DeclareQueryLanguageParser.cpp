@@ -36,6 +36,18 @@ void DeclareQueryLanguageParser::parse(std::istream &stream) {
     }
 }
 
+void DeclareQueryLanguageParser::analyse(const std::string &approach, const DeclareDataAware &clause) {
+    auto it = planname_to_declare_to_ltlf.find(approach);
+    if (it == planname_to_declare_to_ltlf.end()) {
+        throw std::runtime_error(std::string("ERROR: plan name ").append(approach).append(" does not exist"));
+    }
+    auto it2 = it->second.find(clause.casusu);
+    if (it2 == it->second.end()) {
+        throw std::runtime_error(std::string("ERROR: plan name ").append(approach).append(" does not implement the specification for the clase ").append(clause.casusu));
+    }
+}
+
+
 LTLfQuery DeclareQueryLanguageParser::visitQuery(LTLfQueryParser::QueryContext *pContext) {
     if (!pContext) return LTLfQuery{}; // if the context is empty, return a query returning empty (the falsehood statement)
     fromNowOnTimed = false;
@@ -49,28 +61,28 @@ antlrcpp::Any DeclareQueryLanguageParser::visitInit(LTLfQueryParser::InitContext
     ASSERT_ON_TIMING(context);
     auto argument = decleare_templates_determine(context->declare_arguments());
     max_aspect = std::max(max_aspect, argument);
-    return {LTLfQuery::qINIT(argument, GET_TIMING(context))};
+    return {LTLfQuery::qINIT(argument, decleare_leaf_determine(context->declare_act_target()), GET_TIMING(context))};
 }
 
 antlrcpp::Any DeclareQueryLanguageParser::visitEnd(LTLfQueryParser::EndContext *context) {
     ASSERT_ON_TIMING(context);
     auto argument = decleare_templates_determine(context->declare_arguments());
     max_aspect = std::max(max_aspect, argument);
-    return {LTLfQuery::qEND(argument, GET_TIMING(context))};
+    return {LTLfQuery::qEND(argument, decleare_leaf_determine(context->declare_act_target()), GET_TIMING(context))};
 }
 
 antlrcpp::Any DeclareQueryLanguageParser::visitAbsence(LTLfQueryParser::AbsenceContext *context) {
     ASSERT_ON_TIMING(context);
     auto argument = decleare_templates_determine(context->declare_arguments());
     max_aspect = std::max(max_aspect, argument);
-    return {LTLfQuery::qABSENCE(std::stoull(context->INTNUMBER()->getText()), argument, GET_TIMING(context))};
+    return {LTLfQuery::qABSENCE(std::stoull(context->INTNUMBER()->getText()), argument, decleare_leaf_determine(context->declare_act_target()), GET_TIMING(context))};
 }
 
 antlrcpp::Any DeclareQueryLanguageParser::visitExists(LTLfQueryParser::ExistsContext *context) {
     ASSERT_ON_TIMING(context);
     auto argument = decleare_templates_determine(context->declare_arguments());
     max_aspect = std::max(max_aspect, argument);
-    return {LTLfQuery::qEXISTS(std::stoull(context->INTNUMBER()->getText()), argument, GET_TIMING(context), context->NEGATED())};
+    return {LTLfQuery::qEXISTS(std::stoull(context->INTNUMBER()->getText()), argument, decleare_leaf_determine(context->declare_act_target()), GET_TIMING(context), context->NEGATED())};
 }
 
 antlrcpp::Any DeclareQueryLanguageParser::visitNext(LTLfQueryParser::NextContext *context) {
@@ -217,3 +229,5 @@ antlrcpp::Any DeclareQueryLanguageParser::visitIfte(LTLfQueryParser::IfteContext
                              GET_TIMING(context),
                              context->THETA() != nullptr)};
 }
+
+

@@ -1,5 +1,5 @@
-ensemble: "PerDeclareSupport"
+ensemble: "TraceIntersection"
 decomposition_script: "scripts/logic_plan.queryplan"
-script_plan: "efficient"
+script_plan: "marking"
 threads: 1
 operators: "FastOperator_v1"

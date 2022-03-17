@@ -14,12 +14,14 @@
 
 inline unsigned char decleare_templates_determine(LTLfQueryParser::Declare_argumentsContext* ptr) {
     if (!ptr) return DECLARE_TYPE_NONE;
-    else {
-        if (ptr->LEFT()) return DECLARE_TYPE_LEFT;
-        else if (ptr->MIDDLE()) return DECLARE_TYPE_MIDDLE;
-        else if (ptr->RIGHT()) return DECLARE_TYPE_RIGHT;
-        else return DECLARE_TYPE_NONE;
-    }
+    else return std::stoull(ptr->INTNUMBER()->getText());
+}
+
+inline LeafType decleare_leaf_determine(LTLfQueryParser::Declare_act_targetContext* ptr) {
+    if (!ptr) return NoneLeaf;
+    else if (ptr->ACTIVATION()) return ActivationLeaf;
+    else if (ptr->TARGET()) return TargetLeaf;
+    else return NoneLeaf;
 }
 
 #include <unordered_map>
@@ -37,21 +39,10 @@ struct DeclareQueryLanguageParser : public LTLfQueryVisitor {
     unsigned char max_aspect;
     std::unordered_map<std::string, std::unordered_map<std::string, LTLfQuery>> planname_to_declare_to_ltlf;
 
-    void parse(std::istream& stream);
-
     /// VISITORS
     LTLfQuery visitQuery(LTLfQueryParser::QueryContext *pContext);
-
-    void analyse(const std::string& approach, const DeclareDataAware& clause) {
-        auto it = planname_to_declare_to_ltlf.find(approach);
-        if (it == planname_to_declare_to_ltlf.end()) {
-            throw std::runtime_error(std::string("ERROR: plan name ").append(approach).append(" does not exist"));
-        }
-        auto it2 = it->second.find(clause.casusu);
-        if (it2 == it->second.end()) {
-            throw std::runtime_error(std::string("ERROR: plan name ").append(approach).append(" does not implement the specification for the clase ").append(clause.casusu));
-        }
-    }
+    void parse(std::istream& stream);
+    void analyse(const std::string& approach, const DeclareDataAware& clause);
 
     /// Inherited visitors
     antlrcpp::Any visitInit(LTLfQueryParser::InitContext *context) override;
@@ -77,6 +68,7 @@ struct DeclareQueryLanguageParser : public LTLfQueryVisitor {
     antlrcpp::Any visitHas_args(LTLfQueryParser::Has_argsContext *context) override { return {}; }
     antlrcpp::Any visitDeclare_arguments(LTLfQueryParser::Declare_argumentsContext *context) override { return {}; }
     antlrcpp::Any visitQuery_plans(LTLfQueryParser::Query_plansContext *context) override { return {}; }
+    antlrcpp::Any visitDeclare_act_target(LTLfQueryParser::Declare_act_targetContext *context) override { return {}; }
 };
 
 

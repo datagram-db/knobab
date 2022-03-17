@@ -28,11 +28,13 @@ enum EnsembleMethods {
     PerDeclareSupport,
     TraceMaximumSatisfiability,
     TraceIntersection,
+    Nothing
 };
 
 enum OperatorQueryPlan {
     AbidingLogic,
-    FastOperator_v1
+    FastOperator_v1,
+    NoQueryRunning
 };
 
 struct MAXSatPipeline {
@@ -94,8 +96,8 @@ private:
     std::vector<PartialResult> subqueriesRunning(const KnowledgeBase &kb);
     void abidinglogic_query_running(const std::vector<PartialResult>& results_cache, const KnowledgeBase& kb);
     void fast_v1_query_running(const std::vector<PartialResult>& results_cache, const KnowledgeBase& kb);
-
     size_t pushAtomDataQuery(const DataQuery &q, bool directlyFromCache);
+    LTLfQuery *pushAtomicQueries(const AtomizingPipeline &atomization, LTLfQuery *formula, bool isRoot = true);
 };
 
 

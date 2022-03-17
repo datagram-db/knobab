@@ -6,7 +6,8 @@
 
 bool LTLfQuery::operator==(const LTLfQuery &rhs) const {
     return t == rhs.t &&
-           declare_type == rhs.declare_type &&
+           declare_arg == rhs.declare_arg &&
+           isLeaf == rhs.isLeaf &&
            fields == rhs.fields &&
            n == rhs.n &&
            args_from_script == rhs.args_from_script &&
@@ -27,32 +28,20 @@ std::ostream& operator<<(std::ostream& os, const LTLfQuery& x) {
 
     switch (x.t) {
         case LTLfQuery::INIT_QP:
-            os << ((x.declare_type == 1)? 'L' : (x.declare_type==2 ? 'R' : 'M'));
-            os << (x.fields.id.parts.is_timed ? t : ' ') << "Init";
-            if (!x.atom.empty()) {
-                return os << x.atom;
-            }
+            os << ((x.isLeaf == ActivationLeaf)? 'A' : (x.isLeaf==TargetLeaf ? 'T' : ' '));
+            return os << (x.fields.id.parts.is_timed ? t : ' ') << "Init" << x.atom;
 
         case LTLfQuery::END_QP:
-            os << ((x.declare_type == 1)? 'L' : (x.declare_type==2 ? 'R' : 'M'));
-            os << (x.fields.id.parts.is_timed ? t : ' ') << "End";
-            if (!x.atom.empty()) {
-                return os << x.atom;
-            }
+            os << ((x.isLeaf == ActivationLeaf)? 'A' : (x.isLeaf==TargetLeaf ? 'T' : ' '));
+            return os << (x.fields.id.parts.is_timed ? t : ' ') << "End" << x.atom;
 
         case LTLfQuery::EXISTS_QP:
-            os << ((x.declare_type == 1)? 'L' : (x.declare_type==2 ? 'R' : 'M'));
-            os << (x.fields.id.parts.is_timed ? t : ' ') << (x.fields.id.parts.is_negated ? n : ' ') << "Exists" << x.n ;
-            if (!x.atom.empty()) {
-                return os << x.atom;
-            }
+            os << ((x.isLeaf == ActivationLeaf)? 'A' : (x.isLeaf==TargetLeaf ? 'T' : ' '));
+            return  os << (x.fields.id.parts.is_timed ? t : ' ') << (x.fields.id.parts.is_negated ? n : ' ') << "Exists" << x.n  << x.atom;
 
         case LTLfQuery::ABSENCE_QP:
-            os << ((x.declare_type == 1)? 'L' : (x.declare_type==2 ? 'R' : 'M'));
-            os << (x.fields.id.parts.is_timed ? t : ' ') << "Absence" << x.n;
-            if (!x.atom.empty()) {
-                return os << x.atom;
-            }
+            os << ((x.isLeaf == ActivationLeaf)? 'A' : (x.isLeaf==TargetLeaf ? 'T' : ' '));
+            return os << (x.fields.id.parts.is_timed ? t : ' ') << "Absence" << x.n << x.atom;
 
         case LTLfQuery::NEXT_QP:
             if (!x.fields.id.parts.is_queryplan)
@@ -125,11 +114,12 @@ std::ostream& operator<<(std::ostream& os, const LTLfQuery& x) {
     }
 }
 
-LTLfQuery LTLfQuery::qINIT(short declare_argument, bool isTimed) {
+LTLfQuery LTLfQuery::qINIT(short declare_argument, LeafType marking, bool isTimed) {
     LTLfQuery q;
     q.t = INIT_QP;
     q.n = 0;
-    q.declare_type = declare_argument;
+    q.isLeaf = marking;
+    q.declare_arg = declare_argument;
     q.fields.id.parts.has_theta = false;
     q.fields.id.parts.preserve = false;
     q.fields.id.parts.is_atom = true;
@@ -141,11 +131,12 @@ LTLfQuery LTLfQuery::qINIT(short declare_argument, bool isTimed) {
     return q;
 }
 
-LTLfQuery LTLfQuery::qEND(short declare_argument, bool isTimed) {
+LTLfQuery LTLfQuery::qEND(short declare_argument, LeafType marking, bool isTimed) {
     LTLfQuery q;
     q.t = END_QP;
     q.n = 0;
-    q.declare_type = declare_argument;
+    q.isLeaf = marking;
+    q.declare_arg = declare_argument;
     q.fields.id.parts.has_theta = false;
     q.fields.id.parts.preserve = false;
     q.fields.id.parts.is_atom = true;
@@ -157,11 +148,12 @@ LTLfQuery LTLfQuery::qEND(short declare_argument, bool isTimed) {
     return q;
 }
 
-LTLfQuery LTLfQuery::qEXISTS(size_t narg, short declare_argument, bool isTimed, bool isNegated) {
+LTLfQuery LTLfQuery::qEXISTS(size_t narg, short declare_argument, LeafType marking, bool isTimed, bool isNegated) {
     LTLfQuery q;
     q.t = EXISTS_QP;
     q.n = narg;
-    q.declare_type = declare_argument;
+    q.isLeaf = marking;
+    q.declare_arg = declare_argument;
     q.fields.id.parts.has_theta = false;
     q.fields.id.parts.preserve = false;
     q.fields.id.parts.is_atom = true;
@@ -173,11 +165,12 @@ LTLfQuery LTLfQuery::qEXISTS(size_t narg, short declare_argument, bool isTimed, 
     return q;
 }
 
-LTLfQuery LTLfQuery::qABSENCE(size_t narg, short declare_argument, bool isTimed) {
+LTLfQuery LTLfQuery::qABSENCE(size_t narg, short declare_argument, LeafType marking, bool isTimed) {
     LTLfQuery q;
     q.t = ABSENCE_QP;
     q.n = narg;
-    q.declare_type = declare_argument;
+    q.isLeaf = marking;
+    q.declare_arg = declare_argument;
     q.fields.id.parts.has_theta = false;
     q.fields.id.parts.preserve = false;
     q.fields.id.parts.is_atom = true;
@@ -193,7 +186,8 @@ LTLfQuery LTLfQuery::qNEXT(const LTLfQuery& arg, bool isTimed) {
     LTLfQuery q;
     q.t = NEXT_QP;
     q.n = 0;
-    q.declare_type = DECLARE_TYPE_NONE;
+    q.isLeaf = NotALeaf;
+    q.declare_arg = DECLARE_TYPE_NONE;
     q.fields.id.parts.has_theta = false;
     q.fields.id.parts.preserve = false;
     q.fields.id.parts.is_atom = false;
@@ -210,7 +204,8 @@ LTLfQuery LTLfQuery::qNOT(const LTLfQuery& arg, bool isTimed, bool preserve) {
     LTLfQuery q;
     q.t = NOT_QP;
     q.n = 0;
-    q.declare_type = DECLARE_TYPE_NONE;
+    q.isLeaf = NotALeaf;
+    q.declare_arg = DECLARE_TYPE_NONE;
     q.fields.id.parts.has_theta = false;
     q.fields.id.parts.preserve = preserve;
     q.fields.id.parts.is_atom = false;
@@ -227,7 +222,8 @@ LTLfQuery LTLfQuery::qOR(const LTLfQuery& lhs, const LTLfQuery& rhs, bool isTime
     LTLfQuery q;
     q.t = OR_QP;
     q.n = 0;
-    q.declare_type = DECLARE_TYPE_NONE;
+    q.isLeaf = NotALeaf;
+    q.declare_arg = DECLARE_TYPE_NONE;
     q.fields.id.parts.has_theta = hasTheta;
     q.fields.id.parts.preserve = false;
     q.fields.id.parts.is_atom = false;
@@ -245,7 +241,8 @@ LTLfQuery LTLfQuery::qIMPLICATION(const LTLfQuery& lhs, const LTLfQuery& rhs, bo
     LTLfQuery q;
     q.t = IMPL_QP;
     q.n = 0;
-    q.declare_type = DECLARE_TYPE_NONE;
+    q.isLeaf = NotALeaf;
+    q.declare_arg = DECLARE_TYPE_NONE;
     q.fields.id.parts.has_theta = hasTheta;
     q.fields.id.parts.preserve = false;
     q.fields.id.parts.is_atom = false;
@@ -263,7 +260,8 @@ LTLfQuery LTLfQuery::qIFTE(const LTLfQuery& lhs, const LTLfQuery& middle, const 
     LTLfQuery q;
     q.t = IFTE_QP;
     q.n = 0;
-    q.declare_type = DECLARE_TYPE_NONE;
+    q.isLeaf = NotALeaf;
+    q.declare_arg = DECLARE_TYPE_NONE;
     q.fields.id.parts.has_theta = hasTheta;
     q.fields.id.parts.preserve = false;
     q.fields.id.parts.is_atom = false;
@@ -282,7 +280,8 @@ LTLfQuery LTLfQuery::qAND(const LTLfQuery& lhs, const LTLfQuery& rhs, bool isTim
     LTLfQuery q;
     q.t = AND_QP;
     q.n = 0;
-    q.declare_type = DECLARE_TYPE_NONE;
+    q.isLeaf = NotALeaf;
+    q.declare_arg = DECLARE_TYPE_NONE;
     q.fields.id.parts.has_theta = hasTheta;
     q.fields.id.parts.preserve = false;
     q.fields.id.parts.is_atom = false;
@@ -300,7 +299,8 @@ LTLfQuery LTLfQuery::qANDNEXTGLOBALLY(const LTLfQuery& lhs, const LTLfQuery& rhs
     LTLfQuery q;
     q.t = AXG_QPT;
     q.n = 0;
-    q.declare_type = DECLARE_TYPE_NONE;
+    q.isLeaf = NotALeaf;
+    q.declare_arg = DECLARE_TYPE_NONE;
     q.fields.id.parts.has_theta = hasTheta;
     q.fields.id.parts.preserve = false;
     q.fields.id.parts.is_atom = false;
@@ -318,7 +318,8 @@ LTLfQuery LTLfQuery::qANDFUTURE(const LTLfQuery& lhs, const LTLfQuery& rhs, bool
     LTLfQuery q;
     q.t = AF_QPT;
     q.n = 0;
-    q.declare_type = DECLARE_TYPE_NONE;
+    q.isLeaf = NotALeaf;
+    q.declare_arg = DECLARE_TYPE_NONE;
     q.fields.id.parts.has_theta = hasTheta;
     q.fields.id.parts.preserve = false;
     q.fields.id.parts.is_atom = false;
@@ -336,7 +337,8 @@ LTLfQuery LTLfQuery::qUNTIL(const LTLfQuery& lhs, const LTLfQuery& rhs, bool isT
     LTLfQuery q;
     q.t = U_QP;
     q.n = 0;
-    q.declare_type = DECLARE_TYPE_NONE;
+    q.isLeaf = NotALeaf;
+    q.declare_arg = DECLARE_TYPE_NONE;
     q.fields.id.parts.has_theta = hasTheta;
     q.fields.id.parts.preserve = false;
     q.fields.id.parts.is_negated = false;
@@ -354,7 +356,8 @@ LTLfQuery LTLfQuery::qBOX(const LTLfQuery& lhs, bool isTimed) {
     LTLfQuery q;
     q.t = G_QP;
     q.n = 0;
-    q.declare_type = DECLARE_TYPE_NONE;
+    q.isLeaf = NotALeaf;
+    q.declare_arg = DECLARE_TYPE_NONE;
     q.fields.id.parts.has_theta = false;
     q.fields.id.parts.preserve = false;
     q.fields.id.parts.is_atom = false;
@@ -371,7 +374,8 @@ LTLfQuery LTLfQuery::qDIAMOND(const LTLfQuery& lhs, bool isTimed) {
     LTLfQuery q;
     q.t = F_QP;
     q.n = 0;
-    q.declare_type = DECLARE_TYPE_NONE;
+    q.isLeaf = NotALeaf;
+    q.declare_arg = DECLARE_TYPE_NONE;
     q.fields.id.parts.has_theta = false;
     q.fields.id.parts.preserve = false;
     q.fields.id.parts.is_atom = false;

@@ -518,7 +518,7 @@ inline void global_logic_untimed(const Result &section, Result& result, const st
         const uint32_t dist = std::distance(lower, upper - 1);
 
         if(dist == cp.first.second - 1){
-            populateAndReturnEvents(lower, upper, second.second, false);
+            populateAndReturnEvents(lower, upper, second.second);
             result.emplace_back(first, second);
         }
     }
@@ -640,7 +640,7 @@ inline void until_logic_timed(const Result &aSection, const Result &bSection, Re
                                 continue;
                             }
                         } else {
-                            populateAndReturnEvents(aIt, aEn, cpResult.second.second, false);
+                            populateAndReturnEvents(aIt, aEn, cpResult.second.second);
                             cpResult.second.second.insert(cpResult.second.second.end(), lower->second.second.begin(), lower->second.second.end());
                         }
                         remove_duplicates(cpResult.second.second);
@@ -755,7 +755,7 @@ inline void until_logic_untimed(const Result &aSection, const Result &bSection, 
                             }
                             if (hasFail) break;
                         } else {
-                            populateAndReturnEvents(aIt, aEn, cpResult.second.second, false);
+                            populateAndReturnEvents(aIt, aEn, cpResult.second.second);
                             cpResult.second.second.insert(cpResult.second.second.end(), lower->second.second.begin(), lower->second.second.end());
                         }
                         remove_duplicates(cpResult.second.second);

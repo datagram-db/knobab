@@ -13,16 +13,17 @@ class  LTLfQueryParser : public antlr4::Parser {
 public:
   enum {
     T__0 = 1, T__1 = 2, T__2 = 3, T__3 = 4, T__4 = 5, T__5 = 6, T__6 = 7, 
-    T__7 = 8, INIT = 9, END = 10, EXISTS = 11, ABSENCE = 12, NEXT = 13, 
-    OR = 14, AND = 15, IF = 16, THEN = 17, ELSE = 18, UNTIL = 19, BOX = 20, 
-    DIAMOND = 21, AUTO_TIMED = 22, LPAREN = 23, RPAREN = 24, PRESERVE = 25, 
-    TIMED = 26, THETA = 27, LEFT = 28, RIGHT = 29, MIDDLE = 30, NEGATED = 31, 
-    INTNUMBER = 32, STRING = 33, SPACE = 34, COMMENT = 35, LINE_COMMENT = 36
+    T__7 = 8, T__8 = 9, ACTIVATION = 10, TARGET = 11, INIT = 12, END = 13, 
+    EXISTS = 14, ABSENCE = 15, NEXT = 16, OR = 17, AND = 18, IF = 19, THEN = 20, 
+    ELSE = 21, UNTIL = 22, BOX = 23, DIAMOND = 24, AUTO_TIMED = 25, LPAREN = 26, 
+    RPAREN = 27, PRESERVE = 28, TIMED = 29, THETA = 30, LEFT = 31, RIGHT = 32, 
+    MIDDLE = 33, NEGATED = 34, INTNUMBER = 35, STRING = 36, SPACE = 37, 
+    COMMENT = 38, LINE_COMMENT = 39
   };
 
   enum {
     RuleQuery_plans = 0, RuleQuery_plan = 1, RuleDeclare_syntax = 2, RuleHas_args = 3, 
-    RuleQuery = 4, RuleDeclare_arguments = 5
+    RuleQuery = 4, RuleDeclare_arguments = 5, RuleDeclare_act_target = 6
   };
 
   explicit LTLfQueryParser(antlr4::TokenStream *input);
@@ -40,7 +41,8 @@ public:
   class Declare_syntaxContext;
   class Has_argsContext;
   class QueryContext;
-  class Declare_argumentsContext; 
+  class Declare_argumentsContext;
+  class Declare_act_targetContext; 
 
   class  Query_plansContext : public antlr4::ParserRuleContext {
   public:
@@ -142,6 +144,7 @@ public:
     antlr4::tree::TerminalNode *INIT();
     antlr4::tree::TerminalNode *TIMED();
     Declare_argumentsContext *declare_arguments();
+    Declare_act_targetContext *declare_act_target();
     virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
     virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
 
@@ -171,6 +174,7 @@ public:
     antlr4::tree::TerminalNode *INTNUMBER();
     antlr4::tree::TerminalNode *TIMED();
     Declare_argumentsContext *declare_arguments();
+    Declare_act_targetContext *declare_act_target();
     virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
     virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
 
@@ -276,9 +280,10 @@ public:
 
     antlr4::tree::TerminalNode *EXISTS();
     antlr4::tree::TerminalNode *INTNUMBER();
-    antlr4::tree::TerminalNode *TIMED();
     antlr4::tree::TerminalNode *NEGATED();
+    antlr4::tree::TerminalNode *TIMED();
     Declare_argumentsContext *declare_arguments();
+    Declare_act_targetContext *declare_act_target();
     virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
     virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
 
@@ -292,6 +297,7 @@ public:
     antlr4::tree::TerminalNode *END();
     antlr4::tree::TerminalNode *TIMED();
     Declare_argumentsContext *declare_arguments();
+    Declare_act_targetContext *declare_act_target();
     virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
     virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
 
@@ -349,9 +355,7 @@ public:
   public:
     Declare_argumentsContext(antlr4::ParserRuleContext *parent, size_t invokingState);
     virtual size_t getRuleIndex() const override;
-    antlr4::tree::TerminalNode *LEFT();
-    antlr4::tree::TerminalNode *MIDDLE();
-    antlr4::tree::TerminalNode *RIGHT();
+    antlr4::tree::TerminalNode *INTNUMBER();
 
     virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
     virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
@@ -361,6 +365,22 @@ public:
   };
 
   Declare_argumentsContext* declare_arguments();
+
+  class  Declare_act_targetContext : public antlr4::ParserRuleContext {
+  public:
+    Declare_act_targetContext(antlr4::ParserRuleContext *parent, size_t invokingState);
+    virtual size_t getRuleIndex() const override;
+    antlr4::tree::TerminalNode *ACTIVATION();
+    antlr4::tree::TerminalNode *TARGET();
+
+    virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
+    virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
+
+    virtual antlrcpp::Any accept(antlr4::tree::ParseTreeVisitor *visitor) override;
+   
+  };
+
+  Declare_act_targetContext* declare_act_target();
 
 
   virtual bool sempred(antlr4::RuleContext *_localctx, size_t ruleIndex, size_t predicateIndex) override;
