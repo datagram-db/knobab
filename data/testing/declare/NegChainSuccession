@@ -1,10 +1,3 @@
-b
-b	b
-b	b	b
-b	b	b	b
-b	b	b	b	b
-a	a	a	a	a
-a	a	a	a	b
 a	a	a	a	c
 a	a	a	a	d
 a	a	a	a	e
@@ -12,6 +5,111 @@ a	a	a	a	f
 a	a	a	a	g
 a	a	a	a	h
 a	a	a	a	i
+a	a	a	c
+a	a	a	c	b
+a	a	a	d
+a	a	a	d	b
+a	a	a	e
+a	a	a	e	b
+a	a	a	f
+a	a	a	f	b
+a	a	a	g
+a	a	a	g	b
+a	a	a	h
+a	a	a	h	b
+a	a	a	i
+a	a	a	i	b
+a	a	c
+a	a	c	b
+a	a	c	b	b
+a	a	d
+a	a	d	b
+a	a	d	b	b
+a	a	e
+a	a	e	b
+a	a	e	b	b
+a	a	f
+a	a	f	b
+a	a	f	b	b
+a	a	g
+a	a	g	b
+a	a	g	b	b
+a	a	h
+a	a	h	b
+a	a	h	b	b
+a	a	i
+a	a	i	b
+a	a	i	b	b
+a	c
+a	c	b
+a	c	b	b
+a	c	b	b	b
+a	d
+a	d	b
+a	d	b	b
+a	d	b	b	b
+a	e
+a	e	b
+a	e	b	b
+a	e	b	b	b
+a	f
+a	f	b
+a	f	b	b
+a	f	b	b	b
+a	g
+a	g	b
+a	g	b	b
+a	g	b	b	b
+a	h
+a	h	b
+a	h	b	b
+a	h	b	b	b
+a	i
+a	i	b
+a	i	b	b
+a	i	b	b	b
+b
+b	b
+b	b	b
+b	b	b	b
+b	b	b	b	b
+c
+c	b
+c	b	b
+c	b	b	b
+c	b	b	b	b
+d
+d	b
+d	b	b
+d	b	b	b
+d	b	b	b	b
+e
+e	b
+e	b	b
+e	b	b	b
+e	b	b	b	b
+f
+f	b
+f	b	b
+f	b	b	b
+f	b	b	b	b
+g
+g	b
+g	b	b
+g	b	b	b
+g	b	b	b	b
+h
+h	b
+h	b	b
+h	b	b	b
+h	b	b	b	b
+i
+i	b
+i	b	b
+i	b	b	b
+i	b	b	b	b
+a	a	a	a	a
+a	a	a	a	b
 a	a	a	b	a
 a	a	a	b	b
 a	a	a	b	c
@@ -22,7 +120,6 @@ a	a	a	b	g
 a	a	a	b	h
 a	a	a	b	i
 a	a	a	c	a
-a	a	a	c	b
 a	a	a	c	c
 a	a	a	c	d
 a	a	a	c	e
@@ -31,7 +128,6 @@ a	a	a	c	g
 a	a	a	c	h
 a	a	a	c	i
 a	a	a	d	a
-a	a	a	d	b
 a	a	a	d	c
 a	a	a	d	d
 a	a	a	d	e
@@ -40,7 +136,6 @@ a	a	a	d	g
 a	a	a	d	h
 a	a	a	d	i
 a	a	a	e	a
-a	a	a	e	b
 a	a	a	e	c
 a	a	a	e	d
 a	a	a	e	e
@@ -49,7 +144,6 @@ a	a	a	e	g
 a	a	a	e	h
 a	a	a	e	i
 a	a	a	f	a
-a	a	a	f	b
 a	a	a	f	c
 a	a	a	f	d
 a	a	a	f	e
@@ -58,7 +152,6 @@ a	a	a	f	g
 a	a	a	f	h
 a	a	a	f	i
 a	a	a	g	a
-a	a	a	g	b
 a	a	a	g	c
 a	a	a	g	d
 a	a	a	g	e
@@ -67,7 +160,6 @@ a	a	a	g	g
 a	a	a	g	h
 a	a	a	g	i
 a	a	a	h	a
-a	a	a	h	b
 a	a	a	h	c
 a	a	a	h	d
 a	a	a	h	e
@@ -76,7 +168,6 @@ a	a	a	h	g
 a	a	a	h	h
 a	a	a	h	i
 a	a	a	i	a
-a	a	a	i	b
 a	a	a	i	c
 a	a	a	i	d
 a	a	a	i	e
@@ -175,7 +266,6 @@ a	a	c	a	g
 a	a	c	a	h
 a	a	c	a	i
 a	a	c	b	a
-a	a	c	b	b
 a	a	c	b	c
 a	a	c	b	d
 a	a	c	b	e
@@ -256,7 +346,6 @@ a	a	d	a	g
 a	a	d	a	h
 a	a	d	a	i
 a	a	d	b	a
-a	a	d	b	b
 a	a	d	b	c
 a	a	d	b	d
 a	a	d	b	e
@@ -337,7 +426,6 @@ a	a	e	a	g
 a	a	e	a	h
 a	a	e	a	i
 a	a	e	b	a
-a	a	e	b	b
 a	a	e	b	c
 a	a	e	b	d
 a	a	e	b	e
@@ -418,7 +506,6 @@ a	a	f	a	g
 a	a	f	a	h
 a	a	f	a	i
 a	a	f	b	a
-a	a	f	b	b
 a	a	f	b	c
 a	a	f	b	d
 a	a	f	b	e
@@ -499,7 +586,6 @@ a	a	g	a	g
 a	a	g	a	h
 a	a	g	a	i
 a	a	g	b	a
-a	a	g	b	b
 a	a	g	b	c
 a	a	g	b	d
 a	a	g	b	e
@@ -580,7 +666,6 @@ a	a	h	a	g
 a	a	h	a	h
 a	a	h	a	i
 a	a	h	b	a
-a	a	h	b	b
 a	a	h	b	c
 a	a	h	b	d
 a	a	h	b	e
@@ -661,7 +746,6 @@ a	a	i	a	g
 a	a	i	a	h
 a	a	i	a	i
 a	a	i	b	a
-a	a	i	b	b
 a	a	i	b	c
 a	a	i	b	d
 a	a	i	b	e
@@ -1552,7 +1636,6 @@ a	c	b	a	g
 a	c	b	a	h
 a	c	b	a	i
 a	c	b	b	a
-a	c	b	b	b
 a	c	b	b	c
 a	c	b	b	d
 a	c	b	b	e
@@ -2281,7 +2364,6 @@ a	d	b	a	g
 a	d	b	a	h
 a	d	b	a	i
 a	d	b	b	a
-a	d	b	b	b
 a	d	b	b	c
 a	d	b	b	d
 a	d	b	b	e
@@ -3010,7 +3092,6 @@ a	e	b	a	g
 a	e	b	a	h
 a	e	b	a	i
 a	e	b	b	a
-a	e	b	b	b
 a	e	b	b	c
 a	e	b	b	d
 a	e	b	b	e
@@ -3739,7 +3820,6 @@ a	f	b	a	g
 a	f	b	a	h
 a	f	b	a	i
 a	f	b	b	a
-a	f	b	b	b
 a	f	b	b	c
 a	f	b	b	d
 a	f	b	b	e
@@ -4468,7 +4548,6 @@ a	g	b	a	g
 a	g	b	a	h
 a	g	b	a	i
 a	g	b	b	a
-a	g	b	b	b
 a	g	b	b	c
 a	g	b	b	d
 a	g	b	b	e
@@ -5197,7 +5276,6 @@ a	h	b	a	g
 a	h	b	a	h
 a	h	b	a	i
 a	h	b	b	a
-a	h	b	b	b
 a	h	b	b	c
 a	h	b	b	d
 a	h	b	b	e
@@ -5926,7 +6004,6 @@ a	i	b	a	g
 a	i	b	a	h
 a	i	b	a	i
 a	i	b	b	a
-a	i	b	b	b
 a	i	b	b	c
 a	i	b	b	d
 a	i	b	b	e
@@ -13944,7 +14021,6 @@ c	b	b	a	g
 c	b	b	a	h
 c	b	b	a	i
 c	b	b	b	a
-c	b	b	b	b
 c	b	b	b	c
 c	b	b	b	d
 c	b	b	b	e
@@ -20505,7 +20581,6 @@ d	b	b	a	g
 d	b	b	a	h
 d	b	b	a	i
 d	b	b	b	a
-d	b	b	b	b
 d	b	b	b	c
 d	b	b	b	d
 d	b	b	b	e
@@ -27066,7 +27141,6 @@ e	b	b	a	g
 e	b	b	a	h
 e	b	b	a	i
 e	b	b	b	a
-e	b	b	b	b
 e	b	b	b	c
 e	b	b	b	d
 e	b	b	b	e
@@ -33627,7 +33701,6 @@ f	b	b	a	g
 f	b	b	a	h
 f	b	b	a	i
 f	b	b	b	a
-f	b	b	b	b
 f	b	b	b	c
 f	b	b	b	d
 f	b	b	b	e
@@ -40188,7 +40261,6 @@ g	b	b	a	g
 g	b	b	a	h
 g	b	b	a	i
 g	b	b	b	a
-g	b	b	b	b
 g	b	b	b	c
 g	b	b	b	d
 g	b	b	b	e
@@ -46749,7 +46821,6 @@ h	b	b	a	g
 h	b	b	a	h
 h	b	b	a	i
 h	b	b	b	a
-h	b	b	b	b
 h	b	b	b	c
 h	b	b	b	d
 h	b	b	b	e
@@ -53310,7 +53381,6 @@ i	b	b	a	g
 i	b	b	a	h
 i	b	b	a	i
 i	b	b	b	a
-i	b	b	b	b
 i	b	b	b	c
 i	b	b	b	d
 i	b	b	b	e
