@@ -138,7 +138,16 @@ void MAXSatPipeline::pipeline(CNFDeclareDataAware* model,
     {
         auto start = std::chrono::system_clock::now();
         std::vector<PartialResult> pr = subqueriesRunning(kb);
-        abidinglogic_query_running(pr, kb);
+
+        switch (operators) {
+            case AbidingLogic:
+                abidinglogic_query_running(pr, kb);
+                break;
+
+            case FastOperator_v1:
+                fast_v1_query_running(pr, kb);
+                break;
+        }
 
         if (!qm.Q.empty()) {
             switch (final_ensemble) {
