@@ -36,27 +36,35 @@ After compiling the tool with CMake, the final project is delivered as a server(
                                           the internal representation of both
                                           the knowledge base and the associated
                                           query plan
+        -o, --nodata                      Ignores the payload when loading the
+                                          data
         -n, --nostats                     Whether the code will lose time in
                                           calculating the statistics for the
                                           traces
-        
-        -p[#threads],
-        --threads=[#threads]              [Ineffective: the program is compiled
-                                          in sequential mode]
-                                  
         -d[Models/Queries...],
         --declare=[Models/Queries...]     The queries expressed as Declare
                                           models
+        -c[Script],
+        --declareDecomposition=[Script]   specifies the path where to load the
+                                          declare LTLf decomposition model
+        -l[Plan], --plan=[Plan]           specifies the preferred plan to be run
+                                          from the script
+        -a[YamlFile],
+        --atomization=[YamlFile]          specifies the configuration file for
+                                          the atomization pipeline
         -b[Benchmark File],
         --csv=[Benchmark File]            Appends the current Result data into a
                                           benchmark file
         -s[SQLMinerDump],
         --sqlminer=[SQLMinerDump]         If present, specifies the dump for the
                                           SQL miner representation
+        -m[MaxSatConfigurationFile],
+        --maxsat=[MaxSatConfigurationFile]
+                                          If present, specifies the
+                                          configurations for the maxsatpipeline
 
     This free and open software program implements the MaxSat problem via a
     Knowledge Base, KnoBAB. Nicer things are still to come!
-
 
 ```
 
