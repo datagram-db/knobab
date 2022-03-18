@@ -764,6 +764,8 @@ int main(int argc, char **argv) {
 // --xes=/home/giacomo/Scaricati/hospital_corrected.xes --nostats -o
     // --tab=data/testing/declare/Response --nostats --nodata --declare=data/testing/declare/Response.powerdecl
 
+    //--tab=data/testing/declare/AltResponse --nostats --nodata --declare=data/testing/declare/AltResponse.powerdecl --server
+
     return 0;
 }
         ///
