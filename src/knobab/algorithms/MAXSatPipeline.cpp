@@ -309,7 +309,7 @@ LTLfQuery *MAXSatPipeline::pushAtomicQueries(const AtomizingPipeline &atomizatio
     if (!formula) return formula;
     for (const auto ptr : formula->args)
         pushAtomicQueries(atomization, ptr,  false);
-    if ((!formula->fields.id.parts.is_timed) && (atomization.act_atoms.contains(*formula->atom.begin()))) {
+    if ((!formula->fields.id.parts.is_timed) && (formula->isLeaf != NotALeaf) && (atomization.act_atoms.contains(*formula->atom.begin()))) {
         switch (formula->t) {
             case LTLfQuery::INIT_QP:{
                 formula->result_id = pushAtomDataQuery(DataQuery::InitQuery(*formula->atom.begin()), true);

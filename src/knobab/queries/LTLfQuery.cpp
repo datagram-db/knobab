@@ -118,6 +118,7 @@ LTLfQuery LTLfQuery::qINIT(short declare_argument, LeafType marking, bool isTime
     LTLfQuery q;
     q.t = INIT_QP;
     q.n = 0;
+    DEBUG_ASSERT(marking != NotALeaf);
     q.isLeaf = marking;
     q.declare_arg = declare_argument;
     q.fields.id.parts.has_theta = false;
@@ -135,6 +136,7 @@ LTLfQuery LTLfQuery::qEND(short declare_argument, LeafType marking, bool isTimed
     LTLfQuery q;
     q.t = END_QP;
     q.n = 0;
+    DEBUG_ASSERT(marking != NotALeaf);
     q.isLeaf = marking;
     q.declare_arg = declare_argument;
     q.fields.id.parts.has_theta = false;
@@ -152,6 +154,7 @@ LTLfQuery LTLfQuery::qEXISTS(size_t narg, short declare_argument, LeafType marki
     LTLfQuery q;
     q.t = EXISTS_QP;
     q.n = narg;
+    DEBUG_ASSERT(marking != NotALeaf);
     q.isLeaf = marking;
     q.declare_arg = declare_argument;
     q.fields.id.parts.has_theta = false;
@@ -169,6 +172,7 @@ LTLfQuery LTLfQuery::qABSENCE(size_t narg, short declare_argument, LeafType mark
     LTLfQuery q;
     q.t = ABSENCE_QP;
     q.n = narg;
+    DEBUG_ASSERT(marking != NotALeaf);
     q.isLeaf = marking;
     q.declare_arg = declare_argument;
     q.fields.id.parts.has_theta = false;
