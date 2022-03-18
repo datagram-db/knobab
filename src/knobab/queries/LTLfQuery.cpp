@@ -132,6 +132,42 @@ LTLfQuery LTLfQuery::qINIT(short declare_argument, LeafType marking, bool isTime
     return q;
 }
 
+LTLfQuery LTLfQuery::qFIRST(LeafType marking) {
+    LTLfQuery q;
+    q.t = FIRST_QP;
+    q.n = 0;
+    DEBUG_ASSERT(marking != NotALeaf);
+    q.isLeaf = marking;
+    q.declare_arg = DECLARE_TYPE_NONE;
+    q.fields.id.parts.has_theta = false;
+    q.fields.id.parts.preserve = false;
+    q.fields.id.parts.is_atom = true;
+    q.fields.id.parts.is_negated = false;
+    q.fields.id.parts.is_timed = true;
+    q.fields.id.parts.is_numbered = false;
+    q.fields.id.parts.is_queryplan = false;
+    q.fields.id.parts.directly_from_cache = false;
+    return q;
+}
+
+LTLfQuery LTLfQuery::qLAST(LeafType marking) {
+    LTLfQuery q;
+    q.t = LAST_QP;
+    q.n = 0;
+    DEBUG_ASSERT(marking != NotALeaf);
+    q.isLeaf = marking;
+    q.declare_arg = DECLARE_TYPE_NONE;
+    q.fields.id.parts.has_theta = false;
+    q.fields.id.parts.preserve = false;
+    q.fields.id.parts.is_atom = true;
+    q.fields.id.parts.is_negated = false;
+    q.fields.id.parts.is_timed = true;
+    q.fields.id.parts.is_numbered = false;
+    q.fields.id.parts.is_queryplan = false;
+    q.fields.id.parts.directly_from_cache = false;
+    return q;
+}
+
 LTLfQuery LTLfQuery::qEND(short declare_argument, LeafType marking, bool isTimed) {
     LTLfQuery q;
     q.t = END_QP;
@@ -283,6 +319,26 @@ LTLfQuery LTLfQuery::qIFTE(const LTLfQuery& lhs, const LTLfQuery& middle, const 
 LTLfQuery LTLfQuery::qAND(const LTLfQuery& lhs, const LTLfQuery& rhs, bool isTimed, bool hasTheta) {
     LTLfQuery q;
     q.t = AND_QP;
+    q.n = 0;
+    q.isLeaf = NotALeaf;
+    q.declare_arg = DECLARE_TYPE_NONE;
+    q.fields.id.parts.has_theta = hasTheta;
+    q.fields.id.parts.preserve = false;
+    q.fields.id.parts.is_atom = false;
+    q.fields.id.parts.is_negated = false;
+    q.fields.id.parts.is_timed = isTimed;
+    q.fields.id.parts.is_numbered = false;
+    q.args_from_script.emplace_back(lhs);
+    q.args_from_script.emplace_back(rhs);
+    q.fields.id.parts.is_queryplan = false;
+    q.fields.id.parts.directly_from_cache = false;
+    return q;
+}
+
+// qANDGLOBALLY
+LTLfQuery LTLfQuery::qANDGLOBALLY(const LTLfQuery& lhs, const LTLfQuery& rhs, bool isTimed, bool hasTheta) {
+    LTLfQuery q;
+    q.t = AG_QPT;
     q.n = 0;
     q.isLeaf = NotALeaf;
     q.declare_arg = DECLARE_TYPE_NONE;

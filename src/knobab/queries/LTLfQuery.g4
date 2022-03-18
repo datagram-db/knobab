@@ -11,6 +11,8 @@ has_args : 'args' INTNUMBER;
 
 query : INIT TIMED?                      declare_arguments? declare_act_target?        #init
       | END  TIMED?                      declare_arguments? declare_act_target?        #end
+      | LAST                                                declare_act_target?        #last
+      | FIRST                                               declare_act_target?        #first
       | EXISTS NEGATED? INTNUMBER TIMED? declare_arguments? declare_act_target?        #exists
       | ABSENCE INTNUMBER TIMED?         declare_arguments? declare_act_target?        #absence
       | NEXT query                                                                     #next
@@ -25,6 +27,7 @@ query : INIT TIMED?                      declare_arguments? declare_act_target? 
       | '(' query ')'                                                                  #paren
       |<assoc=right> query '&Ft' THETA? query                                          #and_future
       |<assoc=right> query '&XGt' THETA? query                                         #and_next_globally
+      |<assoc=right> query '&Gt' THETA? query                                          #and_globally
       ;
 
 
@@ -40,6 +43,8 @@ ABSENCE: 'ABSENCE';
 NEXT : 'NEXT';
 OR : 'OR';
 AND: 'AND';
+FIRST: 'FIRST';
+LAST: 'LAST';
 IF : 'IF';
 THEN: 'THEN';
 ELSE: 'ELSE';

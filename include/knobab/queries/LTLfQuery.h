@@ -49,7 +49,10 @@ struct LTLfQuery {
         NOT_QP = 12,
         AF_QPT = 13,
         AXG_QPT = 14,
-        FALSEHOOD_QP = 15
+        AG_QPT = 15,
+        FIRST_QP = 16,
+        LAST_QP = 17,
+        FALSEHOOD_QP = 18
     };
     type t;
     declare_type_t declare_arg = 0; // Representation of a specific argument providing data/label condition
@@ -81,6 +84,8 @@ struct LTLfQuery {
     bool operator==(const LTLfQuery &rhs) const;
     bool operator!=(const LTLfQuery &rhs) const;
 
+    static LTLfQuery qFIRST(LeafType marking);
+    static LTLfQuery qLAST(LeafType marking);
     static LTLfQuery qINIT(short declare_argument, LeafType marking, bool isTimed);
     static LTLfQuery qEND(short declare_argument, LeafType marking, bool isTimed);
     static LTLfQuery qEXISTS(size_t narg, short declare_argument, LeafType marking, bool isTimed, bool isNegated);
@@ -91,6 +96,7 @@ struct LTLfQuery {
     static LTLfQuery qIMPLICATION(const LTLfQuery& lhs, const LTLfQuery& rhs, bool isTimed, bool hasTheta);
     static LTLfQuery qIFTE(const LTLfQuery& lhs, const LTLfQuery& middle, const LTLfQuery& rhs, bool isTimed, bool hasTheta);
     static LTLfQuery qAND(const LTLfQuery& lhs, const LTLfQuery& rhs, bool isTimed, bool hasTheta);
+    static LTLfQuery qANDGLOBALLY(const LTLfQuery& lhs, const LTLfQuery& rhs, bool isTimed, bool hasTheta);
     static LTLfQuery qANDNEXTGLOBALLY(const LTLfQuery& lhs, const LTLfQuery& rhs, bool isTimed, bool hasTheta);
     static LTLfQuery qANDFUTURE(const LTLfQuery& lhs, const LTLfQuery& rhs, bool isTimed, bool hasTheta);
     static LTLfQuery qUNTIL(const LTLfQuery& lhs, const LTLfQuery& rhs, bool isTimed, bool hasTheta);

@@ -1054,4 +1054,15 @@ void KnowledgeBase::dump_for_sqlminer(std::ostream &log, std::ostream &payload, 
     }
 }
 
+PartialResult KnowledgeBase::getFirstOrLastElements(const bool isFirst) const {
+    PartialResult elems{};
+    PartialResultRecord traceEventPair{{0,0}, 1.0};
+    for (const std::pair<ActTable::record *, ActTable::record *> &rec: act_table_by_act_id.secondary_index) {
+        traceEventPair.first.first = isFirst ? rec.first->entry.id.parts.trace_id : rec.second->entry.id.parts.trace_id;
+        traceEventPair.first.second = isFirst ? rec.first->entry.id.parts.event_id : rec.second->entry.id.parts.event_id;
+        elems.push_back(traceEventPair);
+    }
+    return elems;
+}
+
 

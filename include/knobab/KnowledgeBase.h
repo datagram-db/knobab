@@ -230,6 +230,15 @@ public:
     Result ends(const std::string& act, bool doExtractEvent, const double minThreshold = 1) const;
     std::vector<std::pair<std::pair<trace_t, event_t>, double>> exists(const std::string& act) const;
 
+    /**
+     *
+     * @author Samuel 'Sam' Appleby
+     *
+     * @param isFirst
+     * @return
+     */
+    PartialResult getFirstOrLastElements(const bool isFirst) const;
+
     [[deprecated]] Result exists(const std::string& act, LeafType markEventsForMatch) const;
 
     //template <typename traceIdentifier, typename traceValue>

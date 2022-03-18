@@ -18,7 +18,9 @@ enum DataQueryType {
     RangeQuery,
     InitQuery,
     EndsQuery,
-    AtomQuery
+    AtomQuery,
+    FirstQuery,
+    LastQuery
 };
 
 
@@ -30,6 +32,8 @@ struct DataQuery {
     std::variant<std::string, double> lower_bound, upper_bound;
     size_t numeric_argument;
 
+    static DataQuery FirstQuery(LeafType lt = NoneLeaf);
+    static DataQuery LastQuery(LeafType lt = NoneLeaf);
     static DataQuery AtomQueries (DataQueryType t, const std::string &atom, LeafType lt = NoneLeaf);
     static DataQuery ExistsQuery(const std::string &atom, size_t numeric_argument, LeafType lt = NoneLeaf);
     static DataQuery AtomQuery(const std::string &atom, LeafType lt = NoneLeaf);

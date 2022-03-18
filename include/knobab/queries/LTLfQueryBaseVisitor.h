@@ -43,6 +43,10 @@ public:
     return visitChildren(ctx);
   }
 
+  virtual antlrcpp::Any visitLast(LTLfQueryParser::LastContext *ctx) override {
+    return visitChildren(ctx);
+  }
+
   virtual antlrcpp::Any visitAbsence(LTLfQueryParser::AbsenceContext *ctx) override {
     return visitChildren(ctx);
   }
@@ -75,6 +79,10 @@ public:
     return visitChildren(ctx);
   }
 
+  virtual antlrcpp::Any visitAnd_globally(LTLfQueryParser::And_globallyContext *ctx) override {
+    return visitChildren(ctx);
+  }
+
   virtual antlrcpp::Any visitExists(LTLfQueryParser::ExistsContext *ctx) override {
     return visitChildren(ctx);
   }
@@ -88,6 +96,10 @@ public:
   }
 
   virtual antlrcpp::Any visitAnd_future(LTLfQueryParser::And_futureContext *ctx) override {
+    return visitChildren(ctx);
+  }
+
+  virtual antlrcpp::Any visitFirst(LTLfQueryParser::FirstContext *ctx) override {
     return visitChildren(ctx);
   }
 

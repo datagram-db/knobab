@@ -340,6 +340,23 @@ LTLfQuery *MAXSatPipeline::pushAtomicQueries(const AtomizingPipeline &atomizatio
 
             default: break;
         }
+    } else if (((formula->fields.id.parts.is_timed) && (formula->t == LTLfQuery::LAST_QP || formula->t == LTLfQuery::FIRST_QP))) {
+        switch (formula->t) {
+            case LTLfQuery::FIRST_QP: {
+                formula->result_id = pushAtomDataQuery(DataQuery::FirstQuery(), true);
+                formula->fields.id.parts.directly_from_cache = true;
+                //W.emplace_back(formula);
+                break;
+            }
+            case LTLfQuery::LAST_QP: {
+                formula->result_id = pushAtomDataQuery(DataQuery::LastQuery(), true);
+                formula->fields.id.parts.directly_from_cache = true;
+                //W.emplace_back(formula);
+                break;
+            }
+
+            default: break;
+        }
     } else {
         //W.emplace_back(formula);
         if (formula->args.empty()) {
@@ -797,25 +814,43 @@ void MAXSatPipeline::abidinglogic_query_running(const std::vector<PartialResult>
                             break;
 
                         case LTLfQuery::AF_QPT:
-                            if (formula->fields.id.parts.is_timed)
-                                aAndFutureB_timed(formula->args.at(0)->result,
-                                                  formula->args.at(1)->result,
-                                                  formula->result,
-                                                  formula->joinCondition,
-                                                  kb.act_table_by_act_id.trace_length);
-                            else
-                                throw std::runtime_error("AndFuture is untimed: unexpected implementation!");
+                            if (formula->fields.id.parts.is_timed) {
+                                future_logic_timed(formula->args.at(1)->result, tmp_result, kb.act_table_by_act_id.trace_length);
+                                and_logic_timed(formula->args.at(0)->result, tmp_result, formula->result, formula->joinCondition, kb.act_table_by_act_id.trace_length);
+                                tmp_result.clear();
+                            } else {
+                                future_logic_timed(formula->args.at(1)->result, tmp_result, kb.act_table_by_act_id.trace_length);
+                                and_logic_untimed(formula->args.at(0)->result, tmp_result, formula->result, formula->joinCondition, kb.act_table_by_act_id.trace_length);
+                                tmp_result.clear();
+                            }
                             break;
 
                         case LTLfQuery::AXG_QPT:
-                            if (formula->fields.id.parts.is_timed)
-                                aAndNextGloballyB_timed(formula->args.at(0)->result,
-                                                  formula->args.at(1)->result,
-                                                  formula->result,
-                                                  formula->joinCondition,
-                                                  kb.act_table_by_act_id.trace_length);
-                            else
-                                throw std::runtime_error("AndNextGlobally is untimed: unexpected implementation!");
+                            if (formula->fields.id.parts.is_timed) {
+                                Result local;
+                                global_logic_timed(formula->args.at(1)->result, tmp_result, kb.act_table_by_act_id.trace_length);
+                                next_logical(tmp_result, local);
+                                and_logic_timed(formula->args.at(0)->result, local, formula->result, formula->joinCondition, kb.act_table_by_act_id.trace_length);
+                                tmp_result.clear();
+                            } else {
+                                Result local;
+                                global_logic_timed(formula->args.at(1)->result, tmp_result, kb.act_table_by_act_id.trace_length);
+                                next_logical(tmp_result, local);
+                                and_logic_untimed(formula->args.at(0)->result, local, formula->result, formula->joinCondition, kb.act_table_by_act_id.trace_length);
+                                tmp_result.clear();
+                            }
+                            break;
+
+                        case LTLfQuery::AG_QPT:
+                            if (formula->fields.id.parts.is_timed) {
+                                global_logic_timed(formula->args.at(1)->result, tmp_result, kb.act_table_by_act_id.trace_length);
+                                and_logic_timed(formula->args.at(0)->result, tmp_result, formula->result, formula->joinCondition, kb.act_table_by_act_id.trace_length);
+                                tmp_result.clear();
+                            } else {
+                                global_logic_timed(formula->args.at(1)->result, tmp_result, kb.act_table_by_act_id.trace_length);
+                                and_logic_untimed(formula->args.at(0)->result, tmp_result, formula->result, formula->joinCondition, kb.act_table_by_act_id.trace_length);
+                                tmp_result.clear();
+                            }
                             break;
 
                         case LTLfQuery::FALSEHOOD_QP:
@@ -850,9 +885,13 @@ std::vector<PartialResult> MAXSatPipeline::subqueriesRunning(const KnowledgeBase
                     case EndsQuery:
                         ref.second = kb.endsOrig(ref.first.label);
                         break;
-                    //
-                    //    // TODO: ref.second = kb.exists<std::pair<uint32_t, uint16_t>, double>(ref.first.label).traceApproximations;
-                    //    break;
+                    case FirstQuery:
+                        ref.second = kb.getFirstOrLastElements(true);
+                        break;
+                    case LastQuery:
+                        ref.second = kb.getFirstOrLastElements(false);
+                        break;
+
                     default:
                         DEBUG_ASSERT(false); // This should be dealt in (B)
                 }
@@ -1138,6 +1177,17 @@ void MAXSatPipeline::fast_v1_query_running(const std::vector<PartialResult>& res
                         case LTLfQuery::AXG_QPT:
                             if (formula->fields.id.parts.is_timed)
                                 aAndNextGloballyB_timed(formula->args.at(0)->result,
+                                                        formula->args.at(1)->result,
+                                                        formula->result,
+                                                        formula->joinCondition,
+                                                        kb.act_table_by_act_id.trace_length);
+                            else
+                                throw std::runtime_error("AndNextGlobally is untimed: unexpected implementation!");
+                            break;
+
+                        case LTLfQuery::AG_QPT:
+                            if (formula->fields.id.parts.is_timed)
+                                aAndGloballyB_timed(formula->args.at(0)->result,
                                                         formula->args.at(1)->result,
                                                         formula->result,
                                                         formula->joinCondition,

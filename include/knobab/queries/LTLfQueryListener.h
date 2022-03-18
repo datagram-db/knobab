@@ -35,6 +35,9 @@ public:
   virtual void enterOr(LTLfQueryParser::OrContext *ctx) = 0;
   virtual void exitOr(LTLfQueryParser::OrContext *ctx) = 0;
 
+  virtual void enterLast(LTLfQueryParser::LastContext *ctx) = 0;
+  virtual void exitLast(LTLfQueryParser::LastContext *ctx) = 0;
+
   virtual void enterAbsence(LTLfQueryParser::AbsenceContext *ctx) = 0;
   virtual void exitAbsence(LTLfQueryParser::AbsenceContext *ctx) = 0;
 
@@ -59,6 +62,9 @@ public:
   virtual void enterImplication(LTLfQueryParser::ImplicationContext *ctx) = 0;
   virtual void exitImplication(LTLfQueryParser::ImplicationContext *ctx) = 0;
 
+  virtual void enterAnd_globally(LTLfQueryParser::And_globallyContext *ctx) = 0;
+  virtual void exitAnd_globally(LTLfQueryParser::And_globallyContext *ctx) = 0;
+
   virtual void enterExists(LTLfQueryParser::ExistsContext *ctx) = 0;
   virtual void exitExists(LTLfQueryParser::ExistsContext *ctx) = 0;
 
@@ -70,6 +76,9 @@ public:
 
   virtual void enterAnd_future(LTLfQueryParser::And_futureContext *ctx) = 0;
   virtual void exitAnd_future(LTLfQueryParser::And_futureContext *ctx) = 0;
+
+  virtual void enterFirst(LTLfQueryParser::FirstContext *ctx) = 0;
+  virtual void exitFirst(LTLfQueryParser::FirstContext *ctx) = 0;
 
   virtual void enterIfte(LTLfQueryParser::IfteContext *ctx) = 0;
   virtual void exitIfte(LTLfQueryParser::IfteContext *ctx) = 0;
