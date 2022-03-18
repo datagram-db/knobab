@@ -1,8 +1,10 @@
 "marking" {
-     template "Init"            := INIT
-     template "Exists1"         := (EXISTS 1)
-     template "Absence1"        := ABSENCE 1
-     template "Absence2"        := ABSENCE 2
-     template "Choice" args 2   := (EXISTS 1 t #1 activation) OR THETA (EXISTS 1 t #2 target)
-     template "Response" args 2 := G ( ((EXISTS ~ 1 t #1)) OR t ((EXISTS 1 t #1 activation) &Ft THETA (EXISTS 1 t #2 target)) )
+     template "Init"               := INIT
+     template "Exists1"            := (EXISTS 1)
+     template "Absence1"           := ABSENCE 1
+     template "Absence2"           := ABSENCE 2
+     template "Choice" args 2      := (EXISTS 1 t #1 activation) OR THETA (EXISTS 1 t #2 target)
+     template "Response" args 2    := G ( ((EXISTS ~ 1 t #1)) OR t ((EXISTS 1 t #1 activation) &Ft THETA (EXISTS 1 t #2 target)) )
+     template "AltResponse" args 2 := G ( ((EXISTS ~ 1 t #1)) OR t ((EXISTS 1 t #1 activation) AND t THETA (NEXT ((EXISTS ~ 1 t #1) U t  (EXISTS 1 t #2 target)))) )
+     template "ChainResponse" args 2 := G ( ((EXISTS ~ 1 t #1)) OR t ((EXISTS 1 t #1 activation) AND t THETA (NEXT EXISTS 1 t #2 target)))
 }
