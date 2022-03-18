@@ -451,6 +451,7 @@ Result negateUntimed(TableSection &data_untimed, const std::vector<size_t> &leng
             // MEMO: if you want to preserve the condition where it didn't hold for repairs or givin advices, then you should return a result having 0, and containing the result of the match
             if (preserveNegatedFacts) {
                 rc.first.first = first1;
+                rc.second.first = 1.0;
                 while (first2 != last2 && (first2->first.first != first1)) {
                     rc.second.second.insert(rc.second.second.end(), first2->second.second.begin(), first2->second.second.end());
                     rc.second.first *= first2->second.first;
@@ -468,6 +469,7 @@ Result negateUntimed(TableSection &data_untimed, const std::vector<size_t> &leng
         if (first2 != last2) {
             trace_t currTraceId = first2->first.first;
             rc.first.first = currTraceId;
+            rc.second.first = 1.0;
             while ((first2 != last2) && (first2->first.first == currTraceId)) {
                 rc.second.second.insert(rc.second.second.end(), first2->second.second.begin(), first2->second.second.end());
                 rc.second.first *= first2->second.first;

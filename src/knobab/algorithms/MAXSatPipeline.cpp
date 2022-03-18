@@ -167,7 +167,9 @@ void MAXSatPipeline::pipeline(CNFDeclareDataAware* model,
                     max_sat_per_trace.resize(kb.noTraces, 0.0);
                     for (const auto& q : qm.Q.begin()->second) {
                         for (const auto& rx: q->result) {
-                            max_sat_per_trace[rx.first.first]++;
+                            // Counting the trace if and only if it has a near-1 value
+                            if (std::abs(rx.second.first - 1.0) <= std::numeric_limits<double>::epsilon())
+                                max_sat_per_trace[rx.first.first]++;
                         }
                     }
                     for (auto& ref : max_sat_per_trace) {
@@ -784,15 +786,13 @@ void MAXSatPipeline::abidinglogic_query_running(const std::vector<PartialResult>
 
                         case LTLfQuery::NOT_QP:
                             if (formula->fields.id.parts.preserve && (!formula->fields.id.parts.is_timed)) {
-                                formula->result = negateUntimed(formula->result, kb.act_table_by_act_id.trace_length, true);
+                                formula->result = negateUntimed(formula->args[0]->result, kb.act_table_by_act_id.trace_length, true);
                             } else if (formula->fields.id.parts.is_timed) {
                                 if (formula->fields.id.parts.preserve)
                                     throw std::runtime_error("At this stage, cannot preserve data for timed");
-                                negated_logic_timed(formula->result, tmp_result, kb.act_table_by_act_id.trace_length);
-                                std::swap(formula->result, tmp_result);
+                                negated_logic_timed(formula->args[0]->result, formula->result, kb.act_table_by_act_id.trace_length);
                             } else {
-                                negated_logic_untimed(formula->result, tmp_result, kb.act_table_by_act_id.trace_length);
-                                std::swap(formula->result, tmp_result);
+                                negated_logic_untimed(formula->args[0]->result, formula->result, kb.act_table_by_act_id.trace_length);
                             }
                             break;
 
@@ -1114,15 +1114,13 @@ void MAXSatPipeline::fast_v1_query_running(const std::vector<PartialResult>& res
 
                         case LTLfQuery::NOT_QP:
                             if (formula->fields.id.parts.preserve && (!formula->fields.id.parts.is_timed)) {
-                                formula->result = negateUntimed(formula->result, kb.act_table_by_act_id.trace_length, true);
+                                formula->result = negateUntimed(formula->args[0]->result, kb.act_table_by_act_id.trace_length, true);
                             } else if (formula->fields.id.parts.is_timed) {
                                 if (formula->fields.id.parts.preserve)
                                     throw std::runtime_error("At this stage, cannot preserve data for timed");
-                                negated_fast_timed(formula->result, tmp_result, kb.act_table_by_act_id.trace_length);
-                                std::swap(formula->result, tmp_result);
+                                negated_fast_timed(formula->args[0]->result, formula->result, kb.act_table_by_act_id.trace_length);
                             } else {
-                                negated_fast_untimed(formula->result, tmp_result, kb.act_table_by_act_id.trace_length);
-                                std::swap(formula->result, tmp_result);
+                                negated_fast_untimed(formula->args[0]->result, formula->result, kb.act_table_by_act_id.trace_length);
                             }
                             break;
 
