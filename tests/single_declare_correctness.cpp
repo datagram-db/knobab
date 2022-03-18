@@ -86,3 +86,14 @@ TEST_F(RespExistence_tests, test_single_declare_clause) {
     }
 }
 
+TEST_MULTI(ExlChoice)
+TEST_F(ExlChoice_tests, test_single_declare_clause) {
+    auto ref = env.query_model();
+    ASSERT_EQ(ref.final_ensemble, TraceMaximumSatisfiability);
+    for (size_t i = 0; i<ref.max_sat_per_trace.size(); i++) {
+        if (i<pos)
+            ASSERT_EQ(ref.max_sat_per_trace.at(i), 1.0);
+        else
+            ASSERT_EQ(ref.max_sat_per_trace.at(i), 0.0);
+    }
+}
