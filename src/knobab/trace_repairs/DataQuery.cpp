@@ -5,20 +5,22 @@
 #include "knobab/trace_repairs/DataQuery.h"
 #include <yaucl/functional/assert.h>
 
-DataQuery DataQuery::ExistsQuery(const std::string &atom, LeafType lt) {
+DataQuery DataQuery::ExistsQuery(const std::string &atom, size_t narg, LeafType lt) {
     DataQuery returnable;
     DEBUG_ASSERT(!atom.empty());
     returnable.label = atom;
     returnable.type = DataQueryType::ExistsQuery;
     returnable.t = lt;
+    returnable.numeric_argument = narg;
     return returnable;
 }
 
-DataQuery DataQuery::AbsenceQuery(const std::string &atom, LeafType lt) {
+DataQuery DataQuery::AbsenceQuery(const std::string &atom, size_t narg,  LeafType lt) {
     DataQuery returnable;
     DEBUG_ASSERT(!atom.empty());
     returnable.label = atom;
     returnable.type = DataQueryType::AbsenceQuery;
+    returnable.numeric_argument = narg;
     returnable.t = lt;
     return returnable;
 }
