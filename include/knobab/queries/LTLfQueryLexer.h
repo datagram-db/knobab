@@ -13,12 +13,12 @@ class  LTLfQueryLexer : public antlr4::Lexer {
 public:
   enum {
     T__0 = 1, T__1 = 2, T__2 = 3, T__3 = 4, T__4 = 5, T__5 = 6, T__6 = 7, 
-    T__7 = 8, T__8 = 9, ACTIVATION = 10, TARGET = 11, INIT = 12, END = 13, 
-    EXISTS = 14, ABSENCE = 15, NEXT = 16, OR = 17, AND = 18, IF = 19, THEN = 20, 
-    ELSE = 21, UNTIL = 22, BOX = 23, DIAMOND = 24, AUTO_TIMED = 25, LPAREN = 26, 
-    RPAREN = 27, PRESERVE = 28, TIMED = 29, THETA = 30, LEFT = 31, RIGHT = 32, 
-    MIDDLE = 33, NEGATED = 34, INTNUMBER = 35, STRING = 36, SPACE = 37, 
-    COMMENT = 38, LINE_COMMENT = 39
+    T__7 = 8, T__8 = 9, T__9 = 10, ACTIVATION = 11, TARGET = 12, INIT = 13, 
+    END = 14, EXISTS = 15, ABSENCE = 16, NEXT = 17, OR = 18, AND = 19, FIRST = 20, 
+    LAST = 21, IF = 22, THEN = 23, ELSE = 24, UNTIL = 25, BOX = 26, DIAMOND = 27, 
+    AUTO_TIMED = 28, LPAREN = 29, RPAREN = 30, PRESERVE = 31, TIMED = 32, 
+    THETA = 33, LEFT = 34, RIGHT = 35, MIDDLE = 36, NEGATED = 37, INTNUMBER = 38, 
+    STRING = 39, SPACE = 40, COMMENT = 41, LINE_COMMENT = 42
   };
 
   explicit LTLfQueryLexer(antlr4::CharStream *input);

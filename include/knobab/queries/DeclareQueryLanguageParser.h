@@ -45,6 +45,8 @@ struct DeclareQueryLanguageParser : public LTLfQueryVisitor {
     void analyse(const std::string& approach, const DeclareDataAware& clause);
 
     /// Inherited visitors
+    antlrcpp::Any visitLast(LTLfQueryParser::LastContext *context) override;
+    antlrcpp::Any visitFirst(LTLfQueryParser::FirstContext *context) override;
     antlrcpp::Any visitInit(LTLfQueryParser::InitContext *context) override;
     antlrcpp::Any visitEnd(LTLfQueryParser::EndContext *context) override;
     antlrcpp::Any visitAbsence(LTLfQueryParser::AbsenceContext *context) override;
@@ -61,6 +63,8 @@ struct DeclareQueryLanguageParser : public LTLfQueryVisitor {
     antlrcpp::Any visitImplication(LTLfQueryParser::ImplicationContext *context) override;
     antlrcpp::Any visitUntil(LTLfQueryParser::UntilContext *context) override;
     antlrcpp::Any visitIfte(LTLfQueryParser::IfteContext *context) override;
+
+    antlrcpp::Any visitAnd_globally(LTLfQueryParser::And_globallyContext *context) override;
 
     /// Useless inherited visitors
     antlrcpp::Any visitQuery_plan(LTLfQueryParser::Query_planContext *context) override { return {}; }

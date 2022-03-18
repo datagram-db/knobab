@@ -33,6 +33,8 @@ public:
 
     virtual antlrcpp::Any visitOr(LTLfQueryParser::OrContext *context) = 0;
 
+    virtual antlrcpp::Any visitLast(LTLfQueryParser::LastContext *context) = 0;
+
     virtual antlrcpp::Any visitAbsence(LTLfQueryParser::AbsenceContext *context) = 0;
 
     virtual antlrcpp::Any visitBox(LTLfQueryParser::BoxContext *context) = 0;
@@ -49,6 +51,8 @@ public:
 
     virtual antlrcpp::Any visitImplication(LTLfQueryParser::ImplicationContext *context) = 0;
 
+    virtual antlrcpp::Any visitAnd_globally(LTLfQueryParser::And_globallyContext *context) = 0;
+
     virtual antlrcpp::Any visitExists(LTLfQueryParser::ExistsContext *context) = 0;
 
     virtual antlrcpp::Any visitEnd(LTLfQueryParser::EndContext *context) = 0;
@@ -56,6 +60,8 @@ public:
     virtual antlrcpp::Any visitUntil(LTLfQueryParser::UntilContext *context) = 0;
 
     virtual antlrcpp::Any visitAnd_future(LTLfQueryParser::And_futureContext *context) = 0;
+
+    virtual antlrcpp::Any visitFirst(LTLfQueryParser::FirstContext *context) = 0;
 
     virtual antlrcpp::Any visitIfte(LTLfQueryParser::IfteContext *context) = 0;
 

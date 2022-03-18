@@ -13,4 +13,8 @@
      template "Precedence" args 2 := ((EXISTS  ~ 1 t #2) U (EXISTS 1 t #1 target)) OR (ABSENCE 1 #2)
      template "Succession" args 2 := (G ( ((EXISTS ~ 1 t #1)) OR t ((EXISTS 1 t #1 activation) &Ft THETA (EXISTS 1 t #2 target)) )) AND (((EXISTS  ~ 1 t #2) U (EXISTS 1 t #1 target)) OR (ABSENCE 1 #2))
      template "NegSuccession" args 2 := (G ( ((EXISTS ~ 1 t #1)) OR t ((EXISTS 1 t #1 activation) &Gt THETA (EXISTS ~ 1 t #2)) ))
+     template "ChainPrecedence" args 2 := G(((LAST OR t (NEXT EXISTS ~ 1 t #2))) OR t ((EXISTS 1 t #1 activation) AND t (NEXT EXISTS 1 t #2 target)))
+     template "ChainSuccession" args 2 := G( (((LAST OR t (NEXT EXISTS ~ 1 t #2))) OR t ((EXISTS 1 t #1 activation) AND t (NEXT EXISTS 1 t #2 target))) AND t
+                                             ( ((EXISTS ~ 1 t #1)) OR t ((EXISTS 1 t #1 activation) AND t THETA (NEXT EXISTS 1 t #2 target)))
+                                           )
 }

@@ -61,6 +61,22 @@ DataQuery DataQuery::EndsQuery(const std::string &atom) {
     return returnable;
 }
 
+DataQuery DataQuery::FirstQuery(LeafType lt) {
+    DataQuery returnable;
+    returnable.type = DataQueryType::FirstQuery;
+    returnable.t = lt;
+    returnable.numeric_argument = 0;
+    return returnable;
+}
+
+DataQuery DataQuery::LastQuery(LeafType lt) {
+    DataQuery returnable;
+    returnable.type = DataQueryType::LastQuery;
+    returnable.t = lt;
+    returnable.numeric_argument = 0;
+    return returnable;
+}
+
 DataQuery
 DataQuery::RangeQuery(const std::string &atom, const std::string &var, const std::variant<std::string, double> &lb,
                                       const std::variant<std::string, double> &ub, LeafType lt) {

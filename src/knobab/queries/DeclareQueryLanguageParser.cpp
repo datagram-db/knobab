@@ -64,6 +64,15 @@ antlrcpp::Any DeclareQueryLanguageParser::visitInit(LTLfQueryParser::InitContext
     return {LTLfQuery::qINIT(argument, decleare_leaf_determine(context->declare_act_target()), GET_TIMING(context))};
 }
 
+antlrcpp::Any DeclareQueryLanguageParser::visitLast(LTLfQueryParser::LastContext *context) {
+    return {LTLfQuery::qLAST(decleare_leaf_determine(context->declare_act_target()))};
+}
+
+antlrcpp::Any DeclareQueryLanguageParser::visitFirst(LTLfQueryParser::FirstContext *context) {
+    return {LTLfQuery::qFIRST(decleare_leaf_determine(context->declare_act_target()))};
+}
+
+
 antlrcpp::Any DeclareQueryLanguageParser::visitEnd(LTLfQueryParser::EndContext *context) {
     ASSERT_ON_TIMING(context);
     auto argument = decleare_templates_determine(context->declare_arguments());
@@ -229,5 +238,24 @@ antlrcpp::Any DeclareQueryLanguageParser::visitIfte(LTLfQueryParser::IfteContext
                              GET_TIMING(context),
                              context->THETA() != nullptr)};
 }
+
+antlrcpp::Any DeclareQueryLanguageParser::visitAnd_globally(LTLfQueryParser::And_globallyContext *context) {
+    ASSERT_ON_GIVEN_TIMING(true);
+
+    fromNowOnTimedStack.push(fromNowOnTimed);
+    auto lhs = visit(context->query(0)).as<LTLfQuery>();
+    fromNowOnTimed = fromNowOnTimedStack.top();
+    fromNowOnTimedStack.pop();
+
+    fromNowOnTimedStack.push(fromNowOnTimed);
+    fromNowOnTimed = true;
+    auto rhs = visit(context->query(1)).as<LTLfQuery>();
+    fromNowOnTimed = fromNowOnTimedStack.top();
+    fromNowOnTimedStack.pop();
+
+    return {LTLfQuery::qANDGLOBALLY(lhs, rhs, true, context->THETA() != nullptr)};
+}
+
+
 
 

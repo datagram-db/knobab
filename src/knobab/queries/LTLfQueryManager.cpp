@@ -217,7 +217,9 @@ LTLfQuery *LTLfQueryManager::simplify(const std::unordered_set<std::string>& ato
         }
     } else {
         //To be done at a future step: supporting three argument clauses
-        DEBUG_ASSERT(!q.fields.id.parts.is_atom);
+        if(q.fields.id.parts.is_atom) {
+            DEBUG_ASSERT((q.t == LTLfQuery::FIRST_QP) || (q.t == LTLfQuery::LAST_QP));
+        }
     }
     if (input.fields.id.parts.has_theta) {
         q.joinCondition = joinCondition;

@@ -640,6 +640,99 @@ inline void aAndNextGloballyB_timed(const Result& a, const Result& b,Result& res
 
 }
 
+
+
+/**
+ *
+ * @author Samuel 'Sam' Appleby, Giacomo Bergami
+ *
+ * @param aResult
+ * @param bResult
+ * @param result
+ * @param manager
+ * @param lengths
+ */
+inline void aAndGloballyB_timed(const Result& a, const Result& b,Result& result, const PredicateManager *manager = nullptr, const std::vector<size_t> lengths = {}) {
+    if (b.empty()) {
+        result.clear();
+        return;
+    }
+    auto bCurrent = b.begin(), bEnd = b.end();
+    ResultRecord rcx;
+    marked_event join = marked_event::join(0,0);
+    bool hasMatch;
+    std::unordered_set<std::string> cache;
+
+    for (auto aCurrent = a.begin(), aEnd = a.end(); aCurrent != aEnd; ) {
+
+        if (aCurrent->first > bCurrent->first) {
+            bCurrent++;
+        } else {
+            auto newItr = bCurrent;
+            rcx.first = aCurrent->first;
+            rcx.second.second.clear();
+            rcx.second.first = 1.0;
+            hasMatch = false;
+
+            if (newItr == bEnd) return;
+
+            if((newItr->first.first == aCurrent->first.first) && (newItr->first.second == aCurrent->first.second)){
+                std::vector<uint16_t> activations{};
+
+                uint16_t count = 0;
+
+                while (newItr != bEnd) {
+                    if(newItr->first.first != aCurrent->first.first){
+                        break;
+                    }
+                    if (manager) {
+                        for (const auto &elem: aCurrent->second.second) {
+                            if (!IS_MARKED_EVENT_ACTIVATION(elem)) continue;
+                            join.id.parts.left = GET_ACTIVATION_EVENT(elem);
+                            env e1 = manager->GetPayloadDataFromEvent(aCurrent->first.first, join.id.parts.left, true, cache);
+                            for (const auto &elem1: newItr->second.second) {
+                                if (!IS_MARKED_EVENT_TARGET(elem1)) continue;
+                                join.id.parts.right = GET_TARGET_EVENT(elem1);
+
+                                if (manager->checkValidity(e1, newItr->first.first, join.id.parts.right)) {
+                                    rcx.second.second.push_back(join);
+                                    rcx.second.first *= (1.0 - std::min(aCurrent->second.first, newItr->second.first));
+                                    count++;
+                                    hasMatch = true;
+                                }
+                            }
+                        }
+                    } else {
+                        count++;
+                        hasMatch = true;
+                        rcx.second.second.insert(rcx.second.second.end(), newItr->second.second.begin(), newItr->second.second.end());
+                    }
+
+                    newItr++;
+                }
+
+                hasMatch = hasMatch && (count == lengths.at( aCurrent->first.first)  - aCurrent->first.second);
+            }
+
+            if (hasMatch) {
+                if (!manager) rcx.second.second.insert(rcx.second.second.end(), aCurrent->second.second.begin(), aCurrent->second.second.end());
+                remove_duplicates(rcx.second.second);
+                if (manager) rcx.second.first = 1.0 - rcx.second.first;
+                result.emplace_back(rcx);
+            }
+
+            if (aCurrent->first == bCurrent->first) {
+                bCurrent++;
+            }
+
+            aCurrent++;
+        }
+    }
+
+}
+
+
+
 inline void implies_fast_timed(const Result &aSection, const Result &bSection, const Result &notaSection, Result& result, const PredicateManager* manager = nullptr, const std::vector<size_t>& lengths = {}) {
     Result aTrue;
     and_fast_timed(aSection, bSection, aTrue, manager, lengths);
