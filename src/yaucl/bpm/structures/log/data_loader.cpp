@@ -206,7 +206,7 @@ void load_act_stream_to_knowledge_base(std::istream &stream, const std::string &
         std::istringstream iss(line);
         std::string token;
         while(std::getline(iss, token, '\t')) {
-            tv.enterEvent(timestamp++, token);
+            tv.exitEvent(tv.enterEvent(timestamp++, token));
         }
         tv.exitTrace(traceId);
         trace_count++;
