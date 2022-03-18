@@ -14,14 +14,33 @@
 #include <yaucl/graphs/algorithms/minimizeDFA.h>
 #include <yaucl/graphs/graph_join_pm_conversion.h>
 
+void generate_powerdecl_benchmark(const KnowledgeBase& db, const std::string dir, const std::vector<std::string>& Declare){
+    for(const std::string& name : Declare){
+        std::ofstream outF{dir + "/" + name + ".powerdecl", std::ios_base::app};
 
-void whole_testing(const std::string& log_file = "data/testing/log.txt",
+        const uint16_t s = db.event_label_mapper.int_to_T.size();
+        for(int i = 0; i < s; ++i){
+            std::string first = db.event_label_mapper.get(i);
+            for(int j = 0; j < s; ++j){
+                std::string second = db.event_label_mapper.get(j);
+                outF << name << "(\"" << first << "\", true, " << "\"" << second << "\", true)" << std::endl;
+            }
+        }
+
+        outF.close();
+    }
+}
+
+void whole_testing(const std::string &log_file = "data/testing/log.txt",
                    log_data_format format = HUMAN_READABLE_YAUCL,
-                   const std::vector<std::string>& declare_files = {"data/testing/SimpleComposition.txt"},
+                   const std::vector<std::string> &declare_files = {"data/testing/SimpleComposition.txt"},
                    bool doDebugServer = false,
-                   const std::string& benchmarking_file = "",
-                   const std::string& sqlminer_dump_dir = "",
-                   bool doStats = true) {
+                   const std::string &benchmarking_file = "",
+                   const std::string &sqlminer_dump_dir = "",
+                   bool doStats = true,
+                   const std::string& generateDir = "",
+                   const std::vector<std::string> &declareNames = {},
+                   const std::uint16_t num_iters = 1) {
     Environment env;
     env.clear();
     env.doStats = doStats;
@@ -37,57 +56,67 @@ void whole_testing(const std::string& log_file = "data/testing/log.txt",
         env.dump_log_for_sqlminer(sqlminer_dump_dir);
     }
 
-    if (declare_files.empty()) {
+    if(!generateDir.empty() && !declareNames.empty()){
+        generate_powerdecl_benchmark(env.db, generateDir, declareNames);
+    }
+
+    else if (declare_files.empty()) {
         std::cout << env.experiment_logger << std::endl;
-    } else for (const auto& declare_file : declare_files) {
-        std::cout << "Loading the declarative model from file: " << declare_file << std::endl;
-        env.load_model(declare_file);
-        env.print_model(std::cout); // DEBUG
-        //////////////////////////////////////////////////////////////////
+    } else {
+        for (const std::string &declare_file: declare_files) {
+            std::cout << "Loading the declarative model from file: " << declare_file << std::endl;
+            env.load_model(declare_file);
+            env.print_model(std::cout); // DEBUG
+            //////////////////////////////////////////////////////////////////
 
-        env.set_grounding_parameters(true, false, true,GroundingStrategyConf::NO_EXPANSION);
-        //env.set_grounding_parameters(grounding_strategy);
-        env.doGrounding();
-        env.print_grounded_model(std::cout); // DEBUG
-        //////////////////////////////////////////////////////////////////
+            env.set_grounding_parameters(true, false, true, GroundingStrategyConf::NO_EXPANSION);
+            //env.set_grounding_parameters(grounding_strategy);
+            env.doGrounding();
+            env.print_grounded_model(std::cout); // DEBUG
+            //////////////////////////////////////////////////////////////////
 
-        env.set_atomization_parameters("p", 10);
-        //env.set_atomization_parameters(std::filesystem::path(atomization_conf));
-        //////////////////////////////////////////////////////////////////
+            env.set_atomization_parameters("p", 10);
+            //env.set_atomization_parameters(std::filesystem::path(atomization_conf));
+            //////////////////////////////////////////////////////////////////
 
-        std::cout << "Loading the atomization tables given the model" << std::endl;
-        env.init_atomize_tables();
-        env.print_grounding_tables(std::cout);
-        //////////////////////////////////////////////////////////////////
+            std::cout << "Loading the atomization tables given the model" << std::endl;
+            env.init_atomize_tables();
+            env.print_grounding_tables(std::cout);
+            //////////////////////////////////////////////////////////////////
 
-        std::cout << "Atomizing the declare formulae" << std::endl;
-        env.first_atomize_model();
-        env.print_grounded_model(std::cout); // DEBUG
-        //////////////////////////////////////////////////////////////////
+            std::cout << "Atomizing the declare formulae" << std::endl;
+            env.first_atomize_model();
+            env.print_grounded_model(std::cout); // DEBUG
+            //////////////////////////////////////////////////////////////////
 
-        auto ref = env.query_model(0);
-        std::cout << ref.result << std::endl;
-        std::cout << env.experiment_logger << std::endl;
-        if (doDebugServer) {
-            env.server(ref);
-        }
-        if (!benchmarking_file.empty()) {
+            MAXSatPipeline ref(0);
+
             std::filesystem::path F(benchmarking_file);
             bool doIHaveToWriteTheHeader = !std::filesystem::exists(F);
             std::ofstream outF{benchmarking_file, std::ios_base::app};
             if (doIHaveToWriteTheHeader)
                 env.experiment_logger.log_csv_file_header(outF);
-            env.experiment_logger.log_csv_file(outF);
+
+            for (int i = 0; i < num_iters; ++i) {
+                ref = env.query_model(0);
+                std::cout << ref.result << std::endl;
+                std::cout << env.experiment_logger << std::endl;
+
+                if (!benchmarking_file.empty()) {
+                    env.experiment_logger.log_csv_file(outF);
+                }
+            }
+            if (doDebugServer) {
+                env.server(ref);
+            }
         }
     }
-
-
 }
 
-void test_data_query(const std::string& log_file = "data/testing/log_until.txt",
-                   const std::string& declare_file = "data/testing/declare5.powerdecl",
-                   const std::string& atomization_conf = "data/testing/atomization_pipeline.yaml",
-                   const std::string& grounding_strategy = "data/testing/grounding_strategy.yaml") {
+void test_data_query(const std::string &log_file = "data/testing/log_until.txt",
+                     const std::string &declare_file = "data/testing/declare5.powerdecl",
+                     const std::string &atomization_conf = "data/testing/atomization_pipeline.yaml",
+                     const std::string &grounding_strategy = "data/testing/grounding_strategy.yaml") {
     Environment env;
     env.clear();
     std::string fresh_atom_label{"p"};
@@ -124,17 +153,15 @@ void test_data_query(const std::string& log_file = "data/testing/log_until.txt",
 }
 
 
-
-
 void generate_nonunary_templates() {
-    for (declare_templates t : magic_enum::enum_values<declare_templates>()) {
+    for (declare_templates t: magic_enum::enum_values<declare_templates>()) {
         if (isUnaryPredicate(t)) continue; // discarding unary predicates
 
         std::cout << magic_enum::enum_name(t) << ":" << std::endl << "\t - ";
         auto f = DeclareDataAware::binary(t, "a", "b").toFiniteSemantics(false);
 
 
-       // human_readable_ltlf_printing(std::cout, f) << std::endl;
+        // human_readable_ltlf_printing(std::cout, f) << std::endl;
         auto nnf = f.nnf(false);
         /*if (nnf != f)*/ {
             //std::cout << "\t - ";
@@ -171,24 +198,24 @@ void generate_nonunary_templates() {
 //{{"a", {}}, {"c", {{"x", 2.0}}}}};
 
 const KnowledgeBase::no_antlr_log LogTrace = {
-        {{"A", {{"x", 2.0},{"y", 3.0}}},
-         {"A", {{"x", 1.0},{"y", 6.0}}},
-         {"A", {{"x", 2.0},{"y", 3.0}}},
-         {"B", {{"x", 2.0},{"y", 6.0}}},
-         {"B", {{"x", 2.0},{"y", 5.0}}},
-         {"B", {{"x", 2.0},{"y", 5.0}}},},
+        {{"A", {{"x", 2.0}, {"y", 3.0}}},
+                {"A", {{"x", 1.0}, {"y", 6.0}}},
+                {"A", {{"x", 2.0}, {"y", 3.0}}},
+                {"B", {{"x", 2.0}, {"y", 6.0}}},
+                {"B", {{"x", 2.0}, {"y", 5.0}}},
+                {"B", {{"x", 2.0}, {"y", 5.0}}},},
 
-        {{"A", {{"x", 2.0},{"y", 1.0}}},
-         {"A", {{"x", 1.0},{"y", 3.0}}},
-         {"B", {}},
-         {"A", {{"x", 1.0},{"y", 3.0}}},
-         {"A", {{"x", 4.0},{"y", 3.0}}}},
+        {{"A", {{"x", 2.0}, {"y", 1.0}}},
+                {"A", {{"x", 1.0}, {"y", 3.0}}},
+                {"B", {}},
+                {"A", {{"x", 1.0}, {"y", 3.0}}},
+                {"A", {{"x", 4.0}, {"y", 3.0}}}},
 
         {{"C", {}},
-         {"B", {}},
-         {"C", {}},
-         {"B", {}},
-         {"C", {}}}
+                {"B", {}},
+                {"C", {}},
+                {"B", {}},
+                {"C", {}}}
 };
 
 const std::string toSearch = "A";
@@ -201,7 +228,7 @@ const double minThreshHold = 0;
 //const double minThreshHold = 1;
 
 
-KnowledgeBase test_kb(const KnowledgeBase::no_antlr_log& L, const std::string &source, const std::string &name) {
+KnowledgeBase test_kb(const KnowledgeBase::no_antlr_log &L, const std::string &source, const std::string &name) {
     /// Creating an instance of the knowledge base, that is going to store all the traces in the log!
     KnowledgeBase db;
 
@@ -227,7 +254,7 @@ KnowledgeBase test_kb(const KnowledgeBase::no_antlr_log& L, const std::string &s
 #include <knobab/flloat_deps/ParseFFLOATDot.h>
 
 
-template <typename T>
+template<typename T>
 size_t
 generateBenchmarkForTests(const std::string &log_file,
                           size_t modelNo,
@@ -260,8 +287,8 @@ generateBenchmarkForTests(const std::string &log_file,
                 DFA.dot(GF, false);
             }*/
 
-            for (const auto& trace : DFA.generative(10)) {
-                for (size_t j = 0, N = trace.size()-1; j<=N; j++) {
+            for (const auto &trace: DFA.generative(10)) {
+                for (size_t j = 0, N = trace.size() - 1; j <= N; j++) {
                     file << trace[j];
                     if (j != N) file << ",";
                 }
@@ -274,10 +301,10 @@ generateBenchmarkForTests(const std::string &log_file,
     return modelNo;
 }
 
-void generate_traces(const std::string& log_file = "data/testing/nologolog.txt",
-                     const std::string& declare_file = "data/testing/declare4.powerdecl",
-                     const std::string& atomization_conf = "data/testing/atomization_pipeline.yaml",
-                     const std::string& grounding_strategy = "data/testing/grounding_strategy.yaml") {
+void generate_traces(const std::string &log_file = "data/testing/nologolog.txt",
+                     const std::string &declare_file = "data/testing/declare4.powerdecl",
+                     const std::string &atomization_conf = "data/testing/atomization_pipeline.yaml",
+                     const std::string &grounding_strategy = "data/testing/grounding_strategy.yaml") {
     Environment env;
     env.clear();
     env.cache_declare_templates_as_graphs();
@@ -332,13 +359,13 @@ void generate_traces(const std::string& log_file = "data/testing/nologolog.txt",
     env.doGrounding();
     semantic_atom_set Sigma = env.getSigmaAll();
     std::vector<std::string> atomSet;
-    for (const auto str : env.getSigmaAll()) {
+    for (const auto str: env.getSigmaAll()) {
         atomSet.emplace_back(str);
     }
-    std::uniform_int_distribution<> distribEnv(0, atomSet.size()-1);
+    std::uniform_int_distribution<> distribEnv(0, atomSet.size() - 1);
 
     std::vector<declare_templates> W;
-    for (declare_templates t : magic_enum::enum_values<declare_templates>()) {
+    for (declare_templates t: magic_enum::enum_values<declare_templates>()) {
         W.emplace_back(t);
     }
     std::uniform_int_distribution<> distribTemplates(1, W.size());
@@ -347,20 +374,20 @@ void generate_traces(const std::string& log_file = "data/testing/nologolog.txt",
     if (false) {
         size_t modelThis = 14;
         std::ofstream file{"tests/test.txt"};
-        generateBenchmarkForTests(log_file, 4,std::vector<DeclareDataAware>{DeclareDataAware::binary(NotCoExistence, "C", "B"),
-                                                                                            //DeclareDataAware::unary(Absence2, "C", 1),
-                                                                                            DeclareDataAware::unary(Existence, "B", 1),
-                                                                                            DeclareDataAware::binary(Succession, "C", "B"),
-                                                                                            DeclareDataAware::binary(AltPrecedence, "C", "B")
-                                                                                            }, file);
+        generateBenchmarkForTests(log_file, 4, std::vector<DeclareDataAware>{DeclareDataAware::binary(NotCoExistence, "C", "B"),
+                //DeclareDataAware::unary(Absence2, "C", 1),
+                                                                             DeclareDataAware::unary(Existence, "B", 1),
+                                                                             DeclareDataAware::binary(Succession, "C", "B"),
+                                                                             DeclareDataAware::binary(AltPrecedence, "C", "B")
+        }, file);
 
         exit(1);
 
     }
 
     std::mt19937_64 gen{1};
-    for (size_t len : std::vector<size_t>{1, 3, 5, 7, 10}) {
-        for (size_t i = 0; i<10; i++) {
+    for (size_t len: std::vector<size_t>{1, 3, 5, 7, 10}) {
+        for (size_t i = 0; i < 10; i++) {
             std::unordered_set<DeclareDataAware> templatu;
 
             while (templatu.size() < len) {
@@ -376,8 +403,8 @@ void generate_traces(const std::string& log_file = "data/testing/nologolog.txt",
                 }
             }
 
-            std::ofstream file{"tests/" + std::to_string(modelNo)+"_"+std::to_string(len)+"_"+std::to_string(i)+".txt"};
-            for (const auto& ref : templatu)
+            std::ofstream file{"tests/" + std::to_string(modelNo) + "_" + std::to_string(len) + "_" + std::to_string(i) + ".txt"};
+            for (const auto &ref: templatu)
                 file << '#' << ref << std::endl;
             file << std::endl << std::flush;
 
@@ -613,14 +640,17 @@ void sam_testing() {
 }
 
 
-
 int main(int argc, char **argv) {
     bool setUpServer = false;
     bool doStats = true;
     log_data_format format = HUMAN_READABLE_YAUCL;
     std::string log_file = "data/testing/log.txt";
+    std::vector<std::string> declareNames = {};
     std::string benchmark = "";
+    std::string declareDirectory = "";
     std::string sql_miner_dump_folder = "";
+    std::string declareTestDirectory = "";
+    uint16_t test_num_iters = 0;
     std::vector<std::string> queriesV{};
     args::ArgumentParser parser("KnoBAB  (c) 2020-2022 by Giacomo Bergami & Samuel 'Sam' Appleby.", "This free and open software program implements the MaxSat problem via a Knowledge Base, KnoBAB. Nicer things are still to come!");
     args::HelpFlag help(parser, "help", "Display this help menu", {'h', "help"});
@@ -635,7 +665,14 @@ int main(int argc, char **argv) {
     args::Flag do_notcompute_trace_Stats(group, "do_not_compute_trace_stats", "Whether the code will lose time in calculating the statistics for the traces", {'n', "nostats"});
     args::ValueFlagList<std::string> queries(group, "Models/Queries", "The queries expressed as Declare models", {'d', "declare"});
     args::ValueFlag<std::string> benchmarkFile(group, "Benchmark File", "Appends the current Result data into a benchmark file", {'b', "csv"});
-    args::ValueFlag<std::string>  sqlMinerDump(group, "SQLMinerDump", "If present, specifies the dump for the SQL miner representation", {'s', "sqlminer"});
+    args::ValueFlag<std::string> sqlMinerDump(group, "SQLMinerDump", "If present, specifies the dump for the SQL miner representation", {'s', "sqlminer"});
+
+    args::ValueFlag<std::string> generateDir(group, "DirectoryToGeneratePowerdecl", "The generated powerdecl file", {"generateDir"});
+    args::ValueFlag<std::string> generateNames(group, "DeclareNameToGenerate", "", {"generate"});
+
+    args::ValueFlag<std::string> declareTestDir(group, "DirectoryToPowerdeclToTest", "Testing all files in this dir", {"declareTesting"});
+
+    args::ValueFlag<uint16_t> num_iters(group, "NumberOfIterationsPerDeclare", "Number of Iterations", {"iterations"});
 
     try {
         parser.ParseCLI(argc, argv);
@@ -670,9 +707,28 @@ int main(int argc, char **argv) {
         log_file = args::get(tabFile);
         format = TAB_SEPARATED_EVENTS;
     }
+    if (tabFile) {
+        log_file = args::get(tabFile);
+        format = TAB_SEPARATED_EVENTS;
+    }
+    if (generateDir) {
+        declareDirectory = args::get(generateDir);
+        if (generateNames) {
+            std::string list = args::get(generateNames);
+            std::stringstream ss(list);
+
+            std::string name;
+            while (std::getline(ss, name, ',')) {
+                declareNames.push_back(name);
+            }
+        }
+    }
+    if(num_iters){
+        test_num_iters = args::get(num_iters);
+    }
     if (queries) {
         queriesV.clear();
-        for (const auto& query: args::get(queries))
+        for (const auto &query: args::get(queries))
             queriesV.emplace_back(query);
     }
     if (benchmarkFile) {
@@ -681,7 +737,14 @@ int main(int argc, char **argv) {
     if (sqlMinerDump) {
         sql_miner_dump_folder = args::get(sqlMinerDump);
     }
-    whole_testing(log_file, format, queriesV, setUpServer, benchmark, sql_miner_dump_folder, doStats);
+    if(declareTestDir){
+        declareTestDirectory = args::get(declareTestDir);
+
+        for (const auto & entry : std::filesystem::directory_iterator(declareTestDirectory)){
+            queriesV.emplace_back(entry.path());
+        }
+    }
+    whole_testing(log_file, format, queriesV, setUpServer, benchmark, sql_miner_dump_folder, doStats, declareDirectory, declareNames, test_num_iters);
 
     //generate_nonunary_templates();
     //test_data_query();
@@ -697,11 +760,18 @@ int main(int argc, char **argv) {
     // --sqlminer /home/giacomo/IdeaProjects/JavaConcurrentAPI/SQLMinerBenchmarker/log --log data/testing/log_until.txt
 
     // --sqlminer=/home/giacomo/IdeaProjects/JavaConcurrentAPI/SQLMinerBenchmarker/log --log=data/testing/log_response.txt --declare=data/testing/response.powerdecl --server
-    // --sqlminer=C:/Users/Sam/Documents/Codebases/knobabBenchmark/knobab/competitors/SQLMinerBenchmarker/log --csv=test.csv --log=data/testing/log_response.txt
-    // --sqlminer=C:/Users/Sam/Documents/Codebases/knobabBenchmark/knobab/competitors/SQLMinerBenchmarker/log --csv=test.csv --xes=data/testing/xes/concept_drift_detection_10000.xes
+    // --sqlminer=C:/Users/Sam/Documents/Codebases/knobabBenchmark/knobab/competitors/SQLMinerBenchmarker/log --csv=test.csv --log=data/testing/log_until.txt --declare=data/testing/response.powerdecl --server
+    // --sqlminer=C:/Users/Sam/Documents/Codebases/knobabBenchmark/knobab/competitors/SQLMinerBenchmarker/log --csv=test.csv --xes=data/testing/hospital/xes/Hospital_Log.xes --declare=data/testing/hosptial/declare/response.powerdecl --server
+
+    /* Use to generate .powerdecl files for SQL Miner for given log */
+    // --log=data/testing/log_until.txt --generateDir=data/testing/log_until/declare --generate=Response,AltResponse,ChainResponse,Precedence,AltPrecedence,ChainPrecedence,RespondedExistence,NotSuccession
+
+    /* Benchmarking */
+    // --log=data/testing/log_until.txt --csv=test.csv --declareTesting=data/testing/log_until/declare
+
     //  https://ieee-dataport.org/open-access/synthetic-event-logs-concept-drift-detection
     // --tab=data/testing/ltlf/WeakUntil --sqlminer=/home/giacomo/IdeaProjects/JavaConcurrentAPI/SQLMinerBenchmarker/log
-// --tab=data/testing/ltlf/WeakUntil --nostats --sqlminer=/home/giacomo/IdeaProjects/JavaConcurrentAPI/SQLMinerBenchmarker/log
+    // --tab=data/testing/ltlf/WeakUntil --nostats --sqlminer=/home/giacomo/IdeaProjects/JavaConcurrentAPI/SQLMinerBenchmarker/log
 
     return 0;
 }

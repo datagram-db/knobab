@@ -399,8 +399,8 @@ public class Database implements AutoCloseable {
     }
 
     public ResultSet rawSqlQueryOpen(File file) throws IOException, SQLException {
-        Statement s = connection.createStatement();
-        return s.executeQuery(new String(Files.readAllBytes(file.toPath()),UTF_8));
+        PreparedStatement s = connection.prepareStatement(new String(Files.readAllBytes(file.toPath()),UTF_8), ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE);
+        return s.executeQuery();
     }
 
     public ResultSet rawSqlQuery(File file) throws IOException {
