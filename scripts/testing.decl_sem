@@ -8,4 +8,5 @@
      template "AltResponse" args 2 := G ( ((EXISTS ~ 1 t #1)) OR t ((EXISTS 1 t #1 activation) AND t THETA (NEXT ((EXISTS ~ 1 t #1) U t  (EXISTS 1 t #2 target)))) )
      template "ChainResponse" args 2 := G ( ((EXISTS ~ 1 t #1)) OR t ((EXISTS 1 t #1 activation) AND t THETA (NEXT EXISTS 1 t #2 target)))
      template "RespExistence" args 2 := ( ((ABSENCE 1 #1)) OR ((EXISTS 1 #1 activation) AND THETA (EXISTS 1 #2 target)))
+     template "ExlChoice" args 2 := ((EXISTS 1 t #1 activation) OR THETA (EXISTS 1 t #2 target)) AND ((ABSENCE 1 #1) OR (ABSENCE 1 #2))
 }
