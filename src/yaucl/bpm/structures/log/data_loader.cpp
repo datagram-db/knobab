@@ -138,27 +138,27 @@ void load_xes_with_data(const std::string &filename, std::istream &file, bool lo
                     hasTraceOpened = true;
                     trace_id = tv->enterTrace(std::to_string(trace_id));
                 }
-                if (event_start == XML_SCAN_STEPS::TRACE_PAYLOAD) {
-                    // Before loading the event, I create a dummy event,
-                    // which will contain the trace payload information
-                    auto event_id = tv->enterEvent(0, "__trace__payload");
-                    for (auto &str: pay.strings) {
-                        tv->visitField(str.first, str.second);
-                    }
-                    for (auto &str: pay.booleans) {
-                        tv->visitField(str.first, str.second);
-                    }
-                    for (auto &str: pay.ints) {
-                        tv->visitField(str.first, str.second);
-                    }
-                    for (auto &str: pay.floats) {
-                        tv->visitField(str.first, str.second);
-                    }
-                    for (auto &str: pay.dates) {
-                        tv->visitField(str.first, str.second);
-                    }
-                    tv->exitEvent(event_id);
-                }
+//                if (event_start == XML_SCAN_STEPS::TRACE_PAYLOAD) {
+//                    // Before loading the event, I create a dummy event,
+//                    // which will contain the trace payload information
+//                    auto event_id = tv->enterEvent(0, "__trace__payload");
+//                    for (auto &str: pay.strings) {
+//                        tv->visitField(str.first, str.second);
+//                    }
+//                    for (auto &str: pay.booleans) {
+//                        tv->visitField(str.first, str.second);
+//                    }
+//                    for (auto &str: pay.ints) {
+//                        tv->visitField(str.first, str.second);
+//                    }
+//                    for (auto &str: pay.floats) {
+//                        tv->visitField(str.first, str.second);
+//                    }
+//                    for (auto &str: pay.dates) {
+//                        tv->visitField(str.first, str.second);
+//                    }
+//                    tv->exitEvent(event_id);
+//                }
                 event_start = XML_SCAN_STEPS::EVENTS;
                 parse_event(t, tv, load_data);
             } else if (tag_name == "string") {
