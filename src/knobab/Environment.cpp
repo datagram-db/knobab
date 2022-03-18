@@ -529,6 +529,9 @@ void Environment::set_maxsat_parameters(const std::filesystem::path &atomization
             experiment_logger.operators_version = n["operators"].Scalar();
             operators = magic_enum::enum_cast<OperatorQueryPlan>(experiment_logger.operators_version).value_or(operators);
         }
+        if (n["decomposition_script"]) {
+            script_for_decomposition = n["decomposition_script"].Scalar();
+        }
     }
 }
 
