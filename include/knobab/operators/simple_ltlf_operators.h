@@ -113,19 +113,52 @@ inline void or_logic_untimed(const Result& lhs, const Result& rhs,
     auto start2 = group2.begin(), end2 = group2.end();
     ResultRecord result{{0, 0}, {0.0, {}}};
     bool hasMatch;
+    size_t localTrace = 0;
 
     while (start1 != end1) {
         if (start2 == end2) {
             while (start1 != end1) {
-                std::copy(start1->second.begin(), start1->second.end(), std::back_inserter(out));
+                localTrace = start1->first;
+                result.second.first = 0.0;
+                result.first.first = localTrace;
+                result.first.second = 0;
+                result.second.second.clear();
+                for  (const auto& dx : start1->second){
+                    result.second.first = std::max(result.second.first, dx.second.first);
+                    result.second.second.insert(result.second.second.end(), dx.second.second.begin(), dx.second.second.end());
+                }
+                remove_duplicates(result.second.second);
+                out.emplace_back(result);
                 start1++;
             }
             return;
         } else if (start1->first > start2->first) {
-            std::copy(start2->second.begin(), start2->second.end(), std::back_inserter(out));
+            localTrace = start2->first;
+            result.second.first = 0.0;
+            result.first.first = localTrace;
+            result.first.second = 0;
+            result.second.second.clear();
+            for  (const auto& dx : start2->second){
+                result.second.first = std::max(result.second.first, dx.second.first);
+                result.second.second.insert(result.second.second.end(), dx.second.second.begin(), dx.second.second.end());
+            }
+            remove_duplicates(result.second.second);
+            out.emplace_back(result);
             start2++;
+            //std::copy(start2->second.begin(), start2->second.end(), std::back_inserter(out));
         } else if (start1->first < start2->first) {
-            std::copy(start1->second.begin(), start1->second.end(), std::back_inserter(out));
+            //std::copy(start1->second.begin(), start1->second.end(), std::back_inserter(out));
+            localTrace = start1->first;
+            result.second.first = 0.0;
+            result.first.first = localTrace;
+            result.first.second = 0;
+            result.second.second.clear();
+            for  (const auto& dx : start1->second){
+                result.second.first = std::max(result.second.first, dx.second.first);
+                result.second.second.insert(result.second.second.end(), dx.second.second.begin(), dx.second.second.end());
+            }
+            remove_duplicates(result.second.second);
+            out.emplace_back(result);
             start1++;
         } else {
             result.first.first = pair.first = start1->first;
@@ -170,9 +203,18 @@ inline void or_logic_untimed(const Result& lhs, const Result& rhs,
             start2++;
         }
     }
-
     while (start2 != end2) {
-        std::copy(start2->second.begin(), start2->second.end(), std::back_inserter(out));
+        localTrace = start2->first;
+        result.second.first = 0.0;
+        result.first.first = localTrace;
+        result.first.second = 0;
+        result.second.second.clear();
+        for  (const auto& dx : start2->second){
+            result.second.first = std::max(result.second.first, dx.second.first);
+            result.second.second.insert(result.second.second.end(), dx.second.second.begin(), dx.second.second.end());
+        }
+        remove_duplicates(result.second.second);
+        out.emplace_back(result);
         start2++;
     }
 }

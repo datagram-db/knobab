@@ -96,6 +96,7 @@ inline void or_fast_untimed(const Result& lhs, const Result& rhs, Result& out, c
     auto first1 = lhs.begin(), first2 = rhs.begin(),
             last1 = lhs.end(), last2 = rhs.end();
     env e1, e2;
+    size_t localTrace = 0;
     ResultRecord result{{0, 0}, {0.0, {}}};
     ResultRecord idx{{0, 0}, {0.0, {}}};
     ResultIndex pair, pair1;
@@ -104,15 +105,52 @@ inline void or_fast_untimed(const Result& lhs, const Result& rhs, Result& out, c
     auto join = marked_event::join(0, 0);
     while (first1 != last1) {
         if (first2 == last2) {
-            std::copy(first1, last1, std::back_inserter(out));
+            result.first.second = 0;
+            result.second.first = 0.0;
+            while (first1 != last1){
+                auto dx = first1;
+                localTrace = first1->first.first;
+                result.first.first = first1->first.first;
+                result.second.second.clear();
+                do {
+                    result.second.first = std::max(result.second.first, first1->second.first);
+                    result.second.second.insert(result.second.second.end(), dx->second.second.begin(), dx->second.second.end());
+                    dx++;
+                } while ((dx != last1) && (dx->first.first == localTrace));
+                remove_duplicates(result.second.second);
+                out.emplace_back(result);
+                first1 = dx;
+            }
             return;
         }
         if (first1->first.first > first2->first.first) {
-            out.emplace_back(*first2++);
+            auto dx = first2;
+            localTrace = first2->first.first;
+            result.first.first = first2->first.first;
+            result.second.second.clear();
+            do {
+                result.second.first = std::max(result.second.first, first2->second.first);
+                result.second.second.insert(result.second.second.end(), dx->second.second.begin(), dx->second.second.end());
+                dx++;
+            } while ((dx != last2) && (dx->first.first == localTrace));
+            remove_duplicates(result.second.second);
+            out.emplace_back(result);
+            first2 = dx;
         } else if (first1->first.first < first2->first.first) {
-            out.emplace_back(*first1++);
+            auto dx = first1;
+            localTrace = first1->first.first;
+            result.first.first = first1->first.first;
+            result.second.second.clear();
+            do {
+                result.second.first = std::max(result.second.first, first1->second.first);
+                result.second.second.insert(result.second.second.end(), dx->second.second.begin(), dx->second.second.end());
+                dx++;
+            } while ((dx != last1) && (dx->first.first == localTrace));
+            remove_duplicates(result.second.second);
+            out.emplace_back(result);
+            first1 = dx;
         } else {
-            auto localTrace = first1->first.first;
+            localTrace = first1->first.first;
             idx.first.first = first1->first.first+1; // pointing towards the next trace
             auto endFirst1 = std::upper_bound(first1, last1, idx);
             pair.first = pair1.first = localTrace;
@@ -165,7 +203,22 @@ inline void or_fast_untimed(const Result& lhs, const Result& rhs, Result& out, c
             first2 = endFirst2;
         }
     }
-    std::copy(first2, last2, std::back_inserter(out));
+    result.first.second = 0;
+    result.second.first = 0.0;
+    while (first2 != last2){
+        auto dx = first2;
+        localTrace = first2->first.first;
+        result.first.first = first2->first.first;
+        result.second.second.clear();
+        do {
+            result.second.first = std::max(result.second.first, first2->second.first);
+            result.second.second.insert(result.second.second.end(), dx->second.second.begin(), dx->second.second.end());
+            dx++;
+        } while ((dx != last2) && (dx->first.first == localTrace));
+        remove_duplicates(result.second.second);
+        out.emplace_back(result);
+        first2 = dx;
+    }
 }
 
 /**
