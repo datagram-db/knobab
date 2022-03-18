@@ -31,10 +31,10 @@ struct DataQuery {
     size_t numeric_argument;
 
     static DataQuery AtomQueries (DataQueryType t, const std::string &atom, LeafType lt = NoneLeaf);
-    static DataQuery ExistsQuery(const std::string &atom, LeafType lt = NoneLeaf);
+    static DataQuery ExistsQuery(const std::string &atom, size_t numeric_argument, LeafType lt = NoneLeaf);
     static DataQuery AtomQuery(const std::string &atom, LeafType lt = NoneLeaf);
     static DataQuery InitQuery(const std::string &atom);
-    static DataQuery AbsenceQuery(const std::string &atom, LeafType lt = NoneLeaf);
+    static DataQuery AbsenceQuery(const std::string &atom, size_t numeric_argument, LeafType lt = NoneLeaf);
     static DataQuery EndsQuery(const std::string &atom);
 
     static DataQuery

@@ -324,13 +324,13 @@ LTLfQuery *MAXSatPipeline::pushAtomicQueries(const AtomizingPipeline &atomizatio
                 break;
             }
             case LTLfQuery::EXISTS_QP: {
-                formula->result_id = pushAtomDataQuery(DataQuery::ExistsQuery(*formula->atom.begin()), true);
+                formula->result_id = pushAtomDataQuery(DataQuery::ExistsQuery(*formula->atom.begin(), formula->n), true);
                 formula->fields.id.parts.directly_from_cache = true;
                 //W.emplace_back(formula);
                 break;
             }
             case LTLfQuery::ABSENCE_QP: {
-                formula->result_id = pushAtomDataQuery(DataQuery::AbsenceQuery(*formula->atom.begin()), true);
+                formula->result_id = pushAtomDataQuery(DataQuery::AbsenceQuery(*formula->atom.begin(), formula->n), true);
                 formula->fields.id.parts.directly_from_cache = true;
                 //W.emplace_back(formula);
                 break;
