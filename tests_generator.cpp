@@ -126,6 +126,7 @@ int main() {
     generatePatternLog(cache_path, dec_path, "ChainPrecedence", 5);
     generatePatternLog(cache_path, dec_path, "ChainResponse", 5);
     generatePatternLog(cache_path, dec_path, "ChainSuccession", 5);
+    generatePatternLog(cache_path, dec_path, "Choice", 5);
     generatePatternLog(cache_path, dec_path, "CoExistence", 5);
     generatePatternLog(cache_path, dec_path, "ExlChoice", 5);
     generatePatternLog(cache_path, dec_path, "NegChainSuccession", 5);

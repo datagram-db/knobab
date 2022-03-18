@@ -18,7 +18,7 @@ if __name__ == '__main__':
 	print("WeakUntil")
 	serialize("(a U b) | G(b)", os.path.join(os.getcwd(), os.pardir, 'data', 'cache', 'graph_pattern_cache',   'WeakUntil'))
 	print("Choice")
-	serialize("F(a) | F(b)", os.path.join(os.getcwd(), os.pardir, 'data', 'cache', 'graph_pattern_cache',  'WeakUntil'))
+	serialize("F(a) | F(b)", os.path.join(os.getcwd(), os.pardir, 'data', 'cache', 'graph_pattern_cache',  'Choice'))
 	print("ExlChoice")
 	serialize("(F(a) | F(b)) & (!(F(a) & F(b)))", os.path.join(os.getcwd(), os.pardir, 'data', 'cache', 'graph_pattern_cache',  'ExlChoice'))
 	print("RespExistence")

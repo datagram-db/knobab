@@ -961,8 +961,8 @@ KnowledgeBase::initOrEnds(const std::string &act, bool beginOrEnd, bool doExtrac
 PartialResult KnowledgeBase::exists(const std::string &act) const {
     PartialResult foundData;
     ResultIndex timePair;
-    const uint16_t& mappedVal = getMappedValueFromAction(act);
-    if(mappedVal < 0){
+    uint16_t mappedVal = getMappedValueFromAction(act);
+    if(mappedVal == (uint16_t)-1){
         return foundData;
     }
     auto indexes = act_table_by_act_id.resolve_index(mappedVal);

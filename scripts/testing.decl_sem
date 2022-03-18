@@ -1,30 +1,3 @@
-auto-timed "logic" {
-     template "Init"            :=   INIT
-     template "Exists1"         :=   F (EXISTS 1)
-     template "Absence1"        := ~ (EXISTS 1) PRESERVE
-     template "Absence2"        := ~ (F ((EXISTS 1) AND (F (EXISTS 1)))) PRESERVE
-     template "Choice" args 2   :=   (F (EXISTS 1 #1)) OR THETA (F (EXISTS 1 #2))
-     template "Response" args 2 :=   G ( (EXISTS 1 t #1) => THETA (F (EXISTS 1 t #2)) )
-}
-
-"efficient" {
-     template "Init"            := INIT
-     template "Exists1"         := (EXISTS 1)
-     template "Absence1"        := ABSENCE 1
-     template "Absence2"        := ABSENCE 2
-     template "Choice" args 2   := (EXISTS 1 t #1 ) OR THETA (EXISTS 1 t #2 )
-     template "Response" args 2 := G ( (EXISTS ~ 1 t #1) OR ((EXISTS 1 t #1) &Ft THETA (EXISTS 1 t #2)) )
-}
-
-"negleaf_expand" {
-     template "Init"            := INIT
-     template "Exists1"         := (EXISTS 1)
-     template "Absence1"        := ABSENCE 1
-     template "Absence2"        := ABSENCE 2
-     template "Choice" args 2   := (EXISTS 1 t #1 ) OR THETA (EXISTS 1 t #2 )
-     template "Response" args 2 := G ( (~(EXISTS  1 t #1)) OR t ((EXISTS 1 t #1) &Ft THETA (EXISTS 1 t #2)) )
-}
-
 "marking" {
      template "Init"            := INIT
      template "Exists1"         := (EXISTS 1)
