@@ -1039,7 +1039,7 @@ void MAXSatPipeline::fast_v1_query_running(const std::vector<PartialResult>& res
                             break;
 
                         case LTLfQuery::OR_QP:
-                            local_logic_union(formula, formula->result, formula->fields.id.parts.is_timed);
+                            local_fast_union(formula, formula->result, formula->fields.id.parts.is_timed);
                             break;
 
                         case LTLfQuery::AND_QP:
