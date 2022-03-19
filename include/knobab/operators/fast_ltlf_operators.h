@@ -41,7 +41,7 @@ inline void or_fast_timed(const Result& lhs, const Result& rhs, Result& out, con
             result.second.second.clear();
             hasMatch = false;
 
-            if (manager) {
+            if (manager && (!first1->second.second.empty()) && (!first2->second.second.empty())) {
                 for (const marked_event &elem: first1->second.second) {
                     if (!IS_MARKED_EVENT_ACTIVATION(elem)) continue;
                     join.id.parts.left = pair.second = GET_ACTIVATION_EVENT(elem);
@@ -163,7 +163,7 @@ inline void or_fast_untimed(const Result& lhs, const Result& rhs, Result& out, c
                 auto dx = first2;
                 do {
 
-                    if (manager) {
+                    if (manager && (!first1->second.second.empty()) && (!first2->second.second.empty())) {
                         for (const marked_event &elem: first1->second.second) {
                             if (!IS_MARKED_EVENT_ACTIVATION(elem)) continue;
                             join.id.parts.left = pair.second = GET_ACTIVATION_EVENT(elem);
@@ -254,7 +254,7 @@ inline void and_fast_timed(const Result& lhs, const Result& rhs, Result& out, co
             pair1.first = first2->first.first;
             hasMatch = false;
 
-            if (manager) {
+            if (manager && (!first1->second.second.empty()) && (!first2->second.second.empty())) {
                 for (const marked_event &elem: first1->second.second) {
                     if (!IS_MARKED_EVENT_ACTIVATION(elem)) continue;
                     join.id.parts.left = pair.second = GET_ACTIVATION_EVENT(elem);
@@ -329,7 +329,7 @@ inline void and_fast_untimed(const Result& lhs, const Result& rhs, Result& out, 
                 auto dx = first2;
                 do {
 
-                    if (manager) {
+                    if (manager && (!first1->second.second.empty()) && (!first2->second.second.empty())) {
                         for (const marked_event &elem: first1->second.second) {
                             if (!IS_MARKED_EVENT_ACTIVATION(elem)) continue;
                             join.id.parts.left = pair.second = GET_ACTIVATION_EVENT(elem);

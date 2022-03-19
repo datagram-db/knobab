@@ -17,4 +17,5 @@
      template "ChainSuccession" args 2 := G( (((LAST OR t (NEXT EXISTS ~ 1 t #2))) OR t ((EXISTS 1 t #1 activation) AND t (NEXT EXISTS 1 t #2 target))) AND t
                                              ( ((EXISTS ~ 1 t #1)) OR t ((EXISTS 1 t #1 activation) AND t THETA (NEXT EXISTS 1 t #2 target)))
                                            )
+     template "AltResponse" args 2 := G ( (EXISTS ~ 1 t #1) OR t ((EXISTS 1 t #1 activation) AND t THETA (NEXT ((EXISTS ~ 1 t #1) U t (EXISTS 1 t #2 target)) )))
 }
