@@ -660,8 +660,8 @@ inline void until_logic_timed(const Result &aSection, const Result &bSection, Re
             } else {
                 // Scanning the "a"-s
                 cp_aLocalLower.first.second = alpha;
-                aLower = std::lower_bound(aLocalUpper, aUpper, cp_aLocalLower);
-                cp_aLocalUpper.first.second = bLower->first.second - 1;
+                aLower = std::lower_bound(aLower, aUpper, cp_aLocalLower);
+                cp_aLocalUpper.first.second = std::max((event_t)(bLower->first.second - 1), (event_t)cp_aLocalLower.first.second);
                 aLocalUpper = std::upper_bound(aLower, aUpper, cp_aLocalUpper);
                 std::iterator_traits<decltype(aLower)>::difference_type dst;
                 size_t count;
@@ -670,7 +670,7 @@ inline void until_logic_timed(const Result &aSection, const Result &bSection, Re
                 if ((aLower != aUpper) && (aLower->first.first == currentTraceId)) {
                     dst = std::distance(aLower, aLocalUpper) +
                           1; // distance between the beginning of the sequence of the As and the bLower
-                    count = ((bLower)->first.second - aLower->first.second) + 1;
+                    count = ((bLower)->first.second - alpha) + 1;
 
                     // if there exists a contiguous sequence sequence A_alpha ... A_{t-1}
                     if (dst == count) {
@@ -737,9 +737,12 @@ inline void until_logic_timed(const Result &aSection, const Result &bSection, Re
                         auto &ref = globalResultBeforeShift.emplace(first.second, semein).first->second;
                         ref.first = std::max(ref.first, bLower->second.first);
                         ref.second.insert(ref.second.end(), bLower->second.second.begin(), bLower->second.second.end());
-                        alpha = t;
+                        bLower++;
                     } else if ((aLower->first.first == currentTraceId) && (aLower->first.second < t)) {
-                        alpha = aLower->first.second;
+                        if (alpha == aLower->first.second)
+                            alpha++;
+                        else
+                            alpha = aLower->first.second;
                     } else {
                         alpha = t;
                     }
