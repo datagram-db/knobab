@@ -38,6 +38,14 @@ enum LeafType {
 #include <utility>
 
 
+/**
+ * @author Samuel 'Sam' Appleby
+ * @tparam T
+ * @param it1
+ * @param it2
+ * @param vec
+ * @param sort
+ */
 template <typename T>
 MarkedEventsVector populateAndReturnEvents(T it1, T it2){
     MarkedEventsVector vec;
@@ -54,8 +62,16 @@ MarkedEventsVector populateAndReturnEvents(T it1, T it2){
     return vec;
 }
 
+/**
+ * @author Samuel 'Sam' Appleby, Giacomo Bergami
+ * @tparam T
+ * @param it1
+ * @param it2
+ * @param vec
+ * @param sort
+ */
 template <typename T> void populateAndReturnEvents(T it1, T it2, MarkedEventsVector& vec, bool sort = true){
-    vec.clear();
+    //vec.clear();
 
     for(auto itr = it1; itr != it2; ++itr){
         std::copy(itr->second.second.begin(), itr->second.second.end(), std::back_inserter(vec));

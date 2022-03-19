@@ -655,6 +655,7 @@ static inline void absence_or_exists(LTLfQuery* formula, const std::vector<Parti
 void MAXSatPipeline::abidinglogic_query_running(const std::vector<PartialResult>& results_cache, const KnowledgeBase& kb) {
     /// Scanning the query plan starting from the leaves (rbegin) towards the actual declare formulae (rend)
     auto it = qm.Q.rbegin(), en = qm.Q.rend();
+    size_t idx = qm.Q.size()-1;
     for (; it != en; it++) {
         Result tmp_result;
         PARALLELIZE_LOOP_BEGIN(pool, 0, it->second.size(), lb, ub)
@@ -860,6 +861,19 @@ void MAXSatPipeline::abidinglogic_query_running(const std::vector<PartialResult>
                 }
             }
         PARALLELIZE_LOOP_END
+
+        // Clearing the caches, so to free potentially unrequired memory for the next computational steps
+        // This might help save some memory in big-data scenarios
+        PARALLELIZE_LOOP_BEGIN(pool, 0, it->second.size(), lb, ub)
+        for (size_t j = lb; j < ub; j++) {
+            auto formula = it->second.at(j);
+            for (auto ptr : formula->args) {
+                if (ptr->parentMin == idx)
+                    ptr->result.clear();
+            }
+        }
+        PARALLELIZE_LOOP_END
+        idx--;
     }
 }
 
@@ -1005,6 +1019,7 @@ std::vector<PartialResult> MAXSatPipeline::subqueriesRunning(const KnowledgeBase
 void MAXSatPipeline::fast_v1_query_running(const std::vector<PartialResult>& results_cache, const KnowledgeBase& kb) {
 /// Scanning the query plan starting from the leaves (rbegin) towards the actual declare formulae (rend)
     auto it = qm.Q.rbegin(), en = qm.Q.rend();
+    size_t idx = qm.Q.size()-1;
     for (; it != en; it++) {
         Result tmp_result;
         PARALLELIZE_LOOP_BEGIN(pool, 0, it->second.size(), lb, ub)
@@ -1202,6 +1217,19 @@ void MAXSatPipeline::fast_v1_query_running(const std::vector<PartialResult>& res
                     }
                 }
             }
-                PARALLELIZE_LOOP_END
+        PARALLELIZE_LOOP_END
+
+        // Clearing the caches, so to free potentially unrequired memory for the next computational steps
+        // This might help save some memory in big-data scenarios
+        PARALLELIZE_LOOP_BEGIN(pool, 0, it->second.size(), lb, ub)
+            for (size_t j = lb; j < ub; j++) {
+                auto formula = it->second.at(j);
+                for (auto ptr : formula->args) {
+                    if (ptr->parentMin == idx)
+                        ptr->result.clear();
+                }
+            }
+        PARALLELIZE_LOOP_END
+        idx--;
     }
 }
