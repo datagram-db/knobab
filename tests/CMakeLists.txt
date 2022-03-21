@@ -22,6 +22,10 @@ add_executable(ltlf_operators_test ltlf_operators_test.cpp)
 target_link_libraries(ltlf_operators_test gtest_main knobab yaucl_hashing yaucl_bpm knobab_flloat Threads::Threads)
 gtest_discover_tests(ltlf_operators_test)
 
-add_executable(single_declare single_declare_correctness.cpp single_declare_slow.cpp)
+add_executable(single_declare single_declare_correctness.cpp)
 target_link_libraries(single_declare gtest_main knobab yaucl_hashing yaucl_bpm knobab_flloat Threads::Threads)
 gtest_discover_tests(single_declare)
+
+add_executable(slow_declare single_declare_slow.cpp)
+target_link_libraries(slow_declare gtest_main knobab yaucl_hashing yaucl_bpm knobab_flloat Threads::Threads)
+gtest_discover_tests(slow_declare)

@@ -19,5 +19,5 @@
                                            )
      template "AltResponse" args 2 := G ( (EXISTS ~ 1 t #1) OR t ((EXISTS 1 t #1 activation) AND t THETA (NEXT ((EXISTS ~ 1 t #1) U t (EXISTS 1 t #2 target)) )))
      template "AltPrecedence" args 2 := (((EXISTS  ~ 1 t #2) U (EXISTS 1 t #1 target)) OR (ABSENCE 1 #2)) AND
-                                        (G(((EXISTS ~ 1 t #2)) OR t ((NEXT (((EXISTS  ~ 1 t #2) U t (EXISTS 1 t #1 target)) OR t (G (EXISTS  ~ 1 t #2)))) AND t THETA ((EXISTS 1 t #2 target)))))
+                                        (G(((EXISTS ~ 1 t #2)) OR t ((NEXT (((EXISTS  ~ 1 t #2) U t (EXISTS 1 t #1 activation)) OR t (G t (EXISTS  ~ 1 t #2)))) AND t THETA ((EXISTS 1 t #2 target)))))
 }
