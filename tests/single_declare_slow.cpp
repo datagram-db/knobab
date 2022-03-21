@@ -22,7 +22,7 @@ void SetUp() override {\
         std::filesystem::path curr = root_folder / "data" / "testing" / "declare" / base;\
         auto sizes = root_folder / "data" /"testing"/"declare" / (base+"_pos_neg.txt");\
         declare_file_path = (root_folder / "data" /"testing"/"declare" / (base+".powerdecl")).string();\
-        maxsat = (root_folder / "scripts" / ("maxsat_pipeline_singledecl_testing.yaml")).string();\
+        maxsat = (root_folder / "scripts" / ("maxsat_pipeline_singledecl_testing_slow.yaml")).string();\
         std::ifstream file{curr};\
         env.load_log(TAB_SEPARATED_EVENTS, true, curr.filename(), false, file);\
         std::ifstream fs{sizes};\
