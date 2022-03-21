@@ -23,14 +23,18 @@ public class Main {
             File dir = new File(sqls);
 
             for(String file : dir.list()){
+                System.out.println("Running Query: " + file);
+
                 try {
                     for (int i = 0; i < iters; ++i) {
+                        System.out.println("Iteration: " + (i + 1));
                         File test = new File(dir + "/" + file);
                         ResultSet set = db.rawSqlQueryOpen(test);
                         set.last();
                         String part = set.getString(1);
                         Double d =  Double.parseDouble(part.replaceAll("[^0-9.]", ""));
                         sb.append(file + ',' + String.valueOf(d) + '\n');
+                        System.out.println("Time: " + d);
                     }
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -46,12 +50,9 @@ public class Main {
         } catch (Exception e) {
             e.printStackTrace();
         }
-
     }
 
     public static void main(String args[]) throws SQLException {
-        //-queries "response.sql,alternate_response.sql,chain_response.sql,precedence.sql,alternate_precedence.sql,chain_precedence.sql,responded_existence.sql,not_succession.sql"
-
         int i = 0;
         int iters = 1;
         String sqlQueryDir = "";
@@ -59,7 +60,6 @@ public class Main {
         while (i < args.length && args[i].startsWith("-")) {
             String arg = args[i++];
 
-            // use this type of check for arguments that require arguments
             if (arg.equals("-queries")) {
                 if (i < args.length) {
                     sqlQueryDir = args[i++];
