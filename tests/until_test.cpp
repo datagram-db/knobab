@@ -45,6 +45,19 @@ TEST_F(until_tests, logic) {
         EXPECT_TRUE(expectedTraces.contains(ref.first.first));
 }
 
+TEST_F(until_tests, fast) {
+    auto a = env.db.exists("A", NoneLeaf);
+    auto b = env.db.exists("B", NoneLeaf);
+    std::set<uint32_t> expectedTraces{1,3,5,7,9,10,11,12,13};
+    Result result, result2;
+    until_fast_untimed(a, b, result, nullptr, env.db.act_table_by_act_id.trace_length);
+    for (const auto& ref : result)
+        EXPECT_TRUE(expectedTraces.contains(ref.first.first));
+
+    until_logic_untimed(a, b, result2, nullptr, env.db.act_table_by_act_id.trace_length);
+    EXPECT_EQ(result, result2);
+}
+
 TEST_F(until_tests, predicate_manager) {
     auto a = env.db.exists("A", ActivationLeaf);
     auto b = env.db.exists("B", TargetLeaf);
@@ -64,6 +77,16 @@ TEST_F(until_tests, logic_pm) {
     until_logic_untimed(a, b, result, &pm, env.db.act_table_by_act_id.trace_length);
     for (const auto& ref : result)
         EXPECT_TRUE(expectedTraces.contains(ref.first.first));
+}
+
+TEST_F(until_tests, fast_pm) {
+    auto a = env.db.exists("A", ActivationLeaf);
+    auto b = env.db.exists("B", TargetLeaf);
+    PredicateManager pm{{{{"x", "y", LT}}}, &env.db};
+    Result result, result2;
+    until_fast_untimed(a, b, result, &pm, env.db.act_table_by_act_id.trace_length);
+    until_logic_untimed(a, b, result2, &pm, env.db.act_table_by_act_id.trace_length);
+    EXPECT_EQ(result, result2);
 }
 
 #define DATA_EMPLACE_BACK(l,trace,event,...)     (l).emplace_back(std::make_pair((trace),(event)), std::make_pair((1.0), MarkedEventsVector{ __VA_ARGS__}));

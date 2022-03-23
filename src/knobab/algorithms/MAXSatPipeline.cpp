@@ -150,6 +150,7 @@ void MAXSatPipeline::pipeline(CNFDeclareDataAware* model,
                 case PerDeclareSupport: {
                     std::unordered_map<LTLfQuery*, double> visited;
                     for (const auto& declare : declare_to_query) {
+                        // TODO: mark in the query plan the part where the activation conditions are assessed!
                         auto it = visited.emplace(declare, ((double)declare->result.size())/((double)kb.noTraces));
                         support_per_declare.emplace_back(it.first->second);
                     }
@@ -1132,13 +1133,13 @@ void MAXSatPipeline::fast_v1_query_running(const std::vector<PartialResult>& res
 
                         case LTLfQuery::U_QP:
                             if (formula->fields.id.parts.is_timed)
-                                until_logic_timed(formula->args.at(0)->result,
+                                until_fast_timed(formula->args.at(0)->result,
                                                   formula->args.at(1)->result,
                                                   formula->result,
                                                   formula->joinCondition,
                                                   kb.act_table_by_act_id.trace_length);
                             else
-                                until_logic_untimed(formula->args.at(0)->result,
+                                until_fast_untimed(formula->args.at(0)->result,
                                                     formula->args.at(1)->result,
                                                     formula->result,
                                                     formula->joinCondition,

@@ -465,9 +465,8 @@ inline void global_fast_untimed(const Result &section, Result& result, const std
         upper = lower + (cp.first.second-1);//std::upper_bound(lower, section.end(), cp);
         ///const uint32_t dist = std::distance(lower, upper - 1);
         if ((upper < end) && (upper->first.first == lower->first.first)) {
-            populateAndReturnEvents(lower, upper, second.second);
+            populateAndReturnEvents(lower, ++upper, second.second);
             result.emplace_back(first, second);
-            upper++;
         } else {
             cp.first.first = currentTraceId+1;
             cp.first.second = 0;
@@ -804,6 +803,115 @@ inline void aAndGloballyB_timed(const Result& a, const Result& b,Result& result,
 
 }
 
+inline void until_fast_timed(const Result &aSection, const Result &bSection, Result &temp,
+                               const PredicateManager *manager = nullptr, const std::vector<size_t> &lengths = {}) {
+    until_logic_timed(aSection, bSection, temp, manager, lengths);
+}
+
+inline void until_fast_untimed(const Result &aSection, const Result &bSection, Result &temp,
+                                const PredicateManager *manager = nullptr, const std::vector<size_t> &lengths = {}) {
+    auto bCurrent = bSection.begin();
+    auto localBUpper = bCurrent;
+    auto upper = bSection.end();
+
+    auto aIt = aSection.begin(), aEn = aSection.begin(), bestAEn = aSection.begin();
+    auto upperA = aSection.end();
+
+    ResultRecord cpAIt{{0, 0},
+                       {0, {}}};
+    ResultRecord cpLocalUpper{{0,   0},
+                              {1.0, {}}};
+    ResultRecord cpAEn{{0,   0},
+                       {1.0, maxVec}};
+    ResultRecord cpResult{{0,   0},
+                          {1.0, {}}};
+
+    env e1, e2;
+    std::pair<uint32_t, uint16_t> Fut, Prev;
+    temp.clear();
+    auto join = marked_event::join(0, 0);
+
+    while (bCurrent != upper) {
+        uint32_t currentTraceId = localBUpper->first.first;
+        cpAIt.first.first = cpLocalUpper.first.first = cpAEn.first.first = cpResult.first.first = currentTraceId;
+        cpLocalUpper.first.second = lengths.at(currentTraceId);
+        cpAIt.first.second = 0;
+
+        localBUpper = std::upper_bound(bCurrent, upper, cpLocalUpper);
+        aIt = std::lower_bound(aIt, upperA, cpAIt);
+        aEn = bestAEn = aIt;
+
+        bool atLeastOneResult = false;
+        for (; bCurrent != localBUpper; bCurrent++) {
+            Fut.first = bCurrent->first.first;
+            if (bCurrent->first.second == 0) {
+                cpResult.second.second.insert(cpResult.second.second.end(), bCurrent->second.second.begin(),
+                                              bCurrent->second.second.end());
+                atLeastOneResult = true;
+            } else {
+                if (aIt->first.second > 0) break;
+                cpAEn.first.second = bCurrent->first.second - 1;
+                if (aIt >= upperA) break;
+
+                // Applying the same concept from the new globally timed... (2)
+                aEn = aIt + (cpAEn.first.second);//std::upper_bound(aEn, upperA, cpAEn);
+                if ((aEn >= upperA) || (aEn->first.first > currentTraceId) || (aEn->first.second != ((bCurrent->first.second)) - 1)) {
+                    // Rationale: (1)
+                    // if the condition does not hold for a time [startEventId, lower->first.second-1], it is because
+                    // one event makes it not hold. Therefore, it should never hold even if you are extending the data
+                    // that you have.
+                    break;
+                } else {
+                    if (manager) {
+                        ++aEn;
+                        bestAEn = aEn;
+                        bool hasFail = false;
+                        for (auto &activationEvent: bCurrent->second.second) {
+                            if (hasFail) break;
+                            if (!IS_MARKED_EVENT_TARGET(activationEvent)) continue;
+                            Fut.second = GET_TARGET_EVENT(activationEvent);
+                            e1 = manager->GetPayloadDataFromEvent(Fut);
+                            for (auto curr = aIt; curr != aEn; curr++) {
+                                if (hasFail) break;
+                                Prev.first = curr->first.first;
+                                for (auto &targetEvent: curr->second.second) {
+                                    if (!IS_MARKED_EVENT_ACTIVATION(targetEvent)) continue;
+                                    Prev.second = GET_ACTIVATION_EVENT(targetEvent);
+                                    e2 = manager->GetPayloadDataFromEvent(Prev);
+                                    if (!manager->checkValidity(e2, e1)) {
+                                        hasFail = true;
+                                        break;
+                                    } else {
+                                        join.id.parts.left = Fut.second;
+                                        join.id.parts.right = Prev.second;
+                                        cpResult.second.second.emplace_back(join);
+                                    }
+                                }
+                            }
+                        }
+                        if (hasFail) break;
+                        else atLeastOneResult = true;
+                    } else {
+                        populateAndReturnEvents(aIt, ++aEn, cpResult.second.second);
+                        bestAEn = aEn;
+                        cpResult.second.second.insert(cpResult.second.second.end(), bCurrent->second.second.begin(),
+                                                      bCurrent->second.second.end());
+                        atLeastOneResult = true;
+                    }
+                }
+            }
+        }
+
+        if (atLeastOneResult) {
+            remove_duplicates(cpResult.second.second);
+            temp.emplace_back(cpResult);
+        }
+        cpResult.second.second.clear();
+
+        bCurrent = localBUpper;
+        aIt = bestAEn;
+    }
+}
 
 
 inline void implies_fast_timed(const Result &aSection, const Result &bSection, const Result &notaSection, Result& result, const PredicateManager* manager = nullptr, const std::vector<size_t>& lengths = {}) {

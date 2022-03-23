@@ -62,35 +62,35 @@ protected:
     Environment env;
 };
 
-TEST_F(CompleteResponse, InSetting) {
-    // I cannot possibly enumerate all of the possible sets composed of all of the possible pairs, which are 72.
-    // As this would be 2^|72|, generating this is too costly and exeeds the memory limits
-    std::cout << "Loading ok" << std::endl;
-//    std::set<std::set<std::pair<std::string,std::string>>> allOfPossibleSets{{{"a", "b"}},
-//                                                                             {{"a", "b"}, {"c", "d"}},
-//                                                                             {{"a", "b"}, {"c", "d"}, {"e","f"}},
-//                                                                             {{"a", "b"}, {"c", "d"}, {"e","f"}, {"g", "h"}},
-//                                                                             {{"a", "b"}, {"c", "d"}, {"e","f"}, {"g", "h"}, {"i","a"}},
-//                                                                             {{"a", "b"}, {"c", "d"}, {"e","f"}, {"g", "h"}, {"i","a"}, {"b", "c"}},
-//                                                                             {{"a", "b"}, {"c", "d"}, {"e","f"}, {"g", "h"}, {"i","a"}, {"b", "c"}, {"d", "e"}},
-//                                                                             {{"a", "b"}, {"c", "d"}, {"e","f"}, {"g", "h"}, {"i","a"}, {"b", "c"}, {"d", "e"}, {"f", "g"}},
-//                                                                             {{"a", "b"}, {"c", "d"}, {"e","f"}, {"g", "h"}, {"i","a"}, {"b", "c"}, {"d", "e"}, {"f", "g"}, {"h", "i"}}};
-    for (const auto& set : allOfPossibleSets) {
-        // Clearing the previous model specification
-        env.clearModel();
-
-        std::vector<DeclareDataAware> model;
-        for (const auto ref: set) {
-            model.emplace_back(DeclareDataAware::binary_for_testing("Response", ref.first, ref.second));
-        }
-        env.load_model(model.begin(), model.end());
-
-        // Dummy model computation
-        env.doGrounding();
-        env.init_atomize_tables();
-        env.first_atomize_model();
-        auto ref = env.query_model();
-        std::cout << ref.ltlf_query_time << "ms for ";
-        std::cout << set.size() << "... done!" <<  std::endl <<  std::endl;
-    }
-}
+//TEST_F(CompleteResponse, InSetting) {
+//    // I cannot possibly enumerate all of the possible sets composed of all of the possible pairs, which are 72.
+//    // As this would be 2^|72|, generating this is too costly and exeeds the memory limits
+//    std::cout << "Loading ok" << std::endl;
+////    std::set<std::set<std::pair<std::string,std::string>>> allOfPossibleSets{{{"a", "b"}},
+////                                                                             {{"a", "b"}, {"c", "d"}},
+////                                                                             {{"a", "b"}, {"c", "d"}, {"e","f"}},
+////                                                                             {{"a", "b"}, {"c", "d"}, {"e","f"}, {"g", "h"}},
+////                                                                             {{"a", "b"}, {"c", "d"}, {"e","f"}, {"g", "h"}, {"i","a"}},
+////                                                                             {{"a", "b"}, {"c", "d"}, {"e","f"}, {"g", "h"}, {"i","a"}, {"b", "c"}},
+////                                                                             {{"a", "b"}, {"c", "d"}, {"e","f"}, {"g", "h"}, {"i","a"}, {"b", "c"}, {"d", "e"}},
+////                                                                             {{"a", "b"}, {"c", "d"}, {"e","f"}, {"g", "h"}, {"i","a"}, {"b", "c"}, {"d", "e"}, {"f", "g"}},
+////                                                                             {{"a", "b"}, {"c", "d"}, {"e","f"}, {"g", "h"}, {"i","a"}, {"b", "c"}, {"d", "e"}, {"f", "g"}, {"h", "i"}}};
+//    for (const auto& set : allOfPossibleSets) {
+//        // Clearing the previous model specification
+//        env.clearModel();
+//
+//        std::vector<DeclareDataAware> model;
+//        for (const auto ref: set) {
+//            model.emplace_back(DeclareDataAware::binary_for_testing("Response", ref.first, ref.second));
+//        }
+//        env.load_model(model.begin(), model.end());
+//
+//        // Dummy model computation
+//        env.doGrounding();
+//        env.init_atomize_tables();
+//        env.first_atomize_model();
+//        auto ref = env.query_model();
+//        std::cout << ref.ltlf_query_time << "ms for ";
+//        std::cout << set.size() << "... done!" <<  std::endl <<  std::endl;
+//    }
+//}

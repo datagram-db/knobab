@@ -54,7 +54,7 @@ TEST_F(Box_tests, timed) {
     Environment env2;
     env2.doStats = false;
     auto a = env.db.exists("a", ActivationLeaf);
-    Result result;
+    Result result, result2;
     global_logic_timed(a, result, env.db.act_table_by_act_id.trace_length);
     EXPECT_TRUE(!result.empty());
     size_t resultSize = result.size();
@@ -78,6 +78,9 @@ TEST_F(Box_tests, timed) {
     global_logic_untimed(a, result, env2.db.act_table_by_act_id.trace_length);
     EXPECT_EQ(trace_count, result.size());
     EXPECT_EQ(resultSize, result.size());
+
+    global_fast_untimed(a, result2, env2.db.act_table_by_act_id.trace_length);
+    EXPECT_EQ(result, result2);
 }
 
 TEST(Diamond)
@@ -122,9 +125,12 @@ TEST(Until)
 TEST_F(Until_tests, basic) {
     auto a = env.db.exists("a", ActivationLeaf);
     auto b = env.db.exists("b", TargetLeaf);
-    Result result;
+    Result result, result2;
     until_logic_untimed(a, b, result, nullptr, env.db.act_table_by_act_id.trace_length);
     EXPECT_EQ(pos, result.size());
+
+    until_fast_untimed(a, b, result2, nullptr, env.db.act_table_by_act_id.trace_length);
+    EXPECT_EQ(result, result2);
 }
 
 
