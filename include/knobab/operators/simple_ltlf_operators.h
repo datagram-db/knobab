@@ -755,8 +755,8 @@ inline void until_logic_timed(const Result &aSection, const Result &bSection, Re
 
 inline void until_logic_untimed(const Result &aSection, const Result &bSection, Result &temp,
                                 const PredicateManager *manager = nullptr, const std::vector<size_t> &lengths = {}) {
-    auto lower = bSection.begin();
-    auto localUpper = lower;
+    auto bCurrent = bSection.begin();
+    auto localBUpper = bCurrent;
     auto upper = bSection.end();
 
     auto aIt = aSection.begin();
@@ -777,22 +777,25 @@ inline void until_logic_untimed(const Result &aSection, const Result &bSection, 
     temp.clear();
     auto join = marked_event::join(0, 0);
 
-    while (lower != upper) {
-        uint32_t currentTraceId = localUpper->first.first;
+    while (bCurrent != upper) {
+        uint32_t currentTraceId = localBUpper->first.first;
         cpAIt.first.first = cpLocalUpper.first.first = cpAEn.first.first = cpResult.first.first = currentTraceId;
         cpLocalUpper.first.second = lengths.at(currentTraceId);
         cpAIt.first.second = 0;
 
-        localUpper = std::upper_bound(lower, upper, cpLocalUpper);
+        localBUpper = std::upper_bound(bCurrent, upper, cpLocalUpper);
         aIt = std::lower_bound(aIt, upperA, cpAIt);
         aEn = aIt;
 
-        for (; lower != localUpper; lower++) {
-            Fut.first = lower->first.first;
-            if (lower->first.second == 0) {
-                temp.emplace_back(*lower);
+        bool atLeastOneResult = false;
+        for (; bCurrent != localBUpper; bCurrent++) {
+            Fut.first = bCurrent->first.first;
+            if (bCurrent->first.second == 0) {
+                atLeastOneResult = true;
+                cpResult.second.second.insert(cpResult.second.second.end(), bCurrent->second.second.begin(),
+                                              bCurrent->second.second.end());
             } else {
-                cpAEn.first.second = lower->first.second - 1;
+                cpAEn.first.second = bCurrent->first.second - 1;
                 aEn = std::upper_bound(aEn, upperA, cpAEn);
                 if (aIt == aEn) {
                     // Rationale: (1)
@@ -802,12 +805,12 @@ inline void until_logic_untimed(const Result &aSection, const Result &bSection, 
                     break;
                 } else {
                     const uint32_t dist = std::distance(aIt, aEn - 1);
-                    cpResult.second.second.clear();
+                    //cpResult.second.second.clear();
 
-                    if (dist == ((lower->first.second)) - 1) {
+                    if (dist == ((bCurrent->first.second)) - 1) {
                         if (manager) {
                             bool hasFail = false;
-                            for (auto &activationEvent: lower->second.second) {
+                            for (auto &activationEvent: bCurrent->second.second) {
                                 if (hasFail) break;
                                 if (!IS_MARKED_EVENT_TARGET(activationEvent)) continue;
                                 Fut.second = GET_TARGET_EVENT(activationEvent);
@@ -831,23 +834,29 @@ inline void until_logic_untimed(const Result &aSection, const Result &bSection, 
                                 }
                             }
                             if (hasFail) break;
+                            else atLeastOneResult = true;
                         } else {
                             populateAndReturnEvents(aIt, aEn, cpResult.second.second);
-                            cpResult.second.second.insert(cpResult.second.second.end(), lower->second.second.begin(),
-                                                          lower->second.second.end());
+                            cpResult.second.second.insert(cpResult.second.second.end(), bCurrent->second.second.begin(),
+                                                          bCurrent->second.second.end());
+                            atLeastOneResult = true;
                         }
-                        remove_duplicates(cpResult.second.second);
-                        temp.emplace_back(cpResult);
                     } else {
                         // For (1)
                         break;
                     }
                 }
             }
-
         }
 
-        lower = localUpper;
+        if (atLeastOneResult) {
+            remove_duplicates(cpResult.second.second);
+            temp.emplace_back(cpResult);
+        }
+        cpResult.second.second.clear();
+
+
+        bCurrent = localBUpper;
     }
 }
 

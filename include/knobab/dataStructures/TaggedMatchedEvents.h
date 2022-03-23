@@ -48,8 +48,8 @@ std::ostream &operator<<(std::ostream &os, const marked_event &event);
 #define IS_MARKED_EVENT_RIGHT(x)  (((marked_event)(x)).id.parts.type == MARKED_EVENT_RIGHT)
 #define IS_MARKED_EVENT_TARGET(x)  (((marked_event)(x)).id.parts.type == MARKED_EVENT_TARGET)
 #define IS_MARKED_EVENT_MATCH(x)  (((marked_event)(x)).id.parts.type == MARKED_EVENT_MATCH)
-#define GET_ACTIVATION_EVENT(x)    (IS_MARKED_EVENT_ACTIVATION(x) ? (x).id.parts.left : 0)
-#define GET_TARGET_EVENT(x)    (IS_MARKED_EVENT_TARGET(x) ? (x).id.parts.right : 0)
+#define GET_ACTIVATION_EVENT(x)    ((IS_MARKED_EVENT_ACTIVATION(x) || IS_MARKED_EVENT_MATCH(x)) ? (x).id.parts.left : 0)
+#define GET_TARGET_EVENT(x)    ((IS_MARKED_EVENT_TARGET(x) || IS_MARKED_EVENT_MATCH(x)) ? (x).id.parts.right : 0)
 #define GET_LEFT_EVENT(x)    (IS_MARKED_EVENT_LEFT(x) ? (x).id.parts.left : 0)
 #define GET_RIGHT_EVENT(x)    (IS_MARKED_EVENT_RIGHT(x) ? (x).id.parts.right : 0)
 #define SET_EVENT(x,val)   if (IS_MARKED_EVENT_ACTIVATION(x))  (x).id.parts.left = (val); else if (IS_MARKED_EVENT_TARGET(x))(x).id.parts.right = (val);
