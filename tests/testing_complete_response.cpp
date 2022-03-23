@@ -66,15 +66,15 @@ TEST_F(CompleteResponse, InSetting) {
     // I cannot possibly enumerate all of the possible sets composed of all of the possible pairs, which are 72.
     // As this would be 2^|72|, generating this is too costly and exeeds the memory limits
     std::cout << "Loading ok" << std::endl;
-    std::set<std::set<std::pair<std::string,std::string>>> allOfPossibleSets{{{"a", "b"}},
-                                                                             {{"a", "b"}, {"c", "d"}},
-                                                                             {{"a", "b"}, {"c", "d"}, {"e","f"}},
-                                                                             {{"a", "b"}, {"c", "d"}, {"e","f"}, {"g", "h"}},
-                                                                             {{"a", "b"}, {"c", "d"}, {"e","f"}, {"g", "h"}, {"i","a"}},
-                                                                             {{"a", "b"}, {"c", "d"}, {"e","f"}, {"g", "h"}, {"i","a"}, {"b", "c"}},
-                                                                             {{"a", "b"}, {"c", "d"}, {"e","f"}, {"g", "h"}, {"i","a"}, {"b", "c"}, {"d", "e"}},
-                                                                             {{"a", "b"}, {"c", "d"}, {"e","f"}, {"g", "h"}, {"i","a"}, {"b", "c"}, {"d", "e"}, {"f", "g"}},
-                                                                             {{"a", "b"}, {"c", "d"}, {"e","f"}, {"g", "h"}, {"i","a"}, {"b", "c"}, {"d", "e"}, {"f", "g"}, {"h", "i"}}};
+//    std::set<std::set<std::pair<std::string,std::string>>> allOfPossibleSets{{{"a", "b"}},
+//                                                                             {{"a", "b"}, {"c", "d"}},
+//                                                                             {{"a", "b"}, {"c", "d"}, {"e","f"}},
+//                                                                             {{"a", "b"}, {"c", "d"}, {"e","f"}, {"g", "h"}},
+//                                                                             {{"a", "b"}, {"c", "d"}, {"e","f"}, {"g", "h"}, {"i","a"}},
+//                                                                             {{"a", "b"}, {"c", "d"}, {"e","f"}, {"g", "h"}, {"i","a"}, {"b", "c"}},
+//                                                                             {{"a", "b"}, {"c", "d"}, {"e","f"}, {"g", "h"}, {"i","a"}, {"b", "c"}, {"d", "e"}},
+//                                                                             {{"a", "b"}, {"c", "d"}, {"e","f"}, {"g", "h"}, {"i","a"}, {"b", "c"}, {"d", "e"}, {"f", "g"}},
+//                                                                             {{"a", "b"}, {"c", "d"}, {"e","f"}, {"g", "h"}, {"i","a"}, {"b", "c"}, {"d", "e"}, {"f", "g"}, {"h", "i"}}};
     for (const auto& set : allOfPossibleSets) {
         // Clearing the previous model specification
         env.clearModel();
@@ -90,7 +90,7 @@ TEST_F(CompleteResponse, InSetting) {
         env.init_atomize_tables();
         env.first_atomize_model();
         auto ref = env.query_model();
-        std::cout << ref.ltlf_query_time << std::endl;
-        std::cout << set << "... done!" <<  std::endl <<  std::endl;
+        std::cout << ref.ltlf_query_time << "ms for ";
+        std::cout << set.size() << "... done!" <<  std::endl <<  std::endl;
     }
 }

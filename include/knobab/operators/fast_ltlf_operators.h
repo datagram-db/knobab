@@ -402,7 +402,49 @@ inline void future_fast_untimed(const Result &section, Result& result, const std
 
 
 inline void global_fast_timed(const Result &section, Result& result, const std::vector<size_t>& lengths) {
-    global_logic_timed(section, result, lengths);
+    result.clear();
+    auto lower = section.begin(), upper = section.begin();
+    auto end = section.end();
+
+    ResultIndex first;
+    ResultRecordSemantics second{1.0, 0.0};
+    ResultRecord cp{{0,   0},
+                    {1.0, {}}};
+
+    while (upper != end) {
+        uint32_t currentTraceId = upper->first.first;
+        first.first = cp.first.first = currentTraceId;
+        cp.first.second = lengths.at(currentTraceId);
+        first.second = 0;
+
+        lower = upper;
+        upper = std::upper_bound(lower, section.end(), cp);
+
+        Result toBeReversed;
+        auto it = lower + std::distance(lower, upper) - 1;
+        for (int64_t i = (upper - 1)->first.second; i >= 0; i--) {
+            first.second = i;
+            const uint32_t dist = std::distance(it, upper);
+
+            if ((cp.first.first == it->first.first) && (dist == (cp.first.second - it->first.second))) {
+                second.first = std::min(it->second.first, second.first);
+                second.second.insert(second.second.begin(), it->second.second.begin(), it->second.second.end());
+                remove_duplicates(second.second);
+                it--;
+            } else {
+                break; // If after this the condition does not hold, then it means that in the remainder I will have
+                // events that are not matching the condition
+            }
+            toBeReversed.emplace_back(first, second);
+        }
+
+        // Inserting the elements in reversed order
+        result.insert(result.end(), std::make_move_iterator(toBeReversed.rbegin()),
+                      std::make_move_iterator(toBeReversed.rend()));
+
+        second.second.clear();
+    }
+
 }
 
 inline void global_fast_untimed(const Result &section, Result& result, const std::vector<size_t>& lengths) {
@@ -422,7 +464,7 @@ inline void global_fast_untimed(const Result &section, Result& result, const std
         lower = upper;
         upper = lower + (cp.first.second-1);//std::upper_bound(lower, section.end(), cp);
         ///const uint32_t dist = std::distance(lower, upper - 1);
-        if ((upper->first.first == lower->first.first)) {
+        if ((upper < end) && (upper->first.first == lower->first.first)) {
             populateAndReturnEvents(lower, upper, second.second);
             result.emplace_back(first, second);
             upper++;
@@ -520,6 +562,7 @@ inline void aAndFutureB_timed(const Result& aResult, const Result& bResult, Resu
 
         if (aCurrent->first > bCurrent->first) {
             bCurrent++;
+            if (bCurrent == bEnd) break;
         } else {
             auto newItr = bCurrent;
             rcx.first = aCurrent->first;
@@ -564,6 +607,7 @@ inline void aAndFutureB_timed(const Result& aResult, const Result& bResult, Resu
 
             if (aCurrent->first == bCurrent->first) {
                 bCurrent++;
+                if (bCurrent == bEnd) break;
             }
 
             aCurrent++;
@@ -597,6 +641,7 @@ inline void aAndNextGloballyB_timed(const Result& a, const Result& b,Result& res
 
         if (aCurrent->first > bCurrent->first) {
             bCurrent++;
+            if (bCurrent == bEnd) break;
         } else {
             auto newItr = bCurrent;
             rcx.first = aCurrent->first;
@@ -657,6 +702,7 @@ inline void aAndNextGloballyB_timed(const Result& a, const Result& b,Result& res
 
             if (aCurrent->first == bCurrent->first) {
                 bCurrent++;
+                if (bCurrent == bEnd) break;
             }
 
             aCurrent++;
@@ -692,6 +738,7 @@ inline void aAndGloballyB_timed(const Result& a, const Result& b,Result& result,
 
         if (aCurrent->first > bCurrent->first) {
             bCurrent++;
+            if (bCurrent == bEnd) break;
         } else {
             auto newItr = bCurrent;
             rcx.first = aCurrent->first;
@@ -748,6 +795,7 @@ inline void aAndGloballyB_timed(const Result& a, const Result& b,Result& result,
 
             if (aCurrent->first == bCurrent->first) {
                 bCurrent++;
+                if (bCurrent == bEnd) break;
             }
 
             aCurrent++;

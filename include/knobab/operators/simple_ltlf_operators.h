@@ -623,7 +623,6 @@ inline void until_logic_timed(const Result &aSection, const Result &bSection, Re
 
     while (bLower != bUpper) {
         trace_t currentTraceId = bLower->first.first;
-//        std::cout << currentTraceId << ":" << std::endl;
         cp_aLocalLower.first.first = cp_aLocalUpper.first.first
                 = Fut.first
                 = Prev.first
@@ -634,14 +633,12 @@ inline void until_logic_timed(const Result &aSection, const Result &bSection, Re
 
         bLocalUpper = std::upper_bound(bLocalUpper, bUpper, cp_bLocalUpper);
         event_t alpha = 0;
-        //event_t globalUpper = bLower->first.second, globalLower = alpha;
         std::map<event_t, ResultRecordSemantics> globalResultBeforeShift;
 
         while (bLower != bLocalUpper) {
             event_t t = bLower->first.second;
             if (t == alpha) {
                 // TODO: add event in results
-//                std::cout << "++<" << alpha << "," << t << ">" << std::endl;
                 if (globalResultBeforeShift.empty()) {
                     // If there were not previous events, directly insert this into temp
                     temp.emplace_back(*bLower);
@@ -654,9 +651,6 @@ inline void until_logic_timed(const Result &aSection, const Result &bSection, Re
                     remove_duplicates(ref.second);
                 }
                 bLower++; /// Increment Upper
-//                if (bLower != bLocalUpper) {
-//                    globalUpper = bLower->first.second;
-//                }
             } else {
                 // Scanning the "a"-s
                 cp_aLocalLower.first.second = alpha;
@@ -674,10 +668,6 @@ inline void until_logic_timed(const Result &aSection, const Result &bSection, Re
 
                     // if there exists a contiguous sequence sequence A_alpha ... A_{t-1}
                     if (dst == count) {
-//                        for (auto ptr = aLower; ptr != aLocalUpper; ptr++) {
-//                            std::cout << "++<" << ptr->first.second << "," << t << ">" << std::endl;
-//                            std::cout << "";
-//                        }
 
                         if (manager) {
                             // For the current event, every event should satisfy the correlation condition
@@ -760,285 +750,6 @@ inline void until_logic_timed(const Result &aSection, const Result &bSection, Re
         }
         globalResultBeforeShift.clear();
     }
-
-//    while (bLower != bUpper) { // condition for checking the end of scan of b
-//        trace_t currentTraceId = bLower->first.first;
-//        Fut.first = Prev.first = first.first = cp_bLocalUpper.first.first = currentTraceId;
-//        cp_bLocalUpper.first.second = lengths.at(bLower->first.first);
-//        bLocalUpper = std::upper_bound(bLocalUpper, bUpper, cp_bLocalUpper);
-//        event_t alpha = 0;
-//        cp_aLocalLower.first.first = cp_aLocalUpper.first.first = bLower->first.first;
-//        cp_aLocalLower.first.second = alpha;
-//        aLower = std::lower_bound(aLocalUpper, aUpper, cp_aLocalLower);
-//        cp_aLocalUpper.first.second = bLower->first.second-1;
-//        aLocalUpper = std::upper_bound(aLower, aUpper, cp_aLocalUpper);
-//
-//        // Determining the next b event within the trace
-//        while (bLower != bLocalUpper) {
-//            event_t t = bLower->first.second;
-//            auto dist = ((aLower == aLocalUpper) ? 0 : std::distance(aLower, aLocalUpper-1))+1;
-//            auto diff = (bLower)->first.second-aLower->first.second;
-//            assert(aLower <= aLocalUpper);
-//
-//            if (t == alpha) {
-//                first.second = bLower->first.second;
-//                auto& ref = globalResultBeforeShift.emplace(first.second, semein).first->second.second;
-//                ref.insert(ref.end(), bLower->second.second.begin(), bLower->second.second.end());
-//                bLower++;
-//                if (bLower != bUpper) {
-//                    cp_aLocalUpper.first.second = bLower->first.second-1;
-//                    aLocalUpper = std::upper_bound(aLocalUpper, aUpper, cp_aLocalUpper);
-//                }
-//            } else if ((aLower->first.first == currentTraceId) &&
-//                       (aLower->first.second == alpha) &&
-//                       (dist == diff)) {
-//
-//                //bool hasFail = false;
-//                std::map<event_t, ResultRecordSemantics> localResultBeforeShift;
-//                if (manager) {
-//                    for (auto& activationEvent : bLower->second.second) {
-//                        //if (hasFail) break;
-//                        if (!IS_MARKED_EVENT_TARGET(activationEvent)) continue;
-//                        Fut.second = GET_TARGET_EVENT(activationEvent);
-//                        e1 = manager->GetPayloadDataFromEvent(Fut);
-//                        for (auto curr = aLower; curr != aLocalUpper; curr++) {
-//                            Prev.first = curr->first.first;
-//                            if (failedEvents.contains(curr->first.first)) continue;
-//                            for (auto& targetEvent : curr->second.second) {
-//                                if (!IS_MARKED_EVENT_ACTIVATION(targetEvent)) continue;
-//                                Prev.second = GET_ACTIVATION_EVENT(targetEvent);
-//                                e2 = manager->GetPayloadDataFromEvent(Prev);
-//                                if (!manager->checkValidity(e2, e1)) {
-//                                    failedEvents.insert(curr->first.second);
-//                                    auto it = localResultBeforeShift.begin();
-//                                    auto en = localResultBeforeShift.upper_bound(curr->first.second);
-//                                    while (it != en) {
-//                                        failedEvents.insert(it->first);
-//                                        it = localResultBeforeShift.erase(it);
-//                                    }
-//                                    break;
-//                                } else {
-//                                    join.id.parts.left = Fut.second;
-//                                    join.id.parts.right = Prev.second;
-//                                    for (auto idx = curr; idx != aLocalUpper; idx++) {
-//                                        auto it = localResultBeforeShift.emplace(idx->first.second, semein);
-//                                        it.first->second.second.emplace_back(join);
-//                                    }
-//                                }
-//                            }
-//                        }
-//                    }
-//                    for (const auto& ref : localResultBeforeShift) {
-//                        auto& ref2 = globalResultBeforeShift[ref.first];
-//                        ref2.second.insert(ref2.second.end(), ref.second.second.begin(), ref.second.second.end());
-//                    }
-//                } else {
-//                    if (aLower == aLocalUpper) {
-//                        auto it = globalResultBeforeShift.emplace(aLower->first.second, semein);
-//                        populateAndReturnEvents(aLower, aLocalUpper, it.first->second.second);
-//                        it.first->second.second.insert(it.first->second.second.end(), bLower->second.second.begin(), bLower->second.second.end());
-//                    } else for (auto curr = aLower; curr != aLocalUpper; curr++) {
-//                        auto it = globalResultBeforeShift.emplace(curr->first.second, semein);
-//                        populateAndReturnEvents(aLower, aLocalUpper, it.first->second.second);
-//                        it.first->second.second.insert(it.first->second.second.end(), bLower->second.second.begin(), bLower->second.second.end());
-//                    }
-//                }
-//                first.second = bLower->first.second;
-//                auto& ref = globalResultBeforeShift.emplace(first.second, semein).first->second.second;
-//                ref.insert(ref.end(), bLower->second.second.begin(), bLower->second.second.end());
-//                bLower++;
-//            } else if ((aLower->first.first == currentTraceId) &&
-//                       (aLower->first.second < bLower->first.second)) {
-//                if (alpha == aLower->first.second) {
-//                    if (aLower == aLocalUpper)  {
-//                        alpha = bLower->first.second;
-//                        cp_aLocalLower.first.second = alpha;
-//                        aLower = std::lower_bound(aLocalUpper, aUpper, cp_aLocalLower);
-//                        for (auto it = globalResultBeforeShift.begin(), en = globalResultBeforeShift.upper_bound(aLower->first.second); it!= en; it = globalResultBeforeShift.erase(it)) {
-//                            first.second = it->first;
-//                            remove_duplicates(it->second.second);
-//                            temp.emplace_back(first, it->second);
-//                        }
-//                        if (aLower == aUpper || (aLower->first.first > currentTraceId)) break;
-//                    }
-//                    else {
-//                        cp_aLocalLower.first.second++;
-//                        aLower = std::lower_bound(aLower, aLocalUpper, cp_aLocalLower);
-//                    }
-//                    alpha = aLower->first.second;
-//                    cp_aLocalLower.first.second = alpha;
-//                } else {
-//                    alpha = aLower->first.second;
-//                    cp_aLocalLower.first.second = alpha;
-//                }
-//            } else {
-//                alpha = bLower->first.second;
-//                cp_aLocalLower.first.second = alpha;
-//                aLower = std::lower_bound(aLocalUpper, aUpper, cp_aLocalLower);
-//                for (auto it = globalResultBeforeShift.begin(), en = globalResultBeforeShift.upper_bound(aLower->first.second); it!= en; it = globalResultBeforeShift.erase(it)) {
-//                    first.second = it->first;
-//                    remove_duplicates(it->second.second);
-//                    temp.emplace_back(first, it->second);
-//                }
-//            }
-//        }
-//        for (auto it = globalResultBeforeShift.begin(), en = globalResultBeforeShift.end(); it!= en; it++) {
-//            first.second = it->first;
-//            remove_duplicates(it->second.second);
-//            temp.emplace_back(first, it->second);
-//        }
-//        globalResultBeforeShift.clear();
-//    }
-
-//for (const auto& ref : temp)
-//    std::cout << ref << std::endl;
-    assert(std::is_sorted(temp.begin(), temp.end()));
-
-//    bool setUntilHolds;
-//
-//    uint16_t untilHolds;
-//
-//    auto join = marked_event::join(0,0);
-//    auto activation = marked_event::activation(0);
-//    ResultRecord cpAIt{{0, 0}, {0, {}}};
-//    ResultRecord cpLocalUpper{{0, 0}, {1.0, {}}};
-//    ResultRecord cpAEn{{0, 0}, {1.0, maxVec}};
-//    ResultRecord cpResult{{0, 0}, {1.0, {}}};
-//
-//    env e1, e2;
-//    std::pair<uint32_t, uint16_t> Fut, Prev;
-//    temp.clear();
-//
-//    // Complete iteration over the istances of b
-//    while (bLower != bUpper) {
-//        setUntilHolds = true;
-//        uint32_t currentTraceId = bLocalUpper->first.first;
-//        cpAIt.first.first = cpLocalUpper.first.first = cpAEn.first.first = cpResult.first.first = currentTraceId;
-//        cpLocalUpper.first.second = lengths.at(currentTraceId);
-//        cpAIt.first.second = 0;
-//
-//        bLocalUpper = std::upper_bound(bLower, bUpper, cpLocalUpper);
-//        aLower = std::lower_bound(aLower, aUpper, cpAIt);
-//        aLocalUpper = aLower;
-//        std::queue<decltype(aLower)> nextCandidateQueue;
-//
-//        // Iterating b over the same trace
-//        while (bLower != bLocalUpper) {
-//            // Assumption where we start from the given trace
-//            // TraceID
-//            Fut.first = bLower->first.first;
-//
-//            // If b appears at the beginning of the trace, I can add the result
-//            if (bLower->first.second == 0) {
-//                temp.emplace_back(*bLower);
-//            } else {
-//                // Iterating over the as preceeding b
-//                cpAEn.first.second = bLower->first.second;
-//                aLocalUpper = std::upper_bound(aLocalUpper, aUpper, cpAEn);
-//                if (aLocalUpper->first.first == currentTraceId)
-//                    nextCandidateQueue.emplace(aLocalUpper);
-//                if(aLower == aLocalUpper){
-//                    // Rationale: (1)
-//                    // if the condition does not hold for a time [startEventId, lower->first.second-1], it is because
-//                    // one event makes it not hold. Therefore, it should never hold even if you are extending the data
-//                    // that you have.
-//                    setUntilHolds = true;
-//                    if (nextCandidateQueue.empty()) break;
-//                    aLower = nextCandidateQueue.front();
-//                    nextCandidateQueue.pop();
-//                    cpAEn.first.second = bLower->first.second;
-//                    aLocalUpper = std::upper_bound(aLocalUpper, aUpper, cpAEn);
-//                    if (aLocalUpper->first.first == currentTraceId)
-//                        nextCandidateQueue.emplace(aLocalUpper);
-//                    bLower++;
-//                    continue;
-//                } else {
-//                    const uint32_t dist = std::distance(aLower, aLocalUpper-1);
-//                    cpResult.second.second.clear();
-//                    if (setUntilHolds) {
-//                        untilHolds = aLower->first.second;
-//                        setUntilHolds = false;
-//                    }
-//
-//                    if ((bLower->first.second) == aLower->first.second) {
-//                        temp.emplace_back(*bLower);
-//                    } else if(dist == ((bLower->first.second) - aLower->first.second)){
-//                        if (manager) {
-//                            bool hasFail = false;
-//                            for (auto& activationEvent : bLower->second.second) {
-//                                if (hasFail) break;
-//                                if (!IS_MARKED_EVENT_TARGET(activationEvent)) continue;
-//                                Fut.second = GET_TARGET_EVENT(activationEvent);
-//                                e1 = manager->GetPayloadDataFromEvent(Fut);
-//                                for (auto curr = aLower; curr != aLocalUpper; curr++) {
-//                                    if (hasFail) break;
-//                                    Prev.first = curr->first.first;
-//                                    for (auto& targetEvent : curr->second.second) {
-//                                        if (!IS_MARKED_EVENT_ACTIVATION(targetEvent)) continue;
-//                                        Prev.second = GET_ACTIVATION_EVENT(targetEvent);
-//                                        e2 = manager->GetPayloadDataFromEvent(Prev);
-//                                        if (!manager->checkValidity(e2, e1)) {
-//                                            hasFail = true;
-//                                            break;
-//                                        } else {
-//                                            join.id.parts.left = Fut.second;
-//                                            join.id.parts.right = Prev.second;
-//                                            cpResult.second.second.emplace_back(join);
-//                                        }
-//                                    }
-//                                }
-//                            }
-//                            if (hasFail) {
-//                                setUntilHolds = true;
-//                                if (nextCandidateQueue.empty()) break;
-//                                aLower = nextCandidateQueue.front();
-//                                nextCandidateQueue.pop();
-//                                cpAEn.first.second = bLower->first.second;
-//                                aLocalUpper = std::upper_bound(aLocalUpper, aUpper, cpAEn);
-//                                if (aLocalUpper->first.first == currentTraceId)
-//                                    nextCandidateQueue.emplace(aLocalUpper);
-//                                bLower++;
-//                                continue;
-//                            }
-//                        } else {
-//                            populateAndReturnEvents(aLower, aLocalUpper, cpResult.second.second);
-//                            cpResult.second.second.insert(cpResult.second.second.end(), bLower->second.second.begin(), bLower->second.second.end());
-//                        }
-//                        remove_duplicates(cpResult.second.second);
-//                        auto itAllEnd = cpResult.second.second.end();
-//                        activation.id.parts.left = join.id.parts.left = untilHolds;
-//                        join.id.parts.right = bLower->first.second;
-//                        auto it = std::lower_bound(cpResult.second.second.begin(), itAllEnd, manager ? join : activation);
-//                        activation.id.parts.left = join.id.parts.left = bLower->first.second - 1;
-//                        join.id.parts.right = bLower->first.second;
-//                        auto itEnd = std::upper_bound(it, itAllEnd, manager ? join : activation);
-//                        bool hasMatch = it != itEnd;
-//                        for (uint16_t i = untilHolds; i <= bLower->first.second; i++) {
-//                            cpResult.first.second = i;
-//                            temp.emplace_back(cpResult);
-//                            if (hasMatch && (i < bLower->first.second)) {
-//                                it = cpResult.second.second.erase(it);
-//                            }
-//                        }
-//                    } else {
-//                        // For (1)
-//                        setUntilHolds = true;
-//                        if (nextCandidateQueue.empty()) break;
-//                        aLower = nextCandidateQueue.front();
-//                        nextCandidateQueue.pop();
-//                        cpAEn.first.second = bLower->first.second;
-//                        aLocalUpper = std::upper_bound(aLocalUpper, aUpper, cpAEn);
-//                        if (aLocalUpper->first.first == currentTraceId)
-//                            nextCandidateQueue.emplace(aLocalUpper);
-//                        continue;
-//                    }
-//                }
-//            }
-//            bLower++;
-//        }
-//
-//        bLower = bLocalUpper;
-//    }
 }
 
 
