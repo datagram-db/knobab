@@ -148,7 +148,8 @@ public:
      * Loading the Declare model in the Extended format
      * @param model_file
      */
-    void load_model(const std::string &model_file);
+    void load_model(const std::filesystem::path &model_file);
+    void load_model(const std::string &model);
     template <typename T> void load_model(T begin, T end) {
         conjunctive_model.clear();
         for (auto it = begin; it != end; it++) {
