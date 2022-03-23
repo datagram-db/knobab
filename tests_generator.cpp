@@ -125,8 +125,8 @@ void generateMultiplePatternLog(const std::filesystem::path& cache_path,
     for (const auto& left : sigma) {
         for (const auto& right : sigma) {
             if (left != right) {
-                auto local = pattern_name +"(" + left + ","+ right+")";
-                std::cout << "Generating pos/neg log for: " << local << std::endl;
+                auto local =  left + ","+ right;
+                std::cout << "Generating pos/neg log for: " << pattern_name <<"(" << local << ")"<<  std::endl;
                 ParseFFLOATDot graph_loader;
                 std::ifstream strm{cache_path / pattern_name};
                 auto patternGraphToInstantiate = graph_loader.parse(strm);

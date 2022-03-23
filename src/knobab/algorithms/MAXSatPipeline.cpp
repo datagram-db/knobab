@@ -3,19 +3,12 @@
 //
 
 #include <magic_enum.hpp>
-#include <knobab/predicates/SimpleDataPredicate.h>
 #include <knobab/predicates/PredicateManager.h>
 #include <knobab/utilities/SetOperators.h>
 #include <knobab/operators/simple_ltlf_operators.h>
 #include <yaucl/functional/assert.h>
 #include <knobab/operators/fast_ltlf_operators.h>
 #include "knobab/algorithms/MAXSatPipeline.h"
-
-
-
-std::string MAXSatPipeline::LEFT_ATOM{"a"};
-std::string MAXSatPipeline::RIGHT_ATOM{"b"};
-
 
 
 MAXSatPipeline::MAXSatPipeline(const std::string& plan_file, const std::string& plan, size_t nThreads)

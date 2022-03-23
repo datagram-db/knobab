@@ -406,7 +406,32 @@ inline void global_fast_timed(const Result &section, Result& result, const std::
 }
 
 inline void global_fast_untimed(const Result &section, Result& result, const std::vector<size_t>& lengths) {
-    global_logic_untimed(section, result, lengths);
+    auto lower = section.begin(), upper = section.begin();
+    auto end = section.end();
+    result.clear();
+
+    ResultIndex first{0, 0};
+    ResultRecordSemantics second{1.0, {}};
+    ResultRecord cp{{0,   0},
+                    {1.0, {}}};
+    while (upper != end) {
+        uint32_t currentTraceId = upper->first.first;
+        first.first = cp.first.first = currentTraceId;
+        cp.first.second = lengths.at(currentTraceId);
+        cp.second.second.clear();
+        lower = upper;
+        upper = lower + (cp.first.second-1);//std::upper_bound(lower, section.end(), cp);
+        ///const uint32_t dist = std::distance(lower, upper - 1);
+        if ((upper->first.first == lower->first.first)) {
+            populateAndReturnEvents(lower, upper, second.second);
+            result.emplace_back(first, second);
+            upper++;
+        } else {
+            cp.first.first = currentTraceId+1;
+            cp.first.second = 0;
+            upper = std::lower_bound(lower, section.end(), cp);
+        }
+    }
 }
 
 inline void negated_fast_untimed(const Result &section, Result& result, const std::vector<size_t>& lengths) {

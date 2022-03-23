@@ -144,6 +144,7 @@ struct DeclareDataAware {
     static DeclareDataAware binary(const declare_templates& t, const std::string& left, const std::string right);
     static DeclareDataAware doExistence(size_t n, const std::string& left_act, const std::vector<std::unordered_map<std::string, DataPredicate>>& dnf_left_map);
     static DeclareDataAware doAbsence(size_t n, const std::string& left_act, const std::vector<std::unordered_map<std::string, DataPredicate>>& dnf_left_map);
+    static DeclareDataAware binary_for_testing(const declare_templates& t, const std::string &left, const std::string& right);
 
     static DeclareDataAware parse_declare_non_data_string(const std::string& line);
     static std::vector<DeclareDataAware> load_simplified_declare_model(std::istream &file);

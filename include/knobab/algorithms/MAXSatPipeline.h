@@ -53,7 +53,6 @@ struct MAXSatPipeline {
     std::vector<LTLfQuery*> declare_to_query;
 
     CNFDeclareDataAware* declare_model = nullptr;
-    static std::string LEFT_ATOM, RIGHT_ATOM;
 
     //std::unordered_map<declare_templates, ltlf> ltlf_semantics;
     std::unordered_map<std::string , std::vector<size_t>> atomToFormulaId;

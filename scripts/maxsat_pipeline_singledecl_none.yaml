@@ -1,0 +1,5 @@
+ensemble: "TraceMaximumSatisfiability"
+decomposition_script: "../../scripts/testing.decl_sem"
+script_plan: "marking"
+threads: 1
+operators: "NoQueryRunning"
