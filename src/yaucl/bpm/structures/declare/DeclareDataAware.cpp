@@ -487,6 +487,13 @@ DeclareDataAware DeclareDataAware::binary(const declare_templates& t, const std:
     return result;
 }
 
+DeclareDataAware DeclareDataAware::binary_for_testing(const declare_templates& t, const std::string &left, const std::string& right) {
+    auto result = binary(t, left, right);
+    result.left_decomposed_atoms.insert(left);
+    result.right_decomposed_atoms.insert(right);
+    return result;
+}
+
 #include <knobab/KnowledgeBase.h>
 
 bool DeclareDataAware::checkValidity(const env &e1, const env &e2) const {

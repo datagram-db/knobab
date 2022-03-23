@@ -127,6 +127,9 @@ public:
      */
     void clear();
 
+    void clearModel();
+
+
     /**
      * Loads the data traces from the log
      * @param format        Format of the log

@@ -29,8 +29,7 @@ semantic_atom_set Environment::getSigmaAll() const {
 
 void Environment::clear() {
     db.clear();
-    ap.clear();
-    conjunctive_model.clear();
+    clearModel();
 }
 
 #include <filesystem>
@@ -589,5 +588,11 @@ void Environment::dump_log_for_sqlminer(const std::string &basicString) {
                   payload{parent / "payload.tab"};
 
     db.dump_for_sqlminer(log_table, payload, schema);
+}
+
+void Environment::clearModel() {
+    grounding.singleElementOfConjunction.clear();
+    ap.clear();
+    conjunctive_model.clear();
 }
 
