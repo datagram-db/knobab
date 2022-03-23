@@ -1,4 +1,7 @@
 #include <iostream>
+
+
+
 #include <args.hxx>
 
 #include "yaucl/bpm/structures/log/data_loader.h"
@@ -11,10 +14,13 @@
 #include <yaucl/graphs/algorithms/minimizeDFA.h>
 #include <yaucl/graphs/graph_join_pm_conversion.h>
 
+void envAfterModelLoad(bool doDebugServer, const std::string &benchmarking_file, const std::string &atomization_file,
+                       const std::string &maxsat, Environment &env);
 
 void whole_testing(const std::string& log_file = "data/testing/log.txt",
                    log_data_format format = HUMAN_READABLE_YAUCL,
                    const std::vector<std::string>& declare_files = {"data/testing/SimpleComposition.txt"},
+                   const std::vector<std::string>& declare_models = {},
                    bool doDebugServer = false,
                    const std::string& benchmarking_file = "",
                    const std::string& sqlminer_dump_dir = "",
@@ -40,68 +46,81 @@ void whole_testing(const std::string& log_file = "data/testing/log.txt",
 
     if (declare_files.empty()) {
         std::cout << env.experiment_logger << std::endl;
-    } else for (const auto& declare_file : declare_files) {
-        std::cout << "Loading the declarative model from file: " << declare_file << std::endl;
-        env.load_model(declare_file);
-        env.print_model(std::cout); // DEBUG
-        //////////////////////////////////////////////////////////////////
-
-        env.set_grounding_parameters(true, false, true,GroundingStrategyConf::NO_EXPANSION);
-        //env.set_grounding_parameters(grounding_strategy);
-        env.doGrounding();
-        env.print_grounded_model(std::cout); // DEBUG
-        //////////////////////////////////////////////////////////////////
-
-        if (atomization_file.empty())
-            env.set_atomization_parameters("p", 10);
-        else
-            env.set_atomization_parameters(std::filesystem::path(atomization_file));
-        //////////////////////////////////////////////////////////////////
-
-        std::cout << "Loading the atomization tables given the model" << std::endl;
-        env.init_atomize_tables();
-        env.print_grounding_tables(std::cout);
-        //////////////////////////////////////////////////////////////////
-
-        std::cout << "Atomizing the declare formulae" << std::endl;
-        env.first_atomize_model();
-        env.print_grounded_model(std::cout); // DEBUG
-        //////////////////////////////////////////////////////////////////
-
-        env.set_maxsat_parameters(std::filesystem::path(maxsat));
-        auto ref = env.query_model();
-        switch (ref.final_ensemble) {
-            case PerDeclareSupport:
-                for (size_t i = 0; i<ref.support_per_declare.size(); i++) {
-                    std::cout << "Clause #" << i << ": " << (ref.support_per_declare.at(i)* 100.0) << "%" << std::endl;
-                }
-                break;
-
-            case TraceMaximumSatisfiability:
-                for (size_t i = 0; i<ref.max_sat_per_trace.size(); i++) {
-                    std::cout << "Trace #" << i << ": " << (ref.max_sat_per_trace.at(i)* 100.0) << "%" << std::endl;
-                }
-                break;
-
-            case TraceIntersection:
-                std::cout << ref.result << std::endl;
-                break;
+    } else {
+        for (const auto& declare_file_string : declare_files) {
+            std::filesystem::path declare_file{declare_file_string};
+            std::cout << "Loading the declarative model from file: " << declare_file << std::endl;
+            env.load_model(declare_file);
+            envAfterModelLoad(doDebugServer, benchmarking_file, atomization_file, maxsat, env);
         }
-        std::cout << env.experiment_logger << std::endl;
-        if (doDebugServer) {
-            env.server(ref);
-        }
-        if (!benchmarking_file.empty()) {
-            std::filesystem::path F(benchmarking_file);
-            bool doIHaveToWriteTheHeader = !std::filesystem::exists(F);
-            std::ofstream outF{benchmarking_file, std::ios_base::app};
-            if (doIHaveToWriteTheHeader)
-                env.experiment_logger.log_csv_file_header(outF);
-            env.experiment_logger.log_csv_file(outF);
+        for (const auto& declare_string : declare_models) {
+            std::cout << "Loading the declarative model from file: " << declare_string << std::endl;
+            env.load_model(declare_string);
+            envAfterModelLoad(doDebugServer, benchmarking_file, atomization_file, maxsat, env);
         }
     }
 
 
+}
+
+void envAfterModelLoad(bool doDebugServer, const std::string &benchmarking_file, const std::string &atomization_file,
+                       const std::string &maxsat, Environment &env) {
+    env.print_model(std::cout); // DEBUG
+//////////////////////////////////////////////////////////////////
+
+    env.set_grounding_parameters(true, false, true,GroundingStrategyConf::NO_EXPANSION);
+    //env.set_grounding_parameters(grounding_strategy);
+    env.doGrounding();
+    env.print_grounded_model(std::cout); // DEBUG
+//////////////////////////////////////////////////////////////////
+
+    if (atomization_file.empty())
+        env.set_atomization_parameters("p", 10);
+    else
+        env.set_atomization_parameters(std::filesystem::path(atomization_file));
+    //////////////////////////////////////////////////////////////////
+
+    std::cout << "Loading the atomization tables given the model" << std::endl;
+    env.init_atomize_tables();
+    env.print_grounding_tables(std::cout);
+    //////////////////////////////////////////////////////////////////
+
+    std::cout << "Atomizing the declare formulae" << std::endl;
+    env.first_atomize_model();
+    env.print_grounded_model(std::cout); // DEBUG
+//////////////////////////////////////////////////////////////////
+
+    env.set_maxsat_parameters(std::filesystem::path(maxsat));
+    auto ref = env.query_model();
+    switch (ref.final_ensemble) {
+        case PerDeclareSupport:
+            for (size_t i = 0; i<ref.support_per_declare.size(); i++) {
+                std::cout << "Clause #" << i << ": " << (ref.support_per_declare.at(i)* 100.0) << "%" << std::endl;
+            }
+            break;
+
+        case TraceMaximumSatisfiability:
+            for (size_t i = 0; i<ref.max_sat_per_trace.size(); i++) {
+                std::cout << "Trace #" << i << ": " << (ref.max_sat_per_trace.at(i)* 100.0) << "%" << std::endl;
+            }
+            break;
+
+        case TraceIntersection:
+            std::cout << ref.result << std::endl;
+            break;
+    }
+    std::cout << env.experiment_logger << std::endl;
+    if (doDebugServer) {
+        env.server(ref);
+    }
+    if (!benchmarking_file.empty()) {
+        std::filesystem::path F(benchmarking_file);
+        bool doIHaveToWriteTheHeader = !std::filesystem::exists(F);
+        std::ofstream outF{benchmarking_file, std::ios_base::app};
+        if (doIHaveToWriteTheHeader)
+            env.experiment_logger.log_csv_file_header(outF);
+        env.experiment_logger.log_csv_file(outF);
+    }
 }
 
 void test_data_query(const std::string& log_file = "data/testing/log_until.txt",
@@ -663,7 +682,7 @@ int main(int argc, char **argv) {
     std::string max_conf_file = "scripts/maxsat_pipeline.yaml";
     std::string benchmark = "";
     std::string sql_miner_dump_folder = "";
-    std::vector<std::string> queriesV{};
+    std::vector<std::string> queriesV{}, queriesA;
     args::ArgumentParser parser("KnoBAB  (c) 2020-2022 by Giacomo Bergami & Samuel 'Sam' Appleby.", "This free and open software program implements the MaxSat problem via a Knowledge Base, KnoBAB. Nicer things are still to come!");
     args::HelpFlag help(parser, "help", "Display this help menu", {'h', "help"});
 
@@ -677,7 +696,9 @@ int main(int argc, char **argv) {
     args::Flag no_data(group, "nodata", "Ignores the payload when loading the data", {'o', "nodata"});
 
     args::Flag do_notcompute_trace_Stats(group, "do_not_compute_trace_stats", "Whether the code will lose time in calculating the statistics for the traces", {'n', "nostats"});
-    args::ValueFlagList<std::string> queries(group, "Models/Queries", "The queries expressed as Declare models", {'d', "declare"});
+    args::ValueFlagList<std::string> queriesFiles(group, "Model/Query Files", "The queries expressed as Declare models", {'f', "declareFile"});
+    args::ValueFlagList<std::string> queriesActual(group, "Models/Queries", "The queries expressed as Declare models", {'d', "declare"});
+
     args::ValueFlag<std::string> decomposition(group, "Script", "specifies the path where to load the declare LTLf decomposition model", {'c', "declareDecomposition"});
     args::ValueFlag<std::string> plan(group, "Plan", "specifies the preferred plan to be run from the script", {'l', "plan"});
     args::ValueFlag<std::string> atomization_pipeline(group, "YamlFile", "specifies the configuration file for the atomization pipeline", {'a', "atomization"});
@@ -719,10 +740,15 @@ int main(int argc, char **argv) {
         log_file = args::get(tabFile);
         format = TAB_SEPARATED_EVENTS;
     }
-    if (queries) {
+    if (queriesFiles) {
         queriesV.clear();
-        for (const auto& query: args::get(queries))
+        for (const auto& query: args::get(queriesFiles))
             queriesV.emplace_back(query);
+    }
+    if (queriesActual) {
+        queriesA.clear();
+        for (const auto& query: args::get(queriesActual))
+            queriesA.emplace_back(query);
     }
     if (benchmarkFile) {
         benchmark = args::get(benchmarkFile);
@@ -739,7 +765,7 @@ int main(int argc, char **argv) {
     if (maxSatConf) {
         max_conf_file = args::get(maxSatConf);
     }
-    whole_testing(log_file, format, queriesV, setUpServer, benchmark, sql_miner_dump_folder, doStats, atomization_file, do_data);
+    whole_testing(log_file, format, queriesV, queriesA, setUpServer, benchmark, sql_miner_dump_folder, doStats, atomization_file, do_data);
 
     //generate_nonunary_templates();
     //test_data_query();
@@ -749,22 +775,22 @@ int main(int argc, char **argv) {
     //generate_traces();
     //ltlf_operators_testing();
     //sam_testing();
-    // --declare data/testing/AbsenceA.txt --server --log data/testing/log_until.txt
+    // --declareFile data/testing/AbsenceA.txt --server --log data/testing/log_until.txt
     // --sqlminer /home/giacomo/IdeaProjects/JavaConcurrentAPI/SQLMinerBenchmarker/log --log data/testing/log_until.txt
-    // --sqlminer=/home/giacomo/IdeaProjects/JavaConcurrentAPI/SQLMinerBenchmarker/log --log=data/testing/log_response.txt --declare=data/testing/response.powerdecl --server
+    // --sqlminer=/home/giacomo/IdeaProjects/JavaConcurrentAPI/SQLMinerBenchmarker/log --log=data/testing/log_response.txt --declareFile=data/testing/response.powerdecl --server
     // --sqlminer=C:/Users/Sam/Documents/Codebases/knobabBenchmark/knobab/competitors/SQLMinerBenchmarker/log --csv=test.csv --log=data/testing/log_response.txt
     // --sqlminer=C:/Users/Sam/Documents/Codebases/knobabBenchmark/knobab/competitors/SQLMinerBenchmarker/log --csv=test.csv --xes=data/testing/xes/concept_drift_detection_10000.xes
     //  https://ieee-dataport.org/open-access/synthetic-event-logs-concept-drift-detection
     // --tab=data/testing/ltlf/WeakUntil --sqlminer=/home/giacomo/IdeaProjects/JavaConcurrentAPI/SQLMinerBenchmarker/log
     // --tab=data/testing/ltlf/WeakUntil --nostats --sqlminer=/home/giacomo/IdeaProjects/JavaConcurrentAPI/SQLMinerBenchmarker/log
     // --xes=/home/giacomo/Scaricati/hospital_corrected.xes --nostats --sqlminer=/home/giacomo/Scaricati/sump
-// --nostats --log=data/testing/log_response.txt --declare=data/testing/response.powerdecl
-// --nostats --log=data/testing/log_response.txt --declare=data/testing/InitDataA.txt --server
+// --nostats --log=data/testing/log_response.txt --declareFile=data/testing/response.powerdecl
+// --nostats --log=data/testing/log_response.txt --declareFile=data/testing/InitDataA.txt --server
 
 // --xes=/home/giacomo/Scaricati/hospital_corrected.xes --nostats -o
-    // --tab=data/testing/declare/Response --nostats --nodata --declare=data/testing/declare/Response.powerdecl
+    // --tab=data/testing/declare/Response --nostats --nodata --declareFile=data/testing/declare/Response.powerdecl
 
-    //--tab=data/testing/declare/AltResponse --nostats --nodata --declare=data/testing/declare/AltResponse.powerdecl --server
+    //--tab=data/testing/declare/AltResponse --nostats --nodata --declareFile=data/testing/declare/AltResponse.powerdecl --server
 
     return 0;
 }

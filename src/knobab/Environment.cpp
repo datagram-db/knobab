@@ -38,9 +38,9 @@ void Environment::clear() {
 #include <yaucl/functional/assert.h>
 
 
-void Environment::load_model(const std::string &model_file) {
+void Environment::load_model(const std::filesystem::path &model_file) {
     conjunctive_model.clear();
-    if (!std::filesystem::exists(std::filesystem::path(model_file))) {
+    if (!std::filesystem::exists((model_file))) {
         std::cerr << "ERROR: model file does not exist: " << model_file << std::endl;
         exit(1);
     }
@@ -49,6 +49,15 @@ void Environment::load_model(const std::string &model_file) {
     experiment_logger.model_parsing_ms = dmp.parsing_time_ms;
     experiment_logger.model_size = conjunctive_model.size();
     experiment_logger.model_filename = model_file;
+}
+
+void Environment::load_model(const std::string &model) {
+    conjunctive_model.clear();
+    std::stringstream file{model};
+    conjunctive_model = dmp.load(file, true);
+    experiment_logger.model_parsing_ms = dmp.parsing_time_ms;
+    experiment_logger.model_size = conjunctive_model.size();
+    experiment_logger.model_filename = model;
 }
 
 void Environment::load_log(log_data_format format, bool loadData, const std::string &filename, bool setMaximumStrLen,
