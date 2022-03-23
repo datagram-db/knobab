@@ -162,8 +162,6 @@ void generateMultiplePatternLog(const std::filesystem::path& cache_path,
                     auto DFA = minimizeDFA(g);
                     DFA.removeStatesNotLeadingToAcceptance();
 
-
-                    std::ofstream tab{log_path / pattern_name};
                     auto l = DFA.generative(limit_size);
                     for (const auto& x : l ){
                         trace_to_patterns[x].emplace_back(local);
