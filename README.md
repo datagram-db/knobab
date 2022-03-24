@@ -41,6 +41,10 @@ After compiling the tool with CMake, the final project is delivered as a server(
         -n, --nostats                     Whether the code will lose time in
                                           calculating the statistics for the
                                           traces
+        -f[Model/Query Files...],
+        --declareFile=[Model/Query
+        Files...]                         The queries expressed as Declare
+                                          models
         -d[Models/Queries...],
         --declare=[Models/Queries...]     The queries expressed as Declare
                                           models
