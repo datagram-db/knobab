@@ -16,7 +16,7 @@
 
 void generate_powerdecl_benchmark(const KnowledgeBase& db, const std::string dir, const std::vector<std::string>& Declare){
     for(const std::string& name : Declare){
-        std::ofstream outF{dir + "/" + name + ".powerdecl", std::ios_base::app};
+        std::ofstream outF{dir + "/" + name + ".powerdecl", std::ios_base::app | std::ofstream::trunc};
 
         const uint16_t s = db.event_label_mapper.int_to_T.size();
         for(int i = 0; i < s; ++i){
