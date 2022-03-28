@@ -131,7 +131,6 @@ void MAXSatPipeline::pipeline(CNFDeclareDataAware* model,
     {
         auto start = std::chrono::system_clock::now();
         std::vector<PartialResult> pr = subqueriesRunning(kb);
-
         switch (operators) {
             case AbidingLogic:
                 abidinglogic_query_running(pr, kb);
@@ -149,10 +148,34 @@ void MAXSatPipeline::pipeline(CNFDeclareDataAware* model,
             switch (final_ensemble) {
                 case PerDeclareSupport: {
                     std::unordered_map<LTLfQuery*, double> visited;
-                    for (const auto& declare : declare_to_query) {
-                        // TODO: mark in the query plan the part where the activation conditions are assessed!
-                        auto it = visited.emplace(declare, ((double)declare->result.size())/((double)kb.noTraces));
-                        support_per_declare.emplace_back(it.first->second);
+                    for (size_t i = 0, N = declare_to_query.size(); i<N; i++) { // each declare i
+                        const auto &declare = declare_to_query.at(i);
+                        auto &localActivations = qm.activations.at(i)->result;
+                        if (localActivations.empty()) {
+                            DEBUG_ASSERT(declare->result.empty());
+                            support_per_declare.emplace_back(0);
+                        } else {
+                            auto it2 = visited.emplace(declare, 0);
+                            if (it2.second) {
+                                auto it = localActivations.begin(), en = localActivations.end();
+                                auto val = it->first.first;
+                                double numerator = 0.0;
+                                double denominator = 1.0; // count == 1
+                                it++;
+                                for (; it != en; it++) {
+                                    if (it->first.first != val) {
+                                        val = it->first.first;
+                                        denominator += 1.0;
+                                    }
+                                }
+                                for (const auto& trace : declare->result) {
+                                    if ((!trace.second.second.empty()) && IS_MARKED_EVENT_ACTIVATION(trace.second.second.at(0)))
+                                        numerator += 1.0;
+                                }
+                                it2.first->second = numerator / denominator;
+                            }
+                            support_per_declare.emplace_back(it2.first->second);
+                        }
                     }
                 } break;
 
@@ -196,6 +219,7 @@ void MAXSatPipeline::data_chunk(CNFDeclareDataAware *model,
                                 const KnowledgeBase& kb) {
 
     if (!model) return;
+    qm.current_query_id = 0;
     static std::vector<std::pair<std::pair<trace_t, event_t>, double>> empty_result{};
     declare_model = model;
     std::vector<LTLfQuery*> W;
@@ -240,6 +264,7 @@ void MAXSatPipeline::data_chunk(CNFDeclareDataAware *model,
             fomulaidToFormula.emplace_back(formula);
             maxFormulaId++;
             declare_to_query.emplace_back(formula);
+            qm.current_query_id++;
         }
     }
 
@@ -862,7 +887,8 @@ void MAXSatPipeline::abidinglogic_query_running(const std::vector<PartialResult>
         for (size_t j = lb; j < ub; j++) {
             auto formula = it->second.at(j);
             for (auto ptr : formula->args) {
-                if (ptr->parentMin == idx)
+                // Preserving the cache only if I need it for computing the Support
+                if (ptr->parentMin == idx && (((final_ensemble != PerDeclareSupport) || (ptr->isLeaf != ActivationLeaf))))
                     ptr->result.clear();
             }
         }
@@ -1215,15 +1241,16 @@ void MAXSatPipeline::fast_v1_query_running(const std::vector<PartialResult>& res
 
         // Clearing the caches, so to free potentially unrequired memory for the next computational steps
         // This might help save some memory in big-data scenarios
-        PARALLELIZE_LOOP_BEGIN(pool, 0, it->second.size(), lb, ub)
-            for (size_t j = lb; j < ub; j++) {
-                auto formula = it->second.at(j);
-                for (auto ptr : formula->args) {
-                    if (ptr->parentMin == idx)
-                        ptr->result.clear();
-                }
-            }
-        PARALLELIZE_LOOP_END
+//        PARALLELIZE_LOOP_BEGIN(pool, 0, it->second.size(), lb, ub)
+//            for (size_t j = lb; j < ub; j++) {
+//                auto formula = it->second.at(j);
+//                for (auto ptr : formula->args) {
+//                    // Preserving the cache only if I need it for computing the Support
+//                    if (ptr->parentMin == idx && (((final_ensemble != PerDeclareSupport) || (ptr->isLeaf != ActivationLeaf))))
+//                        ptr->result.clear();
+//                }
+//            }
+//        PARALLELIZE_LOOP_END
         idx--;
     }
 }

@@ -765,7 +765,7 @@ int main(int argc, char **argv) {
     if (maxSatConf) {
         max_conf_file = args::get(maxSatConf);
     }
-    whole_testing(log_file, format, queriesV, queriesA, setUpServer, benchmark, sql_miner_dump_folder, doStats, atomization_file, do_data);
+    whole_testing(log_file, format, queriesV, queriesA, setUpServer, benchmark, sql_miner_dump_folder, doStats, atomization_file, do_data, max_conf_file);
 
     //generate_nonunary_templates();
     //test_data_query();
