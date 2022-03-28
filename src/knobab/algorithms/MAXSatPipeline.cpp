@@ -1241,16 +1241,16 @@ void MAXSatPipeline::fast_v1_query_running(const std::vector<PartialResult>& res
 
         // Clearing the caches, so to free potentially unrequired memory for the next computational steps
         // This might help save some memory in big-data scenarios
-//        PARALLELIZE_LOOP_BEGIN(pool, 0, it->second.size(), lb, ub)
-//            for (size_t j = lb; j < ub; j++) {
-//                auto formula = it->second.at(j);
-//                for (auto ptr : formula->args) {
-//                    // Preserving the cache only if I need it for computing the Support
-//                    if (ptr->parentMin == idx && (((final_ensemble != PerDeclareSupport) || (ptr->isLeaf != ActivationLeaf))))
-//                        ptr->result.clear();
-//                }
-//            }
-//        PARALLELIZE_LOOP_END
+        PARALLELIZE_LOOP_BEGIN(pool, 0, it->second.size(), lb, ub)
+            for (size_t j = lb; j < ub; j++) {
+                auto formula = it->second.at(j);
+                for (auto ptr : formula->args) {
+                    // Preserving the cache only if I need it for computing the Support
+                    if (ptr->parentMin == idx && (((final_ensemble != PerDeclareSupport) || (ptr->isLeaf != ActivationLeaf))))
+                        ptr->result.clear();
+                }
+            }
+        PARALLELIZE_LOOP_END
         idx--;
     }
 }
