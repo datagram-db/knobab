@@ -5,6 +5,7 @@
 #ifndef KNOBAB_LTLFQUERYMANAGER_H
 #define KNOBAB_LTLFQUERYMANAGER_H
 
+#include <yaucl/numeric/ssize_t.h>
 #include <knobab/algorithms/atomization_pipeline.h>
 #include <knobab/queries/LTLfQuery.h>
 #include <unordered_map>
@@ -14,6 +15,7 @@ struct LTLfQueryManager {
     std::map<size_t, std::vector<LTLfQuery*>> Q;
     std::unordered_map<LTLfQuery*, size_t> counter;
     std::vector<LTLfQuery*> atomsToDecomposeInUnion;
+    ssize_t current_query_id = -1;
 
     void generateGraph(std::map<LTLfQuery*, std::vector<LTLfQuery*>>& ref, LTLfQuery*q) const;
     std::string generateGraph() const;

@@ -5,6 +5,7 @@
 #ifndef AUTOMATA_JOIN_GRAPH_JOIN_PM_H
 #define AUTOMATA_JOIN_GRAPH_JOIN_PM_H
 
+#include <yaucl/numeric/ssize_t.h>
 #include <map>
 #include <vector>
 #include <string>

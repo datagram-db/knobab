@@ -30,6 +30,7 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <ostream>
+#include <yaucl/numeric/ssize_t.h>
 
 struct adjacency_graph {
     size_t V_size, E_size;

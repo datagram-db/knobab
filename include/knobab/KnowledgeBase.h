@@ -9,6 +9,7 @@
 #include <string>
 #include <set>
 #include <unordered_set>
+#include <yaucl/numeric/ssize_t.h>
 #include <knobab/CountTemplate.h>
 #include <knobab/ActTable.h>
 #include <unordered_map>
