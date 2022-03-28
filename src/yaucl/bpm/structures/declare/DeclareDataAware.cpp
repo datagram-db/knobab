@@ -414,7 +414,7 @@ DeclareDataAware DeclareDataAware::parse_declare_non_data_string(const std::stri
     DeclareDataAware pattern;
     std::string nextLine;
 
-    ssize_t pos = line.find('[');
+    auto pos = line.find('[');
     DEBUG_ASSERT(pos != std::string::npos);
     std::string pattern_name = line.substr(0, pos);
     pattern.casusu = pattern_name;//magic_enum::enum_cast<declare_templates>(pattern_name).value();

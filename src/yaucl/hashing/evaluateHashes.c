@@ -24,6 +24,7 @@
 //
 
 #include <yaucl/hashing/evaluateHashes.h>
+#include <yaucl/numeric/ssize_t.h>
 
 unsigned int doHash(char *line, int *pos) {
     unsigned int prime = 17;
@@ -41,6 +42,8 @@ unsigned int doHash(char *line, int *pos) {
     }
     return result;
 }
+
+#include <stdio.h>
 
 void evaluateHashes(char *file, int *pos) {
     FILE * fp;

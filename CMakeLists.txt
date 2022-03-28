@@ -191,11 +191,11 @@ target_link_libraries(knobab_flloat ${CppPythonBindings} yaucl_bpm yaucl_graph)
 
 
 add_subdirectory(submodules/backward-cpp)
-add_executable(server main.cpp ${BACKWARD_ENABLE} ) #)
+add_executable(server main.cpp )#${BACKWARD_ENABLE} ) #)
 
 target_link_libraries(server Threads::Threads yaml-cpp  knobab antlr4_static ${CppPythonBindings}
                                   yaucl_stringutils yaucl_numeric yaucl_hashing yaucl_data yaucl_bpm yaucl_graph knobab_flloat yaucl_structures)
-add_backward(server)
+#add_backward(server)
 
 add_executable(tests_generator tests_generator.cpp) #${BACKWARD_ENABLE})
 target_link_libraries(tests_generator knobab

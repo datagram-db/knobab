@@ -200,6 +200,7 @@ inline void or_fast_untimed(const Result& lhs, const Result& rhs, Result& out, c
                 remove_duplicates(result.second.second);
                 out.emplace_back(result);
             }
+            result.second.second.clear();
             first2 = endFirst2;
         }
     }
@@ -217,6 +218,7 @@ inline void or_fast_untimed(const Result& lhs, const Result& rhs, Result& out, c
         } while ((dx != last2) && (dx->first.first == localTrace));
         remove_duplicates(result.second.second);
         out.emplace_back(result);
+        result.second.second.clear();
         first2 = dx;
     }
 }
@@ -462,6 +464,7 @@ inline void global_fast_untimed(const Result &section, Result& result, const std
         cp.first.second = lengths.at(currentTraceId);
         cp.second.second.clear();
         lower = upper;
+        second.second.clear();
         upper = lower + (cp.first.second-1);//std::upper_bound(lower, section.end(), cp);
         ///const uint32_t dist = std::distance(lower, upper - 1);
         if ((upper < end) && (upper->first.first == lower->first.first)) {

@@ -90,6 +90,7 @@ std::string LTLfQueryManager::generateGraph() const {
 }
 
 void LTLfQueryManager::clear() {
+    current_query_id = 0;
     for (auto it = conversion_map_for_subexpressions.begin(); it != conversion_map_for_subexpressions.end(); it++) {
         delete it->second;
         it = conversion_map_for_subexpressions.erase(it);
@@ -229,7 +230,12 @@ LTLfQuery *LTLfQueryManager::simplify(const std::unordered_set<std::string>& ato
     q.fields.id.parts.is_queryplan = true;
     q.fields.id.parts.is_negated = false;
     q.declare_arg = DECLARE_TYPE_NONE;
-    return simplify(q);
+    auto tmp = simplify(q);
+    if (q.isLeaf == ActivationLeaf) {
+        DEBUG_ASSERT(current_query_id == activations.size());
+        activations.emplace_back(tmp);
+    }
+    return tmp;
 }
 
 LTLfQuery *LTLfQueryManager::simplify(const LTLfQuery &q) {
@@ -242,6 +248,7 @@ LTLfQuery *LTLfQueryManager::simplify(const LTLfQuery &q) {
         *ptr = q;
         counter.emplace(ptr, 1);
         assert(conversion_map_for_subexpressions.emplace(q, ptr).second);
+
         return ptr;
     }
 }
