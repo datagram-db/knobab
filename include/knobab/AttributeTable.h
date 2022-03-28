@@ -30,6 +30,7 @@ using union_type = std::variant<double, size_t, long long, std::string, bool>;
 #include <SimplifiedFuzzyStringMatching.h>
 #include <knobab/trace_repairs/DataQuery.h>
 #include <knobab/operators/semantics.h>
+#include <yaucl/numeric/ssize_t.h>
 
 struct AttributeTable {
     std::string attr_name;

@@ -12,6 +12,7 @@
 #include "knobab/queries/LTLfQueryManager.h"
 #include <yaucl/numeric/ssize_t.h>
 #include <knobab/queries/DeclareQueryLanguageParser.h>
+#include <yaucl/numeric/ssize_t.h>
 
 //#define MAXSatPipeline_PARALLEL
 
