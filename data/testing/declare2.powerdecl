@@ -17,6 +17,12 @@
  * You should have received a copy of the GNU General Public License
  * along with bpm21. If not, see <http://www.gnu.org/licenses/>.
  */
+<<<<<<< HEAD:data/testing/declare2.powerdecl
  "Response"("A", var "x" > 0.0 && var "y" > 5.0, "B", var "y" <= 0.0)
  "Response"("B", var "y" <= 0.0, "C", true) where var "y" < var "x"
  "Precedence"("B", var "y" <= 0.0, "A", var "z" > 5.0) //where y < x
+=======
+ Response("A", var "x" > 0.0 && var "y" > 5.0, "B", var "y" <= 0.0)
+ Response("B", var "y" <= 0.0, "C", true) where var "y" < var "x"
+ Precedence("B", var "y" <= 0.0, "A", var "z" > 5.0) //where y < x
+>>>>>>> safe_for_benchmark:testing/declare2.powerdecl
