@@ -184,11 +184,15 @@ struct DeclareDataAware {
 
     DeclareDataAware flip() const {
         //Flipping only the relevant part
-        DeclareDataAware result;
+        DeclareDataAware result = *this;
+        result.conjunctive_map.clear();
         for (const auto& ref : conjunctive_map) {
             auto inner = result.conjunctive_map.emplace_back();
             for (const auto& ref2 : ref) {
-                inner.emplace(ref2.first, ref2.second.flip());
+                for (const auto& pred : ref2.second.BiVariableConditions) {
+                    auto cpy = ref2.second.flip();
+                    inner.emplace(cpy.var, cpy);
+                }
             }
         }
         result.kb = this->kb;
