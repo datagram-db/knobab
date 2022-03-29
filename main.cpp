@@ -46,6 +46,9 @@ void whole_testing(const std::string& log_file = "data/testing/log.txt",
 
     if (declare_files.empty()) {
         std::cout << env.experiment_logger << std::endl;
+        if (doDebugServer) {
+            env.server();
+        }
     } else {
         for (const auto& declare_file_string : declare_files) {
             std::filesystem::path declare_file{declare_file_string};
@@ -109,6 +112,10 @@ void envAfterModelLoad(bool doDebugServer, const std::string &benchmarking_file,
             std::cout << ref.result << std::endl;
             break;
     }
+    std::cout << "LTLf-DA" << std::endl;
+    for (const auto& ref : ref.declare_to_query)
+        std::cout <<" **) " << *ref << std::endl;
+    std::cout << std::endl;
     std::cout << env.experiment_logger << std::endl;
     if (doDebugServer) {
         env.server(ref);
@@ -786,12 +793,16 @@ int main(int argc, char **argv) {
     // --xes=/home/giacomo/Scaricati/hospital_corrected.xes --nostats --sqlminer=/home/giacomo/Scaricati/sump
 // --nostats --log=data/testing/log_response.txt --declareFile=data/testing/response.powerdecl
 // --nostats --log=data/testing/log_response.txt --declareFile=data/testing/InitDataA.txt --server
-// --nostats --xes=/home/giacomo/paper_testset/bpi_12/bpi_12.xes --declareFile=/home/giacomo/paper_testset/bpi_12/model1.powerdecl
+//
 // --xes=/home/giacomo/Scaricati/hospital_corrected.xes --nostats -o
     // --tab=data/testing/declare/Response --nostats --nodata --declareFile=data/testing/declare/Response.powerdecl
 
     //--tab=data/testing/declare/AltResponse --nostats --nodata --declareFile=data/testing/declare/AltResponse.powerdecl --server
 // --nostats --log=data/testing/log_response.txt --declareFile=data/testing/response.powerdecl --maxsat=scripts/support_pipeline.yaml
+
+// --nostats --log=data/testing/log_until.txt --declareFile=data/testing/declare/ResponseData1.powerdecl --maxsat=scripts/maxsat_pipeline.yaml
+
+// --nostats --log=data/testing/log_until.txt --declareFile=data/testing/declare/ResponseData1.powerdecl --maxsat=scripts/maxsat_pipeline.yaml
     return 0;
 }
         ///
