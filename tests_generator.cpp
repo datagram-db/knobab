@@ -12,21 +12,12 @@
 
 struct GenerativePath {
     size_t maxN;
-<<<<<<< HEAD
     const std::set<std::vector<std::string>>& toAvoid;
     const std::unordered_set<std::string>& sigma;
     std::set<std::vector<std::string>> result;
     std::vector<std::string> V;
 
     GenerativePath(size_t maxN, const std::set<std::vector<std::string>> &toAvoid,
-=======
-    const std::unordered_set<std::vector<std::string>>& toAvoid;
-    const std::unordered_set<std::string>& sigma;
-    std::unordered_set<std::vector<std::string>> result;
-    std::vector<std::string> V;
-
-    GenerativePath(size_t maxN, const std::unordered_set<std::vector<std::string>> &toAvoid,
->>>>>>> safe_for_benchmark
                    const std::unordered_set<std::string> &sigma) : maxN(maxN), toAvoid(toAvoid), sigma(sigma), V(maxN, "") {}
 
     void run(size_t i=0) {
@@ -48,7 +39,6 @@ struct GenerativePath {
 
 };
 
-<<<<<<< HEAD
 
 
 void generatePatternLog(std::map<std::vector<std::string>, std::vector<std::string>>& trace_to_patterns,
@@ -59,13 +49,6 @@ void generatePatternLog(std::map<std::vector<std::string>, std::vector<std::stri
                         const std::unordered_set<std::string>& sigma = {"a", "b", "c", "d", "e", "f", "g", "h", "i"},
                         const std::string& left = "a",
                         const std::string& right = "b") {
-=======
-void generatePatternLog(const std::filesystem::path& cache_path,
-                        const std::filesystem::path& log_path,
-                        const std::string& pattern_name,
-                        size_t limit_size = 5,
-                        const std::unordered_set<std::string>& sigma = {"a", "b", "c", "d", "e", "f", "g", "h", "i"}) {
->>>>>>> safe_for_benchmark
 
     std::cout << "Generating pos/neg log for: " << pattern_name << std::endl;
     ParseFFLOATDot graph_loader;
@@ -73,13 +56,8 @@ void generatePatternLog(const std::filesystem::path& cache_path,
     auto patternGraphToInstantiate = graph_loader.parse(strm);
 
     std::unordered_map<std::string, semantic_atom_set> bogus_act_to_set;
-<<<<<<< HEAD
     bogus_act_to_set["a"] = {left};
     bogus_act_to_set["b"] = {right};
-=======
-    bogus_act_to_set["a"] = {"a"};
-    bogus_act_to_set["b"] = {"b"};
->>>>>>> safe_for_benchmark
 
     {
         FlexibleFA<size_t, std::string> result;
@@ -119,10 +97,7 @@ void generatePatternLog(const std::filesystem::path& cache_path,
         }
 
         for (const auto& trace : l) {
-<<<<<<< HEAD
             trace_to_patterns[trace].emplace_back(pattern_name);
-=======
->>>>>>> safe_for_benchmark
             for (size_t j = 0, N = trace.size()-1; j<=N; j++) {
                 tab << trace[j];
                 if (j != N) tab  << "\t";
@@ -130,10 +105,7 @@ void generatePatternLog(const std::filesystem::path& cache_path,
             tab << std::endl;
         }
         for (const auto& trace : gen.result) {
-<<<<<<< HEAD
             trace_to_patterns[trace];
-=======
->>>>>>> safe_for_benchmark
             for (size_t j = 0, N = trace.size()-1; j<=N; j++) {
                 tab << trace[j];
                 if (j != N) tab  << "\t";
@@ -143,7 +115,6 @@ void generatePatternLog(const std::filesystem::path& cache_path,
     }
 }
 
-<<<<<<< HEAD
 void generateMultiplePatternLog(const std::filesystem::path& cache_path,
                                 const std::filesystem::path& log_path,
                                 const std::string& pattern_name,
@@ -300,18 +271,6 @@ int main() {
 
     ////////////////////////////////////////////////////////////////
     generateMultiplePatternLog( cache_path, dec_path, "Response", 5);
-=======
-int main() {
-    std::filesystem::path data = "data";
-    std::filesystem::path cache_path = data / "cache" / "graph_pattern_cache";
-    std::filesystem::path log_path = data / "testing" / "ltlf";
-
-    generatePatternLog(cache_path, log_path, "Until", 5);
-    generatePatternLog(cache_path, log_path, "WeakUntil", 5);
-    generatePatternLog(cache_path, log_path, "Release", 5);
-    generatePatternLog(cache_path, log_path, "Box", 5);
-    generatePatternLog(cache_path, log_path, "Diamond", 5);
->>>>>>> safe_for_benchmark
 
     return 0;
 }
