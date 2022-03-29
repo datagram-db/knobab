@@ -97,183 +97,6 @@ std::ostream &operator<<(std::ostream &os, const DeclareDataAware &aware) {
     return os;
 }
 
-/*
-ltlf map_conj(const std::unordered_map<std::string, DataPredicate> &map) {
-    ltlf result = ltlf::True();
-    size_t i = 0, N = map.size();
-    for (const auto& elem : map) {
-        if (i == 0) {
-            result = ltlf::Interval(elem.second);
-        } else {
-            result = ltlf::And(ltlf::Interval(elem.second), result);
-        }
-        i++;
-    }
-    return result;
-}
-
-ltlf map_disj(const std::vector<std::unordered_map<std::string, DataPredicate>> &map) {
-    ltlf result = ltlf::True();
-    for (size_t i = 0, N = map.size(); i<N; i++) {
-        const std::unordered_map<std::string, DataPredicate>& elem = map.at(i);
-        if (i == 0) {
-            result = map_conj(elem);
-        } else {
-            result = ltlf::Or(map_conj(elem), result);
-        }
-    }
-    return result;
-}
-
-
-
-
-
-
-ltlf
-toFiniteSemantics(declare_templates casusu, size_t n, const std::string &left_act, const std::string &right_act) {
-    ltlf left = ltlf::Act(left_act).setBeingCompound(true);
-
-    ltlf right = ltlf::True();
-    if (!right_act.empty()) {
-        right = ltlf::Act(right_act).setBeingCompound(true);
-    }
-
-    switch (casusu) {
-        case Existence:
-            if (n > 1) {
-                return ltlf::Diamond(
-                        ltlf::And(left, ltlf::Next(toFiniteSemantics(Existence, n - 1, left_act)))
-                );
-            } else if (n == 1) {
-                return ltlf::Diamond(left);
-            } else {
-                return ltlf::Diamond(left).negate();
-            }
-        case Absence:
-            return ltlf::Neg(toFiniteSemantics(Existence, n, left_act));
-
-        case Absence2:
-            return ltlf::Neg(ltlf::Diamond(ltlf::And(left, ltlf::Diamond(left))));
-
-        case Exactly:
-            return ltlf::And(toFiniteSemantics(Existence,n,  left_act), toFiniteSemantics(Absence, n + 1, left_act));
-
-        case Init:
-            return left;
-
-        case RespExistence:
-            return ltlf::Implies(ltlf::Diamond(left),
-                                 ltlf::Diamond(right));
-
-        case Choice:
-            return ltlf::Or(ltlf::Diamond(left), ltlf::Diamond(right));
-
-        case ExlChoice:
-            return ltlf::And(ltlf::Or(ltlf::Diamond(left), ltlf::Diamond(right)),
-                             ltlf::Neg(ltlf::And(ltlf::Diamond(left), ltlf::Diamond(right))));
-
-        case CoExistence:
-            return ltlf::And(ltlf::Implies(ltlf::Diamond(left),
-                                           ltlf::Diamond(right)),
-                             ltlf::Implies(ltlf::Diamond(right),
-                                           ltlf::Diamond(left)));
-
-        case Response:
-            return ltlf::Box(ltlf::Implies(left,
-                                           ltlf::Diamond(right)));
-
-        case NegationResponse:
-            return ltlf::Neg(ltlf::Box(ltlf::Implies(left,
-                                                     ltlf::Diamond(right))));
-
-        case Precedence:
-            return ltlf::WeakUntil(ltlf::Neg(right), left);
-
-        case NegationPrecedence:
-            return ltlf::Neg(ltlf::WeakUntil(ltlf::Neg(right), left));
-
-        case AltResponse:
-            return ltlf::Box(ltlf::Implies(left,
-                                           ltlf::Next(ltlf::Until(left.negate(), right))));
-
-
-        case NegationAltResponse:
-            return ltlf::Neg(ltlf::Box(ltlf::Implies(left,
-                                                     ltlf::Next(ltlf::Until(left.negate(), right)))));
-
-        case AltPrecedence: {
-            struct ltlf base = ltlf::Until(right.negate(), left);
-            return ltlf::And(base, ltlf::Box(ltlf::Implies(right,
-                                                           ltlf::Next(ltlf::Or(base, ltlf::Box(right.negate()))))));
-        }
-
-        case AltSuccession: {
-            auto L = ltlf::Box(ltlf::Implies(right,
-                                             ltlf::Next(ltlf::Until(left.negate(), right))));
-            struct ltlf base = ltlf::WeakUntil(right.negate(), left);
-            auto R =  ltlf::And(base, ltlf::Box(ltlf::Implies(right,
-                                                              ltlf::Next(base))));
-            return ltlf::And(L, R);
-        }
-
-        case ChainResponse:
-            return ltlf::Box(ltlf::Implies(left, ltlf::Next(right)));
-
-        case ChainPrecedence:
-            return ltlf::Box(ltlf::Implies( ltlf::Next(right), left));
-
-        case ChainSuccession:
-            return ltlf::Box(ltlf::Equivalent(left, ltlf::Next(right)));
-
-        case Succession: {
-            struct ltlf base = ltlf::WeakUntil(right.negate(), left);
-            return ltlf::And(base, ltlf::Box(ltlf::Implies(left, ltlf::Diamond(right))));
-        }
-
-        case End:
-            return ltlf::Diamond(ltlf::And(left, ltlf::Neg(ltlf::Next(ltlf::Or(left, left.negate())))));
-
-        case NotPrecedence:
-            return ltlf::Box(ltlf::Implies(left, ltlf::Neg(ltlf::Diamond(right))));
-
-        case NotSuccession:
-            return ltlf::Box(ltlf::Implies(left,
-                                           ltlf::Neg(ltlf::Diamond(right))));
-
-        case NotResponse:
-            return ltlf::Box(ltlf::Implies(left, ltlf::Neg(ltlf::Box(right))));
-
-        case NotChainPrecedence:
-            return ltlf::Box(ltlf::Implies(right, ltlf::Neg(ltlf::Next(left))));
-
-        case NotCoExistence:
-            return ltlf::Neg(ltlf::And(ltlf::Diamond(left), ltlf::Diamond(right)));
-
-        case NegSuccession:
-            return ltlf::Box(ltlf::Implies(left, ltlf::Neg(ltlf::Box(right))));
-
-        case NotChainResponse:
-            return ltlf::Box(ltlf::Implies(left, ltlf::Neg(ltlf::Next(right))));
-
-        case NegChainSuccession:
-            return ltlf::Box(ltlf::Equivalent(left, ltlf::Next(right.negate())));
-
-        case NotChainSuccession:
-            return ltlf::Box(ltlf::Implies(left, ltlf::Next(right.negate())));
-
-        case NotRespExistence:
-            return ltlf::Implies(left, ltlf::Neg(ltlf::Diamond(right)));
-
-        case NegNotChainSuccession:
-            return ltlf::Diamond(ltlf::And(left, ltlf::Neg(ltlf::Next(right.negate()))));
-
-        case VacNegNotChainSuccession:
-            return ltlf::Or(ltlf::Diamond(ltlf::And(left, ltlf::Neg(ltlf::Next(right.negate())))),
-                            ltlf::Box(left.negate()));
-    }
-}
-*/
 bool isUnaryPredicate(const declare_templates& type) {
     return type == "Existence" || type == "Absence" || type == "End" || type == "Init";
 }
@@ -281,114 +104,6 @@ bool isUnaryPredicate(const declare_templates& type) {
 bool isPredicateNegative(const declare_templates& type) {
     return type == "NotCoExistence" || type == "NegSuccession" || type == "NegChainSuccession" || type == "Absence" || type == "ExlChoice" || type == "AltPrecedence" || type == "AltResponse" || type == "AltSuccession";
 }
-#if 0
-
-ltlf DeclareDataAware::toFiniteSemantics(bool isForGraph) const {
-    DEBUG_ASSERT(false);
-    return ltlf::True().negate();
-    ltlf left =  //left_decomposed_atoms.empty() ?
-                 (dnf_left_map.empty() ?
-            ltlf::Act(left_act) :
-            ltlf::And(ltlf::Act(left_act), map_disj(dnf_left_map)).simplify().setBeingCompound(true)); //: map_disj(left_decomposed_atoms);
-
-    ltlf right;// = ltlf::True();
-    if (!right_act.empty()) {
-        right =  //right_decomposed_atoms.empty() ?
-                 (dnf_right_map.empty() ? ltlf::Act(right_act) : ltlf::And(ltlf::Act(right_act), map_disj(dnf_right_map)).simplify().setBeingCompound(true));
-                 //: map_disj(right_decomposed_atoms);
-    }
-
-    switch (casusu) {
-        case "Existence":
-            if (n > 1) {
-                return ltlf::Diamond(
-                        ltlf::And(left, ltlf::Next(doExistence(n - 1, left_act, dnf_left_map).toFiniteSemantics(isForGraph))),isForGraph
-                );
-            } else if (n == 1) {
-                return ltlf::Diamond(left, isForGraph);
-            } else {
-                return ltlf::Diamond(left, isForGraph).negate();
-            }
-        case Absence:
-            return ltlf::Neg(doExistence(n, left_act, dnf_left_map).toFiniteSemantics(isForGraph));
-
-        //case Absence2:
-        //    return ltlf::Neg(ltlf::Diamond(ltlf::And(left, ltlf::Diamond(left, isForGraph)), isForGraph));
-
-        case Init:
-            return left;
-
-        case RespExistence:
-            return ltlf::Implies(ltlf::Diamond(left, isForGraph),
-                                 ltlf::Diamond(right, isForGraph), isForGraph);
-
-        case Choice:
-            return ltlf::Or(ltlf::Diamond(left, isForGraph), ltlf::Diamond(right, isForGraph));
-
-        case ExlChoice:
-            return ltlf::And(ltlf::Or(ltlf::Diamond(left, isForGraph), ltlf::Diamond(right, isForGraph)),
-                             ltlf::Neg(ltlf::And(ltlf::Diamond(left, isForGraph), ltlf::Diamond(right, isForGraph))));
-
-        case CoExistence:
-            return ltlf::And(ltlf::Implies(ltlf::Diamond(left, isForGraph),
-                                           ltlf::Diamond(right, isForGraph), isForGraph),
-                             ltlf::Implies(ltlf::Diamond(right, isForGraph),
-                                           ltlf::Diamond(left, isForGraph), isForGraph));
-
-        case Response:
-            return ltlf::Box(ltlf::Implies(left,
-                                           ltlf::Diamond(right, isForGraph), isForGraph), isForGraph);
-
-
-        case Precedence:
-            return ltlf::WeakUntil(ltlf::Neg(right), left, isForGraph);
-
-
-        case AltResponse:
-            return ltlf::Box(ltlf::Implies(left,
-                                           ltlf::Next(ltlf::Until(left.negate(), right)), isForGraph), isForGraph);
-
-        case AltPrecedence: {
-            struct ltlf base = ltlf::WeakUntil(right.negate(), left, isForGraph);
-            return ltlf::And(base, ltlf::Box(ltlf::Implies(right,
-                                                           ltlf::Next(/*ltlf::Or(base, ltlf::Box(right.negate(), isForGraph))*/base), isForGraph), isForGraph));
-        }
-
-        case AltSuccession: {
-            auto L = ltlf::Box(ltlf::Implies(left, ltlf::Next(ltlf::Until(left.negate(isForGraph), right))), isForGraph);
-            auto M = ltlf::WeakUntil(left.negate(isForGraph), right, isForGraph);
-            auto R = ltlf::Box(ltlf::Implies(right, ltlf::Next(M), isForGraph), isForGraph);
-            return ltlf::And(L, ltlf::And(M, R));
-        }
-
-        case ChainResponse:
-            return ltlf::Box(ltlf::Implies(left, ltlf::Next(right), isForGraph), isForGraph);
-
-        case ChainPrecedence:
-            return ltlf::Box(ltlf::Implies( ltlf::Next(right), left, isForGraph), isForGraph);
-
-        case ChainSuccession:
-            return ltlf::Box(ltlf::Equivalent(left, ltlf::Next(right)), isForGraph);
-
-        case Succession: {
-            struct ltlf base = ltlf::WeakUntil(right.negate(), left, isForGraph);
-            return ltlf::And(base, ltlf::Box(ltlf::Implies(left, ltlf::Diamond(right, isForGraph), isForGraph), isForGraph));
-        }
-
-        case End:
-            return ltlf::Diamond(ltlf::And(left, ltlf::Neg(ltlf::Next(ltlf::Or(left, left.negate())))), isForGraph);
-        case NotCoExistence:
-            return ltlf::Neg(ltlf::And(ltlf::Diamond(left, isForGraph), ltlf::Diamond(right, isForGraph)));
-
-        case NegSuccession:
-            return ltlf::Box(ltlf::Implies(left, ltlf::Neg(ltlf::Box(right, isForGraph)), isForGraph), isForGraph);
-
-        case NegChainSuccession:
-            return ltlf::Box(ltlf::Equivalent(left, ltlf::Next(right.negate())), isForGraph);
-    }
-}
-#endif
-
 
 DeclareDataAware DeclareDataAware::doExistence(size_t n, const std::string &left_act,
                                                const std::vector<std::unordered_map<std::string, DataPredicate>> &dnf_left_map) {
@@ -656,4 +371,31 @@ env DeclareDataAware::GetPayloadDataFromEvent(uint32_t first, uint16_t second, b
     }
 
     return environment;
+}
+
+DeclareDataAware::DeclareDataAware(const std::vector<std::vector<DataPredicate>> &predicate, const KnowledgeBase *kb) : kb{kb} {
+    for (const auto& ref : predicate) {
+        auto& res = conjunctive_map.emplace_back();
+        for (const auto& x : ref) {
+            res[x.var].BiVariableConditions.emplace_back(x);
+
+        }
+    }
+}
+
+DeclareDataAware DeclareDataAware::flip() const {
+    //Flipping only the relevant part
+    DeclareDataAware result = *this;
+    result.conjunctive_map.clear();
+    for (const auto& ref : conjunctive_map) {
+        auto inner = result.conjunctive_map.emplace_back();
+        for (const auto& ref2 : ref) {
+            for (const auto& pred : ref2.second.BiVariableConditions) {
+                auto cpy = ref2.second.flip();
+                inner.emplace(cpy.var, cpy);
+            }
+        }
+    }
+    result.kb = this->kb;
+    return result;
 }
