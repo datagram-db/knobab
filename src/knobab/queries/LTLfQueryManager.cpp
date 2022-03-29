@@ -116,9 +116,11 @@ void LTLfQueryManager::finalize_unions(const AtomizingPipeline& ap, std::vector<
                 l.atom.insert(result.minimal_common_subsets.at(i).begin(), result.minimal_common_subsets.at(i).end());
                 if (just) {
                     element_disjunction = l;
+                    element_disjunction.fields.id.parts.is_timed = atomsToDecomposeInUnion[ref.first]->fields.id.parts.is_timed;
+                    element_disjunction.fields.id.parts.is_queryplan = true;
                     just = false;
                 } else {
-                    element_disjunction = LTLfQuery::qOR(l, element_disjunction, false, false);
+                    element_disjunction = LTLfQuery::qOR(l, element_disjunction, true, false);
                 }
             } else
                 for (size_t further : result.minimal_common_subsets_composition.at(i-isFromFurtherDecomposition)) {
@@ -127,9 +129,13 @@ void LTLfQueryManager::finalize_unions(const AtomizingPipeline& ap, std::vector<
                     l.atom.insert(result.minimal_common_subsets.at(further).begin(), result.minimal_common_subsets.at(further).end());
                     if (just) {
                         element_disjunction = l;
+                        element_disjunction.fields.id.parts.is_timed = atomsToDecomposeInUnion[ref.first]->fields.id.parts.is_timed;
+                        element_disjunction.fields.id.parts.is_queryplan = true;
                         just = false;
                     } else {
-                        element_disjunction = LTLfQuery::qOR(l, element_disjunction, false, false);
+                        element_disjunction = LTLfQuery::qOR(l, element_disjunction, true, false);
+                        element_disjunction.fields.id.parts.is_timed = atomsToDecomposeInUnion[ref.first]->fields.id.parts.is_timed;
+                        element_disjunction.fields.id.parts.is_queryplan = true;
                     }
                 }
 
@@ -219,7 +225,21 @@ LTLfQuery *LTLfQueryManager::simplify(const std::unordered_set<std::string>& ato
     } else {
         //To be done at a future step: supporting three argument clauses
         if(q.fields.id.parts.is_atom) {
-            DEBUG_ASSERT((q.t == LTLfQuery::FIRST_QP) || (q.t == LTLfQuery::LAST_QP));
+            if(!((q.t == LTLfQuery::FIRST_QP) || (q.t == LTLfQuery::LAST_QP))) {
+                if (input.fields.id.parts.is_negated) {
+                    for (const auto& x : atom_universe) {
+                        if (!left.contains(x)) {
+                            q.atom.insert(x);
+                            atomToFormulaId[x].emplace_back(formulaId);
+                        }
+                    }
+                } else {
+                    for (const auto& x : left) {
+                        q.atom.insert(x);
+                        atomToFormulaId[x].emplace_back(formulaId);
+                    }
+                }
+            }
         }
     }
     if (input.fields.id.parts.has_theta) {

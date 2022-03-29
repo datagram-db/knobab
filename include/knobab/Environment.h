@@ -74,6 +74,7 @@ struct Environment {
     //std::unordered_map<DeclareDataAware, FlexibleFA<size_t, std::string>> pattern_graph;
 
     void server(MAXSatPipeline& pipeline);
+    void server();
 
     void dump_log_for_sqlminer(const std::string &basicString);
 
