@@ -131,14 +131,7 @@ struct DeclareDataAware {
     std::unordered_set<std::string> left_decomposed_atoms, right_decomposed_atoms; /// TODO: generalization to the number of the possible arguments of a declare clause
 
     DEFAULT_CONSTRUCTORS(DeclareDataAware)
-    DeclareDataAware(const std::vector<std::vector<DataPredicate>>& predicate, const KnowledgeBase* kb) : kb{kb} {
-        for (const auto& ref : predicate) {
-            auto& res = conjunctive_map.emplace_back();
-            for (const auto& x : ref) {
-                res[x.var].BiVariableConditions.emplace_back(x);
-            }
-        }
-    }
+    DeclareDataAware(const std::vector<std::vector<DataPredicate>>& predicate, const KnowledgeBase* kb);
 
     static DeclareDataAware unary(const declare_templates&, const std::string& argument, size_t n);
     static DeclareDataAware binary(const declare_templates& t, const std::string& left, const std::string right);
@@ -182,22 +175,7 @@ struct DeclareDataAware {
     env GetPayloadDataFromEvent(const std::pair<uint32_t , uint16_t>& pair) const;
     env GetPayloadDataFromEvent(uint32_t first, uint16_t second, bool isLeft, std::unordered_set<std::string>& leftArgs) const;
 
-    DeclareDataAware flip() const {
-        //Flipping only the relevant part
-        DeclareDataAware result = *this;
-        result.conjunctive_map.clear();
-        for (const auto& ref : conjunctive_map) {
-            auto inner = result.conjunctive_map.emplace_back();
-            for (const auto& ref2 : ref) {
-                for (const auto& pred : ref2.second.BiVariableConditions) {
-                    auto cpy = ref2.second.flip();
-                    inner.emplace(cpy.var, cpy);
-                }
-            }
-        }
-        result.kb = this->kb;
-        return result;
-    }
+    DeclareDataAware flip() const;
 
     //[[deprecated]] ltlf toFiniteSemantics(bool isForGraph = true) const;
 
