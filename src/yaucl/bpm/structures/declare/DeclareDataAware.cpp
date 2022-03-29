@@ -500,10 +500,12 @@ bool DeclareDataAware::checkValidity(const env &e1, const env &e2) const {
     if (conjunctive_map.empty()) return true;
     for(const auto& pred_withConj : conjunctive_map){
         bool result = true;
-        for (const auto& pred : pred_withConj) {
-            if(!test_decomposed_data_predicate(e1, e2, pred.second.var, pred.second.varRHS, pred.second.casusu)){
-                result = false;
-                break;
+        for (const auto& predDummy : pred_withConj) {
+            for (const auto& pred : predDummy.second.BiVariableConditions) {
+                if(!test_decomposed_data_predicate(e1, e2, pred.var, pred.varRHS, pred.casusu)){
+                    result = false;
+                    break;
+                }
             }
         }
         if (result) return true;
@@ -515,45 +517,47 @@ bool DeclareDataAware::checkValidity(uint32_t t1, uint16_t e1, const env &e2) co
     if (conjunctive_map.empty()) return true;
     for(const auto& pred_withConj : conjunctive_map){
         bool result = true;
-        for (const auto & pred : pred_withConj) {
-            bool test = false;
-            auto temp1 = e2.find(pred.second.varRHS);
-            if (temp1 == e2.end())
-                test = false;
-            else {
-                auto temp2_a = kb->attribute_name_to_table.find(pred.second.var);
-                if (temp2_a != kb->attribute_name_to_table.end()) {
-                    size_t offset = kb->act_table_by_act_id.getBuilder().trace_id_to_event_id_to_offset.at(t1).at(e1);
-                    std::optional<union_minimal> data = temp2_a->second.resolve_record_if_exists2(offset);
-                    if (data.has_value()) {
-                        auto lhs = data.value();
-                        switch (pred.second.casusu) {
-                            case LT:
-                                test = lhs < temp1->second ; break;
-                            case LEQ:
-                                test = lhs <= temp1->second; break;
-                            case GT:
-                                test = lhs > temp1->second; break;
-                            case GEQ:
-                                test =  lhs >= temp1->second; break;
-                            case EQ:
-                                test =  lhs == temp1->second; break;
-                            case NEQ:
-                                test =  lhs != temp1->second; break;
-                            case TTRUE:
-                                test =  true; break;
-                            default:
-                                test =  false; break;
-                        }
-                    } else
-                        test = false;
-                } else {
+        for (const auto & predDummy : pred_withConj) {
+            for (const auto& pred : predDummy.second.BiVariableConditions) {
+                bool test = false;
+                auto temp1 = e2.find(pred.varRHS);
+                if (temp1 == e2.end())
                     test = false;
+                else {
+                    auto temp2_a = kb->attribute_name_to_table.find(pred.var);
+                    if (temp2_a != kb->attribute_name_to_table.end()) {
+                        size_t offset = kb->act_table_by_act_id.getBuilder().trace_id_to_event_id_to_offset.at(t1).at(e1);
+                        std::optional<union_minimal> data = temp2_a->second.resolve_record_if_exists2(offset);
+                        if (data.has_value()) {
+                            auto lhs = data.value();
+                            switch (pred.casusu) {
+                                case LT:
+                                    test = lhs < temp1->second ; break;
+                                case LEQ:
+                                    test = lhs <= temp1->second; break;
+                                case GT:
+                                    test = lhs > temp1->second; break;
+                                case GEQ:
+                                    test =  lhs >= temp1->second; break;
+                                case EQ:
+                                    test =  lhs == temp1->second; break;
+                                case NEQ:
+                                    test =  lhs != temp1->second; break;
+                                case TTRUE:
+                                    test =  true; break;
+                                default:
+                                    test =  false; break;
+                            }
+                        } else
+                            test = false;
+                    } else {
+                        test = false;
+                    }
                 }
-            }
-            if(!test){
-                result = false;
-                break;
+                if(!test){
+                    result = false;
+                    break;
+                }
             }
         }
         if (result) return true;
@@ -565,45 +569,47 @@ bool DeclareDataAware::checkValidity(const env &e1, uint32_t t2, uint16_t e2) co
     if (conjunctive_map.empty()) return true;
     for(const auto& pred_withConj : conjunctive_map){
         bool result = true;
-        for (const auto& pred : pred_withConj) {
-            bool test = false;
-            auto temp1 = e1.find(pred.second.var);
-            if (temp1 == e1.end())
-                test = false;
-            else {
-                auto temp2_a = kb->attribute_name_to_table.find(pred.second.varRHS);
-                if (temp2_a != kb->attribute_name_to_table.end()) {
-                    size_t offset = kb->act_table_by_act_id.getBuilder().trace_id_to_event_id_to_offset.at(t2).at(e2);
-                    std::optional<union_minimal> data = temp2_a->second.resolve_record_if_exists2(offset);
-                    if (data.has_value()) {
-                        auto rhs = data.value();
-                        switch (pred.second.casusu) {
-                            case LT:
-                                test = temp1->second < rhs; break;
-                            case LEQ:
-                                test =  temp1->second <= rhs; break;
-                            case GT:
-                                test =  temp1->second > rhs; break;
-                            case GEQ:
-                                test =  temp1->second >= rhs; break;
-                            case EQ:
-                                test =  temp1->second == rhs; break;
-                            case NEQ:
-                                test =  temp1->second != rhs; break;
-                            case TTRUE:
-                                test =  true; break;
-                            default:
-                                test =  false; break;
-                        }
-                    } else
-                        test = false;
-                } else {
+        for (const auto& predDummy : pred_withConj) {
+            for (const auto& pred : predDummy.second.BiVariableConditions) {
+                bool test = false;
+                auto temp1 = e1.find(pred.var);
+                if (temp1 == e1.end())
                     test = false;
+                else {
+                    auto temp2_a = kb->attribute_name_to_table.find(pred.varRHS);
+                    if (temp2_a != kb->attribute_name_to_table.end()) {
+                        size_t offset = kb->act_table_by_act_id.getBuilder().trace_id_to_event_id_to_offset.at(t2).at(e2);
+                        std::optional<union_minimal> data = temp2_a->second.resolve_record_if_exists2(offset);
+                        if (data.has_value()) {
+                            auto rhs = data.value();
+                            switch (pred.casusu) {
+                                case LT:
+                                    test = temp1->second < rhs; break;
+                                case LEQ:
+                                    test =  temp1->second <= rhs; break;
+                                case GT:
+                                    test =  temp1->second > rhs; break;
+                                case GEQ:
+                                    test =  temp1->second >= rhs; break;
+                                case EQ:
+                                    test =  temp1->second == rhs; break;
+                                case NEQ:
+                                    test =  temp1->second != rhs; break;
+                                case TTRUE:
+                                    test =  true; break;
+                                default:
+                                    test =  false; break;
+                            }
+                        } else
+                            test = false;
+                    } else {
+                        test = false;
+                    }
                 }
-            }
-            if(!test){
-                result = false;
-                break;
+                if(!test){
+                    result = false;
+                    break;
+                }
             }
         }
         if (result) return true;
@@ -630,8 +636,10 @@ env DeclareDataAware::GetPayloadDataFromEvent(uint32_t first, uint16_t second, b
 
     if (cache.empty()) {
         for(const auto& pred_withConj : conjunctive_map){
-            for (const auto & pred : pred_withConj) {
-                cache.insert(isLeft ? pred.second.var : pred.second.varRHS);
+            for (const auto & predListing : pred_withConj) {
+                for (const auto& pred : predListing.second.BiVariableConditions) {
+                    cache.insert(isLeft ? pred.var : pred.varRHS);
+                }
             }
         }
     }
