@@ -19,6 +19,10 @@ public class SQLMinerServer {
     private static File log_data_folder;
     private static DBMSInterface engine;
 
+    public static String getDBName(){
+        return dbname;
+    }
+
     private static boolean loadProperties() {
         if (properties.isEmpty()) try {
             properties.load(new FileInputStream("conf/postgresql.properties"));
@@ -112,7 +116,7 @@ public class SQLMinerServer {
             final BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(path), StandardCharsets.UTF_8));
 
             // Removing the header;
-            br.readLine();
+            //br.readLine();
 
             // Reading the first line after the header
             String ln = br.readLine();
