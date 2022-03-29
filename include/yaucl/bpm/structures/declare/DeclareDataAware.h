@@ -135,7 +135,7 @@ struct DeclareDataAware {
         for (const auto& ref : predicate) {
             auto& res = conjunctive_map.emplace_back();
             for (const auto& x : ref) {
-                res.emplace(x.var, x);
+                res[x.var].BiVariableConditions.emplace_back(x);
             }
         }
     }
