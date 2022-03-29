@@ -575,6 +575,7 @@ inline void global_logic_untimed(const Result &section, Result &result, const st
         first.first = cp.first.first = currentTraceId;
         cp.first.second = lengths.at(currentTraceId);
         cp.second.second.clear();
+        second.second.clear();
 
         lower = upper;
         upper = std::upper_bound(lower, section.end(), cp);

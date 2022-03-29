@@ -232,8 +232,11 @@ LTLfQuery *LTLfQueryManager::simplify(const std::unordered_set<std::string>& ato
     q.declare_arg = DECLARE_TYPE_NONE;
     auto tmp = simplify(q);
     if (q.isLeaf == ActivationLeaf) {
-        DEBUG_ASSERT(current_query_id == activations.size());
-        activations.emplace_back(tmp);
+        if (current_query_id == activations.size()) { // Query Id counting from zero, so, if that happens, then it means that I need to add the activation in here!
+            activations.emplace_back(tmp);
+        } else {
+            DEBUG_ASSERT( (activations.back() == tmp)); // By default, the activations should always refer to the same atom! That will make the assumption in the pipeline correct
+        }
     }
     return tmp;
 }

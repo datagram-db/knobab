@@ -16,7 +16,7 @@ protected:\
 void SetUp() override {\
         env.clear();\
         env.doStats = false;\
-        std::string declare_file_path, maxsat;\
+        std::filesystem::path declare_file_path, maxsat;\
         std::string base{#name}; \
         std::filesystem::path root_folder = std::filesystem::current_path().parent_path().parent_path();\
         std::filesystem::path curr = root_folder / "data" / "testing" / "declare" / base;\

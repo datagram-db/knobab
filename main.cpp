@@ -786,12 +786,12 @@ int main(int argc, char **argv) {
     // --xes=/home/giacomo/Scaricati/hospital_corrected.xes --nostats --sqlminer=/home/giacomo/Scaricati/sump
 // --nostats --log=data/testing/log_response.txt --declareFile=data/testing/response.powerdecl
 // --nostats --log=data/testing/log_response.txt --declareFile=data/testing/InitDataA.txt --server
-
+// --nostats --xes=/home/giacomo/paper_testset/bpi_12/bpi_12.xes --declareFile=/home/giacomo/paper_testset/bpi_12/model1.powerdecl
 // --xes=/home/giacomo/Scaricati/hospital_corrected.xes --nostats -o
     // --tab=data/testing/declare/Response --nostats --nodata --declareFile=data/testing/declare/Response.powerdecl
 
     //--tab=data/testing/declare/AltResponse --nostats --nodata --declareFile=data/testing/declare/AltResponse.powerdecl --server
-
+// --nostats --log=data/testing/log_response.txt --declareFile=data/testing/response.powerdecl --maxsat=scripts/support_pipeline.yaml
     return 0;
 }
         ///
