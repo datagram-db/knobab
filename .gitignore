@@ -19,3 +19,6 @@ competitors/SQLMinerBenchmarker/conf/postgresql.properties
 /home/giacomo/projects/knobab/antlr4_gen.sh
 antlr4/cpp/*
 antlr4/*
+fast_build/
+fast_build/*	
+
