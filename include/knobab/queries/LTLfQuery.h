@@ -60,6 +60,18 @@ struct LTLfQuery {
     bit_fields fields;
     size_t n;                        // numeric_arg associated to the query type (exists, absence)
 
+    bool isDisjunctionOfExistentials() const {
+        if (args.empty() && args_from_script.empty()) {
+            return t == type::EXISTS_QP;
+        } else if (!args.empty()) {
+            for (const auto &ref: args) if (!ref->isDisjunctionOfExistentials()) return false;
+            return true;
+        } else if (!args_from_script.empty()) {
+            for (const auto &ref: args_from_script) if (!ref.isDisjunctionOfExistentials()) return false;
+            return true;
+        }
+    }
+
     /// Arguments used while compiling the declare clauses description from the script
     std::vector<LTLfQuery> args_from_script;
 

@@ -146,9 +146,22 @@ void LTLfQueryManager::finalize_unions(const AtomizingPipeline& ap, std::vector<
         LTLfQuery *q = simplifyRecursively(element_disjunction);
         auto tmpValue = atomsToDecomposeInUnion[ref.first]->isLeaf;
         q->isLeaf = tmpValue;
-        *atomsToDecomposeInUnion[ref.first] = *q;
-        //delete q; //this will not delete the other nodes, recursively. TODO: this should be done in clear() and avoid leaks
-        atomsToDecomposeInUnion[ref.first]->isLeaf = tmpValue;
+
+        if (atomsToDecomposeInUnion[ref.first]->isDisjunctionOfExistentials()) {
+            // All of this code is correct, just because we always had this assumption to work with!
+            *atomsToDecomposeInUnion[ref.first] = *q;
+            //delete q; //this will not delete the other nodes, recursively. TODO: this should be done in clear() and avoid leaks
+            atomsToDecomposeInUnion[ref.first]->isLeaf = tmpValue;
+        } else {
+            LTLfQuery tmp = *atomsToDecomposeInUnion[ref.first];
+            tmp.args.emplace_back(q);
+            tmp.isLeaf = tmpValue;
+            LTLfQuery *q2 = simplifyRecursively(tmp);
+            q2->isLeaf = tmpValue;
+            *atomsToDecomposeInUnion[ref.first] = *q2;
+            //delete q; //this will not delete the other nodes, recursively. TODO: this should be done in clear() and avoid leaks
+            atomsToDecomposeInUnion[ref.first]->isLeaf = tmpValue;
+        }
     }
 
     // Making ready for the parallelization of the query execution by setting it into layers
