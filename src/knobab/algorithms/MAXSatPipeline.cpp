@@ -257,8 +257,8 @@ void MAXSatPipeline::data_chunk(CNFDeclareDataAware *model,
                                              atomToFormulaId);
 
             // Setting specific untimed atom queries, that can be run directly and separatedly
-
             formula = pushAtomicQueries(atomization, formula, true);
+
             W.emplace_back(formula);
             // Storing the expression that we analysed.
             fomulaidToFormula.emplace_back(formula);

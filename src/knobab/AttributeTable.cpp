@@ -514,6 +514,8 @@ AttributeTable::exact_range_query(const std::vector<std::pair<size_t, std::vecto
                         actualResult.emplace_back(tmpLeft, tmpRight);
                         begin = tmpRight;
                     }
+                } else {
+                    actualResult.emplace_back(nullptr, nullptr);
                 }
 
                 propRef++;
