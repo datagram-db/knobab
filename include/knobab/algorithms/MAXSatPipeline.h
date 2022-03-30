@@ -97,7 +97,7 @@ private:
     void abidinglogic_query_running(const std::vector<PartialResult>& results_cache, const KnowledgeBase& kb);
     void fast_v1_query_running(const std::vector<PartialResult>& results_cache, const KnowledgeBase& kb);
     size_t pushAtomDataQuery(const DataQuery &q, bool directlyFromCache);
-    LTLfQuery *pushAtomicQueries(const AtomizingPipeline &atomization, LTLfQuery *formula, bool isRoot = true);
+    LTLfQuery *pushAtomicQueries(const AtomizingPipeline &atomization, LTLfQuery *formula);
 };
 
 
