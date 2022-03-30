@@ -257,7 +257,9 @@ void MAXSatPipeline::data_chunk(CNFDeclareDataAware *model,
                                              atomToFormulaId);
 
             // Setting specific untimed atom queries, that can be run directly and separatedly
-            formula = pushAtomicQueries(atomization, formula, true);
+            // So, any expansion of the formula by detecting whether the formula can directly
+            // access the tables or not should be done in a later stage, that is, on simplify!
+            formula = pushAtomicQueries(atomization, formula);
 
             W.emplace_back(formula);
             // Storing the expression that we analysed.
@@ -326,58 +328,55 @@ void MAXSatPipeline::data_chunk(CNFDeclareDataAware *model,
     }
 }
 
-LTLfQuery *MAXSatPipeline::pushAtomicQueries(const AtomizingPipeline &atomization, LTLfQuery *formula, bool isRoot) {
+LTLfQuery *MAXSatPipeline::pushAtomicQueries(const AtomizingPipeline &atomization, LTLfQuery *formula) {
     if (!formula) return formula;
     for (const auto ptr : formula->args)
-        pushAtomicQueries(atomization, ptr,  false);
+        pushAtomicQueries(atomization, ptr);
+
     if ((!formula->fields.id.parts.is_timed) && (formula->isLeaf != NotALeaf) && (atomization.act_atoms.contains(*formula->atom.begin()))) {
+        // Data conditions, for timed events, that are leaves, and contain only atoms
         switch (formula->t) {
             case LTLfQuery::INIT_QP:{
                 formula->result_id = pushAtomDataQuery(DataQuery::InitQuery(*formula->atom.begin()), true);
                 formula->fields.id.parts.directly_from_cache = true;
-                //W.emplace_back(formula);
                 break;
             }
             case LTLfQuery::END_QP: {
                 formula->result_id = pushAtomDataQuery(DataQuery::EndsQuery(*formula->atom.begin()), true);
                 formula->fields.id.parts.directly_from_cache = true;
-                //W.emplace_back(formula);
                 break;
             }
             case LTLfQuery::EXISTS_QP: {
                 formula->result_id = pushAtomDataQuery(DataQuery::ExistsQuery(*formula->atom.begin(), formula->n), true);
                 formula->fields.id.parts.directly_from_cache = true;
-                //W.emplace_back(formula);
                 break;
             }
             case LTLfQuery::ABSENCE_QP: {
                 formula->result_id = pushAtomDataQuery(DataQuery::AbsenceQuery(*formula->atom.begin(), formula->n), true);
                 formula->fields.id.parts.directly_from_cache = true;
-                //W.emplace_back(formula);
                 break;
             }
 
             default: break;
         }
     } else if (((formula->fields.id.parts.is_timed) && (formula->t == LTLfQuery::LAST_QP || formula->t == LTLfQuery::FIRST_QP))) {
+        // It makes no sense to have an untimed first and last, as those are timed properties!
+        // Equivalent untimed properties (return the trace beginning/ending, are Init and End).
         switch (formula->t) {
             case LTLfQuery::FIRST_QP: {
                 formula->result_id = pushAtomDataQuery(DataQuery::FirstQuery(), true);
                 formula->fields.id.parts.directly_from_cache = true;
-                //W.emplace_back(formula);
                 break;
             }
             case LTLfQuery::LAST_QP: {
                 formula->result_id = pushAtomDataQuery(DataQuery::LastQuery(), true);
                 formula->fields.id.parts.directly_from_cache = true;
-                //W.emplace_back(formula);
                 break;
             }
 
             default: break;
         }
     } else {
-        //W.emplace_back(formula);
         if (formula->args.empty()) {
             qm.atomsToDecomposeInUnion.emplace_back(formula);
         }
@@ -1029,6 +1028,7 @@ std::vector<PartialResult> MAXSatPipeline::subqueriesRunning(const KnowledgeBase
     for (size_t i = 0, N = toUseAtoms.size(); i < N; i++) {
         auto& atom = toUseAtoms.at(i);
         for (size_t formulaId : atomToFormulaId.at(atom)) {
+            // Associating the partial results from the cache to the atom of chhoice (partial_results)
             fomulaidToFormula.at(formulaId)->associateDataQueryIdsToFormulaByAtom(atom, i);// setting the partial results for the data pipeline
         }
     }
