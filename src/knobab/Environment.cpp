@@ -114,7 +114,6 @@ void Environment::load_log(log_data_format format, bool loadData, const std::str
             trace_avg += i;
             trace_pow2 += std::pow(i, 2);
             O.insert(i);
-
         }
         for (size_t len : O) {
             size_t currFreq = O.count(len);

@@ -1,0 +1,513 @@
+Loading the log file: /home/giacomo/paper_testset/burattin/bpi12_knobab.xes
+Loading the declarative model from file: "/home/giacomo/paper_testset/burattin/model1.powerdecl"
+Declarative Model: 
+----------------------------------------
+Response(A_SUBMITTED, true, A_ACCEPTED, true )
+----------------------------------------
+
+Grounded Model: 
+----------------------------------------
+Response(A_SUBMITTED, true, A_ACCEPTED, true )
+----------------------------------------
+
+Loading the atomization configuration file: "scripts/atomization_pipeline.yaml"
+Loading the atomization tables given the model
+Grounding Tables: 
+----------------------------------------
+Sigma 
+
+ * Single acts: 
+================
+    O_SENT_BACK
+    O_SELECTED
+    O_SENT
+    __trace__payload
+    A_FINALIZED
+    W_Completeren aanvraag
+    O_CANCELLED
+    A_PREACCEPTED
+    O_CREATED
+    W_Nabellen offertes
+    A_ACCEPTED
+    W_Valideren aanvraag
+    A_REGISTERED
+    A_SUBMITTED
+    W_Afhandelen leads
+    W_Beoordelen fraude
+    W_Wijzigen contractgegevens
+    A_APPROVED
+    W_Nabellen incomplete dossiers
+    O_DECLINED
+    A_CANCELLED
+    A_DECLINED
+    A_ACTIVATED
+    O_ACCEPTED
+    A_PARTLYSUBMITTED
+
+
+ * Sigma Boxes: 
+================
+
+
+ * Predicate Conversions: 
+==========================
+
+----------------------------------------
+
+Atomizing the declare formulae
+Grounded Model: 
+----------------------------------------
+Response(A_SUBMITTED, true, A_ACCEPTED, true ) {leftAtoms = A_SUBMITTED } {rightAtoms = A_ACCEPTED }
+----------------------------------------
+
+Loading the atomization configuration file: "scripts/support_pipeline.yaml"
+Clause #0: 39.069305417589973%
+LTLf-DA
+ **)  G((( t Exists1{A_ACTIVATED, A_APPROVED, A_CANCELLED, A_DECLINED, A_FINALIZED, A_PARTLYSUBMITTED, A_PREACCEPTED, A_REGISTERED, O_ACCEPTED, O_CANCELLED, O_CREATED, O_DECLINED, O_SELECTED, O_SENT, O_SENT_BACK, W_Afhandelen leads, W_Beoordelen fraude, W_Completeren aanvraag, W_Nabellen incomplete dossiers, W_Nabellen offertes, W_Valideren aanvraag, W_Wijzigen contractgegevens, __trace__payload}) t || (Tt Exists1{A_ACCEPTED})) t || ((At Exists1{A_SUBMITTED}) H &F (Tt Exists1{A_ACCEPTED})))
+
+Log Filename: /home/giacomo/paper_testset/burattin/bpi12_knobab.xes
+	 - Loading and parsing (ms): 1097.0225579999999
+	 - Indexing time (ms): 209.76817800000001
+	 - #traces: 13087
+	 - #acts: 21
+	 - Avg. Trace Length: 0
+	 - Trace Variance: 2.6086666100417818e-321
+	 - Most Frequent Trace Length: 0
+	 - Most Frequent Trace Length's Frequency: 512
+Model Filename: /home/giacomo/paper_testset/burattin/model1.powerdecl
+	 - Queries Plan  marking
+	 - Operators Version  FastOperator_v1
+	 - Parsing (ms) 0.91795800000000005
+	 - #clauses: 1
+	 - Data/Interval Decomposition (ms): 0.01502
+	 - Declare Atomization (ms): 0.00060599999999999998
+	 - Declare->LTLf Transformation (ms):  0.118299
+	 - Actual Query Time (ms):  18.407730999999998
+Is Multithreaded: No
+	 - #Threads: 1
+Loading the declarative model from file: "/home/giacomo/paper_testset/burattin/model2.powerdecl"
+Declarative Model: 
+----------------------------------------
+Response(A_SUBMITTED, true, A_ACCEPTED, true )
+Exists1(__trace__payload, __trace__payload.AMOUNT_REQ ≥ 10000, 1 )
+----------------------------------------
+
+Grounded Model: 
+----------------------------------------
+Response(A_SUBMITTED, true, A_ACCEPTED, true ) ⋀ Exists1(__trace__payload, __trace__payload.AMOUNT_REQ ≥ 10000, 1 )
+----------------------------------------
+
+Loading the atomization configuration file: "scripts/atomization_pipeline.yaml"
+Loading the atomization tables given the model
+Grounding Tables: 
+----------------------------------------
+Sigma 
+
+ * Single acts: 
+================
+    O_SENT_BACK
+    O_SELECTED
+    O_SENT
+    A_FINALIZED
+    W_Completeren aanvraag
+    O_CANCELLED
+    A_PREACCEPTED
+    O_CREATED
+    A_PARTLYSUBMITTED
+    A_APPROVED
+    W_Wijzigen contractgegevens
+    O_ACCEPTED
+    A_ACTIVATED
+    A_DECLINED
+    A_CANCELLED
+    W_Afhandelen leads
+    O_DECLINED
+    W_Nabellen incomplete dossiers
+    W_Beoordelen fraude
+    W_Valideren aanvraag
+    A_REGISTERED
+    A_SUBMITTED
+    W_Nabellen offertes
+    A_ACCEPTED
+
+
+ * Sigma Boxes: 
+================
+   - __trace__payload
+        * p0 --> [-1.7976931348623157e+308 ≤ __trace__payload.AMOUNT_REQ ≤ 9999.9999999999982]
+        * p1 --> [10000 ≤ __trace__payload.AMOUNT_REQ ≤ 1.7976931348623157e+308]
+
+
+ * Predicate Conversions: 
+==========================
+   - 10000 ≤ __trace__payload.AMOUNT_REQ ≤ 1.7976931348623157e+308 --> [p1]
+   - -1.7976931348623157e+308 ≤ __trace__payload.AMOUNT_REQ ≤ 9999.9999999999982 --> [p0]
+
+----------------------------------------
+
+Atomizing the declare formulae
+Grounded Model: 
+----------------------------------------
+Response(A_SUBMITTED, true, A_ACCEPTED, true ) {leftAtoms = A_SUBMITTED } {rightAtoms = A_ACCEPTED } ⋀ Exists1(__trace__payload, __trace__payload.AMOUNT_REQ ≥ 10000, 1 ) {leftAtoms = p1 }
+----------------------------------------
+
+Loading the atomization configuration file: "scripts/support_pipeline.yaml"
+Clause #0: 39.069305417589973%
+Clause #1: 100%
+LTLf-DA
+ **)  G((( t Exists1{p1}) t || (( t Exists1{A_ACTIVATED, A_APPROVED, A_CANCELLED, A_DECLINED, A_FINALIZED, A_PARTLYSUBMITTED, A_PREACCEPTED, A_REGISTERED, O_ACCEPTED, O_CANCELLED, O_CREATED, O_DECLINED, O_SELECTED, O_SENT, O_SENT_BACK, W_Afhandelen leads, W_Beoordelen fraude, W_Completeren aanvraag, W_Nabellen incomplete dossiers, W_Nabellen offertes, W_Valideren aanvraag, W_Wijzigen contractgegevens, p0}) t || (Tt Exists1{A_ACCEPTED}))) t || ((At Exists1{A_SUBMITTED}) H &F (Tt Exists1{A_ACCEPTED})))
+ **)    Exists1{p1}
+
+Log Filename: /home/giacomo/paper_testset/burattin/bpi12_knobab.xes
+	 - Loading and parsing (ms): 1097.0225579999999
+	 - Indexing time (ms): 209.76817800000001
+	 - #traces: 13087
+	 - #acts: 21
+	 - Avg. Trace Length: 0
+	 - Trace Variance: 2.6086666100417818e-321
+	 - Most Frequent Trace Length: 0
+	 - Most Frequent Trace Length's Frequency: 512
+Model Filename: /home/giacomo/paper_testset/burattin/model2.powerdecl
+	 - Queries Plan  marking
+	 - Operators Version  FastOperator_v1
+	 - Parsing (ms) 0.242067
+	 - #clauses: 2
+	 - Data/Interval Decomposition (ms): 0.027737999999999999
+	 - Declare Atomization (ms): 0.0049899999999999996
+	 - Declare->LTLf Transformation (ms):  0.090561000000000003
+	 - Actual Query Time (ms):  20.678502999999999
+Is Multithreaded: No
+	 - #Threads: 1
+Loading the declarative model from file: "/home/giacomo/paper_testset/burattin/model3.powerdecl"
+Declarative Model: 
+----------------------------------------
+Response(A_SUBMITTED, true, A_ACCEPTED, true )
+Exists1(__trace__payload, __trace__payload.AMOUNT_REQ < 10000, 1 )
+----------------------------------------
+
+Grounded Model: 
+----------------------------------------
+Response(A_SUBMITTED, true, A_ACCEPTED, true ) ⋀ Exists1(__trace__payload, __trace__payload.AMOUNT_REQ < 10000, 1 )
+----------------------------------------
+
+Loading the atomization configuration file: "scripts/atomization_pipeline.yaml"
+Loading the atomization tables given the model
+Grounding Tables: 
+----------------------------------------
+Sigma 
+
+ * Single acts: 
+================
+    O_SENT_BACK
+    O_SELECTED
+    O_SENT
+    A_FINALIZED
+    W_Completeren aanvraag
+    O_CANCELLED
+    A_PREACCEPTED
+    O_CREATED
+    A_PARTLYSUBMITTED
+    A_APPROVED
+    W_Wijzigen contractgegevens
+    O_ACCEPTED
+    A_ACTIVATED
+    A_DECLINED
+    A_CANCELLED
+    W_Afhandelen leads
+    O_DECLINED
+    W_Nabellen incomplete dossiers
+    W_Beoordelen fraude
+    W_Valideren aanvraag
+    A_REGISTERED
+    A_SUBMITTED
+    W_Nabellen offertes
+    A_ACCEPTED
+
+
+ * Sigma Boxes: 
+================
+   - __trace__payload
+        * p0 --> [-1.7976931348623157e+308 ≤ __trace__payload.AMOUNT_REQ ≤ 9999.9999999999982]
+        * p1 --> [10000 ≤ __trace__payload.AMOUNT_REQ ≤ 1.7976931348623157e+308]
+
+
+ * Predicate Conversions: 
+==========================
+   - 10000 ≤ __trace__payload.AMOUNT_REQ ≤ 1.7976931348623157e+308 --> [p1]
+   - -1.7976931348623157e+308 ≤ __trace__payload.AMOUNT_REQ ≤ 9999.9999999999982 --> [p0]
+
+----------------------------------------
+
+Atomizing the declare formulae
+Grounded Model: 
+----------------------------------------
+Response(A_SUBMITTED, true, A_ACCEPTED, true ) {leftAtoms = A_SUBMITTED } {rightAtoms = A_ACCEPTED } ⋀ Exists1(__trace__payload, __trace__payload.AMOUNT_REQ < 10000, 1 ) {leftAtoms = p0 }
+----------------------------------------
+
+Loading the atomization configuration file: "scripts/support_pipeline.yaml"
+Clause #0: 39.069305417589973%
+Clause #1: 100%
+LTLf-DA
+ **)  G((( t Exists1{A_ACTIVATED, A_APPROVED, A_CANCELLED, A_DECLINED, A_FINALIZED, A_PARTLYSUBMITTED, A_PREACCEPTED, A_REGISTERED, O_ACCEPTED, O_CANCELLED, O_CREATED, O_DECLINED, O_SELECTED, O_SENT, O_SENT_BACK, W_Afhandelen leads, W_Beoordelen fraude, W_Completeren aanvraag, W_Nabellen incomplete dossiers, W_Nabellen offertes, W_Valideren aanvraag, W_Wijzigen contractgegevens, p1}) t || ((Tt Exists1{A_ACCEPTED}) t || ( t Exists1{p0}))) t || ((At Exists1{A_SUBMITTED}) H &F (Tt Exists1{A_ACCEPTED})))
+ **)    Exists1{p0}
+
+Log Filename: /home/giacomo/paper_testset/burattin/bpi12_knobab.xes
+	 - Loading and parsing (ms): 1097.0225579999999
+	 - Indexing time (ms): 209.76817800000001
+	 - #traces: 13087
+	 - #acts: 21
+	 - Avg. Trace Length: 0
+	 - Trace Variance: 2.6086666100417818e-321
+	 - Most Frequent Trace Length: 0
+	 - Most Frequent Trace Length's Frequency: 512
+Model Filename: /home/giacomo/paper_testset/burattin/model3.powerdecl
+	 - Queries Plan  marking
+	 - Operators Version  FastOperator_v1
+	 - Parsing (ms) 0.118822
+	 - #clauses: 2
+	 - Data/Interval Decomposition (ms): 0.025869
+	 - Declare Atomization (ms): 0.0046849999999999999
+	 - Declare->LTLf Transformation (ms):  0.119729
+	 - Actual Query Time (ms):  21.876255
+Is Multithreaded: No
+	 - #Threads: 1
+Loading the declarative model from file: "/home/giacomo/paper_testset/burattin/model4.powerdecl"
+Declarative Model: 
+----------------------------------------
+Response(A_SUBMITTED, true, A_ACCEPTED, true ) where A_SUBMITTED.org:resource = A_ACCEPTED.org:resource
+----------------------------------------
+
+Grounded Model: 
+----------------------------------------
+Response(A_SUBMITTED, true, A_ACCEPTED, true ) where A_SUBMITTED.org:resource = A_ACCEPTED.org:resource
+----------------------------------------
+
+Loading the atomization configuration file: "scripts/atomization_pipeline.yaml"
+Loading the atomization tables given the model
+Grounding Tables: 
+----------------------------------------
+Sigma 
+
+ * Single acts: 
+================
+    O_SENT_BACK
+    O_SELECTED
+    O_SENT
+    __trace__payload
+    A_FINALIZED
+    W_Completeren aanvraag
+    O_CANCELLED
+    A_PREACCEPTED
+    O_CREATED
+    A_PARTLYSUBMITTED
+    A_APPROVED
+    W_Wijzigen contractgegevens
+    O_ACCEPTED
+    A_ACTIVATED
+    A_DECLINED
+    A_CANCELLED
+    W_Afhandelen leads
+    O_DECLINED
+    W_Nabellen incomplete dossiers
+    W_Beoordelen fraude
+    W_Valideren aanvraag
+    A_REGISTERED
+    A_SUBMITTED
+    W_Nabellen offertes
+    A_ACCEPTED
+
+
+ * Sigma Boxes: 
+================
+
+
+ * Predicate Conversions: 
+==========================
+
+----------------------------------------
+
+Atomizing the declare formulae
+Grounded Model: 
+----------------------------------------
+Response(A_SUBMITTED, true, A_ACCEPTED, true ) where A_SUBMITTED.org:resource = A_ACCEPTED.org:resource {leftAtoms = A_SUBMITTED } {rightAtoms = A_ACCEPTED }
+----------------------------------------
+
+Loading the atomization configuration file: "scripts/support_pipeline.yaml"
+Clause #0: 0%
+LTLf-DA
+ **)  G((( t Exists1{A_ACTIVATED, A_APPROVED, A_CANCELLED, A_DECLINED, A_FINALIZED, A_PARTLYSUBMITTED, A_PREACCEPTED, A_REGISTERED, O_ACCEPTED, O_CANCELLED, O_CREATED, O_DECLINED, O_SELECTED, O_SENT, O_SENT_BACK, W_Afhandelen leads, W_Beoordelen fraude, W_Completeren aanvraag, W_Nabellen incomplete dossiers, W_Nabellen offertes, W_Valideren aanvraag, W_Wijzigen contractgegevens, __trace__payload}) t || (Tt Exists1{A_ACCEPTED})) t || ((At Exists1{A_SUBMITTED}) H &F (Tt Exists1{A_ACCEPTED})))
+
+Log Filename: /home/giacomo/paper_testset/burattin/bpi12_knobab.xes
+	 - Loading and parsing (ms): 1097.0225579999999
+	 - Indexing time (ms): 209.76817800000001
+	 - #traces: 13087
+	 - #acts: 21
+	 - Avg. Trace Length: 0
+	 - Trace Variance: 2.6086666100417818e-321
+	 - Most Frequent Trace Length: 0
+	 - Most Frequent Trace Length's Frequency: 512
+Model Filename: /home/giacomo/paper_testset/burattin/model4.powerdecl
+	 - Queries Plan  marking
+	 - Operators Version  FastOperator_v1
+	 - Parsing (ms) 0.16034000000000001
+	 - #clauses: 1
+	 - Data/Interval Decomposition (ms): 0.0098630000000000002
+	 - Declare Atomization (ms): 0.00062799999999999998
+	 - Declare->LTLf Transformation (ms):  0.113834
+	 - Actual Query Time (ms):  24.253907000000002
+Is Multithreaded: No
+	 - #Threads: 1
+Loading the declarative model from file: "/home/giacomo/paper_testset/burattin/model5.powerdecl"
+Declarative Model: 
+----------------------------------------
+Response(A_SUBMITTED, true, A_ACCEPTED, true ) where A_SUBMITTED.org:resource ≠ A_ACCEPTED.org:resource
+----------------------------------------
+
+Grounded Model: 
+----------------------------------------
+Response(A_SUBMITTED, true, A_ACCEPTED, true ) where A_SUBMITTED.org:resource ≠ A_ACCEPTED.org:resource
+----------------------------------------
+
+Loading the atomization configuration file: "scripts/atomization_pipeline.yaml"
+Loading the atomization tables given the model
+Grounding Tables: 
+----------------------------------------
+Sigma 
+
+ * Single acts: 
+================
+    O_SENT_BACK
+    O_SELECTED
+    O_SENT
+    __trace__payload
+    A_FINALIZED
+    W_Completeren aanvraag
+    O_CANCELLED
+    A_PREACCEPTED
+    O_CREATED
+    A_PARTLYSUBMITTED
+    A_APPROVED
+    W_Wijzigen contractgegevens
+    O_ACCEPTED
+    A_ACTIVATED
+    A_DECLINED
+    A_CANCELLED
+    W_Afhandelen leads
+    O_DECLINED
+    W_Nabellen incomplete dossiers
+    W_Beoordelen fraude
+    W_Valideren aanvraag
+    A_REGISTERED
+    A_SUBMITTED
+    W_Nabellen offertes
+    A_ACCEPTED
+
+
+ * Sigma Boxes: 
+================
+
+
+ * Predicate Conversions: 
+==========================
+
+----------------------------------------
+
+Atomizing the declare formulae
+Grounded Model: 
+----------------------------------------
+Response(A_SUBMITTED, true, A_ACCEPTED, true ) where A_SUBMITTED.org:resource ≠ A_ACCEPTED.org:resource {leftAtoms = A_SUBMITTED } {rightAtoms = A_ACCEPTED }
+----------------------------------------
+
+Loading the atomization configuration file: "scripts/support_pipeline.yaml"
+Clause #0: 0%
+LTLf-DA
+ **)  G((( t Exists1{A_ACTIVATED, A_APPROVED, A_CANCELLED, A_DECLINED, A_FINALIZED, A_PARTLYSUBMITTED, A_PREACCEPTED, A_REGISTERED, O_ACCEPTED, O_CANCELLED, O_CREATED, O_DECLINED, O_SELECTED, O_SENT, O_SENT_BACK, W_Afhandelen leads, W_Beoordelen fraude, W_Completeren aanvraag, W_Nabellen incomplete dossiers, W_Nabellen offertes, W_Valideren aanvraag, W_Wijzigen contractgegevens, __trace__payload}) t || (Tt Exists1{A_ACCEPTED})) t || ((At Exists1{A_SUBMITTED}) H &F (Tt Exists1{A_ACCEPTED})))
+
+Log Filename: /home/giacomo/paper_testset/burattin/bpi12_knobab.xes
+	 - Loading and parsing (ms): 1097.0225579999999
+	 - Indexing time (ms): 209.76817800000001
+	 - #traces: 13087
+	 - #acts: 21
+	 - Avg. Trace Length: 0
+	 - Trace Variance: 2.6086666100417818e-321
+	 - Most Frequent Trace Length: 0
+	 - Most Frequent Trace Length's Frequency: 512
+Model Filename: /home/giacomo/paper_testset/burattin/model5.powerdecl
+	 - Queries Plan  marking
+	 - Operators Version  FastOperator_v1
+	 - Parsing (ms) 0.111609
+	 - #clauses: 1
+	 - Data/Interval Decomposition (ms): 0.0091819999999999992
+	 - Declare Atomization (ms): 0.00079500000000000003
+	 - Declare->LTLf Transformation (ms):  0.11547200000000001
+	 - Actual Query Time (ms):  26.244209999999999
+Is Multithreaded: No
+	 - #Threads: 1
+Loading the declarative model from file: "/home/giacomo/paper_testset/burattin/model1+2.powerdecl"
+Declarative Model: 
+----------------------------------------
+Response(A_SUBMITTED, true, A_ACCEPTED, true )
+Response(A_SUBMITTED, true, A_ACCEPTED, true )
+Exists1(__trace__payload, __trace__payload.AMOUNT_REQ ≥ 10000, 1 )
+----------------------------------------
+
+Grounded Model: 
+----------------------------------------
+Response(A_SUBMITTED, true, A_ACCEPTED, true ) ⋀ Response(A_SUBMITTED, true, A_ACCEPTED, true ) ⋀ Exists1(__trace__payload, __trace__payload.AMOUNT_REQ ≥ 10000, 1 )
+----------------------------------------
+
+Loading the atomization configuration file: "scripts/atomization_pipeline.yaml"
+Loading the atomization tables given the model
+Grounding Tables: 
+----------------------------------------
+Sigma 
+
+ * Single acts: 
+================
+    O_SENT_BACK
+    O_SELECTED
+    O_SENT
+    A_FINALIZED
+    W_Completeren aanvraag
+    O_CANCELLED
+    A_PREACCEPTED
+    O_CREATED
+    A_PARTLYSUBMITTED
+    A_APPROVED
+    W_Wijzigen contractgegevens
+    O_ACCEPTED
+    A_ACTIVATED
+    A_DECLINED
+    A_CANCELLED
+    W_Afhandelen leads
+    O_DECLINED
+    W_Nabellen incomplete dossiers
+    W_Beoordelen fraude
+    W_Valideren aanvraag
+    A_REGISTERED
+    A_SUBMITTED
+    W_Nabellen offertes
+    A_ACCEPTED
+
+
+ * Sigma Boxes: 
+================
+   - __trace__payload
+        * p0 --> [-1.7976931348623157e+308 ≤ __trace__payload.AMOUNT_REQ ≤ 9999.9999999999982]
+        * p1 --> [10000 ≤ __trace__payload.AMOUNT_REQ ≤ 1.7976931348623157e+308]
+
+
+ * Predicate Conversions: 
+==========================
+   - 10000 ≤ __trace__payload.AMOUNT_REQ ≤ 1.7976931348623157e+308 --> [p1]
+   - -1.7976931348623157e+308 ≤ __trace__payload.AMOUNT_REQ ≤ 9999.9999999999982 --> [p0]
+
+----------------------------------------
+
+Atomizing the declare formulae
+Grounded Model: 
+----------------------------------------
+Response(A_SUBMITTED, true, A_ACCEPTED, true ) {leftAtoms = A_SUBMITTED } {rightAtoms = A_ACCEPTED } ⋀ Response(A_SUBMITTED, true, A_ACCEPTED, true ) {leftAtoms = A_SUBMITTED } {rightAtoms = A_ACCEPTED } ⋀ Exists1(__trace__payload, __trace__payload.AMOUNT_REQ ≥ 10000, 1 ) {leftAtoms = p1 }
+----------------------------------------
+
+Loading the atomization configuration file: "scripts/support_pipeline.yaml"

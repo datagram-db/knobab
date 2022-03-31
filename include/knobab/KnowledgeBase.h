@@ -68,7 +68,14 @@ public:
     static double    maximum_reliability_for_insertion;
 
 
-
+    std::multimap<size_t, std::string> doActCounting() {
+        auto res = count_table.actCounting();
+        std::multimap<size_t, std::string> Result;
+        for (size_t i = 0, N = res.size(); i<N; i++)
+            Result.emplace(res.at(i), event_label_mapper.get(i));
+        Result.size();
+        return Result;
+    }
 
 
     ActTable                                        act_table_by_act_id;
@@ -113,28 +120,6 @@ public:
     union_minimal resolveMinimalRecord(const ActTable::record* eventFromTrace,
                                        const std::unordered_map<std::string, AttributeTable>::iterator& attr_table) const;
     size_t getMaximumStringLength() const { return maximumStringLength+1; }
-
-#if 0
-public:
-    ActTable                                        act_table_by_act_id;
-
-    std::pair<std::unordered_map<std::string, AttributeTable>::iterator,
-            std::unordered_map<std::string, AttributeTable>::iterator> getAttrNameTableIt() {
-        return {attribute_name_to_table.begin(), attribute_name_to_table.end()};
-    }
-
-    union_type resolveRecord(const ActTable::record* eventFromTrace,
-                             const std::unordered_map<std::string, AttributeTable>::iterator& attr_table) const {
-
-        return attr_table->second.resolve(*attr_table->second.resolve_record_if_exists(eventFromTrace - act_table_by_act_id.table.data()));
-    }
-
-    union_minimal resolveMinimalRecord(const ActTable::record* eventFromTrace,
-                                       const std::unordered_map<std::string, AttributeTable>::iterator& attr_table) const {
-        return resolveUnionMinimal(attr_table->second,
-                                   *attr_table->second.resolve_record_if_exists(eventFromTrace - act_table_by_act_id.table.data()));
-    }
-#endif
 
     /**
      * Collects the values contained in the knowledge base as single instances
@@ -287,47 +272,6 @@ public:
                            std::vector<std::pair<DataQuery, PartialResult>> &Qs,
                            const std::optional<uint16_t> &temporalTimeMatch = std::optional<uint16_t>{},
                            double minApproxTime = 1)  const;
-#if 0
-//=======
-    TraceData<traceIdentifier, traceValue> existsAt(const std::string& act, const uint16_t& eventId, const double minThreshold = 1) const{
-        TraceData<traceIdentifier, traceValue> foundData;
-
-        std::pair<traceIdentifier, traceValue> tracePair;
-        const uint16_t& mappedVal = getMappedValueFromAction(act);
-
-        if(mappedVal < 0){
-            return foundData;
-        }
-
-        std::pair<const uint32_t , const uint32_t> indexes = act_table_by_act_id.resolve_index(mappedVal);
-
-        if(indexes.first < 0){
-            return foundData;
-        }
-
-        for (auto it = act_table_by_act_id.table.begin() + indexes.first; it != act_table_by_act_id.table.begin() + indexes.second + 1; ++it) {
-            uint16_t approxConstant = MAX_UINT16 / 2;
-
-            float satisfiability = getSatisifiabilityBetweenValues(eventId, it->entry.id.parts.event_id, approxConstant);
-
-            if(satisfiability >= minThreshold) {
-                const uint16_t newEventID = getPositionFromEventId({it->entry.id.parts.trace_id, it->entry.id.parts.event_id});
-                foundData.getTraceApproximations().emplace_back(std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>{{it->entry.id.parts.trace_id,  newEventID}, {satisfiability, {newEventID}}});
-            }
-        }
-
-        return foundData;
-    }
-
-    /* First is traceID, second is eventID */
-    uint16_t getPositionFromEventId(const std::pair<uint32_t, uint16_t> pair) const;
-
-    const std::unordered_map<std::string, AttributeTable> getAttributeNameToTable() const{
-        return attribute_name_to_table;
-    }
-//>>>>>>> sam
-#endif
-
 private:
     void collectValuesAmongTraces(std::set<union_type> &S, size_t trace_id, act_t acts, bool HasNoAct,
                                   const std::string &attribute_name, bool hasNoAttribute) const;

@@ -26,6 +26,13 @@ struct CountTemplate {
 
     std::pair<const uint32_t, const uint32_t> resolve_primary_index(const uint16_t actId) const;
 
+    std::vector<size_t> actCounting() {
+        std::vector<size_t> result(maxAct, 0);
+        for (const auto& ref : table)
+            result[ref.id.parts.act] += ref.id.parts.event_id;
+        return result;
+    }
+
     ///void emplace_back(const uint_least64_t& monotone_hash);
     void sort();
     void sanityCheck();
