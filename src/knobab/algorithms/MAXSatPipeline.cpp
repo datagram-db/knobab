@@ -150,31 +150,36 @@ void MAXSatPipeline::pipeline(CNFDeclareDataAware* model,
                     std::unordered_map<LTLfQuery*, double> visited;
                     for (size_t i = 0, N = declare_to_query.size(); i<N; i++) { // each declare i
                         const auto &declare = declare_to_query.at(i);
-                        auto &localActivations = qm.activations.at(i)->result;
-                        if (localActivations.empty()) {
-                            DEBUG_ASSERT(declare->result.empty());
-                            support_per_declare.emplace_back(0);
+                        auto aptr = qm.activations.at(i);
+                        if (!aptr) {
+                            support_per_declare.emplace_back(declare->result.empty() ? 0 : 1);
                         } else {
-                            auto it2 = visited.emplace(declare, 0);
-                            if (it2.second) {
-                                auto it = localActivations.begin(), en = localActivations.end();
-                                auto val = it->first.first;
-                                double numerator = 0.0;
-                                double denominator = 1.0; // count == 1
-                                it++;
-                                for (; it != en; it++) {
-                                    if (it->first.first != val) {
-                                        val = it->first.first;
-                                        denominator += 1.0;
+                            auto &localActivations = qm.activations.at(i)->result;
+                            if (localActivations.empty()) {
+                                DEBUG_ASSERT(declare->result.empty());
+                                support_per_declare.emplace_back(0);
+                            } else {
+                                auto it2 = visited.emplace(declare, 0);
+                                if (it2.second) {
+                                    auto it = localActivations.begin(), en = localActivations.end();
+                                    auto val = it->first.first;
+                                    double numerator = 0.0;
+                                    double denominator = 1.0; // count == 1
+                                    it++;
+                                    for (; it != en; it++) {
+                                        if (it->first.first != val) {
+                                            val = it->first.first;
+                                            denominator += 1.0;
+                                        }
                                     }
+                                    for (const auto& trace : declare->result) {
+                                        if ((!trace.second.second.empty()) && IS_MARKED_EVENT_ACTIVATION(trace.second.second.at(0)))
+                                            numerator += 1.0;
+                                    }
+                                    it2.first->second = numerator / denominator;
                                 }
-                                for (const auto& trace : declare->result) {
-                                    if ((!trace.second.second.empty()) && IS_MARKED_EVENT_ACTIVATION(trace.second.second.at(0)))
-                                        numerator += 1.0;
-                                }
-                                it2.first->second = numerator / denominator;
+                                support_per_declare.emplace_back(it2.first->second);
                             }
-                            support_per_declare.emplace_back(it2.first->second);
                         }
                     }
                 } break;
@@ -255,6 +260,9 @@ void MAXSatPipeline::data_chunk(CNFDeclareDataAware *model,
                                              item.right_decomposed_atoms,
                                              toUseAtoms,
                                              atomToFormulaId);
+            if (qm.activations.size() != qm.current_query_id+1) {
+                qm.activations.emplace_back(nullptr);
+            }
 
             // Setting specific untimed atom queries, that can be run directly and separatedly
             // So, any expansion of the formula by detecting whether the formula can directly
