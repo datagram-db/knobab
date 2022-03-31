@@ -87,11 +87,10 @@ With respect to the CMake compilation flags, in order to mimick advanced JIT fea
 
 ## Windows
 
-### Toolchain
-* CLion 2021.3.3
-   * CMake: Bundled (v 3.21.1)
-   * CMake Debug Generator: '''-G "Unix Makefiles"''''
-* Cygwin64 (v 3.3.4)
-* Cygwin GDB (v 10.2)
+For Windows, we suggest to use the [Windows Subsystem for Linux v2](https://docs.microsoft.com/en-us/windows/wsl/compare-versions#whats-new-in-wsl-2), as it seems that running this has the same performances as running the same application on GNU/Linux environment. You might be interested in following [this](https://web.archive.org/web/20220217172442/https://www.windowscentral.com/how-install-wsl2-windows-10) tutorial for installing this, as well as [this](https://www.jetbrains.com/help/clion/how-to-use-wsl-development-environment-in-product.html#wsl-general) other one if you want to set up your system with CLion as an IDE. For accessing the Web Server running on WSL from Windows, first get WSL's vm IP via 'hostname -I'. Then, run the following command in a Windows PowerShell with admin capabilities:
+
+'''
+netsh interface portproxy add v4tov4 listenport=80 listenaddress=0.0.0.0 connectport=80 connectaddress=ipFromHostnameI
+'''
  
 ****
