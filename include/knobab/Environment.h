@@ -94,6 +94,30 @@ public:
         return db.range_query(prop, min_threshold, c);
     }
 
+
+    std::vector<DeclareDataAware> generateTopBinaryClauses(const std::string& template_name, size_t topN = 0) {
+        auto n = db.doActCounting();
+        std::vector<std::string> cpy;
+        std::vector<DeclareDataAware> toGen;
+        size_t max = std::ceil(std::sqrt(n.size())), count = 0;
+        for (auto it = n.rbegin(), en = n.rend(); it != en; it++) {
+            if (count >= max) break;
+            cpy.emplace_back(it->second);
+            count++;
+        }
+        count = 0;
+        for (const auto& x : cpy) {
+            if (count > topN) break;
+            for (const auto& y : cpy) {
+                if (count > topN) break;
+                toGen.emplace_back(DeclareDataAware::binary_for_testing(template_name, x, y));
+                count++;
+            }
+        }
+        std::cout << toGen << std::endl;
+        return toGen;
+    }
+
     void exact_range_query(const std::vector<DataQuery>& Q) {
         std::vector<std::pair<DataQuery, PartialResult>> Qs;
         std::unordered_map<std::string, std::vector<size_t>> actToPredId;
@@ -156,6 +180,9 @@ public:
         for (auto it = begin; it != end; it++) {
             conjunctive_model.emplace_back(*it);
         }
+        experiment_logger.model_parsing_ms = 0;
+        experiment_logger.model_size = conjunctive_model.size();
+        experiment_logger.model_filename = "--Generated";
     }
 
     void set_atomization_parameters(const std::filesystem::path& atomization_conf);

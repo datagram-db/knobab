@@ -27,7 +27,9 @@ void whole_testing(const std::string& log_file = "data/testing/log.txt",
                    bool doStats = true,
                    const std::string& atomization_file = "",
                    bool load_data = true,
-                   const std::string& maxsat = "scripts/maxsat_pipeline.yaml") {
+                   const std::string& maxsat = "scripts/maxsat_pipeline.yaml",
+                   size_t topN = 0,
+                   const std::string& template_name = "Response") {
     Environment env;
     env.clear();
     env.doStats = doStats;
@@ -44,23 +46,31 @@ void whole_testing(const std::string& log_file = "data/testing/log.txt",
     }
 
 
-    if (declare_files.empty()) {
+    if (declare_files.empty() && declare_models.empty() && (topN == 0)) {
         std::cout << env.experiment_logger << std::endl;
         if (doDebugServer) {
             env.server();
         }
     } else {
-        for (const auto& declare_file_string : declare_files) {
-            std::filesystem::path declare_file{declare_file_string};
-            std::cout << "Loading the declarative model from file: " << declare_file << std::endl;
-            env.load_model(declare_file);
+        if (topN > 0) {
+            auto model = env.generateTopBinaryClauses( template_name, topN);
+            std::cout << "Loading generated declarative model " << model << std::endl;
+            env.load_model(model.begin(), model.end());
             envAfterModelLoad(doDebugServer, benchmarking_file, atomization_file, maxsat, env);
+        } else {
+            for (const auto& declare_file_string : declare_files) {
+                std::filesystem::path declare_file{declare_file_string};
+                std::cout << "Loading the declarative model from file: " << declare_file << std::endl;
+                env.load_model(declare_file);
+                envAfterModelLoad(doDebugServer, benchmarking_file, atomization_file, maxsat, env);
+            }
+            for (const auto& declare_string : declare_models) {
+                std::cout << "Loading the declarative model from file: " << declare_string << std::endl;
+                env.load_model(declare_string);
+                envAfterModelLoad(doDebugServer, benchmarking_file, atomization_file, maxsat, env);
+            }
         }
-        for (const auto& declare_string : declare_models) {
-            std::cout << "Loading the declarative model from file: " << declare_string << std::endl;
-            env.load_model(declare_string);
-            envAfterModelLoad(doDebugServer, benchmarking_file, atomization_file, maxsat, env);
-        }
+
     }
 
 
@@ -685,6 +695,8 @@ int main(int argc, char **argv) {
     bool do_data = true;
     log_data_format format = HUMAN_READABLE_YAUCL;
     std::string log_file = "data/testing/log.txt";
+    size_t topNVal = 0;
+    std::string topNDefaultR = "Response";
     std::string atomization_file = "scripts/atomization_pipeline.yaml";
     std::string max_conf_file = "scripts/maxsat_pipeline.yaml";
     std::string benchmark = "";
@@ -698,10 +710,13 @@ int main(int argc, char **argv) {
     args::ValueFlag<std::string> xesFile(file_format, "XES", "The Log in xes format to load into the knowledgebase", {'x', "xes"});
     args::ValueFlag<std::string> tabFile(file_format, "TAB", "The Log in a tab separated format, with no event payload, to load into the knowledgebase", {'t', "tab"});
 
+
+
     args::Group group(parser, "You can use the following parameters", args::Group::Validators::DontCare, args::Options::Global);
     args::Flag server(group, "server", "Runs the HTTP server for visualizing the internal representation of both the knowledge base and the associated query plan", {'s', "server"});
     args::Flag no_data(group, "nodata", "Ignores the payload when loading the data", {'o', "nodata"});
-
+    args::ValueFlag<size_t> topN(group, "topN", "If non-zero, it specifies how many declare clauses to instantiate with a given template (default: Response)", {'p', "topN"});
+    args::ValueFlag<std::string> topNTemplate(group, "template", "If topN is non-zero, it specifies the template associated to generate assocaited to topN", {"topNTemplate"});
     args::Flag do_notcompute_trace_Stats(group, "do_not_compute_trace_stats", "Whether the code will lose time in calculating the statistics for the traces", {'n', "nostats"});
     args::ValueFlagList<std::string> queriesFiles(group, "Model/Query Files", "The queries expressed as Declare models", {'f', "declareFile"});
     args::ValueFlagList<std::string> queriesActual(group, "Models/Queries", "The queries expressed as Declare models", {'d', "declare"});
@@ -772,7 +787,13 @@ int main(int argc, char **argv) {
     if (maxSatConf) {
         max_conf_file = args::get(maxSatConf);
     }
-    whole_testing(log_file, format, queriesV, queriesA, setUpServer, benchmark, sql_miner_dump_folder, doStats, atomization_file, do_data, max_conf_file);
+    if (topN) {
+        topNVal = args::get(topN);
+        if (topNTemplate) {
+            topNDefaultR = args::get(topNTemplate);
+        }
+    }
+    whole_testing(log_file, format, queriesV, queriesA, setUpServer, benchmark, sql_miner_dump_folder, doStats, atomization_file, do_data, max_conf_file, topNVal, topNDefaultR);
 
     //generate_nonunary_templates();
     //test_data_query();
