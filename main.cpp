@@ -61,11 +61,13 @@ void whole_testing(const std::string& log_file = "data/testing/log.txt",
             for (const auto& declare_file_string : declare_files) {
                 std::filesystem::path declare_file{declare_file_string};
                 std::cout << "Loading the declarative model from file: " << declare_file << std::endl;
+                env.clearModel();
                 env.load_model(declare_file);
                 envAfterModelLoad(doDebugServer, benchmarking_file, atomization_file, maxsat, env);
             }
             for (const auto& declare_string : declare_models) {
                 std::cout << "Loading the declarative model from file: " << declare_string << std::endl;
+                env.clearModel();
                 env.load_model(declare_string);
                 envAfterModelLoad(doDebugServer, benchmarking_file, atomization_file, maxsat, env);
             }
