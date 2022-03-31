@@ -236,6 +236,7 @@ void MAXSatPipeline::data_chunk(CNFDeclareDataAware *model,
             auto cp = declare_atomization.emplace(item, declareId++);
             if (!cp.second) {
                 declare_to_query.emplace_back(declare_to_query.at(cp.first->second));
+                qm.activations.emplace_back(qm.activations.at(cp.first->second));
                 continue;
             }
 
@@ -260,7 +261,7 @@ void MAXSatPipeline::data_chunk(CNFDeclareDataAware *model,
                                              item.right_decomposed_atoms,
                                              toUseAtoms,
                                              atomToFormulaId);
-            if (qm.activations.size() != qm.current_query_id+1) {
+            if (qm.activations.size() != declareId) {
                 qm.activations.emplace_back(nullptr);
             }
 
