@@ -334,7 +334,7 @@ double atomize_model(AtomizingPipeline &pipeline_data, CNFDeclareDataAware &disj
             // Assertion: one atom should only appear once!
             auto it = pipeline_data.atom_to_conjunctedPredicates.emplace(pipeline_data.clause_to_atomization_map.at(cp),
                                                                          k.second.at(i));
-            DEBUG_ASSERT(it.second);
+            //DEBUG_ASSERT(it.second);
         }
     }
 
