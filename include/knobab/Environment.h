@@ -96,6 +96,8 @@ public:
 
 
     std::vector<DeclareDataAware> generateTopBinaryClauses(const std::string& template_name, size_t topN = 0) {
+        std::ofstream outF("/mnt/c/Users/Sam/Documents/Repositories/Codebases/knobab/competitors/SQLMinerBenchmarker/log/actions.tab", std::ofstream::trunc);
+
         auto n = db.doActCounting();
         std::vector<std::string> cpy;
         std::vector<DeclareDataAware> toGen;
@@ -114,9 +116,11 @@ public:
         for (const auto& x : cpy) {
             for (const auto& y : cpy) {
                 toGen.emplace_back(DeclareDataAware::binary_for_testing(template_name, x, y));
+                outF <<  x << "\t" << y  << std::endl;
             }
         }
         std::cout << toGen << std::endl;
+        outF.close();
         return toGen;
     }
 
