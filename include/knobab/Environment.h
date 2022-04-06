@@ -100,18 +100,20 @@ public:
         std::vector<std::string> cpy;
         std::vector<DeclareDataAware> toGen;
         size_t max = std::ceil(std::sqrt(n.size())), count = 0;
+
+        if(max < topN){
+            topN = max;
+        }
+
         for (auto it = n.rbegin(), en = n.rend(); it != en; it++) {
-            if (count >= max) break;
+            if (count >= topN) break;
             cpy.emplace_back(it->second);
             count++;
         }
-        count = 0;
+
         for (const auto& x : cpy) {
-            if (count > topN) break;
             for (const auto& y : cpy) {
-                if (count > topN) break;
                 toGen.emplace_back(DeclareDataAware::binary_for_testing(template_name, x, y));
-                count++;
             }
         }
         std::cout << toGen << std::endl;
