@@ -8,5 +8,5 @@ if [ ! -d prom-6.11-all-platforms ]; then
      rm prom-6.11-all-platforms.tar.gz
 fi
 cp ../*.sh .
-rm prom_dependencies.sh
+rm prom_linux_dependencies.sh
 popd

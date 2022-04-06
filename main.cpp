@@ -34,6 +34,9 @@ void whole_testing(const std::string& log_file = "data/testing/log.txt",
     env.clear();
     env.doStats = doStats;
 
+    std::cout << "Current path is " << std::filesystem::current_path() << '\n';
+    std::flush(std::cout);
+
     if (!std::filesystem::exists(std::filesystem::path(log_file))) {
         std::cerr << "ERROR: the log file is missing: cannot run the pipeline! " << log_file << std::endl;
         exit(1);

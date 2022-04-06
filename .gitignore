@@ -4,6 +4,8 @@ competitors/ProM/*
 .idea/*
 cmake-build-debug/
 cmake-build-debug/*
+cmake-build-release/
+cmake-build-release/*
 dist/
 dist/*
 test/*
