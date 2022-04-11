@@ -95,9 +95,7 @@ public:
     }
 
 
-    std::vector<DeclareDataAware> generateTopBinaryClauses(const std::string& template_name, size_t topN = 0) {
-        std::ofstream outF("/mnt/c/Users/Sam/Documents/Repositories/Codebases/knobab/competitors/SQLMinerBenchmarker/log/actions.tab", std::ofstream::trunc);
-
+    std::vector<DeclareDataAware> generateTopBinaryClauses(const std::string& template_name, size_t topN = 0, const bool writeFile = false) {
         auto n = db.doActCounting();
         std::vector<std::string> cpy;
         std::vector<DeclareDataAware> toGen;
@@ -116,11 +114,17 @@ public:
         for (const auto& x : cpy) {
             for (const auto& y : cpy) {
                 toGen.emplace_back(DeclareDataAware::binary_for_testing(template_name, x, y));
-                outF <<  x << "\t" << y  << std::endl;
             }
         }
+        if(writeFile){
+            std::ofstream outF("/mnt/c/Users/Sam/Documents/Repositories/Codebases/knobab/competitors/SQLMinerBenchmarker/log/actions.tab", std::ofstream::trunc);
+            for(const DeclareDataAware& dec : toGen){
+                outF <<  dec.left_act << "\t" << dec.right_act << std::endl;
+            }
+            outF.close();
+        }
+
         std::cout << toGen << std::endl;
-        outF.close();
         return toGen;
     }
 
@@ -181,14 +185,14 @@ public:
      */
     void load_model(const std::filesystem::path &model_file);
     void load_model(const std::string &model);
-    template <typename T> void load_model(T begin, T end) {
+    template <typename T> void load_model(T begin, T end, const std::string& generatedName = "Generated") {
         conjunctive_model.clear();
         for (auto it = begin; it != end; it++) {
             conjunctive_model.emplace_back(*it);
         }
         experiment_logger.model_parsing_ms = 0;
         experiment_logger.model_size = conjunctive_model.size();
-        experiment_logger.model_filename = "--Generated";
+        experiment_logger.model_filename = generatedName;
     }
 
     void set_atomization_parameters(const std::filesystem::path& atomization_conf);

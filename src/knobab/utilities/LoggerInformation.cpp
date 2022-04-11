@@ -11,6 +11,7 @@ void LoggerInformation::clear() {
     model_filename.clear();
     queries_plan.clear();
     operators_version.clear();
+    atomization_conf.clear();
     is_multithreaded = with_data = false;
 }
 
@@ -23,7 +24,7 @@ std::ostream& operator<<(std::ostream& os, const LoggerInformation &information)
        << information.log_trace_average_length  << std::endl <<  "\t - Trace Variance: " << information.log_trace_variance
        << std::endl << "\t - Most Frequent Trace Length: " << information.most_frequent_trace_length
             << std::endl <<   "\t - Most Frequent Trace Length's Frequency: "
-       << information.trace_length_frequency << std::endl <<  "Model Filename: " << information.model_filename
+       << information.trace_length_frequency << std::endl << "\t - Atomisation Conf  " << information.atomization_conf << std::endl << "Model Filename: " << information.model_filename
             << std::endl <<"\t - Queries Plan  " << information.queries_plan << std::endl << "\t - Operators Version  " << information.operators_version << std::endl <<"\t - Parsing (ms) " << information.model_parsing_ms << std::endl << "\t - #clauses: " << information.model_size
             << std::endl << "\t - Data/Interval Decomposition (ms): " << information.model_data_decomposition_time << std::endl <<"\t - Declare Atomization (ms): "
        << information.model_atomization_time << std::endl << "\t - Declare->LTLf Transformation (ms):  " << information.model_declare_to_ltlf
@@ -44,6 +45,7 @@ void LoggerInformation::log_csv_file(std::ostream &csv_log) {
             << log_trace_variance << ","
             << most_frequent_trace_length << ","
             << trace_length_frequency << ","
+            << atomization_conf << ","
             << model_filename<< ","
             << queries_plan<< ","
             << operators_version<< ","
@@ -68,6 +70,7 @@ void LoggerInformation::log_csv_file_header(std::ostream &csv_log) {
             << "log_trace_variance" << ","
             << "most_frequent_trace_length" << ","
             << "trace_length_frequency" << ","
+            << "atomization_conf" << ","
             << "model_filename" << ","
             << "queries_plan" << ","
             << "operators_version" << ","
