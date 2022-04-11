@@ -15,7 +15,7 @@
 #include <yaucl/graphs/graph_join_pm_conversion.h>
 
 void envAfterModelLoad(bool doDebugServer, const std::string &benchmarking_file, const std::string &atomization_file,
-                       const std::string &maxsat, Environment &env, const uint16_t& queryCount);
+                       const std::string &maxsat, Environment &env);
 
 void whole_testing(const std::string& log_file = "data/testing/log.txt",
                    log_data_format format = HUMAN_READABLE_YAUCL,
@@ -29,8 +29,7 @@ void whole_testing(const std::string& log_file = "data/testing/log.txt",
                    bool load_data = true,
                    const std::string& maxsat = "scripts/maxsat_pipeline.yaml",
                    size_t topN = 0,
-                   const std::string& template_name = "Response",
-                   const uint16_t& queryCount = 1) {
+                   const std::string& template_name = "Response") {
     Environment env;
     env.clear();
     env.doStats = doStats;
@@ -60,30 +59,28 @@ void whole_testing(const std::string& log_file = "data/testing/log.txt",
             auto model = env.generateTopBinaryClauses(template_name, topN, !sqlminer_dump_dir.empty());
             std::cout << "Loading generated declarative model " << model << std::endl;
             env.load_model(model.begin(), model.end(), template_name + std::to_string(topN * topN));
-            envAfterModelLoad(doDebugServer, benchmarking_file, atomization_file, maxsat, env, queryCount);
+            envAfterModelLoad(doDebugServer, benchmarking_file, atomization_file, maxsat, env);
         } else {
             for (const auto& declare_file_string : declare_files) {
                 std::filesystem::path declare_file{declare_file_string};
                 std::cout << "Loading the declarative model from file: " << declare_file << std::endl;
                 env.clearModel();
                 env.load_model(declare_file);
-                envAfterModelLoad(doDebugServer, benchmarking_file, atomization_file, maxsat, env, queryCount);
+                envAfterModelLoad(doDebugServer, benchmarking_file, atomization_file, maxsat, env);
             }
             for (const auto& declare_string : declare_models) {
                 std::cout << "Loading the declarative model from file: " << declare_string << std::endl;
                 env.clearModel();
                 env.load_model(declare_string);
-                envAfterModelLoad(doDebugServer, benchmarking_file, atomization_file, maxsat, env, queryCount);
+                envAfterModelLoad(doDebugServer, benchmarking_file, atomization_file, maxsat, env);
             }
         }
 
     }
-
-
 }
 
 void envAfterModelLoad(bool doDebugServer, const std::string &benchmarking_file, const std::string &atomization_file,
-                       const std::string &maxsat, Environment &env, const uint16_t& queryCount = 1) {
+                       const std::string &maxsat, Environment &env) {
     env.print_model(std::cout); // DEBUG
 //////////////////////////////////////////////////////////////////
 
@@ -111,41 +108,39 @@ void envAfterModelLoad(bool doDebugServer, const std::string &benchmarking_file,
 
     env.set_maxsat_parameters(std::filesystem::path(maxsat));
 
-    for(uint16_t i = 0; i < queryCount; ++i){
-        auto ref = env.query_model();
-        switch (ref.final_ensemble) {
-            case PerDeclareSupport:
-                for (size_t i = 0; i<ref.support_per_declare.size(); i++) {
-                    std::cout << "Clause #" << i << ": " << (ref.support_per_declare.at(i)* 100.0) << "%" << std::endl;
-                }
-                break;
+    auto ref = env.query_model();
+    switch (ref.final_ensemble) {
+        case PerDeclareSupport:
+            for (size_t i = 0; i < ref.support_per_declare.size(); i++) {
+                std::cout << "Clause #" << i << ": " << (ref.support_per_declare.at(i) * 100.0) << "%" << std::endl;
+            }
+            break;
 
-            case TraceMaximumSatisfiability:
-                for (size_t i = 0; i<ref.max_sat_per_trace.size(); i++) {
-                    std::cout << "Trace #" << i << ": " << (ref.max_sat_per_trace.at(i)* 100.0) << "%" << std::endl;
-                }
-                break;
+        case TraceMaximumSatisfiability:
+            for (size_t i = 0; i < ref.max_sat_per_trace.size(); i++) {
+                std::cout << "Trace #" << i << ": " << (ref.max_sat_per_trace.at(i) * 100.0) << "%" << std::endl;
+            }
+            break;
 
-            case TraceIntersection:
-                std::cout << ref.result << std::endl;
-                break;
-        }
-        std::cout << "LTLf-DA" << std::endl;
-        for (const auto& ref : ref.declare_to_query)
-            std::cout <<" **) " << *ref << std::endl;
-        std::cout << std::endl;
-        std::cout << env.experiment_logger << std::endl;
-        if (doDebugServer) {
-            env.server(ref);
-        }
-        if (!benchmarking_file.empty()) {
-            std::filesystem::path F(benchmarking_file);
-            bool doIHaveToWriteTheHeader = !std::filesystem::exists(F);
-            std::ofstream outF{benchmarking_file, std::ios_base::app};
-            if (doIHaveToWriteTheHeader)
-                env.experiment_logger.log_csv_file_header(outF);
-            env.experiment_logger.log_csv_file(outF);
-        }
+        case TraceIntersection:
+            std::cout << ref.result << std::endl;
+            break;
+    }
+    std::cout << "LTLf-DA" << std::endl;
+    for (const auto &ref: ref.declare_to_query)
+        std::cout << " **) " << *ref << std::endl;
+    std::cout << std::endl;
+    std::cout << env.experiment_logger << std::endl;
+    if (doDebugServer) {
+        env.server(ref);
+    }
+    if (!benchmarking_file.empty()) {
+        std::filesystem::path F(benchmarking_file);
+        bool doIHaveToWriteTheHeader = !std::filesystem::exists(F);
+        std::ofstream outF{benchmarking_file, std::ios_base::app};
+        if (doIHaveToWriteTheHeader)
+            env.experiment_logger.log_csv_file_header(outF);
+        env.experiment_logger.log_csv_file(outF);
     }
 }
 
@@ -711,7 +706,7 @@ int main(int argc, char **argv) {
     std::string benchmark = "";
     std::string sql_miner_dump_folder = "";
     std::vector<std::string> queriesV{}, queriesA;
-    uint16_t queryIters = 1;
+    uint16_t iters = 1;
 
     args::ArgumentParser parser("KnoBAB  (c) 2020-2022 by Giacomo Bergami & Samuel 'Sam' Appleby.", "This free and open software program implements the MaxSat problem via a Knowledge Base, KnoBAB. Nicer things are still to come!");
     args::HelpFlag help(parser, "help", "Display this help menu", {'h', "help"});
@@ -738,7 +733,7 @@ int main(int argc, char **argv) {
     args::ValueFlag<std::string> benchmarkFile(group, "Benchmark File", "Appends the current Result data into a benchmark file", {'b', "csv"});
     args::ValueFlag<std::string>  sqlMinerDump(group, "SQLMinerDump", "If present, specifies the dump for the SQL miner representation", {'s', "sqlminer"});
     args::ValueFlag<std::string>  maxSatConf(group, "MaxSatConfigurationFile", "If present, specifies the configurations for the maxsatpipeline", {'m', "maxsat"});
-    args::ValueFlag<uint16_t>  queryNum(group, "Number of Queries", "If present, specifies the number of times the query will be run (for benchmarking)", {'q', "queryCount"});
+    args::ValueFlag<uint16_t>  iterNum(group, "Number of Iterations", "If present, specifies the number of times the pipeline will be run (for benchmarking)", {'q', "queryCount"});
 
     try {
         parser.ParseCLI(argc, argv);
@@ -804,12 +799,13 @@ int main(int argc, char **argv) {
             topNDefaultR = args::get(topNTemplate);
         }
     }
-    if(queryNum){
-        queryIters = args::get(queryNum);
+    if(iterNum){
+        iters = args::get(iterNum);
     }
 
-
-    whole_testing(log_file, format, queriesV, queriesA, setUpServer, benchmark, sql_miner_dump_folder, doStats, atomization_file, do_data, max_conf_file, topNVal, topNDefaultR, queryIters);
+    for(uint16_t i = 0; i < iters; ++i){
+        whole_testing(log_file, format, queriesV, queriesA, setUpServer, benchmark, sql_miner_dump_folder, doStats, atomization_file, do_data, max_conf_file, topNVal, topNDefaultR);
+    }
 
     //generate_nonunary_templates();
     //test_data_query();
