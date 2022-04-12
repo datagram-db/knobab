@@ -222,8 +222,8 @@ log_filename,with_data,log_loading_and_parsing_ms,log_indexing_ms,n_traces,n_act
 ,,,,,,,,,,,,,,,,,,,,,,,SQLMiner,1000,NotSuccession25,651330.434
 ,,,,,,,,,,,,,,,,,,,,,,,SQLMiner,1000,NotSuccession25,663379.427
 ,,,,,,,,,,,,,,,,,,,,,,,SQLMiner,1000,NotSuccession25,653513.065
-,,,,,,,,,,,,,,,,,,,,,,,SQLMiner,1000,NotSuccession25,
-,,,,,,,,,,,,,,,,,,,,,,,SQLMiner,1000,NotSuccession25,
+,,,,,,,,,,,,,,,,,,,,,,,SQLMiner,1000,NotSuccession25,621377.545
+,,,,,,,,,,,,,,,,,,,,,,,SQLMiner,1000,NotSuccession25,654544.098
 ,,,,,,,,,,,,,,,,,,,,,,,SQLMiner + TraceInfo,10,NotSuccession25,486.404
 ,,,,,,,,,,,,,,,,,,,,,,,SQLMiner + TraceInfo,10,NotSuccession25,474.936
 ,,,,,,,,,,,,,,,,,,,,,,,SQLMiner + TraceInfo,10,NotSuccession25,474.803
