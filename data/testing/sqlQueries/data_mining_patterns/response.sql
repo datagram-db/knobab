@@ -4,19 +4,22 @@
 explain analyse
 SELECT taska, taskb,
 (CAST(COUNT(*) AS FLOAT) / CAST((SELECT COUNT(*) FROM log1 WHERE task LIKE taska) AS FLOAT)) AS Support
-FROM log1 a, (SELECT a.task AS taska, b.task AS taskb FROM log1 a, log1 b GROUP BY a.task , b.task) x
+FROM log1 a, (SELECT a.task AS taska, b.task AS taskb FROM log1 a, log1 b WHERE a.task != b.task GROUP BY a.task, b.task) x
 WHERE a.task = x.taska AND EXISTS (SELECT * FROM log1 b WHERE b.task = x.taskb AND b.trace_id = a.trace_id AND b.time > a.time)
 GROUP BY x.taska, x.taskb
 HAVING (CAST(COUNT(*) AS FLOAT) / CAST((SELECT COUNT(*) FROM log1 WHERE task LIKE taska) AS FLOAT)) > 0.7
 
--- SELECT taska, taskb, ARRAY_AGG(DISTINCT tid) as trace_id
--- FROM (
--- SELECT taska, taskb, a.trace_id as tid, (CAST(COUNT(*) AS FLOAT) /CAST( (SELECT COUNT(*) FROM log1 WHERE trace_id = a.trace_id and task like taska) AS FLOAT)) AS Support
+-- With confidence
+-- SELECT taska, taskb,
+-- (CAST(COUNT(*) AS FLOAT) /CAST( (SELECT COUNT(*) FROM log1 WHERE task LIKE taska) AS FLOAT)) AS Support,
+-- ((CAST(COUNT(*) AS FLOAT) /CAST((SELECT COUNT(*) FROM log1 WHERE task LIKE taska) AS FLOAT)) * (CAST((SELECT COUNT(*) FROM (SELECT trace_id FROM log1 WHERE task LIKE taska
+-- GROUP BY trace_id) t2) AS FLOAT) /CAST( (SELECT COUNT(*) FROM (SELECT trace_id FROM log1 GROUP BY trace_id) t) AS FLOAT))) AS Confidence
 -- FROM log1 a, (SELECT a.task AS taska , b.task AS taskb FROM log1 a, log1 b  GROUP BY a.task , b.task) x
 -- WHERE a.task = x.taska and EXISTS (SELECT * FROM log1 b WHERE b.task = x.taskb AND b.trace_id = a.trace_id AND b.time > a.time)
--- GROUP BY x.taska, x.taskb, a.trace_id) QR
--- where Support = 1
--- GROUP BY taska, taskb
+-- GROUP BY x.taska, x.taskb
+-- HAVING (CAST(COUNT(*) AS FLOAT) /CAST((SELECT COUNT(*) FROM log1 WHERE task LIKE taska) AS FLOAT)) > 0.7
+-- AND ((CAST(COUNT(*) AS FLOAT) /CAST( (SELECT COUNT(*) FROM log1 WHERE Task LIKE taskA) AS FLOAT)) * (CAST((SELECT COUNT (*) FROM(SELECT trace_id FROM log1 WHERE task LIKE taska
+-- GROUP BY trace_id) t2) AS FLOAT) / CAST((SELECT COUNT(*) FROM(SELECT trace_id FROM log1 GROUP BY trace_id) t) AS FLOAT))) > 0.5
 
 -- SELECT 'response', TaskA , TaskB ,
 -- (CAST(COUNT(*) AS FLOAT) /CAST( (SELECT COUNT(*) FROM Log WHERE Task LIKE TaskA) AS FLOAT)) AS Support,
@@ -36,16 +39,3 @@ HAVING (CAST(COUNT(*) AS FLOAT) / CAST((SELECT COUNT(*) FROM log1 WHERE task LIK
 -- BB = 00010011101101101010 = 10 / 20 = 0.5
 -- CA = 0001 = 1 / 4 = 0.25
 -- CB = 0001 = 1 / 4 = 0.25
-
--- With confidence
--- SELECT taska, taskb,
--- (CAST(COUNT(*) AS FLOAT) /CAST( (SELECT COUNT(*) FROM log1 WHERE task LIKE taska) AS FLOAT)) AS Support,
--- ((CAST(COUNT(*) AS FLOAT) /CAST((SELECT COUNT(*) FROM log1 WHERE task LIKE taska) AS FLOAT)) * (CAST((SELECT COUNT(*) FROM (SELECT trace_id FROM log1 WHERE task LIKE taska
--- GROUP BY trace_id) t2) AS FLOAT) /CAST( (SELECT COUNT(*) FROM (SELECT trace_id FROM log1 GROUP BY trace_id) t) AS FLOAT))) AS Confidence
--- FROM log1 a, (SELECT a.task AS taska , b.task AS taskb FROM log1 a, log1 b  GROUP BY a.task , b.task) x
--- WHERE a.task = x.taska and EXISTS (SELECT * FROM log1 b WHERE b.task = x.taskb AND b.trace_id = a.trace_id AND b.time > a.time)
--- GROUP BY x.taska, x.taskb
--- HAVING (CAST(COUNT(*) AS FLOAT) /CAST((SELECT COUNT(*) FROM log1 WHERE task LIKE taska) AS FLOAT)) > 0.7
--- AND ((CAST(COUNT(*) AS FLOAT) /CAST( (SELECT COUNT(*) FROM log1 WHERE Task LIKE taskA) AS FLOAT)) * (CAST((SELECT COUNT (*) FROM(SELECT trace_id FROM log1 WHERE task LIKE taska
--- GROUP BY trace_id) t2) AS FLOAT) / CAST((SELECT COUNT(*) FROM(SELECT trace_id FROM log1 GROUP BY trace_id) t) AS FLOAT))) > 0.5
-
