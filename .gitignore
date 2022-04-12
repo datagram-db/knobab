@@ -17,7 +17,6 @@ competitors/SQLMinerBenchmarker/log/*.tab
 competitors/SQLMinerBenchmarker/.idea
 competitors/SQLMinerBenchmarker/.idea/*
 competitors/SQLMinerBenchmarker/conf/postgresql.properties
-*.csv
 /home/giacomo/projects/knobab/antlr4_gen.sh
 antlr4/cpp/*
 antlr4/*
