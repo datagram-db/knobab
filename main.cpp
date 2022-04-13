@@ -34,6 +34,9 @@ void whole_testing(const std::string& log_file = "data/testing/log.txt",
     env.clear();
     env.doStats = doStats;
 
+    std::cout << "Current path is " << std::filesystem::current_path() << '\n';
+    std::flush(std::cout);
+
     if (!std::filesystem::exists(std::filesystem::path(log_file))) {
         std::cerr << "ERROR: the log file is missing: cannot run the pipeline! " << log_file << std::endl;
         exit(1);
@@ -53,9 +56,9 @@ void whole_testing(const std::string& log_file = "data/testing/log.txt",
         }
     } else {
         if (topN > 0) {
-            auto model = env.generateTopBinaryClauses( template_name, topN);
+            auto model = env.generateTopBinaryClauses(template_name, topN, !sqlminer_dump_dir.empty());
             std::cout << "Loading generated declarative model " << model << std::endl;
-            env.load_model(model.begin(), model.end());
+            env.load_model(model.begin(), model.end(), template_name + std::to_string(topN * topN));
             envAfterModelLoad(doDebugServer, benchmarking_file, atomization_file, maxsat, env);
         } else {
             for (const auto& declare_file_string : declare_files) {
@@ -74,8 +77,6 @@ void whole_testing(const std::string& log_file = "data/testing/log.txt",
         }
 
     }
-
-
 }
 
 void envAfterModelLoad(bool doDebugServer, const std::string &benchmarking_file, const std::string &atomization_file,
@@ -106,17 +107,18 @@ void envAfterModelLoad(bool doDebugServer, const std::string &benchmarking_file,
 //////////////////////////////////////////////////////////////////
 
     env.set_maxsat_parameters(std::filesystem::path(maxsat));
+
     auto ref = env.query_model();
     switch (ref.final_ensemble) {
         case PerDeclareSupport:
-            for (size_t i = 0; i<ref.support_per_declare.size(); i++) {
-                std::cout << "Clause #" << i << ": " << (ref.support_per_declare.at(i)* 100.0) << "%" << std::endl;
+            for (size_t i = 0; i < ref.support_per_declare.size(); i++) {
+                std::cout << "Clause #" << i << ": " << (ref.support_per_declare.at(i) * 100.0) << "%" << std::endl;
             }
             break;
 
         case TraceMaximumSatisfiability:
-            for (size_t i = 0; i<ref.max_sat_per_trace.size(); i++) {
-                std::cout << "Trace #" << i << ": " << (ref.max_sat_per_trace.at(i)* 100.0) << "%" << std::endl;
+            for (size_t i = 0; i < ref.max_sat_per_trace.size(); i++) {
+                std::cout << "Trace #" << i << ": " << (ref.max_sat_per_trace.at(i) * 100.0) << "%" << std::endl;
             }
             break;
 
@@ -125,8 +127,8 @@ void envAfterModelLoad(bool doDebugServer, const std::string &benchmarking_file,
             break;
     }
     std::cout << "LTLf-DA" << std::endl;
-    for (const auto& ref : ref.declare_to_query)
-        std::cout <<" **) " << *ref << std::endl;
+    for (const auto &ref: ref.declare_to_query)
+        std::cout << " **) " << *ref << std::endl;
     std::cout << std::endl;
     std::cout << env.experiment_logger << std::endl;
     if (doDebugServer) {
@@ -704,6 +706,8 @@ int main(int argc, char **argv) {
     std::string benchmark = "";
     std::string sql_miner_dump_folder = "";
     std::vector<std::string> queriesV{}, queriesA;
+    uint16_t iters = 1;
+
     args::ArgumentParser parser("KnoBAB  (c) 2020-2022 by Giacomo Bergami & Samuel 'Sam' Appleby.", "This free and open software program implements the MaxSat problem via a Knowledge Base, KnoBAB. Nicer things are still to come!");
     args::HelpFlag help(parser, "help", "Display this help menu", {'h', "help"});
 
@@ -729,7 +733,7 @@ int main(int argc, char **argv) {
     args::ValueFlag<std::string> benchmarkFile(group, "Benchmark File", "Appends the current Result data into a benchmark file", {'b', "csv"});
     args::ValueFlag<std::string>  sqlMinerDump(group, "SQLMinerDump", "If present, specifies the dump for the SQL miner representation", {'s', "sqlminer"});
     args::ValueFlag<std::string>  maxSatConf(group, "MaxSatConfigurationFile", "If present, specifies the configurations for the maxsatpipeline", {'m', "maxsat"});
-
+    args::ValueFlag<uint16_t>  iterNum(group, "Number of Iterations", "If present, specifies the number of times the pipeline will be run (for benchmarking)", {'q', "queryCount"});
 
     try {
         parser.ParseCLI(argc, argv);
@@ -795,7 +799,13 @@ int main(int argc, char **argv) {
             topNDefaultR = args::get(topNTemplate);
         }
     }
-    whole_testing(log_file, format, queriesV, queriesA, setUpServer, benchmark, sql_miner_dump_folder, doStats, atomization_file, do_data, max_conf_file, topNVal, topNDefaultR);
+    if(iterNum){
+        iters = args::get(iterNum);
+    }
+
+    for(uint16_t i = 0; i < iters; ++i){
+        whole_testing(log_file, format, queriesV, queriesA, setUpServer, benchmark, sql_miner_dump_folder, doStats, atomization_file, do_data, max_conf_file, topNVal, topNDefaultR);
+    }
 
     //generate_nonunary_templates();
     //test_data_query();

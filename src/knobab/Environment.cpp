@@ -591,6 +591,7 @@ void Environment::set_maxsat_parameters(const std::filesystem::path &atomization
     noThreads = 1;
     operators = AbidingLogic;
     if (std::filesystem::exists((atomization_conf))) {
+        experiment_logger.atomization_conf = atomization_conf;
         std::cout << "Loading the atomization configuration file: " << atomization_conf << std::endl;
         YAML::Node n = YAML::LoadFile((atomization_conf).string());
         if (n["script_plan"]) {
