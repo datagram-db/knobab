@@ -274,8 +274,6 @@ void MAXSatPipeline::data_chunk(CNFDeclareDataAware *model,
                 throw std::runtime_error(item.casusu+": missing from the loaded query decomposition");
             }
 
-            std::cout << it2->second << std::endl;
-
             // Caching the query, so to generate a pointer to an experssion that was already computed.
             // The query plan manager will identfy the common expressions, and will let represent those only ones
             // via caching and mapping.
