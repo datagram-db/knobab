@@ -75,6 +75,30 @@ static inline void local_logic_intersection(const LTLfQuery* q, Result& last_uni
     }
 }
 
+static inline void local_logic_intersection(const std::unordered_set<LTLfQuery*>& q, Result& last_union, bool isTimed = true) {
+    size_t N = q.size();
+    if ((N == 0)) {
+        last_union.clear();
+        return;
+    } else if (N == 1) {
+        last_union = (*q.begin())->result;
+    } else {
+        auto it = q.begin();
+        last_union = (*it)->result;
+        Result curr_union;
+        for (std::size_t i = 1; i < N; ++i) {
+            it++;
+            auto ref = (*it)->result;
+            if (isTimed)
+                and_logic_timed(last_union, ref, curr_union);
+            else
+                and_logic_untimed(last_union, ref, curr_union);
+            std::swap(last_union, curr_union);
+            curr_union.clear();
+        }
+    }
+}
+
 static inline void local_fast_intersection(const LTLfQuery* q, Result& last_union, bool isTimed = true) {
     size_t N = q->args.size();
     if ((!q) || (N == 0)) {
@@ -150,11 +174,12 @@ void MAXSatPipeline::pipeline(CNFDeclareDataAware* model,
                     std::unordered_map<LTLfQuery*, double> visited;
                     for (size_t i = 0, N = declare_to_query.size(); i<N; i++) { // each declare i
                         const auto &declare = declare_to_query.at(i);
-                        auto aptr = qm.activations.at(i);
-                        if (!aptr) {
+                        auto& aptr = qm.activations.at(i);
+                        if (aptr.empty()) {
                             support_per_declare.emplace_back(declare->result.empty() ? 0 : 1);
                         } else {
-                            auto &localActivations = qm.activations.at(i)->result;
+                            Result localActivations;
+                            local_logic_intersection(qm.activations.at(i), localActivations, false);
                             if (localActivations.empty()) {
                                 DEBUG_ASSERT(declare->result.empty());
                                 support_per_declare.emplace_back(0);
@@ -249,6 +274,8 @@ void MAXSatPipeline::data_chunk(CNFDeclareDataAware *model,
                 throw std::runtime_error(item.casusu+": missing from the loaded query decomposition");
             }
 
+            std::cout << it2->second << std::endl;
+
             // Caching the query, so to generate a pointer to an experssion that was already computed.
             // The query plan manager will identfy the common expressions, and will let represent those only ones
             // via caching and mapping.
@@ -262,7 +289,7 @@ void MAXSatPipeline::data_chunk(CNFDeclareDataAware *model,
                                              toUseAtoms,
                                              atomToFormulaId);
             if (qm.activations.size() != declareId) {
-                qm.activations.emplace_back(nullptr);
+                qm.activations.emplace_back();
             }
 
             // Setting specific untimed atom queries, that can be run directly and separatedly
