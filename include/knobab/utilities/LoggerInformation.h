@@ -22,6 +22,8 @@ struct LoggerInformation {
     size_t most_frequent_trace_length;
     size_t trace_length_frequency;
 
+    std::string atomization_conf;
+
     std::string model_filename;
     std::string queries_plan;
     std::string operators_version;
