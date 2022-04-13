@@ -16,7 +16,7 @@ struct LTLfQueryManager {
     std::unordered_map<LTLfQuery*, size_t> counter;
     std::vector<LTLfQuery*> atomsToDecomposeInUnion;
     size_t current_query_id = 0;
-    std::vector<LTLfQuery*> activations;
+    std::vector<std::unordered_set<LTLfQuery*>> activations;
 
     void generateGraph(std::map<LTLfQuery*, std::vector<LTLfQuery*>>& ref, LTLfQuery*q) const;
     std::string generateGraph() const;
