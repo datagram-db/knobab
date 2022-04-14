@@ -61,7 +61,23 @@ struct MAXSatPipeline {
     std::vector<LTLfQuery*> fomulaidToFormula;
 
     MAXSatPipeline(const std::string& plan_file, const std::string& plan, size_t nThreads);
+    
+    
+#ifdef MAXSatPipeline_PARALLEL
+    MAXSatPipeline() : MAXSatPipeline{"", "", 1} {}
+    MAXSatPipeline(const MAXSatPipeline& x) : qm{x.qm}, pool{1}, declare_to_ltlf_time{x.declare_to_ltlf_time},
+                                              ltlf_query_time{x.ltlf_query_time}, dqlp{x.dqlp}, ptr{x.ptr}, 
+                                              declare_to_query{x.declare_to_query}, atomToFormulaId{x.atomToFormulaId},
+                                              maxFormulaId{x.maxFormulaId}, fomulaidToFormula{x.fomulaidToFormula}, 
+                                              final_ensemble{x.final_ensemble}, operators{x.operators}, support_per_declare{x.support_per_declare},
+                                              max_sat_per_trace{x.max_sat_per_trace}, maxPartialResultId{x.maxPartialResultId}, 
+                                              data_offset{x.data_offset}, data_accessing{x.data_accessing}, data_accessing_range_query_to_offsets{x.data_accessing_range_query_to_offsets},
+                                              declare_atomization{x.declare_atomization}, atomToResultOffset{x.atomToResultOffset}, toUseAtoms{x.toUseAtoms}, 
+                                              barrier_to_range_queries{x.barrier_to_range_queries}, barriers_to_atfo{x.barriers_to_atfo}, atomicPartIntersectionResult{x.atomicPartIntersectionResult} {}
+    MAXSatPipeline& operator=(const MAXSatPipeline&) = default;
+#else    
     DEFAULT_COPY_ASSGN(MAXSatPipeline)
+#endif
 
     EnsembleMethods final_ensemble;
     OperatorQueryPlan operators;
