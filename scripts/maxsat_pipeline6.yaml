@@ -2,5 +2,5 @@ ensemble: "TraceMaximumSatisfiability"
 #decomposition_script: "/mnt/c/Users/Sam/Documents/Repositories/Codebases/knobab/scripts/testing.decl_sem"
 decomposition_script: "scripts/testing.decl_sem"
 script_plan: "marking"
-threads: 1
+threads: 6
 operators: "FastOperator_v1"
