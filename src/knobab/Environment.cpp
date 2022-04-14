@@ -588,7 +588,7 @@ void Environment::set_grounding_parameters(const std::string &grounding_strategy
 void Environment::set_maxsat_parameters(const std::filesystem::path &atomization_conf) {
     script_for_decomposition = "scripts/logic_plan.queryplan";
     preferred_plan = "efficient";
-    noThreads = 1;
+    experiment_logger.no_threads = noThreads = 1;
     operators = AbidingLogic;
     if (std::filesystem::exists((atomization_conf))) {
         experiment_logger.atomization_conf = atomization_conf;

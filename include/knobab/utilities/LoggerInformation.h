@@ -34,7 +34,11 @@ struct LoggerInformation {
     double model_declare_to_ltlf = -1.0;
     double model_ltlf_query_time = -1.0;
 
+#ifdef MAXSatPipeline_PARALLEL
+    bool is_multithreaded = true;
+#else
     bool is_multithreaded = false;
+#endif
 
     DEFAULT_CONSTRUCTORS(LoggerInformation)
 
