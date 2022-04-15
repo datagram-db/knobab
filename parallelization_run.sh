@@ -2,7 +2,8 @@
 # Declare a string array with type
 declare -a StringArray=("AltPrecedence" "AltResponse" "ChainPrecedence" "ChainResponse" "NegSuccession" "Precedence" "RespExistence" "Response")
 declare -a ProcArray=("scripts/maxsat_pipeline2.yaml" "scripts/maxsat_pipeline4.yaml" "scripts/maxsat_pipeline6.yaml" "scripts/maxsat_pipeline8.yaml")
-declare -a plist=(2 4 8 16)
+#declare -a plist=(2 4 8 16)
+declare -a plist=(16)
  
  
 # Read the array values with space
