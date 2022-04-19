@@ -5,7 +5,7 @@ include_directories(submodules/rapidxml-1.13)
 include_directories(submodules/thread-pool)
 include_directories(submodules/cpp-httplib)
 
-add_subdirectory(submodules/args)
+
 include_directories(submodules/args)
 
 
