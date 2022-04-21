@@ -1,0 +1,1 @@
+"Response"("A_SUBMITTED", true, "A_ACCEPTED", true) where var "org:resource" != var "org:resource"

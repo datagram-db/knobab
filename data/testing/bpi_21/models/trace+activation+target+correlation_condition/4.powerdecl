@@ -1,0 +1,5 @@
+"Response"("A_SUBMITTED", var "lifecycle:transition" = "COMPLETE", "A_ACCEPTED", var "lifecycle:transition" = "COMPLETE") where var "org:resource" = var "org:resource"
+"Response"("W_Valideren aanvraag",  var "lifecycle:transition" = "START", "W_Nabellen incomplete dossiers", var "lifecycle:transition" = "COMPLETE") where var "org:resource" = var "org:resource"
+"Response"("O_SELECTED", var "lifecycle:transition" = "START", "O_CANCELLED",  var "lifecycle:transition" = "COMPLETE") where var "org:resource" = var "org:resource"
+"Response"("W_Valideren aanvraag", var "lifecycle:transition" = "COMPLETE", "W_Nabellen offertes", var "lifecycle:transition" = "START") where var "org:resource" != var "org:resource"
+"Exists1"("__trace__payload", var "AMOUNT_REQ" >= 10000.0, 1)
