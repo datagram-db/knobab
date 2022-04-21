@@ -119,7 +119,6 @@ static inline void local_fast_intersection(const LTLfQuery* q, Result& last_unio
                               arg2->result,
                               last_union, q->joinCondition);
     } else {
-        DEBUG_ASSERT(q->joinCondition);
         auto it = q->args.begin();
         last_union = (*it)->result;
         Result curr_union;
