@@ -13,5 +13,5 @@ p <- ggplot(data = dat_2, aes(x = model_filename, y = value, group = variable, f
   facet_grid(. ~ log_filename) +
   theme_bw() +
   labs(x = "Declare Clause", y = "Time (ms)") + 
-  theme(axis.text.x = element_text(angle = 90)) 
+  theme(axis.text.x = element_text(angle = 90))
 p
