@@ -20,12 +20,19 @@ public class SQLMinerServer {
     private static DBMSInterface engine;
 
     public static String getDBName(){
+        loadProperties();
         return dbname;
     }
 
     private static boolean loadProperties() {
         if (properties.isEmpty()) try {
             properties.load(new FileInputStream("conf/postgresql.properties"));
+            engine = DBMSInterfaceFactory.generate(properties.getProperty("engine", "PostgreSQL"));
+            dbname = properties.getProperty("dbname", "ldc");
+            username = properties.getProperty("username", System.getProperty("user.name"));
+            password = properties.getProperty("password", "password");
+            batchSize = Integer.valueOf(properties.getProperty("batchSize", "1000"));
+            log_data_folder = new File(properties.getProperty("log.data.folder", "log/"));
             return true;
         } catch (IOException e) {
             e.printStackTrace();
@@ -40,12 +47,6 @@ public class SQLMinerServer {
      */
     public static Optional<Database> databaseConnection() {
         if (!loadProperties()) return Optional.empty();
-        engine = DBMSInterfaceFactory.generate(properties.getProperty("engine", "PostgreSQL"));
-        dbname = properties.getProperty("dbname", "ldc");
-        username = properties.getProperty("username", System.getProperty("user.name"));
-        password = properties.getProperty("password", "password");
-        batchSize = Integer.valueOf(properties.getProperty("batchSize", "1000"));
-        log_data_folder = new File(properties.getProperty("log.data.folder", "log/"));
         return Database.open(engine, dbname, username, password);
     }
 
