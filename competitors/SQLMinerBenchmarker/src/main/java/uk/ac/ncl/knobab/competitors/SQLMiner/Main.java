@@ -8,44 +8,65 @@ import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Objects;
 
 public class Main {
-    public static void benchmarkSQLMinerQueries(String sqls, int iters) {
+    static String toCamelCase(String s){
+        String[] parts = s.split("_");
+        String camelCaseString = "";
+        for (String part : parts){
+            camelCaseString = camelCaseString + toProperCase(part);
+        }
+        return camelCaseString;
+    }
+
+    static String toProperCase(String s) {
+        return s.substring(0, 1).toUpperCase() +
+                s.substring(1).toLowerCase();
+    }
+
+
+    public static void benchmarkSQLMinerQueries(int ntraces, String sqls, int iters) {
         try {
-            Database db = SQLMinerServer.databaseConnection().get();
-
             File timeFile = new File(SQLMinerServer.getDBName() + "_timings.csv");
-            if (!timeFile.exists()) {
-                timeFile.createNewFile();
+            boolean firstLine = !timeFile.exists();
+            PrintStream fileStream = new PrintStream( new FileOutputStream(timeFile, true));
+            if (firstLine) {
+                fileStream.println("n_traces,model_filename,atomization_conf,query_time");
+                fileStream.flush();
             }
-
-            StringBuilder sb = new StringBuilder();
             File dir = new File(sqls);
 
-            for(String file : dir.list()){
-                System.out.println("Running Query: " + file);
-
-                try {
-                    for (int i = 0; i < iters; ++i) {
-                        System.out.println("Iteration: " + (i + 1));
-                        File test = new File(dir + "/" + file);
-                        ResultSet set = db.rawSqlQueryOpen(test);
-                        set.last();
-                        String part = set.getString(1);
-                        Double d =  Double.parseDouble(part.replaceAll("[^0-9.]", ""));
-                        sb.append(file + ',' + String.valueOf(d) + '\n');
-                        System.out.println("Time: " + d);
+            var ls =
+                    Arrays.asList(Objects.requireNonNull(dir.list()));
+            Collections.reverse(ls);
+            for(String file : ls) {
+                try (Database db = SQLMinerServer.databaseConnection().get()) {
+                    boolean withTraceInfo = file.contains("with_trace_info");
+                    String ModelFilename = toCamelCase(file.replace(".sql","").replace("_with_trace_info", ""));
+                    ModelFilename = ModelFilename.replace("Alternate", "Alt")+"25";
+                    System.out.println(ModelFilename);
+                    String AtomizationConf = withTraceInfo ? "SQLMiner + TraceInfo" : "SQLMiner + Support";
+                    try {
+                        for (int i = 0; i < iters; ++i) {
+                            System.out.println("Iteration: " + (i + 1));
+                            File test = new File(dir + "/" + file);
+                            ResultSet set = db.rawSqlQueryOpen(test);
+                            set.last();
+                            String part = set.getString(1);
+                            Double d =  Double.parseDouble(part.replaceAll("[^0-9.]", ""));
+                            fileStream.println(ntraces + "," + ModelFilename + "," + AtomizationConf + "," + String.valueOf(d));
+                            System.out.println("Time: " + d);
+                        }
+                        fileStream.flush();
+                    } catch (Exception e) {
+                        e.printStackTrace();
                     }
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
-                break;
-            }
-
-            try {
-                Files.write(Paths.get(timeFile.getName()), sb.toString().getBytes(), StandardOpenOption.WRITE);
-            } catch (IOException e) {
-                e.printStackTrace();
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -53,33 +74,8 @@ public class Main {
     }
 
     public static void main(String args[]) throws SQLException {
-        int i = 0;
-        int iters = 1;
-        String sqlQueryDir = "";
-
-        while (i < args.length && args[i].startsWith("-")) {
-            String arg = args[i++];
-
-            if (arg.equals("-queries")) {
-                if (i < args.length) {
-                    sqlQueryDir = args[i++];
-                    System.out.println("declare files = " + sqlQueryDir.toString());
-                } else {
-                    System.err.println("-test requires a directory");
-                }
-            }
-            if (arg.equals("-iterations")) {
-                if (i < args.length) {
-                    iters = Integer.parseInt(args[i++]);
-                }
-            }
-        }
-
-        if(!sqlQueryDir.isEmpty()){
-            benchmarkSQLMinerQueries(sqlQueryDir, iters);
-        }
-        else{
-            SQLMinerServer.loadDATAForSQLMiner();
-        }
+        int iters = 2;
+        String sqlQueryDir = "/home/giacomo/projects/knobab/data/testing/sqlQueries/benchmarking3";
+        benchmarkSQLMinerQueries(1000, sqlQueryDir, iters);
     }
 }

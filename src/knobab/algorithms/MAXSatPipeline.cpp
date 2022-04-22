@@ -174,6 +174,31 @@ void MAXSatPipeline::pipeline(CNFDeclareDataAware* model,
                     std::unordered_map<LTLfQuery*, double> visited;
                     for (size_t i = 0, N = declare_to_query.size(); i<N; i++) { // each declare i
                         const auto &declare = declare_to_query.at(i);
+                        Result localActivations;
+                        local_logic_intersection(qm.activations.at(i), localActivations, false);
+                        if (localActivations.empty()) {
+                            DEBUG_ASSERT(declare->result.empty());
+                            support_per_declare.emplace_back(0);
+                        } else {
+                            auto it2 = visited.emplace(declare, 0);
+                            if (it2.second) {
+                                double numerator = 0.0;
+                                for (const auto& trace : declare->result) {
+                                    if ((!trace.second.second.empty()) && IS_MARKED_EVENT_ACTIVATION(trace.second.second.at(0)))
+                                        numerator += 1.0;
+                                }
+                                it2.first->second = numerator / ((double)kb.noTraces);
+                            }
+                            support_per_declare.emplace_back(it2.first->second);
+                        }
+                    }
+                } break;
+
+
+                case PerDeclareConfidence: {
+                    std::unordered_map<LTLfQuery*, double> visited;
+                    for (size_t i = 0, N = declare_to_query.size(); i<N; i++) { // each declare i
+                        const auto &declare = declare_to_query.at(i);
                         auto& aptr = qm.activations.at(i);
                         if (aptr.empty()) {
                             support_per_declare.emplace_back(declare->result.empty() ? 0 : 1);
