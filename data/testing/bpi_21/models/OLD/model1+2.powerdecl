@@ -1,3 +1,0 @@
-"Response"("A_SUBMITTED", true, "A_ACCEPTED", true)
-"Response"("A_SUBMITTED", true, "A_ACCEPTED", true)
-"Exists1"("__trace__payload", var "AMOUNT_REQ" >= 10000.0, 1)

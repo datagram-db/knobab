@@ -1,0 +1,21 @@
+model_size,atomization_conf,execution_time
+5,Declare Analyzer,12544
+5,Declare Analyzer,12214
+5,Declare Analyzer,12173
+5,Declare Analyzer,12113
+5,Declare Analyzer,12267
+10,Declare Analyzer,13837
+10,Declare Analyzer,14046
+10,Declare Analyzer,14215
+10,Declare Analyzer,14068
+10,Declare Analyzer,14072
+15,Declare Analyzer,15386
+15,Declare Analyzer,15361
+15,Declare Analyzer,15148
+15,Declare Analyzer,15058
+15,Declare Analyzer,15088
+20,Declare Analyzer,17390
+20,Declare Analyzer,17886
+20,Declare Analyzer,17892
+20,Declare Analyzer,17215
+20,Declare Analyzer,17934
