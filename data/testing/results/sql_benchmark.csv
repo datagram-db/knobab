@@ -1,4 +1,4 @@
-n_traces,model_filename,query_type,sql_execution_time,failure
+n_traces,model_filename,atomization_conf,execution_time,failure
 10,Response,SQLMiner + Support,7.288,F
 10,Response,SQLMiner + Support,7.09,F
 10,Response,SQLMiner + Support,7.05,F
