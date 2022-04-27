@@ -132,7 +132,7 @@ void envAfterModelLoad(bool doDebugServer, const std::string &benchmarking_file,
     std::cout << std::endl;
     std::cout << env.experiment_logger << std::endl;
     if (doDebugServer) {
-        env.server(ref);
+        env.server(&ref);
     }
     if (!benchmarking_file.empty()) {
         std::filesystem::path F(benchmarking_file);
