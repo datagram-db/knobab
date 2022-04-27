@@ -1,4 +1,0 @@
-"Response"("A_SUBMITTED", true, "A_ACCEPTED", true)
-"Response"("W_Valideren aanvraag", true, "W_Nabellen incomplete dossiers", true)
-"Response"("O_SELECTED", true, "O_CANCELLED", true)
-"Exists1"("__trace__payload", var "AMOUNT_REQ" >= 10000.0, 1)

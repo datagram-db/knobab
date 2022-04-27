@@ -1,0 +1,241 @@
+n_traces,model_filename,atomization_conf,execution_time,failure
+10,Response,SQLMiner + Support,7.288,F
+10,Response,SQLMiner + Support,7.09,F
+10,Response,SQLMiner + Support,7.05,F
+10,Response,SQLMiner + Support,7.228,F
+10,Response,SQLMiner + Support,6.804,F
+100,Response,SQLMiner + Support,59.488,F
+100,Response,SQLMiner + Support,57.867,F
+100,Response,SQLMiner + Support,57.114,F
+100,Response,SQLMiner + Support,57.115,F
+100,Response,SQLMiner + Support,57.494,F
+1000,Response,SQLMiner + Support,850.329,F
+1000,Response,SQLMiner + Support,715.906,F
+1000,Response,SQLMiner + Support,717.566,F
+1000,Response,SQLMiner + Support,707.217,F
+1000,Response,SQLMiner + Support,716.242,F
+10,Response,SQLMiner + Trace Info,565.229,F
+10,Response,SQLMiner + Trace Info,562.478,F
+10,Response,SQLMiner + Trace Info,558.039,F
+10,Response,SQLMiner + Trace Info,560.732,F
+10,Response,SQLMiner + Trace Info,555.659,F
+100,Response,SQLMiner + Trace Info,7298.855,F
+100,Response,SQLMiner + Trace Info,7002.113,F
+100,Response,SQLMiner + Trace Info,6959.111,F
+100,Response,SQLMiner + Trace Info,6961.416,F
+100,Response,SQLMiner + Trace Info,7153.404,F
+1000,Response,SQLMiner + Trace Info,834937.479,F
+1000,Response,SQLMiner + Trace Info,826778.091,F
+1000,Response,SQLMiner + Trace Info,859065.3,F
+1000,Response,SQLMiner + Trace Info,824610.586,F
+1000,Response,SQLMiner + Trace Info,842840.566,F
+10,Alternate Reponse,SQLMiner + Support,5826.996,F
+10,Alternate Reponse,SQLMiner + Support,5837.454,F
+10,Alternate Reponse,SQLMiner + Support,5778.92,F
+10,Alternate Reponse,SQLMiner + Support,5764.66,F
+10,Alternate Reponse,SQLMiner + Support,6157.328,F
+100,Alternate Reponse,SQLMiner + Support,247944.007,F
+100,Alternate Reponse,SQLMiner + Support,233360.83,F
+100,Alternate Reponse,SQLMiner + Support,206553.589,F
+100,Alternate Reponse,SQLMiner + Support,207405.836,F
+100,Alternate Reponse,SQLMiner + Support,195359.402,F
+1000,Alternate Reponse,SQLMiner + Support,0,T
+1000,Alternate Reponse,SQLMiner + Support,0,T
+1000,Alternate Reponse,SQLMiner + Support,0,T
+1000,Alternate Reponse,SQLMiner + Support,0,T
+1000,Alternate Reponse,SQLMiner + Support,0,T
+10,Alternate Reponse,SQLMiner + Trace Info,1078.759,F
+10,Alternate Reponse,SQLMiner + Trace Info,1072.771,F
+10,Alternate Reponse,SQLMiner + Trace Info,1070.734,F
+10,Alternate Reponse,SQLMiner + Trace Info,1073.07,F
+10,Alternate Reponse,SQLMiner + Trace Info,1060.954,F
+100,Alternate Reponse,SQLMiner + Trace Info,180649.334,F
+100,Alternate Reponse,SQLMiner + Trace Info,195511.992,F
+100,Alternate Reponse,SQLMiner + Trace Info,197780.378,F
+100,Alternate Reponse,SQLMiner + Trace Info,217901.348,F
+100,Alternate Reponse,SQLMiner + Trace Info,203635.576,F
+1000,Alternate Reponse,SQLMiner + Trace Info,17559814.37,F
+1000,Alternate Reponse,SQLMiner + Trace Info,17579243.73,F
+1000,Alternate Reponse,SQLMiner + Trace Info,17705754.97,F
+1000,Alternate Reponse,SQLMiner + Trace Info,17522468.44,F
+1000,Alternate Reponse,SQLMiner + Trace Info,17559185.08,F
+10,Chain Response,SQLMiner + Support,6296.485,F
+10,Chain Response,SQLMiner + Support,6478.606,F
+10,Chain Response,SQLMiner + Support,6460.206,F
+10,Chain Response,SQLMiner + Support,6552.798,F
+10,Chain Response,SQLMiner + Support,6523.749,F
+100,Chain Response,SQLMiner + Support,110278.889,F
+100,Chain Response,SQLMiner + Support,108462.235,F
+100,Chain Response,SQLMiner + Support,109376.353,F
+100,Chain Response,SQLMiner + Support,108670.507,F
+100,Chain Response,SQLMiner + Support,109086.977,F
+1000,Chain Response,SQLMiner + Support,0,T
+1000,Chain Response,SQLMiner + Support,0,T
+1000,Chain Response,SQLMiner + Support,0,T
+1000,Chain Response,SQLMiner + Support,0,T
+1000,Chain Response,SQLMiner + Support,0,T
+10,Chain Response,SQLMiner + Trace Info,1086.067,F
+10,Chain Response,SQLMiner + Trace Info,1091.017,F
+10,Chain Response,SQLMiner + Trace Info,1093.448,F
+10,Chain Response,SQLMiner + Trace Info,1093.249,F
+10,Chain Response,SQLMiner + Trace Info,1086.301,F
+100,Chain Response,SQLMiner + Trace Info,181308.655,F
+100,Chain Response,SQLMiner + Trace Info,184607.934,F
+100,Chain Response,SQLMiner + Trace Info,182464.66,F
+100,Chain Response,SQLMiner + Trace Info,179651.382,F
+100,Chain Response,SQLMiner + Trace Info,179403.327,F
+1000,Chain Response,SQLMiner + Trace Info,17253116.14,F
+1000,Chain Response,SQLMiner + Trace Info,17129309.65,F
+1000,Chain Response,SQLMiner + Trace Info,16761318.97,F
+1000,Chain Response,SQLMiner + Trace Info,16660762.03,F
+1000,Chain Response,SQLMiner + Trace Info,16672630.02,F
+10,Precedence,SQLMiner + Support,23.607,F
+10,Precedence,SQLMiner + Support,21.581,F
+10,Precedence,SQLMiner + Support,21.522,F
+10,Precedence,SQLMiner + Support,21.478,F
+10,Precedence,SQLMiner + Support,21.479,F
+100,Precedence,SQLMiner + Support,53.501,F
+100,Precedence,SQLMiner + Support,53.326,F
+100,Precedence,SQLMiner + Support,53.207,F
+100,Precedence,SQLMiner + Support,52.955,F
+100,Precedence,SQLMiner + Support,53.315,F
+1000,Precedence,SQLMiner + Support,738.266,F
+1000,Precedence,SQLMiner + Support,737.878,F
+1000,Precedence,SQLMiner + Support,737.44,F
+1000,Precedence,SQLMiner + Support,737.027,F
+1000,Precedence,SQLMiner + Support,715.976,F
+10,Precedence,SQLMiner + Trace Info,329.882,F
+10,Precedence,SQLMiner + Trace Info,329.243,F
+10,Precedence,SQLMiner + Trace Info,329.945,F
+10,Precedence,SQLMiner + Trace Info,331.735,F
+10,Precedence,SQLMiner + Trace Info,332.303,F
+100,Precedence,SQLMiner + Trace Info,2900.427,F
+100,Precedence,SQLMiner + Trace Info,2913.482,F
+100,Precedence,SQLMiner + Trace Info,2892.281,F
+100,Precedence,SQLMiner + Trace Info,2875.029,F
+100,Precedence,SQLMiner + Trace Info,2893.949,F
+1000,Precedence,SQLMiner + Trace Info,239728.824,F
+1000,Precedence,SQLMiner + Trace Info,244426.653,F
+1000,Precedence,SQLMiner + Trace Info,240794.677,F
+1000,Precedence,SQLMiner + Trace Info,260014.062,F
+1000,Precedence,SQLMiner + Trace Info,248308.772,F
+10,Alternate Precedence,SQLMiner + Support,5764.501,F
+10,Alternate Precedence,SQLMiner + Support,5850.425,F
+10,Alternate Precedence,SQLMiner + Support,5990.697,F
+10,Alternate Precedence,SQLMiner + Support,5775.808,F
+10,Alternate Precedence,SQLMiner + Support,5955.127,F
+100,Alternate Precedence,SQLMiner + Support,192025.561,F
+100,Alternate Precedence,SQLMiner + Support,200412.947,F
+100,Alternate Precedence,SQLMiner + Support,192532.53,F
+100,Alternate Precedence,SQLMiner + Support,196850.855,F
+100,Alternate Precedence,SQLMiner + Support,198281.986,F
+1000,Alternate Precedence,SQLMiner + Support,0,T
+1000,Alternate Precedence,SQLMiner + Support,0,T
+1000,Alternate Precedence,SQLMiner + Support,0,T
+1000,Alternate Precedence,SQLMiner + Support,0,T
+1000,Alternate Precedence,SQLMiner + Support,0,T
+10,Alternate Precedence,SQLMiner + Trace Info,548.694,F
+10,Alternate Precedence,SQLMiner + Trace Info,540.513,F
+10,Alternate Precedence,SQLMiner + Trace Info,542.249,F
+10,Alternate Precedence,SQLMiner + Trace Info,541,F
+10,Alternate Precedence,SQLMiner + Trace Info,541.729,F
+100,Alternate Precedence,SQLMiner + Trace Info,5873.245,F
+100,Alternate Precedence,SQLMiner + Trace Info,5885.042,F
+100,Alternate Precedence,SQLMiner + Trace Info,5745.695,F
+100,Alternate Precedence,SQLMiner + Trace Info,5861.664,F
+100,Alternate Precedence,SQLMiner + Trace Info,5833.181,F
+1000,Alternate Precedence,SQLMiner + Trace Info,683026.225,F
+1000,Alternate Precedence,SQLMiner + Trace Info,657537.853,F
+1000,Alternate Precedence,SQLMiner + Trace Info,657793.816,F
+1000,Alternate Precedence,SQLMiner + Trace Info,654403.756,F
+1000,Alternate Precedence,SQLMiner + Trace Info,654916.342,F
+10,Chain Precedence,SQLMiner + Support,4510.693,F
+10,Chain Precedence,SQLMiner + Support,4520.614,F
+10,Chain Precedence,SQLMiner + Support,4480.82,F
+10,Chain Precedence,SQLMiner + Support,4503.83,F
+10,Chain Precedence,SQLMiner + Support,4563.068,F
+100,Chain Precedence,SQLMiner + Support,101510.575,F
+100,Chain Precedence,SQLMiner + Support,108059.015,F
+100,Chain Precedence,SQLMiner + Support,111857.154,F
+100,Chain Precedence,SQLMiner + Support,107787.234,F
+100,Chain Precedence,SQLMiner + Support,109920.662,F
+1000,Chain Precedence,SQLMiner + Support,0,T
+1000,Chain Precedence,SQLMiner + Support,0,T
+1000,Chain Precedence,SQLMiner + Support,0,T
+1000,Chain Precedence,SQLMiner + Support,0,T
+1000,Chain Precedence,SQLMiner + Support,0,T
+10,Chain Precedence,SQLMiner + Trace Info,478.199,F
+10,Chain Precedence,SQLMiner + Trace Info,475.461,F
+10,Chain Precedence,SQLMiner + Trace Info,474.332,F
+10,Chain Precedence,SQLMiner + Trace Info,480.979,F
+10,Chain Precedence,SQLMiner + Trace Info,476.008,F
+100,Chain Precedence,SQLMiner + Trace Info,4931.858,F
+100,Chain Precedence,SQLMiner + Trace Info,4897.72,F
+100,Chain Precedence,SQLMiner + Trace Info,4971.658,F
+100,Chain Precedence,SQLMiner + Trace Info,5019.234,F
+100,Chain Precedence,SQLMiner + Trace Info,5035.212,F
+1000,Chain Precedence,SQLMiner + Trace Info,584616.262,F
+1000,Chain Precedence,SQLMiner + Trace Info,567082.512,F
+1000,Chain Precedence,SQLMiner + Trace Info,583958.63,F
+1000,Chain Precedence,SQLMiner + Trace Info,563305.287,F
+1000,Chain Precedence,SQLMiner + Trace Info,544708.279,F
+10,Responded Existence,SQLMiner + Support,6.206,F
+10,Responded Existence,SQLMiner + Support,6.408,F
+10,Responded Existence,SQLMiner + Support,6.432,F
+10,Responded Existence,SQLMiner + Support,6.325,F
+10,Responded Existence,SQLMiner + Support,6.141,F
+100,Responded Existence,SQLMiner + Support,35.608,F
+100,Responded Existence,SQLMiner + Support,35.188,F
+100,Responded Existence,SQLMiner + Support,35.447,F
+100,Responded Existence,SQLMiner + Support,35.081,F
+100,Responded Existence,SQLMiner + Support,35.131,F
+1000,Responded Existence,SQLMiner + Support,520.568,F
+1000,Responded Existence,SQLMiner + Support,498.118,F
+1000,Responded Existence,SQLMiner + Support,500.41,F
+1000,Responded Existence,SQLMiner + Support,496.685,F
+1000,Responded Existence,SQLMiner + Support,498.374,F
+10,Responded Existence,SQLMiner + Trace Info,394.971,F
+10,Responded Existence,SQLMiner + Trace Info,389.404,F
+10,Responded Existence,SQLMiner + Trace Info,387.062,F
+10,Responded Existence,SQLMiner + Trace Info,386.797,F
+10,Responded Existence,SQLMiner + Trace Info,387.032,F
+100,Responded Existence,SQLMiner + Trace Info,2331.093,F
+100,Responded Existence,SQLMiner + Trace Info,2103.396,F
+100,Responded Existence,SQLMiner + Trace Info,2096.601,F
+100,Responded Existence,SQLMiner + Trace Info,2172.086,F
+100,Responded Existence,SQLMiner + Trace Info,2168.561,F
+1000,Responded Existence,SQLMiner + Trace Info,243338.234,F
+1000,Responded Existence,SQLMiner + Trace Info,236601.155,F
+1000,Responded Existence,SQLMiner + Trace Info,243950.204,F
+1000,Responded Existence,SQLMiner + Trace Info,234164.497,F
+1000,Responded Existence,SQLMiner + Trace Info,232851.212,F
+10,Not Succession,SQLMiner + Support,462.578,F
+10,Not Succession,SQLMiner + Support,446.307,F
+10,Not Succession,SQLMiner + Support,446.062,F
+10,Not Succession,SQLMiner + Support,447.098,F
+10,Not Succession,SQLMiner + Support,451.839,F
+100,Not Succession,SQLMiner + Support,2331.093,F
+100,Not Succession,SQLMiner + Support,2103.396,F
+100,Not Succession,SQLMiner + Support,2096.601,F
+100,Not Succession,SQLMiner + Support,2172.086,F
+100,Not Succession,SQLMiner + Support,2168.561,F
+1000,Not Succession,SQLMiner + Support,651330.434,F
+1000,Not Succession,SQLMiner + Support,663379.427,F
+1000,Not Succession,SQLMiner + Support,653513.065,F
+1000,Not Succession,SQLMiner + Support,621377.545,F
+1000,Not Succession,SQLMiner + Support,654544.098,F
+10,Not Succession,SQLMiner + Trace Info,486.404,F
+10,Not Succession,SQLMiner + Trace Info,474.936,F
+10,Not Succession,SQLMiner + Trace Info,474.803,F
+10,Not Succession,SQLMiner + Trace Info,475.82,F
+10,Not Succession,SQLMiner + Trace Info,474.163,F
+100,Not Succession,SQLMiner + Trace Info,2331.093,F
+100,Not Succession,SQLMiner + Trace Info,2103.396,F
+100,Not Succession,SQLMiner + Trace Info,2096.601,F
+100,Not Succession,SQLMiner + Trace Info,2172.086,F
+100,Not Succession,SQLMiner + Trace Info,2168.561,F
+1000,Not Succession,SQLMiner + Trace Info,235911.428,F
+1000,Not Succession,SQLMiner + Trace Info,278469.846,F
+1000,Not Succession,SQLMiner + Trace Info,254605.462,F
+1000,Not Succession,SQLMiner + Trace Info,239839.401,F
+1000,Not Succession,SQLMiner + Trace Info,257999.32,F
