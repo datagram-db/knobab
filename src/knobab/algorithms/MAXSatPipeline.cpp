@@ -173,6 +173,31 @@ void MAXSatPipeline::pipeline(CNFDeclareDataAware* model,
                     std::unordered_map<LTLfQuery*, double> visited;
                     for (size_t i = 0, N = declare_to_query.size(); i<N; i++) { // each declare i
                         const auto &declare = declare_to_query.at(i);
+                        Result localActivations;
+                        local_logic_intersection(qm.activations.at(i), localActivations, false);
+                        if (localActivations.empty()) {
+                            DEBUG_ASSERT(declare->result.empty());
+                            support_per_declare.emplace_back(0);
+                        } else {
+                            auto it2 = visited.emplace(declare, 0);
+                            if (it2.second) {
+                                double numerator = 0.0;
+                                for (const auto& trace : declare->result) {
+                                    if ((!trace.second.second.empty()) && IS_MARKED_EVENT_ACTIVATION(trace.second.second.at(0)))
+                                        numerator += 1.0;
+                                }
+                                it2.first->second = numerator / ((double)kb.noTraces);
+                            }
+                            support_per_declare.emplace_back(it2.first->second);
+                        }
+                    }
+                } break;
+
+
+                case PerDeclareConfidence: {
+                    std::unordered_map<LTLfQuery*, double> visited;
+                    for (size_t i = 0, N = declare_to_query.size(); i<N; i++) { // each declare i
+                        const auto &declare = declare_to_query.at(i);
                         auto& aptr = qm.activations.at(i);
                         if (aptr.empty()) {
                             support_per_declare.emplace_back(declare->result.empty() ? 0 : 1);
@@ -243,6 +268,44 @@ void MAXSatPipeline::pipeline(CNFDeclareDataAware* model,
 
 }
 
+static inline label_set_t localAtomUniverse(DeclareDataAware& item, const AtomizingPipeline& pipeline) {
+    label_set_t set;
+    if (!item.left_decomposed_atoms.contains(item.left_act)) {
+        // Decoposed atom into components!
+        std::pair<std::string, size_t> cp;         // Just a copy object for the query
+        cp.first = item.left_act;
+        for (size_t i = 0, N = pipeline.max_ctam_iteration.at(cp.first); i<N; i++) {
+            cp.second = i;                     // cp = <Event Label, Offset>
+            set.insert(pipeline.clause_to_atomization_map.at(cp));
+        }
+    } else {
+        set.insert(item.left_act);
+    }
+
+    if (!item.right_act.empty()) {
+        // binary declare clauses
+        if (!item.right_decomposed_atoms.contains(item.right_act)) {
+            // Decoposed atom into components!
+            std::pair<std::string, size_t> cp;         // Just a copy object for the query
+            cp.first = item.right_act;
+            for (size_t i = 0, N = pipeline.max_ctam_iteration.at(cp.first); i<N; i++) {
+                cp.second = i;                     // cp = <Event Label, Offset>
+                set.insert(pipeline.clause_to_atomization_map.at(cp));
+            }
+        } else {
+            set.insert(item.right_act);
+        }
+    }
+
+
+    for (const auto& x : pipeline.act_atoms) {
+        if ((x != item.left_act) && (x != item.right_act)) {
+            set.insert(x);
+        }
+    }
+    return set;
+}
+
 void MAXSatPipeline::data_chunk(CNFDeclareDataAware *model,
                                 const AtomizingPipeline& atomization,
                                 const KnowledgeBase& kb) {
@@ -280,7 +343,7 @@ void MAXSatPipeline::data_chunk(CNFDeclareDataAware *model,
                                              maxFormulaId,
                                              it2->second,
                                              item.isTruth() ? nullptr : (const DeclareDataAware *) &item,
-                                             atomization.atom_universe,
+                                             (item.dnf_left_map.empty() && item.dnf_right_map.empty()) ? atomization.act_atoms : localAtomUniverse(item, atomization),
                                              item.left_decomposed_atoms,
                                              item.right_decomposed_atoms,
                                              toUseAtoms,
@@ -915,16 +978,16 @@ void MAXSatPipeline::abidinglogic_query_running(const std::vector<PartialResult>
 
         // Clearing the caches, so to free potentially unrequired memory for the next computational steps
         // This might help save some memory in big-data scenarios
-        PARALLELIZE_LOOP_BEGIN(pool, 0, it->second.size(), lb, ub)
-        for (size_t j = lb; j < ub; j++) {
-            auto formula = it->second.at(j);
-            for (auto ptr : formula->args) {
-                // Preserving the cache only if I need it for computing the Support
-                if (ptr->parentMin == idx && (((final_ensemble != PerDeclareSupport) || (ptr->isLeaf != ActivationLeaf))))
-                    ptr->result.clear();
-            }
-        }
-        PARALLELIZE_LOOP_END
+//        PARALLELIZE_LOOP_BEGIN(pool, 0, it->second.size(), lb, ub)
+//        for (size_t j = lb; j < ub; j++) {
+//            auto formula = it->second.at(j);
+//            for (auto ptr : formula->args) {
+//                // Preserving the cache only if I need it for computing the Support
+//                if (ptr->parentMin == idx && (((final_ensemble != PerDeclareSupport) || (ptr->isLeaf != ActivationLeaf))))
+//                    ptr->result.clear();
+//            }
+//        }
+//        PARALLELIZE_LOOP_END
         idx--;
     }
 }

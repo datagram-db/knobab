@@ -53,6 +53,8 @@ semantic_atom_set evaluate_easy_prop_to_atoms(const easy_prop &prop,
 struct Environment {
     /// Creating an instance of the knowledge base, that is going to store all the traces in the log!
 
+    const uint16_t PORT_NUM = 8080;
+    const std::string HOST = "localhost";
     bool doStats = true;
     KnowledgeBase db;
     AtomizingPipeline ap;
@@ -73,8 +75,7 @@ struct Environment {
 
     //std::unordered_map<DeclareDataAware, FlexibleFA<size_t, std::string>> pattern_graph;
 
-    void server(MAXSatPipeline& pipeline);
-    void server();
+    void server(const MAXSatPipeline* pipeline = nullptr);
 
     void dump_log_for_sqlminer(const std::string &basicString);
 

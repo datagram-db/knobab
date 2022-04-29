@@ -1,5 +1,0 @@
-"Response"("A_SUBMITTED", true, "A_ACCEPTED", true)
-"Response"("W_Valideren aanvraag", true, "W_Nabellen incomplete dossiers", true)
-"Response"("O_SELECTED", true, "O_CANCELLED", true)
-"Response"("W_Valideren aanvraag", true, "W_Nabellen offertes", true)
-"Response"("A_PARTLYSUBMITTED", true, "A_DECLINED", true)

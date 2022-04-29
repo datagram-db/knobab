@@ -1,0 +1,30 @@
+"Response"("A_SUBMITTED", true, "A_ACCEPTED", true)
+"Response"("A_SUBMITTED", true, "A_ACCEPTED", true)
+"Exists1"("__trace__payload", var "AMOUNT_REQ" >= 10000.0, 1)
+"Response"("A_SUBMITTED", true, "A_ACCEPTED", true)
+"Exists1"("__trace__payload", var "AMOUNT_REQ" < 10000.0, 1)
+"Response"("A_SUBMITTED", true, "A_ACCEPTED", true) where var "org:resource" = var "org:resource"
+"Response"("A_SUBMITTED", true, "A_ACCEPTED", true) where var "org:resource" != var "org:resource"
+"Response"("W_Completeren aanvraag", true, "W_Valideren aanvraag", true) 
+"Response"("W_Valideren aanvraag", true, "O_CANCELLED",  true) 
+"Response"("W_Completeren aanvraag", true, "W_Valideren aanvraag", true) where var "org:resource" != var "org:resource"
+"Response"("W_Valideren aanvraag", true, "O_CANCELLED", true) 
+"Exists1"("__trace__payload", var "AMOUNT_REQ" = 5000.0, 1)
+"Response"("W_Valideren aanvraag", true, "O_CANCELLED",  true) where var "org:resource" = var "org:resource"
+"Exists1"("__trace__payload", var "AMOUNT_REQ" = 5000.0, 1)
+"Response"("O_SELECTED", true, "O_CANCELLED",  true)
+"Response"("O_SELECTED", true, "O_CANCELLED",  true) where var "org:resource" = var "org:resource"
+"Response"("O_SELECTED", true, "O_CANCELLED",  true) 
+"Exists1"("__trace__payload", var "AMOUNT_REQ" < 8000.0, 1)
+"Response"("O_SELECTED", true, "O_CANCELLED",  true) where var "org:resource" = var "org:resource"
+"Exists1"("__trace__payload", var "AMOUNT_REQ" < 8000.0, 1)
+"Response"("O_SELECTED", true, "O_CANCELLED",  true) where var "org:resource" != var "org:resource"
+"Exists1"("__trace__payload", var "AMOUNT_REQ" > 10000.0, 1)
+"Response"("A_PARTLYSUBMITTED", true, "A_DECLINED", true) 
+"Response"("A_PARTLYSUBMITTED", true, "A_DECLINED", true) where var "org:resource" = var "org:resource"
+"Response"("A_PARTLYSUBMITTED", true, "A_DECLINED", true) 
+"Exists1"("__trace__payload", var "AMOUNT_REQ" > 20000.0, 1)
+"Response"("A_PARTLYSUBMITTED", true, "O_CANCELLED", true) 
+"Exists1"("__trace__payload", var "AMOUNT_REQ" > 20000.0, 1)
+"Response"("A_PARTLYSUBMITTED", true, "A_DECLINED", true) where var "org:resource" = var "org:resource"
+"Exists1"("__trace__payload", var "AMOUNT_REQ" > 20000.0, 1)

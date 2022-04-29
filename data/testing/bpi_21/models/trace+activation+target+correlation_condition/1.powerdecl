@@ -1,2 +1,0 @@
-"Response"("A_SUBMITTED", var "lifecycle:transition" = "COMPLETE", "A_ACCEPTED", var "lifecycle:transition" = "COMPLETE") where var "org:resource" = var "org:resource"
-"Exists1"("__trace__payload", var "AMOUNT_REQ" >= 10000.0, 1)
