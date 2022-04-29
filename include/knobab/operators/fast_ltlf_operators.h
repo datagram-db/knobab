@@ -488,6 +488,7 @@ inline void negated_fast_untimed(const Result &section, Result& result, const st
                 rc.first.first = first1++;
                 result.emplace_back(rc);
             }
+            break;
         }
         if (first1 > first2->first.first) {
             first2++;
@@ -515,6 +516,7 @@ inline void negated_fast_timed(const Result &section, Result& result, const std:
                     rc.first.second = 0;
                 }
             }
+            break;
         }
         if (rc.first > first2->first) {
             first2++;

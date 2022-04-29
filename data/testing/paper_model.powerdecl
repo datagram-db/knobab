@@ -18,5 +18,5 @@
  * along with bpm21. If not, see <http://www.gnu.org/licenses/>.
  */
 "Response"("A", var "x" > 5.0, "B", var "y" < 0.0)
-"Init"("A", var "x" > 5.0, 1)
+"Succession"("A", var "x" > 5.0, "B", var "y" < 0.0)
 "Choice"("A", true, "B", var "y" < 0.0) where var "x" < var "y"
