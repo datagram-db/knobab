@@ -75,7 +75,8 @@ public class Main {
 
     public static void main(String args[]) throws SQLException {
         int iters = 2;
-        String sqlQueryDir = "/home/giacomo/projects/knobab/data/testing/sqlQueries/benchmarking3";
-        benchmarkSQLMinerQueries(1000, sqlQueryDir, iters);
+        //String sqlQueryDir = "/home/giacomo/projects/knobab/data/testing/sqlQueries/benchmarking3";
+        String sqlQueryDir = "data/testing/sqlQueries/benchmarking2";
+        benchmarkSQLMinerQueries(10, sqlQueryDir, iters);
     }
 }
