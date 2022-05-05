@@ -45,3 +45,4 @@ n_traces,model_filename,mode_size,atomization_conf,execution_time,failure
 1000,Response,25,SQLMiner + TraceInfo,833602.3
 1000,Response,25,SQLMiner + TraceInfo,830895.531
 1000,AltResponse,25,SQLMiner + TraceInfo,1.8056899495E7
+1000,AltResponse,25,SQLMiner + TraceInfo,1.8125615304E7
