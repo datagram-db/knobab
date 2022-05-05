@@ -1,5 +1,6 @@
 package uk.ac.ncl.knobab.competitors.SQLMiner;
 
+import org.jooq.Table;
 import uk.ac.ncl.knobab.competitors.SQLMiner.dbloader.tmpORM.withReflection.dbms.Database;
 
 import java.io.*;
@@ -8,9 +9,7 @@ import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Objects;
+import java.util.*;
 
 public class Main {
     static String toCamelCase(String s){
@@ -34,19 +33,23 @@ public class Main {
             boolean firstLine = !timeFile.exists();
             PrintStream fileStream = new PrintStream( new FileOutputStream(timeFile, true));
             if (firstLine) {
-                fileStream.println("n_traces,model_filename,atomization_conf,query_time");
+                fileStream.println("n_traces,model_filename,mode_size,atomization_conf,execution_time,failure");
                 fileStream.flush();
             }
             File dir = new File(sqls);
 
-            var ls =
+            List<String> ls =
                     Arrays.asList(Objects.requireNonNull(dir.list()));
-            Collections.reverse(ls);
+            Collections.sort(ls);
             for(String file : ls) {
                 try (Database db = SQLMinerServer.databaseConnection().get()) {
+                    File model_size = new File("/home/samuelappleby/Documents/CodeBases/knobab/data/testing/sqlQueries/model_size.sql");
+                    ResultSet rs = db.rawSqlQueryOpen(model_size);
+                    rs.last();
+
                     boolean withTraceInfo = file.contains("with_trace_info");
                     String ModelFilename = toCamelCase(file.replace(".sql","").replace("_with_trace_info", ""));
-                    ModelFilename = ModelFilename.replace("Alternate", "Alt")+"25";
+                    ModelFilename = ModelFilename.replace("Alternate", "Alt");
                     System.out.println(ModelFilename);
                     String AtomizationConf = withTraceInfo ? "SQLMiner + TraceInfo" : "SQLMiner + Support";
                     try {
@@ -57,7 +60,7 @@ public class Main {
                             set.last();
                             String part = set.getString(1);
                             Double d =  Double.parseDouble(part.replaceAll("[^0-9.]", ""));
-                            fileStream.println(ntraces + "," + ModelFilename + "," + AtomizationConf + "," + String.valueOf(d));
+                            fileStream.println(ntraces + "," + ModelFilename + "," + rs.getRow() + "," + AtomizationConf + "," + String.valueOf(d));
                             System.out.println("Time: " + d);
                         }
                         fileStream.flush();
@@ -74,9 +77,9 @@ public class Main {
     }
 
     public static void main(String args[]) throws SQLException {
-        int iters = 2;
+        int iters = 5;
         //String sqlQueryDir = "/home/giacomo/projects/knobab/data/testing/sqlQueries/benchmarking3";
-        String sqlQueryDir = "data/testing/sqlQueries/benchmarking2";
-        benchmarkSQLMinerQueries(10, sqlQueryDir, iters);
+        String sqlQueryDir = "/home/samuelappleby/Documents/CodeBases/knobab/data/testing/sqlQueries/benchmarking_trace_info";
+        benchmarkSQLMinerQueries(1000, sqlQueryDir, iters);
     }
 }
