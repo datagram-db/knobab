@@ -20,7 +20,7 @@ sqltimings <- read.csv(file = 'C:/Users/Sam/Documents/Repositories/Codebases/kno
 sqltimings <- aggregate(list(execution_time = sqltimings$execution_time),
                         by=list(n_traces=sqltimings$n_traces,model_filename=sqltimings$model_filename,atomization_conf=sqltimings$atomization_conf,failure=sqltimings$failure),data=sqltimings,FUN=mean)
 
-validsqltimings <- subset(sqltimings, select = c(atomization_conf,n_traces,model_filename,execution_time), failure=="FALSE")
+validsqltimings <- subset(sqltimings, select = c(atomization_conf,n_traces,model_filename,execution_time), failure==0)
 
 validsqltimings$failure <- NULL
 

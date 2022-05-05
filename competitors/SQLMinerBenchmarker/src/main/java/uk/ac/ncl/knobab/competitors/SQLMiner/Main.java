@@ -9,6 +9,7 @@ import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Timestamp;
 import java.util.*;
 
 public class Main {
@@ -52,19 +53,27 @@ public class Main {
                     ModelFilename = ModelFilename.replace("Alternate", "Alt");
                     System.out.println(ModelFilename);
                     String AtomizationConf = withTraceInfo ? "SQLMiner + TraceInfo" : "SQLMiner + Support";
+                    Timestamp startTS = null, endTS = null;
                     try {
                         for (int i = 0; i < iters; ++i) {
-                            System.out.println("Iteration: " + (i + 1));
+                            startTS = new Timestamp(System.currentTimeMillis());
+                            System.out.println("Iteration: " + (i + 1) + " Start: " + startTS);
                             File test = new File(dir + "/" + file);
                             ResultSet set = db.rawSqlQueryOpen(test);
+                            endTS = new Timestamp(System.currentTimeMillis());
                             set.last();
                             String part = set.getString(1);
                             Double d =  Double.parseDouble(part.replaceAll("[^0-9.]", ""));
                             fileStream.println(ntraces + "," + ModelFilename + "," + rs.getRow() + "," + AtomizationConf + "," + String.valueOf(d));
-                            System.out.println("Time: " + d);
+                            System.out.println("Time: " + d + " End: " + endTS);
+                            long diff  = endTS.getTime() - startTS.getTime();
+                            System.out.println("Diff: " + diff);
                         }
                         fileStream.flush();
                     } catch (Exception e) {
+                        endTS = new Timestamp(System.currentTimeMillis());
+                        long diff  = endTS.getTime() - startTS.getTime();
+                        System.out.println("Failed after: " + diff);
                         e.printStackTrace();
                     }
                 } catch (Exception e) {

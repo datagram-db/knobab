@@ -46,3 +46,8 @@ n_traces,model_filename,mode_size,atomization_conf,execution_time,failure
 1000,Response,25,SQLMiner + TraceInfo,830895.531
 1000,AltResponse,25,SQLMiner + TraceInfo,1.8056899495E7
 1000,AltResponse,25,SQLMiner + TraceInfo,1.8125615304E7
+1000,ChainPrecedence,25,SQLMiner + TraceInfo,552999.149
+1000,ChainPrecedence,25,SQLMiner + TraceInfo,569841.383
+1000,ChainPrecedence,25,SQLMiner + TraceInfo,590637.16
+1000,ChainPrecedence,25,SQLMiner + TraceInfo,696035.621
+1000,ChainPrecedence,25,SQLMiner + TraceInfo,692239.812
