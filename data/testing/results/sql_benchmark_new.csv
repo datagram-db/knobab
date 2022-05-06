@@ -177,7 +177,7 @@ n_traces,model_filename,model_size,atomization_conf,execution_time,failure_time
 1000,ChainResponse,25,SQLMiner + TraceInfo,19351961.917,0
 1000,ChainResponse,25,SQLMiner + TraceInfo,18196108.195,0
 1000,ChainResponse,25,SQLMiner + TraceInfo,18176108.225,0
-1000,ChainResponse,25,SQLMiner + TraceInfo,,0
+1000,ChainResponse,25,SQLMiner + TraceInfo,19090893.725,0
 1000,ChainResponse,25,SQLMiner + TraceInfo,,0
 10,NotSuccession,25,SQLMiner + TraceInfo,528.614,0
 10,NotSuccession,25,SQLMiner + TraceInfo,461.522,0
