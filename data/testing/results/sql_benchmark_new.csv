@@ -146,8 +146,8 @@ n_traces,model_filename,model_size,atomization_conf,execution_time,failure_time
 100,AltResponse,25,SQLMiner + TraceInfo,176348.648,0
 1000,AltResponse,25,SQLMiner + TraceInfo,18056899.495,0
 1000,AltResponse,25,SQLMiner + TraceInfo,18125615.304,0
-1000,AltResponse,25,SQLMiner + TraceInfo,,0
-1000,AltResponse,25,SQLMiner + TraceInfo,,0
+1000,AltResponse,25,SQLMiner + TraceInfo,17611652.422,0
+1000,AltResponse,25,SQLMiner + TraceInfo,17360936.549,0
 1000,AltResponse,25,SQLMiner + TraceInfo,,0
 10,ChainPrecedence,25,SQLMiner + TraceInfo,518.128,0
 10,ChainPrecedence,25,SQLMiner + TraceInfo,464.05,0
@@ -178,7 +178,7 @@ n_traces,model_filename,model_size,atomization_conf,execution_time,failure_time
 1000,ChainResponse,25,SQLMiner + TraceInfo,18196108.195,0
 1000,ChainResponse,25,SQLMiner + TraceInfo,18176108.225,0
 1000,ChainResponse,25,SQLMiner + TraceInfo,19090893.725,0
-1000,ChainResponse,25,SQLMiner + TraceInfo,,0
+1000,ChainResponse,25,SQLMiner + TraceInfo,16681291.94,0
 10,NotSuccession,25,SQLMiner + TraceInfo,528.614,0
 10,NotSuccession,25,SQLMiner + TraceInfo,461.522,0
 10,NotSuccession,25,SQLMiner + TraceInfo,461.336,0
