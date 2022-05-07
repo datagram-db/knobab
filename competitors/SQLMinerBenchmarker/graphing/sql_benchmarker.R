@@ -1,10 +1,11 @@
 library(ggplot2)
 library(reshape2)
 library(reshape)
+library(dplyr)
 
 setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 
-knoababtimings <- read.csv(file = 'C:/Users/Sam/Documents/Repositories/Codebases/knobab/data/testing/results/knobab_sql_benchmark.csv')
+knoababtimings <- read.csv(file = '/home/samuelappleby/Documents/CodeBases/knobab/data/testing/results/knobab_sql_benchmark.csv')
 
 knoababtimings$execution_time <- knoababtimings$model_data_decomposition_time + knoababtimings$model_atomization_time + knoababtimings$model_declare_to_ltlf + knoababtimings$model_ltlf_query_time
 
@@ -15,7 +16,7 @@ knoababtimings <- aggregate(list(execution_time = knoababtimings$execution_time)
 
 knobabdf <- as.data.frame(melt(knoababtimings, id.vars = c("n_traces", "model_filename", "atomization_conf","execution_time")))
 
-sqltimings <- read.csv(file = 'C:/Users/Sam/Documents/Repositories/Codebases/knobab/data/testing/results/sql_benchmark.csv')
+sqltimings <- read.csv(file = '/home/samuelappleby/Documents/CodeBases/knobab/data/testing/results/sql_benchmark.csv')
 
 sqltimings <- aggregate(list(execution_time = sqltimings$execution_time),
                         by=list(n_traces=sqltimings$n_traces,model_filename=sqltimings$model_filename,atomization_conf=sqltimings$atomization_conf,failure=sqltimings$failure),data=sqltimings,FUN=mean)
