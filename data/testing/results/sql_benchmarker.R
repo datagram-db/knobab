@@ -2,10 +2,11 @@ library(ggplot2)
 library(reshape2)
 library(reshape)
 library(dplyr)
+library(scales)
 
 setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 
-knoababtimings <- read.csv(file = '/home/samuelappleby/Documents/CodeBases/knobab/data/testing/results/knobab_sql_benchmark.csv')
+knoababtimings <- read.csv(file = 'knobab_sql_benchmark.csv')
 
 knoababtimings$execution_time <- knoababtimings$model_data_decomposition_time + knoababtimings$model_atomization_time + knoababtimings$model_declare_to_ltlf + knoababtimings$model_ltlf_query_time
 
@@ -16,7 +17,7 @@ knoababtimings <- aggregate(list(execution_time = knoababtimings$execution_time)
 
 knobabdf <- as.data.frame(melt(knoababtimings, id.vars = c("n_traces", "model_filename", "atomization_conf","execution_time")))
 
-sqltimings <- read.csv(file = '/home/samuelappleby/Documents/CodeBases/knobab/data/testing/results/sql_benchmark.csv')
+sqltimings <- read.csv(file = 'sql_benchmark.csv')
 
 sqltimings <- aggregate(list(execution_time = sqltimings$execution_time),
                         by=list(n_traces=sqltimings$n_traces,model_filename=sqltimings$model_filename,atomization_conf=sqltimings$atomization_conf,failure=sqltimings$failure),data=sqltimings,FUN=mean)
@@ -32,8 +33,9 @@ ggplot(aes(x=n_traces, y=execution_time), group=atomization_conf) +
   geom_line(aes(color=atomization_conf)) +
   geom_point(aes(color=atomization_conf)) +
   facet_wrap( ~ model_filename, nrow=2, ncol=4) +
-  labs(x = "Log Size", y = "Time (ms)") + 
+  labs(x = "Log", y = "Time (ms)") + 
   scale_y_continuous(trans='log10') + 
-  scale_x_continuous(trans='log10') + 
-  theme(legend.position="bottom") + 
+  scale_x_continuous(trans='log10',labels=c("b10","b100","b1000"),
+                     breaks=c(10,100,1000)) + 
+  theme(legend.position="bottom", axis.text.x = element_text(hjust = 0.5)) + 
   labs(color="")
