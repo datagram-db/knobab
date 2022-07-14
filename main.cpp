@@ -58,7 +58,7 @@ void whole_testing(const std::string& log_file = "data/testing/log.txt",
         if (topN > 0) {
             auto model = env.generateTopBinaryClauses(template_name, topN, !sqlminer_dump_dir.empty());
             std::cout << "Loading generated declarative model " << model << std::endl;
-            env.load_model(model.begin(), model.end(), template_name + std::to_string(topN * topN));
+            env.load_model(model.begin(), model.end(), template_name);
             envAfterModelLoad(doDebugServer, benchmarking_file, atomization_file, maxsat, env);
         } else {
             for (const auto& declare_file_string : declare_files) {
