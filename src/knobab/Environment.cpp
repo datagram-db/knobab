@@ -100,7 +100,7 @@ void Environment::load_log(log_data_format format, bool loadData, const std::str
 
 
     experiment_logger.n_traces = db.noTraces;
-    experiment_logger.n_acts = db.actId;
+    experiment_logger.n_acts = db.event_label_mapper.int_to_T.size();
     // Compute some more trace statistics
 
     double trace_avg, trace_pow2, N;
