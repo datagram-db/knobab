@@ -23,7 +23,7 @@ MAXSatPipeline::MAXSatPipeline(const std::string& plan_file, const std::string& 
     if (it == dqlp.planname_to_declare_to_ltlf.end()) {
         throw std::runtime_error(plan+": the plan is missing from the script file!");
     }
-    ptr = &it->second;
+    xtLTLfTemplates = &it->second;
 }
 
 void MAXSatPipeline::clear() {
@@ -280,22 +280,28 @@ void MAXSatPipeline::data_chunk(CNFDeclareDataAware *model,
     //label_set_t visitedAtoms;
     size_t declareId = 0;
     std::vector<LTLfQuery> tmpQuery;
+    std::unordered_map<size_t, size_t> declareToQuery;
     for (auto& it : declare_model->singleElementOfConjunction) {
         for (auto& item : it.elementsInDisjunction) {
             // Skipping already-met definitions: those will only duplicate the code to be run!
             auto cp = declare_atomization.emplace(item, declareId++);
             if (!cp.second) {
-                declare_to_query.emplace_back(declare_to_query.at(cp.first->second));
-                qm.activations.emplace_back(qm.activations.at(cp.first->second));
+                declareToQuery[declareId-1] =
+                        cp.first->second;
+                /// TODO: PRESERVE
+//                declare_to_query.emplace_back(declare_to_query.at(cp.first->second));
+//                qm.activations.emplace_back(qm.activations.at(cp.first->second));
                 continue;
+            } else {
+                declareToQuery[declareId-1] = declareId-1;
             }
 
             // Setting the knowledge base, so to exploit it for join queries
             item.kb = &kb;
 
             // Getting the definition of Declare from the Query rewriter
-            auto it2 = ptr->find(item.casusu);
-            if (it2 == ptr->end()) {
+            auto it2 = xtLTLfTemplates->find(item.casusu);
+            if (it2 == xtLTLfTemplates->end()) {
                 throw std::runtime_error(item.casusu+": missing from the loaded query decomposition");
             }
 
@@ -303,46 +309,48 @@ void MAXSatPipeline::data_chunk(CNFDeclareDataAware *model,
             // The query plan manager will identfy the common expressions, and will let represent those only ones
             // via caching and mapping.
 
-            qm.instantiate(atomization.act_atoms,
+            tmpQuery.emplace_back(qm.instantiate(atomization.act_atoms,
                            maxFormulaId,
                            it2->second,
                            item.isTruth() ? nullptr : (const DeclareDataAware *) &item,
+                           atomization.data_query_atoms,
                            atomization.atom_universe,
                            item.left_decomposed_atoms,
-                           item.right_decomposed_atoms,
-                           toUseAtoms,
-                           atomToFormulaId,
-                           tmpQuery);
+                           item.right_decomposed_atoms));
 
-            LTLfQuery* formula = qm.simplify(atomization.act_atoms,
-                                             maxFormulaId,
-                                             it2->second,
-                                             item.isTruth() ? nullptr : (const DeclareDataAware *) &item,
-                                             atomization.atom_universe,
-                                             item.left_decomposed_atoms,
-                                             item.right_decomposed_atoms,
-                                             toUseAtoms,
-                                             atomToFormulaId);
-            if (qm.activations.size() != declareId) {
-                qm.activations.emplace_back();
-            }
+//            LTLfQuery* formula = qm.simplify(atomization.act_atoms,
+//                                             maxFormulaId,
+//                                             it2->second,
+//                                             item.isTruth() ? nullptr : (const DeclareDataAware *) &item,
+//                                             atomization.atom_universe,
+//                                             item.left_decomposed_atoms,
+//                                             item.right_decomposed_atoms,
+//                                             toUseAtoms,
+//                                             atomToFormulaId);
 
-            // Setting specific untimed atom queries, that can be run directly and separatedly
-            // So, any expansion of the formula by detecting whether the formula can directly
-            // access the tables or not should be done in a later stage, that is, on simplify!
-            formula = pushAtomicQueries(atomization, formula);
+            /// TODO: PRESERVE
+            ///if (qm.activations.size() != declareId) {
+            ///    qm.activations.emplace_back();
+            ///}
 
-            W.emplace_back(formula);
+            /// TODO: PRESERVE
+            /// Setting specific untimed atom queries, that can be run directly and separatedly
+            /// So, any expansion of the formula by detecting whether the formula can directly
+            /// access the tables or not should be done in a later stage, that is, on simplify!
+            /// formula = pushAtomicQueries(atomization, formula);
+
+//            W.emplace_back(formula);
             // Storing the expression that we analysed.
-            fomulaidToFormula.emplace_back(formula);
+//            fomulaidToFormula.emplace_back(formula);
             maxFormulaId++;
-            declare_to_query.emplace_back(formula);
+//            declare_to_query.emplace_back(formula);
             qm.current_query_id++;
         }
     }
 
-    for (auto& ref : atomToFormulaId)
-        remove_duplicates(ref.second);
+    qm.finalizeUnions();
+//    for (auto& ref : atomToFormulaId)
+//        remove_duplicates(ref.second);
     qm.finalize_unions(atomization, W, (KnowledgeBase*)&kb); // Time Computational Complexity: Squared on the size of the atoms
 //
 //#ifdef DEBUG
@@ -450,7 +458,8 @@ LTLfQuery *MAXSatPipeline::pushAtomicQueries(const AtomizingPipeline &atomizatio
         }
     } else {
         if (formula->args.empty()) {
-            qm.atomsToDecomposeInUnion.emplace_back(formula);
+            DEBUG_ASSERT(false);
+            /// TODO: qm.atomsToDecomposeInUnion.emplace_back(formula);
         }
         formula->fields.id.parts.directly_from_cache = false;
         toUseAtoms.insert(toUseAtoms.end(), formula->atom.begin(), formula->atom.end());
@@ -1099,10 +1108,12 @@ std::vector<PartialResult> MAXSatPipeline::subqueriesRunning(const KnowledgeBase
     // Preparing the second phase of the pipeline, where the extracted data is going to be combined.
     for (size_t i = 0, N = toUseAtoms.size(); i < N; i++) {
         auto& atom = toUseAtoms.at(i);
-        for (size_t formulaId : atomToFormulaId.at(atom)) {
-            // Associating the partial results from the cache to the atom of chhoice (partial_results)
-            fomulaidToFormula.at(formulaId)->associateDataQueryIdsToFormulaByAtom(atom, i);// setting the partial results for the data pipeline
-        }
+        DEBUG_ASSERT(false);
+/// TODO:
+///        for (size_t formulaId : atomToFormulaId.at(atom)) {
+///            // Associating the partial results from the cache to the atom of chhoice (partial_results)
+///            fomulaidToFormula.at(formulaId)->associateDataQueryIdsToFormulaByAtom(atom, i);// setting the partial results for the data pipeline
+///        }
     }
 
     return results_cache;
