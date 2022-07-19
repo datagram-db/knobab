@@ -279,6 +279,7 @@ void MAXSatPipeline::data_chunk(CNFDeclareDataAware *model,
     std::vector<LTLfQuery*> W;
     //label_set_t visitedAtoms;
     size_t declareId = 0;
+    std::vector<LTLfQuery> tmpQuery;
     for (auto& it : declare_model->singleElementOfConjunction) {
         for (auto& item : it.elementsInDisjunction) {
             // Skipping already-met definitions: those will only duplicate the code to be run!
@@ -301,6 +302,18 @@ void MAXSatPipeline::data_chunk(CNFDeclareDataAware *model,
             // Caching the query, so to generate a pointer to an experssion that was already computed.
             // The query plan manager will identfy the common expressions, and will let represent those only ones
             // via caching and mapping.
+
+            qm.instantiate(atomization.act_atoms,
+                           maxFormulaId,
+                           it2->second,
+                           item.isTruth() ? nullptr : (const DeclareDataAware *) &item,
+                           atomization.atom_universe,
+                           item.left_decomposed_atoms,
+                           item.right_decomposed_atoms,
+                           toUseAtoms,
+                           atomToFormulaId,
+                           tmpQuery);
+
             LTLfQuery* formula = qm.simplify(atomization.act_atoms,
                                              maxFormulaId,
                                              it2->second,
@@ -392,6 +405,7 @@ LTLfQuery *MAXSatPipeline::pushAtomicQueries(const AtomizingPipeline &atomizatio
         pushAtomicQueries(atomization, ptr);
 
     if ((!formula->fields.id.parts.is_timed) && (formula->isLeaf != NotALeaf) && (atomization.act_atoms.contains(*formula->atom.begin()))) {
+        DEBUG_ASSERT(formula->atom.size() == 1);
         // Data conditions, for timed events, that are leaves, and contain only atoms
         switch (formula->t) {
             case LTLfQuery::INIT_QP:{
