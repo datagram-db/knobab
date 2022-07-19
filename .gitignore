@@ -1,3 +1,6 @@
+competitors/Burattin/ProM/*
+competitors/SQLMinerBenchmarker/target/*
+competitors/SQLMinerBenchmarker/.idea/*
 competitors/ProM/*
 .Rhistory
 .idea/
@@ -26,3 +29,7 @@ antlr4/*
 parall/
 parall/*
 ProM/competitors/
+/competitors/Burattin/ProM/
+/competitors/Exercises/
+/competitors/RobotMonitor/
+/competitors/VOIDPROJECT/
