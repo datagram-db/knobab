@@ -106,22 +106,29 @@ void LTLfQueryManager::finalize_unions(const AtomizingPipeline& ap, std::vector<
     auto result = partition_sets(unionToDecompose);
     size_t isFromFurtherDecomposition = result.minimal_common_subsets.size();
 //    auto cp = result.decomposedIndexedSubsets;
-//    std::sort(cp.begin(), cp.end(), [](const std::pair<size_t, std::set<size_t>*>& x, const std::pair<size_t, std::set<size_t>*>& y) {return x.second->size()<y.second->size();} );
+//    std::sort(cp.begin(), cp.end(), [](const auto& x) {re} )
     for (const auto& ref : result.decomposedIndexedSubsets) {
         auto& f = atomsToDecomposeInUnion.at(ref.first);
-        LTLfQuery *q;
         bool just = true;
-        if (f->atom.size() == 1)
-            q = simplifyRecursively(*f);
-        else {
-            LTLfQuery element_disjunction;
-            for (size_t i: *ref.second) {
-                if (i < isFromFurtherDecomposition) {
-
-                    auto l = LTLfQuery::qEXISTS(1,  f->declare_arg, f->isLeaf, true, false);
+        LTLfQuery element_disjunction;
+        for (size_t i : *ref.second) {
+            if (i < isFromFurtherDecomposition) {
+                auto l = LTLfQuery::qEXISTS(1, DECLARE_TYPE_NONE, NoneLeaf, true, false);
+                l.fields.id.parts.is_atom = false;
+                l.atom.insert(result.minimal_common_subsets.at(i).begin(), result.minimal_common_subsets.at(i).end());
+                if (just) {
+                    element_disjunction = l;
+                    element_disjunction.fields.id.parts.is_timed = atomsToDecomposeInUnion[ref.first]->fields.id.parts.is_timed;
+                    element_disjunction.fields.id.parts.is_queryplan = true;
+                    just = false;
+                } else {
+                    element_disjunction = LTLfQuery::qOR(l, element_disjunction, true, false);
+                }
+            } else
+                for (size_t further : result.minimal_common_subsets_composition.at(i-isFromFurtherDecomposition)) {
+                    auto l = LTLfQuery::qEXISTS(1, DECLARE_TYPE_NONE, NoneLeaf, true, false);
                     l.fields.id.parts.is_atom = false;
-                    l.atom.insert(result.minimal_common_subsets.at(i).begin(),
-                                  result.minimal_common_subsets.at(i).end());
+                    l.atom.insert(result.minimal_common_subsets.at(further).begin(), result.minimal_common_subsets.at(further).end());
                     if (just) {
                         element_disjunction = l;
                         element_disjunction.fields.id.parts.is_timed = atomsToDecomposeInUnion[ref.first]->fields.id.parts.is_timed;
@@ -129,30 +136,16 @@ void LTLfQueryManager::finalize_unions(const AtomizingPipeline& ap, std::vector<
                         just = false;
                     } else {
                         element_disjunction = LTLfQuery::qOR(l, element_disjunction, true, false);
+                        element_disjunction.fields.id.parts.is_timed = atomsToDecomposeInUnion[ref.first]->fields.id.parts.is_timed;
+                        element_disjunction.fields.id.parts.is_queryplan = true;
                     }
-                } else
-                    for (size_t further: result.minimal_common_subsets_composition.at(i - isFromFurtherDecomposition)) {
-                        auto l = LTLfQuery::qEXISTS(1, f->declare_arg, f->isLeaf, true, false);
-                        l.fields.id.parts.is_atom = false;
-                        l.atom.insert(result.minimal_common_subsets.at(further).begin(),
-                                      result.minimal_common_subsets.at(further).end());
-                        if (just) {
-                            element_disjunction = l;
-                            element_disjunction.fields.id.parts.is_timed = atomsToDecomposeInUnion[ref.first]->fields.id.parts.is_timed;
-                            element_disjunction.fields.id.parts.is_queryplan = true;
-                            just = false;
-                        } else {
-                            element_disjunction = LTLfQuery::qOR(l, element_disjunction, true, false);
-                            element_disjunction.fields.id.parts.is_timed = atomsToDecomposeInUnion[ref.first]->fields.id.parts.is_timed;
-                            element_disjunction.fields.id.parts.is_queryplan = true;
-                        }
-                    }
+                }
 
-            }
-            element_disjunction.fields.id.parts.is_timed = atomsToDecomposeInUnion[ref.first]->fields.id.parts.is_timed;
-            element_disjunction.fields.id.parts.is_queryplan = true;
-            q = simplifyRecursively(element_disjunction);
         }
+        element_disjunction.fields.id.parts.is_timed = atomsToDecomposeInUnion[ref.first]->fields.id.parts.is_timed;
+        element_disjunction.fields.id.parts.is_queryplan = true;
+
+        LTLfQuery *q = simplifyRecursively(element_disjunction);
         auto tmpValue = atomsToDecomposeInUnion[ref.first]->isLeaf;
         q->isLeaf = tmpValue;
 
