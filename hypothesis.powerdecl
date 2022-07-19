@@ -1,0 +1,3 @@
+"Response"("Referral", var "CA15.3" >= 23.5, "FollowUp", var "CA15.3" < 23.5) where var "CA15.3" > var "CA15.3"
+"Succession"("Referral", var "CA15.3" >= 23.5, "FollowUp", var "CA15.3" < 23.5) where var "CA15.3" > var "CA15.3"
+"Choice"("Mastectomy", var "CA15.3" >= 50.0 && var "biopsy" >= 1.0, "Lumpectomy", var "CA15.3" >= 50.0 && var "biopsy" >= 1.0)

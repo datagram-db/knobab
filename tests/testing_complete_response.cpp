@@ -76,5 +76,5 @@ TEST_F(CompleteResponse, Support) {
     auto ref = env.query_model();
     EXPECT_EQ(ref.final_ensemble, PerDeclareSupport);
     EXPECT_EQ(ref.support_per_declare.size(), 9);
-    EXPECT_EQ(ref.support_per_declare, (std::vector<double>{1.0,1.0,1.0/9.0,0.0,1.0,0.0,0.0,1.0,1.0}));
+    EXPECT_EQ(ref.support_per_declare, (std::vector<double>{1.0,1.0,1.0/9.0,0.0,1.0,0.0,0.0,1.0/9.0,1.0/9.0}));
 }
