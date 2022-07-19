@@ -51,13 +51,13 @@ struct MAXSatPipeline {
     double declare_to_ltlf_time = 0.0;
     double ltlf_query_time = 0.0;
     DeclareQueryLanguageParser dqlp;
-    std::unordered_map<std::string, LTLfQuery>* ptr = nullptr;
+    std::unordered_map<std::string, LTLfQuery>* xtLTLfTemplates = nullptr;
     std::vector<LTLfQuery*> declare_to_query;
 
     CNFDeclareDataAware* declare_model = nullptr;
 
     //std::unordered_map<declare_templates, ltlf> ltlf_semantics;
-    std::unordered_map<std::string , std::vector<size_t>> atomToFormulaId;
+//    std::unordered_map<std::string , std::vector<size_t>> atomToFormulaId;
     size_t maxFormulaId = 0;
     std::vector<LTLfQuery*> fomulaidToFormula;
 
