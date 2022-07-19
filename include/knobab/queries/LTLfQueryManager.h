@@ -26,7 +26,7 @@ struct LTLfQueryManager {
      */
     void clear();
 
-    LTLfQuery instantiate(const std::unordered_set<std::string>& atom,
+    void instantiate(const std::unordered_set<std::string>& atom,
                                           size_t formulaId,
                                           const LTLfQuery &input,
                                           const DeclareDataAware *joinCondition,
@@ -34,8 +34,9 @@ struct LTLfQueryManager {
                                           const std::unordered_set<std::string> &left,
                                           const std::unordered_set<std::string> &right,
                                           std::vector<std::string> &toUseAtoms,
-                                          std::unordered_map<std::string , std::vector<size_t>>& atomToFormulaId) {
-        LTLfQuery q;
+                                          std::unordered_map<std::string , std::vector<size_t>>& atomToFormulaId,
+                                          std::vector<LTLfQuery>& result_vector) {
+        LTLfQuery& q = result_vector.emplace_back();
         q.t = input.t;
         q.n = input.n;
         q.isLeaf = input.isLeaf;
@@ -73,7 +74,7 @@ struct LTLfQueryManager {
             }
         } else {
             //To be done at a future step: supporting three argument clauses
-            if(q.fields.id.parts.is_atom) {
+            if (q.fields.id.parts.is_atom) {
                 if(!((q.t == LTLfQuery::FIRST_QP) || (q.t == LTLfQuery::LAST_QP))) {
                     if (input.fields.id.parts.is_negated) {
                         for (const auto& x : atom_universe) {
@@ -98,8 +99,8 @@ struct LTLfQueryManager {
             q.args.emplace_back(simplify(atom, formulaId, args, joinCondition, atom_universe, left, right, toUseAtoms, atomToFormulaId));
         q.fields.id.parts.is_queryplan = true;
         q.fields.id.parts.is_negated = false;
-        q.declare_arg = DECLARE_TYPE_NONE;
-        return q;
+        q.declare_arg = input.declare_arg; //DECLARE_TYPE_NONE;
+//        return q;
 //        auto tmp = simplify(q);
 //        if (q.isLeaf == ActivationLeaf) {
 //            if (current_query_id == activations.size()) { // Query Id counting from zero, so, if that happens, then it means that I need to add the activation in here!
