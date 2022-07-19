@@ -807,6 +807,8 @@ int main(int argc, char **argv) {
         whole_testing(log_file, format, queriesV, queriesA, setUpServer, benchmark, sql_miner_dump_folder, doStats, atomization_file, do_data, max_conf_file, topNVal, topNDefaultR);
     }
 
+    //
+
     //generate_nonunary_templates();
     //test_data_query();
     //test_fsm();

@@ -1,29 +1,32 @@
-import java.util.HashSet;
-import java.util.Set;
+import javax.management.Notification;
 
-public class CorrectTheProgram {
+public class NotCommutative {
 
     private static volatile double countMe = 1.0;
 
-    public static void doOperation(double value, boolean Mult_AddOtherwise) {
+    public static synchronized void doOperation(double value, boolean Mult_AddOtherwise) {
+        if ((value == 5.0) && (countMe != 3.0))
+        try { NotCommutative.class.wait(); } catch (Exception ignored) {}
         countMe = (Mult_AddOtherwise ? (countMe * value) : (countMe + value));
+        NotCommutative.class.notifyAll();
     }
 
     public static void main(String args[]) throws InterruptedException {
-        Set<String> outcomes = new HashSet<>();
-        for (int i = 0; i<500000; i++) {
+
+        for (int i = 0; i<1000000; i++) {
             countMe = 1.0;
-            Thread t1 = new Thread(() -> {
-                doOperation(3.0, true);
-            }, "Multiplier");
-            Thread t2 = new Thread(() -> {
-                doOperation(5.0, false);
-            }, "Adder");
-            t2.start(); t1.start();
+            Thread t1 = new Thread(() -> doOperation(3.0, true));
+            Thread t2 = new Thread(() -> doOperation(5.0, false));
+            if (i % 2 == 0) {
+                t1.start(); t2.start();
+            } else {
+                t2.start(); t1.start();
+            }
             t1.join(); t2.join();
-            outcomes.add(String.valueOf(countMe));
+            System.out.println(i);
         }
-        outcomes.forEach(System.out::println);
+
+        System.out.println(countMe);
     }
 
 }
