@@ -8,7 +8,7 @@ bool LTLfQuery::operator==(const LTLfQuery &rhs) const {
     return t == rhs.t &&
            declare_arg == rhs.declare_arg &&
            isLeaf == rhs.isLeaf &&
-           fields == rhs.fields &&
+           fields.id.data == rhs.fields.id.data &&
            n == rhs.n &&
            args_from_script == rhs.args_from_script &&
            args == rhs.args &&

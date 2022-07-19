@@ -44,6 +44,7 @@ struct AtomizingPipeline {
     label_set_t           act_universe;
     label_set_t           act_atoms;
     semantic_atom_set      atom_universe;
+    semantic_atom_set      data_query_atoms;
 
     double_bulk_map_t     double_bulk_map;
     double_map_t          double_map;
