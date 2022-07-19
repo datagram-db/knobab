@@ -17,6 +17,6 @@
  * You should have received a copy of the GNU General Public License
  * along with bpm. If not, see <http://www.gnu.org/licenses/>.
  */
-{ } : A { x=1.0 y=2.0 } B { x=-2.0 y=10.0 } C{ x=5.0 y=-3.0 } A { y=1.0 };
-{ } : B { x=5.0 z=2.0 } A { x=-1.0 y=10.0 };
-{ } : C { x=30.0 y=4.0} C {} A{ z=2.0 };
+{ location = "LN" patient = "001A" } : Referral { ca = 69.0 } Mastectomy { ca = 69.0 biopsy = 1.0 } FollowUp { ca = 10.0  };
+{ location = "NE" patient = "002A" } : Referral { ca = 20.0 };
+{ location = "YO" patient = "003A" } : Referral { ca = 61.0 } Lumpectomy { ca = 61.0 biopsy = 1.0 } FollowUp { ca = 55.0  }

@@ -65,9 +65,13 @@ antlrcpp::Any yaucl::bpm::DataTraceParse::visitLog(TracesParser::LogContext *ctx
 antlrcpp::Any yaucl::bpm::DataTraceParse::visitTrace(TracesParser::TraceContext *ctx) {
     if (ctx) {
         size_t event_count = 1;
+        const auto p1 = std::chrono::system_clock::now();
+        unsigned long long int timestamp = std::chrono::duration_cast<std::chrono::hours>(p1.time_since_epoch()).count();
         size_t traceId = tv->enterTrace(std::to_string(trace_count));
-        isPayloadTrace = true;
+        isPayloadTrace = false;
+        size_t eid = tv->enterEvent(timestamp,"__trace_payload");
         visitData_part(ctx->data_part());
+        tv->exitEvent(eid);
         isPayloadTrace = false;
         event_count = 0;
         for (const auto& ptr : ctx->event()) {

@@ -1,2 +1,0 @@
-"Response"("A", true, "B", true)
-"Precedence"("A", var "x" > 5.0, "B", true)

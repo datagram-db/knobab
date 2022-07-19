@@ -17,6 +17,6 @@
  * You should have received a copy of the GNU General Public License
  * along with bpm21. If not, see <http://www.gnu.org/licenses/>.
  */
-"Response"("A", true, "B", true)
-"Precedence"("A", var "x" > 5.0, "B", true)
-"Precedence"("A", true, "B",  var "y" > 3.0)
+"Response"("Referral", var "ca" >= 23.5, "FollowUp", var "ca" < 23.5) where var "ca" > var "ca"
+"Succession"("Referral", var "ca" >= 23.5, "FollowUp", var "ca" < 23.5) where var "ca" > var "ca"
+"Choice"("Mastectomy", var "ca" >= 50.0 && var "biopsy" >= 1.0, "Lumpectomy", var "ca" >= 50.0 && var "biopsy" >= 1.0)
