@@ -97,7 +97,7 @@ struct MAXSatPipeline {
     std::unordered_map<DeclareDataAware, size_t> declare_atomization;
     ///std::vector<std::set<size_t>> atomToResultOffset;
     std::vector<std::string> toUseAtoms; // This is to ensure the insertion of unique elements to the map!
-    size_t barrier_to_range_queries, barriers_to_atfo;
+    //size_t barrier_to_range_queries, barriers_to_atfo;
     std::vector<std::vector<std::pair<std::pair<trace_t, event_t>, double>>> atomicPartIntersectionResult;
 
     void pipeline(CNFDeclareDataAware* model,
@@ -111,9 +111,9 @@ struct MAXSatPipeline {
 
 private:
     void data_chunk(CNFDeclareDataAware* model, const AtomizingPipeline& atomization, const KnowledgeBase& kb);
-    std::vector<PartialResult> subqueriesRunning(const KnowledgeBase &kb);
-    void abidinglogic_query_running(const std::vector<PartialResult>& results_cache, const KnowledgeBase& kb);
-    void fast_v1_query_running(const std::vector<PartialResult>& results_cache, const KnowledgeBase& kb);
+    void subqueriesRunning(const KnowledgeBase &kb);
+    void abidinglogic_query_running(/*const std::vector<PartialResult>& results_cache,*/ const KnowledgeBase& kb);
+    void fast_v1_query_running(/*const std::vector<PartialResult>& results_cache,*/ const KnowledgeBase& kb);
 //    LTLfQuery *pushAtomicQueries(const AtomizingPipeline &atomization, LTLfQuery *formula);
 
 };

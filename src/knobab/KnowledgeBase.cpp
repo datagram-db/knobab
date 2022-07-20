@@ -604,7 +604,8 @@ std::pair<const uint32_t, const uint32_t> KnowledgeBase::resolveCountingData(con
     return count_table.resolve_primary_index(mappedVal);
 }
 
-std::vector<std::pair<std::pair<trace_t, event_t>, double>> KnowledgeBase::exists(const std::pair<const uint32_t, const uint32_t>& indexes, const uint16_t& amount) const {
+std::vector<std::pair<std::pair<trace_t, event_t>, double>> KnowledgeBase::untimed_dataless_exists(const std::pair<const uint32_t, const uint32_t>& indexes,
+                                                                                                   const uint16_t& amount) const {
     std::vector<std::pair<std::pair<trace_t, event_t>, double>> foundElems;
 
     if ((indexes.first == indexes.second) && (indexes.first == (uint32_t)-1))
@@ -621,7 +622,7 @@ std::vector<std::pair<std::pair<trace_t, event_t>, double>> KnowledgeBase::exist
 }
 
 
-Result KnowledgeBase::exists(const std::string &act, LeafType leafType) const {
+Result KnowledgeBase::timed_dataless_exists(const std::string &act, LeafType leafType) const {
     Result foundData;
     ResultRecord result{{0,0}, {1.0, {}}};
 //    std::pair<uint32_t, uint16_t> timePair;
@@ -961,7 +962,7 @@ KnowledgeBase::initOrEnds(const std::string &act, bool beginOrEnd, bool doExtrac
     return foundData;
 }
 
-PartialResult KnowledgeBase::exists(const std::string &act) const {
+PartialResult KnowledgeBase::timed_dataless_exists(const std::string &act) const {
     PartialResult foundData;
     ResultIndex timePair;
     uint16_t mappedVal = getMappedValueFromAction(act);
@@ -981,7 +982,7 @@ PartialResult KnowledgeBase::exists(const std::string &act) const {
 }
 
 PartialResult
-KnowledgeBase::absence(const std::pair<const uint32_t, const uint32_t> &indexes, const event_t &amount) const {
+KnowledgeBase::untimed_dataless_absence(const std::pair<const uint32_t, const uint32_t> &indexes, const event_t &amount) const {
     PartialResult foundElems;
 
     for (auto it = count_table.table.begin() + indexes.first; it != count_table.table.begin() + indexes.second + 1; ++it) {
@@ -1054,7 +1055,7 @@ void KnowledgeBase::dump_for_sqlminer(std::ostream &log, std::ostream &payload, 
     }
 }
 
-PartialResult KnowledgeBase::getFirstOrLastElements(const bool isFirst) const {
+PartialResult KnowledgeBase::getFirstLastOtherwise(const bool isFirst) const {
     PartialResult elems{};
     PartialResultRecord traceEventPair{{0,0}, 1.0};
     for (const std::pair<ActTable::record *, ActTable::record *> &rec: act_table_by_act_id.secondary_index) {
