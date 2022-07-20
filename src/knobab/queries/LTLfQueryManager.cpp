@@ -3,6 +3,7 @@
 //
 
 #include "knobab/queries/LTLfQueryManager.h"
+#include "knobab/algorithms/MAXSatPipeline.h"
 #include <stack>
 
 static inline void topological_sort(const std::vector<LTLfQuery*>& W,
@@ -72,7 +73,7 @@ std::string LTLfQueryManager::generateGraph() const {
         nlohmann::json node;
         node["id"] = cp.first ?(size_t)cp.first : 0;
         node["group"] = layerId[cp.first];
-        if ((cp.first) && (!cp.first->atom.empty())) {
+        if ((cp.first) && (!cp.first->atom.empty()) && (cp.first->args.empty())) {
             std::stringstream aa;
             aa << *cp.first;
             node["label"] = aa.str();
@@ -100,7 +101,7 @@ void LTLfQueryManager::clear() {
     counter.clear();
 }
 
-void LTLfQueryManager::finalize_unions(const AtomizingPipeline& ap, std::vector<LTLfQuery*>& W, KnowledgeBase* ptr) {
+void LTLfQueryManager::sort_query_plan_for_scheduling(const AtomizingPipeline& ap, std::vector<LTLfQuery*>& W, KnowledgeBase* ptr) {
 //    std::vector<std::set<std::string>> unionToDecompose;
 //    for (const auto& x : atomsToDecomposeInUnion)
 //        unionToDecompose.emplace_back(x->atom);
@@ -183,13 +184,13 @@ void LTLfQueryManager::finalize_unions(const AtomizingPipeline& ap, std::vector<
     }
 }
 
-LTLfQuery* LTLfQueryManager::simplifyRecursively(LTLfQuery &element_disjunction) {
-    for (auto& args : element_disjunction.args_from_script)
-        element_disjunction.args.emplace_back(simplifyRecursively(args));
-    element_disjunction.fields.id.parts.is_queryplan = true;
-//    element_disjunction.declare_arg = DECLARE_TYPE_NONE;
-    return simplify(element_disjunction);
-}
+//LTLfQuery* LTLfQueryManager::simplifyRecursively(LTLfQuery &element_disjunction) {
+//    for (auto& args : element_disjunction.args_from_script)
+//        element_disjunction.args.emplace_back(simplifyRecursively(args));
+//    element_disjunction.fields.id.parts.is_queryplan = true;
+////    element_disjunction.declare_arg = DECLARE_TYPE_NONE;
+//    return simplify(element_disjunction);
+//}
 
 #include <iostream>
 
@@ -286,6 +287,84 @@ LTLfQuery *LTLfQueryManager::simplify(const LTLfQuery &q) {
     } else {
         auto* ptr = new LTLfQuery();
         *ptr = q;
+        /// Checking whether this is a leaf node
+        if (ptr->args.empty()) {
+            switch (ptr->t) {
+                case LTLfQuery::INIT_QP:
+                case LTLfQuery::END_QP: {
+                    DEBUG_ASSERT(!ptr->fields.id.parts.is_timed);
+                    DEBUG_ASSERT(!ptr->atom.empty());
+                    for (auto it : ptr->atom) {
+                        if (atomization->data_query_atoms.contains(it)) {
+                            ptr->range_query.emplace_back(pipeline->pushDataRangeQuery(*atomization, it));
+                        } else {
+                            ptr->range_query.emplace_back(pipeline->pushNonRangeQuery(DataQuery::AtomQuery(it)));
+                        }
+                    }
+                } break;
+
+                case LTLfQuery::FIRST_QP: {
+                    DEBUG_ASSERT(ptr->fields.id.parts.is_timed);
+                    DEBUG_ASSERT(ptr->atom.empty());
+                    ptr->range_query.emplace_back(pipeline->pushNonRangeQuery(DataQuery::FirstQuery(ptr->isLeaf)));
+                } break;
+
+                case LTLfQuery::LAST_QP: {
+                    DEBUG_ASSERT(ptr->fields.id.parts.is_timed);
+                    DEBUG_ASSERT(ptr->atom.empty());
+                    ptr->range_query.emplace_back(pipeline->pushNonRangeQuery(DataQuery::LastQuery(ptr->isLeaf)));
+                } break;
+
+                case LTLfQuery::EXISTS_QP: {
+                    auto it = ptr->atom.begin();
+                    if ((!ptr->fields.id.parts.is_timed) && (ptr->atom.size() == 1) && (!atomization->data_query_atoms.contains(*it))) {
+                        // If we have only one atom, has size of one and it is not a data query, then I can exploit the tables
+                        ptr->range_query.emplace_back(pipeline->pushNonRangeQuery(DataQuery::ExistsQuery(*it, ptr->n, ptr->isLeaf)));
+                    } else {
+                        // This is computed independently from the element being timed or untimed
+                        for (auto it : ptr->atom) {
+                            if (atomization->data_query_atoms.contains(it)) {
+                                ptr->range_query.emplace_back(pipeline->pushDataRangeQuery(*atomization, it));
+                            } else {
+                                ptr->range_query.emplace_back(pipeline->pushNonRangeQuery(DataQuery::AtomQuery(it)));
+                            }
+                        }
+                    }
+
+                } break;
+
+                case LTLfQuery::FALSEHOOD_QP:
+                    // Falsehood just returns empty: nothing shall be done in here.
+                    break;
+
+                case LTLfQuery::ABSENCE_QP: {
+                    auto it = ptr->atom.begin();
+                    if ((!ptr->fields.id.parts.is_timed) && (ptr->atom.size() == 1) && (!atomization->data_query_atoms.contains(*it))) {
+                        // If we have only one atom, has size of one and it is not a data query, then I can exploit the tables
+                        ptr->range_query.emplace_back(pipeline->pushNonRangeQuery(DataQuery::AbsenceQuery(*it, ptr->isLeaf)));
+                    } else {
+                        throw std::runtime_error("ERROR: we are not expecting timed absence queries or with multiple atoms anymore after rewriting!");
+                    }
+                } break;
+
+                // These other cases should not be covered, as they are non-leaf nodes
+                case LTLfQuery::NEXT_QP:
+                case LTLfQuery::OR_QP:
+                case LTLfQuery::AND_QP:
+                case LTLfQuery::IMPL_QP:
+                case LTLfQuery::IFTE_QP:
+                case LTLfQuery::U_QP:
+                case LTLfQuery::G_QP:
+                case LTLfQuery::F_QP:
+                case LTLfQuery::NOT_QP:
+                case LTLfQuery::AF_QPT:
+                case LTLfQuery::AXG_QPT:
+                case LTLfQuery::AG_QPT:
+                    DEBUG_ASSERT(false);
+                    break;
+            }
+            std::cout << *ptr << std::endl;
+        }
         counter.emplace(ptr, 1);
         assert(conversion_map_for_subexpressions.emplace(q, ptr).second);
         return ptr;
@@ -296,6 +375,7 @@ for_occurrence::for_occurrence(bool isTimed, LeafType type, size_t nArg) : isTim
 
 bool for_occurrence::operator==(const for_occurrence &rhs) const {
     return isTimed == rhs.isTimed &&
+            isDisjunctiveSoNegated == rhs.isDisjunctiveSoNegated &&
            type == rhs.type &&
            n_arg == rhs.n_arg;
 }
