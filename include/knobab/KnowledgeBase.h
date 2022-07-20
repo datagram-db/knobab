@@ -200,8 +200,8 @@ public:
     PartialResult range_query(DataPredicate prop, double min_threshold = 1.0, const double c = 2.0) const;
 
     // Second part of the pipeline
-    PartialResult exists(const std::pair<const uint32_t, const uint32_t>& indexes, const uint16_t& amount) const;
-    PartialResult absence(const std::pair<const uint32_t, const uint32_t>& indexes, const uint16_t& amount) const;
+    PartialResult untimed_dataless_exists(const std::pair<const uint32_t, const uint32_t>& indexes, const uint16_t& amount) const;
+    PartialResult untimed_dataless_absence(const std::pair<const uint32_t, const uint32_t>& indexes, const uint16_t& amount) const;
 
 
     PartialResult exists(const std::pair<const uint32_t, const uint32_t>& indexes) const {
@@ -214,7 +214,7 @@ public:
 
     Result init(const std::string& act, bool doExtractEvent, const double minThreshold = 1) const;
     Result ends(const std::string& act, bool doExtractEvent, const double minThreshold = 1) const;
-    std::vector<std::pair<std::pair<trace_t, event_t>, double>> exists(const std::string& act) const;
+    std::vector<std::pair<std::pair<trace_t, event_t>, double>> timed_dataless_exists(const std::string& act) const;
 
     /**
      *
@@ -223,9 +223,9 @@ public:
      * @param isFirst
      * @return
      */
-    PartialResult getFirstOrLastElements(const bool isFirst) const;
+    PartialResult getFirstLastOtherwise(const bool isFirst) const;
 
-    [[deprecated]] Result exists(const std::string& act, LeafType markEventsForMatch) const;
+    [[deprecated]] Result timed_dataless_exists(const std::string& act, LeafType leafType) const;
 
     //template <typename traceIdentifier, typename traceValue>
     PartialResult initOrig(const std::string& act, const double minThreshold = 1) const{
