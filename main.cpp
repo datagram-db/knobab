@@ -690,7 +690,13 @@ void parse_declare_query_planner() {
 }
 
 int main(int argc, char **argv) {
-
+//    std::vector<std::set<size_t>> S;
+//    S.emplace_back(std::set<size_t>{1,2,3});
+//    S.emplace_back(std::set<size_t>{1,2});
+//    S.emplace_back(std::set<size_t>{3,4,5});
+//    S.emplace_back(std::set<size_t>{2,4,6});
+//    std::cout << partition_sets(S) << std::endl;
+//    exit(3);
     //parse_declare_query_planner();
     //exit(1);
 

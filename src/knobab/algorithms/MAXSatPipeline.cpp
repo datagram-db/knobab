@@ -348,7 +348,12 @@ void MAXSatPipeline::data_chunk(CNFDeclareDataAware *model,
         }
     }
 
+//    for (const auto& ref : tmpQuery)
+//        std::cout << ref << std::endl;
+
     qm.finalizeUnions();
+
+
 //    for (auto& ref : atomToFormulaId)
 //        remove_duplicates(ref.second);
     qm.finalize_unions(atomization, W, (KnowledgeBase*)&kb); // Time Computational Complexity: Squared on the size of the atoms

@@ -217,9 +217,11 @@ void remove_duplicates(std::vector<T>& vec){
 
 template <typename T>
 struct partition_sets_result {
+    // Minimal components into which the data is decomposed.
+    std::vector<std::set<T>> minimal_common_subsets;
+
     std::vector<std::set<size_t>> decomposedSubsets;
     std::vector<std::pair<size_t, std::set<size_t>*>> decomposedIndexedSubsets;
-    std::vector<std::set<T>> minimal_common_subsets;
     std::vector<std::set<size_t>> minimal_common_subsets_composition;
 
     partition_sets_result(size_t N): decomposedSubsets(N) {}
