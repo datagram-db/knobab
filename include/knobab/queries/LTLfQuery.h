@@ -59,7 +59,7 @@ struct LTLfQuery {
     LeafType       isLeaf;           // Marking whether the query is going to be an activation or a target condition
     bit_fields fields;
     size_t n;                        // numeric_arg associated to the query type (exists, absence)
-
+    bool isTop = false;
     bool isDisjunctionOfExistentials() const {
         if (args.empty() && args_from_script.empty()) {
             return t == type::EXISTS_QP;

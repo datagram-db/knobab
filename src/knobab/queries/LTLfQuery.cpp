@@ -26,7 +26,10 @@ std::ostream& operator<<(std::ostream& os, const LTLfQuery& x) {
     char H{'H'};
     char p{'p'};
     char n{'~'};
+    char top{'^'};
 
+    if (x.isTop)
+        os << top;
     switch (x.t) {
         case LTLfQuery::INIT_QP:
             os << ((x.isLeaf == ActivationLeaf)? 'A' : (x.isLeaf==TargetLeaf ? 'T' : ' '));

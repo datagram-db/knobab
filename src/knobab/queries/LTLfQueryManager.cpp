@@ -67,6 +67,7 @@ std::string LTLfQueryManager::generateGraph() const {
     json["edges"] = {};
     auto& nodes = json["nodes"];
     auto& edges = json["edges"];
+
     for (const auto& cp : ref) {
         nlohmann::json node;
         node["id"] = cp.first ?(size_t)cp.first : 0;
@@ -76,7 +77,7 @@ std::string LTLfQueryManager::generateGraph() const {
             aa << *cp.first;
             node["label"] = aa.str();
         } else {
-            node["label"] = cp.first ? ((cp.first->fields.id.parts.is_timed ? "t" : "") + std::string(magic_enum::enum_name(cp.first->t))) : "Ensemble";
+            node["label"] = cp.first ? ((cp.first->isTop ? "^" : "") + std::string(cp.first->fields.id.parts.is_timed ? "t" : "") + std::string(magic_enum::enum_name(cp.first->t))) : "Ensemble";
         }
         nodes.push_back(node);
         for (const auto& out : cp.second) {

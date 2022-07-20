@@ -354,6 +354,7 @@ void MAXSatPipeline::data_chunk(CNFDeclareDataAware *model,
         if (!WECTOR.at(qId)) {
             WECTOR[qId] = true;
             LTLfQuery* formula = qm.alloc(tmpQuery.at(qId));
+            formula->isTop = true;
             if (qm.activations.size() != declareId) {
                qm.activations.emplace_back();
             }
