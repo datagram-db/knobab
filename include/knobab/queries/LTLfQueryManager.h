@@ -10,6 +10,39 @@
 #include <knobab/queries/LTLfQuery.h>
 #include <unordered_map>
 
+struct for_occurrence {
+    DEFAULT_CONSTRUCTORS(for_occurrence)
+    bool isTimed;
+    LeafType type;
+    size_t n_arg;
+    for_occurrence(bool isTimed, LeafType type, size_t nArg);
+    bool operator==(const for_occurrence &rhs) const;
+    bool operator!=(const for_occurrence &rhs) const;
+};
+
+namespace std {
+    template <>
+    struct hash<struct for_occurrence>
+    {
+        std::size_t operator()(const for_occurrence& k) const
+        {
+            using yaucl::hashing::hash_combine;
+            return hash_combine<size_t>(hash_combine<LeafType>(hash_combine<bool>(31, k.isTimed), k.type), k.n_arg);
+        }
+    };
+
+}
+
+LTLfQuery* alloc(LTLfQuery& orig,
+                 std::unordered_map<for_occurrence, std::vector<std::set<std::string>>> focc_atomsets,
+std::unordered_map<for_occurrence, std::vector<LTLfQuery*>> focc_sub_formulae
+) {
+    if (orig.args_from_script.empty() && (orig.t == LTLfQuery::EXISTS_QP)) {
+
+    }
+}
+
+#include <iostream>
 struct LTLfQueryManager {
     std::unordered_map<LTLfQuery, LTLfQuery*> conversion_map_for_subexpressions;
     std::map<size_t, std::vector<LTLfQuery*>> Q;
@@ -26,22 +59,133 @@ struct LTLfQueryManager {
      */
     void clear();
 
-    std::vector<std::set<std::string>> untimed_atomsets;
-    std::vector<std::set<std::string>> timed_atomsets;
+    std::unordered_map<for_occurrence, std::vector<std::set<std::string>>> focc_atomsets;
+    std::unordered_map<for_occurrence, std::vector<LTLfQuery*>> focc_sub_formulae;
 
+    // Union decomposition
     void finalizeUnions() {
-        remove_duplicates(untimed_atomsets);
-        remove_duplicates(timed_atomsets);
 
-        bool isTimed = true;
-        auto result = partition_sets(timed_atomsets);
-        size_t isFromFurtherDecomposition = result.minimal_common_subsets.size();
-
-        for (const auto& min_set : result.minimal_common_subsets) {
-            bool just = true;
-            LTLfQuery element_disjunction;
-            for ()
+//        std::unordered_map<for_occurrence, std::vector<LTLfQuery*>> focc_formula;
+        LTLfQuery element_disjunction;
+        for (auto& arg : focc_atomsets) {
+            std::vector<LTLfQuery*> FF;
+            remove_duplicates(arg.second);
+            if (arg.second.empty()) continue;
+            auto result = partition_sets(arg.second);
+            std::cout << result << std::endl;
+            std::cout << "-----" << std::endl;
+            for (const auto& min_set : result.minimal_common_subsets) {
+                bool just = true;
+                element_disjunction.n = arg.first.n_arg;
+                element_disjunction.isLeaf = arg.first.type;
+                element_disjunction.fields.id.parts.is_negated = false;
+                element_disjunction.fields.id.parts.is_timed = arg.first.isTimed;
+                element_disjunction.fields.id.parts.is_queryplan = true;
+                element_disjunction.fields.id.parts.is_atom = true;
+                element_disjunction.fields.id.parts.directly_from_cache = true;
+                element_disjunction.fields.id.parts.has_theta = false;
+                element_disjunction.t = LTLfQuery::EXISTS_QP;
+                element_disjunction.atom = min_set;
+                FF.emplace_back(simplify(element_disjunction));
+            }
+            for (const auto& min_composition : result.minimal_common_subsets_composition) {
+                DEBUG_ASSERT(min_composition.size() > 1);
+                if (min_composition.size() == 2) {
+                    element_disjunction.isLeaf = arg.first.type;
+                    element_disjunction.fields.id.parts.is_negated = false;
+                    element_disjunction.fields.id.parts.is_timed = arg.first.isTimed;
+                    element_disjunction.fields.id.parts.is_queryplan = true;
+                    element_disjunction.fields.id.parts.is_atom = true;
+                    element_disjunction.fields.id.parts.directly_from_cache = true;
+                    element_disjunction.fields.id.parts.has_theta = false;
+                    element_disjunction.t = LTLfQuery::OR_QP;
+                    for (size_t id : min_composition) {
+                        element_disjunction.args.emplace_back(FF.at(id));
+                    }
+                    FF.emplace_back(simplify(element_disjunction));
+                    element_disjunction.args.clear();
+                } else {
+                    element_disjunction.isLeaf = arg.first.type;
+                    element_disjunction.fields.id.parts.is_negated = false;
+                    element_disjunction.fields.id.parts.is_timed = arg.first.isTimed;
+                    element_disjunction.fields.id.parts.is_queryplan = true;
+                    element_disjunction.fields.id.parts.is_atom = true;
+                    element_disjunction.fields.id.parts.directly_from_cache = true;
+                    element_disjunction.fields.id.parts.has_theta = false;
+                    element_disjunction.t = LTLfQuery::OR_QP;
+                    LTLfQuery* ptr = nullptr;
+                    auto it = min_composition.begin();
+                    for (size_t i = 0, N = min_composition.size(); i<N; i++) {
+                        if (i<2) {
+                            element_disjunction.args.emplace_back(FF.at(*it++));
+                        } else {
+                            ptr = simplify(element_disjunction);
+                            element_disjunction.args.clear();
+                            element_disjunction.args.emplace_back(ptr);
+                            element_disjunction.args.emplace_back(FF.at(*it++));
+                        }
+                    }
+                    FF.emplace_back(simplify(element_disjunction));
+                    element_disjunction.args.clear();
+                }
+            }
+            auto& v = focc_sub_formulae[arg.first];
+            v.insert(v.begin(), arg.second.size(), nullptr);
+            for (auto& min_composition : result.decomposedIndexedSubsets) {
+                if (min_composition.second->size() == 1) {
+                    v[min_composition.first] = FF.at(*min_composition.second->begin());
+                } else if (min_composition.second->size() == 2) {
+                    element_disjunction.isLeaf = arg.first.type;
+                    element_disjunction.fields.id.parts.is_negated = false;
+                    element_disjunction.fields.id.parts.is_timed = arg.first.isTimed;
+                    element_disjunction.fields.id.parts.is_queryplan = true;
+                    element_disjunction.fields.id.parts.is_atom = true;
+                    element_disjunction.fields.id.parts.directly_from_cache = true;
+                    element_disjunction.fields.id.parts.has_theta = false;
+                    element_disjunction.t = LTLfQuery::OR_QP;
+                    for (const auto& id : *min_composition.second) {
+                        element_disjunction.args.emplace_back(FF.at(id));
+                    }
+                    v[min_composition.first] = simplify(element_disjunction);
+                    element_disjunction.args.clear();
+                } else {
+                    element_disjunction.isLeaf = arg.first.type;
+                    element_disjunction.fields.id.parts.is_negated = false;
+                    element_disjunction.fields.id.parts.is_timed = arg.first.isTimed;
+                    element_disjunction.fields.id.parts.is_queryplan = true;
+                    element_disjunction.fields.id.parts.is_atom = true;
+                    element_disjunction.fields.id.parts.directly_from_cache = true;
+                    element_disjunction.fields.id.parts.has_theta = false;
+                    element_disjunction.t = LTLfQuery::OR_QP;
+                    LTLfQuery* ptr = nullptr;
+                    auto it = min_composition.second->begin();
+                    for (size_t i = 0, N = min_composition.second->size(); i<N; i++) {
+                        if (i<2) {
+                            element_disjunction.args.emplace_back(FF.at(*it++));
+                        } else {
+                            ptr = simplify(element_disjunction);
+                            element_disjunction.args.clear();
+                            element_disjunction.args.emplace_back(ptr);
+                            element_disjunction.args.emplace_back(FF.at(*it++));
+                        }
+                    }
+                    v[min_composition.first] = (simplify(element_disjunction));
+                    element_disjunction.args.clear();
+                }
+            }
         }
+        for (const auto& kv : focc_atomsets) {
+            if (kv.second.empty()) continue;
+            auto it = focc_sub_formulae.at(kv.first);
+            for (size_t i = 0, N = kv.second.size(); i<N; i++) {
+                std::cout << kv.second.at(i) << std::endl;
+                std::cout << *it.at(i) << std::endl;
+                std::cout << "~~~~~~~~~" << std::endl;
+            }
+        }
+        std::cout << "OK" << std::endl;
+
+
 
 
 //
@@ -121,7 +265,11 @@ struct LTLfQueryManager {
         q.fields = input.fields;
         q.fields.id.parts.is_negated = false; // after resolution, nothing is negated!
         q.isLeaf = input.isLeaf;
-
+        for_occurrence key;
+        key.isTimed = input.fields.id.parts.is_timed;
+        key.n_arg = input.n;
+        key.type = input.isLeaf;
+        auto& V = focc_atomsets[key];
 
         bool hasAtLeastOneDataAtom = false;
         if ((input.declare_arg == DECLARE_TYPE_LEFT)) {
@@ -140,10 +288,8 @@ struct LTLfQueryManager {
 //                    atomToFormulaId[x].emplace_back(formulaId);
                 }
             }
-            if (input.fields.id.parts.is_timed) {
-                timed_atomsets.emplace_back(q.atom);
-            } else {
-                untimed_atomsets.emplace_back(q.atom);
+            if (q.t == LTLfQuery::EXISTS_QP) {
+                V.emplace_back(q.atom);
             }
         } else if (input.declare_arg == DECLARE_TYPE_RIGHT) {
             if (input.fields.id.parts.is_negated) {
@@ -161,10 +307,8 @@ struct LTLfQueryManager {
 //                    atomToFormulaId[x].emplace_back(formulaId);
                 }
             }
-            if (input.fields.id.parts.is_timed) {
-                timed_atomsets.emplace_back(q.atom);
-            } else {
-                untimed_atomsets.emplace_back(q.atom);
+            if (q.t == LTLfQuery::EXISTS_QP) {
+                V.emplace_back(q.atom);
             }
         } else {
 //            //To be done at a future step: supporting three argument clauses
@@ -193,19 +337,23 @@ struct LTLfQueryManager {
         }
         for (auto& args : input.args_from_script)
             q.args_from_script.emplace_back(instantiate(atom, formulaId, args, joinCondition, data_atom, atom_universe, left, right));
-        q.fields.id.parts.is_queryplan = true;
+        q.fields.id.parts.is_queryplan = false;
         q.fields.id.parts.is_negated = false;
         q.declare_arg = input.declare_arg; //DECLARE_TYPE_NONE;
-        if ((q.t == LTLfQuery::ABSENCE_QP) && hasAtLeastOneDataAtom) {
+        if ((q.t == LTLfQuery::ABSENCE_QP) && (hasAtLeastOneDataAtom || (q.atom.size()>1) || (input.fields.id.parts.is_timed))) {
             LTLfQuery trueAbsence;
-            trueAbsence.t = input.t;
+            trueAbsence.t = LTLfQuery::NOT_QP;
             trueAbsence.n = input.n;
             trueAbsence.isLeaf = NotALeaf;
             trueAbsence.fields = input.fields;
             trueAbsence.fields.id.parts.is_atom = false;
             trueAbsence.fields.id.parts.is_negated = false; // after resolution, nothing is negated!
             trueAbsence.isLeaf = input.isLeaf;
+            trueAbsence.fields.id.parts.is_queryplan = false;
+            q.t = LTLfQuery::EXISTS_QP;
+            q.n = 1;
             trueAbsence.args_from_script.emplace_back(q);
+            V.emplace_back(q.atom);
             return trueAbsence;
         } else
             return q;

@@ -292,3 +292,15 @@ LTLfQuery *LTLfQueryManager::simplify(const LTLfQuery &q) {
         return ptr;
     }
 }
+
+for_occurrence::for_occurrence(bool isTimed, LeafType type, size_t nArg) : isTimed(isTimed), type(type), n_arg(nArg) {}
+
+bool for_occurrence::operator==(const for_occurrence &rhs) const {
+    return isTimed == rhs.isTimed &&
+           type == rhs.type &&
+           n_arg == rhs.n_arg;
+}
+
+bool for_occurrence::operator!=(const for_occurrence &rhs) const {
+    return !(rhs == *this);
+}
