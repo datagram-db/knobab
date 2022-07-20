@@ -166,8 +166,6 @@ void LTLfQueryManager::finalize_unions(const AtomizingPipeline& ap, std::vector<
 //        }
 //    }
 
-    DEBUG_ASSERT(false);
-
     // Making ready for the parallelization of the query execution by setting it into layers
     std::vector<LTLfQuery*> topological_order;
     topological_sort(W, topological_order);

@@ -130,6 +130,14 @@ struct DeclareDataAware {
     std::vector<std::unordered_map<std::string, DataPredicate>> dnf_left_map, dnf_right_map, conjunctive_map;
     std::unordered_set<std::string> left_decomposed_atoms, right_decomposed_atoms; /// TODO: generalization to the number of the possible arguments of a declare clause
 
+    bool compareAsThetaPredicate(const struct DeclareDataAware* ptr) const {
+        if (ptr == nullptr) return false;
+        return n == ptr->n
+                && left_act == ptr->left_act
+                && right_act == ptr->right_act
+                && conjunctive_map == ptr->conjunctive_map;
+    }
+
     DEFAULT_CONSTRUCTORS(DeclareDataAware)
     DeclareDataAware(const std::vector<std::vector<DataPredicate>>& predicate, const KnowledgeBase* kb);
 

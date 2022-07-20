@@ -134,8 +134,8 @@ namespace std {
             size_t init = 31;
             for (const auto& x : k.args_from_script)
                 init = hash_combine<LTLfQuery>(init, x);
-            size_t f= hash_combine<size_t>(hash_combine<unsigned char>(hash_combine<short>(hash_combine<size_t>(init, k.t), k.isLeaf), k.fields.id.data), k.n);
-            return f;
+            size_t f= hash_combine<size_t>(hash_combine<unsigned char>(hash_combine<short>(hash_combine<size_t>(init, k.t), k.isLeaf), 'A'), k.n);
+            return 0;
         }
     };
 

@@ -151,6 +151,7 @@ void MAXSatPipeline::pipeline(CNFDeclareDataAware* model,
         declare_to_ltlf_time = elapsed.count();
     }
 
+#ifdef ENABLE
     {
         auto start = std::chrono::system_clock::now();
         std::vector<PartialResult> pr = subqueriesRunning(kb);
@@ -265,7 +266,7 @@ void MAXSatPipeline::pipeline(CNFDeclareDataAware* model,
                 std::chrono::duration<double, std::milli>(end - start);
         ltlf_query_time = elapsed.count();
     }
-
+#endif
 }
 
 void MAXSatPipeline::data_chunk(CNFDeclareDataAware *model,
@@ -280,20 +281,18 @@ void MAXSatPipeline::data_chunk(CNFDeclareDataAware *model,
     //label_set_t visitedAtoms;
     size_t declareId = 0;
     std::vector<LTLfQuery> tmpQuery;
-    std::unordered_map<size_t, size_t> declareToQuery;
+    std::vector<size_t> declareToQuery;
     for (auto& it : declare_model->singleElementOfConjunction) {
         for (auto& item : it.elementsInDisjunction) {
             // Skipping already-met definitions: those will only duplicate the code to be run!
             auto cp = declare_atomization.emplace(item, declareId++);
             if (!cp.second) {
-                declareToQuery[declareId-1] =
-                        cp.first->second;
+                declareToQuery.emplace_back(cp.first->second);
                 /// TODO: PRESERVE
-//                declare_to_query.emplace_back(declare_to_query.at(cp.first->second));
-//                qm.activations.emplace_back(qm.activations.at(cp.first->second));
+
                 continue;
             } else {
-                declareToQuery[declareId-1] = declareId-1;
+                declareToQuery.emplace_back(declareId-1);
             }
 
             // Setting the knowledge base, so to exploit it for join queries
@@ -347,16 +346,35 @@ void MAXSatPipeline::data_chunk(CNFDeclareDataAware *model,
             qm.current_query_id++;
         }
     }
-
-//    for (const auto& ref : tmpQuery)
-//        std::cout << ref << std::endl;
+    std::vector<bool> WECTOR(maxFormulaId, false);
 
     qm.finalizeUnions();
+    for (size_t i = 0, N = declareToQuery.size(); i<N; i++) {
+        auto qId = declareToQuery.at(i);
+        if (!WECTOR.at(qId)) {
+            WECTOR[qId] = true;
+            LTLfQuery* formula = qm.alloc(tmpQuery.at(qId));
+            if (qm.activations.size() != declareId) {
+               qm.activations.emplace_back();
+            }
 
+            /// TODO: PRESERVE
+            /// Setting specific untimed atom queries, that can be run directly and separatedly
+            /// So, any expansion of the formula by detecting whether the formula can directly
+            /// access the tables or not should be done in a later stage, that is, on simplify!
+            // TODO: formula = pushAtomicQueries(atomization, formula);
+            W.emplace_back(formula);
+            declare_to_query.emplace_back(formula);
+        } else {
+            declare_to_query.emplace_back(declare_to_query.at(qId));
+            qm.activations.emplace_back(qm.activations.at(qId));
+        }
+    }
+    qm.finalize_unions(atomization, W, (KnowledgeBase*)&kb); // Time Computational Complexity: Squared on the size of the atoms
+    return;
 
 //    for (auto& ref : atomToFormulaId)
 //        remove_duplicates(ref.second);
-    qm.finalize_unions(atomization, W, (KnowledgeBase*)&kb); // Time Computational Complexity: Squared on the size of the atoms
 //
 //#ifdef DEBUG
 //    for (const auto& ref : W) {
