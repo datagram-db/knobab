@@ -17,7 +17,11 @@
  * You should have received a copy of the GNU General Public License
  * along with bpm21. If not, see <http://www.gnu.org/licenses/>.
  */
-"Response"("Referral", var "ca" >= 23.5, "FollowUp", var "ca" < 23.5) where var "ca" > var "ca"
-"RespExistence"("Referral", var "ca" >= 23.5, "FollowUp", var "ca" < 23.5) where var "ca" > var "ca" // ADDED
-"Succession"("Referral", var "ca" >= 23.5, "FollowUp", var "ca" < 23.5) where var "ca" > var "ca"
-"Choice"("Mastectomy", var "ca" >= 23.5 && var "biopsy" >= 1.0, "Lumpectomy", var "ca" >= 23.5 && var "biopsy" >= 1.0)
+//"Response"("Referral", var "ca" >= 23.5, "FollowUp", var "ca" < 23.5) where var "ca" > var "ca"
+//"RespExistence"("Referral", var "ca" >= 23.5, "FollowUp", var "ca" < 23.5) where var "ca" > var "ca" // ADDED
+//"Succession"("Referral", var "ca" >= 23.5, "FollowUp", var "ca" < 23.5) where var "ca" > var "ca"
+//"Choice"("Mastectomy", var "ca" >= 23.5 && var "biopsy" >= 1.0, "Lumpectomy", var "ca" >= 23.5 && var "biopsy" >= 1.0)
+//"Init"("__trace_payload", true, 1) // ADDED
+"Precedence"("Mastectomy", var "ca" >= 23.5 && var "biopsy" >= 1.0, "FollowUp", var "ca" >= 23.5 && var "biopsy" >= 1.0)
+"Init"("__trace_payload", true, 1) // ADDED
+"Exists1"("Mastectomy", var "ca" >= 23.5 && var "biopsy" >= 1.0, 1) // ADDED

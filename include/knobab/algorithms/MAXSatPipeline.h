@@ -13,6 +13,7 @@
 #include <yaucl/numeric/ssize_t.h>
 #include <knobab/queries/DeclareQueryLanguageParser.h>
 #include <yaucl/numeric/ssize_t.h>
+struct LTLfQueryManager;
 
 //#define MAXSatPipeline_PARALLEL
 
@@ -89,12 +90,12 @@ struct MAXSatPipeline {
     std::vector<double> max_sat_per_trace;
 
     // DATA
-    ssize_t maxPartialResultId = -1;
+    ///ssize_t maxPartialResultId = -1;
     std::unordered_map<DataQuery, size_t> data_offset;
     std::vector<std::pair<DataQuery, std::vector<std::pair<std::pair<trace_t, event_t>, double>>>> data_accessing;
     std::unordered_map<std::string, std::unordered_map<std::string,std::vector<size_t>>> data_accessing_range_query_to_offsets;
     std::unordered_map<DeclareDataAware, size_t> declare_atomization;
-    std::vector<std::set<size_t>> atomToResultOffset;
+    ///std::vector<std::set<size_t>> atomToResultOffset;
     std::vector<std::string> toUseAtoms; // This is to ensure the insertion of unique elements to the map!
     size_t barrier_to_range_queries, barriers_to_atfo;
     std::vector<std::vector<std::pair<std::pair<trace_t, event_t>, double>>> atomicPartIntersectionResult;
@@ -104,17 +105,17 @@ struct MAXSatPipeline {
                   const KnowledgeBase& kb);
 
     void clear();
-
-
-    std::string generateGraph() const { return qm.generateGraph(); }
+    std::string generateGraph() const;
+    size_t pushNonRangeQuery(const DataQuery &q, bool directlyFromCache = true);
+    std::vector<size_t> pushDataRangeQuery(const AtomizingPipeline &atomization, const std::string &atom);
 
 private:
     void data_chunk(CNFDeclareDataAware* model, const AtomizingPipeline& atomization, const KnowledgeBase& kb);
     std::vector<PartialResult> subqueriesRunning(const KnowledgeBase &kb);
     void abidinglogic_query_running(const std::vector<PartialResult>& results_cache, const KnowledgeBase& kb);
     void fast_v1_query_running(const std::vector<PartialResult>& results_cache, const KnowledgeBase& kb);
-    size_t pushAtomDataQuery(const DataQuery &q, bool directlyFromCache);
-    LTLfQuery *pushAtomicQueries(const AtomizingPipeline &atomization, LTLfQuery *formula);
+//    LTLfQuery *pushAtomicQueries(const AtomizingPipeline &atomization, LTLfQuery *formula);
+
 };
 
 

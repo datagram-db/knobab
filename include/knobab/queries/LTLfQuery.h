@@ -78,17 +78,25 @@ struct LTLfQuery {
     // AFTER THE COMPILATION OF THE QUERY PLAN. TODO: to be inserted in the definition of hashing and equality
     std::vector<LTLfQuery*> args;
     std::set<std::string> atom;
-    std::set<size_t> partial_results;
-    size_t result_id = 0;
+
+    // Novel vector representation
+    std::vector<std::vector<size_t>> range_query;
+    std::vector<size_t> table_query;
+    // OLD SUPPORT
+    //std::set<size_t> partial_results;
+    //size_t result_id = 0;
+
+
     const DeclareDataAware* joinCondition;
     size_t parentMin = std::numeric_limits<size_t>::max(), parentMax = 0, dis = 0;
     Result result;
-    void associateDataQueryIdsToFormulaByAtom(const std::string &x, size_t l) {
-        if (atom.contains(x)) {
-            partial_results.emplace(l);
-        } else for (auto& child : args)
-                child->associateDataQueryIdsToFormulaByAtom(x, l);
-    }
+
+//    void associateDataQueryIdsToFormulaByAtom(const std::string &x, size_t l) {
+//        if (atom.contains(x)) {
+//            partial_results.emplace(l);
+//        } else for (auto& child : args)
+//                child->associateDataQueryIdsToFormulaByAtom(x, l);
+//    }
 
     LTLfQuery() : t{FALSEHOOD_QP}, declare_arg{DECLARE_TYPE_NONE}, isLeaf{NoneLeaf}, n{0}, fields{0}, joinCondition{nullptr} {}
     DEFAULT_COPY_ASSGN(LTLfQuery)

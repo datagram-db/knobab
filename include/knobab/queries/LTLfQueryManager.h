@@ -12,7 +12,7 @@
 
 struct for_occurrence {
     DEFAULT_CONSTRUCTORS(for_occurrence)
-    bool isTimed;
+    bool isTimed, isDisjunctiveSoNegated;
     LeafType type;
     size_t n_arg;
     for_occurrence(bool isTimed, LeafType type, size_t nArg);
@@ -27,22 +27,24 @@ namespace std {
         std::size_t operator()(const for_occurrence& k) const
         {
             using yaucl::hashing::hash_combine;
-            return hash_combine<size_t>(hash_combine<LeafType>(hash_combine<bool>(31, k.isTimed), k.type), k.n_arg);
+            return hash_combine<bool>(hash_combine<size_t>(hash_combine<LeafType>(hash_combine<bool>(31, k.isTimed), k.type), k.n_arg), k.isDisjunctiveSoNegated);
         }
     };
 
 }
 
-
+struct MAXSatPipeline;
 
 #include <iostream>
 struct LTLfQueryManager {
     std::unordered_map<LTLfQuery, LTLfQuery*> conversion_map_for_subexpressions;
     std::map<size_t, std::vector<LTLfQuery*>> Q;
     std::unordered_map<LTLfQuery*, size_t> counter;
-//    std::vector<LTLfQuery*> atomsToDecomposeInUnion;
+    std::vector<LTLfQuery*> atomsToDecomposeInUnion;
     size_t current_query_id = 0;
     std::vector<std::unordered_set<LTLfQuery*>> activations;
+    const AtomizingPipeline* atomization;
+    MAXSatPipeline *pipeline;
 
     void generateGraph(std::map<LTLfQuery*, std::vector<LTLfQuery*>>& ref, LTLfQuery*q) const;
     std::string generateGraph() const;
@@ -61,6 +63,7 @@ struct LTLfQueryManager {
         key.type = orig.isLeaf;
         key.n_arg = orig.n;
         key.isTimed = orig.fields.id.parts.is_timed;
+        key.isDisjunctiveSoNegated = orig.fields.id.parts.is_negated;
         if (orig.t == LTLfQuery::AF_QPT)
             std::cout << "DEBUG" << std::endl;
         if (orig.args_from_script.empty() && (orig.t == LTLfQuery::EXISTS_QP)) {
@@ -80,6 +83,10 @@ struct LTLfQueryManager {
 
     // Union decomposition
     void finalizeUnions() {
+        //// TODO: there is an issue: this should be in some cases a disjunction,
+        ////       and in other cases it should be a conjunction.
+        ////       * When the atom was a negation, this was a disjunction
+        ////       * When this was a positive one, it was a conjunction
 //        std::unordered_map<for_occurrence, std::vector<LTLfQuery*>> focc_formula;
         LTLfQuery element_disjunction;
         for (auto& arg : focc_atomsets) {
@@ -90,10 +97,9 @@ struct LTLfQueryManager {
 //            std::cout << result << std::endl;
 //            std::cout << "-----" << std::endl;
             for (const auto& min_set : result.minimal_common_subsets) {
-                bool just = true;
                 element_disjunction.n = arg.first.n_arg;
                 element_disjunction.isLeaf = arg.first.type;
-                element_disjunction.fields.id.parts.is_negated = false;
+                element_disjunction.fields.id.parts.is_negated = arg.first.isDisjunctiveSoNegated;
                 element_disjunction.fields.id.parts.is_timed = arg.first.isTimed;
                 element_disjunction.fields.id.parts.is_queryplan = true;
                 element_disjunction.fields.id.parts.is_atom = true;
@@ -114,7 +120,7 @@ struct LTLfQueryManager {
                     element_disjunction.fields.id.parts.is_atom = false;
                     element_disjunction.fields.id.parts.directly_from_cache = true;
                     element_disjunction.fields.id.parts.has_theta = false;
-                    element_disjunction.t = LTLfQuery::OR_QP;
+                    element_disjunction.t = arg.first.isDisjunctiveSoNegated ? LTLfQuery::OR_QP : LTLfQuery::AND_QP;
                     for (size_t id : min_composition) {
                         element_disjunction.args.emplace_back(FF.at(id));
                     }
@@ -128,7 +134,7 @@ struct LTLfQueryManager {
                     element_disjunction.fields.id.parts.is_atom = false;
                     element_disjunction.fields.id.parts.directly_from_cache = true;
                     element_disjunction.fields.id.parts.has_theta = false;
-                    element_disjunction.t = LTLfQuery::OR_QP;
+                    element_disjunction.t = arg.first.isDisjunctiveSoNegated ? LTLfQuery::OR_QP : LTLfQuery::AND_QP;
                     LTLfQuery* ptr = nullptr;
                     auto it = min_composition.begin();
                     for (size_t i = 0, N = min_composition.size(); i<N; i++) {
@@ -159,7 +165,7 @@ struct LTLfQueryManager {
                     element_disjunction.fields.id.parts.is_atom = false;
                     element_disjunction.fields.id.parts.directly_from_cache = true;
                     element_disjunction.fields.id.parts.has_theta = false;
-                    element_disjunction.t = LTLfQuery::OR_QP;
+                    element_disjunction.t = arg.first.isDisjunctiveSoNegated ? LTLfQuery::OR_QP : LTLfQuery::AND_QP;
                     for (const auto& id : *min_composition.second) {
                         element_disjunction.args.emplace_back(FF.at(id));
                     }
@@ -173,7 +179,7 @@ struct LTLfQueryManager {
                     element_disjunction.fields.id.parts.is_atom = false;
                     element_disjunction.fields.id.parts.directly_from_cache = true;
                     element_disjunction.fields.id.parts.has_theta = false;
-                    element_disjunction.t = LTLfQuery::OR_QP;
+                    element_disjunction.t = arg.first.isDisjunctiveSoNegated ? LTLfQuery::OR_QP : LTLfQuery::AND_QP;
                     LTLfQuery* ptr = nullptr;
                     auto it = min_composition.second->begin();
                     for (size_t i = 0, N = min_composition.second->size(); i<N; i++) {
@@ -271,21 +277,37 @@ struct LTLfQueryManager {
                                           const std::unordered_set<std::string> &atom_universe,
                                           const std::unordered_set<std::string> &left,
                                           const std::unordered_set<std::string> &right) {
+
+        bool firstOrLast = false;
+        // Time assumptions on the Init and End operator!
+        // Only untimed and non-negated operators are allowed
+        if ((((input.t == LTLfQuery::INIT_QP) || (input.t == LTLfQuery::END_QP)))) {
+            if (input.fields.id.parts.is_timed)
+                throw std::runtime_error("ERROR: an init or end cannot be timed in this implementation!");
+            else if (input.fields.id.parts.is_negated)
+                throw std::runtime_error("ERROR: an init or end cannot be negated in this implementation!");
+        } if ((((input.t == LTLfQuery::FIRST_QP) || (input.t == LTLfQuery::LAST_QP)))) {
+            firstOrLast = true;
+            if (input.fields.id.parts.is_negated)
+                throw std::runtime_error("ERROR: an first or last cannot be negated in this implementation!");
+        }
+
         LTLfQuery q;
         q.t = input.t;
         q.n = input.n;
         q.isLeaf = input.isLeaf;
         q.fields = input.fields;
-        q.fields.id.parts.is_negated = false; // after resolution, nothing is negated!
+        q.fields.id.parts.is_negated = input.fields.id.parts.is_negated; // I need to remember whether this was an intersection or a union, depending on the negation of the atom!
         q.isLeaf = input.isLeaf;
         for_occurrence key;
-        key.isTimed = input.fields.id.parts.is_timed;
+        key.isTimed = firstOrLast || input.fields.id.parts.is_timed;
         key.n_arg = input.n;
         key.type = input.isLeaf;
+        key.isDisjunctiveSoNegated = input.fields.id.parts.is_negated;
         auto& V = focc_atomsets[key];
 
         bool hasAtLeastOneDataAtom = false;
-        if ((input.declare_arg == DECLARE_TYPE_LEFT)) {
+        if ((input.declare_arg == DECLARE_TYPE_LEFT) || (input.declare_arg == DECLARE_TYPE_NONE)) {
             if (input.fields.id.parts.is_negated) {
                 for (const auto& x : atom_universe) {
                     if (!left.contains(x)) {
@@ -324,26 +346,26 @@ struct LTLfQueryManager {
                 V.emplace_back(q.atom);
             }
         } else {
-//            //To be done at a future step: supporting three argument clauses
-//            if (q.fields.id.parts.is_atom) {
-//                if(!((q.t == LTLfQuery::FIRST_QP) || (q.t == LTLfQuery::LAST_QP))) {
-//                    if (input.fields.id.parts.is_negated) {
-//                        for (const auto& x : atom_universe) {
-//                            if (!left.contains(x)) {
-//                                hasAtLeastOneDataAtom = hasAtLeastOneDataAtom || data_atom.contains(x);
-//                                q.atom.insert(x);
-////                                atomToFormulaId[x].emplace_back(formulaId);
-//                            }
-//                        }
-//                    } else {
-//                        for (const auto& x : left) {
-//                            hasAtLeastOneDataAtom = hasAtLeastOneDataAtom || data_atom.contains(x);
-//                            q.atom.insert(x);
-////                            atomToFormulaId[x].emplace_back(formulaId);
-//                        }
-//                    }
-//                }
-//            }
+            //To be done at a future step: supporting three argument clauses
+            if (q.fields.id.parts.is_atom) {
+                if(!((q.t == LTLfQuery::FIRST_QP) || (q.t == LTLfQuery::LAST_QP))) {
+                    if (input.fields.id.parts.is_negated) {
+                        for (const auto& x : atom_universe) {
+                            if (!left.contains(x)) {
+                                hasAtLeastOneDataAtom = hasAtLeastOneDataAtom || data_atom.contains(x);
+                                q.atom.insert(x);
+//                                atomToFormulaId[x].emplace_back(formulaId);
+                            }
+                        }
+                    } else {
+                        for (const auto& x : left) {
+                            hasAtLeastOneDataAtom = hasAtLeastOneDataAtom || data_atom.contains(x);
+                            q.atom.insert(x);
+//                            atomToFormulaId[x].emplace_back(formulaId);
+                        }
+                    }
+                }
+            }
         }
         if (input.fields.id.parts.has_theta) {
             q.joinCondition = joinCondition;
@@ -351,7 +373,7 @@ struct LTLfQueryManager {
         for (auto& args : input.args_from_script)
             q.args_from_script.emplace_back(instantiate(atom, formulaId, args, joinCondition, data_atom, atom_universe, left, right));
         q.fields.id.parts.is_queryplan = false;
-        q.fields.id.parts.is_negated = false;
+//        q.fields.id.parts.is_negated = false;
         q.declare_arg = input.declare_arg; //DECLARE_TYPE_NONE;
         if ((q.t == LTLfQuery::ABSENCE_QP) && (hasAtLeastOneDataAtom || (q.atom.size()>1) || (input.fields.id.parts.is_timed))) {
             LTLfQuery trueAbsence;
@@ -392,12 +414,12 @@ struct LTLfQueryManager {
                         std::vector<std::string> &toUseAtoms,
                         std::unordered_map<std::string , std::vector<size_t>>& atomToFormulaId);
 
-    void finalize_unions(const AtomizingPipeline& ap, std::vector<LTLfQuery*>& W, KnowledgeBase* ptr);
+    void sort_query_plan_for_scheduling(const AtomizingPipeline& ap, std::vector<LTLfQuery*>& W, KnowledgeBase* ptr);
 
 private:
 
     LTLfQuery* simplify(const LTLfQuery& q);
-    LTLfQuery* simplifyRecursively(LTLfQuery &element_disjunction);
+//    LTLfQuery* simplifyRecursively(LTLfQuery &element_disjunction);
 };
 
 

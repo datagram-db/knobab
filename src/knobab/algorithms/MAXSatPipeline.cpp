@@ -3,13 +3,13 @@
 //
 
 #include <magic_enum.hpp>
+#include "knobab/queries/LTLfQueryManager.h"
 #include <knobab/predicates/PredicateManager.h>
 #include <knobab/utilities/SetOperators.h>
 #include <knobab/operators/simple_ltlf_operators.h>
 #include <yaucl/functional/assert.h>
 #include <knobab/operators/fast_ltlf_operators.h>
 #include "knobab/algorithms/MAXSatPipeline.h"
-
 
 MAXSatPipeline::MAXSatPipeline(const std::string& plan_file, const std::string& plan, size_t nThreads)
 #ifdef MAXSatPipeline_PARALLEL
@@ -140,6 +140,7 @@ void MAXSatPipeline::pipeline(CNFDeclareDataAware* model,
                        const KnowledgeBase& kb) {
     /// Clearing the previous spurious computation values
     clear();
+    qm.atomization = &atomization;
 
     /// Extracting the predicates from both the LTLf semantics and the data extracted from it
     {
@@ -275,13 +276,15 @@ void MAXSatPipeline::data_chunk(CNFDeclareDataAware *model,
 
     if (!model) return;
     qm.current_query_id = 0;
-    static std::vector<std::pair<std::pair<trace_t, event_t>, double>> empty_result{};
     declare_model = model;
     std::vector<LTLfQuery*> W;
     //label_set_t visitedAtoms;
     size_t declareId = 0;
     std::vector<LTLfQuery> tmpQuery;
     std::vector<size_t> declareToQuery;
+
+    /// Instantiating the patterns as distinct trees before generating the graph.
+    /// TODO: pattern instantiation and DAG generation in one shot
     for (auto& it : declare_model->singleElementOfConjunction) {
         for (auto& item : it.elementsInDisjunction) {
             // Skipping already-met definitions: those will only duplicate the code to be run!
@@ -359,11 +362,11 @@ void MAXSatPipeline::data_chunk(CNFDeclareDataAware *model,
                qm.activations.emplace_back();
             }
 
-            /// TODO: PRESERVE
             /// Setting specific untimed atom queries, that can be run directly and separatedly
             /// So, any expansion of the formula by detecting whether the formula can directly
             /// access the tables or not should be done in a later stage, that is, on simplify!
-            // TODO: formula = pushAtomicQueries(atomization, formula);
+            // TODO: push towards simplification
+            //  formula = pushAtomicQueries(atomization, formula);
             W.emplace_back(formula);
             declare_to_query.emplace_back(formula);
         } else {
@@ -371,8 +374,7 @@ void MAXSatPipeline::data_chunk(CNFDeclareDataAware *model,
             qm.activations.emplace_back(qm.activations.at(qId));
         }
     }
-    qm.finalize_unions(atomization, W, (KnowledgeBase*)&kb); // Time Computational Complexity: Squared on the size of the atoms
-    return;
+    qm.sort_query_plan_for_scheduling(atomization, W, (KnowledgeBase *) &kb); // Time Computational Complexity: Squared on the size of the atoms
 
 //    for (auto& ref : atomToFormulaId)
 //        remove_duplicates(ref.second);
@@ -382,127 +384,141 @@ void MAXSatPipeline::data_chunk(CNFDeclareDataAware *model,
 //        std::cout << *ref << std::endl;
 //    }
 //#endif
-    remove_duplicates(toUseAtoms);
+//    remove_duplicates(toUseAtoms);
 
-    // TODO: AtomQuery is not required, as range queries already have the atom information!
-    // Just the Act iteration
-    auto toUseAtomsEnd = std::stable_partition(toUseAtoms.begin(), toUseAtoms.end(), [&](const auto& x) { return atomization.act_atoms.contains(x); });
-    for (auto it = toUseAtoms.begin(); it != toUseAtomsEnd; it++) {
-        pushAtomDataQuery(DataQuery::AtomQuery(*it), false);
-    }
-    barrier_to_range_queries = data_accessing.size();
-    barriers_to_atfo = atomToResultOffset.size();
-
-    // Iterating other the remaining non-act atoms, that is, the data predicate+label ones
-    for (auto it = toUseAtomsEnd, en = toUseAtoms.end(); it != en; it++) {
-        auto interval_to_interval_queries_to_intersect = atomization.atom_to_conjunctedPredicates.find(*it);
-        if (interval_to_interval_queries_to_intersect == atomization.atom_to_conjunctedPredicates.end())
-            throw std::runtime_error(*it + ": element not in map");
-
-        std::vector<size_t> tmpRanges;
-        for (const auto& interval_data_query : interval_to_interval_queries_to_intersect->second) {
-            // Sanity Checks
-            DEBUG_ASSERT(interval_data_query.casusu == INTERVAL);
-            DEBUG_ASSERT(interval_data_query.BiVariableConditions.empty());
-
-            //       splits the RangeQuery by clause.var (as they are going to be on different tables),
-            //       clause.label (as the ranges are ordered by act and then by value) and then sort
-            //       the remainder by interval. By doing so, we are going to pay the access to clause.label
-            //       only once, and we are going to scan the whole range at most linearly instead of performing
-            //       at most linear scans for each predicate.
-            //       Then, the access canfomulaidToFormula be parallelized by variable name, as they are going to query separated tables
-            auto q = DataQuery::RangeQuery(interval_data_query.label, interval_data_query.var, interval_data_query.value, interval_data_query.value_upper_bound);
-            size_t tmpDataAccessingSize =  data_accessing.size();
-            auto find = data_offset.emplace(q, tmpDataAccessingSize);
-            if (find.second){
-                maxPartialResultId = std::max(maxPartialResultId, (ssize_t)tmpDataAccessingSize);
-                tmpRanges.emplace_back(tmpDataAccessingSize);
-                data_accessing_range_query_to_offsets[interval_data_query.var][interval_data_query.label].emplace_back(tmpDataAccessingSize);
-                data_accessing.emplace_back(q, empty_result);
-            } else {
-                maxPartialResultId = std::max(maxPartialResultId, (ssize_t)find.first->second);
-                tmpRanges.emplace_back(find.first->second);
-            }
-        }
-//#ifdef DEBUG
-//        std::cout << atomToResultOffset.size() << "<=>" << interval_to_interval_queries_to_intersect->first << "-->" << tmpRanges << std::endl;
-//#endif
-        atomToResultOffset.emplace_back(tmpRanges.begin(), tmpRanges.end());
-    }
+//    // TODO: AtomQuery is not required, as range queries already have the atom information!
+//    // Just the Act iteration
+//    auto toUseAtomsEnd = std::stable_partition(toUseAtoms.begin(), toUseAtoms.end(), [&](const auto& x) { return atomization.act_atoms.contains(x); });
+//    for (auto it = toUseAtoms.begin(); it != toUseAtomsEnd; it++) {
+//        pushNonRangeQuery(DataQuery::AtomQuery(*it), false);
+//    }
+//    barrier_to_range_queries = data_accessing.size();
+//    ///barriers_to_atfo = atomToResultOffset.size();
+//
+//    // Iterating other the remaining non-act atoms, that is, the data predicate+label ones
+//    for (auto it = toUseAtomsEnd, en = toUseAtoms.end(); it != en; it++) {
+//        auto atom = *it;
+//
+//        pushDataRangeQuery(atomization, atom);
+//
+//        //#ifdef DEBUG
+////        std::cout << atomToResultOffset.size() << "<=>" << interval_to_interval_queries_to_intersect->first << "-->" << tmpRanges << std::endl;
+////#endif
+//        ///atomToResultOffset.emplace_back(tmpRanges.begin(), tmpRanges.end());
+//    }
 }
 
-LTLfQuery *MAXSatPipeline::pushAtomicQueries(const AtomizingPipeline &atomization, LTLfQuery *formula) {
-    if (!formula) return formula;
-    for (const auto ptr : formula->args)
-        pushAtomicQueries(atomization, ptr);
+std::vector<size_t> MAXSatPipeline::pushDataRangeQuery(const AtomizingPipeline &atomization, const std::string &atom) {
+    static std::vector<std::pair<std::pair<trace_t, event_t>, double>> empty_result{};
 
-    if ((!formula->fields.id.parts.is_timed) && (formula->isLeaf != NotALeaf) && (atomization.act_atoms.contains(*formula->atom.begin()))) {
-        DEBUG_ASSERT(formula->atom.size() == 1);
-        // Data conditions, for timed events, that are leaves, and contain only atoms
-        switch (formula->t) {
-            case LTLfQuery::INIT_QP:{
-                formula->result_id = pushAtomDataQuery(DataQuery::InitQuery(*formula->atom.begin()), true);
-                formula->fields.id.parts.directly_from_cache = true;
-                break;
-            }
-            case LTLfQuery::END_QP: {
-                formula->result_id = pushAtomDataQuery(DataQuery::EndsQuery(*formula->atom.begin()), true);
-                formula->fields.id.parts.directly_from_cache = true;
-                break;
-            }
-            case LTLfQuery::EXISTS_QP: {
-                formula->result_id = pushAtomDataQuery(DataQuery::ExistsQuery(*formula->atom.begin(), formula->n), true);
-                formula->fields.id.parts.directly_from_cache = true;
-                break;
-            }
-            case LTLfQuery::ABSENCE_QP: {
-                formula->result_id = pushAtomDataQuery(DataQuery::AbsenceQuery(*formula->atom.begin(), formula->n), true);
-                formula->fields.id.parts.directly_from_cache = true;
-                break;
-            }
+    // CHECKING THAT THE ATOM IS WITHIN THE ATOMIZATION PIPELINE
+    auto interval_to_interval_queries_to_intersect = atomization.atom_to_conjunctedPredicates.find(atom);
+    if (interval_to_interval_queries_to_intersect == atomization.atom_to_conjunctedPredicates.end())
+        throw std::runtime_error(atom + ": element not in map");
 
-            default: break;
-        }
-    } else if (((formula->fields.id.parts.is_timed) && (formula->t == LTLfQuery::LAST_QP || formula->t == LTLfQuery::FIRST_QP))) {
-        // It makes no sense to have an untimed first and last, as those are timed properties!
-        // Equivalent untimed properties (return the trace beginning/ending, are Init and End).
-        switch (formula->t) {
-            case LTLfQuery::FIRST_QP: {
-                formula->result_id = pushAtomDataQuery(DataQuery::FirstQuery(), true);
-                formula->fields.id.parts.directly_from_cache = true;
-                break;
-            }
-            case LTLfQuery::LAST_QP: {
-                formula->result_id = pushAtomDataQuery(DataQuery::LastQuery(), true);
-                formula->fields.id.parts.directly_from_cache = true;
-                break;
-            }
+    std::vector<size_t> tmpRanges;
+    for (const auto& interval_data_query : interval_to_interval_queries_to_intersect->second) {
+        // Sanity Checks
+        DEBUG_ASSERT(interval_data_query.casusu == INTERVAL);
+        DEBUG_ASSERT(interval_data_query.BiVariableConditions.empty());
 
-            default: break;
+        //       splits the RangeQuery by clause.var (as they are going to be on different tables),
+        //       clause.label (as the ranges are ordered by act and then by value) and then sort
+        //       the remainder by interval. By doing so, we are going to pay the access to clause.label
+        //       only once, and we are going to scan the whole range at most linearly instead of performing
+        //       at most linear scans for each predicate.
+        //       Then, the access canfomulaidToFormula be parallelized by variable name, as they are going to query separated tables
+        auto q = DataQuery::RangeQuery(interval_data_query.label, interval_data_query.var, interval_data_query.value, interval_data_query.value_upper_bound);
+        size_t tmpDataAccessingSize =  data_accessing.size();
+        auto find = data_offset.emplace(q, tmpDataAccessingSize);
+        if (find.second){
+            ///maxPartialResultId = std::max(maxPartialResultId, (ssize_t)tmpDataAccessingSize);
+            tmpRanges.emplace_back(tmpDataAccessingSize);
+            data_accessing_range_query_to_offsets[interval_data_query.var][interval_data_query.label].emplace_back(tmpDataAccessingSize);
+            data_accessing.emplace_back(q, empty_result);
+        } else {
+            ///maxPartialResultId = std::max(maxPartialResultId, (ssize_t)find.first->second);
+            tmpRanges.emplace_back(find.first->second);
         }
-    } else {
-        if (formula->args.empty()) {
-            DEBUG_ASSERT(false);
-            /// TODO: qm.atomsToDecomposeInUnion.emplace_back(formula);
-        }
-        formula->fields.id.parts.directly_from_cache = false;
-        toUseAtoms.insert(toUseAtoms.end(), formula->atom.begin(), formula->atom.end());
     }
-    return formula;
+    return tmpRanges;
 }
 
-size_t MAXSatPipeline::pushAtomDataQuery(const DataQuery &q, bool directlyFromCache) {
+//LTLfQuery *MAXSatPipeline::pushAtomicQueries(const AtomizingPipeline &atomization, LTLfQuery *formula) {
+//    DEBUG_ASSERT(false);
+//    if (!formula) return formula;
+//    for (const auto ptr : formula->args)
+//        pushAtomicQueries(atomization, ptr);
+//
+//    if ((!formula->fields.id.parts.is_timed) && (formula->isLeaf != NotALeaf) && (atomization.act_atoms.contains(*formula->atom.begin()))) {
+//        DEBUG_ASSERT(formula->atom.size() == 1);
+//        // Data conditions, for timed events, that are leaves, and contain only atoms
+//        switch (formula->t) {
+//            case LTLfQuery::INIT_QP:{
+//                formula->result_id = pushNonRangeQuery(DataQuery::InitQuery(*formula->atom.begin()), true);
+//                formula->fields.id.parts.directly_from_cache = true;
+//                break;
+//            }
+//            case LTLfQuery::END_QP: {
+//                formula->result_id = pushNonRangeQuery(DataQuery::EndsQuery(*formula->atom.begin()), true);
+//                formula->fields.id.parts.directly_from_cache = true;
+//                break;
+//            }
+//            case LTLfQuery::EXISTS_QP: {
+//                formula->result_id = pushNonRangeQuery(DataQuery::ExistsQuery(*formula->atom.begin(), formula->n), true);
+//                formula->fields.id.parts.directly_from_cache = true;
+//                break;
+//            }
+//            case LTLfQuery::ABSENCE_QP: {
+//                formula->result_id = pushNonRangeQuery(DataQuery::AbsenceQuery(*formula->atom.begin(), formula->n),
+//                                                       true);
+//                formula->fields.id.parts.directly_from_cache = true;
+//                break;
+//            }
+//
+//            default: break;
+//        }
+//    } else if (((formula->fields.id.parts.is_timed) && (formula->t == LTLfQuery::LAST_QP || formula->t == LTLfQuery::FIRST_QP))) {
+//        // It makes no sense to have an untimed first and last, as those are timed properties!
+//        // Equivalent untimed properties (return the trace beginning/ending, are Init and End).
+//        switch (formula->t) {
+//            case LTLfQuery::FIRST_QP: {
+//                formula->result_id = pushNonRangeQuery(DataQuery::FirstQuery(), true);
+//                formula->fields.id.parts.directly_from_cache = true;
+//                break;
+//            }
+//            case LTLfQuery::LAST_QP: {
+//                formula->result_id = pushNonRangeQuery(DataQuery::LastQuery(), true);
+//                formula->fields.id.parts.directly_from_cache = true;
+//                break;
+//            }
+//
+//            default: break;
+//        }
+//    } else {
+//        if (formula->args.empty()) {
+//            qm.atomsToDecomposeInUnion.emplace_back(formula);
+//        }
+//        formula->fields.id.parts.directly_from_cache = false;
+//        toUseAtoms.insert(toUseAtoms.end(), formula->atom.begin(), formula->atom.end());
+//    }
+//    return formula;
+//}
+
+size_t MAXSatPipeline::pushNonRangeQuery(const DataQuery &q, bool directlyFromCache) {
     static std::vector<std::pair<std::pair<trace_t, event_t>, double>> empty_result{};
     size_t offset = data_accessing.size();
-    auto find = data_offset.emplace(q, offset);
+    auto find = data_offset.emplace(q, offset); // Determining whether the query already exists
     if (find.second){
+        // Inserting the novel atomic query
         offset = data_accessing.size();
         data_accessing.emplace_back(q, empty_result);
     } else
-        offset = (find.first->second);
-    maxPartialResultId = std::max(maxPartialResultId, (ssize_t)offset);
+        offset = (find.first->second); // Otherwise, taking the offset already being computed before
+    ///maxPartialResultId = std::max(maxPartialResultId, (ssize_t)offset);
     if (!directlyFromCache) {
-        atomToResultOffset.emplace_back(std::set<size_t>{offset});
+        DEBUG_ASSERT(false);
+//        atomToResultOffset.emplace_back(std::set<size_t>{offset});
     }
     return offset;
 }
@@ -1361,3 +1377,5 @@ void MAXSatPipeline::fast_v1_query_running(const std::vector<PartialResult>& res
         idx--;
     }
 }
+
+std::string MAXSatPipeline::generateGraph() const { return qm.generateGraph(); }

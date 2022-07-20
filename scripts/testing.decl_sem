@@ -1,7 +1,6 @@
 "marking" {
      template "Init"               := INIT
      template "Exists1"            := (EXISTS 1)
-     template "Exist2"            := (EXISTS 2)
      template "Absence1"           := ABSENCE 1
      template "Absence2"           := ABSENCE 2
      template "Choice" args 2      := (EXISTS 1 t #1 activation) OR THETA (EXISTS 1 t #2 target)
