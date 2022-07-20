@@ -33,14 +33,7 @@ namespace std {
 
 }
 
-LTLfQuery* alloc(LTLfQuery& orig,
-                 std::unordered_map<for_occurrence, std::vector<std::set<std::string>>> focc_atomsets,
-std::unordered_map<for_occurrence, std::vector<LTLfQuery*>> focc_sub_formulae
-) {
-    if (orig.args_from_script.empty() && (orig.t == LTLfQuery::EXISTS_QP)) {
 
-    }
-}
 
 #include <iostream>
 struct LTLfQueryManager {
@@ -62,9 +55,31 @@ struct LTLfQueryManager {
     std::unordered_map<for_occurrence, std::vector<std::set<std::string>>> focc_atomsets;
     std::unordered_map<for_occurrence, std::vector<LTLfQuery*>> focc_sub_formulae;
 
+    LTLfQuery* alloc(LTLfQuery& orig) {
+        orig.fields.id.parts.is_queryplan = true;
+        for_occurrence key;
+        key.type = orig.isLeaf;
+        key.n_arg = orig.n;
+        key.isTimed = orig.fields.id.parts.is_timed;
+        if (orig.t == LTLfQuery::AF_QPT)
+            std::cout << "DEBUG" << std::endl;
+        if (orig.args_from_script.empty() && (orig.t == LTLfQuery::EXISTS_QP)) {
+            auto it = focc_atomsets.find(key);
+            DEBUG_ASSERT(it != focc_atomsets.end());
+            DEBUG_ASSERT(it->second.size() > 0);
+            auto it2 = std::find(it->second.begin(), it->second.end(), orig.atom);
+            DEBUG_ASSERT(it2 != it->second.end());
+            return focc_sub_formulae[key].at( it2 - it->second.begin());
+        } else {
+            for (auto& x : orig.args_from_script)
+                orig.args.emplace_back(alloc(x));
+            orig.args_from_script.clear();
+            return simplify(orig);
+        }
+    }
+
     // Union decomposition
     void finalizeUnions() {
-
 //        std::unordered_map<for_occurrence, std::vector<LTLfQuery*>> focc_formula;
         LTLfQuery element_disjunction;
         for (auto& arg : focc_atomsets) {
@@ -183,10 +198,6 @@ struct LTLfQueryManager {
                 std::cout << "~~~~~~~~~" << std::endl;
             }
         }
-        std::cout << "OK" << std::endl;
-
-
-
 
 //
 //        for (const auto& ref : result.decomposedIndexedSubsets) {

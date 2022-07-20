@@ -13,7 +13,8 @@ bool LTLfQuery::operator==(const LTLfQuery &rhs) const {
            args_from_script == rhs.args_from_script &&
            args == rhs.args &&
            atom == rhs.atom &&
-           joinCondition == rhs.joinCondition;
+            ((joinCondition == nullptr) || (joinCondition->compareAsThetaPredicate(rhs.joinCondition)))
+            && ((joinCondition) || rhs.joinCondition == nullptr);
 }
 
 bool LTLfQuery::operator!=(const LTLfQuery &rhs) const {
