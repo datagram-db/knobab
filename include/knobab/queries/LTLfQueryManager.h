@@ -87,8 +87,8 @@ struct LTLfQueryManager {
             remove_duplicates(arg.second);
             if (arg.second.empty()) continue;
             auto result = partition_sets(arg.second);
-            std::cout << result << std::endl;
-            std::cout << "-----" << std::endl;
+//            std::cout << result << std::endl;
+//            std::cout << "-----" << std::endl;
             for (const auto& min_set : result.minimal_common_subsets) {
                 bool just = true;
                 element_disjunction.n = arg.first.n_arg;
@@ -105,12 +105,13 @@ struct LTLfQueryManager {
             }
             for (const auto& min_composition : result.minimal_common_subsets_composition) {
                 DEBUG_ASSERT(min_composition.size() > 1);
+                element_disjunction.atom.clear();
                 if (min_composition.size() == 2) {
-                    element_disjunction.isLeaf = arg.first.type;
+                    element_disjunction.isLeaf = NotALeaf;
                     element_disjunction.fields.id.parts.is_negated = false;
                     element_disjunction.fields.id.parts.is_timed = arg.first.isTimed;
                     element_disjunction.fields.id.parts.is_queryplan = true;
-                    element_disjunction.fields.id.parts.is_atom = true;
+                    element_disjunction.fields.id.parts.is_atom = false;
                     element_disjunction.fields.id.parts.directly_from_cache = true;
                     element_disjunction.fields.id.parts.has_theta = false;
                     element_disjunction.t = LTLfQuery::OR_QP;
@@ -120,11 +121,11 @@ struct LTLfQueryManager {
                     FF.emplace_back(simplify(element_disjunction));
                     element_disjunction.args.clear();
                 } else {
-                    element_disjunction.isLeaf = arg.first.type;
+                    element_disjunction.isLeaf = NotALeaf;
                     element_disjunction.fields.id.parts.is_negated = false;
                     element_disjunction.fields.id.parts.is_timed = arg.first.isTimed;
                     element_disjunction.fields.id.parts.is_queryplan = true;
-                    element_disjunction.fields.id.parts.is_atom = true;
+                    element_disjunction.fields.id.parts.is_atom = false;
                     element_disjunction.fields.id.parts.directly_from_cache = true;
                     element_disjunction.fields.id.parts.has_theta = false;
                     element_disjunction.t = LTLfQuery::OR_QP;
@@ -147,14 +148,15 @@ struct LTLfQueryManager {
             auto& v = focc_sub_formulae[arg.first];
             v.insert(v.begin(), arg.second.size(), nullptr);
             for (auto& min_composition : result.decomposedIndexedSubsets) {
+                element_disjunction.atom.clear();
                 if (min_composition.second->size() == 1) {
                     v[min_composition.first] = FF.at(*min_composition.second->begin());
                 } else if (min_composition.second->size() == 2) {
-                    element_disjunction.isLeaf = arg.first.type;
+                    element_disjunction.isLeaf = NotALeaf;
                     element_disjunction.fields.id.parts.is_negated = false;
                     element_disjunction.fields.id.parts.is_timed = arg.first.isTimed;
                     element_disjunction.fields.id.parts.is_queryplan = true;
-                    element_disjunction.fields.id.parts.is_atom = true;
+                    element_disjunction.fields.id.parts.is_atom = false;
                     element_disjunction.fields.id.parts.directly_from_cache = true;
                     element_disjunction.fields.id.parts.has_theta = false;
                     element_disjunction.t = LTLfQuery::OR_QP;
@@ -164,11 +166,11 @@ struct LTLfQueryManager {
                     v[min_composition.first] = simplify(element_disjunction);
                     element_disjunction.args.clear();
                 } else {
-                    element_disjunction.isLeaf = arg.first.type;
+                    element_disjunction.isLeaf = NotALeaf;
                     element_disjunction.fields.id.parts.is_negated = false;
                     element_disjunction.fields.id.parts.is_timed = arg.first.isTimed;
                     element_disjunction.fields.id.parts.is_queryplan = true;
-                    element_disjunction.fields.id.parts.is_atom = true;
+                    element_disjunction.fields.id.parts.is_atom = false;
                     element_disjunction.fields.id.parts.directly_from_cache = true;
                     element_disjunction.fields.id.parts.has_theta = false;
                     element_disjunction.t = LTLfQuery::OR_QP;
