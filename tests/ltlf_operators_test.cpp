@@ -44,7 +44,7 @@ std::vector<std::vector<std::string>> traces;\
 
 TEST(Box)
 TEST_F(Box_tests, untimed) {
-    auto a = env.db.untimed_dataless_exists("a", ActivationLeaf);
+    auto a = env.db.timed_dataless_exists("a", ActivationLeaf);
     Result result;
     global_logic_untimed(a, result, env.db.act_table_by_act_id.trace_length);
     EXPECT_EQ(pos, result.size());
@@ -53,7 +53,7 @@ TEST_F(Box_tests, untimed) {
 TEST_F(Box_tests, timed) {
     Environment env2;
     env2.doStats = false;
-    auto a = env.db.untimed_dataless_exists("a", ActivationLeaf);
+    auto a = env.db.timed_dataless_exists("a", ActivationLeaf);
     Result result, result2;
     global_logic_timed(a, result, env.db.act_table_by_act_id.trace_length);
     EXPECT_TRUE(!result.empty());
@@ -74,7 +74,7 @@ TEST_F(Box_tests, timed) {
     env2.db.exitLog("box_test_timed", "box_test_timed");
     env2.db.index_data_structures(false);
     assert(result.empty());
-    a = env2.db.untimed_dataless_exists("a", ActivationLeaf);
+    a = env2.db.timed_dataless_exists("a", ActivationLeaf);
     global_logic_untimed(a, result, env2.db.act_table_by_act_id.trace_length);
     EXPECT_EQ(trace_count, result.size());
     EXPECT_EQ(resultSize, result.size());
@@ -85,7 +85,7 @@ TEST_F(Box_tests, timed) {
 
 TEST(Diamond)
 TEST_F(Diamond_tests, basic) {
-    auto a = env.db.untimed_dataless_exists("a", ActivationLeaf);
+    auto a = env.db.timed_dataless_exists("a", ActivationLeaf);
 
     Result result;
     future_logic_untimed(a, result, env.db.act_table_by_act_id.trace_length);
@@ -94,7 +94,7 @@ TEST_F(Diamond_tests, basic) {
 TEST_F(Diamond_tests, timed) {
     Environment env2;
     env2.doStats = false;
-    auto a = env.db.untimed_dataless_exists("a", ActivationLeaf);
+    auto a = env.db.timed_dataless_exists("a", ActivationLeaf);
     Result result;
     future_logic_timed(a, result, env.db.act_table_by_act_id.trace_length);
     EXPECT_TRUE(!result.empty());
@@ -115,7 +115,7 @@ TEST_F(Diamond_tests, timed) {
     env2.db.exitLog("diamond_test_timed", "diamond_test_timed");
     env2.db.index_data_structures(false);
     assert(result.empty());
-    a = env2.db.untimed_dataless_exists("a", ActivationLeaf);
+    a = env2.db.timed_dataless_exists("a", ActivationLeaf);
     future_logic_untimed(a, result, env2.db.act_table_by_act_id.trace_length);
     EXPECT_EQ(trace_count, result.size());
     EXPECT_EQ(resultSize, result.size());
@@ -123,8 +123,8 @@ TEST_F(Diamond_tests, timed) {
 
 TEST(Until)
 TEST_F(Until_tests, basic) {
-    auto a = env.db.untimed_dataless_exists("a", ActivationLeaf);
-    auto b = env.db.untimed_dataless_exists("b", TargetLeaf);
+    auto a = env.db.timed_dataless_exists("a", ActivationLeaf);
+    auto b = env.db.timed_dataless_exists("b", TargetLeaf);
     Result result, result2;
     until_logic_untimed(a, b, result, nullptr, env.db.act_table_by_act_id.trace_length);
     EXPECT_EQ(pos, result.size());
@@ -137,8 +137,8 @@ TEST_F(Until_tests, basic) {
 TEST_F(Until_tests, timed) {
     Environment env2;
     env2.doStats = false;
-    auto a = env.db.untimed_dataless_exists("a", ActivationLeaf);
-    auto b = env.db.untimed_dataless_exists("b", TargetLeaf);
+    auto a = env.db.timed_dataless_exists("a", ActivationLeaf);
+    auto b = env.db.timed_dataless_exists("b", TargetLeaf);
     Result result;
     until_logic_timed(a, b, result, nullptr, env.db.act_table_by_act_id.trace_length);
     EXPECT_TRUE(!result.empty());
@@ -159,8 +159,8 @@ TEST_F(Until_tests, timed) {
     env2.db.exitLog("until_test_timed", "until_test_timed");
     env2.db.index_data_structures(false);
     assert(result.empty());
-    a = env2.db.untimed_dataless_exists("a", ActivationLeaf);
-    b = env2.db.untimed_dataless_exists("b", TargetLeaf);
+    a = env2.db.timed_dataless_exists("a", ActivationLeaf);
+    b = env2.db.timed_dataless_exists("b", TargetLeaf);
     until_logic_untimed(a, b, result, nullptr, env2.db.act_table_by_act_id.trace_length);
     EXPECT_EQ(trace_count, result.size());
     EXPECT_EQ(resultSize, result.size());
@@ -169,8 +169,8 @@ TEST_F(Until_tests, timed) {
 TEST_F(Until_tests, negated_untimed) {
     Environment env2;
     env2.doStats = false;
-    auto a = env.db.untimed_dataless_exists("a", ActivationLeaf);
-    auto b = env.db.untimed_dataless_exists("b", TargetLeaf);
+    auto a = env.db.timed_dataless_exists("a", ActivationLeaf);
+    auto b = env.db.timed_dataless_exists("b", TargetLeaf);
     Result until, result, resultF;
     until_logic_untimed(a, b, until, nullptr, env.db.act_table_by_act_id.trace_length);
     negated_logic_untimed(until, result, env.db.act_table_by_act_id.trace_length);
@@ -188,8 +188,8 @@ TEST_F(Until_tests, negated_untimed) {
 TEST_F(Until_tests, negated_timed) {
     Environment env2;
     env2.doStats = false;
-    auto a = env.db.untimed_dataless_exists("a", ActivationLeaf);
-    auto b = env.db.untimed_dataless_exists("b", TargetLeaf);
+    auto a = env.db.timed_dataless_exists("a", ActivationLeaf);
+    auto b = env.db.timed_dataless_exists("b", TargetLeaf);
 
     Result until, result, resultF;
     until_logic_timed(a, b, until, nullptr, env.db.act_table_by_act_id.trace_length);

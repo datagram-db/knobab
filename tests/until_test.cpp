@@ -27,8 +27,8 @@ protected:
 };
 
 TEST_F(until_tests, basic) {
-    auto a = env.db.untimed_dataless_exists("A", NoneLeaf);
-    auto b = env.db.untimed_dataless_exists("B", NoneLeaf);
+    auto a = env.db.timed_dataless_exists("A", NoneLeaf);
+    auto b = env.db.timed_dataless_exists("B", NoneLeaf);
     std::set<uint32_t> expectedTraces{1,3,5,7,9,10,11,12,13};
     auto result = until(a, b, env.db.act_table_by_act_id.getTraceLengths(), nullptr);
     for (const auto& ref : result)
@@ -36,8 +36,8 @@ TEST_F(until_tests, basic) {
 }
 
 TEST_F(until_tests, logic) {
-    auto a = env.db.untimed_dataless_exists("A", NoneLeaf);
-    auto b = env.db.untimed_dataless_exists("B", NoneLeaf);
+    auto a = env.db.timed_dataless_exists("A", NoneLeaf);
+    auto b = env.db.timed_dataless_exists("B", NoneLeaf);
     std::set<uint32_t> expectedTraces{1,3,5,7,9,10,11,12,13};
     Result result;
     until_logic_untimed(a, b, result, nullptr, env.db.act_table_by_act_id.trace_length);
@@ -46,8 +46,8 @@ TEST_F(until_tests, logic) {
 }
 
 TEST_F(until_tests, fast) {
-    auto a = env.db.untimed_dataless_exists("A", NoneLeaf);
-    auto b = env.db.untimed_dataless_exists("B", NoneLeaf);
+    auto a = env.db.timed_dataless_exists("A", NoneLeaf);
+    auto b = env.db.timed_dataless_exists("B", NoneLeaf);
     std::set<uint32_t> expectedTraces{1,3,5,7,9,10,11,12,13};
     Result result, result2;
     until_fast_untimed(a, b, result, nullptr, env.db.act_table_by_act_id.trace_length);
@@ -59,8 +59,8 @@ TEST_F(until_tests, fast) {
 }
 
 TEST_F(until_tests, predicate_manager) {
-    auto a = env.db.untimed_dataless_exists("A", ActivationLeaf);
-    auto b = env.db.untimed_dataless_exists("B", TargetLeaf);
+    auto a = env.db.timed_dataless_exists("A", ActivationLeaf);
+    auto b = env.db.timed_dataless_exists("B", TargetLeaf);
     PredicateManager pm{{{{"x", "y", LT}}}, &env.db};
     std::set<uint32_t> expectedTraces{1,3,5,7,13};
     auto result = until(a, b, env.db.act_table_by_act_id.getTraceLengths(), &pm);
@@ -69,8 +69,8 @@ TEST_F(until_tests, predicate_manager) {
 }
 
 TEST_F(until_tests, logic_pm) {
-    auto a = env.db.untimed_dataless_exists("A", ActivationLeaf);
-    auto b = env.db.untimed_dataless_exists("B", TargetLeaf);
+    auto a = env.db.timed_dataless_exists("A", ActivationLeaf);
+    auto b = env.db.timed_dataless_exists("B", TargetLeaf);
     PredicateManager pm{{{{"x", "y", LT}}}, &env.db};
     std::set<uint32_t> expectedTraces{1,3,5,7,13};
     Result result;
@@ -80,8 +80,8 @@ TEST_F(until_tests, logic_pm) {
 }
 
 TEST_F(until_tests, fast_pm) {
-    auto a = env.db.untimed_dataless_exists("A", ActivationLeaf);
-    auto b = env.db.untimed_dataless_exists("B", TargetLeaf);
+    auto a = env.db.timed_dataless_exists("A", ActivationLeaf);
+    auto b = env.db.timed_dataless_exists("B", TargetLeaf);
     PredicateManager pm{{{{"x", "y", LT}}}, &env.db};
     Result result, result2;
     until_fast_untimed(a, b, result, &pm, env.db.act_table_by_act_id.trace_length);
@@ -94,8 +94,8 @@ TEST_F(until_tests, fast_pm) {
 TEST_F(until_tests, logic_timed) {
 
     {
-        auto a = env.db.untimed_dataless_exists("A", NoneLeaf);
-        auto b = env.db.untimed_dataless_exists("B", NoneLeaf);
+        auto a = env.db.timed_dataless_exists("A", NoneLeaf);
+        auto b = env.db.timed_dataless_exists("B", NoneLeaf);
         Result result, expected;
 
         DATA_EMPLACE_BACK(expected, 1, 0)
@@ -138,8 +138,8 @@ TEST_F(until_tests, logic_timed) {
     }
 
     {
-        auto a = env.db.untimed_dataless_exists("A", NoneLeaf);
-        auto b = env.db.untimed_dataless_exists("B", TargetLeaf);
+        auto a = env.db.timed_dataless_exists("A", NoneLeaf);
+        auto b = env.db.timed_dataless_exists("B", TargetLeaf);
         Result result, expected;
         DATA_EMPLACE_BACK(expected, 1, 0, marked_event::target(0))
         DATA_EMPLACE_BACK(expected, 3, 0, marked_event::target(1))
@@ -181,8 +181,8 @@ TEST_F(until_tests, logic_timed) {
     }
 
     {
-        auto a = env.db.untimed_dataless_exists("A", ActivationLeaf);
-        auto b = env.db.untimed_dataless_exists("B", TargetLeaf);
+        auto a = env.db.timed_dataless_exists("A", ActivationLeaf);
+        auto b = env.db.timed_dataless_exists("B", TargetLeaf);
         Result result, expected;
         DATA_EMPLACE_BACK(expected, 1, 0, marked_event::target(0))
         DATA_EMPLACE_BACK(expected, 3, 0, marked_event::activation(0), marked_event::target(1))
@@ -229,8 +229,8 @@ TEST_F(until_tests, logic_timed) {
 
 
 TEST_F(until_tests, aAndFutureBTimed) {
-    auto a = env.db.untimed_dataless_exists("A", ActivationLeaf);
-    auto b = env.db.untimed_dataless_exists("B", TargetLeaf);
+    auto a = env.db.timed_dataless_exists("A", ActivationLeaf);
+    auto b = env.db.timed_dataless_exists("B", TargetLeaf);
 
     Result futureB, aAndFutureB1, aAndFutureB2, fast;
 
@@ -277,8 +277,8 @@ TEST_F(until_tests, aAndFutureBTimed) {
 }
 
 TEST_F(until_tests, aAndNextGloballyBTimed) {
-    auto a = env.db.untimed_dataless_exists("A", ActivationLeaf);
-    auto b = env.db.untimed_dataless_exists("B", TargetLeaf);
+    auto a = env.db.timed_dataless_exists("A", ActivationLeaf);
+    auto b = env.db.timed_dataless_exists("B", TargetLeaf);
 
     Result nextGlobalB, aAndXGB1, aAndXGB2, fast;
 
@@ -329,8 +329,8 @@ TEST_F(until_tests, aAndNextGloballyBTimed) {
 
 
 TEST_F(until_tests, aAndGloballyBTimed) {
-    auto a = env.db.untimed_dataless_exists("A", ActivationLeaf);
-    auto b = env.db.untimed_dataless_exists("B", TargetLeaf);
+    auto a = env.db.timed_dataless_exists("A", ActivationLeaf);
+    auto b = env.db.timed_dataless_exists("B", TargetLeaf);
 
     Result  aAndXGB1, aAndXGB2, fast;
     Result globalB;
