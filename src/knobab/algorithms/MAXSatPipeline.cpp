@@ -615,63 +615,79 @@ static inline Result local_intersection(const std::set<size_t> &vecs,
     return finalResult;
 }
 
+//
 
-static inline void data_merge_new(const LTLfQuery* formula,
-                              const std::vector<std::pair<DataQuery, PartialResult>>& table,
-                              const std::vector<PartialResult>& data_cache,
+static inline void multi_merge(const std::vector<size_t> &range_vecs,
+                               const std::vector<size_t> &no_range_vecs,
+                              const std::vector<PartialResult>& range_cache,
+                               const std::vector<std::pair<DataQuery, PartialResult>>& non_range_tables,
                               Result& result,
-                              LeafType isLeaf) {
-
-    if (formula->range_query.empty() && formula->table_query.empty()) {
+                              LeafType isLeaf,
+                              bool isUnion) {
+    if (range_vecs.empty() && no_range_vecs.empty()) {
         result.clear();
         return;
     }
+    auto it = range_vecs.begin();
+    auto last_range_intersection = range_cache.at(*it);
+    PartialResult curr_range_intersection;
+    for (std::size_t i = 1; i < range_vecs.size(); ++i) {
+        it++;
+        auto ref = range_cache.at(*it);
+        if (isUnion)
+            partialResultUnion(last_range_intersection,
+                               ref,
+                               std::back_inserter(curr_range_intersection));
+        else
+            partialResultIntersection(last_range_intersection,
+                                      ref,
+                                      std::back_inserter(curr_range_intersection));
 
-    bool doUnion = formula->fields.id.parts.is_negated;
-
-    auto* vecs = &formula->table_query;
-    auto it = vecs->begin();
-    PartialResult last_intersection;
-    size_t j = 0;
-    if (!formula->table_query.empty()) {
-        last_intersection = table.at(*it).second;
-        PartialResult curr_intersection;
-        for (std::size_t i = 1; i < vecs->size(); ++i) {
-            it++;
-            auto ref = table.at(*it).second;
-
-            if (doUnion)
-                partialResultUnion(last_intersection,
-                                   ref,
-                                   std::back_inserter(curr_intersection));
-            else
-                partialResultIntersection(last_intersection,
-                                          ref,
-                                          std::back_inserter(curr_intersection));
-
-            std::swap(last_intersection, curr_intersection);
-            curr_intersection.clear();
-        }
-        vecs = &formula->range_query;
-        if (!vecs->empty()) {
-            auto it = vecs->begin();
-            j = 0;
-        }
-    } else {
-        vecs = &formula->range_query;
-        if (!vecs->empty()) {
-            auto it = vecs->begin();
-            last_intersection = data_cache.at(*it);
-            j = 1;
-            it++;
-        }
+        std::swap(last_range_intersection, curr_range_intersection);
+        curr_range_intersection.clear();
     }
 
-    PartialResult curr_intersection;
-    for (std::size_t i = j; i < vecs->size(); ++i) {
-        auto ref = data_cache.at(*it);
+    // TODO!
 
-        if (doUnion)
+    ResultRecord rcx;
+    bool isActivation = false;
+    bool isTarget = false;
+    if (isLeaf == ActivationLeaf) {
+        rcx.second.second.emplace_back(marked_event::activation(0));
+        isActivation = true;
+    } else if (isLeaf == TargetLeaf) {
+        rcx.second.second.emplace_back(marked_event::target(0));
+        isTarget = true;
+    }
+
+    // TODO: better done through views!
+    for (auto it = last_range_intersection.begin(); it != last_range_intersection.end(); it++) {
+        rcx.first = it->first;
+        rcx.second.first = it->second;
+        if (isActivation)
+            rcx.second.second.at(0).id.parts.left = it->first.second;
+        else if (isTarget)
+            rcx.second.second.at(0).id.parts.right = it->first.second;
+        result.emplace_back(rcx);
+    }
+}
+
+static inline void data_merge(const std::vector<size_t> &vecs,
+                              const std::vector<PartialResult>& results,
+                              Result& result,
+                              LeafType isLeaf,
+                              bool isUnion) {
+    if (vecs.empty()) {
+        result.clear();
+        return;
+    }
+    auto it = vecs.begin();
+    auto last_intersection = results.at(*it);
+    PartialResult curr_intersection;
+    for (std::size_t i = 1; i < vecs.size(); ++i) {
+        it++;
+        const auto& ref = results.at(*it);
+        if (isUnion)
             partialResultUnion(last_intersection,
                                ref,
                                std::back_inserter(curr_intersection));
@@ -682,65 +698,31 @@ static inline void data_merge_new(const LTLfQuery* formula,
 
         std::swap(last_intersection, curr_intersection);
         curr_intersection.clear();
-        it++;
     }
 
     ResultRecord rcx;
-    if (isLeaf == ActivationLeaf)
+    bool isActivation = false;
+    bool isTarget = false;
+    if (isLeaf == ActivationLeaf) {
         rcx.second.second.emplace_back(marked_event::activation(0));
-    else if (isLeaf == TargetLeaf)
+        isActivation = true;
+    } else if (isLeaf == TargetLeaf) {
         rcx.second.second.emplace_back(marked_event::target(0));
+        isTarget = true;
+    }
 
     // TODO: better done through views!
     for (auto it = last_intersection.begin(); it != last_intersection.end(); it++) {
         rcx.first = it->first;
         rcx.second.first = it->second;
-        if (isLeaf == ActivationLeaf)
+        if (isActivation)
             rcx.second.second.at(0).id.parts.left = it->first.second;
-        else if (isLeaf == TargetLeaf)
+        else if (isTarget)
             rcx.second.second.at(0).id.parts.right = it->first.second;
         result.emplace_back(rcx);
     }
 }
 
-static inline void data_merge(const std::vector<size_t> &vecs,
-                              const std::vector<PartialResult>& results,
-                              Result& result,
-                              LeafType isLeaf) {
-    if (vecs.empty()) {
-        result.clear();
-        return;
-    }
-    auto it = vecs.begin();
-    auto last_intersection = results.at(*it);
-    PartialResult curr_intersection;
-    for (std::size_t i = 1; i < vecs.size(); ++i) {
-        it++;
-        auto ref = results.at(*it);
-        partialResultUnion(last_intersection,
-                           ref,
-                           std::back_inserter(curr_intersection));
-        std::swap(last_intersection, curr_intersection);
-        curr_intersection.clear();
-    }
-
-    ResultRecord rcx;
-    if (isLeaf == ActivationLeaf)
-        rcx.second.second.emplace_back(marked_event::activation(0));
-    else if (isLeaf == TargetLeaf)
-        rcx.second.second.emplace_back(marked_event::target(0));
-
-    // TODO: better done through views!
-    for (auto it = last_intersection.begin(); it != last_intersection.end(); it++) {
-        rcx.first = it->first;
-        rcx.second.first = it->second;
-        if (isLeaf == ActivationLeaf)
-            rcx.second.second.at(0).id.parts.left = it->first.second;
-        else if (isLeaf == TargetLeaf)
-            rcx.second.second.at(0).id.parts.right = it->first.second;
-        result.emplace_back(rcx);
-    }
-}
 
 static inline void local_logic_union(const LTLfQuery* q, Result& last_union, bool isTimed = true) {
     size_t N = q->args.size();
@@ -826,50 +808,54 @@ static inline void local_fast_union(const LTLfQuery* q, Result& last_union, bool
     }
 }
 
-static inline void absence_or_exists(LTLfQuery* formula,
+static inline void untimed_exists_for_data_queries(LTLfQuery* formula,
                                      const std::vector<PartialResult>& results_cache) {
-    DEBUG_ASSERT(false);
-//    bool isFirstIteration = true;
-//    uint32_t traceId = 0;
-//    uint16_t eventCount = 0;
-//    Result tmp_result;
-//    data_merge(formula->partial_results, results_cache, tmp_result, formula->isLeaf);
-//    ResultRecord cp{{0,0}, {1.0, {}}};
-//    for (auto ref = tmp_result.begin(); ref != tmp_result.end(); ref++) {
-//        if (isFirstIteration) {
-//            traceId = ref->first.first;
-//            eventCount = 1;
-//            isFirstIteration = false;
-//        } else {
-//            if ((traceId != ref->first.first)) {
-//                if ((eventCount >= formula->n)) {
-//                    cp.first.first = traceId;
-//                    formula->result.emplace_back(cp);
-//                }
-//                traceId = ref->first.first;
-//                eventCount = 1;
-//            } else eventCount++;
-//        }
-//    }
-//    tmp_result.clear();
-//    if ((eventCount >= formula->n)) {
-//        cp.first.first = traceId;
-//        formula->result.emplace_back(cp);
-//    }
+//    DEBUG_ASSERT(false);
+    bool isFirstIteration = true;
+    uint32_t traceId = 0;
+    uint16_t eventCount = 0;
+    Result tmp_result;
+    data_merge(formula->range_query, results_cache, tmp_result, formula->isLeaf, formula->fields.id.parts.is_negated);
+    ResultRecord cp{{0,0}, {1.0, {}}};
+    for (auto ref = tmp_result.begin(); ref != tmp_result.end(); ref++) {
+        if (isFirstIteration) {
+            traceId = ref->first.first;
+            eventCount = 1;
+            isFirstIteration = false;
+        } else {
+            if ((traceId != ref->first.first)) {
+                if ((eventCount >= formula->n)) {
+                    cp.first.first = traceId;
+                    formula->result.emplace_back(cp);
+                }
+                traceId = ref->first.first;
+                eventCount = 1;
+            } else eventCount++;
+        }
+    }
+    tmp_result.clear();
+    if ((eventCount >= formula->n)) {
+        cp.first.first = traceId;
+        formula->result.emplace_back(cp);
+    }
 }
 
 
 static inline void import_from_partial_results(LTLfQuery* formula, size_t offset, const std::vector<std::pair<DataQuery, PartialResult>>& data_accessing) {
     ResultRecordSemantics R{1.0, {}};
+    bool isActivation = false;
+    bool isTarget = false;
     if (formula->isLeaf == ActivationLeaf) {
         R.second.emplace_back(marked_event::left(0));
+        isActivation = true;
     } else if (formula->isLeaf == TargetLeaf) {
         R.second.emplace_back(marked_event::right(0));
+        isTarget = true;
     }
     for (const auto& ref : data_accessing.at(formula->table_query.at(offset)).second) {
-        if (formula->isLeaf == ActivationLeaf)
+        if (isActivation)
             R.second.at(0).id.parts.left = ref.first.second;
-        else if (formula->isLeaf == TargetLeaf)
+        else if (isTarget)
             R.second.at(0).id.parts.right = ref.first.second;
         formula->result.emplace_back(ref.first, R);
     }
@@ -883,23 +869,11 @@ void MAXSatPipeline::abidinglogic_query_running(const std::vector<PartialResult>
         Result tmp_result;
         PARALLELIZE_LOOP_BEGIN(pool, 0, it->second.size(), lb, ub)
             for (size_t j = lb; j < ub; j++) {
-                auto formula = it->second.at(j); // TODO: run this query
+                LTLfQuery* formula = it->second.at(j); // TODO: run this query
                 if (!formula) continue;
 
 //                if (formula->fields.id.parts.directly_from_cache) {
-//                    ResultRecordSemantics R{1.0, {}};
-//                    if (formula->isLeaf == ActivationLeaf) {
-//                        R.second.emplace_back(marked_event::left(0));
-//                    } else if (formula->isLeaf == TargetLeaf) {
-//                        R.second.emplace_back(marked_event::right(0));
-//                    }
-//                    for (const auto& ref : data_accessing.at(formula->result_id).second) {
-//                        if (formula->isLeaf == ActivationLeaf)
-//                            R.second.at(0).id.parts.left = ref.first.second;
-//                        else if (formula->isLeaf == TargetLeaf)
-//                            R.second.at(0).id.parts.right = ref.first.second;
-//                        formula->result.emplace_back(ref.first, R);
-//                    }
+//// import_from_partial_results
 //                } else
                 {
                     // Combine the results from the results_cache
@@ -912,7 +886,7 @@ void MAXSatPipeline::abidinglogic_query_running(const std::vector<PartialResult>
                                 // In this situation, I'm directly taking the pre-computated data
                                 import_from_partial_results(formula, formula->table_query.at(0), data_accessing);
                             } else {
-                                data_merge(formula->range_query, results_cache, formula->result, formula->isLeaf);
+                                data_merge(formula->range_query, results_cache, formula->result, formula->isLeaf, false);
                                 formula->result.erase(std::remove_if(formula->result.begin(),
                                                                  formula->result.end(),
                                                                  [](const auto&  x){return x.first.second > 0;}),
@@ -925,7 +899,7 @@ void MAXSatPipeline::abidinglogic_query_running(const std::vector<PartialResult>
                                 // In this situation, I'm directly taking the pre-computated data
                                 import_from_partial_results(formula, formula->table_query.at(0), data_accessing);
                             } else {
-                                data_merge(formula->range_query, results_cache, formula->result, formula->isLeaf);
+                                data_merge(formula->range_query, results_cache, formula->result, formula->isLeaf, false);
                                 formula->result.erase(std::remove_if(formula->result.begin(),
                                                                      formula->result.end(),
                                                                      [kb](const auto&  x){return x.first.second < kb.act_table_by_act_id.trace_length.at(x.first.first)-1;}),
@@ -936,6 +910,25 @@ void MAXSatPipeline::abidinglogic_query_running(const std::vector<PartialResult>
                         case LTLfQuery::LAST_QP: {
                             DEBUG_ASSERT((formula->table_query.size() == 1));
                             import_from_partial_results(formula, formula->table_query.at(0), data_accessing);
+                        } break;
+
+                        case LTLfQuery::EXISTS_QP: {
+                            if (formula->fields.id.parts.is_timed) {
+                                DEBUG_ASSERT((formula->n == 1));
+                                if (!formula->range_query.empty())
+                                    data_merge(formula->range_query, results_cache, formula->result, formula->isLeaf, formula->fields.id.parts.is_negated);
+                                if (!formula->table_query.empty()) {
+                                    // TODO: union with Table data!
+                                }
+                            } else {
+                                DEBUG_ASSERT((formula->table_query.size() == 1) != (!formula->range_query.empty()));
+                                if (formula->table_query.size() == 1) {
+                                    // In this situation, I'm directly taking the pre-computated data
+                                    import_from_partial_results(formula, formula->table_query.at(0), data_accessing);
+                                } else {
+                                    untimed_exists_for_data_queries(formula, results_cache);
+                                } break;
+                            }
                         } break;
 
 // TODO: replace with the novel atomic semantics
@@ -1154,19 +1147,7 @@ void MAXSatPipeline::fast_v1_query_running(const std::vector<PartialResult>& res
                 if (!formula) continue;
 
 //                if (formula->fields.id.parts.directly_from_cache) {
-//                    ResultRecordSemantics R{1.0, {}};
-//                    if (formula->isLeaf == ActivationLeaf) {
-//                        R.second.emplace_back(marked_event::left(0));
-//                    } else if (formula->isLeaf == TargetLeaf) {
-//                        R.second.emplace_back(marked_event::right(0));
-//                    }
-//                    for (const auto& ref : data_accessing.at(formula->result_id).second) {
-//                        if (formula->isLeaf == ActivationLeaf)
-//                            R.second.at(0).id.parts.left = ref.first.second;
-//                        else if (formula->isLeaf == TargetLeaf)
-//                            R.second.at(0).id.parts.right = ref.first.second;
-//                        formula->result.emplace_back(ref.first, R);
-//                    }
+//// import_from_partial_results
 //                } else
                 {
                     // Combine the results from the results_cache
@@ -1179,7 +1160,7 @@ void MAXSatPipeline::fast_v1_query_running(const std::vector<PartialResult>& res
                             // In this situation, I'm directly taking the pre-computated data
                             import_from_partial_results(formula, formula->table_query.at(0), data_accessing);
                         } else {
-                            data_merge(formula->range_query, results_cache, formula->result, formula->isLeaf);
+                            data_merge(formula->range_query, results_cache, formula->result, formula->isLeaf, false);
                             formula->result.erase(std::remove_if(formula->result.begin(),
                                                                  formula->result.end(),
                                                                  [](const auto&  x){return x.first.second > 0;}),
@@ -1192,7 +1173,7 @@ void MAXSatPipeline::fast_v1_query_running(const std::vector<PartialResult>& res
                                 // In this situation, I'm directly taking the pre-computated data
                                 import_from_partial_results(formula, formula->table_query.at(0), data_accessing);
                             } else {
-                                data_merge(formula->range_query, results_cache, formula->result, formula->isLeaf);
+                                data_merge(formula->range_query, results_cache, formula->result, formula->isLeaf, false);
                                 formula->result.erase(std::remove_if(formula->result.begin(),
                                                                      formula->result.end(),
                                                                      [kb](const auto&  x){return x.first.second < kb.act_table_by_act_id.trace_length.at(x.first.first)-1;}),

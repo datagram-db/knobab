@@ -83,7 +83,7 @@ struct LTLfQueryManager {
 
     // Union decomposition
     void finalizeUnions() {
-        //// TODO: there is an issue: this should be in some cases a disjunction,
+        ////  this should be in some cases a disjunction,
         ////       and in other cases it should be a conjunction.
         ////       * When the atom was a negation, this was a disjunction
         ////       * When this was a positive one, it was a conjunction
@@ -192,7 +192,7 @@ struct LTLfQueryManager {
                             element_disjunction.args.emplace_back(FF.at(*it++));
                         }
                     }
-                    v[min_composition.first] = (simplify(element_disjunction));
+                    v[min_composition.first] = simplify(element_disjunction);
                     element_disjunction.args.clear();
                 }
             }

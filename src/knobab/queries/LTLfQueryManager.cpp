@@ -220,15 +220,15 @@ LTLfQuery *LTLfQueryManager::simplify(const LTLfQuery &q) {
                 case LTLfQuery::END_QP: {
                     DEBUG_ASSERT(!ptr->fields.id.parts.is_timed);
                     DEBUG_ASSERT(!ptr->atom.empty());
-                    for (auto it : ptr->atom) {
-                        if (atomization->data_query_atoms.contains(it)) {
+                    for (const auto& it2 : ptr->atom) {
+                        if (atomization->data_query_atoms.contains(it2)) {
                             // For the moment, we just register the leaf as associated to the atom
                             // subqueriesRunning, part 2, will then associated the formula with the
                             // intermediate result associated to each atom
-                            pipeline->pushDataRangeQuery(ptr, *atomization, it);
+                            pipeline->pushDataRangeQuery(ptr, *atomization, it2);
                         } else {
                             // Directly stores the atom into table_query
-                            ptr->table_query.emplace_back(pipeline->pushNonRangeQuery(DataQuery::AtomQuery(it)));
+                            ptr->table_query.emplace_back(pipeline->pushNonRangeQuery(DataQuery::AtomQuery(it2)));
                         }
                     }
                 } break;
@@ -248,24 +248,28 @@ LTLfQuery *LTLfQueryManager::simplify(const LTLfQuery &q) {
                 } break;
 
                 case LTLfQuery::EXISTS_QP: {
-                    auto it = ptr->atom.begin();
-                    if ((!ptr->fields.id.parts.is_timed) && (ptr->atom.size() == 1) && (!atomization->data_query_atoms.contains(*it))) {
+                    if (ptr->fields.id.parts.is_timed) {
+                        if (ptr->n != 1) {
+                            throw std::runtime_error("In the current implementation, we only support timed exists with n = 1!");
+                        }
+                    }
+                    auto it2 = ptr->atom.begin();
+                    if ((!ptr->fields.id.parts.is_timed) && (ptr->atom.size() == 1) && (!atomization->data_query_atoms.contains(*it2))) {
                         // If we have only one atom, has size of one and it is not a data query, then I can exploit the tables
-                        ptr->table_query.emplace_back(pipeline->pushNonRangeQuery(DataQuery::ExistsQuery(*it, ptr->n, ptr->isLeaf)));
+                        ptr->table_query.emplace_back(pipeline->pushNonRangeQuery(DataQuery::ExistsQuery(*it2, ptr->n, ptr->isLeaf)));
                     } else {
                         // This is computed independently from the element being timed or untimed
-                        for (auto it : ptr->atom) {
-                            if (atomization->data_query_atoms.contains(it)) {
+                        for (const auto& it3 : ptr->atom) {
+                            if (atomization->data_query_atoms.contains(it3)) {
                                 // For the moment, we just register the leaf as associated to the atom
                                 // subqueriesRunning, part 2, will then associated the formula with the
                                 // intermediate result associated to each atom
-                                pipeline->pushDataRangeQuery(ptr, *atomization, it);
+                                pipeline->pushDataRangeQuery(ptr, *atomization, it3);
                             } else {
-                                ptr->table_query.emplace_back(pipeline->pushNonRangeQuery(DataQuery::AtomQuery(it)));
+                                ptr->table_query.emplace_back(pipeline->pushNonRangeQuery(DataQuery::AtomQuery(it3)));
                             }
                         }
                     }
-
                 } break;
 
                 case LTLfQuery::FALSEHOOD_QP:
@@ -273,10 +277,15 @@ LTLfQuery *LTLfQueryManager::simplify(const LTLfQuery &q) {
                     break;
 
                 case LTLfQuery::ABSENCE_QP: {
-                    auto it = ptr->atom.begin();
-                    if ((!ptr->fields.id.parts.is_timed) && (ptr->atom.size() == 1) && (!atomization->data_query_atoms.contains(*it))) {
+                    if (ptr->fields.id.parts.is_timed) {
+                        if (ptr->n != 1) {
+                            throw std::runtime_error("In the current implementation, we only support timed exists with n = 1!");
+                        }
+                    }
+                    auto it3 = ptr->atom.begin();
+                    if ((!ptr->fields.id.parts.is_timed) && (ptr->atom.size() == 1) && (!atomization->data_query_atoms.contains(*it3))) {
                         // If we have only one atom, has size of one and it is not a data query, then I can exploit the tables
-                        ptr->table_query.emplace_back(pipeline->pushNonRangeQuery(DataQuery::AbsenceQuery(*it, ptr->isLeaf)));
+                        ptr->table_query.emplace_back(pipeline->pushNonRangeQuery(DataQuery::AbsenceQuery(*it3, ptr->isLeaf)));
                     } else {
                         throw std::runtime_error("ERROR: we are not expecting timed absence queries or with multiple atoms anymore after rewriting! Absence should be now a NOT operator");
                     }

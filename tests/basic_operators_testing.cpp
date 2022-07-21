@@ -28,7 +28,7 @@ protected:
 TEST_F(basic_operators, A) {
     for (int i = 0; i<2; i++) {
         bool value = (i == 0);
-        auto resultA = env.db.untimed_dataless_exists("A", value ? ActivationLeaf : NoneLeaf);
+        auto resultA = env.db.timed_dataless_exists("A", value ? ActivationLeaf : NoneLeaf);
 
         Result A;
         DATA_EMPLACE_BACK(A, 0, 0, value);
@@ -56,7 +56,7 @@ TEST_F(basic_operators, A) {
 TEST_F(basic_operators, B) {
     for (int i = 0; i<2; i++) {
         bool value = (i == 0);
-        auto resultA = env.db.untimed_dataless_exists("B", (i == 0) ? ActivationLeaf : NoneLeaf);
+        auto resultA = env.db.timed_dataless_exists("B", (i == 0) ? ActivationLeaf : NoneLeaf);
 
         Result A;
         DATA_EMPLACE_BACK(A, 1, 0, value);
@@ -85,7 +85,7 @@ TEST_F(basic_operators, B) {
 TEST_F(basic_operators, C) {
     for (int i = 0; i<2; i++) {
         bool value = (i == 0);
-        auto resultA = env.db.untimed_dataless_exists("C", (i == 0) ? ActivationLeaf : NoneLeaf);
+        auto resultA = env.db.timed_dataless_exists("C", (i == 0) ? ActivationLeaf : NoneLeaf);
 
         Result A;
         DATA_EMPLACE_BACK(A, 2, 0, value);
@@ -176,7 +176,7 @@ TEST_F(basic_operators, next_act) {
         bool value = (i == 0);
 
         {
-            auto resultA = next(env.db.untimed_dataless_exists("A", (i == 0) ? ActivationLeaf : NoneLeaf));
+            auto resultA = next(env.db.timed_dataless_exists("A", (i == 0) ? ActivationLeaf : NoneLeaf));
             Result A;
             DATA_DECREMENT_EMPLACE_BACK(A, 7, 3, value);
             DATA_DECREMENT_EMPLACE_BACK(A, 8, 3, value);
@@ -188,7 +188,7 @@ TEST_F(basic_operators, next_act) {
         }
 
         {
-            auto resultA = next(env.db.untimed_dataless_exists("B", (i == 0) ? ActivationLeaf : NoneLeaf));
+            auto resultA = next(env.db.timed_dataless_exists("B", (i == 0) ? ActivationLeaf : NoneLeaf));
             Result A;
             DATA_DECREMENT_EMPLACE_BACK(A, 3, 1, value);
             DATA_DECREMENT_EMPLACE_BACK(A, 5, 1, value);
@@ -211,7 +211,7 @@ TEST_F(basic_operators, next_act) {
         }
 
         {
-            auto resultA = next(env.db.untimed_dataless_exists("C", (i == 0) ? ActivationLeaf : NoneLeaf));
+            auto resultA = next(env.db.timed_dataless_exists("C", (i == 0) ? ActivationLeaf : NoneLeaf));
             Result A;
             DATA_DECREMENT_EMPLACE_BACK(A, 4, 1, value);
             DATA_DECREMENT_EMPLACE_BACK(A, 6, 1, value);
@@ -225,8 +225,8 @@ TEST_F(basic_operators, no_multiple_labels) {
     {
         // A and B shall never appear at the same time
         Result result;
-        auto resultA = (env.db.untimed_dataless_exists("A", ActivationLeaf));
-        auto resultB = (env.db.untimed_dataless_exists("B", TargetLeaf));
+        auto resultA = (env.db.timed_dataless_exists("A", ActivationLeaf));
+        auto resultB = (env.db.timed_dataless_exists("B", TargetLeaf));
         setIntersection(resultA.begin(), resultA.end(), resultB.begin(), resultB.end(), std::back_inserter(result), Aggregators::maxSimilarity<double,double,double>, nullptr);
         EXPECT_TRUE(result.empty());
 
@@ -238,8 +238,8 @@ TEST_F(basic_operators, no_multiple_labels) {
     {
         // A and B shall never appear in the next time
         Result result;
-        auto resultA = next(env.db.untimed_dataless_exists("A", ActivationLeaf));
-        auto resultB = next(env.db.untimed_dataless_exists("B", TargetLeaf));
+        auto resultA = next(env.db.timed_dataless_exists("A", ActivationLeaf));
+        auto resultB = next(env.db.timed_dataless_exists("B", TargetLeaf));
         setIntersection(resultA.begin(), resultA.end(), resultB.begin(), resultB.end(), std::back_inserter(result), Aggregators::maxSimilarity<double,double,double>, nullptr);
         EXPECT_TRUE(result.empty());
 
@@ -261,8 +261,8 @@ TEST_F(basic_operators, no_multiple_labels) {
         // A and_{where x<y} next B
         Result result, alResult, expected;
         PredicateManager pm{{{{"x", "y", LT}}}, &env.db};
-        auto resultA = (env.db.untimed_dataless_exists("A", ActivationLeaf));
-        auto resultB = next(env.db.untimed_dataless_exists("B", TargetLeaf));
+        auto resultA = (env.db.timed_dataless_exists("A", ActivationLeaf));
+        auto resultB = next(env.db.timed_dataless_exists("B", TargetLeaf));
         setIntersection(resultA.begin(), resultA.end(), resultB.begin(), resultB.end(), std::back_inserter(result), Aggregators::maxSimilarity<double,double,double>, &pm);
 
         DATA_EMPLACE_BACK(expected, 3, 0, false);
@@ -280,15 +280,15 @@ TEST_F(basic_operators, no_multiple_labels) {
 
 TEST_F(basic_operators, globally_untimed) {
     {
-        auto result = global(env.db.untimed_dataless_exists("A", ActivationLeaf), env.db.act_table_by_act_id.getTraceLengths());
+        auto result = global(env.db.timed_dataless_exists("A", ActivationLeaf), env.db.act_table_by_act_id.getTraceLengths());
         EXPECT_EQ(result, Result {ResultRecord (std::make_pair(0, 0), std::make_pair(1.0, MarkedEventsVector {marked_event::activation(0)}))});
     }
     {
-        auto result = global(env.db.untimed_dataless_exists("B", ActivationLeaf), env.db.act_table_by_act_id.getTraceLengths());
+        auto result = global(env.db.timed_dataless_exists("B", ActivationLeaf), env.db.act_table_by_act_id.getTraceLengths());
         EXPECT_EQ(result, Result {ResultRecord (std::make_pair(1, 0), std::make_pair(1.0, MarkedEventsVector{marked_event::activation(0)}))});
     }
     {
-        auto result = global(env.db.untimed_dataless_exists("C", ActivationLeaf), env.db.act_table_by_act_id.getTraceLengths());
+        auto result = global(env.db.timed_dataless_exists("C", ActivationLeaf), env.db.act_table_by_act_id.getTraceLengths());
         EXPECT_EQ(result, Result {ResultRecord (std::make_pair(2, 0), std::make_pair(1.0, MarkedEventsVector{marked_event::activation(0)}))});
     }
 }
@@ -296,8 +296,8 @@ TEST_F(basic_operators, globally_untimed) {
 TEST_F(basic_operators, intersections_untimed_matches) {
 
     for (size_t i = 0; i<4; i++) {
-        auto a = env.db.untimed_dataless_exists("A", i / 2 ? ActivationLeaf : NoneLeaf),
-                b = env.db.untimed_dataless_exists("B", i % 2 ? TargetLeaf : NoneLeaf);
+        auto a = env.db.timed_dataless_exists("A", i / 2 ? ActivationLeaf : NoneLeaf),
+                b = env.db.timed_dataless_exists("B", i % 2 ? TargetLeaf : NoneLeaf);
         Result result, resultLogic, resultFast;
 
         setIntersectionUntimed(a.begin(), a.end(), b.begin(), b.end(), std::back_inserter(result),  Aggregators::maxSimilarity<double,double,double>, nullptr);
@@ -332,8 +332,8 @@ TEST_F(basic_operators, intersections_untimed_matches) {
 
 TEST_F(basic_operators, unions_untimed_matches) {
     for (size_t i = 0; i<4; i++) {
-        auto a = env.db.untimed_dataless_exists("A", i / 2 ? ActivationLeaf : NoneLeaf),
-                b = env.db.untimed_dataless_exists("B", i % 2 ? TargetLeaf : NoneLeaf);
+        auto a = env.db.timed_dataless_exists("A", i / 2 ? ActivationLeaf : NoneLeaf),
+                b = env.db.timed_dataless_exists("B", i % 2 ? TargetLeaf : NoneLeaf);
         Result result, resultLogic, resultFast;
 
         setUnionUntimed(a.begin(), a.end(), b.begin(), b.end(), std::back_inserter(result),  Aggregators::maxSimilarity<double,double,double>, nullptr);
@@ -368,9 +368,9 @@ TEST_F(basic_operators, unions_untimed_matches) {
 
 TEST_F(basic_operators, negatedUntimed) {
     std::unordered_map<std::string, Result> resultSets;
-    resultSets["A"] = env.db.untimed_dataless_exists("A", NoneLeaf);
-    resultSets["B"] = env.db.untimed_dataless_exists("B", NoneLeaf);
-    resultSets["C"] = env.db.untimed_dataless_exists("C", NoneLeaf);
+    resultSets["A"] = env.db.timed_dataless_exists("A", NoneLeaf);
+    resultSets["B"] = env.db.timed_dataless_exists("B", NoneLeaf);
+    resultSets["C"] = env.db.timed_dataless_exists("C", NoneLeaf);
 
     std::unordered_map<std::string, std::set<trace_t>> traceSets;
     for (const auto& x : resultSets["A"])
