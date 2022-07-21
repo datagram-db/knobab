@@ -165,11 +165,9 @@ void MAXSatPipeline::data_chunk(CNFDeclareDataAware *model,
         auto qId = declareToQuery.at(i);
         if (!WECTOR.at(qId)) {
             WECTOR[qId] = true;
-            LTLfQuery* formula = qm.alloc(tmpQuery.at(qId));
+            qm.activations.emplace_back();
+            LTLfQuery* formula = qm.alloc(tmpQuery.at(qId), i);
             formula->isTop = true;
-            if (qm.activations.size() != declareId) {
-               qm.activations.emplace_back();
-            }
 
             /// Setting specific untimed atom queries, that can be run directly and separatedly
             /// So, any expansion of the formula by detecting whether the formula can directly

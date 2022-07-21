@@ -57,28 +57,40 @@ struct LTLfQueryManager {
     std::unordered_map<for_occurrence, std::vector<std::set<std::string>>> focc_atomsets;
     std::unordered_map<for_occurrence, std::vector<LTLfQuery*>> focc_sub_formulae;
 
-    LTLfQuery* alloc(LTLfQuery& orig) {
+    LTLfQuery* alloc(LTLfQuery& orig, size_t qId) {
         orig.fields.id.parts.is_queryplan = true;
         for_occurrence key;
         key.type = orig.isLeaf;
         key.n_arg = orig.n;
         key.isTimed = orig.fields.id.parts.is_timed;
         key.isDisjunctiveSoNegated = orig.fields.id.parts.is_negated;
-        if (orig.t == LTLfQuery::AF_QPT)
-            std::cout << "DEBUG" << std::endl;
+//        if (orig.t == LTLfQuery::AF_QPT)
+//            std::cout << "DEBUG" << std::endl;
+        LTLfQuery* ptr = nullptr;
         if (orig.args_from_script.empty() && (orig.t == LTLfQuery::EXISTS_QP)) {
             auto it = focc_atomsets.find(key);
             DEBUG_ASSERT(it != focc_atomsets.end());
             DEBUG_ASSERT(it->second.size() > 0);
             auto it2 = std::find(it->second.begin(), it->second.end(), orig.atom);
             DEBUG_ASSERT(it2 != it->second.end());
-            return focc_sub_formulae[key].at( it2 - it->second.begin());
+            ptr = focc_sub_formulae[key].at( it2 - it->second.begin());
         } else {
             for (auto& x : orig.args_from_script)
-                orig.args.emplace_back(alloc(x));
+                orig.args.emplace_back(alloc(x, qId));
             orig.args_from_script.clear();
-            return simplify(orig);
+            ptr = simplify(orig);
         }
+        if (orig.isLeaf == ActivationLeaf) {
+            DEBUG_ASSERT(activations.size() > qId);
+            activations[qId].emplace(ptr);
+//            if (current_query_id == activations.size()) { // Query Id counting from zero, so, if that happens, then it means that I need to add the activation in here!
+//                activations.emplace_back().emplace(ptr);
+//            } else {
+//                activations.back().emplace(ptr);
+//                //DEBUG_ASSERT( (activations.back() == tmp)); // By default, the activations should always refer to the same atom! That will make the assumption in the pipeline correct
+//            }
+        }
+        return ptr;
     }
 
     // Union decomposition
