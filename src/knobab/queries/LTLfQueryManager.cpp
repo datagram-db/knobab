@@ -310,7 +310,7 @@ LTLfQuery *LTLfQueryManager::simplify(const LTLfQuery &q) {
                     DEBUG_ASSERT(false);
                     break;
             }
-            std::cout << *ptr << std::endl;
+//            std::cout << *ptr << std::endl;
         }
         counter.emplace(ptr, 1);
         assert(conversion_map_for_subexpressions.emplace(q, ptr).second);
