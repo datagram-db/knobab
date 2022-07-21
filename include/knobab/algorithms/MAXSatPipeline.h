@@ -58,9 +58,9 @@ struct MAXSatPipeline {
     CNFDeclareDataAware* declare_model = nullptr;
 
     //std::unordered_map<declare_templates, ltlf> ltlf_semantics;
-//    std::unordered_map<std::string , std::vector<size_t>> atomToFormulaId;
+    std::unordered_map<std::string , std::vector<LTLfQuery*>> atomToFormulaId;
     size_t maxFormulaId = 0;
-    std::vector<LTLfQuery*> fomulaidToFormula;
+    //std::vector<LTLfQuery*> fomulaidToFormula;
 
     MAXSatPipeline(const std::string& plan_file, const std::string& plan, size_t nThreads);
     
@@ -92,10 +92,13 @@ struct MAXSatPipeline {
     // DATA
     ///ssize_t maxPartialResultId = -1;
     std::unordered_map<DataQuery, size_t> data_offset;
-    std::vector<std::pair<DataQuery, std::vector<std::pair<std::pair<trace_t, event_t>, double>>>> data_accessing;
+    std::vector<std::pair<DataQuery, PartialResult>> data_accessing;
     std::unordered_map<std::string, std::unordered_map<std::string,std::vector<size_t>>> data_accessing_range_query_to_offsets;
     std::unordered_map<DeclareDataAware, size_t> declare_atomization;
-    ///std::vector<std::set<size_t>> atomToResultOffset;
+
+    /// This other field, on the other hand, is required to speed-up the intersection between the data intervals
+    std::vector<std::set<size_t>> atomToResultOffset;
+
     std::vector<std::string> toUseAtoms; // This is to ensure the insertion of unique elements to the map!
     //size_t barrier_to_range_queries, barriers_to_atfo;
     std::vector<std::vector<std::pair<std::pair<trace_t, event_t>, double>>> atomicPartIntersectionResult;
@@ -107,13 +110,13 @@ struct MAXSatPipeline {
     void clear();
     std::string generateGraph() const;
     size_t pushNonRangeQuery(const DataQuery &q, bool directlyFromCache = true);
-    std::vector<size_t> pushDataRangeQuery(const AtomizingPipeline &atomization, const std::string &atom);
+    void pushDataRangeQuery(const LTLfQuery* query, const AtomizingPipeline &atomization, const std::string &atom);
 
 private:
     void data_chunk(CNFDeclareDataAware* model, const AtomizingPipeline& atomization, const KnowledgeBase& kb);
-    void subqueriesRunning(const KnowledgeBase &kb);
-    void abidinglogic_query_running(/*const std::vector<PartialResult>& results_cache,*/ const KnowledgeBase& kb);
-    void fast_v1_query_running(/*const std::vector<PartialResult>& results_cache,*/ const KnowledgeBase& kb);
+    std::vector<PartialResult> subqueriesRunning(const KnowledgeBase &kb);
+    void abidinglogic_query_running(const std::vector<PartialResult>& results_cache, const KnowledgeBase& kb);
+    void fast_v1_query_running(const std::vector<PartialResult>& results_cache, const KnowledgeBase& kb);
 //    LTLfQuery *pushAtomicQueries(const AtomizingPipeline &atomization, LTLfQuery *formula);
 
 };

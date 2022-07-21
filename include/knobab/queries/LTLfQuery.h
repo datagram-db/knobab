@@ -80,7 +80,7 @@ struct LTLfQuery {
     std::set<std::string> atom;
 
     // Novel vector representation
-    std::vector<std::vector<size_t>> range_query;
+    std::vector<size_t> range_query; // This requires the cache!
     std::vector<size_t> table_query;
     // OLD SUPPORT
     //std::set<size_t> partial_results;
