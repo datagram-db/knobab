@@ -764,21 +764,21 @@ static inline void holistic_merge(LTLfQuery* formula,
         PartialResult last_nodata_intersection;
         if (!formula->table_query.empty()) {
             auto it = formula->table_query.begin();
-            last_data_intersection = non_range_results.at(*it).second;
+            last_nodata_intersection = non_range_results.at(*it).second;
             PartialResult curr_intersection;
             for (std::size_t i = 1; i < formula->table_query.size(); ++i) {
                 it++;
                 const auto &ref = non_range_results.at(*it).second;
                 if (isUnion)
-                    partialResultUnion(last_data_intersection,
+                    partialResultUnion(last_nodata_intersection,
                                        ref,
                                        std::back_inserter(curr_intersection));
                 else
-                    partialResultIntersection(last_data_intersection,
+                    partialResultIntersection(last_nodata_intersection,
                                               ref,
                                               std::back_inserter(curr_intersection));
 
-                std::swap(last_data_intersection, curr_intersection);
+                std::swap(last_nodata_intersection, curr_intersection);
                 curr_intersection.clear();
             }
         }
@@ -1237,7 +1237,7 @@ void MAXSatPipeline::fast_v1_query_running(const std::vector<PartialResult>& res
                         DEBUG_ASSERT((formula->table_query.size() == 1) != (!formula->range_query.empty()));
                         if (formula->table_query.size() == 1) {
                             // In this situation, I'm directly taking the pre-computated data
-                            import_from_partial_results(formula, formula->table_query.at(0), data_accessing);
+                            import_from_partial_results(formula, 0, data_accessing);
                         } else {
                             data_merge(formula->range_query, results_cache, formula->result, formula->isLeaf, false);
                             formula->result.erase(std::remove_if(formula->result.begin(),
@@ -1250,7 +1250,7 @@ void MAXSatPipeline::fast_v1_query_running(const std::vector<PartialResult>& res
                             DEBUG_ASSERT((formula->table_query.size() == 1) != (!formula->range_query.empty()));
                             if (formula->table_query.size() == 1) {
                                 // In this situation, I'm directly taking the pre-computated data
-                                import_from_partial_results(formula, formula->table_query.at(0), data_accessing);
+                                import_from_partial_results(formula, 0, data_accessing);
                             } else {
                                 data_merge(formula->range_query, results_cache, formula->result, formula->isLeaf, false);
                                 formula->result.erase(std::remove_if(formula->result.begin(),
@@ -1262,7 +1262,7 @@ void MAXSatPipeline::fast_v1_query_running(const std::vector<PartialResult>& res
                         case LTLfQuery::FIRST_QP:
                         case LTLfQuery::LAST_QP: {
                             DEBUG_ASSERT((formula->table_query.size() == 1));
-                            import_from_partial_results(formula, formula->table_query.at(0), data_accessing);
+                            import_from_partial_results(formula, 0, data_accessing);
                         } break;
 
                         case LTLfQuery::EXISTS_QP: {
@@ -1273,7 +1273,7 @@ void MAXSatPipeline::fast_v1_query_running(const std::vector<PartialResult>& res
                                 DEBUG_ASSERT((formula->table_query.size() == 1) != (!formula->range_query.empty()));
                                 if (formula->table_query.size() == 1) {
                                     // In this situation, I'm directly taking the pre-computated data
-                                    import_from_partial_results(formula, formula->table_query.at(0), data_accessing);
+                                    import_from_partial_results(formula, 0, data_accessing);
                                 } else {
                                     untimed_exists_for_data_queries(formula, results_cache);
                                 } break;
@@ -1283,7 +1283,7 @@ void MAXSatPipeline::fast_v1_query_running(const std::vector<PartialResult>& res
                         case LTLfQuery::ABSENCE_QP: {
                             DEBUG_ASSERT(formula->table_query.size() == 1);
                             DEBUG_ASSERT(!formula->fields.id.parts.is_timed);
-                            import_from_partial_results(formula, formula->table_query.at(0), data_accessing);
+                            import_from_partial_results(formula, 0, data_accessing);
 
                         } break;
 
