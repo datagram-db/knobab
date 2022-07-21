@@ -197,15 +197,15 @@ struct LTLfQueryManager {
                 }
             }
         }
-        for (const auto& kv : focc_atomsets) {
-            if (kv.second.empty()) continue;
-            auto it = focc_sub_formulae.at(kv.first);
-            for (size_t i = 0, N = kv.second.size(); i<N; i++) {
-                std::cout << kv.second.at(i) << std::endl;
-                std::cout << *it.at(i) << std::endl;
-                std::cout << "~~~~~~~~~" << std::endl;
-            }
-        }
+//        for (const auto& kv : focc_atomsets) {
+//            if (kv.second.empty()) continue;
+//            auto it = focc_sub_formulae.at(kv.first);
+//            for (size_t i = 0, N = kv.second.size(); i<N; i++) {
+//                std::cout << kv.second.at(i) << std::endl;
+//                std::cout << *it.at(i) << std::endl;
+//                std::cout << "~~~~~~~~~" << std::endl;
+//            }
+//        }
 
 //
 //        for (const auto& ref : result.decomposedIndexedSubsets) {
@@ -307,66 +307,73 @@ struct LTLfQueryManager {
         auto& V = focc_atomsets[key];
 
         bool hasAtLeastOneDataAtom = false;
-        if ((input.declare_arg == DECLARE_TYPE_LEFT) || (input.declare_arg == DECLARE_TYPE_NONE)) {
-            if (input.fields.id.parts.is_negated) {
-                for (const auto& x : atom_universe) {
-                    if (!left.contains(x)) {
-                        hasAtLeastOneDataAtom = hasAtLeastOneDataAtom || data_atom.contains(x);
-                        q.atom.insert(x);
-//                        atomToFormulaId[x].emplace_back(formulaId);
-                    }
-                }
-            } else {
-                for (const auto& x : left) {
-                    hasAtLeastOneDataAtom = hasAtLeastOneDataAtom || data_atom.contains(x);
-                    q.atom.insert(x);
-//                    atomToFormulaId[x].emplace_back(formulaId);
-                }
-            }
-            if (q.t == LTLfQuery::EXISTS_QP) {
-                V.emplace_back(q.atom);
-            }
-        } else if (input.declare_arg == DECLARE_TYPE_RIGHT) {
-            if (input.fields.id.parts.is_negated) {
-                for (const auto& x : atom_universe) {
-                    if (!right.contains(x)) {
-                        hasAtLeastOneDataAtom = hasAtLeastOneDataAtom || data_atom.contains(x);
-                        q.atom.insert(x);
-//                        atomToFormulaId[x].emplace_back(formulaId);
-                    }
-                }
-            } else {
-                for (const auto& x : right) {
-                    hasAtLeastOneDataAtom = hasAtLeastOneDataAtom || data_atom.contains(x);
-                    q.atom.insert(x);
-//                    atomToFormulaId[x].emplace_back(formulaId);
-                }
-            }
-            if (q.t == LTLfQuery::EXISTS_QP) {
-                V.emplace_back(q.atom);
-            }
-        } else {
-            //To be done at a future step: supporting three argument clauses
-            if (q.fields.id.parts.is_atom) {
-                if(!((q.t == LTLfQuery::FIRST_QP) || (q.t == LTLfQuery::LAST_QP))) {
-                    if (input.fields.id.parts.is_negated) {
-                        for (const auto& x : atom_universe) {
-                            if (!left.contains(x)) {
-                                hasAtLeastOneDataAtom = hasAtLeastOneDataAtom || data_atom.contains(x);
-                                q.atom.insert(x);
-//                                atomToFormulaId[x].emplace_back(formulaId);
-                            }
-                        }
-                    } else {
-                        for (const auto& x : left) {
+        if (!((q.t == LTLfQuery::FIRST_QP) || (q.t == LTLfQuery::LAST_QP))) {
+
+        }
+
+        if(!((q.t == LTLfQuery::FIRST_QP) || (q.t == LTLfQuery::LAST_QP))) {
+            if ((input.declare_arg == DECLARE_TYPE_LEFT) || (input.declare_arg == DECLARE_TYPE_NONE)) {
+                if (input.fields.id.parts.is_negated) {
+                    for (const auto& x : atom_universe) {
+                        if (!left.contains(x)) {
                             hasAtLeastOneDataAtom = hasAtLeastOneDataAtom || data_atom.contains(x);
                             q.atom.insert(x);
+//                        atomToFormulaId[x].emplace_back(formulaId);
+                        }
+                    }
+                } else {
+                    for (const auto& x : left) {
+                        hasAtLeastOneDataAtom = hasAtLeastOneDataAtom || data_atom.contains(x);
+                        q.atom.insert(x);
+//                    atomToFormulaId[x].emplace_back(formulaId);
+                    }
+                }
+                if (q.t == LTLfQuery::EXISTS_QP) {
+                    V.emplace_back(q.atom);
+                }
+            } else if (input.declare_arg == DECLARE_TYPE_RIGHT) {
+                if (input.fields.id.parts.is_negated) {
+                    for (const auto& x : atom_universe) {
+                        if (!right.contains(x)) {
+                            hasAtLeastOneDataAtom = hasAtLeastOneDataAtom || data_atom.contains(x);
+                            q.atom.insert(x);
+//                        atomToFormulaId[x].emplace_back(formulaId);
+                        }
+                    }
+                } else {
+                    for (const auto& x : right) {
+                        hasAtLeastOneDataAtom = hasAtLeastOneDataAtom || data_atom.contains(x);
+                        q.atom.insert(x);
+//                    atomToFormulaId[x].emplace_back(formulaId);
+                    }
+                }
+                if (q.t == LTLfQuery::EXISTS_QP) {
+                    V.emplace_back(q.atom);
+                }
+            } else {
+                //To be done at a future step: supporting three argument clauses
+                if (q.fields.id.parts.is_atom) {
+                    if(!((q.t == LTLfQuery::FIRST_QP) || (q.t == LTLfQuery::LAST_QP))) {
+                        if (input.fields.id.parts.is_negated) {
+                            for (const auto& x : atom_universe) {
+                                if (!left.contains(x)) {
+                                    hasAtLeastOneDataAtom = hasAtLeastOneDataAtom || data_atom.contains(x);
+                                    q.atom.insert(x);
+//                                atomToFormulaId[x].emplace_back(formulaId);
+                                }
+                            }
+                        } else {
+                            for (const auto& x : left) {
+                                hasAtLeastOneDataAtom = hasAtLeastOneDataAtom || data_atom.contains(x);
+                                q.atom.insert(x);
 //                            atomToFormulaId[x].emplace_back(formulaId);
+                            }
                         }
                     }
                 }
             }
         }
+
         if (input.fields.id.parts.has_theta) {
             q.joinCondition = joinCondition;
         }
