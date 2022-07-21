@@ -703,7 +703,7 @@ static inline void data_merge_new(const LTLfQuery* formula,
     }
 }
 
-static inline void data_merge(const std::set<size_t> &vecs,
+static inline void data_merge(const std::vector<size_t> &vecs,
                               const std::vector<PartialResult>& results,
                               Result& result,
                               LeafType isLeaf) {
@@ -859,6 +859,22 @@ static inline void absence_or_exists(LTLfQuery* formula,
 }
 
 
+static inline void import_from_partial_results(LTLfQuery* formula, size_t offset, const std::vector<std::pair<DataQuery, PartialResult>>& data_accessing) {
+    ResultRecordSemantics R{1.0, {}};
+    if (formula->isLeaf == ActivationLeaf) {
+        R.second.emplace_back(marked_event::left(0));
+    } else if (formula->isLeaf == TargetLeaf) {
+        R.second.emplace_back(marked_event::right(0));
+    }
+    for (const auto& ref : data_accessing.at(formula->table_query.at(offset)).second) {
+        if (formula->isLeaf == ActivationLeaf)
+            R.second.at(0).id.parts.left = ref.first.second;
+        else if (formula->isLeaf == TargetLeaf)
+            R.second.at(0).id.parts.right = ref.first.second;
+        formula->result.emplace_back(ref.first, R);
+    }
+}
+
 void MAXSatPipeline::abidinglogic_query_running(const std::vector<PartialResult>& results_cache, const KnowledgeBase& kb) {
     /// Scanning the query plan starting from the leaves (rbegin) towards the actual declare formulae (rend)
     auto it = qm.Q.rbegin(), en = qm.Q.rend();
@@ -888,6 +904,21 @@ void MAXSatPipeline::abidinglogic_query_running(const std::vector<PartialResult>
                 {
                     // Combine the results from the results_cache
                     switch (formula->t) {
+                        case LTLfQuery::INIT_QP:
+                            /// CORRECTNESS CHECK: The INIT shall either contain one single table atom or a set
+                            /// of predicates in conjunction
+                            DEBUG_ASSERT((formula->table_query.size() == 1) != (!formula->range_query.empty()));
+                            if (formula->table_query.size() == 1) {
+                                // In this situation, I'm directly taking the pre-computated data
+                                // TODO: data conversion
+                                import_from_partial_results(formula, formula->table_query.at(0), data_accessing);
+                            } else {
+                                data_merge(formula->range_query, results_cache, formula->result, formula->isLeaf);
+                                formula->result.erase(std::remove_if(formula->result.begin(),
+                                                                 formula->result.end(),
+                                                                 [](const auto&  x){return x.first.second > 0;}),
+                                                  formula->result.end());
+                            } break;
 // TODO: replace with the novel atomic semantics
 //                        case LTLfQuery::INIT_QP:
 //                            data_merge(formula->partial_results, results_cache, formula->result, formula->isLeaf);
@@ -1121,7 +1152,21 @@ void MAXSatPipeline::fast_v1_query_running(const std::vector<PartialResult>& res
                 {
                     // Combine the results from the results_cache
                     switch (formula->t) {
-
+                        case LTLfQuery::INIT_QP:
+                        /// CORRECTNESS CHECK: The INIT shall either contain one single table atom or a set
+                        /// of predicates in conjunction
+                        DEBUG_ASSERT((formula->table_query.size() == 1) != (!formula->range_query.empty()));
+                        if (formula->table_query.size() == 1) {
+                            // In this situation, I'm directly taking the pre-computated data
+                            // TODO: data conversion
+                            import_from_partial_results(formula, formula->table_query.at(0), data_accessing);
+                        } else {
+                            data_merge(formula->range_query, results_cache, formula->result, formula->isLeaf);
+                            formula->result.erase(std::remove_if(formula->result.begin(),
+                                                                 formula->result.end(),
+                                                                 [](const auto&  x){return x.first.second > 0;}),
+                                                  formula->result.end());
+                        } break;
 // TODO: replace with novel node semantics
 //                        case LTLfQuery::INIT_QP:
 //                            data_merge(formula->partial_results, results_cache, formula->result, formula->isLeaf);
