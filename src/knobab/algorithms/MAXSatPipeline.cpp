@@ -1028,32 +1028,14 @@ void MAXSatPipeline::abidinglogic_query_running(const std::vector<PartialResult>
                             }
                         } break;
 
+                        case LTLfQuery::ABSENCE_QP: {
+                            DEBUG_ASSERT(formula->table_query.size() == 1);
+                            DEBUG_ASSERT(!formula->fields.id.parts.is_timed);
+                            import_from_partial_results(formula, formula->table_query.at(0), data_accessing);
+
+                        } break;
+
 // TODO: replace with the novel atomic semantics
-//                        case LTLfQuery::INIT_QP:
-//                            data_merge(formula->partial_results, results_cache, formula->result, formula->isLeaf);
-//                            formula->result.erase(std::remove_if(formula->result.begin(),
-//                                                                 formula->result.end(),
-//                                                                 [](const auto&  x){return x.first.second > 0;}),
-//                                                  formula->result.end());
-//                            break;
-//
-//                        case LTLfQuery::END_QP:
-//                            // This never has a theta condition to consider
-//                            // This will only work when data conditions are also considered
-//                            data_merge(formula->partial_results, results_cache, formula->result, formula->isLeaf);
-//                            formula->result.erase(std::remove_if(formula->result.begin(),
-//                                                                 formula->result.end(),
-//                                                                 [kb](const auto&  x){return x.first.second < kb.act_table_by_act_id.trace_length.at(x.first.first)-1;}),
-//                                                  formula->result.end());
-//                            break;
-//
-//                        case LTLfQuery::EXISTS_QP:
-//                            if (formula->fields.id.parts.is_timed)
-//                                data_merge(formula->partial_results, results_cache, formula->result, formula->isLeaf);
-//                            else
-//                                absence_or_exists(formula, results_cache);
-//                            break;
-//
 //                        case LTLfQuery::ABSENCE_QP:
 //                            // The difference with absence is that, if it is absent, then it shall not be there with the same number
 //                            if (formula->fields.id.parts.is_timed)
@@ -1298,14 +1280,14 @@ void MAXSatPipeline::fast_v1_query_running(const std::vector<PartialResult>& res
                             }
                         } break;
 
+                        case LTLfQuery::ABSENCE_QP: {
+                            DEBUG_ASSERT(formula->table_query.size() == 1);
+                            DEBUG_ASSERT(!formula->fields.id.parts.is_timed);
+                            import_from_partial_results(formula, formula->table_query.at(0), data_accessing);
+
+                        } break;
+
 // TODO: replace with novel node semantics
-//                        case LTLfQuery::EXISTS_QP:
-//                            if (formula->fields.id.parts.is_timed)
-//                                data_merge(formula->partial_results, results_cache, formula->result, formula->isLeaf);
-//                            else
-//                                absence_or_exists(formula, results_cache);
-//                            break;
-//
 //                        case LTLfQuery::ABSENCE_QP:
 //                            // The difference with absence is that, if it is absent, then it shall not be there with the same number
 //                            if (formula->fields.id.parts.is_timed)

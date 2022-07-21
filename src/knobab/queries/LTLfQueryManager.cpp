@@ -277,6 +277,9 @@ LTLfQuery *LTLfQueryManager::simplify(const LTLfQuery &q) {
                     break;
 
                 case LTLfQuery::ABSENCE_QP: {
+                    if (ptr->fields.id.parts.is_negated) {
+                        throw std::runtime_error("Why do you want to use a negated absence? Please use a normal existene instead!");
+                    }
                     if (ptr->fields.id.parts.is_timed) {
                         if (ptr->n != 1) {
                             throw std::runtime_error("In the current implementation, we only support timed exists with n = 1!");
