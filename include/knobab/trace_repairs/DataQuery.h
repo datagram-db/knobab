@@ -12,6 +12,8 @@
 #include <yaucl/structures/default_constructors.h>
 #include <knobab/operators/semantics.h>
 
+
+
 enum DataQueryType {
     ExistsQuery,
     AbsenceQuery,

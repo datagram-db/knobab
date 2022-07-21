@@ -171,7 +171,12 @@ struct AttributeTable {
     std::pair<const record *, const record *>
     exact_range_query(size_t actId, const DataPredicate &propList) const;
 
-    std::vector<std::pair<const record *, const record *>>
+    /**
+     *
+     * @param propList  for each table name
+     * @return
+     */
+    std::vector<std::vector<std::pair<const record *, const record *>>>
     exact_range_query(const std::vector<std::pair<size_t, std::vector<DataQuery*>>>& propList) const;
 
 

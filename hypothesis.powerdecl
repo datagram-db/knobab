@@ -25,3 +25,4 @@
 //"Precedence"("Mastectomy", var "ca" >= 23.5 && var "biopsy" >= 1.0, "FollowUp", var "ca" >= 23.5 && var "biopsy" >= 1.0)
 "Init"("__trace_payload", var "patient" != "0", 1) // ADDED
 //"Exists1"("Mastectomy", var "ca" >= 23.5 && var "biopsy" >= 1.0, 1) // ADDED
+//"Init"("__trace_payload", var "ca" >= 23.5, 1) // ADDED

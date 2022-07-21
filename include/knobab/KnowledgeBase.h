@@ -267,11 +267,10 @@ public:
 
     std::vector<std::pair<trace_t, event_t>> exact_range_query(DataPredicate prop) const;
 
-    void exact_range_query(const std::string &var,
-                           const std::unordered_map<std::string, std::vector<size_t>> &actToPredId,
+    void exact_range_query(const std::string &field_name,
+                           const std::unordered_map<std::string, std::vector<size_t>> &ActNameToPredicates,
                            std::vector<std::pair<DataQuery, PartialResult>> &Qs,
-                           const std::optional<uint16_t> &temporalTimeMatch = std::optional<uint16_t>{},
-                           double minApproxTime = 1)  const;
+                           const std::optional<uint16_t> &temporalTimeMatch = std::optional<uint16_t>{})  const;
 private:
     void collectValuesAmongTraces(std::set<union_type> &S, size_t trace_id, act_t acts, bool HasNoAct,
                                   const std::string &attribute_name, bool hasNoAttribute) const;

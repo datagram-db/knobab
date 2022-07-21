@@ -768,25 +768,27 @@ std::vector<std::pair<trace_t, event_t>> KnowledgeBase::exact_range_query(DataPr
     }
 }
 
-void KnowledgeBase::exact_range_query(const std::string &var,
-                                      const std::unordered_map<std::string, std::vector<size_t>> &actToPredId,
+void KnowledgeBase::exact_range_query(const std::string &field_name,
+                                      const std::unordered_map<std::string, std::vector<size_t>> &ActNameToPredicates,
                                       std::vector<std::pair<DataQuery, PartialResult>> &Qs,
-                                      const std::optional<uint16_t> &temporalTimeMatch,
-                                      double approxConstant) const {
+                                      const std::optional<uint16_t> &temporalTimeMatch) const {
 
     bool doTemporalMatchQuery = temporalTimeMatch.has_value();
     uint16_t isTemproalVal = temporalTimeMatch.value_or(0);
-    auto it = attribute_name_to_table.find(var);
+    auto it = attribute_name_to_table.find(field_name);
     if (it == attribute_name_to_table.end()) {
         // if no attribute is there, for the exact match I assume that no value was matched
         return;
     } else {
         // The attribute exists within the dataset
         std::vector<std::pair<size_t, std::vector<DataQuery*>>> V;
-        for (const auto& mapRef : actToPredId) {
+        std::unordered_map<DataQuery*, size_t> qToItsId;
+        for (const auto& mapRef : ActNameToPredicates) {
             std::pair<size_t, std::vector<DataQuery*>>& DQ = V.emplace_back(event_label_mapper.get(mapRef.first), std::vector<DataQuery*>{});
             for (const auto& qId : mapRef.second) {
                 auto& prop = Qs.at(qId).first;
+                auto it = qToItsId.emplace(&prop, qId);
+                DEBUG_ASSERT(it.second);
                 DQ.second.emplace_back(&prop);
             }
             // I do not need to compare the pointers, rather than compare the values associated to those
@@ -796,49 +798,54 @@ void KnowledgeBase::exact_range_query(const std::string &var,
         // TODO: this is just the concrete doing.
         auto tmp = it->second.exact_range_query(V);
 
-        size_t j = 0;
-        for (const auto& mapRef : actToPredId) {
-            for (const auto& qId : mapRef.second) {
-                auto& tmpRef = tmp.at(j);
-                if ((tmpRef.first == tmpRef.second) && tmpRef.first == nullptr ) continue;
-                else {
+        for (size_t i = 0, N = V.size(); i<N; i++) {
+            const auto& actIdToPropList = V.at(i);
+            auto v_actId = actIdToPropList.first;
+            auto& v_propList = actIdToPropList.second;
+            auto& tmpResult = tmp.at(i);
+            DEBUG_ASSERT(v_propList.size() == tmpResult.size()); // We return the result for each query
+            for (size_t j = 0, M = v_propList.size(); j<M; j++) {
+                auto& tmpRef = tmpResult.at(j);
+                if (!((tmpRef.first == tmpRef.second) && tmpRef.first == nullptr )) {
+                    auto qPTr = v_propList.at(j);
+                    auto qId = qToItsId.at(qPTr);
                     auto& refQ = Qs.at(qId);
-                    LeafType qT = refQ.first.t;
+                    DEBUG_ASSERT(refQ.first == *qPTr); // They are the same query
+//                    LeafType qT = refQ.first.t;
                     PartialResult& S = refQ.second;
                     size_t N = std::distance(tmpRef.first, tmpRef.second);
-                    //std::vector<uint16_t> W;
-                    /*switch (qT) {
-                        case ActivationLeaf:
-                        case TargetLeaf:
-                            W.emplace_back(0);
-                            break;
-                        default:
-                            break;
-                    }*/
                     for (size_t i = 0; i<=N; i++) {
                         const auto& exactIt = tmpRef.first[i];
                         const auto& resolve = act_table_by_act_id.table.at(exactIt.act_table_offset).entry.id.parts;
-                        /*if (!W.empty()) {
-                            W[0] = resolve.event_id;
-                        }*/
-                        bool doInsert = true;
-                        float satisfiability = 1.0;
-                        if (doTemporalMatchQuery) {
-                            auto L = resolve.event_id;
-                            satisfiability = getSatisifiabilityBetweenValues(((L <= 1) ? 0 : isTemproalVal),
-                                                                             cast_to_float2(resolve.event_id,L), approxConstant);
-                            doInsert = satisfiability >= approxConstant;
-                        }
-                        if (doInsert)
+// TODO: for the approximate match, in the later future
+//                        bool doInsert = true;
+//                        float satisfiability = 1.0;
+//                        if (doTemporalMatchQuery) {
+//                            auto L = resolve.event_id;
+//                            satisfiability = getSatisifiabilityBetweenValues(((L <= 1) ? 0 : isTemproalVal),
+//                                                                             cast_to_float2(resolve.event_id,L), approxConstant);
+//                            doInsert = satisfiability >= 1.0;
+//                        }
+//                        if (doInsert)
                         S.emplace_back(std::pair<trace_t,event_t>{resolve.trace_id, resolve.event_id},
-                                       /*std::pair<double,std::vector<uint16_t>>{*/satisfiability/*, W}*/);
+                                       /*std::pair<double,std::vector<uint16_t>>{*/1.0/*, W}*/);
                     }
                     std::sort(S.begin(), S.end());
                     S.erase(std::unique(S.begin(), S.end()), S.end());
                 }
-                j++;
             }
         }
+
+//        size_t j = 0;
+//        for (const auto& mapRef : ActNameToPredicates) {
+//            for (const auto& qId : mapRef.second) {
+//                auto& tmpRef = tmp.at(j++);// TODO: fix, funziona solo per puro caso
+//                if ((tmpRef.first == tmpRef.second) && tmpRef.first == nullptr ) continue;
+//                else {
+
+//                }
+//            }
+//        }
     }
 }
 
