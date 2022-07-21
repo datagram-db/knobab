@@ -288,7 +288,7 @@ LTLfQuery *LTLfQueryManager::simplify(const LTLfQuery &q) {
                     auto it3 = ptr->atom.begin();
                     if ((!ptr->fields.id.parts.is_timed) && (ptr->atom.size() == 1) && (!atomization->data_query_atoms.contains(*it3))) {
                         // If we have only one atom, has size of one and it is not a data query, then I can exploit the tables
-                        ptr->table_query.emplace_back(pipeline->pushNonRangeQuery(DataQuery::AbsenceQuery(*it3, ptr->isLeaf)));
+                        ptr->table_query.emplace_back(pipeline->pushNonRangeQuery(DataQuery::AbsenceQuery(*it3, ptr->n,ptr->isLeaf)));
                     } else {
                         throw std::runtime_error("ERROR: we are not expecting timed absence queries or with multiple atoms anymore after rewriting! Absence should be now a NOT operator");
                     }
