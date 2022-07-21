@@ -23,5 +23,5 @@
 //"Choice"("Mastectomy", var "ca" >= 23.5 && var "biopsy" >= 1.0, "Lumpectomy", var "ca" >= 23.5 && var "biopsy" >= 1.0)
 //"Init"("__trace_payload", true, 1) // ADDED
 //"Precedence"("Mastectomy", var "ca" >= 23.5 && var "biopsy" >= 1.0, "FollowUp", var "ca" >= 23.5 && var "biopsy" >= 1.0)
-"Init"("__trace_payload", true, 1) // ADDED
+"Init"("__trace_payload", var "patient" != "0", 1) // ADDED
 //"Exists1"("Mastectomy", var "ca" >= 23.5 && var "biopsy" >= 1.0, 1) // ADDED

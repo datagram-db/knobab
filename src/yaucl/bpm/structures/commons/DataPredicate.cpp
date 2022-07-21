@@ -154,7 +154,7 @@ std::string prev_char(const std::string &val, size_t max_size) {
         result.pop_back();
     } else {
         result[val.size()-1] = last_char-1;
-        result += std::string(MAXIMUM_STRING_LENGTH - result.size(), MAX_CHAR);
+        result += std::string(max_size - result.size(), MAX_CHAR);
     }
     return result;
 }

@@ -690,6 +690,8 @@ void parse_declare_query_planner() {
 }
 
 int main(int argc, char **argv) {
+
+
 //    std::vector<std::set<size_t>> S;
 //    S.emplace_back(std::set<size_t>{1,2,3});
 //    S.emplace_back(std::set<size_t>{1,2});
