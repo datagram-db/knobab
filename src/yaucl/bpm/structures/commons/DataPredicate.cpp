@@ -143,8 +143,8 @@ std::ostream &operator<<(std::ostream &os, const DataPredicate &predicate) {
 }
 
 std::string prev_char(const std::string &val, size_t max_size) {
-    static const char MIN_CHAR = std::numeric_limits<char>::min();
-    static const char MAX_CHAR = std::numeric_limits<char>::max();
+    static const char MIN_CHAR = static_cast<char>(std::numeric_limits<unsigned char>::min()+1);
+    static const char MAX_CHAR = static_cast<char>(std::numeric_limits<unsigned char>::max());
     if (val.empty()) return val;
 
     std::string result = val;
@@ -160,8 +160,8 @@ std::string prev_char(const std::string &val, size_t max_size) {
 }
 
 std::string next_char(const std::string &val, size_t max_size) {
-    static const char MIN_CHAR = std::numeric_limits<char>::min();
-    static const char MAX_CHAR = std::numeric_limits<char>::max();
+    static const char MIN_CHAR = static_cast<char>(std::numeric_limits<unsigned char>::min()+1);
+    static const char MAX_CHAR = static_cast<char>(std::numeric_limits<unsigned char>::max());
     if (val == DataPredicate::MAX_STRING) return val;
 
     std::string next = val;

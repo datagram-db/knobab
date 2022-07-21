@@ -466,13 +466,14 @@ std::pair<const AttributeTable::record *, const AttributeTable::record *>
     return thisResult;
 }
 
-std::vector<std::pair<const AttributeTable::record *, const AttributeTable::record *>>
+std::vector<std::vector<std::pair<const AttributeTable::record *, const AttributeTable::record *>>>
 AttributeTable::exact_range_query(const std::vector<std::pair<size_t, std::vector<DataQuery*>>>& propList) const {
-    std::vector<std::pair<const AttributeTable::record *, const AttributeTable::record *>> actualResult;
+    std::vector<std::vector<std::pair<const AttributeTable::record *, const AttributeTable::record *>>> finalResult;
     //std::pair<const AttributeTable::record *, const AttributeTable::record *> thisResult{nullptr, nullptr};
     for (const auto& cps : propList) {
+        auto& actualResult = finalResult.emplace_back();
         size_t actId = cps.first;
-        if (/*(cps.second->empty()) ||*/ (actId > primary_index.size())) {
+        if ((actId > primary_index.size())) {
             for (size_t i = 0, N = cps.second.size(); i<N; i++)
                 actualResult.emplace_back(nullptr, nullptr);
         }
@@ -492,12 +493,18 @@ AttributeTable::exact_range_query(const std::vector<std::pair<size_t, std::vecto
                 const union_type prop_rightValue = cast_unions(type, (*propRef)->upper_bound);
 
                 const record* lb = std::lower_bound(begin, end, prop_leftValue, [&](const record &r, const union_type &value) {
-                    return resolve(r) < value;
+//                    auto val = resolve(r);
+//                    bool test = val < value;
+//                    return test;
+                      return resolve(r) < value;
                 });
 
                 if (lb != end) {
                     const record* ub = std::upper_bound(begin, end, prop_rightValue, [&](const union_type &value, const record &r) {
-                        return resolve(r) > value;
+//                        auto val = resolve(r);
+//                        bool test =  val > value;
+//                        return test;
+                          return resolve(r) > value;
                     });
 
                     auto tmpLeft = lb;
@@ -522,5 +529,5 @@ AttributeTable::exact_range_query(const std::vector<std::pair<size_t, std::vecto
             } while (propRef != propEnd);
         }
     }
-    return actualResult;
+    return finalResult;
 }

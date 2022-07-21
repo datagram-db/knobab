@@ -139,9 +139,8 @@ public:
     void exact_range_query(const std::string &var,
                                                                             const std::unordered_map<std::string, std::vector<size_t>> &actToPredId,
                                                                             std::vector<std::pair<DataQuery, PartialResult>> &Qs,
-                                                                            const std::optional<uint16_t> &temporalTimeMatch = {},
-                                                                            double approxConstant = 1.0) const {
-        db.exact_range_query(var, actToPredId, Qs, temporalTimeMatch, approxConstant);
+                                                                            const std::optional<uint16_t> &temporalTimeMatch = {}) const {
+        db.exact_range_query(var, actToPredId, Qs, temporalTimeMatch);
     }
 
     Environment(const std::filesystem::path& cache_folder = "data/cache") : declare_to_graph{cache_folder} {}
