@@ -361,12 +361,14 @@ bool DataPredicate::testOverSingleVariable(double val) const {
 }
 
 bool DataPredicate::operator==(const DataPredicate &rhs) const {
-    return label == rhs.label &&
+    bool tmp= label == rhs.label &&
            var == rhs.var &&
            casusu == rhs.casusu &&
            value == rhs.value &&
            value_upper_bound == rhs.value_upper_bound &&
-           exceptions == rhs.exceptions;
+           exceptions == rhs.exceptions &&
+           BiVariableConditions == rhs.BiVariableConditions;
+    return tmp;
 }
 
 bool DataPredicate::operator!=(const DataPredicate &rhs) const {
