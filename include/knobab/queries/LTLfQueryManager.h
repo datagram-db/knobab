@@ -309,13 +309,13 @@ struct LTLfQueryManager {
         q.n = input.n;
         q.isLeaf = input.isLeaf;
         q.fields = input.fields;
-        q.fields.id.parts.is_negated = input.fields.id.parts.is_negated; // I need to remember whether this was an intersection or a union, depending on the negation of the atom!
+        q.fields.id.parts.is_negated = true; // input.fields.id.parts.is_negated; /// TODO: BUGFIX, false always // I need to remember whether this was an intersection or a union, depending on the negation of the atom!
         q.isLeaf = input.isLeaf;
         for_occurrence key;
         key.isTimed = firstOrLast || input.fields.id.parts.is_timed;
         key.n_arg = input.n;
         key.type = input.isLeaf;
-        key.isDisjunctiveSoNegated = input.fields.id.parts.is_negated;
+        key.isDisjunctiveSoNegated =  true; // input.fields.id.parts.is_negated; /// TODO: BUGFIX, false always
         auto& V = focc_atomsets[key];
 
         bool hasAtLeastOneDataAtom = false;
