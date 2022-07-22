@@ -33,3 +33,7 @@ gtest_discover_tests(slow_declare)
 add_executable(complete_response testing_complete_response.cpp)
 target_link_libraries(complete_response gtest_main knobab yaucl_hashing yaucl_bpm knobab_flloat Threads::Threads)
 gtest_discover_tests(complete_response)
+
+add_executable(ideas22_tests ideas22_tests.cpp)
+target_link_libraries(ideas22_tests gtest_main knobab yaucl_hashing yaucl_bpm knobab_flloat Threads::Threads)
+gtest_discover_tests(ideas22_tests)
