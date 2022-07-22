@@ -5,3 +5,4 @@
 "End"("FollowUp", true, 1)
 "End"("Referral", true, 1)
 "End"("FollowUp", var "ca" <= 23.5, 1)
+"Init"("__trace_payload", var "ca" <= -1 && var "patient" != "0", 1)

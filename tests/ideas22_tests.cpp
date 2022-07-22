@@ -210,6 +210,34 @@ TEST(ideas22_uce, InitEndsMix) {
     env.first_atomize_model();
     auto ref = env.query_model();
     EXPECT_EQ(ref.final_ensemble, PerDeclareSupport);
-    EXPECT_EQ(ref.support_per_declare.size(), 7);
-    EXPECT_EQ(ref.support_per_declare, (std::vector<double>{0.0, 1.0, 1.0, 0.0, 2.0/3.0, 1.0/3.0, 1.0/3.0}));
+    EXPECT_EQ(ref.support_per_declare.size(), 8);
+    EXPECT_EQ(ref.support_per_declare, (std::vector<double>{0.0, 1.0, 1.0, 0.0, 2.0/3.0, 1.0/3.0, 1.0/3.0, 1.0}));
+}
+
+TEST(ideas22_uce, ExistsData) {
+    Environment env;
+    env.doStats = false;
+    env.set_grounding_parameters(true, false, true,GroundingStrategyConf::NO_EXPANSION);
+    env.set_atomization_parameters("p", 20);
+    auto scripts = std::filesystem::current_path().parent_path().parent_path();
+    auto file = scripts / "data" / "testing" / "ideas22" / "anything.txt";
+    {
+        std::ifstream if_{file};
+        env.load_log(HUMAN_READABLE_YAUCL, true, file.string(), true, if_);
+    }
+    std::filesystem::path declare_file_path, maxsat;
+    maxsat = (scripts / "scripts" / ("support_pipeline_singledecl_testing.yaml")).string();
+    declare_file_path = (scripts / "data" /"testing"/ "ideas22" /  ("ExistsData.powerdecl"));
+    std::filesystem::path root_folder = std::filesystem::current_path().parent_path().parent_path();
+    env.load_model(declare_file_path);
+    env.set_grounding_parameters(true, false, true,GroundingStrategyConf::NO_EXPANSION);
+    env.set_atomization_parameters("p", 20);
+    env.set_maxsat_parameters(std::filesystem::path(maxsat));
+    env.doGrounding();
+    env.init_atomize_tables();
+    env.first_atomize_model();
+    auto ref = env.query_model();
+    EXPECT_EQ(ref.final_ensemble, PerDeclareSupport);
+    EXPECT_EQ(ref.support_per_declare.size(), 1);
+    EXPECT_EQ(ref.support_per_declare, (std::vector<double>{1.0/3.0}));
 }
