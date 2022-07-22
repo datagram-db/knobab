@@ -519,9 +519,34 @@ static inline void local_logic_intersection(const std::unordered_set<LTLfQuery*>
             it++;
             auto ref = (*it)->result;
             if (isTimed)
-                and_logic_timed(last_union, ref, curr_union);
+                and_fast_timed(last_union, ref, curr_union);
             else
-                and_logic_untimed(last_union, ref, curr_union);
+                and_fast_untimed(last_union, ref, curr_union);
+            std::swap(last_union, curr_union);
+            curr_union.clear();
+        }
+    }
+}
+
+
+static inline void local_logic_union(const std::unordered_set<LTLfQuery*>& q, Result& last_union, bool isTimed = true) {
+    size_t N = q.size();
+    if ((N == 0)) {
+        last_union.clear();
+        return;
+    } else if (N == 1) {
+        last_union = (*q.begin())->result;
+    } else {
+        auto it = q.begin();
+        last_union = (*it)->result;
+        Result curr_union;
+        for (std::size_t i = 1; i < N; ++i) {
+            it++;
+            auto ref = (*it)->result;
+            if (isTimed)
+                or_fast_timed(last_union, ref, curr_union);
+            else
+                or_fast_untimed(last_union, ref, curr_union);
             std::swap(last_union, curr_union);
             curr_union.clear();
         }
@@ -1530,7 +1555,7 @@ void MAXSatPipeline::pipeline(CNFDeclareDataAware* model,
                     for (size_t i = 0, N = declare_to_query.size(); i<N; i++) { // each declare i
                         const auto &declare = declare_to_query.at(i);
                         Result localActivations;
-                        local_logic_intersection(qm.activations.at(i), localActivations, false);
+                        local_logic_union(qm.activations.at(i), localActivations, false);
                         if (localActivations.empty()) {
                             DEBUG_ASSERT(declare->result.empty());
                             support_per_declare.emplace_back(0);
@@ -1545,8 +1570,7 @@ void MAXSatPipeline::pipeline(CNFDeclareDataAware* model,
                                 double numerator = 0.0;
                                 for (const auto& trace : declare->result) {
                                     if (!trace.second.second.empty()) {
-                                        auto id = trace.second.second.at(0);
-                                        if (IS_MARKED_EVENT_ACTIVATION(id) || IS_MARKED_EVENT_MATCH(id))
+                                        if (IS_MARKED_EVENT_ACTIVATION(*trace.second.second.begin()) || IS_MARKED_EVENT_MATCH(*trace.second.second.rbegin()))
                                             numerator++;
                                     }
                                 }
@@ -1567,7 +1591,7 @@ void MAXSatPipeline::pipeline(CNFDeclareDataAware* model,
                             support_per_declare.emplace_back(declare->result.empty() ? 0 : 1);
                         } else {
                             Result localActivations;
-                            local_logic_intersection(qm.activations.at(i), localActivations, false);
+                            local_logic_union(qm.activations.at(i), localActivations, false);
                             if (localActivations.empty()) {
                                 DEBUG_ASSERT(declare->result.empty());
                                 support_per_declare.emplace_back(0);
@@ -1587,8 +1611,7 @@ void MAXSatPipeline::pipeline(CNFDeclareDataAware* model,
                                     }
                                     for (const auto& trace : declare->result) {
                                         if (!trace.second.second.empty()) {
-                                            auto id = trace.second.second.at(0);
-                                            if (IS_MARKED_EVENT_ACTIVATION(id) || IS_MARKED_EVENT_MATCH(id))
+                                            if (IS_MARKED_EVENT_ACTIVATION(*trace.second.second.begin()) || IS_MARKED_EVENT_MATCH(*trace.second.second.rbegin()))
                                                 numerator++;
                                         }
                                     }
@@ -1603,7 +1626,8 @@ void MAXSatPipeline::pipeline(CNFDeclareDataAware* model,
                 case TraceMaximumSatisfiability: {
                     // Working under the assumption that all of the final Declare clauses are, at the root level, untimed operations
                     max_sat_per_trace.resize(kb.noTraces, 0.0);
-                    for (const auto& q : qm.Q.begin()->second) {
+                    for (size_t i = 0, N = declare_to_query.size(); i<N; i++) {
+                        const auto &q = declare_to_query.at(i);
                         for (const auto& rx: q->result) {
                             // Counting the trace if and only if it has a near-1 value
                             if (std::abs(rx.second.first - 1.0) <= std::numeric_limits<double>::epsilon())
