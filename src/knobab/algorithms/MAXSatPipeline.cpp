@@ -1500,6 +1500,9 @@ void MAXSatPipeline::pipeline(CNFDeclareDataAware* model,
                         if (localActivations.empty()) {
                             DEBUG_ASSERT(declare->result.empty());
                             support_per_declare.emplace_back(0);
+                        } else if ((!declare->fields.id.parts.is_timed) && ((declare->t == LTLfQuery::INIT_QP) || (declare->t == LTLfQuery::END_QP))) {
+                            auto it2 = visited.emplace(declare, declare->result.size() / (((double)kb.noTraces)));
+                            support_per_declare.emplace_back(it2.first->second);
                         } else {
                             auto it2 = visited.emplace(declare, 0);
                             if (it2.second) {

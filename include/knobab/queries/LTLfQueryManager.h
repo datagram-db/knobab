@@ -80,7 +80,7 @@ struct LTLfQueryManager {
             orig.args_from_script.clear();
             ptr = simplify(orig);
         }
-        if (orig.isLeaf == ActivationLeaf) {
+        if ((orig.isLeaf == ActivationLeaf) || ((!key.isTimed) && (orig.t == LTLfQuery::INIT_QP || orig.t == LTLfQuery::END_QP))) {
             DEBUG_ASSERT(activations.size() > qId);
             activations[qId].emplace(ptr);
 //            if (current_query_id == activations.size()) { // Query Id counting from zero, so, if that happens, then it means that I need to add the activation in here!
