@@ -99,7 +99,7 @@ struct MAXSatPipeline {
     /// This other field, on the other hand, is required to speed-up the intersection between the data intervals
     std::vector<std::set<size_t>> atomToResultOffset;
 
-    std::vector<std::string> toUseAtoms; // This is to ensure the insertion of unique elements to the map!
+    std::unordered_map<std::string, size_t> toUseAtoms; // This is to ensure the insertion of unique elements to the map!
     //size_t barrier_to_range_queries, barriers_to_atfo;
     std::vector<std::vector<std::pair<std::pair<trace_t, event_t>, double>>> atomicPartIntersectionResult;
 

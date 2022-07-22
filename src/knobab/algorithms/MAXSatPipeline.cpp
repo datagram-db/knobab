@@ -184,7 +184,7 @@ void MAXSatPipeline::data_chunk(CNFDeclareDataAware *model,
     // Finalising the data structure representation
     qm.sort_query_plan_for_scheduling(atomization, W, (KnowledgeBase *) &kb); // Time Computational Complexity: Squared on the size of the atoms
 
-    remove_duplicates(toUseAtoms);
+    //remove_duplicates(toUseAtoms);
     for (auto& ref : atomToFormulaId)
         remove_duplicates(ref.second);
 }
@@ -196,6 +196,7 @@ void MAXSatPipeline::pushDataRangeQuery(const LTLfQuery* query,
     // decomposition part of the pipeline
     static std::vector<std::pair<std::pair<trace_t, event_t>, double>> empty_result{};
     atomToFormulaId[atom].emplace_back((LTLfQuery*)query);
+    if (!toUseAtoms.emplace(atom, toUseAtoms.size()).second) return;
 
     // CHECKING THAT THE ATOM IS WITHIN THE ATOMIZATION PIPELINE
     auto interval_to_interval_queries_to_intersect = atomization.atom_to_conjunctedPredicates.find(atom);
@@ -225,7 +226,7 @@ void MAXSatPipeline::pushDataRangeQuery(const LTLfQuery* query,
             tmpRanges.emplace_back(find.first->second);
         }
     }
-    toUseAtoms.emplace_back(atom);
+
     atomToResultOffset.emplace_back(tmpRanges.begin(), tmpRanges.end());
 //    return tmpRanges;
 }
@@ -327,6 +328,7 @@ std::vector<PartialResult> MAXSatPipeline::subqueriesRunning(const KnowledgeBase
     ///std::cout << set_decomposition_result << std::endl;
     size_t isFromFurtherDecomposition = set_decomposition_result.minimal_common_subsets.size();
 
+    // result.minimal_common_subsets.size() + result.minimal_common_subsets_composition.size()
     std::vector<PartialResult> resultOfS(set_decomposition_result.minimal_common_subsets.size() + set_decomposition_result.minimal_common_subsets_composition.size());
     PARALLELIZE_LOOP_BEGIN(pool, 0, set_decomposition_result.minimal_common_subsets.size(), lb, ub)
         for (size_t i = lb; i < ub; i++) {
@@ -357,7 +359,7 @@ std::vector<PartialResult> MAXSatPipeline::subqueriesRunning(const KnowledgeBase
 //    }
 
     ///results_cache.resize(toUseAtoms.size());
-    std::vector<PartialResult> results_cache(std::max(toUseAtoms.size(), resultOfS.size()), PartialResult{});
+    std::vector<PartialResult> results_cache(atomToResultOffset.size(), PartialResult{});
     PARALLELIZE_LOOP_BEGIN(pool, 0, set_decomposition_result.decomposedIndexedSubsets.size(), lb, ub)
         for (size_t j = lb; j < ub; j++) {
             auto& ref = set_decomposition_result.decomposedIndexedSubsets.at(j);
@@ -377,8 +379,9 @@ std::vector<PartialResult> MAXSatPipeline::subqueriesRunning(const KnowledgeBase
 //    }
 
     // Preparing the second phase of the pipeline, where the extracted data is going to be combined.
-    for (size_t i = 0, N = toUseAtoms.size(); i < N; i++) {
-        auto& atom = toUseAtoms.at(i);
+    for (const auto& cp : toUseAtoms) {
+        auto& atom = cp.first;
+        auto& i = cp.second;
         for (LTLfQuery* formulaId : atomToFormulaId.at(atom)) {
             // Associating the partial results from the cache to the atom of choice (partial_results)
             formulaId->range_query.emplace_back(i);
