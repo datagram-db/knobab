@@ -913,32 +913,63 @@ static inline void local_fast_union(const LTLfQuery* q, Result& last_union, bool
 static inline void untimed_exists_for_data_queries(LTLfQuery* formula,
                                      const std::vector<PartialResult>& results_cache) {
 //    DEBUG_ASSERT(false);
+    ResultRecord rcx;
+    rcx.second.first = 1.0;
+    rcx.first.second = 0;
+    bool isActivation = false;
+    bool isTarget = false;
+    if (formula->isLeaf == ActivationLeaf) {
+//        rcx.second.second.emplace_back(marked_event::activation(0));
+        isActivation = true;
+    } else if (formula->isLeaf == TargetLeaf) {
+//        rcx.second.second.emplace_back(marked_event::target(0));
+        isTarget = true;
+    }
+
     bool isFirstIteration = true;
     uint32_t traceId = 0;
     uint16_t eventCount = 0;
     Result tmp_result;
     data_merge(formula->range_query, results_cache, tmp_result, formula->isLeaf, true);
-    ResultRecord cp{{0,0}, {1.0, {}}};
+//    ResultRecord cp{{0,0}, {1.0, {}}};
     for (auto ref = tmp_result.begin(); ref != tmp_result.end(); ref++) {
         if (isFirstIteration) {
             traceId = ref->first.first;
             eventCount = 1;
+            if (isActivation) {
+                rcx.second.second.emplace_back(marked_event::activation(ref->first.second));
+            } else if (isTarget) {
+                rcx.second.second.emplace_back(marked_event::target(ref->first.second));
+            }
             isFirstIteration = false;
         } else {
             if ((traceId != ref->first.first)) {
                 if ((eventCount >= formula->n)) {
-                    cp.first.first = traceId;
-                    formula->result.emplace_back(cp);
+                    rcx.first.first = traceId;
+                    formula->result.emplace_back(rcx);
+                    rcx.second.second.clear();
                 }
                 traceId = ref->first.first;
                 eventCount = 1;
-            } else eventCount++;
+                if (isActivation) {
+                    rcx.second.second.emplace_back(marked_event::activation(ref->first.second));
+                } else if (isTarget) {
+                    rcx.second.second.emplace_back(marked_event::target(ref->first.second));
+                }
+            } else {
+                eventCount++;
+                if (isActivation) {
+                    rcx.second.second.emplace_back(marked_event::activation(ref->first.second));
+                } else if (isTarget) {
+                    rcx.second.second.emplace_back(marked_event::target(ref->first.second));
+                }
+            }
         }
     }
     tmp_result.clear();
     if ((eventCount >= formula->n)) {
-        cp.first.first = traceId;
-        formula->result.emplace_back(cp);
+        rcx.first.first = traceId;
+        formula->result.emplace_back(rcx);
     }
 }
 
@@ -1503,10 +1534,12 @@ void MAXSatPipeline::pipeline(CNFDeclareDataAware* model,
                         if (localActivations.empty()) {
                             DEBUG_ASSERT(declare->result.empty());
                             support_per_declare.emplace_back(0);
-                        } else if ((!declare->fields.id.parts.is_timed) && ((declare->t == LTLfQuery::INIT_QP) || (declare->t == LTLfQuery::END_QP))) {
-                            auto it2 = visited.emplace(declare, declare->result.size() / (((double)kb.noTraces)));
-                            support_per_declare.emplace_back(it2.first->second);
-                        } else {
+                        }
+//                        else if ((!declare->fields.id.parts.is_timed) && ((declare->t == LTLfQuery::INIT_QP) || (declare->t == LTLfQuery::END_QP))) {
+//                            auto it2 = visited.emplace(declare, declare->result.size() / (((double)kb.noTraces)));
+//                            support_per_declare.emplace_back(it2.first->second);
+//                        }
+                        else {
                             auto it2 = visited.emplace(declare, 0);
                             if (it2.second) {
                                 double numerator = 0.0;
