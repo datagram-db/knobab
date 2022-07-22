@@ -173,12 +173,14 @@ std::vector<DeclareDataAware> DeclareDataAware::load_simplified_declare_model(st
 }
 
 bool DeclareDataAware::operator==(const DeclareDataAware &rhs) const {
-    return casusu == rhs.casusu &&
+    bool tmp = casusu == rhs.casusu &&
            n == rhs.n &&
            left_act == rhs.left_act &&
            right_act == rhs.right_act &&
            left_decomposed_atoms == rhs.left_decomposed_atoms &&
-           right_decomposed_atoms == rhs.right_decomposed_atoms;
+           right_decomposed_atoms == rhs.right_decomposed_atoms &&
+           conjunctive_map == rhs.conjunctive_map;
+    return tmp;
 }
 
 bool DeclareDataAware::operator!=(const DeclareDataAware &rhs) const {

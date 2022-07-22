@@ -1544,8 +1544,11 @@ void MAXSatPipeline::pipeline(CNFDeclareDataAware* model,
                             if (it2.second) {
                                 double numerator = 0.0;
                                 for (const auto& trace : declare->result) {
-                                    if ((!trace.second.second.empty()) && IS_MARKED_EVENT_ACTIVATION(trace.second.second.at(0)))
-                                        numerator += 1.0;
+                                    if (!trace.second.second.empty()) {
+                                        auto id = trace.second.second.at(0);
+                                        if (IS_MARKED_EVENT_ACTIVATION(id) || IS_MARKED_EVENT_MATCH(id))
+                                            numerator++;
+                                    }
                                 }
                                 it2.first->second = numerator / ((double)kb.noTraces);
                             }
@@ -1583,8 +1586,11 @@ void MAXSatPipeline::pipeline(CNFDeclareDataAware* model,
                                         }
                                     }
                                     for (const auto& trace : declare->result) {
-                                        if ((!trace.second.second.empty()) && IS_MARKED_EVENT_ACTIVATION(trace.second.second.at(0)))
-                                            numerator += 1.0;
+                                        if (!trace.second.second.empty()) {
+                                            auto id = trace.second.second.at(0);
+                                            if (IS_MARKED_EVENT_ACTIVATION(id) || IS_MARKED_EVENT_MATCH(id))
+                                                numerator++;
+                                        }
                                     }
                                     it2.first->second = numerator / denominator;
                                 }
