@@ -216,7 +216,22 @@ LTLfQuery *LTLfQueryManager::simplify(const LTLfQuery &q) {
         /// Checking whether this is a leaf node
         if (ptr->args.empty()) {
             switch (ptr->t) {
-                case LTLfQuery::INIT_QP:
+                case LTLfQuery::INIT_QP:{
+                    DEBUG_ASSERT(!ptr->fields.id.parts.is_timed);
+                    DEBUG_ASSERT(!ptr->atom.empty());
+                    for (const auto& it2 : ptr->atom) {
+                        if (atomization->data_query_atoms.contains(it2)) {
+                            // For the moment, we just register the leaf as associated to the atom
+                            // subqueriesRunning, part 2, will then associated the formula with the
+                            // intermediate result associated to each atom
+                            pipeline->pushDataRangeQuery(ptr, *atomization, it2);
+                        } else {
+                            // Directly stores the atom into table_query
+                            ptr->table_query.emplace_back(pipeline->pushNonRangeQuery(DataQuery::InitQuery(it2)));
+                        }
+                    }
+                } break;
+
                 case LTLfQuery::END_QP: {
                     DEBUG_ASSERT(!ptr->fields.id.parts.is_timed);
                     DEBUG_ASSERT(!ptr->atom.empty());
@@ -228,7 +243,7 @@ LTLfQuery *LTLfQueryManager::simplify(const LTLfQuery &q) {
                             pipeline->pushDataRangeQuery(ptr, *atomization, it2);
                         } else {
                             // Directly stores the atom into table_query
-                            ptr->table_query.emplace_back(pipeline->pushNonRangeQuery(DataQuery::AtomQuery(it2)));
+                            ptr->table_query.emplace_back(pipeline->pushNonRangeQuery(DataQuery::EndsQuery(it2)));
                         }
                     }
                 } break;
