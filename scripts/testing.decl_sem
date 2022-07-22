@@ -1,5 +1,6 @@
 "marking" {
      template "Init"               := INIT
+     template "End"                := END
      template "Exists1"            := (EXISTS 1)
      template "Absence1"           := ABSENCE 1
      template "Absence2"           := ABSENCE 2
