@@ -729,7 +729,7 @@ static inline void holistic_merge(LTLfQuery* formula,
                               const std::vector<PartialResult>& range_results,
                               const std::vector<std::pair<DataQuery, PartialResult>>& non_range_results) {
 
-    bool isUnion = formula->fields.id.parts.is_negated;
+    bool isUnion = true;//formula->fields.id.parts.is_negated;
     if (formula->table_query.empty() && formula->range_query.empty()) {
         formula->result.clear();
         return;
@@ -914,7 +914,7 @@ static inline void untimed_exists_for_data_queries(LTLfQuery* formula,
     uint32_t traceId = 0;
     uint16_t eventCount = 0;
     Result tmp_result;
-    data_merge(formula->range_query, results_cache, tmp_result, formula->isLeaf, formula->fields.id.parts.is_negated);
+    data_merge(formula->range_query, results_cache, tmp_result, formula->isLeaf, true);
     ResultRecord cp{{0,0}, {1.0, {}}};
     for (auto ref = tmp_result.begin(); ref != tmp_result.end(); ref++) {
         if (isFirstIteration) {
@@ -985,7 +985,7 @@ void MAXSatPipeline::abidinglogic_query_running(const std::vector<PartialResult>
                                 // In this situation, I'm directly taking the pre-computated data
                                 import_from_partial_results(formula, 0, data_accessing);
                             } else {
-                                data_merge(formula->range_query, results_cache, formula->result, formula->isLeaf, false);
+                                data_merge(formula->range_query, results_cache, formula->result, formula->isLeaf, true);
                                 formula->result.erase(std::remove_if(formula->result.begin(),
                                                                  formula->result.end(),
                                                                  [](const auto&  x){return x.first.second > 0;}),
@@ -998,7 +998,7 @@ void MAXSatPipeline::abidinglogic_query_running(const std::vector<PartialResult>
                                 // In this situation, I'm directly taking the pre-computated data
                                 import_from_partial_results(formula, 0, data_accessing);
                             } else {
-                                data_merge(formula->range_query, results_cache, formula->result, formula->isLeaf, false);
+                                data_merge(formula->range_query, results_cache, formula->result, formula->isLeaf, true);
                                 formula->result.erase(std::remove_if(formula->result.begin(),
                                                                      formula->result.end(),
                                                                      [kb](const auto&  x){return x.first.second < kb.act_table_by_act_id.trace_length.at(x.first.first)-1;}),
@@ -1237,7 +1237,7 @@ void MAXSatPipeline::fast_v1_query_running(const std::vector<PartialResult>& res
                             // In this situation, I'm directly taking the pre-computated data
                             import_from_partial_results(formula, 0, data_accessing);
                         } else {
-                            data_merge(formula->range_query, results_cache, formula->result, formula->isLeaf, false);
+                            data_merge(formula->range_query, results_cache, formula->result, formula->isLeaf, true);
                             formula->result.erase(std::remove_if(formula->result.begin(),
                                                                  formula->result.end(),
                                                                  [](const auto&  x){return x.first.second > 0;}),
@@ -1250,7 +1250,7 @@ void MAXSatPipeline::fast_v1_query_running(const std::vector<PartialResult>& res
                                 // In this situation, I'm directly taking the pre-computated data
                                 import_from_partial_results(formula, 0, data_accessing);
                             } else {
-                                data_merge(formula->range_query, results_cache, formula->result, formula->isLeaf, false);
+                                data_merge(formula->range_query, results_cache, formula->result, formula->isLeaf, true);
                                 formula->result.erase(std::remove_if(formula->result.begin(),
                                                                      formula->result.end(),
                                                                      [kb](const auto&  x){return x.first.second < kb.act_table_by_act_id.trace_length.at(x.first.first)-1;}),
