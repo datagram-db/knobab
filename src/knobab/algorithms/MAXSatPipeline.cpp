@@ -158,7 +158,7 @@ void MAXSatPipeline::data_chunk(CNFDeclareDataAware *model,
             qm.current_query_id++;
         }
     }
-    std::vector<bool> WECTOR(maxFormulaId, false);
+    std::vector<bool> WECTOR(declareId, false);
 
     qm.finalizeUnions();
     for (size_t i = 0, N = declareToQuery.size(); i<N; i++) {

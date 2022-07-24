@@ -4,13 +4,9 @@
 #define CTEST_COLOR_OK
 #define CTEST_SEGFAULT
 #include <vector>
-#include <cassert>
-#include <yaucl/structures/set_operations.h>
 #include <knobab/Environment.h>
 #include <fstream>
 #include <gtest/gtest.h>
-#include <knobab/operators/simple_ltlf_operators.h>
-#include <knobab/operators/fast_ltlf_operators.h>
 
 // Testing dataless queries, untimed, just one
 TEST(ideas22_uce, InitDataless) {
