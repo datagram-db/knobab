@@ -49,3 +49,4 @@ data/testing/bpi_21
 data/testing/benchmarking_scripts/buratto.log.txt
 build_test/
 build_test/
+data/testing/benchmarking_scripts/sql.log.txt
