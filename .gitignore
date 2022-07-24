@@ -1,3 +1,5 @@
+.git-rewrite/
+
 .RData
 competitors/Burattin/ProM/*
 competitors/SQLMinerBenchmarker/target/*
