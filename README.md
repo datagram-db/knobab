@@ -78,6 +78,13 @@ In order to run multiple queries stored in different files over one single model
 ./cmake-build-debug/server  --log "data/testing/log.txt" --declare "data/testing/SimpleComposition.txt" "data/testing/InitSingleA.txt" "data/testing/InitSingleC.txt" --csv test.csv 
 ```
 
+## Datasets 
+
+Due to space limitations in GitHub, the datasets are available online.
+
+* For the _IDEAS'22_ paper, please download the datasets from [OSF](https://files.osf.io/v1/resources/xwd3v/providers/osfstorage/?zip=) and unzip it in the ```/data/testing``` folder
+
+
 ## CMake
 
 With respect to the CMake compilation flags, in order to mimick advanced JIT features from modern relational databases, such as PostgreSQL, we decided to exploit macros and compile time configuration to build KnoBAB with a specific configuration setting without relying on run-time code function calls. Some flags are explained in here:
