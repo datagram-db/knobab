@@ -114,7 +114,7 @@ void MAXSatPipeline::data_chunk(CNFDeclareDataAware *model,
     declare_model = model;
     std::vector<LTLfQuery*> W;
     //label_set_t visitedAtoms;
-    size_t declareId = 0;
+//    size_t declareId = 0;
     std::vector<LTLfQuery> tmpQuery;
     std::vector<size_t> declareToQuery;
 
@@ -123,14 +123,15 @@ void MAXSatPipeline::data_chunk(CNFDeclareDataAware *model,
     for (auto& it : declare_model->singleElementOfConjunction) {
         for (auto& item : it.elementsInDisjunction) {
             // Skipping already-met definitions: those will only duplicate the code to be run!
-            auto cp = declare_atomization.emplace(item, declareId++);
+//            declareId++;
+            auto cp = declare_atomization.emplace(item, maxFormulaId);
             if (!cp.second) {
                 declareToQuery.emplace_back(cp.first->second);
                 /// TODO: PRESERVE
 
                 continue;
             } else {
-                declareToQuery.emplace_back(declareId-1);
+                declareToQuery.emplace_back(maxFormulaId);
             }
 
             // Setting the knowledge base, so to exploit it for join queries
@@ -158,7 +159,7 @@ void MAXSatPipeline::data_chunk(CNFDeclareDataAware *model,
             qm.current_query_id++;
         }
     }
-    std::vector<bool> WECTOR(declareId, false);
+    std::vector<bool> WECTOR(declareToQuery.size(), false);
 
     qm.finalizeUnions();
     for (size_t i = 0, N = declareToQuery.size(); i<N; i++) {

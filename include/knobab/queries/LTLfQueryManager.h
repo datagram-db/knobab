@@ -122,9 +122,11 @@ struct LTLfQueryManager {
                 FF.emplace_back(simplify(element_disjunction));
             }
             for (const auto& min_composition : result.minimal_common_subsets_composition) {
-                DEBUG_ASSERT(min_composition.size() > 1);
+                DEBUG_ASSERT(min_composition.size() > 0);
                 element_disjunction.atom.clear();
-                if (min_composition.size() == 2) {
+                if (min_composition.size() == 1) {
+                    FF.emplace_back(FF.at(*min_composition.begin()));
+                } else if (min_composition.size() == 2) {
                     element_disjunction.isLeaf = NotALeaf;
                     element_disjunction.fields.id.parts.is_negated = false;
                     element_disjunction.fields.id.parts.is_timed = arg.first.isTimed;
