@@ -198,7 +198,7 @@ target_link_libraries(server Threads::Threads yaml-cpp  knobab antlr4_static ${C
                                   yaucl_stringutils yaucl_numeric yaucl_hashing yaucl_data yaucl_bpm yaucl_graph knobab_flloat yaucl_structures)
 #add_backward(server)
 
-add_executable(tests_generator tests_generator.cpp) #${BACKWARD_ENABLE})
+add_executable(tests_generator tests/tests_generator.cpp) #${BACKWARD_ENABLE})
 target_link_libraries(tests_generator knobab
         yaucl_stringutils yaucl_numeric yaucl_hashing yaucl_data yaucl_bpm yaucl_graph knobab_flloat yaucl_structures)
 
