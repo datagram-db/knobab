@@ -20,14 +20,14 @@ protected:
         env.set_grounding_parameters(true, false, true,GroundingStrategyConf::NO_EXPANSION);
         env.set_atomization_parameters("p", 10);
         auto scripts = std::filesystem::current_path().parent_path().parent_path();
-        auto file = scripts / "data" / "testing" / "log_response.txt";
+        auto file = scripts / "data" / "testing" / "logs" / "log_response.txt";
         {
             std::ifstream if_{file};
             env.load_log(HUMAN_READABLE_YAUCL, false, file.string(), false, if_);
         }
         std::filesystem::path declare_file_path, maxsat;
         maxsat = (scripts / "scripts" / ("support_pipeline_singledecl_testing.yaml")).string();
-        declare_file_path = (scripts / "data" /"testing"/("response.powerdecl"));
+        declare_file_path = (scripts / "data" /"testing"/ "declare" / ("response.powerdecl"));
         std::filesystem::path root_folder = std::filesystem::current_path().parent_path().parent_path();
         env.load_model(declare_file_path);
         env.set_grounding_parameters(true, false, true,GroundingStrategyConf::NO_EXPANSION);

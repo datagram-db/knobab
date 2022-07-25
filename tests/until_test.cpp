@@ -17,7 +17,7 @@
 class until_tests : public testing::Test {
 protected:
     void SetUp() override {
-        auto file = std::filesystem::current_path().parent_path().parent_path() / "data" / "testing" / "logUntil.txt";
+        auto file = std::filesystem::current_path().parent_path().parent_path() / "data" / "testing" / "logs"/ "logUntil.txt";
         {
             std::ifstream if_{file};
             env.load_log(HUMAN_READABLE_YAUCL, true, file.string(), false, if_);
