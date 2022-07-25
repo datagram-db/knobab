@@ -1,241 +1,241 @@
 log_filename,with_data,log_loading_and_parsing_ms,log_indexing_ms,n_traces,n_acts,log_trace_average_length,log_trace_variance,most_frequent_trace_length,trace_length_frequency,atomization_conf,model_filename,queries_plan,operators_version,model_parsing_ms,model_size,model_data_decomposition_time,model_atomization_time,model_declare_to_ltlf,model_ltlf_query_time,is_multithreaded,no_threads
-../bpic_2011/data/10/log.xes,T,39.4074,1.7961,10,159,6.953e-310,4.67957e-310,0,0,../../../scripts/maxsat_pipeline.yaml,Response25,marking,FastOperator_v1,0,25,0.031789,0.006104,1.03922,8.31069,No,1
-../bpic_2011/data/10/log.xes,T,36.0724,1.90926,10,159,6.953e-310,4.67957e-310,0,0,../../../scripts/maxsat_pipeline.yaml,Response25,marking,FastOperator_v1,0,25,0.032617,0.006915,1.09232,7.9942,No,1
-../bpic_2011/data/10/log.xes,T,33.8769,1.96234,10,159,6.953e-310,4.67957e-310,0,0,../../../scripts/maxsat_pipeline.yaml,Response25,marking,FastOperator_v1,0,25,0.033523,0.007231,1.10039,8.24558,No,1
-../bpic_2011/data/10/log.xes,T,34.0605,1.95961,10,159,6.953e-310,4.67957e-310,0,0,../../../scripts/maxsat_pipeline.yaml,Response25,marking,FastOperator_v1,0,25,0.054546,0.007298,1.10452,8.35292,No,1
-../bpic_2011/data/10/log.xes,T,34.9277,2.03584,10,159,6.953e-310,4.67957e-310,0,0,../../../scripts/maxsat_pipeline.yaml,Response25,marking,FastOperator_v1,0,25,0.03394,0.007258,1.12724,8.29946,No,1
-../bpic_2011/data/100/log.xes,T,95.6324,7.8235,100,277,6.95294e-310,4.68101e-310,0,0,../../../scripts/maxsat_pipeline.yaml,Response25,marking,FastOperator_v1,0,25,0.056027,0.007331,1.86756,18.3117,No,1
-../bpic_2011/data/100/log.xes,T,88.5928,7.67951,100,277,6.95294e-310,4.68101e-310,0,0,../../../scripts/maxsat_pipeline.yaml,Response25,marking,FastOperator_v1,0,25,0.051989,0.006649,1.88081,16.4586,No,1
-../bpic_2011/data/100/log.xes,T,91.6604,7.91839,100,277,6.95294e-310,4.68101e-310,0,0,../../../scripts/maxsat_pipeline.yaml,Response25,marking,FastOperator_v1,0,25,0.053713,0.007028,1.94883,19.0482,No,1
-../bpic_2011/data/100/log.xes,T,92.4803,7.86849,100,277,6.95294e-310,4.68101e-310,0,0,../../../scripts/maxsat_pipeline.yaml,Response25,marking,FastOperator_v1,0,25,0.052885,0.006946,2.04595,19.0268,No,1
-../bpic_2011/data/100/log.xes,T,93.1886,8.06768,100,277,6.95294e-310,4.68101e-310,0,0,../../../scripts/maxsat_pipeline.yaml,Response25,marking,FastOperator_v1,0,25,0.053798,0.007129,2.03354,18.958,No,1
-../bpic_2011/data/1000/log.xes,T,848.533,87.655,1000,608,6.95261e-310,4.65562e-310,0,0,../../../scripts/maxsat_pipeline.yaml,Response25,marking,FastOperator_v1,0,25,0.161288,0.009049,4.83891,190.608,No,1
-../bpic_2011/data/1000/log.xes,T,817.597,88.206,1000,608,6.95261e-310,4.65562e-310,0,0,../../../scripts/maxsat_pipeline.yaml,Response25,marking,FastOperator_v1,0,25,0.166613,0.007236,5.02266,188.905,No,1
-../bpic_2011/data/1000/log.xes,T,822.296,88.4232,1000,608,6.95261e-310,4.65562e-310,0,0,../../../scripts/maxsat_pipeline.yaml,Response25,marking,FastOperator_v1,0,25,0.166071,0.007137,5.76283,190.798,No,1
-../bpic_2011/data/1000/log.xes,T,822.178,89.6446,1000,608,6.95261e-310,4.65562e-310,0,0,../../../scripts/maxsat_pipeline.yaml,Response25,marking,FastOperator_v1,0,25,0.170196,0.00695,4.92084,188.762,No,1
-../bpic_2011/data/1000/log.xes,T,818.423,92.608,1000,608,6.95261e-310,4.65562e-310,0,0,../../../scripts/maxsat_pipeline.yaml,Response25,marking,FastOperator_v1,0,25,0.169217,0.007133,5.01441,192.134,No,1
-../bpic_2011/data/10/log.xes,T,40.0934,1.86855,10,159,6.95297e-310,4.64746e-310,0,0,../../../scripts/maxsat_pipeline.yaml,AltResponse25,marking,FastOperator_v1,0,25,0.031099,0.006625,1.79405,14.5114,No,1
-../bpic_2011/data/10/log.xes,T,36.513,1.95443,10,159,6.95297e-310,4.64746e-310,0,0,../../../scripts/maxsat_pipeline.yaml,AltResponse25,marking,FastOperator_v1,0,25,0.045459,0.006904,1.95365,13.9876,No,1
-../bpic_2011/data/10/log.xes,T,35.1913,2.02591,10,159,6.95297e-310,4.64746e-310,0,0,../../../scripts/maxsat_pipeline.yaml,AltResponse25,marking,FastOperator_v1,0,25,0.03627,0.006986,2.02564,14.1841,No,1
-../bpic_2011/data/10/log.xes,T,35.4601,2.08186,10,159,6.95297e-310,4.64746e-310,0,0,../../../scripts/maxsat_pipeline.yaml,AltResponse25,marking,FastOperator_v1,0,25,0.034789,0.00733,2.13766,14.2786,No,1
-../bpic_2011/data/10/log.xes,T,35.7682,2.10087,10,159,6.95297e-310,4.64746e-310,0,0,../../../scripts/maxsat_pipeline.yaml,AltResponse25,marking,FastOperator_v1,0,25,0.035065,0.00713,1.99449,14.3329,No,1
-../bpic_2011/data/100/log.xes,T,101.488,8.08548,100,277,6.95317e-310,4.64067e-310,0,0,../../../scripts/maxsat_pipeline.yaml,AltResponse25,marking,FastOperator_v1,0,25,0.053614,0.007483,3.94372,317.304,No,1
-../bpic_2011/data/100/log.xes,T,94.2584,8.32446,100,277,6.95317e-310,4.64067e-310,0,0,../../../scripts/maxsat_pipeline.yaml,AltResponse25,marking,FastOperator_v1,0,25,0.055533,0.00716,3.91553,313.597,No,1
-../bpic_2011/data/100/log.xes,T,95.9179,8.26979,100,277,6.95317e-310,4.64067e-310,0,0,../../../scripts/maxsat_pipeline.yaml,AltResponse25,marking,FastOperator_v1,0,25,0.056487,0.007376,3.85261,319.054,No,1
-../bpic_2011/data/100/log.xes,T,96.1908,8.2323,100,277,6.95317e-310,4.64067e-310,0,0,../../../scripts/maxsat_pipeline.yaml,AltResponse25,marking,FastOperator_v1,0,25,0.056379,0.007249,3.92653,317.564,No,1
-../bpic_2011/data/100/log.xes,T,94.3248,8.21139,100,277,6.95317e-310,4.64067e-310,0,0,../../../scripts/maxsat_pipeline.yaml,AltResponse25,marking,FastOperator_v1,0,25,0.057624,0.007228,4.32244,320.065,No,1
-../bpic_2011/data/1000/log.xes,T,882.358,88.6359,1000,608,6.95309e-310,4.64439e-310,0,0,../../../scripts/maxsat_pipeline.yaml,AltResponse25,marking,FastOperator_v1,0,25,0.165744,0.007169,10.0603,1799.11,No,1
-../bpic_2011/data/1000/log.xes,T,850.858,90.688,1000,608,6.95309e-310,4.64439e-310,0,0,../../../scripts/maxsat_pipeline.yaml,AltResponse25,marking,FastOperator_v1,0,25,0.173556,0.007104,10.1214,1793.86,No,1
-../bpic_2011/data/1000/log.xes,T,859.589,91.8321,1000,608,6.95309e-310,4.64439e-310,0,0,../../../scripts/maxsat_pipeline.yaml,AltResponse25,marking,FastOperator_v1,0,25,0.171853,0.007108,10.3009,1799.67,No,1
-../bpic_2011/data/1000/log.xes,T,859.412,91.2682,1000,608,6.95309e-310,4.64439e-310,0,0,../../../scripts/maxsat_pipeline.yaml,AltResponse25,marking,FastOperator_v1,0,25,0.182671,0.007241,10.2597,1800.2,No,1
-../bpic_2011/data/1000/log.xes,T,862.916,92.2957,1000,608,6.95309e-310,4.64439e-310,0,0,../../../scripts/maxsat_pipeline.yaml,AltResponse25,marking,FastOperator_v1,0,25,0.201127,0.007059,10.1747,1799.22,No,1
-../bpic_2011/data/10/log.xes,T,42.1353,2.05365,10,159,6.95308e-310,4.67899e-310,0,0,../../../scripts/maxsat_pipeline.yaml,ChainResponse25,marking,FastOperator_v1,0,25,0.033636,0.007336,1.21155,1.16964,No,1
-../bpic_2011/data/10/log.xes,T,38.2307,2.04155,10,159,6.95308e-310,4.67899e-310,0,0,../../../scripts/maxsat_pipeline.yaml,ChainResponse25,marking,FastOperator_v1,0,25,0.035115,0.007356,1.19646,1.07346,No,1
-../bpic_2011/data/10/log.xes,T,35.1432,2.04385,10,159,6.95308e-310,4.67899e-310,0,0,../../../scripts/maxsat_pipeline.yaml,ChainResponse25,marking,FastOperator_v1,0,25,0.034064,0.006889,1.23433,1.0654,No,1
-../bpic_2011/data/10/log.xes,T,34.9753,2.06009,10,159,6.95308e-310,4.67899e-310,0,0,../../../scripts/maxsat_pipeline.yaml,ChainResponse25,marking,FastOperator_v1,0,25,0.035363,0.007368,1.14535,1.09161,No,1
-../bpic_2011/data/10/log.xes,T,35.5065,2.13692,10,159,6.95308e-310,4.67899e-310,0,0,../../../scripts/maxsat_pipeline.yaml,ChainResponse25,marking,FastOperator_v1,0,25,0.035673,0.007371,1.22004,1.04656,No,1
-../bpic_2011/data/100/log.xes,T,102.237,8.23165,100,277,6.95257e-310,4.65495e-310,0,0,../../../scripts/maxsat_pipeline.yaml,ChainResponse25,marking,FastOperator_v1,0,25,0.05428,0.007479,2.0408,6.8705,No,1
-../bpic_2011/data/100/log.xes,T,95.956,8.34124,100,277,6.95257e-310,4.65495e-310,0,0,../../../scripts/maxsat_pipeline.yaml,ChainResponse25,marking,FastOperator_v1,0,25,0.054482,0.007543,2.09982,5.61566,No,1
-../bpic_2011/data/100/log.xes,T,95.4492,8.34148,100,277,6.95257e-310,4.65495e-310,0,0,../../../scripts/maxsat_pipeline.yaml,ChainResponse25,marking,FastOperator_v1,0,25,0.054898,0.007435,2.13508,5.55825,No,1
-../bpic_2011/data/100/log.xes,T,91.9065,8.50182,100,277,6.95257e-310,4.65495e-310,0,0,../../../scripts/maxsat_pipeline.yaml,ChainResponse25,marking,FastOperator_v1,0,25,0.075293,0.00727,2.11086,5.83741,No,1
-../bpic_2011/data/100/log.xes,T,94.8403,8.36402,100,277,6.95257e-310,4.65495e-310,0,0,../../../scripts/maxsat_pipeline.yaml,ChainResponse25,marking,FastOperator_v1,0,25,0.056578,0.007487,2.04591,8.88488,No,1
-../bpic_2011/data/1000/log.xes,T,887.202,89.5555,1000,608,6.95279e-310,4.65434e-310,0,0,../../../scripts/maxsat_pipeline.yaml,ChainResponse25,marking,FastOperator_v1,0,25,0.165118,0.007345,5.1732,88.0392,No,1
-../bpic_2011/data/1000/log.xes,T,855.69,90.4571,1000,608,6.95279e-310,4.65434e-310,0,0,../../../scripts/maxsat_pipeline.yaml,ChainResponse25,marking,FastOperator_v1,0,25,0.167768,0.00727,4.93667,87.1099,No,1
-../bpic_2011/data/1000/log.xes,T,860.434,89.9341,1000,608,6.95279e-310,4.65434e-310,0,0,../../../scripts/maxsat_pipeline.yaml,ChainResponse25,marking,FastOperator_v1,0,25,0.172658,0.00713,5.11077,87.1378,No,1
-../bpic_2011/data/1000/log.xes,T,860.611,90.9345,1000,608,6.95279e-310,4.65434e-310,0,0,../../../scripts/maxsat_pipeline.yaml,ChainResponse25,marking,FastOperator_v1,0,25,0.174013,0.007335,5.29692,87.5482,No,1
-../bpic_2011/data/1000/log.xes,T,860.507,91.4667,1000,608,6.95279e-310,4.65434e-310,0,0,../../../scripts/maxsat_pipeline.yaml,ChainResponse25,marking,FastOperator_v1,0,25,0.175248,0.006954,5.2655,88.4269,No,1
-../bpic_2011/data/10/log.xes,T,42.7031,2.07086,10,159,6.95271e-310,4.64486e-310,0,0,../../../scripts/maxsat_pipeline.yaml,Precedence25,marking,FastOperator_v1,0,25,0.034664,0.007398,1.16071,1.40222,No,1
-../bpic_2011/data/10/log.xes,T,38.3845,2.02119,10,159,6.95271e-310,4.64486e-310,0,0,../../../scripts/maxsat_pipeline.yaml,Precedence25,marking,FastOperator_v1,0,25,0.034638,0.007104,1.14534,1.40302,No,1
-../bpic_2011/data/10/log.xes,T,34.2554,2.11839,10,159,6.95271e-310,4.64486e-310,0,0,../../../scripts/maxsat_pipeline.yaml,Precedence25,marking,FastOperator_v1,0,25,0.061966,0.007194,1.13733,1.45874,No,1
-../bpic_2011/data/10/log.xes,T,34.9893,2.06806,10,159,6.95271e-310,4.64486e-310,0,0,../../../scripts/maxsat_pipeline.yaml,Precedence25,marking,FastOperator_v1,0,25,0.035954,0.007449,1.14741,1.52261,No,1
-../bpic_2011/data/10/log.xes,T,34.4131,2.09833,10,159,6.95271e-310,4.64486e-310,0,0,../../../scripts/maxsat_pipeline.yaml,Precedence25,marking,FastOperator_v1,0,25,0.035907,0.007582,1.13425,1.3956,No,1
-../bpic_2011/data/100/log.xes,T,101.452,8.17845,100,277,6.95255e-310,4.67118e-310,0,0,../../../scripts/maxsat_pipeline.yaml,Precedence25,marking,FastOperator_v1,0,25,0.059465,0.007515,2.0423,4.54654,No,1
-../bpic_2011/data/100/log.xes,T,93.6612,8.23765,100,277,6.95255e-310,4.67118e-310,0,0,../../../scripts/maxsat_pipeline.yaml,Precedence25,marking,FastOperator_v1,0,25,0.054659,0.007163,2.10451,4.54352,No,1
-../bpic_2011/data/100/log.xes,T,91.2675,8.24245,100,277,6.95255e-310,4.67118e-310,0,0,../../../scripts/maxsat_pipeline.yaml,Precedence25,marking,FastOperator_v1,0,25,0.054683,0.007197,2.0122,4.52179,No,1
-../bpic_2011/data/100/log.xes,T,96.9037,8.37376,100,277,6.95255e-310,4.67118e-310,0,0,../../../scripts/maxsat_pipeline.yaml,Precedence25,marking,FastOperator_v1,0,25,0.055722,0.007183,2.05046,4.61126,No,1
-../bpic_2011/data/100/log.xes,T,95.7563,8.38552,100,277,6.95255e-310,4.67118e-310,0,0,../../../scripts/maxsat_pipeline.yaml,Precedence25,marking,FastOperator_v1,0,25,0.057218,0.007278,2.00704,5.50441,No,1
-../bpic_2011/data/1000/log.xes,T,890.93,88.9178,1000,608,6.95315e-310,4.66214e-310,0,0,../../../scripts/maxsat_pipeline.yaml,Precedence25,marking,FastOperator_v1,0,25,0.164409,0.007187,5.17043,52.3582,No,1
-../bpic_2011/data/1000/log.xes,T,816.759,90.3289,1000,608,6.95315e-310,4.66214e-310,0,0,../../../scripts/maxsat_pipeline.yaml,Precedence25,marking,FastOperator_v1,0,25,0.172173,0.007197,5.15487,51.209,No,1
-../bpic_2011/data/1000/log.xes,T,804.097,91.1043,1000,608,6.95315e-310,4.66214e-310,0,0,../../../scripts/maxsat_pipeline.yaml,Precedence25,marking,FastOperator_v1,0,25,0.173056,0.007936,5.3096,50.9138,No,1
-../bpic_2011/data/1000/log.xes,T,800.606,92.7263,1000,608,6.95315e-310,4.66214e-310,0,0,../../../scripts/maxsat_pipeline.yaml,Precedence25,marking,FastOperator_v1,0,25,0.171203,0.007177,5.81817,50.9532,No,1
-../bpic_2011/data/1000/log.xes,T,803.667,92.3363,1000,608,6.95315e-310,4.66214e-310,0,0,../../../scripts/maxsat_pipeline.yaml,Precedence25,marking,FastOperator_v1,0,25,0.176653,0.00712,5.32381,51.4999,No,1
-../bpic_2011/data/10/log.xes,T,40.0455,1.8546,10,159,6.9526e-310,4.68581e-310,0,0,../../../scripts/maxsat_pipeline.yaml,AltPrecedence25,marking,FastOperator_v1,0,25,0.030913,0.006925,3.6534,17.6852,No,1
-../bpic_2011/data/10/log.xes,T,37.2228,1.86086,10,159,6.9526e-310,4.68581e-310,0,0,../../../scripts/maxsat_pipeline.yaml,AltPrecedence25,marking,FastOperator_v1,0,25,0.032668,0.006711,4.06679,16.1453,No,1
-../bpic_2011/data/10/log.xes,T,35.7248,2.01842,10,159,6.9526e-310,4.68581e-310,0,0,../../../scripts/maxsat_pipeline.yaml,AltPrecedence25,marking,FastOperator_v1,0,25,0.034189,0.006782,4.37773,16.0624,No,1
-../bpic_2011/data/10/log.xes,T,35.3173,1.99499,10,159,6.9526e-310,4.68581e-310,0,0,../../../scripts/maxsat_pipeline.yaml,AltPrecedence25,marking,FastOperator_v1,0,25,0.037582,0.0073,4.2759,16.5866,No,1
-../bpic_2011/data/10/log.xes,T,37.6183,2.2321,10,159,6.9526e-310,4.68581e-310,0,0,../../../scripts/maxsat_pipeline.yaml,AltPrecedence25,marking,FastOperator_v1,0,25,0.03722,0.00743,4.39233,17.0012,No,1
-../bpic_2011/data/100/log.xes,T,104.17,8.23182,100,277,6.95304e-310,4.65587e-310,0,0,../../../scripts/maxsat_pipeline.yaml,AltPrecedence25,marking,FastOperator_v1,0,25,0.055147,0.007381,8.25576,335.422,No,1
-../bpic_2011/data/100/log.xes,T,98.2913,8.38669,100,277,6.95304e-310,4.65587e-310,0,0,../../../scripts/maxsat_pipeline.yaml,AltPrecedence25,marking,FastOperator_v1,0,25,0.056724,0.007319,8.3037,329.512,No,1
-../bpic_2011/data/100/log.xes,T,97.3583,8.36759,100,277,6.95304e-310,4.65587e-310,0,0,../../../scripts/maxsat_pipeline.yaml,AltPrecedence25,marking,FastOperator_v1,0,25,0.05609,0.007235,8.0349,333.224,No,1
-../bpic_2011/data/100/log.xes,T,98.7421,8.43134,100,277,6.95304e-310,4.65587e-310,0,0,../../../scripts/maxsat_pipeline.yaml,AltPrecedence25,marking,FastOperator_v1,0,25,0.05902,0.007659,8.12417,333.102,No,1
-../bpic_2011/data/100/log.xes,T,98.2002,8.52853,100,277,6.95304e-310,4.65587e-310,0,0,../../../scripts/maxsat_pipeline.yaml,AltPrecedence25,marking,FastOperator_v1,0,25,0.058027,0.007381,9.44156,334.306,No,1
-../bpic_2011/data/1000/log.xes,T,871.299,88.2419,1000,608,6.95264e-310,4.68269e-310,0,0,../../../scripts/maxsat_pipeline.yaml,AltPrecedence25,marking,FastOperator_v1,0,25,0.162405,0.010337,20.9695,1914.26,No,1
-../bpic_2011/data/1000/log.xes,T,844.394,89.2844,1000,608,6.95264e-310,4.68269e-310,0,0,../../../scripts/maxsat_pipeline.yaml,AltPrecedence25,marking,FastOperator_v1,0,25,0.173918,0.009719,21.2535,1915.36,No,1
-../bpic_2011/data/1000/log.xes,T,850.589,89.0427,1000,608,6.95264e-310,4.68269e-310,0,0,../../../scripts/maxsat_pipeline.yaml,AltPrecedence25,marking,FastOperator_v1,0,25,0.177508,0.007407,20.6651,1928.31,No,1
-../bpic_2011/data/1000/log.xes,T,849.719,90.5808,1000,608,6.95264e-310,4.68269e-310,0,0,../../../scripts/maxsat_pipeline.yaml,AltPrecedence25,marking,FastOperator_v1,0,25,0.179622,0.007396,21.1144,1913.79,No,1
-../bpic_2011/data/1000/log.xes,T,848.511,90.562,1000,608,6.95264e-310,4.68269e-310,0,0,../../../scripts/maxsat_pipeline.yaml,AltPrecedence25,marking,FastOperator_v1,0,25,0.183669,0.007265,20.9595,1923.82,No,1
-../bpic_2011/data/10/log.xes,T,41.8506,1.96235,10,159,6.95324e-310,4.67769e-310,0,0,../../../scripts/maxsat_pipeline.yaml,ChainPrecedence25,marking,FastOperator_v1,0,25,0.033344,0.00727,1.26413,2.95981,No,1
-../bpic_2011/data/10/log.xes,T,38.3494,2.00181,10,159,6.95324e-310,4.67769e-310,0,0,../../../scripts/maxsat_pipeline.yaml,ChainPrecedence25,marking,FastOperator_v1,0,25,0.033836,0.007326,1.27698,2.02629,No,1
-../bpic_2011/data/10/log.xes,T,36.4302,1.99113,10,159,6.95324e-310,4.67769e-310,0,0,../../../scripts/maxsat_pipeline.yaml,ChainPrecedence25,marking,FastOperator_v1,0,25,0.035353,0.007191,1.31201,2.08029,No,1
-../bpic_2011/data/10/log.xes,T,36.3922,2.02242,10,159,6.95324e-310,4.67769e-310,0,0,../../../scripts/maxsat_pipeline.yaml,ChainPrecedence25,marking,FastOperator_v1,0,25,0.034696,0.007283,1.30299,2.11185,No,1
-../bpic_2011/data/10/log.xes,T,36.2584,2.06518,10,159,6.95324e-310,4.67769e-310,0,0,../../../scripts/maxsat_pipeline.yaml,ChainPrecedence25,marking,FastOperator_v1,0,25,0.035462,0.007231,1.27548,2.06445,No,1
-../bpic_2011/data/100/log.xes,T,99.316,8.03835,100,277,6.95323e-310,4.65894e-310,0,0,../../../scripts/maxsat_pipeline.yaml,ChainPrecedence25,marking,FastOperator_v1,0,25,0.054421,0.00742,2.17678,15.3499,No,1
-../bpic_2011/data/100/log.xes,T,93.8484,8.14841,100,277,6.95323e-310,4.65894e-310,0,0,../../../scripts/maxsat_pipeline.yaml,ChainPrecedence25,marking,FastOperator_v1,0,25,0.054711,0.007267,2.16723,12.6659,No,1
-../bpic_2011/data/100/log.xes,T,95.8393,8.18152,100,277,6.95323e-310,4.65894e-310,0,0,../../../scripts/maxsat_pipeline.yaml,ChainPrecedence25,marking,FastOperator_v1,0,25,0.054731,0.007184,2.13341,15.9784,No,1
-../bpic_2011/data/100/log.xes,T,95.9725,8.22179,100,277,6.95323e-310,4.65894e-310,0,0,../../../scripts/maxsat_pipeline.yaml,ChainPrecedence25,marking,FastOperator_v1,0,25,0.054762,0.007082,2.14624,15.483,No,1
-../bpic_2011/data/100/log.xes,T,93.2449,8.29909,100,277,6.95323e-310,4.65894e-310,0,0,../../../scripts/maxsat_pipeline.yaml,ChainPrecedence25,marking,FastOperator_v1,0,25,0.060384,0.007456,2.26182,16.9149,No,1
-../bpic_2011/data/1000/log.xes,T,880.231,88.5017,1000,608,6.95305e-310,4.68171e-310,0,0,../../../scripts/maxsat_pipeline.yaml,ChainPrecedence25,marking,FastOperator_v1,0,25,0.186879,0.007379,5.26607,171.538,No,1
-../bpic_2011/data/1000/log.xes,T,839.97,88.7526,1000,608,6.95305e-310,4.68171e-310,0,0,../../../scripts/maxsat_pipeline.yaml,ChainPrecedence25,marking,FastOperator_v1,0,25,0.169215,0.006849,5.28851,169.245,No,1
-../bpic_2011/data/1000/log.xes,T,847.809,90.2028,1000,608,6.95305e-310,4.68171e-310,0,0,../../../scripts/maxsat_pipeline.yaml,ChainPrecedence25,marking,FastOperator_v1,0,25,0.174184,0.007363,5.40215,170.044,No,1
-../bpic_2011/data/1000/log.xes,T,850.723,90.2902,1000,608,6.95305e-310,4.68171e-310,0,0,../../../scripts/maxsat_pipeline.yaml,ChainPrecedence25,marking,FastOperator_v1,0,25,0.178511,0.007124,5.78186,168.334,No,1
-../bpic_2011/data/1000/log.xes,T,845.12,93.6367,1000,608,6.95305e-310,4.68171e-310,0,0,../../../scripts/maxsat_pipeline.yaml,ChainPrecedence25,marking,FastOperator_v1,0,25,0.175994,0.007346,5.57026,168.307,No,1
-../bpic_2011/data/10/log.xes,T,41.9582,1.97907,10,159,6.95302e-310,4.64607e-310,0,0,../../../scripts/maxsat_pipeline.yaml,RespExistence25,marking,FastOperator_v1,0,25,0.033843,0.00711,0.140487,0.034656,No,1
-../bpic_2011/data/10/log.xes,T,37.1947,2.00293,10,159,6.95302e-310,4.64607e-310,0,0,../../../scripts/maxsat_pipeline.yaml,RespExistence25,marking,FastOperator_v1,0,25,0.033201,0.007132,0.130508,0.034419,No,1
-../bpic_2011/data/10/log.xes,T,32.9135,2.01905,10,159,6.95302e-310,4.64607e-310,0,0,../../../scripts/maxsat_pipeline.yaml,RespExistence25,marking,FastOperator_v1,0,25,0.03326,0.007121,0.12921,0.030899,No,1
-../bpic_2011/data/10/log.xes,T,32.5073,2.02685,10,159,6.95302e-310,4.64607e-310,0,0,../../../scripts/maxsat_pipeline.yaml,RespExistence25,marking,FastOperator_v1,0,25,0.034142,0.007048,0.127696,0.030559,No,1
-../bpic_2011/data/10/log.xes,T,32.9348,2.00109,10,159,6.95302e-310,4.64607e-310,0,0,../../../scripts/maxsat_pipeline.yaml,RespExistence25,marking,FastOperator_v1,0,25,0.033414,0.007067,0.127355,0.030437,No,1
-../bpic_2011/data/100/log.xes,T,99.756,8.02356,100,277,6.95266e-310,4.64506e-310,0,0,../../../scripts/maxsat_pipeline.yaml,RespExistence25,marking,FastOperator_v1,0,25,0.053043,0.007428,0.138534,0.175984,No,1
-../bpic_2011/data/100/log.xes,T,88.0149,8.11287,100,277,6.95266e-310,4.64506e-310,0,0,../../../scripts/maxsat_pipeline.yaml,RespExistence25,marking,FastOperator_v1,0,25,0.053828,0.007164,0.129166,0.172753,No,1
-../bpic_2011/data/100/log.xes,T,88.6784,8.31364,100,277,6.95266e-310,4.64506e-310,0,0,../../../scripts/maxsat_pipeline.yaml,RespExistence25,marking,FastOperator_v1,0,25,0.054129,0.007255,0.132859,0.173164,No,1
-../bpic_2011/data/100/log.xes,T,85.9733,8.17076,100,277,6.95266e-310,4.64506e-310,0,0,../../../scripts/maxsat_pipeline.yaml,RespExistence25,marking,FastOperator_v1,0,25,0.05359,0.007101,0.128989,0.17269,No,1
-../bpic_2011/data/100/log.xes,T,86.7022,8.17623,100,277,6.95266e-310,4.64506e-310,0,0,../../../scripts/maxsat_pipeline.yaml,RespExistence25,marking,FastOperator_v1,0,25,0.053337,0.007044,0.130017,0.173487,No,1
-../bpic_2011/data/1000/log.xes,T,870.704,87.2848,1000,608,6.95266e-310,4.67494e-310,0,0,../../../scripts/maxsat_pipeline.yaml,RespExistence25,marking,FastOperator_v1,0,25,0.161889,0.007278,0.140674,1.2917,No,1
-../bpic_2011/data/1000/log.xes,T,789.666,88.7048,1000,608,6.95266e-310,4.67494e-310,0,0,../../../scripts/maxsat_pipeline.yaml,RespExistence25,marking,FastOperator_v1,0,25,0.166145,0.007541,0.127719,1.26379,No,1
-../bpic_2011/data/1000/log.xes,T,773.901,88.6421,1000,608,6.95266e-310,4.67494e-310,0,0,../../../scripts/maxsat_pipeline.yaml,RespExistence25,marking,FastOperator_v1,0,25,0.168884,0.007428,0.127665,1.22315,No,1
-../bpic_2011/data/1000/log.xes,T,774.209,88.6224,1000,608,6.95266e-310,4.67494e-310,0,0,../../../scripts/maxsat_pipeline.yaml,RespExistence25,marking,FastOperator_v1,0,25,0.168157,0.007101,0.127425,1.25239,No,1
-../bpic_2011/data/1000/log.xes,T,775.344,89.0863,1000,608,6.95266e-310,4.67494e-310,0,0,../../../scripts/maxsat_pipeline.yaml,RespExistence25,marking,FastOperator_v1,0,25,0.171285,0.007034,0.127245,1.24911,No,1
-../bpic_2011/data/10/log.xes,T,41.0452,1.95156,10,159,6.95298e-310,4.6517e-310,0,0,../../../scripts/maxsat_pipeline.yaml,NegSuccession25,marking,FastOperator_v1,0,25,0.033508,0.007016,1.94829,4.78031,No,1
-../bpic_2011/data/10/log.xes,T,37.8372,1.97376,10,159,6.95298e-310,4.6517e-310,0,0,../../../scripts/maxsat_pipeline.yaml,NegSuccession25,marking,FastOperator_v1,0,25,0.033645,0.007142,2.01443,4.59806,No,1
-../bpic_2011/data/10/log.xes,T,34.2003,1.99775,10,159,6.95298e-310,4.6517e-310,0,0,../../../scripts/maxsat_pipeline.yaml,NegSuccession25,marking,FastOperator_v1,0,25,0.037339,0.007169,2.00436,4.54998,No,1
-../bpic_2011/data/10/log.xes,T,34.9789,1.97605,10,159,6.95298e-310,4.6517e-310,0,0,../../../scripts/maxsat_pipeline.yaml,NegSuccession25,marking,FastOperator_v1,0,25,0.034075,0.007105,2.09039,4.54784,No,1
-../bpic_2011/data/10/log.xes,T,35.0752,2.06289,10,159,6.95298e-310,4.6517e-310,0,0,../../../scripts/maxsat_pipeline.yaml,NegSuccession25,marking,FastOperator_v1,0,25,0.035121,0.007813,2.16311,4.61028,No,1
-../bpic_2011/data/100/log.xes,T,98.4834,8.06832,100,277,6.95268e-310,4.67601e-310,0,0,../../../scripts/maxsat_pipeline.yaml,NegSuccession25,marking,FastOperator_v1,0,25,0.053002,0.007254,4.07329,13.8441,No,1
-../bpic_2011/data/100/log.xes,T,94.107,8.13363,100,277,6.95268e-310,4.67601e-310,0,0,../../../scripts/maxsat_pipeline.yaml,NegSuccession25,marking,FastOperator_v1,0,25,0.054535,0.007253,4.07868,14.2239,No,1
-../bpic_2011/data/100/log.xes,T,94.9518,8.16838,100,277,6.95268e-310,4.67601e-310,0,0,../../../scripts/maxsat_pipeline.yaml,NegSuccession25,marking,FastOperator_v1,0,25,0.05548,0.007253,4.12183,13.9035,No,1
-../bpic_2011/data/100/log.xes,T,94.1845,8.1686,100,277,6.95268e-310,4.67601e-310,0,0,../../../scripts/maxsat_pipeline.yaml,NegSuccession25,marking,FastOperator_v1,0,25,0.055275,0.007229,4.25428,15.3636,No,1
-../bpic_2011/data/100/log.xes,T,94.468,8.27107,100,277,6.95268e-310,4.67601e-310,0,0,../../../scripts/maxsat_pipeline.yaml,NegSuccession25,marking,FastOperator_v1,0,25,0.054975,0.007096,4.19671,15.4807,No,1
-../bpic_2011/data/1000/log.xes,T,877.784,87.0975,1000,608,6.95255e-310,4.65824e-310,0,0,../../../scripts/maxsat_pipeline.yaml,NegSuccession25,marking,FastOperator_v1,0,25,0.163878,0.00684,10.296,141.408,No,1
-../bpic_2011/data/1000/log.xes,T,839.489,88.6967,1000,608,6.95255e-310,4.65824e-310,0,0,../../../scripts/maxsat_pipeline.yaml,NegSuccession25,marking,FastOperator_v1,0,25,0.169766,0.007004,10.2725,141.042,No,1
-../bpic_2011/data/1000/log.xes,T,850.545,88.9108,1000,608,6.95255e-310,4.65824e-310,0,0,../../../scripts/maxsat_pipeline.yaml,NegSuccession25,marking,FastOperator_v1,0,25,0.171434,0.007009,10.3363,140.353,No,1
-../bpic_2011/data/1000/log.xes,T,853.737,89.1971,1000,608,6.95255e-310,4.65824e-310,0,0,../../../scripts/maxsat_pipeline.yaml,NegSuccession25,marking,FastOperator_v1,0,25,0.174953,0.007352,10.4201,139.576,No,1
-../bpic_2011/data/1000/log.xes,T,846.685,90.1216,1000,608,6.95255e-310,4.65824e-310,0,0,../../../scripts/maxsat_pipeline.yaml,NegSuccession25,marking,FastOperator_v1,0,25,0.174878,0.007079,10.4441,139.954,No,1
-../bpic_2011/data/10/log.xes,T,42.0972,2.14978,10,159,6.95277e-310,4.68097e-310,0,0,../../../scripts/support_pipeline.yaml,Response25,marking,FastOperator_v1,0,25,0.033557,0.007338,1.1725,9.38269,No,1
-../bpic_2011/data/10/log.xes,T,39.0229,2.10238,10,159,6.95277e-310,4.68097e-310,0,0,../../../scripts/support_pipeline.yaml,Response25,marking,FastOperator_v1,0,25,0.034573,0.006998,1.1559,8.4378,No,1
-../bpic_2011/data/10/log.xes,T,35.9161,2.03505,10,159,6.95277e-310,4.68097e-310,0,0,../../../scripts/support_pipeline.yaml,Response25,marking,FastOperator_v1,0,25,0.049153,0.007129,1.18219,8.52785,No,1
-../bpic_2011/data/10/log.xes,T,35.9409,2.08544,10,159,6.95277e-310,4.68097e-310,0,0,../../../scripts/support_pipeline.yaml,Response25,marking,FastOperator_v1,0,25,0.036098,0.007147,1.17264,8.53095,No,1
-../bpic_2011/data/10/log.xes,T,35.7366,2.04124,10,159,6.95277e-310,4.68097e-310,0,0,../../../scripts/support_pipeline.yaml,Response25,marking,FastOperator_v1,0,25,0.049733,0.007077,1.16851,8.56505,No,1
-../bpic_2011/data/100/log.xes,T,98.4578,8.08764,100,277,6.9526e-310,4.6468e-310,0,0,../../../scripts/support_pipeline.yaml,Response25,marking,FastOperator_v1,0,25,0.053067,0.007182,1.97017,19.5088,No,1
-../bpic_2011/data/100/log.xes,T,91.5954,8.13986,100,277,6.9526e-310,4.6468e-310,0,0,../../../scripts/support_pipeline.yaml,Response25,marking,FastOperator_v1,0,25,0.054344,0.007299,2.02731,17.7668,No,1
-../bpic_2011/data/100/log.xes,T,92.4019,8.22765,100,277,6.9526e-310,4.6468e-310,0,0,../../../scripts/support_pipeline.yaml,Response25,marking,FastOperator_v1,0,25,0.054554,0.007382,2.02904,19.9771,No,1
-../bpic_2011/data/100/log.xes,T,94.1706,8.17357,100,277,6.9526e-310,4.6468e-310,0,0,../../../scripts/support_pipeline.yaml,Response25,marking,FastOperator_v1,0,25,0.055344,0.007123,2.00331,20.1125,No,1
-../bpic_2011/data/100/log.xes,T,94.1554,8.19134,100,277,6.9526e-310,4.6468e-310,0,0,../../../scripts/support_pipeline.yaml,Response25,marking,FastOperator_v1,0,25,0.056565,0.007388,2.0418,19.8499,No,1
-../bpic_2011/data/1000/log.xes,T,867.864,88.7088,1000,608,6.95297e-310,4.63789e-310,0,0,../../../scripts/support_pipeline.yaml,Response25,marking,FastOperator_v1,0,25,0.160409,0.007174,5.2348,207.504,No,1
-../bpic_2011/data/1000/log.xes,T,890.363,96.9122,1000,608,6.95297e-310,4.63789e-310,0,0,../../../scripts/support_pipeline.yaml,Response25,marking,FastOperator_v1,0,25,0.247886,0.007031,5.28031,205.086,No,1
-../bpic_2011/data/1000/log.xes,T,840.799,89.3938,1000,608,6.95297e-310,4.63789e-310,0,0,../../../scripts/support_pipeline.yaml,Response25,marking,FastOperator_v1,0,25,0.169784,0.007352,5.36801,199.472,No,1
-../bpic_2011/data/1000/log.xes,T,873.049,92.1833,1000,608,6.95297e-310,4.63789e-310,0,0,../../../scripts/support_pipeline.yaml,Response25,marking,FastOperator_v1,0,25,0.175655,0.007028,5.18481,203.047,No,1
-../bpic_2011/data/1000/log.xes,T,863.308,99.5094,1000,608,6.95297e-310,4.63789e-310,0,0,../../../scripts/support_pipeline.yaml,Response25,marking,FastOperator_v1,0,25,0.19171,0.007621,5.23232,204.517,No,1
-../bpic_2011/data/10/log.xes,T,41.513,1.96866,10,159,6.95265e-310,4.65422e-310,0,0,../../../scripts/support_pipeline.yaml,AltResponse25,marking,FastOperator_v1,0,25,0.032953,0.007286,1.88579,15.3329,No,1
-../bpic_2011/data/10/log.xes,T,37.6314,1.97192,10,159,6.95265e-310,4.65422e-310,0,0,../../../scripts/support_pipeline.yaml,AltResponse25,marking,FastOperator_v1,0,25,0.034048,0.006963,1.94992,14.2344,No,1
-../bpic_2011/data/10/log.xes,T,35.9413,2.3963,10,159,6.95265e-310,4.65422e-310,0,0,../../../scripts/support_pipeline.yaml,AltResponse25,marking,FastOperator_v1,0,25,0.039058,0.007315,2.24102,15.1998,No,1
-../bpic_2011/data/10/log.xes,T,38.4332,2.2061,10,159,6.95265e-310,4.65422e-310,0,0,../../../scripts/support_pipeline.yaml,AltResponse25,marking,FastOperator_v1,0,25,0.038235,0.007626,2.24535,15.3783,No,1
-../bpic_2011/data/10/log.xes,T,38.0671,2.13694,10,159,6.95265e-310,4.65422e-310,0,0,../../../scripts/support_pipeline.yaml,AltResponse25,marking,FastOperator_v1,0,25,0.052317,0.007365,2.14298,14.8516,No,1
-../bpic_2011/data/100/log.xes,T,101.695,8.6168,100,277,6.95274e-310,4.67774e-310,0,0,../../../scripts/support_pipeline.yaml,AltResponse25,marking,FastOperator_v1,0,25,0.057326,0.007225,4.0882,319.005,No,1
-../bpic_2011/data/100/log.xes,T,92.7603,8.19772,100,277,6.95274e-310,4.67774e-310,0,0,../../../scripts/support_pipeline.yaml,AltResponse25,marking,FastOperator_v1,0,25,0.053545,0.007389,4.35146,315.017,No,1
-../bpic_2011/data/100/log.xes,T,96.1603,8.39892,100,277,6.95274e-310,4.67774e-310,0,0,../../../scripts/support_pipeline.yaml,AltResponse25,marking,FastOperator_v1,0,25,0.061171,0.007373,4.02669,319.854,No,1
-../bpic_2011/data/100/log.xes,T,92.6266,8.22371,100,277,6.95274e-310,4.67774e-310,0,0,../../../scripts/support_pipeline.yaml,AltResponse25,marking,FastOperator_v1,0,25,0.053772,0.00718,4.23215,314.011,No,1
-../bpic_2011/data/100/log.xes,T,92.2851,8.19223,100,277,6.95274e-310,4.67774e-310,0,0,../../../scripts/support_pipeline.yaml,AltResponse25,marking,FastOperator_v1,0,25,0.054693,0.007294,4.29293,315.806,No,1
-../bpic_2011/data/1000/log.xes,T,900.372,94.2714,1000,608,6.95253e-310,4.66201e-310,0,0,../../../scripts/support_pipeline.yaml,AltResponse25,marking,FastOperator_v1,0,25,0.165566,0.007386,11.4186,1793.17,No,1
-../bpic_2011/data/1000/log.xes,T,853.985,101.448,1000,608,6.95253e-310,4.66201e-310,0,0,../../../scripts/support_pipeline.yaml,AltResponse25,marking,FastOperator_v1,0,25,0.185881,0.007663,10.7981,1800.15,No,1
-../bpic_2011/data/1000/log.xes,T,850.469,97.1336,1000,608,6.95253e-310,4.66201e-310,0,0,../../../scripts/support_pipeline.yaml,AltResponse25,marking,FastOperator_v1,0,25,0.171452,0.006913,9.98136,1815.2,No,1
-../bpic_2011/data/1000/log.xes,T,862.103,90.7844,1000,608,6.95253e-310,4.66201e-310,0,0,../../../scripts/support_pipeline.yaml,AltResponse25,marking,FastOperator_v1,0,25,0.173672,0.027175,10.0695,1811.93,No,1
-../bpic_2011/data/1000/log.xes,T,865.349,91.3817,1000,608,6.95253e-310,4.66201e-310,0,0,../../../scripts/support_pipeline.yaml,AltResponse25,marking,FastOperator_v1,0,25,0.171717,0.007147,10.1301,1794.63,No,1
-../bpic_2011/data/10/log.xes,T,39.5357,1.82126,10,159,6.95285e-310,4.685e-310,0,0,../../../scripts/support_pipeline.yaml,ChainResponse25,marking,FastOperator_v1,0,25,0.031018,0.006683,1.05829,1.14113,No,1
-../bpic_2011/data/10/log.xes,T,35.6291,1.89167,10,159,6.95285e-310,4.685e-310,0,0,../../../scripts/support_pipeline.yaml,ChainResponse25,marking,FastOperator_v1,0,25,0.032864,0.006848,1.1734,1.13558,No,1
-../bpic_2011/data/10/log.xes,T,33.6383,1.92836,10,159,6.95285e-310,4.685e-310,0,0,../../../scripts/support_pipeline.yaml,ChainResponse25,marking,FastOperator_v1,0,25,0.033093,0.006875,1.15256,1.12502,No,1
-../bpic_2011/data/10/log.xes,T,33.811,1.96825,10,159,6.95285e-310,4.685e-310,0,0,../../../scripts/support_pipeline.yaml,ChainResponse25,marking,FastOperator_v1,0,25,0.033781,0.006861,1.16739,1.12305,No,1
-../bpic_2011/data/10/log.xes,T,34.8867,2.01471,10,159,6.95285e-310,4.685e-310,0,0,../../../scripts/support_pipeline.yaml,ChainResponse25,marking,FastOperator_v1,0,25,0.034319,0.006851,1.15177,1.16462,No,1
-../bpic_2011/data/100/log.xes,T,98.8259,8.04693,100,277,6.95289e-310,4.67061e-310,0,0,../../../scripts/support_pipeline.yaml,ChainResponse25,marking,FastOperator_v1,0,25,0.053119,0.007397,2.00261,7.11479,No,1
-../bpic_2011/data/100/log.xes,T,92.5899,8.13017,100,277,6.95289e-310,4.67061e-310,0,0,../../../scripts/support_pipeline.yaml,ChainResponse25,marking,FastOperator_v1,0,25,0.053598,0.007344,2.04564,5.9921,No,1
-../bpic_2011/data/100/log.xes,T,90.2204,8.34599,100,277,6.95289e-310,4.67061e-310,0,0,../../../scripts/support_pipeline.yaml,ChainResponse25,marking,FastOperator_v1,0,25,0.055156,0.007231,2.04875,6.14699,No,1
-../bpic_2011/data/100/log.xes,T,91.9465,8.21911,100,277,6.95289e-310,4.67061e-310,0,0,../../../scripts/support_pipeline.yaml,ChainResponse25,marking,FastOperator_v1,0,25,0.054933,0.007165,2.03734,7.55431,No,1
-../bpic_2011/data/100/log.xes,T,90.9301,8.19097,100,277,6.95289e-310,4.67061e-310,0,0,../../../scripts/support_pipeline.yaml,ChainResponse25,marking,FastOperator_v1,0,25,0.055409,0.007084,2.01697,6.03893,No,1
-../bpic_2011/data/1000/log.xes,F,871.93,95.6659,1000,608,6.95278e-310,4.63789e-310,0,0,../../../scripts/support_pipeline.yaml,ChainResponse25,marking,FastOperator_v1,0,25,0.167199,0.009432,5.15023,92.3491,No,1
-../bpic_2011/data/1000/log.xes,F,855.08,91.2811,1000,608,6.95278e-310,4.63789e-310,0,0,../../../scripts/support_pipeline.yaml,ChainResponse25,marking,FastOperator_v1,0,25,0.170985,0.009437,4.96631,90.3199,No,1
-../bpic_2011/data/1000/log.xes,F,866.233,94.1958,1000,608,6.95278e-310,4.63789e-310,0,0,../../../scripts/support_pipeline.yaml,ChainResponse25,marking,FastOperator_v1,0,25,0.188509,0.01146,5.14205,92.2247,No,1
-../bpic_2011/data/1000/log.xes,F,872.26,93.5232,1000,608,6.95278e-310,4.63789e-310,0,0,../../../scripts/support_pipeline.yaml,ChainResponse25,marking,FastOperator_v1,0,25,0.18543,0.011036,5.06835,94.1213,No,1
-../bpic_2011/data/1000/log.xes,F,849.961,89.6184,1000,608,6.95278e-310,4.63789e-310,0,0,../../../scripts/support_pipeline.yaml,ChainResponse25,marking,FastOperator_v1,0,25,0.182064,0.011681,5.20289,91.2988,No,1
-../bpic_2011/data/10/log.xes,T,41.5956,1.96041,10,159,6.95316e-310,4.66143e-310,0,0,../../../scripts/support_pipeline.yaml,Precedence25,marking,FastOperator_v1,0,25,0.033096,0.007073,1.10477,1.36733,No,1
-../bpic_2011/data/10/log.xes,T,37.3665,1.97681,10,159,6.95316e-310,4.66143e-310,0,0,../../../scripts/support_pipeline.yaml,Precedence25,marking,FastOperator_v1,0,25,0.033246,0.00713,1.08966,1.38105,No,1
-../bpic_2011/data/10/log.xes,T,33.0001,2.01179,10,159,6.95316e-310,4.66143e-310,0,0,../../../scripts/support_pipeline.yaml,Precedence25,marking,FastOperator_v1,0,25,0.035645,0.007141,1.16523,1.4257,No,1
-../bpic_2011/data/10/log.xes,T,33.4681,2.06691,10,159,6.95316e-310,4.66143e-310,0,0,../../../scripts/support_pipeline.yaml,Precedence25,marking,FastOperator_v1,0,25,0.035338,0.006971,1.11028,1.39037,No,1
-../bpic_2011/data/10/log.xes,T,33.354,2.0051,10,159,6.95316e-310,4.66143e-310,0,0,../../../scripts/support_pipeline.yaml,Precedence25,marking,FastOperator_v1,0,25,0.034755,0.007211,1.08119,1.3921,No,1
-../bpic_2011/data/100/log.xes,T,99.2188,7.95849,100,277,6.95313e-310,4.68958e-310,0,0,../../../scripts/support_pipeline.yaml,Precedence25,marking,FastOperator_v1,0,25,0.05279,0.007496,2.028,4.47939,No,1
-../bpic_2011/data/100/log.xes,T,91.8553,8.08483,100,277,6.95313e-310,4.68958e-310,0,0,../../../scripts/support_pipeline.yaml,Precedence25,marking,FastOperator_v1,0,25,0.053223,0.007057,1.98611,4.43775,No,1
-../bpic_2011/data/100/log.xes,T,89.6775,8.12599,100,277,6.95313e-310,4.68958e-310,0,0,../../../scripts/support_pipeline.yaml,Precedence25,marking,FastOperator_v1,0,25,0.055456,0.007063,2.05972,4.43479,No,1
-../bpic_2011/data/100/log.xes,T,95.2026,8.17898,100,277,6.95313e-310,4.68958e-310,0,0,../../../scripts/support_pipeline.yaml,Precedence25,marking,FastOperator_v1,0,25,0.055269,0.007092,1.9952,4.54699,No,1
-../bpic_2011/data/100/log.xes,T,92.435,8.16726,100,277,6.95313e-310,4.68958e-310,0,0,../../../scripts/support_pipeline.yaml,Precedence25,marking,FastOperator_v1,0,25,0.055818,0.007023,2.0354,5.4402,No,1
-../bpic_2011/data/1000/log.xes,T,870.527,89.5235,1000,608,6.95325e-310,4.65554e-310,0,0,../../../scripts/support_pipeline.yaml,Precedence25,marking,FastOperator_v1,0,25,0.164144,0.006921,5.10235,50.6889,No,1
-../bpic_2011/data/1000/log.xes,T,805.996,89.4823,1000,608,6.95325e-310,4.65554e-310,0,0,../../../scripts/support_pipeline.yaml,Precedence25,marking,FastOperator_v1,0,25,0.172644,0.006995,5.17372,50.3418,No,1
-../bpic_2011/data/1000/log.xes,T,788.758,89.5368,1000,608,6.95325e-310,4.65554e-310,0,0,../../../scripts/support_pipeline.yaml,Precedence25,marking,FastOperator_v1,0,25,0.172241,0.007076,5.24262,49.8566,No,1
-../bpic_2011/data/1000/log.xes,T,793.833,91.3201,1000,608,6.95325e-310,4.65554e-310,0,0,../../../scripts/support_pipeline.yaml,Precedence25,marking,FastOperator_v1,0,25,0.174286,0.007033,5.24031,49.7705,No,1
-../bpic_2011/data/1000/log.xes,T,792.295,90.8667,1000,608,6.95325e-310,4.65554e-310,0,0,../../../scripts/support_pipeline.yaml,Precedence25,marking,FastOperator_v1,0,25,0.174526,0.006971,5.27072,49.6819,No,1
-../bpic_2011/data/10/log.xes,T,41.4093,1.98507,10,159,6.95313e-310,4.68008e-310,0,0,../../../scripts/support_pipeline.yaml,AltPrecedence25,marking,FastOperator_v1,0,25,0.034035,0.007169,4.05771,18.742,No,1
-../bpic_2011/data/10/log.xes,T,38.1133,2.02298,10,159,6.95313e-310,4.68008e-310,0,0,../../../scripts/support_pipeline.yaml,AltPrecedence25,marking,FastOperator_v1,0,25,0.035864,0.007035,4.48695,16.7499,No,1
-../bpic_2011/data/10/log.xes,T,37.0056,2.05172,10,159,6.95313e-310,4.68008e-310,0,0,../../../scripts/support_pipeline.yaml,AltPrecedence25,marking,FastOperator_v1,0,25,0.034949,0.007109,4.2773,16.6845,No,1
-../bpic_2011/data/10/log.xes,T,36.646,2.08441,10,159,6.95313e-310,4.68008e-310,0,0,../../../scripts/support_pipeline.yaml,AltPrecedence25,marking,FastOperator_v1,0,25,0.037505,0.007655,4.35578,16.748,No,1
-../bpic_2011/data/10/log.xes,T,36.9036,2.06953,10,159,6.95313e-310,4.68008e-310,0,0,../../../scripts/support_pipeline.yaml,AltPrecedence25,marking,FastOperator_v1,0,25,0.036319,0.00692,4.2379,16.7457,No,1
-../bpic_2011/data/100/log.xes,T,98.3949,9.09253,100,277,6.95307e-310,4.65102e-310,0,0,../../../scripts/support_pipeline.yaml,AltPrecedence25,marking,FastOperator_v1,0,25,0.085942,0.007533,9.46011,334.679,No,1
-../bpic_2011/data/100/log.xes,T,95.4363,9.32698,100,277,6.95307e-310,4.65102e-310,0,0,../../../scripts/support_pipeline.yaml,AltPrecedence25,marking,FastOperator_v1,0,25,0.063452,0.00974,9.55283,332.073,No,1
-../bpic_2011/data/100/log.xes,T,97.426,9.35506,100,277,6.95307e-310,4.65102e-310,0,0,../../../scripts/support_pipeline.yaml,AltPrecedence25,marking,FastOperator_v1,0,25,0.066216,0.009786,9.16027,336.338,No,1
-../bpic_2011/data/100/log.xes,T,98.3878,9.42015,100,277,6.95307e-310,4.65102e-310,0,0,../../../scripts/support_pipeline.yaml,AltPrecedence25,marking,FastOperator_v1,0,25,0.064493,0.00982,9.03067,335.213,No,1
-../bpic_2011/data/100/log.xes,T,96.825,9.62496,100,277,6.95307e-310,4.65102e-310,0,0,../../../scripts/support_pipeline.yaml,AltPrecedence25,marking,FastOperator_v1,0,25,0.067892,0.009947,10.6434,336.302,No,1
-../bpic_2011/data/1000/log.xes,T,869.972,87.442,1000,608,6.95307e-310,4.66074e-310,0,0,../../../scripts/support_pipeline.yaml,AltPrecedence25,marking,FastOperator_v1,0,25,0.160873,0.007076,21.0567,1904.72,No,1
-../bpic_2011/data/1000/log.xes,T,842.515,89.5397,1000,608,6.95307e-310,4.66074e-310,0,0,../../../scripts/support_pipeline.yaml,AltPrecedence25,marking,FastOperator_v1,0,25,0.174372,0.007103,21.1705,1903.05,No,1
-../bpic_2011/data/1000/log.xes,T,843.321,90.7659,1000,608,6.95307e-310,4.66074e-310,0,0,../../../scripts/support_pipeline.yaml,AltPrecedence25,marking,FastOperator_v1,0,25,0.175857,0.006771,20.8345,1918.2,No,1
-../bpic_2011/data/1000/log.xes,T,859.68,91.8955,1000,608,6.95307e-310,4.66074e-310,0,0,../../../scripts/support_pipeline.yaml,AltPrecedence25,marking,FastOperator_v1,0,25,0.175389,0.007084,21.3284,1909.12,No,1
-../bpic_2011/data/1000/log.xes,T,897.48,124.886,1000,608,6.95307e-310,4.66074e-310,0,0,../../../scripts/support_pipeline.yaml,AltPrecedence25,marking,FastOperator_v1,0,25,0.20858,0.007665,23.4329,1913.6,No,1
-../bpic_2011/data/10/log.xes,T,40.3735,1.96895,10,159,6.95334e-310,4.68983e-310,0,0,../../../scripts/support_pipeline.yaml,ChainPrecedence25,marking,FastOperator_v1,0,25,0.033717,0.006936,1.42739,3.54603,No,1
-../bpic_2011/data/10/log.xes,T,38.1111,1.99312,10,159,6.95334e-310,4.68983e-310,0,0,../../../scripts/support_pipeline.yaml,ChainPrecedence25,marking,FastOperator_v1,0,25,0.035374,0.007221,1.4162,2.17821,No,1
-../bpic_2011/data/10/log.xes,T,35.8611,1.99012,10,159,6.95334e-310,4.68983e-310,0,0,../../../scripts/support_pipeline.yaml,ChainPrecedence25,marking,FastOperator_v1,0,25,0.033816,0.007017,1.29782,2.15881,No,1
-../bpic_2011/data/10/log.xes,T,36.2502,1.99703,10,159,6.95334e-310,4.68983e-310,0,0,../../../scripts/support_pipeline.yaml,ChainPrecedence25,marking,FastOperator_v1,0,25,0.035007,0.006916,1.28076,2.12796,No,1
-../bpic_2011/data/10/log.xes,T,36.2306,2.0274,10,159,6.95334e-310,4.68983e-310,0,0,../../../scripts/support_pipeline.yaml,ChainPrecedence25,marking,FastOperator_v1,0,25,0.034644,0.007032,1.34542,2.19238,No,1
-../bpic_2011/data/100/log.xes,T,95.2831,7.86001,100,277,6.95298e-310,4.64247e-310,0,0,../../../scripts/support_pipeline.yaml,ChainPrecedence25,marking,FastOperator_v1,0,25,0.052163,0.007123,2.12889,15.4273,No,1
-../bpic_2011/data/100/log.xes,T,89.5343,8.05445,100,277,6.95298e-310,4.64247e-310,0,0,../../../scripts/support_pipeline.yaml,ChainPrecedence25,marking,FastOperator_v1,0,25,0.052123,0.006818,2.13935,12.8577,No,1
-../bpic_2011/data/100/log.xes,T,91.779,8.04227,100,277,6.95298e-310,4.64247e-310,0,0,../../../scripts/support_pipeline.yaml,ChainPrecedence25,marking,FastOperator_v1,0,25,0.052978,0.006916,2.08977,15.8486,No,1
-../bpic_2011/data/100/log.xes,T,92.2902,8.07202,100,277,6.95298e-310,4.64247e-310,0,0,../../../scripts/support_pipeline.yaml,ChainPrecedence25,marking,FastOperator_v1,0,25,0.053828,0.006776,2.22442,15.734,No,1
-../bpic_2011/data/100/log.xes,T,91.861,8.13654,100,277,6.95298e-310,4.64247e-310,0,0,../../../scripts/support_pipeline.yaml,ChainPrecedence25,marking,FastOperator_v1,0,25,0.05511,0.007057,2.22737,15.5799,No,1
-../bpic_2011/data/1000/log.xes,T,877.399,92.4977,1000,608,6.9528e-310,4.67199e-310,0,0,../../../scripts/support_pipeline.yaml,ChainPrecedence25,marking,FastOperator_v1,0,25,0.159161,0.0069,5.32109,177.045,No,1
-../bpic_2011/data/1000/log.xes,T,846.224,87.5511,1000,608,6.9528e-310,4.67199e-310,0,0,../../../scripts/support_pipeline.yaml,ChainPrecedence25,marking,FastOperator_v1,0,25,0.164254,0.007697,5.33291,173.768,No,1
-../bpic_2011/data/1000/log.xes,T,856.943,98.9002,1000,608,6.9528e-310,4.67199e-310,0,0,../../../scripts/support_pipeline.yaml,ChainPrecedence25,marking,FastOperator_v1,0,25,0.232695,0.007734,5.41653,172.916,No,1
-../bpic_2011/data/1000/log.xes,T,847.32,108.264,1000,608,6.9528e-310,4.67199e-310,0,0,../../../scripts/support_pipeline.yaml,ChainPrecedence25,marking,FastOperator_v1,0,25,0.18552,0.007252,5.56475,171.658,No,1
-../bpic_2011/data/1000/log.xes,T,847.315,95.5249,1000,608,6.9528e-310,4.67199e-310,0,0,../../../scripts/support_pipeline.yaml,ChainPrecedence25,marking,FastOperator_v1,0,25,0.181971,0.007128,5.73521,192.181,No,1
-../bpic_2011/data/10/log.xes,T,40.6992,1.83637,10,159,6.95255e-310,4.64247e-310,0,0,../../../scripts/support_pipeline.yaml,RespExistence25,marking,FastOperator_v1,0,25,0.031742,0.009025,0.136973,0.035998,No,1
-../bpic_2011/data/10/log.xes,T,36.1176,1.96762,10,159,6.95255e-310,4.64247e-310,0,0,../../../scripts/support_pipeline.yaml,RespExistence25,marking,FastOperator_v1,0,25,0.034478,0.009618,0.128586,0.038268,No,1
-../bpic_2011/data/10/log.xes,T,32.3668,1.94293,10,159,6.95255e-310,4.64247e-310,0,0,../../../scripts/support_pipeline.yaml,RespExistence25,marking,FastOperator_v1,0,25,0.033865,0.00947,0.129082,0.036008,No,1
-../bpic_2011/data/10/log.xes,T,32.9294,2.02421,10,159,6.95255e-310,4.64247e-310,0,0,../../../scripts/support_pipeline.yaml,RespExistence25,marking,FastOperator_v1,0,25,0.03371,0.025793,0.131575,0.03735,No,1
-../bpic_2011/data/10/log.xes,T,33.0299,2.13353,10,159,6.95255e-310,4.64247e-310,0,0,../../../scripts/support_pipeline.yaml,RespExistence25,marking,FastOperator_v1,0,25,0.054362,0.009811,0.13457,0.039396,No,1
-../bpic_2011/data/100/log.xes,T,98.9211,8.76867,100,277,6.9526e-310,4.66416e-310,0,0,../../../scripts/support_pipeline.yaml,RespExistence25,marking,FastOperator_v1,0,25,0.05411,0.006885,0.144666,0.21858,No,1
-../bpic_2011/data/100/log.xes,T,88.9475,8.22064,100,277,6.9526e-310,4.66416e-310,0,0,../../../scripts/support_pipeline.yaml,RespExistence25,marking,FastOperator_v1,0,25,0.068586,0.007133,0.131581,0.213246,No,1
-../bpic_2011/data/100/log.xes,T,87.1738,8.21044,100,277,6.9526e-310,4.66416e-310,0,0,../../../scripts/support_pipeline.yaml,RespExistence25,marking,FastOperator_v1,0,25,0.05258,0.007122,0.130364,0.212581,No,1
-../bpic_2011/data/100/log.xes,T,84.0231,8.49737,100,277,6.9526e-310,4.66416e-310,0,0,../../../scripts/support_pipeline.yaml,RespExistence25,marking,FastOperator_v1,0,25,0.054548,0.007024,0.140786,0.216347,No,1
-../bpic_2011/data/100/log.xes,T,86.2311,8.37001,100,277,6.9526e-310,4.66416e-310,0,0,../../../scripts/support_pipeline.yaml,RespExistence25,marking,FastOperator_v1,0,25,0.060203,0.007074,0.135629,0.2807,No,1
-../bpic_2011/data/1000/log.xes,T,898.476,94.1335,1000,608,6.95307e-310,4.64364e-310,0,0,../../../scripts/support_pipeline.yaml,RespExistence25,marking,FastOperator_v1,0,25,0.160317,0.009676,0.136442,1.5794,No,1
-../bpic_2011/data/1000/log.xes,T,792.787,89.3956,1000,608,6.95307e-310,4.64364e-310,0,0,../../../scripts/support_pipeline.yaml,RespExistence25,marking,FastOperator_v1,0,25,0.168567,0.007026,0.124423,1.55044,No,1
-../bpic_2011/data/1000/log.xes,T,764.774,87.4051,1000,608,6.95307e-310,4.64364e-310,0,0,../../../scripts/support_pipeline.yaml,RespExistence25,marking,FastOperator_v1,0,25,0.167203,0.007499,0.123745,1.50105,No,1
-../bpic_2011/data/1000/log.xes,T,763.493,87.3071,1000,608,6.95307e-310,4.64364e-310,0,0,../../../scripts/support_pipeline.yaml,RespExistence25,marking,FastOperator_v1,0,25,0.174186,0.007598,0.1215,1.49294,No,1
-../bpic_2011/data/1000/log.xes,T,783.287,94.2063,1000,608,6.95307e-310,4.64364e-310,0,0,../../../scripts/support_pipeline.yaml,RespExistence25,marking,FastOperator_v1,0,25,0.191812,0.010116,0.150727,1.56567,No,1
-../bpic_2011/data/10/log.xes,T,40.4723,1.84571,10,159,6.95256e-310,4.68289e-310,0,0,../../../scripts/support_pipeline.yaml,NegSuccession25,marking,FastOperator_v1,0,25,0.031846,0.008544,1.91737,4.59168,No,1
-../bpic_2011/data/10/log.xes,T,36.7242,1.9036,10,159,6.95256e-310,4.68289e-310,0,0,../../../scripts/support_pipeline.yaml,NegSuccession25,marking,FastOperator_v1,0,25,0.033421,0.006978,1.95971,4.597,No,1
-../bpic_2011/data/10/log.xes,T,33.931,1.97634,10,159,6.95256e-310,4.68289e-310,0,0,../../../scripts/support_pipeline.yaml,NegSuccession25,marking,FastOperator_v1,0,25,0.033662,0.006692,2.1056,4.55736,No,1
-../bpic_2011/data/10/log.xes,T,33.5144,2.07262,10,159,6.95256e-310,4.68289e-310,0,0,../../../scripts/support_pipeline.yaml,NegSuccession25,marking,FastOperator_v1,0,25,0.036175,0.007301,2.13311,4.54155,No,1
-../bpic_2011/data/10/log.xes,T,34.2902,2.01728,10,159,6.95256e-310,4.68289e-310,0,0,../../../scripts/support_pipeline.yaml,NegSuccession25,marking,FastOperator_v1,0,25,0.035194,0.006888,2.17802,4.67724,No,1
-../bpic_2011/data/100/log.xes,T,97.8358,8.01234,100,277,6.95326e-310,4.64805e-310,0,0,../../../scripts/support_pipeline.yaml,NegSuccession25,marking,FastOperator_v1,0,25,0.06395,0.006909,4.10244,14.0014,No,1
-../bpic_2011/data/100/log.xes,T,92.5047,8.01081,100,277,6.95326e-310,4.64805e-310,0,0,../../../scripts/support_pipeline.yaml,NegSuccession25,marking,FastOperator_v1,0,25,0.082866,0.007184,4.04714,14.4222,No,1
-../bpic_2011/data/100/log.xes,T,92.9696,8.03567,100,277,6.95326e-310,4.64805e-310,0,0,../../../scripts/support_pipeline.yaml,NegSuccession25,marking,FastOperator_v1,0,25,0.05349,0.00701,4.06515,14.1505,No,1
-../bpic_2011/data/100/log.xes,T,91.5758,8.12242,100,277,6.95326e-310,4.64805e-310,0,0,../../../scripts/support_pipeline.yaml,NegSuccession25,marking,FastOperator_v1,0,25,0.054664,0.006921,4.11375,15.542,No,1
-../bpic_2011/data/100/log.xes,T,91.954,8.08938,100,277,6.95326e-310,4.64805e-310,0,0,../../../scripts/support_pipeline.yaml,NegSuccession25,marking,FastOperator_v1,0,25,0.055261,0.00715,4.15444,15.496,No,1
-../bpic_2011/data/1000/log.xes,T,846.889,87.4441,1000,608,6.95314e-310,4.66162e-310,0,0,../../../scripts/support_pipeline.yaml,NegSuccession25,marking,FastOperator_v1,0,25,0.159847,0.006892,10.005,142.386,No,1
-../bpic_2011/data/1000/log.xes,T,813.587,86.6438,1000,608,6.95314e-310,4.66162e-310,0,0,../../../scripts/support_pipeline.yaml,NegSuccession25,marking,FastOperator_v1,0,25,0.165486,0.006678,9.99965,142.069,No,1
-../bpic_2011/data/1000/log.xes,T,843.741,93.0914,1000,608,6.95314e-310,4.66162e-310,0,0,../../../scripts/support_pipeline.yaml,NegSuccession25,marking,FastOperator_v1,0,25,0.247856,0.007094,10.3743,145.003,No,1
-../bpic_2011/data/1000/log.xes,T,831.55,87.9168,1000,608,6.95314e-310,4.66162e-310,0,0,../../../scripts/support_pipeline.yaml,NegSuccession25,marking,FastOperator_v1,0,25,0.17263,0.006733,11.5256,141.384,No,1
-../bpic_2011/data/1000/log.xes,T,848.731,90.5876,1000,608,6.95314e-310,4.66162e-310,0,0,../../../scripts/support_pipeline.yaml,NegSuccession25,marking,FastOperator_v1,0,25,0.172284,0.007048,10.4429,146.004,No,1
+../bpic_2011/data/10/log.xes,T,48.931,2.59496,10,159,6.95298e-310,4.64651e-310,0,0,KnoBAB + Max-SAT,Response,marking,FastOperator_v1,0,25,0.044865,0.00919,4.2152,11.9475,No,1
+../bpic_2011/data/10/log.xes,T,47.1083,2.61231,10,159,6.95298e-310,4.64651e-310,0,0,KnoBAB + Max-SAT,Response,marking,FastOperator_v1,0,25,0.044582,0.010253,4.32592,10.1615,No,1
+../bpic_2011/data/10/log.xes,T,44.8372,2.73675,10,159,6.95298e-310,4.64651e-310,0,0,KnoBAB + Max-SAT,Response,marking,FastOperator_v1,0,25,0.094085,0.028601,4.57208,10.6907,No,1
+../bpic_2011/data/10/log.xes,T,46.6555,2.65384,10,159,6.95298e-310,4.64651e-310,0,0,KnoBAB + Max-SAT,Response,marking,FastOperator_v1,0,25,0.05591,0.009547,4.30344,10.174,No,1
+../bpic_2011/data/10/log.xes,T,45.3337,2.87832,10,159,6.95298e-310,4.64651e-310,0,0,KnoBAB + Max-SAT,Response,marking,FastOperator_v1,0,25,0.048086,0.010725,4.59558,10.4107,No,1
+../bpic_2011/data/100/log.xes,T,124.685,11.5205,100,277,6.95319e-310,4.68262e-310,0,0,KnoBAB + Max-SAT,Response,marking,FastOperator_v1,0,25,0.081979,0.009946,7.75196,26.9427,No,1
+../bpic_2011/data/100/log.xes,T,118.983,11.5726,100,277,6.95319e-310,4.68262e-310,0,0,KnoBAB + Max-SAT,Response,marking,FastOperator_v1,0,25,0.165412,0.029565,7.64805,24.3683,No,1
+../bpic_2011/data/100/log.xes,T,116.523,11.8189,100,277,6.95319e-310,4.68262e-310,0,0,KnoBAB + Max-SAT,Response,marking,FastOperator_v1,0,25,0.07968,0.01079,7.59667,25.1557,No,1
+../bpic_2011/data/100/log.xes,T,118.864,11.8125,100,277,6.95319e-310,4.68262e-310,0,0,KnoBAB + Max-SAT,Response,marking,FastOperator_v1,0,25,0.08076,0.010324,7.86873,28.7161,No,1
+../bpic_2011/data/100/log.xes,T,119.18,12.0946,100,277,6.95319e-310,4.68262e-310,0,0,KnoBAB + Max-SAT,Response,marking,FastOperator_v1,0,25,0.073251,0.009932,7.88582,29.1197,No,1
+../bpic_2011/data/1000/log.xes,T,1101.73,120.632,1000,608,6.9528e-310,4.64316e-310,0,0,KnoBAB + Max-SAT,Response,marking,FastOperator_v1,0,25,0.169522,0.029389,17.8465,273.841,No,1
+../bpic_2011/data/1000/log.xes,T,1083.31,120.715,1000,608,6.9528e-310,4.64316e-310,0,0,KnoBAB + Max-SAT,Response,marking,FastOperator_v1,0,25,0.19004,0.010782,17.6658,278.309,No,1
+../bpic_2011/data/1000/log.xes,T,1094.98,121.65,1000,608,6.9528e-310,4.64316e-310,0,0,KnoBAB + Max-SAT,Response,marking,FastOperator_v1,0,25,0.186081,0.010477,18.1369,276.866,No,1
+../bpic_2011/data/1000/log.xes,T,1106.22,125.008,1000,608,6.9528e-310,4.64316e-310,0,0,KnoBAB + Max-SAT,Response,marking,FastOperator_v1,0,25,0.1924,0.01022,17.8788,278.121,No,1
+../bpic_2011/data/1000/log.xes,T,1102.9,123.592,1000,608,6.9528e-310,4.64316e-310,0,0,KnoBAB + Max-SAT,Response,marking,FastOperator_v1,0,25,0.196244,0.010245,18.0625,279.971,No,1
+../bpic_2011/data/10/log.xes,T,49.399,2.59384,10,159,6.95329e-310,4.67004e-310,0,0,KnoBAB + Max-SAT,Alternate Response,marking,FastOperator_v1,0,25,0.058365,0.009352,7.28069,26.6581,No,1
+../bpic_2011/data/10/log.xes,T,47.3164,2.81848,10,159,6.95329e-310,4.67004e-310,0,0,KnoBAB + Max-SAT,Alternate Response,marking,FastOperator_v1,0,25,0.120348,0.009437,8.09238,24.9767,No,1
+../bpic_2011/data/10/log.xes,T,46.5854,2.83013,10,159,6.95329e-310,4.67004e-310,0,0,KnoBAB + Max-SAT,Alternate Response,marking,FastOperator_v1,0,25,0.043672,0.010418,7.6575,24.8815,No,1
+../bpic_2011/data/10/log.xes,T,46.0029,2.78473,10,159,6.95329e-310,4.67004e-310,0,0,KnoBAB + Max-SAT,Alternate Response,marking,FastOperator_v1,0,25,0.04946,0.009831,7.5878,25.3252,No,1
+../bpic_2011/data/10/log.xes,T,46.745,2.92294,10,159,6.95329e-310,4.67004e-310,0,0,KnoBAB + Max-SAT,Alternate Response,marking,FastOperator_v1,0,25,0.059298,0.009965,7.62468,25.2346,No,1
+../bpic_2011/data/100/log.xes,T,122.106,10.8245,100,277,6.9526e-310,4.6504e-310,0,0,KnoBAB + Max-SAT,Alternate Response,marking,FastOperator_v1,0,25,0.082757,0.012697,12.7218,1774.56,No,1
+../bpic_2011/data/100/log.xes,T,116.274,11.1946,100,277,6.9526e-310,4.6504e-310,0,0,KnoBAB + Max-SAT,Alternate Response,marking,FastOperator_v1,0,25,0.080369,0.009087,12.9861,1858.58,No,1
+../bpic_2011/data/100/log.xes,T,132.091,11.3073,100,277,6.9526e-310,4.6504e-310,0,0,KnoBAB + Max-SAT,Alternate Response,marking,FastOperator_v1,0,25,0.083366,0.009251,13.2349,1775.53,No,1
+../bpic_2011/data/100/log.xes,T,117.039,11.2366,100,277,6.9526e-310,4.6504e-310,0,0,KnoBAB + Max-SAT,Alternate Response,marking,FastOperator_v1,0,25,0.082394,0.028986,12.9607,1787.05,No,1
+../bpic_2011/data/100/log.xes,T,118.735,11.3109,100,277,6.9526e-310,4.6504e-310,0,0,KnoBAB + Max-SAT,Alternate Response,marking,FastOperator_v1,0,25,0.070648,0.00942,13.3284,1865.16,No,1
+../bpic_2011/data/1000/log.xes,T,1135.78,122.952,1000,608,6.95268e-310,4.65128e-310,0,0,KnoBAB + Max-SAT,Alternate Response,marking,FastOperator_v1,0,25,0.260433,0.011087,37.6066,11330.4,No,1
+../bpic_2011/data/1000/log.xes,T,1122.15,123.657,1000,608,6.95268e-310,4.65128e-310,0,0,KnoBAB + Max-SAT,Alternate Response,marking,FastOperator_v1,0,25,0.230955,0.010964,36.3127,11279.1,No,1
+../bpic_2011/data/1000/log.xes,T,1229.32,139.204,1000,608,6.95268e-310,4.65128e-310,0,0,KnoBAB + Max-SAT,Alternate Response,marking,FastOperator_v1,0,25,0.185277,0.009683,34.5529,11026.1,No,1
+../bpic_2011/data/1000/log.xes,T,1318.77,126.034,1000,608,6.95268e-310,4.65128e-310,0,0,KnoBAB + Max-SAT,Alternate Response,marking,FastOperator_v1,0,25,0.264088,0.011483,43.5706,11071.1,No,1
+../bpic_2011/data/1000/log.xes,T,1496.08,158.738,1000,608,6.95268e-310,4.65128e-310,0,0,KnoBAB + Max-SAT,Alternate Response,marking,FastOperator_v1,0,25,0.209066,0.01012,39.3656,11625.2,No,1
+../bpic_2011/data/10/log.xes,T,51.1905,2.75087,10,159,6.95289e-310,4.66418e-310,0,0,KnoBAB + Max-SAT,Chain Response,marking,FastOperator_v1,0,25,0.047544,0.009635,4.57206,3.301,No,1
+../bpic_2011/data/10/log.xes,T,48.0027,2.8423,10,159,6.95289e-310,4.66418e-310,0,0,KnoBAB + Max-SAT,Chain Response,marking,FastOperator_v1,0,25,0.042854,0.009361,4.55827,2.62279,No,1
+../bpic_2011/data/10/log.xes,T,45.6289,2.808,10,159,6.95289e-310,4.66418e-310,0,0,KnoBAB + Max-SAT,Chain Response,marking,FastOperator_v1,0,25,0.059236,0.009678,4.58419,2.47073,No,1
+../bpic_2011/data/10/log.xes,T,44.0753,2.84434,10,159,6.95289e-310,4.66418e-310,0,0,KnoBAB + Max-SAT,Chain Response,marking,FastOperator_v1,0,25,0.044067,0.00953,4.47832,2.49032,No,1
+../bpic_2011/data/10/log.xes,T,44.4985,2.90345,10,159,6.95289e-310,4.66418e-310,0,0,KnoBAB + Max-SAT,Chain Response,marking,FastOperator_v1,0,25,0.045232,0.009865,4.48541,2.42571,No,1
+../bpic_2011/data/100/log.xes,T,127.855,11.7571,100,277,6.9527e-310,4.6576e-310,0,0,KnoBAB + Max-SAT,Chain Response,marking,FastOperator_v1,0,25,0.070681,0.009094,7.77846,12.0564,No,1
+../bpic_2011/data/100/log.xes,T,120.942,11.5214,100,277,6.9527e-310,4.6576e-310,0,0,KnoBAB + Max-SAT,Chain Response,marking,FastOperator_v1,0,25,0.066106,0.009067,7.79568,9.91918,No,1
+../bpic_2011/data/100/log.xes,T,117.264,11.6968,100,277,6.9527e-310,4.6576e-310,0,0,KnoBAB + Max-SAT,Chain Response,marking,FastOperator_v1,0,25,0.066992,0.009205,7.83261,9.83436,No,1
+../bpic_2011/data/100/log.xes,T,119.76,11.6146,100,277,6.9527e-310,4.6576e-310,0,0,KnoBAB + Max-SAT,Chain Response,marking,FastOperator_v1,0,25,0.068466,0.009016,7.74019,9.61589,No,1
+../bpic_2011/data/100/log.xes,T,120.509,11.7907,100,277,6.9527e-310,4.6576e-310,0,0,KnoBAB + Max-SAT,Chain Response,marking,FastOperator_v1,0,25,0.067312,0.008773,7.85322,16.5086,No,1
+../bpic_2011/data/1000/log.xes,T,1139.39,124.703,1000,608,6.95319e-310,4.65124e-310,0,0,KnoBAB + Max-SAT,Chain Response,marking,FastOperator_v1,0,25,0.177596,0.009403,18.4335,138.424,No,1
+../bpic_2011/data/1000/log.xes,T,1111.04,126.248,1000,608,6.95319e-310,4.65124e-310,0,0,KnoBAB + Max-SAT,Chain Response,marking,FastOperator_v1,0,25,0.189095,0.012641,18.0905,136.827,No,1
+../bpic_2011/data/1000/log.xes,T,1109.75,122.795,1000,608,6.95319e-310,4.65124e-310,0,0,KnoBAB + Max-SAT,Chain Response,marking,FastOperator_v1,0,25,0.193206,0.009891,18.2083,134.694,No,1
+../bpic_2011/data/1000/log.xes,T,1112.33,122.864,1000,608,6.95319e-310,4.65124e-310,0,0,KnoBAB + Max-SAT,Chain Response,marking,FastOperator_v1,0,25,0.181466,0.010103,18.2961,133.145,No,1
+../bpic_2011/data/1000/log.xes,T,1114.74,123.195,1000,608,6.95319e-310,4.65124e-310,0,0,KnoBAB + Max-SAT,Chain Response,marking,FastOperator_v1,0,25,0.198969,0.009578,18.1363,134.349,No,1
+../bpic_2011/data/10/log.xes,T,48.7146,2.61139,10,159,6.95274e-310,4.67882e-310,0,0,KnoBAB + Max-SAT,Precedence,marking,FastOperator_v1,0,25,0.076259,0.010452,4.36826,3.28608,No,1
+../bpic_2011/data/10/log.xes,T,44.8716,2.60542,10,159,6.95274e-310,4.67882e-310,0,0,KnoBAB + Max-SAT,Precedence,marking,FastOperator_v1,0,25,0.041931,0.010316,4.22811,2.77181,No,1
+../bpic_2011/data/10/log.xes,T,42.2344,2.94975,10,159,6.95274e-310,4.67882e-310,0,0,KnoBAB + Max-SAT,Precedence,marking,FastOperator_v1,0,25,0.04678,0.010865,4.37832,2.86591,No,1
+../bpic_2011/data/10/log.xes,T,41.9436,2.68204,10,159,6.95274e-310,4.67882e-310,0,0,KnoBAB + Max-SAT,Precedence,marking,FastOperator_v1,0,25,0.076159,0.009924,4.39116,3.00015,No,1
+../bpic_2011/data/10/log.xes,T,41.7544,2.81459,10,159,6.95274e-310,4.67882e-310,0,0,KnoBAB + Max-SAT,Precedence,marking,FastOperator_v1,0,25,0.043679,0.024115,4.22976,2.85708,No,1
+../bpic_2011/data/100/log.xes,T,125.378,11.4946,100,277,6.95304e-310,4.66244e-310,0,0,KnoBAB + Max-SAT,Precedence,marking,FastOperator_v1,0,25,0.079128,0.012386,7.38438,11.2957,No,1
+../bpic_2011/data/100/log.xes,T,120.473,11.5,100,277,6.95304e-310,4.66244e-310,0,0,KnoBAB + Max-SAT,Precedence,marking,FastOperator_v1,0,25,0.133032,0.01011,7.33186,11.4309,No,1
+../bpic_2011/data/100/log.xes,T,118.468,11.5977,100,277,6.95304e-310,4.66244e-310,0,0,KnoBAB + Max-SAT,Precedence,marking,FastOperator_v1,0,25,0.079574,0.012353,7.38738,11.4739,No,1
+../bpic_2011/data/100/log.xes,T,120.878,11.8471,100,277,6.95304e-310,4.66244e-310,0,0,KnoBAB + Max-SAT,Precedence,marking,FastOperator_v1,0,25,0.08317,0.012335,7.47481,11.5044,No,1
+../bpic_2011/data/100/log.xes,T,118.153,11.6972,100,277,6.95304e-310,4.66244e-310,0,0,KnoBAB + Max-SAT,Precedence,marking,FastOperator_v1,0,25,0.081545,0.009171,7.41858,12.9073,No,1
+../bpic_2011/data/1000/log.xes,T,1126.73,121.41,1000,608,6.95318e-310,4.67412e-310,0,0,KnoBAB + Max-SAT,Precedence,marking,FastOperator_v1,0,25,0.170104,0.012487,17.8073,101.63,No,1
+../bpic_2011/data/1000/log.xes,T,1092.31,121.668,1000,608,6.95318e-310,4.67412e-310,0,0,KnoBAB + Max-SAT,Precedence,marking,FastOperator_v1,0,25,0.19892,0.011052,17.586,103.54,No,1
+../bpic_2011/data/1000/log.xes,T,1097.21,122.36,1000,608,6.95318e-310,4.67412e-310,0,0,KnoBAB + Max-SAT,Precedence,marking,FastOperator_v1,0,25,0.178357,0.010646,17.457,101.15,No,1
+../bpic_2011/data/1000/log.xes,T,1099.25,122.314,1000,608,6.95318e-310,4.67412e-310,0,0,KnoBAB + Max-SAT,Precedence,marking,FastOperator_v1,0,25,0.180286,0.029865,17.4903,100.827,No,1
+../bpic_2011/data/1000/log.xes,T,1100.45,122.966,1000,608,6.95318e-310,4.67412e-310,0,0,KnoBAB + Max-SAT,Precedence,marking,FastOperator_v1,0,25,0.215611,0.010296,17.5199,100.033,No,1
+../bpic_2011/data/10/log.xes,T,50.7347,2.76158,10,159,6.95268e-310,4.65899e-310,0,0,KnoBAB + Max-SAT,Alternate Precedence,marking,FastOperator_v1,0,25,0.042151,0.009673,14.5214,32.9372,No,1
+../bpic_2011/data/10/log.xes,T,47.933,2.8197,10,159,6.95268e-310,4.65899e-310,0,0,KnoBAB + Max-SAT,Alternate Precedence,marking,FastOperator_v1,0,25,0.043118,0.009441,14.0875,29.4394,No,1
+../bpic_2011/data/10/log.xes,T,48.4143,2.78851,10,159,6.95268e-310,4.65899e-310,0,0,KnoBAB + Max-SAT,Alternate Precedence,marking,FastOperator_v1,0,25,0.057688,0.009682,14.2591,29.1388,No,1
+../bpic_2011/data/10/log.xes,T,48.9715,2.79351,10,159,6.95268e-310,4.65899e-310,0,0,KnoBAB + Max-SAT,Alternate Precedence,marking,FastOperator_v1,0,25,0.058683,0.00962,14.0368,29.3566,No,1
+../bpic_2011/data/10/log.xes,T,48.2318,2.84628,10,159,6.95268e-310,4.65899e-310,0,0,KnoBAB + Max-SAT,Alternate Precedence,marking,FastOperator_v1,0,25,0.044861,0.009593,13.7657,30.2312,No,1
+../bpic_2011/data/100/log.xes,T,122.173,10.8198,100,277,6.95313e-310,4.67089e-310,0,0,KnoBAB + Max-SAT,Alternate Precedence,marking,FastOperator_v1,0,25,0.102641,0.008965,24.8347,1866.33,No,1
+../bpic_2011/data/100/log.xes,T,118.908,11.1614,100,277,6.95313e-310,4.67089e-310,0,0,KnoBAB + Max-SAT,Alternate Precedence,marking,FastOperator_v1,0,25,0.103083,0.00915,25.1829,1868.64,No,1
+../bpic_2011/data/100/log.xes,T,114.845,11.1415,100,277,6.95313e-310,4.67089e-310,0,0,KnoBAB + Max-SAT,Alternate Precedence,marking,FastOperator_v1,0,25,0.105741,0.009254,24.1544,1854.75,No,1
+../bpic_2011/data/100/log.xes,T,117.945,11.2619,100,277,6.95313e-310,4.67089e-310,0,0,KnoBAB + Max-SAT,Alternate Precedence,marking,FastOperator_v1,0,25,0.105678,0.009022,24.3025,1859.56,No,1
+../bpic_2011/data/100/log.xes,T,118.367,11.3779,100,277,6.95313e-310,4.67089e-310,0,0,KnoBAB + Max-SAT,Alternate Precedence,marking,FastOperator_v1,0,25,0.070507,0.009343,25.1125,1871.92,No,1
+../bpic_2011/data/1000/log.xes,T,1076.91,117.508,1000,608,6.95303e-310,4.64128e-310,0,0,KnoBAB + Max-SAT,Alternate Precedence,marking,FastOperator_v1,0,25,0.198142,0.010347,59.0226,10851.5,No,1
+../bpic_2011/data/1000/log.xes,T,1046.9,118.521,1000,608,6.95303e-310,4.64128e-310,0,0,KnoBAB + Max-SAT,Alternate Precedence,marking,FastOperator_v1,0,25,0.185591,0.009641,60.8279,10902.3,No,1
+../bpic_2011/data/1000/log.xes,T,1059.58,117.891,1000,608,6.95303e-310,4.64128e-310,0,0,KnoBAB + Max-SAT,Alternate Precedence,marking,FastOperator_v1,0,25,0.259476,0.009825,58.0365,10746.9,No,1
+../bpic_2011/data/1000/log.xes,T,1066.34,119.304,1000,608,6.95303e-310,4.64128e-310,0,0,KnoBAB + Max-SAT,Alternate Precedence,marking,FastOperator_v1,0,25,0.239199,0.009984,58.373,10900.1,No,1
+../bpic_2011/data/1000/log.xes,T,1188.91,120.93,1000,608,6.95303e-310,4.64128e-310,0,0,KnoBAB + Max-SAT,Alternate Precedence,marking,FastOperator_v1,0,25,0.19245,0.010253,58.7714,10850.7,No,1
+../bpic_2011/data/10/log.xes,T,50.0033,2.70106,10,159,6.95326e-310,4.65905e-310,0,0,KnoBAB + Max-SAT,Chain Precedence,marking,FastOperator_v1,0,25,0.06052,0.010058,5.04439,3.76659,No,1
+../bpic_2011/data/10/log.xes,T,46.8446,2.71612,10,159,6.95326e-310,4.65905e-310,0,0,KnoBAB + Max-SAT,Chain Precedence,marking,FastOperator_v1,0,25,0.056667,0.00953,4.44815,2.91475,No,1
+../bpic_2011/data/10/log.xes,T,45.3101,2.80998,10,159,6.95326e-310,4.65905e-310,0,0,KnoBAB + Max-SAT,Chain Precedence,marking,FastOperator_v1,0,25,0.042488,0.010816,4.39589,2.82028,No,1
+../bpic_2011/data/10/log.xes,T,44.4258,2.82532,10,159,6.95326e-310,4.65905e-310,0,0,KnoBAB + Max-SAT,Chain Precedence,marking,FastOperator_v1,0,25,0.044648,0.010513,4.4017,2.86975,No,1
+../bpic_2011/data/10/log.xes,T,45.0409,2.81678,10,159,6.95326e-310,4.65905e-310,0,0,KnoBAB + Max-SAT,Chain Precedence,marking,FastOperator_v1,0,25,0.044078,0.012177,4.3556,2.84656,No,1
+../bpic_2011/data/100/log.xes,T,124.162,11.5023,100,277,6.95329e-310,4.65328e-310,0,0,KnoBAB + Max-SAT,Chain Precedence,marking,FastOperator_v1,0,25,0.081888,0.009756,7.5642,14.8033,No,1
+../bpic_2011/data/100/log.xes,T,120.847,11.6497,100,277,6.95329e-310,4.65328e-310,0,0,KnoBAB + Max-SAT,Chain Precedence,marking,FastOperator_v1,0,25,0.079745,0.029175,7.5248,11.5604,No,1
+../bpic_2011/data/100/log.xes,T,117.776,11.6416,100,277,6.95329e-310,4.65328e-310,0,0,KnoBAB + Max-SAT,Chain Precedence,marking,FastOperator_v1,0,25,0.067959,0.011489,7.60167,12.263,No,1
+../bpic_2011/data/100/log.xes,T,120.273,11.6739,100,277,6.95329e-310,4.65328e-310,0,0,KnoBAB + Max-SAT,Chain Precedence,marking,FastOperator_v1,0,25,0.080058,0.009691,7.55211,12.1554,No,1
+../bpic_2011/data/100/log.xes,T,123.256,11.6532,100,277,6.95329e-310,4.65328e-310,0,0,KnoBAB + Max-SAT,Chain Precedence,marking,FastOperator_v1,0,25,0.068199,0.009195,7.67283,17.4017,No,1
+../bpic_2011/data/1000/log.xes,T,1127.63,120.312,1000,608,6.9532e-310,4.68248e-310,0,0,KnoBAB + Max-SAT,Chain Precedence,marking,FastOperator_v1,0,25,0.213153,0.010068,17.8939,160.689,No,1
+../bpic_2011/data/1000/log.xes,T,1107.97,120.223,1000,608,6.9532e-310,4.68248e-310,0,0,KnoBAB + Max-SAT,Chain Precedence,marking,FastOperator_v1,0,25,0.176363,0.010321,17.5855,158.455,No,1
+../bpic_2011/data/1000/log.xes,T,1118.66,123.287,1000,608,6.9532e-310,4.68248e-310,0,0,KnoBAB + Max-SAT,Chain Precedence,marking,FastOperator_v1,0,25,0.190262,0.009488,17.3814,157.19,No,1
+../bpic_2011/data/1000/log.xes,T,1115.86,123.037,1000,608,6.9532e-310,4.68248e-310,0,0,KnoBAB + Max-SAT,Chain Precedence,marking,FastOperator_v1,0,25,0.178574,0.010297,17.442,156.018,No,1
+../bpic_2011/data/1000/log.xes,T,1123.97,122.739,1000,608,6.9532e-310,4.68248e-310,0,0,KnoBAB + Max-SAT,Chain Precedence,marking,FastOperator_v1,0,25,0.182215,0.010288,17.7596,157.043,No,1
+../bpic_2011/data/10/log.xes,T,51.8577,2.75624,10,159,6.95305e-310,4.65904e-310,0,0,KnoBAB + Max-SAT,Responded Existence,marking,FastOperator_v1,0,25,0.047074,0.009614,0.492632,0.035152,No,1
+../bpic_2011/data/10/log.xes,T,46.8295,2.7481,10,159,6.95305e-310,4.65904e-310,0,0,KnoBAB + Max-SAT,Responded Existence,marking,FastOperator_v1,0,25,0.043176,0.009491,0.431839,0.032203,No,1
+../bpic_2011/data/10/log.xes,T,41.635,2.64925,10,159,6.95305e-310,4.65904e-310,0,0,KnoBAB + Max-SAT,Responded Existence,marking,FastOperator_v1,0,25,0.048689,0.014106,0.40842,0.032078,No,1
+../bpic_2011/data/10/log.xes,T,43.0882,2.61468,10,159,6.95305e-310,4.65904e-310,0,0,KnoBAB + Max-SAT,Responded Existence,marking,FastOperator_v1,0,25,0.045204,0.013692,0.417531,0.032619,No,1
+../bpic_2011/data/10/log.xes,T,43.2832,2.78632,10,159,6.95305e-310,4.65904e-310,0,0,KnoBAB + Max-SAT,Responded Existence,marking,FastOperator_v1,0,25,0.079686,0.018585,0.415415,0.032465,No,1
+../bpic_2011/data/100/log.xes,T,124.174,11.6425,100,277,6.95265e-310,4.66051e-310,0,0,KnoBAB + Max-SAT,Responded Existence,marking,FastOperator_v1,0,25,0.073461,0.01072,0.842169,0.189644,No,1
+../bpic_2011/data/100/log.xes,T,113.601,11.6098,100,277,6.95265e-310,4.66051e-310,0,0,KnoBAB + Max-SAT,Responded Existence,marking,FastOperator_v1,0,25,0.081534,0.0101,0.672249,0.214898,No,1
+../bpic_2011/data/100/log.xes,T,113.115,11.6017,100,277,6.95265e-310,4.66051e-310,0,0,KnoBAB + Max-SAT,Responded Existence,marking,FastOperator_v1,0,25,0.085544,0.009943,0.712731,0.196268,No,1
+../bpic_2011/data/100/log.xes,T,113.848,11.4611,100,277,6.95265e-310,4.66051e-310,0,0,KnoBAB + Max-SAT,Responded Existence,marking,FastOperator_v1,0,25,0.066807,0.009831,0.70974,0.201315,No,1
+../bpic_2011/data/100/log.xes,T,111.897,11.7809,100,277,6.95265e-310,4.66051e-310,0,0,KnoBAB + Max-SAT,Responded Existence,marking,FastOperator_v1,0,25,0.146419,0.00907,0.635789,0.192357,No,1
+../bpic_2011/data/1000/log.xes,T,1124.13,120.067,1000,608,6.95301e-310,4.68312e-310,0,0,KnoBAB + Max-SAT,Responded Existence,marking,FastOperator_v1,0,25,0.177051,0.010338,1.48459,1.39852,No,1
+../bpic_2011/data/1000/log.xes,T,1051.72,121.305,1000,608,6.95301e-310,4.68312e-310,0,0,KnoBAB + Max-SAT,Responded Existence,marking,FastOperator_v1,0,25,0.185805,0.010096,1.31606,1.62367,No,1
+../bpic_2011/data/1000/log.xes,T,1027.92,120.652,1000,608,6.95301e-310,4.68312e-310,0,0,KnoBAB + Max-SAT,Responded Existence,marking,FastOperator_v1,0,25,0.176096,0.010028,1.30759,1.52107,No,1
+../bpic_2011/data/1000/log.xes,T,1036.96,120.819,1000,608,6.95301e-310,4.68312e-310,0,0,KnoBAB + Max-SAT,Responded Existence,marking,FastOperator_v1,0,25,0.175034,0.01043,1.3385,1.46249,No,1
+../bpic_2011/data/1000/log.xes,T,1036.9,123.041,1000,608,6.95301e-310,4.68312e-310,0,0,KnoBAB + Max-SAT,Responded Existence,marking,FastOperator_v1,0,25,0.176862,0.010083,1.26879,1.59328,No,1
+../bpic_2011/data/10/log.xes,T,50.9001,2.71911,10,159,6.95298e-310,4.68052e-310,0,0,KnoBAB + Max-SAT,Not Succession,marking,FastOperator_v1,0,25,0.042868,0.0233,7.44539,12.3454,No,1
+../bpic_2011/data/10/log.xes,T,47.7778,2.81124,10,159,6.95298e-310,4.68052e-310,0,0,KnoBAB + Max-SAT,Not Succession,marking,FastOperator_v1,0,25,0.043366,0.010373,7.2901,11.9274,No,1
+../bpic_2011/data/10/log.xes,T,44.4658,2.84605,10,159,6.95298e-310,4.68052e-310,0,0,KnoBAB + Max-SAT,Not Succession,marking,FastOperator_v1,0,25,0.044382,0.010415,7.28375,11.738,No,1
+../bpic_2011/data/10/log.xes,T,45.8419,2.86867,10,159,6.95298e-310,4.68052e-310,0,0,KnoBAB + Max-SAT,Not Succession,marking,FastOperator_v1,0,25,0.043519,0.00987,7.67514,12.0416,No,1
+../bpic_2011/data/10/log.xes,T,45.448,2.86899,10,159,6.95298e-310,4.68052e-310,0,0,KnoBAB + Max-SAT,Not Succession,marking,FastOperator_v1,0,25,0.055955,0.009577,7.42736,11.5826,No,1
+../bpic_2011/data/100/log.xes,T,126.827,11.5709,100,277,6.95308e-310,4.65455e-310,0,0,KnoBAB + Max-SAT,Not Succession,marking,FastOperator_v1,0,25,0.066346,0.009177,12.9321,28.7437,No,1
+../bpic_2011/data/100/log.xes,T,120.06,11.4924,100,277,6.95308e-310,4.65455e-310,0,0,KnoBAB + Max-SAT,Not Succession,marking,FastOperator_v1,0,25,0.070484,0.009215,12.8877,27.2242,No,1
+../bpic_2011/data/100/log.xes,T,115.995,11.5812,100,277,6.95308e-310,4.65455e-310,0,0,KnoBAB + Max-SAT,Not Succession,marking,FastOperator_v1,0,25,0.067812,0.009216,12.7703,26.6407,No,1
+../bpic_2011/data/100/log.xes,T,118.178,11.7924,100,277,6.95308e-310,4.65455e-310,0,0,KnoBAB + Max-SAT,Not Succession,marking,FastOperator_v1,0,25,0.068042,0.009602,12.8259,26.459,No,1
+../bpic_2011/data/100/log.xes,T,121.386,12.8038,100,277,6.95308e-310,4.65455e-310,0,0,KnoBAB + Max-SAT,Not Succession,marking,FastOperator_v1,0,25,0.144571,0.043046,13.619,30.7014,No,1
+../bpic_2011/data/1000/log.xes,T,1131.78,120.512,1000,608,6.95312e-310,4.64667e-310,0,0,KnoBAB + Max-SAT,Not Succession,marking,FastOperator_v1,0,25,0.175319,0.010021,32.4289,313.659,No,1
+../bpic_2011/data/1000/log.xes,T,1102.25,122.523,1000,608,6.95312e-310,4.64667e-310,0,0,KnoBAB + Max-SAT,Not Succession,marking,FastOperator_v1,0,25,0.181562,0.010415,32.3567,312.2,No,1
+../bpic_2011/data/1000/log.xes,T,1245.34,232.279,1000,608,6.95312e-310,4.64667e-310,0,0,KnoBAB + Max-SAT,Not Succession,marking,FastOperator_v1,0,25,0.325507,0.018724,61.0399,393.625,No,1
+../bpic_2011/data/1000/log.xes,T,1112.86,121.91,1000,608,6.95312e-310,4.64667e-310,0,0,KnoBAB + Max-SAT,Not Succession,marking,FastOperator_v1,0,25,0.193711,0.009858,31.8806,309.695,No,1
+../bpic_2011/data/1000/log.xes,T,1120.78,122.794,1000,608,6.95312e-310,4.64667e-310,0,0,KnoBAB + Max-SAT,Not Succession,marking,FastOperator_v1,0,25,0.198088,0.00953,32.4445,309.862,No,1
+../bpic_2011/data/10/log.xes,T,50.8817,2.72551,10,159,6.95314e-310,4.64597e-310,0,0,KnoBAB + Support,Response,marking,FastOperator_v1,0,25,0.05168,0.009703,4.55271,12.2161,No,1
+../bpic_2011/data/10/log.xes,T,47.6436,2.80792,10,159,6.95314e-310,4.64597e-310,0,0,KnoBAB + Support,Response,marking,FastOperator_v1,0,25,0.045305,0.010272,4.45941,10.7143,No,1
+../bpic_2011/data/10/log.xes,T,45.7713,3.02234,10,159,6.95314e-310,4.64597e-310,0,0,KnoBAB + Support,Response,marking,FastOperator_v1,0,25,0.046261,0.0096,4.42088,10.8246,No,1
+../bpic_2011/data/10/log.xes,T,47.516,2.79247,10,159,6.95314e-310,4.64597e-310,0,0,KnoBAB + Support,Response,marking,FastOperator_v1,0,25,0.056533,0.023752,4.4122,10.8446,No,1
+../bpic_2011/data/10/log.xes,T,45.7601,2.82586,10,159,6.95314e-310,4.64597e-310,0,0,KnoBAB + Support,Response,marking,FastOperator_v1,0,25,0.04434,0.009942,4.51984,10.7211,No,1
+../bpic_2011/data/100/log.xes,T,126.386,11.5391,100,277,6.95304e-310,4.65743e-310,0,0,KnoBAB + Support,Response,marking,FastOperator_v1,0,25,0.068003,0.029283,7.78887,28.2649,No,1
+../bpic_2011/data/100/log.xes,T,120.154,11.5095,100,277,6.95304e-310,4.65743e-310,0,0,KnoBAB + Support,Response,marking,FastOperator_v1,0,25,0.130152,0.010414,10.1252,27.3047,No,1
+../bpic_2011/data/100/log.xes,T,119.155,11.5229,100,277,6.95304e-310,4.65743e-310,0,0,KnoBAB + Support,Response,marking,FastOperator_v1,0,25,0.067745,0.011758,7.81817,26.1873,No,1
+../bpic_2011/data/100/log.xes,T,119.959,11.6653,100,277,6.95304e-310,4.65743e-310,0,0,KnoBAB + Support,Response,marking,FastOperator_v1,0,25,0.066977,0.009126,7.89309,30.3184,No,1
+../bpic_2011/data/100/log.xes,T,122.184,11.8934,100,277,6.95304e-310,4.65743e-310,0,0,KnoBAB + Support,Response,marking,FastOperator_v1,0,25,0.070589,0.009098,8.17828,31.0613,No,1
+../bpic_2011/data/1000/log.xes,T,1087.79,118.198,1000,608,6.95274e-310,4.6617e-310,0,0,KnoBAB + Support,Response,marking,FastOperator_v1,0,25,0.207684,0.009424,17.4343,271.859,No,1
+../bpic_2011/data/1000/log.xes,T,1054.27,117.656,1000,608,6.95274e-310,4.6617e-310,0,0,KnoBAB + Support,Response,marking,FastOperator_v1,0,25,0.233428,0.00926,17.9626,269.769,No,1
+../bpic_2011/data/1000/log.xes,T,1064.19,119.265,1000,608,6.95274e-310,4.6617e-310,0,0,KnoBAB + Support,Response,marking,FastOperator_v1,0,25,0.204131,0.009514,17.5064,268.269,No,1
+../bpic_2011/data/1000/log.xes,T,1063.51,118.696,1000,608,6.95274e-310,4.6617e-310,0,0,KnoBAB + Support,Response,marking,FastOperator_v1,0,25,0.236118,0.009549,17.7022,271.084,No,1
+../bpic_2011/data/1000/log.xes,T,1070.05,119.02,1000,608,6.95274e-310,4.6617e-310,0,0,KnoBAB + Support,Response,marking,FastOperator_v1,0,25,0.227917,0.009396,17.6774,269.755,No,1
+../bpic_2011/data/10/log.xes,T,50.1628,2.60068,10,159,6.95314e-310,4.6769e-310,0,0,KnoBAB + Support,Alternate Response,marking,FastOperator_v1,0,25,0.041452,0.009619,7.83245,26.2092,No,1
+../bpic_2011/data/10/log.xes,T,45.8367,2.59912,10,159,6.95314e-310,4.6769e-310,0,0,KnoBAB + Support,Alternate Response,marking,FastOperator_v1,0,25,0.063824,0.010033,7.80703,24.1836,No,1
+../bpic_2011/data/10/log.xes,T,45.9173,2.76261,10,159,6.95314e-310,4.6769e-310,0,0,KnoBAB + Support,Alternate Response,marking,FastOperator_v1,0,25,0.058997,0.010636,7.49416,24.3605,No,1
+../bpic_2011/data/10/log.xes,T,46.2055,2.72875,10,159,6.95314e-310,4.6769e-310,0,0,KnoBAB + Support,Alternate Response,marking,FastOperator_v1,0,25,0.077364,0.009735,7.37014,24.2104,No,1
+../bpic_2011/data/10/log.xes,T,45.6095,2.95761,10,159,6.95314e-310,4.6769e-310,0,0,KnoBAB + Support,Alternate Response,marking,FastOperator_v1,0,25,0.086583,0.033614,7.27929,24.8711,No,1
+../bpic_2011/data/100/log.xes,T,124.605,11.3151,100,277,6.95256e-310,4.63608e-310,0,0,KnoBAB + Support,Alternate Response,marking,FastOperator_v1,0,25,0.117587,0.010745,13.0837,1802.87,No,1
+../bpic_2011/data/100/log.xes,T,116.167,11.4587,100,277,6.95256e-310,4.63608e-310,0,0,KnoBAB + Support,Alternate Response,marking,FastOperator_v1,0,25,0.065924,0.02421,13.1224,1784.37,No,1
+../bpic_2011/data/100/log.xes,T,113.852,11.0391,100,277,6.95256e-310,4.63608e-310,0,0,KnoBAB + Support,Alternate Response,marking,FastOperator_v1,0,25,0.066922,0.009271,12.8591,1777.86,No,1
+../bpic_2011/data/100/log.xes,T,113.627,10.983,100,277,6.95256e-310,4.63608e-310,0,0,KnoBAB + Support,Alternate Response,marking,FastOperator_v1,0,25,0.132701,0.009128,12.7708,1777.78,No,1
+../bpic_2011/data/100/log.xes,T,117.061,11.4513,100,277,6.95256e-310,4.63608e-310,0,0,KnoBAB + Support,Alternate Response,marking,FastOperator_v1,0,25,0.068952,0.00904,13.4798,1789.4,No,1
+../bpic_2011/data/1000/log.xes,T,1098.75,118.078,1000,608,6.95332e-310,4.64695e-310,0,0,KnoBAB + Support,Alternate Response,marking,FastOperator_v1,0,25,0.172157,0.009293,31.9747,10418.2,No,1
+../bpic_2011/data/1000/log.xes,T,1061.46,118.502,1000,608,6.95332e-310,4.64695e-310,0,0,KnoBAB + Support,Alternate Response,marking,FastOperator_v1,0,25,0.177471,0.009128,32.533,10266.1,No,1
+../bpic_2011/data/1000/log.xes,T,1070.72,117.819,1000,608,6.95332e-310,4.64695e-310,0,0,KnoBAB + Support,Alternate Response,marking,FastOperator_v1,0,25,0.180505,0.009404,32.283,10641,No,1
+../bpic_2011/data/1000/log.xes,T,1067.21,118.31,1000,608,6.95332e-310,4.64695e-310,0,0,KnoBAB + Support,Alternate Response,marking,FastOperator_v1,0,25,0.182322,0.009365,32.2658,10256,No,1
+../bpic_2011/data/1000/log.xes,T,1069.79,120.989,1000,608,6.95332e-310,4.64695e-310,0,0,KnoBAB + Support,Alternate Response,marking,FastOperator_v1,0,25,0.182797,0.00988,32.7013,10249.9,No,1
+../bpic_2011/data/10/log.xes,T,49.4882,2.70751,10,159,6.95321e-310,4.64587e-310,0,0,KnoBAB + Support,Chain Response,marking,FastOperator_v1,0,25,0.079821,0.009209,4.66362,3.2822,No,1
+../bpic_2011/data/10/log.xes,T,46.5271,2.71157,10,159,6.95321e-310,4.64587e-310,0,0,KnoBAB + Support,Chain Response,marking,FastOperator_v1,0,25,0.056771,0.010299,4.56902,2.79575,No,1
+../bpic_2011/data/10/log.xes,T,44.8772,2.8576,10,159,6.95321e-310,4.64587e-310,0,0,KnoBAB + Support,Chain Response,marking,FastOperator_v1,0,25,0.042478,0.009194,4.43857,2.46723,No,1
+../bpic_2011/data/10/log.xes,T,44.3919,2.80235,10,159,6.95321e-310,4.64587e-310,0,0,KnoBAB + Support,Chain Response,marking,FastOperator_v1,0,25,0.095862,0.009357,4.39882,2.52166,No,1
+../bpic_2011/data/10/log.xes,T,44.555,2.83889,10,159,6.95321e-310,4.64587e-310,0,0,KnoBAB + Support,Chain Response,marking,FastOperator_v1,0,25,0.044889,0.009697,4.56053,2.54649,No,1
+../bpic_2011/data/100/log.xes,T,124.556,11.4446,100,277,6.95321e-310,4.63597e-310,0,0,KnoBAB + Support,Chain Response,marking,FastOperator_v1,0,25,0.082161,0.009134,7.93243,12.5283,No,1
+../bpic_2011/data/100/log.xes,T,121.117,12.0784,100,277,6.95321e-310,4.63597e-310,0,0,KnoBAB + Support,Chain Response,marking,FastOperator_v1,0,25,0.133608,0.010127,7.99223,10.1631,No,1
+../bpic_2011/data/100/log.xes,T,116.401,11.5464,100,277,6.95321e-310,4.63597e-310,0,0,KnoBAB + Support,Chain Response,marking,FastOperator_v1,0,25,0.080346,0.009952,7.88307,10.0987,No,1
+../bpic_2011/data/100/log.xes,T,118.214,11.6177,100,277,6.95321e-310,4.63597e-310,0,0,KnoBAB + Support,Chain Response,marking,FastOperator_v1,0,25,0.080347,0.009857,7.67391,10.0204,No,1
+../bpic_2011/data/100/log.xes,T,121.751,11.8522,100,277,6.95321e-310,4.63597e-310,0,0,KnoBAB + Support,Chain Response,marking,FastOperator_v1,0,25,0.13874,0.009583,8.07208,14.4722,No,1
+../bpic_2011/data/1000/log.xes,T,1128.41,120.4,1000,608,6.95267e-310,4.66776e-310,0,0,KnoBAB + Support,Chain Response,marking,FastOperator_v1,0,25,0.197522,0.010427,17.911,143.752,No,1
+../bpic_2011/data/1000/log.xes,T,1099.51,120.914,1000,608,6.95267e-310,4.66776e-310,0,0,KnoBAB + Support,Chain Response,marking,FastOperator_v1,0,25,0.260818,0.009704,18.6318,142.381,No,1
+../bpic_2011/data/1000/log.xes,T,1105.4,121.358,1000,608,6.95267e-310,4.66776e-310,0,0,KnoBAB + Support,Chain Response,marking,FastOperator_v1,0,25,0.184583,0.009177,17.7412,137.933,No,1
+../bpic_2011/data/1000/log.xes,T,1108.49,122.7,1000,608,6.95267e-310,4.66776e-310,0,0,KnoBAB + Support,Chain Response,marking,FastOperator_v1,0,25,0.193084,0.009249,17.5602,139.264,No,1
+../bpic_2011/data/1000/log.xes,T,1107.6,122.38,1000,608,6.95267e-310,4.66776e-310,0,0,KnoBAB + Support,Chain Response,marking,FastOperator_v1,0,25,0.183194,0.00943,17.7564,142.456,No,1
+../bpic_2011/data/10/log.xes,T,50.9133,2.72098,10,159,6.95273e-310,4.65159e-310,0,0,KnoBAB + Support,Precedence,marking,FastOperator_v1,0,25,0.048321,0.009363,4.34574,3.27791,No,1
+../bpic_2011/data/10/log.xes,T,46.7749,2.73009,10,159,6.95273e-310,4.65159e-310,0,0,KnoBAB + Support,Precedence,marking,FastOperator_v1,0,25,0.042849,0.009196,4.94698,3.11908,No,1
+../bpic_2011/data/10/log.xes,T,43.3834,2.8485,10,159,6.95273e-310,4.65159e-310,0,0,KnoBAB + Support,Precedence,marking,FastOperator_v1,0,25,0.056879,0.009466,4.35036,2.96165,No,1
+../bpic_2011/data/10/log.xes,T,43.552,2.8021,10,159,6.95273e-310,4.65159e-310,0,0,KnoBAB + Support,Precedence,marking,FastOperator_v1,0,25,0.084603,0.009419,4.23491,2.95846,No,1
+../bpic_2011/data/10/log.xes,T,43.5816,2.80192,10,159,6.95273e-310,4.65159e-310,0,0,KnoBAB + Support,Precedence,marking,FastOperator_v1,0,25,0.057801,0.009541,4.48302,3.03575,No,1
+../bpic_2011/data/100/log.xes,T,126.236,11.6335,100,277,6.9532e-310,4.65862e-310,0,0,KnoBAB + Support,Precedence,marking,FastOperator_v1,0,25,0.069399,0.009246,7.25302,11.1781,No,1
+../bpic_2011/data/100/log.xes,T,118.729,11.5084,100,277,6.9532e-310,4.65862e-310,0,0,KnoBAB + Support,Precedence,marking,FastOperator_v1,0,25,0.104359,0.010727,7.62317,11.5302,No,1
+../bpic_2011/data/100/log.xes,T,117.238,11.4909,100,277,6.9532e-310,4.65862e-310,0,0,KnoBAB + Support,Precedence,marking,FastOperator_v1,0,25,0.079301,0.010132,7.22912,11.2086,No,1
+../bpic_2011/data/100/log.xes,T,117.025,11.8439,100,277,6.9532e-310,4.65862e-310,0,0,KnoBAB + Support,Precedence,marking,FastOperator_v1,0,25,0.068623,0.010121,7.20117,11.2307,No,1
+../bpic_2011/data/100/log.xes,T,116.813,11.573,100,277,6.9532e-310,4.65862e-310,0,0,KnoBAB + Support,Precedence,marking,FastOperator_v1,0,25,0.106549,0.02742,7.37738,12.9045,No,1
+../bpic_2011/data/1000/log.xes,T,1129.18,120.365,1000,608,6.9527e-310,4.68405e-310,0,0,KnoBAB + Support,Precedence,marking,FastOperator_v1,0,25,0.186073,0.009479,17.2805,102.807,No,1
+../bpic_2011/data/1000/log.xes,T,1091.2,119.998,1000,608,6.9527e-310,4.68405e-310,0,0,KnoBAB + Support,Precedence,marking,FastOperator_v1,0,25,0.176209,0.009419,17.6242,102.995,No,1
+../bpic_2011/data/1000/log.xes,T,1095.36,121.302,1000,608,6.9527e-310,4.68405e-310,0,0,KnoBAB + Support,Precedence,marking,FastOperator_v1,0,25,0.214486,0.009439,17.0947,101.07,No,1
+../bpic_2011/data/1000/log.xes,T,1094.11,121.119,1000,608,6.9527e-310,4.68405e-310,0,0,KnoBAB + Support,Precedence,marking,FastOperator_v1,0,25,0.180197,0.009286,17.2729,100.291,No,1
+../bpic_2011/data/1000/log.xes,T,1097.66,121.939,1000,608,6.9527e-310,4.68405e-310,0,0,KnoBAB + Support,Precedence,marking,FastOperator_v1,0,25,0.194308,0.010062,17.2462,100.094,No,1
+../bpic_2011/data/10/log.xes,T,50.0744,2.72406,10,159,6.95263e-310,4.64016e-310,0,0,KnoBAB + Support,Alternate Precedence,marking,FastOperator_v1,0,25,0.056506,0.009374,14.1735,33.0449,No,1
+../bpic_2011/data/10/log.xes,T,47.0667,2.747,10,159,6.95263e-310,4.64016e-310,0,0,KnoBAB + Support,Alternate Precedence,marking,FastOperator_v1,0,25,0.044107,0.029631,13.996,29.5349,No,1
+../bpic_2011/data/10/log.xes,T,48.3901,2.79845,10,159,6.95263e-310,4.64016e-310,0,0,KnoBAB + Support,Alternate Precedence,marking,FastOperator_v1,0,25,0.045454,0.009928,13.9566,29.9853,No,1
+../bpic_2011/data/10/log.xes,T,47.8097,2.88572,10,159,6.95263e-310,4.64016e-310,0,0,KnoBAB + Support,Alternate Precedence,marking,FastOperator_v1,0,25,0.109657,0.032965,13.3339,29.8292,No,1
+../bpic_2011/data/10/log.xes,T,48.695,2.83522,10,159,6.95263e-310,4.64016e-310,0,0,KnoBAB + Support,Alternate Precedence,marking,FastOperator_v1,0,25,0.058668,0.01029,14.1245,29.1122,No,1
+../bpic_2011/data/100/log.xes,T,126.087,11.622,100,277,6.95283e-310,4.67892e-310,0,0,KnoBAB + Support,Alternate Precedence,marking,FastOperator_v1,0,25,0.116778,0.009039,25.3941,1928.94,No,1
+../bpic_2011/data/100/log.xes,T,119.093,11.7738,100,277,6.95283e-310,4.67892e-310,0,0,KnoBAB + Support,Alternate Precedence,marking,FastOperator_v1,0,25,0.069208,0.009602,25.4655,1924.63,No,1
+../bpic_2011/data/100/log.xes,T,118.706,11.5584,100,277,6.95283e-310,4.67892e-310,0,0,KnoBAB + Support,Alternate Precedence,marking,FastOperator_v1,0,25,0.081809,0.010062,25.7152,1911.6,No,1
+../bpic_2011/data/100/log.xes,T,120.842,11.5588,100,277,6.95283e-310,4.67892e-310,0,0,KnoBAB + Support,Alternate Precedence,marking,FastOperator_v1,0,25,0.07229,0.023148,25.7111,2406.55,No,1
+../bpic_2011/data/100/log.xes,T,122.641,11.6885,100,277,6.95283e-310,4.67892e-310,0,0,KnoBAB + Support,Alternate Precedence,marking,FastOperator_v1,0,25,0.084502,0.009221,25.3964,1928.41,No,1
+../bpic_2011/data/1000/log.xes,T,1116.82,120.217,1000,608,6.95261e-310,4.68821e-310,0,0,KnoBAB + Support,Alternate Precedence,marking,FastOperator_v1,0,25,0.213387,0.009809,60.5254,11185.8,No,1
+../bpic_2011/data/1000/log.xes,T,1081.59,121.802,1000,608,6.95261e-310,4.68821e-310,0,0,KnoBAB + Support,Alternate Precedence,marking,FastOperator_v1,0,25,0.178811,0.009384,59.1313,11249.7,No,1
+../bpic_2011/data/1000/log.xes,T,1096.33,120.583,1000,608,6.95261e-310,4.68821e-310,0,0,KnoBAB + Support,Alternate Precedence,marking,FastOperator_v1,0,25,0.180427,0.009518,59.0522,11167.9,No,1
+../bpic_2011/data/1000/log.xes,T,1104.36,121.935,1000,608,6.95261e-310,4.68821e-310,0,0,KnoBAB + Support,Alternate Precedence,marking,FastOperator_v1,0,25,0.183682,0.010087,59.621,11429.9,No,1
+../bpic_2011/data/1000/log.xes,T,1105.29,122.457,1000,608,6.95261e-310,4.68821e-310,0,0,KnoBAB + Support,Alternate Precedence,marking,FastOperator_v1,0,25,0.25865,0.011866,59.9266,11181.8,No,1
+../bpic_2011/data/10/log.xes,T,50.6056,2.70579,10,159,6.95263e-310,4.65682e-310,0,0,KnoBAB + Support,Chain Precedence,marking,FastOperator_v1,0,25,0.044026,0.009727,4.41484,3.8023,No,1
+../bpic_2011/data/10/log.xes,T,47.4876,2.74467,10,159,6.95263e-310,4.65682e-310,0,0,KnoBAB + Support,Chain Precedence,marking,FastOperator_v1,0,25,0.042637,0.009182,4.40295,3.22866,No,1
+../bpic_2011/data/10/log.xes,T,45.6237,2.93856,10,159,6.95263e-310,4.65682e-310,0,0,KnoBAB + Support,Chain Precedence,marking,FastOperator_v1,0,25,0.060134,0.009422,4.32053,2.97833,No,1
+../bpic_2011/data/10/log.xes,T,45.4271,2.79731,10,159,6.95263e-310,4.65682e-310,0,0,KnoBAB + Support,Chain Precedence,marking,FastOperator_v1,0,25,0.043601,0.00958,4.4628,2.93077,No,1
+../bpic_2011/data/10/log.xes,T,44.5381,2.79527,10,159,6.95263e-310,4.65682e-310,0,0,KnoBAB + Support,Chain Precedence,marking,FastOperator_v1,0,25,0.078112,0.009754,4.37156,3.00288,No,1
+../bpic_2011/data/100/log.xes,T,127.224,11.6619,100,277,6.95311e-310,4.68607e-310,0,0,KnoBAB + Support,Chain Precedence,marking,FastOperator_v1,0,25,0.069417,0.009277,7.48893,15.2091,No,1
+../bpic_2011/data/100/log.xes,T,120.72,11.6187,100,277,6.95311e-310,4.68607e-310,0,0,KnoBAB + Support,Chain Precedence,marking,FastOperator_v1,0,25,0.065934,0.011845,7.56684,12.2037,No,1
+../bpic_2011/data/100/log.xes,T,117.902,11.6076,100,277,6.95311e-310,4.68607e-310,0,0,KnoBAB + Support,Chain Precedence,marking,FastOperator_v1,0,25,0.06789,0.009366,7.49085,13.0641,No,1
+../bpic_2011/data/100/log.xes,T,120.06,11.8738,100,277,6.95311e-310,4.68607e-310,0,0,KnoBAB + Support,Chain Precedence,marking,FastOperator_v1,0,25,0.067393,0.009171,7.44689,12.7748,No,1
+../bpic_2011/data/100/log.xes,T,121.689,11.5383,100,277,6.95311e-310,4.68607e-310,0,0,KnoBAB + Support,Chain Precedence,marking,FastOperator_v1,0,25,0.125626,0.009066,7.52262,16.8154,No,1
+../bpic_2011/data/1000/log.xes,T,1126.67,122.103,1000,608,6.95258e-310,4.6721e-310,0,0,KnoBAB + Support,Chain Precedence,marking,FastOperator_v1,0,25,0.171794,0.010341,17.4448,168.418,No,1
+../bpic_2011/data/1000/log.xes,T,1099.78,122.327,1000,608,6.95258e-310,4.6721e-310,0,0,KnoBAB + Support,Chain Precedence,marking,FastOperator_v1,0,25,0.175264,0.009989,17.6399,165.051,No,1
+../bpic_2011/data/1000/log.xes,T,1109.65,121.731,1000,608,6.95258e-310,4.6721e-310,0,0,KnoBAB + Support,Chain Precedence,marking,FastOperator_v1,0,25,0.189047,0.010435,17.5931,164.215,No,1
+../bpic_2011/data/1000/log.xes,T,1108.46,120.53,1000,608,6.95258e-310,4.6721e-310,0,0,KnoBAB + Support,Chain Precedence,marking,FastOperator_v1,0,25,0.183088,0.010263,17.6541,172.121,No,1
+../bpic_2011/data/1000/log.xes,T,1153.41,122.146,1000,608,6.95258e-310,4.6721e-310,0,0,KnoBAB + Support,Chain Precedence,marking,FastOperator_v1,0,25,0.187473,0.010137,17.4204,163.869,No,1
+../bpic_2011/data/10/log.xes,T,52.1485,2.72384,10,159,6.95278e-310,4.68252e-310,0,0,KnoBAB + Support,Responded Existence,marking,FastOperator_v1,0,25,0.047014,0.009435,0.47163,0.043806,No,1
+../bpic_2011/data/10/log.xes,T,47.3745,2.72715,10,159,6.95278e-310,4.68252e-310,0,0,KnoBAB + Support,Responded Existence,marking,FastOperator_v1,0,25,0.04295,0.012291,0.421784,0.037692,No,1
+../bpic_2011/data/10/log.xes,T,42.3037,2.75863,10,159,6.95278e-310,4.68252e-310,0,0,KnoBAB + Support,Responded Existence,marking,FastOperator_v1,0,25,0.043521,0.010206,0.474607,0.040025,No,1
+../bpic_2011/data/10/log.xes,T,42.8586,2.83161,10,159,6.95278e-310,4.68252e-310,0,0,KnoBAB + Support,Responded Existence,marking,FastOperator_v1,0,25,0.079223,0.030612,0.411157,0.037319,No,1
+../bpic_2011/data/10/log.xes,T,43.9235,2.80552,10,159,6.95278e-310,4.68252e-310,0,0,KnoBAB + Support,Responded Existence,marking,FastOperator_v1,0,25,0.043146,0.009743,0.481284,0.039225,No,1
+../bpic_2011/data/100/log.xes,T,126.124,12.0048,100,277,6.95322e-310,4.67194e-310,0,0,KnoBAB + Support,Responded Existence,marking,FastOperator_v1,0,25,0.067166,0.009472,0.719036,0.260367,No,1
+../bpic_2011/data/100/log.xes,T,112.827,11.9677,100,277,6.95322e-310,4.67194e-310,0,0,KnoBAB + Support,Responded Existence,marking,FastOperator_v1,0,25,0.071709,0.009646,0.730709,0.24137,No,1
+../bpic_2011/data/100/log.xes,T,114.305,11.7682,100,277,6.95322e-310,4.67194e-310,0,0,KnoBAB + Support,Responded Existence,marking,FastOperator_v1,0,25,0.098577,0.010002,0.657965,0.270317,No,1
+../bpic_2011/data/100/log.xes,T,111.525,12.3168,100,277,6.95322e-310,4.67194e-310,0,0,KnoBAB + Support,Responded Existence,marking,FastOperator_v1,0,25,0.065474,0.009406,0.636965,0.239449,No,1
+../bpic_2011/data/100/log.xes,T,111.379,11.9592,100,277,6.95322e-310,4.67194e-310,0,0,KnoBAB + Support,Responded Existence,marking,FastOperator_v1,0,25,0.105578,0.023216,0.654086,0.279094,No,1
+../bpic_2011/data/1000/log.xes,T,1131.91,120.726,1000,608,6.9532e-310,4.66655e-310,0,0,KnoBAB + Support,Responded Existence,marking,FastOperator_v1,0,25,0.178956,0.010679,1.42874,1.9387,No,1
+../bpic_2011/data/1000/log.xes,T,1052.15,120.508,1000,608,6.9532e-310,4.66655e-310,0,0,KnoBAB + Support,Responded Existence,marking,FastOperator_v1,0,25,0.173723,0.013511,1.3027,1.85332,No,1
+../bpic_2011/data/1000/log.xes,T,1036.05,122.198,1000,608,6.9532e-310,4.66655e-310,0,0,KnoBAB + Support,Responded Existence,marking,FastOperator_v1,0,25,0.177696,0.010558,1.27367,1.92461,No,1
+../bpic_2011/data/1000/log.xes,T,1035.85,121.411,1000,608,6.9532e-310,4.66655e-310,0,0,KnoBAB + Support,Responded Existence,marking,FastOperator_v1,0,25,0.20957,0.010296,1.25543,1.953,No,1
+../bpic_2011/data/1000/log.xes,T,1037.03,120.516,1000,608,6.9532e-310,4.66655e-310,0,0,KnoBAB + Support,Responded Existence,marking,FastOperator_v1,0,25,0.181702,0.010599,1.26026,1.91998,No,1
+../bpic_2011/data/10/log.xes,T,50.3934,2.7106,10,159,6.95263e-310,4.68694e-310,0,0,KnoBAB + Support,Not Succession,marking,FastOperator_v1,0,25,0.042648,0.031887,7.30183,12.2355,No,1
+../bpic_2011/data/10/log.xes,T,48.827,2.8276,10,159,6.95263e-310,4.68694e-310,0,0,KnoBAB + Support,Not Succession,marking,FastOperator_v1,0,25,0.043922,0.009823,7.44087,11.5308,No,1
+../bpic_2011/data/10/log.xes,T,44.9315,2.87365,10,159,6.95263e-310,4.68694e-310,0,0,KnoBAB + Support,Not Succession,marking,FastOperator_v1,0,25,0.05809,0.010284,7.34396,11.6117,No,1
+../bpic_2011/data/10/log.xes,T,44.344,2.79397,10,159,6.95263e-310,4.68694e-310,0,0,KnoBAB + Support,Not Succession,marking,FastOperator_v1,0,25,0.044289,0.009879,7.47348,11.5776,No,1
+../bpic_2011/data/10/log.xes,T,44.9252,2.86499,10,159,6.95263e-310,4.68694e-310,0,0,KnoBAB + Support,Not Succession,marking,FastOperator_v1,0,25,0.044331,0.030925,7.48886,11.4475,No,1
+../bpic_2011/data/100/log.xes,T,127.577,11.6045,100,277,6.95263e-310,4.6668e-310,0,0,KnoBAB + Support,Not Succession,marking,FastOperator_v1,0,25,0.065737,0.009679,13.0889,29.0082,No,1
+../bpic_2011/data/100/log.xes,T,122.122,11.7274,100,277,6.95263e-310,4.6668e-310,0,0,KnoBAB + Support,Not Succession,marking,FastOperator_v1,0,25,0.103552,0.043075,12.9314,27.0618,No,1
+../bpic_2011/data/100/log.xes,T,116.727,11.7523,100,277,6.95263e-310,4.6668e-310,0,0,KnoBAB + Support,Not Succession,marking,FastOperator_v1,0,25,0.066592,0.01002,12.9891,26.8445,No,1
+../bpic_2011/data/100/log.xes,T,118.898,12.0893,100,277,6.95263e-310,4.6668e-310,0,0,KnoBAB + Support,Not Succession,marking,FastOperator_v1,0,25,0.092589,0.011617,12.9196,26.93,No,1
+../bpic_2011/data/100/log.xes,T,121.714,11.672,100,277,6.95263e-310,4.6668e-310,0,0,KnoBAB + Support,Not Succession,marking,FastOperator_v1,0,25,0.100286,0.014469,12.6695,29.0796,No,1
+../bpic_2011/data/1000/log.xes,T,1130.56,120.803,1000,608,6.95296e-310,4.68755e-310,0,0,KnoBAB + Support,Not Succession,marking,FastOperator_v1,0,25,0.170232,0.010132,32.6952,319.234,No,1
+../bpic_2011/data/1000/log.xes,T,1104.94,120.816,1000,608,6.95296e-310,4.68755e-310,0,0,KnoBAB + Support,Not Succession,marking,FastOperator_v1,0,25,0.178448,0.009216,32.0994,317.611,No,1
+../bpic_2011/data/1000/log.xes,T,1112.06,121.533,1000,608,6.95296e-310,4.68755e-310,0,0,KnoBAB + Support,Not Succession,marking,FastOperator_v1,0,25,0.243308,0.010807,32.2654,316.551,No,1
+../bpic_2011/data/1000/log.xes,T,1120.93,121.84,1000,608,6.95296e-310,4.68755e-310,0,0,KnoBAB + Support,Not Succession,marking,FastOperator_v1,0,25,0.232455,0.010241,32.1956,313.909,No,1
+../bpic_2011/data/1000/log.xes,T,1121.58,122.737,1000,608,6.95296e-310,4.68755e-310,0,0,KnoBAB + Support,Not Succession,marking,FastOperator_v1,0,25,0.182293,0.009504,32.0532,314.991,No,1
