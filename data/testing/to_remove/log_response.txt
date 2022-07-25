@@ -17,15 +17,10 @@
  * You should have received a copy of the GNU General Public License
  * along with bpm. If not, see <http://www.gnu.org/licenses/>.
  */
-{ } : A { x= -3.0 z = 1.0 };
-{ } : B { y= 8.0  z = 1.0 };
-{ } : C { y= 8.0  z = 1.0 };
 { } : A { x= -2.0 z = 1.0 } B { y= 7.0 };
-{ } : A { x= -2.0 z = 1.0 } C { y= 7.0 };
 { } : A { x= 3.0  z = 2.0 } B { y= 7.0 };
-{ } : A { x= 3.0  z = 2.0 } C { y= 7.0 };
-{ } : A { x= 4.0  z = 2.0 } B { y= 8.0 z = 3.0 } B { y= 0.0 z = 4.0 }  A { x= 1.0 z = 3.0 };
-{ } : A { x= 4.0  z = 2.0 } C { x= 8.0 z = 3.0 } B { y= 0.0 z = 4.0 }  A { x= 1.0 z = 5.0 };
+{ } : A { x= 4.0  z = 2.0 } B { y= 8.0 z = 3.0 } B { y= 0.0 z = 4.0 };
+{ } : A { x= 4.0  z = 2.0 } C { x= 8.0 z = 3.0 } B { y= 0.0 z = 4.0 } ;
 { } : A { x= 4.0  z = 2.0 } B { y= 0.0 z = 3.0 } B { y= 8.0 z = 4.0 }  A { x= 1.0 z = 5.0 }   B { y = -3.0 z = 6.0 } B {y = 0.0 z = 7.0 };
 { } : A { x= 4.0  z = 3.0 } B { y= 0.0 z = 3.0 } A { x= 1.0 z = 4.0 }  B { y = -3.0 z = 5.0 } B {y = 0.0   z = 6.0 };
 { } : A { x= 4.0  z = 3.0 } B { y= 0.0 z = 2.0 } B { y= 8.0 z = 1.0 }  A { x= 1.0 z = 0.0 }   B { y = -3.0 z = -1.0 } ;

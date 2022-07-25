@@ -18,6 +18,14 @@ add_executable(until_test until_test.cpp)
 target_link_libraries(until_test gtest_main knobab yaucl_hashing yaucl_bpm knobab_flloat Threads::Threads)
 gtest_discover_tests(until_test)
 
+add_executable(complete_response testing_complete_response.cpp)
+target_link_libraries(complete_response gtest_main knobab yaucl_hashing yaucl_bpm knobab_flloat Threads::Threads)
+gtest_discover_tests(complete_response)
+
+add_executable(ideas22_tests ideas22_tests.cpp)
+target_link_libraries(ideas22_tests gtest_main knobab yaucl_hashing yaucl_bpm knobab_flloat Threads::Threads)
+gtest_discover_tests(ideas22_tests)
+
 add_executable(ltlf_operators_test ltlf_operators_test.cpp)
 target_link_libraries(ltlf_operators_test gtest_main knobab yaucl_hashing yaucl_bpm knobab_flloat Threads::Threads)
 gtest_discover_tests(ltlf_operators_test)
@@ -30,10 +38,3 @@ add_executable(slow_declare single_declare_slow.cpp)
 target_link_libraries(slow_declare gtest_main knobab yaucl_hashing yaucl_bpm knobab_flloat Threads::Threads)
 gtest_discover_tests(slow_declare)
 
-add_executable(complete_response testing_complete_response.cpp)
-target_link_libraries(complete_response gtest_main knobab yaucl_hashing yaucl_bpm knobab_flloat Threads::Threads)
-gtest_discover_tests(complete_response)
-
-add_executable(ideas22_tests ideas22_tests.cpp)
-target_link_libraries(ideas22_tests gtest_main knobab yaucl_hashing yaucl_bpm knobab_flloat Threads::Threads)
-gtest_discover_tests(ideas22_tests)

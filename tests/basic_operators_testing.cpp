@@ -9,12 +9,12 @@
 #include <knobab/Environment.h>
 #include <gtest/gtest.h>
 #include <knobab/operators/fast_ltlf_operators.h>
-#include "log_for_tests.h"
+
 
 class basic_operators : public testing::Test {
 protected:
     void SetUp() override {
-        std::filesystem::path curr = std::filesystem::current_path().parent_path().parent_path() / "data" / "testing" / "log.txt";
+        std::filesystem::path curr = std::filesystem::current_path().parent_path().parent_path() / "data" / "testing" / "basic_operator_testing" / "log.txt";
         std::ifstream file{curr};
         env.load_log(HUMAN_READABLE_YAUCL, true, curr.filename(), false, file);
     }

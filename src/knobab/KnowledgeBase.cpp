@@ -992,6 +992,9 @@ PartialResult
 KnowledgeBase::untimed_dataless_absence(const std::pair<const uint32_t, const uint32_t> &indexes, const event_t &amount) const {
     PartialResult foundElems;
 
+    if ((indexes.first == indexes.second) && (indexes.first == (uint32_t)-1))
+        return foundElems;
+
     for (auto it = count_table.table.begin() + indexes.first; it != count_table.table.begin() + indexes.second + 1; ++it) {
         //uint16_t approxConstant = act_table_by_act_id.getTraceLength(it->id.parts.trace_id) / 2;
         //double satisfiability = getSatisifiabilityBetweenValues(amount, it->id.parts.event_id, approxConstant);

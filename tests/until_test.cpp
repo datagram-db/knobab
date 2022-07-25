@@ -12,12 +12,11 @@
 #include <gtest/gtest.h>
 #include <knobab/operators/simple_ltlf_operators.h>
 #include <knobab/operators/fast_ltlf_operators.h>
-#include "log_for_tests.h"
 
 class until_tests : public testing::Test {
 protected:
     void SetUp() override {
-        auto file = std::filesystem::current_path().parent_path().parent_path() / "data" / "testing" / "logUntil.txt";
+        auto file = std::filesystem::current_path().parent_path().parent_path() / "data" / "testing" / "until_test" / "logUntil.txt";
         {
             std::ifstream if_{file};
             env.load_log(HUMAN_READABLE_YAUCL, true, file.string(), false, if_);
