@@ -1,2 +1,0 @@
-"Init"("__trace_payload", var "ca" >= 23.5, 1)
-"Init"("__trace_payload", var "patient" != "0", 1)

@@ -1,1 +1,0 @@
-"Exists1"("Mastectomy", var "ca" >= 23.5 && var "biopsy" >= 1.0, 1)

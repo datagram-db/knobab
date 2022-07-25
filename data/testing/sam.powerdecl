@@ -1,2 +1,0 @@
-"Response"("A", var "x" > 5.0, "B", var "x" > 5.0)
-"Succession"("A", var "x" > 5.0, "B", var "x" > 5.0)
