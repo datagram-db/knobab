@@ -1,3 +1,5 @@
+## This scripts converts any Log trace to the untold assumption from the paper,
+## that is, that all of the trace payloads have to be injected at the event level.
 from opyenxes.data_in.XUniversalParser import XUniversalParser
 from opyenxes.data_out.XesXmlSerializer import XesXmlSerializer
 from opyenxes.factory.XFactory import XFactory
