@@ -1,0 +1,241 @@
+log_filename,with_data,log_loading_and_parsing_ms,log_indexing_ms,n_traces,n_acts,log_trace_average_length,log_trace_variance,most_frequent_trace_length,trace_length_frequency,atomization_conf,model_filename,queries_plan,operators_version,model_parsing_ms,model_size,model_data_decomposition_time,model_atomization_time,model_declare_to_ltlf,model_ltlf_query_time,is_multithreaded,no_threads
+../bpic_2011/data/10/log.xes,T,48.931,2.59496,10,159,6.95298e-310,4.64651e-310,0,0,KnoBAB + Max-SAT,Response,marking,FastOperator_v1,0,25,0.044865,0.00919,4.2152,11.9475,No,1
+../bpic_2011/data/10/log.xes,T,47.1083,2.61231,10,159,6.95298e-310,4.64651e-310,0,0,KnoBAB + Max-SAT,Response,marking,FastOperator_v1,0,25,0.044582,0.010253,4.32592,10.1615,No,1
+../bpic_2011/data/10/log.xes,T,44.8372,2.73675,10,159,6.95298e-310,4.64651e-310,0,0,KnoBAB + Max-SAT,Response,marking,FastOperator_v1,0,25,0.094085,0.028601,4.57208,10.6907,No,1
+../bpic_2011/data/10/log.xes,T,46.6555,2.65384,10,159,6.95298e-310,4.64651e-310,0,0,KnoBAB + Max-SAT,Response,marking,FastOperator_v1,0,25,0.05591,0.009547,4.30344,10.174,No,1
+../bpic_2011/data/10/log.xes,T,45.3337,2.87832,10,159,6.95298e-310,4.64651e-310,0,0,KnoBAB + Max-SAT,Response,marking,FastOperator_v1,0,25,0.048086,0.010725,4.59558,10.4107,No,1
+../bpic_2011/data/100/log.xes,T,124.685,11.5205,100,277,6.95319e-310,4.68262e-310,0,0,KnoBAB + Max-SAT,Response,marking,FastOperator_v1,0,25,0.081979,0.009946,7.75196,26.9427,No,1
+../bpic_2011/data/100/log.xes,T,118.983,11.5726,100,277,6.95319e-310,4.68262e-310,0,0,KnoBAB + Max-SAT,Response,marking,FastOperator_v1,0,25,0.165412,0.029565,7.64805,24.3683,No,1
+../bpic_2011/data/100/log.xes,T,116.523,11.8189,100,277,6.95319e-310,4.68262e-310,0,0,KnoBAB + Max-SAT,Response,marking,FastOperator_v1,0,25,0.07968,0.01079,7.59667,25.1557,No,1
+../bpic_2011/data/100/log.xes,T,118.864,11.8125,100,277,6.95319e-310,4.68262e-310,0,0,KnoBAB + Max-SAT,Response,marking,FastOperator_v1,0,25,0.08076,0.010324,7.86873,28.7161,No,1
+../bpic_2011/data/100/log.xes,T,119.18,12.0946,100,277,6.95319e-310,4.68262e-310,0,0,KnoBAB + Max-SAT,Response,marking,FastOperator_v1,0,25,0.073251,0.009932,7.88582,29.1197,No,1
+../bpic_2011/data/1000/log.xes,T,1101.73,120.632,1000,608,6.9528e-310,4.64316e-310,0,0,KnoBAB + Max-SAT,Response,marking,FastOperator_v1,0,25,0.169522,0.029389,17.8465,273.841,No,1
+../bpic_2011/data/1000/log.xes,T,1083.31,120.715,1000,608,6.9528e-310,4.64316e-310,0,0,KnoBAB + Max-SAT,Response,marking,FastOperator_v1,0,25,0.19004,0.010782,17.6658,278.309,No,1
+../bpic_2011/data/1000/log.xes,T,1094.98,121.65,1000,608,6.9528e-310,4.64316e-310,0,0,KnoBAB + Max-SAT,Response,marking,FastOperator_v1,0,25,0.186081,0.010477,18.1369,276.866,No,1
+../bpic_2011/data/1000/log.xes,T,1106.22,125.008,1000,608,6.9528e-310,4.64316e-310,0,0,KnoBAB + Max-SAT,Response,marking,FastOperator_v1,0,25,0.1924,0.01022,17.8788,278.121,No,1
+../bpic_2011/data/1000/log.xes,T,1102.9,123.592,1000,608,6.9528e-310,4.64316e-310,0,0,KnoBAB + Max-SAT,Response,marking,FastOperator_v1,0,25,0.196244,0.010245,18.0625,279.971,No,1
+../bpic_2011/data/10/log.xes,T,49.399,2.59384,10,159,6.95329e-310,4.67004e-310,0,0,KnoBAB + Max-SAT,Alternate Response,marking,FastOperator_v1,0,25,0.058365,0.009352,7.28069,26.6581,No,1
+../bpic_2011/data/10/log.xes,T,47.3164,2.81848,10,159,6.95329e-310,4.67004e-310,0,0,KnoBAB + Max-SAT,Alternate Response,marking,FastOperator_v1,0,25,0.120348,0.009437,8.09238,24.9767,No,1
+../bpic_2011/data/10/log.xes,T,46.5854,2.83013,10,159,6.95329e-310,4.67004e-310,0,0,KnoBAB + Max-SAT,Alternate Response,marking,FastOperator_v1,0,25,0.043672,0.010418,7.6575,24.8815,No,1
+../bpic_2011/data/10/log.xes,T,46.0029,2.78473,10,159,6.95329e-310,4.67004e-310,0,0,KnoBAB + Max-SAT,Alternate Response,marking,FastOperator_v1,0,25,0.04946,0.009831,7.5878,25.3252,No,1
+../bpic_2011/data/10/log.xes,T,46.745,2.92294,10,159,6.95329e-310,4.67004e-310,0,0,KnoBAB + Max-SAT,Alternate Response,marking,FastOperator_v1,0,25,0.059298,0.009965,7.62468,25.2346,No,1
+../bpic_2011/data/100/log.xes,T,122.106,10.8245,100,277,6.9526e-310,4.6504e-310,0,0,KnoBAB + Max-SAT,Alternate Response,marking,FastOperator_v1,0,25,0.082757,0.012697,12.7218,1774.56,No,1
+../bpic_2011/data/100/log.xes,T,116.274,11.1946,100,277,6.9526e-310,4.6504e-310,0,0,KnoBAB + Max-SAT,Alternate Response,marking,FastOperator_v1,0,25,0.080369,0.009087,12.9861,1858.58,No,1
+../bpic_2011/data/100/log.xes,T,132.091,11.3073,100,277,6.9526e-310,4.6504e-310,0,0,KnoBAB + Max-SAT,Alternate Response,marking,FastOperator_v1,0,25,0.083366,0.009251,13.2349,1775.53,No,1
+../bpic_2011/data/100/log.xes,T,117.039,11.2366,100,277,6.9526e-310,4.6504e-310,0,0,KnoBAB + Max-SAT,Alternate Response,marking,FastOperator_v1,0,25,0.082394,0.028986,12.9607,1787.05,No,1
+../bpic_2011/data/100/log.xes,T,118.735,11.3109,100,277,6.9526e-310,4.6504e-310,0,0,KnoBAB + Max-SAT,Alternate Response,marking,FastOperator_v1,0,25,0.070648,0.00942,13.3284,1865.16,No,1
+../bpic_2011/data/1000/log.xes,T,1135.78,122.952,1000,608,6.95268e-310,4.65128e-310,0,0,KnoBAB + Max-SAT,Alternate Response,marking,FastOperator_v1,0,25,0.260433,0.011087,37.6066,11330.4,No,1
+../bpic_2011/data/1000/log.xes,T,1122.15,123.657,1000,608,6.95268e-310,4.65128e-310,0,0,KnoBAB + Max-SAT,Alternate Response,marking,FastOperator_v1,0,25,0.230955,0.010964,36.3127,11279.1,No,1
+../bpic_2011/data/1000/log.xes,T,1229.32,139.204,1000,608,6.95268e-310,4.65128e-310,0,0,KnoBAB + Max-SAT,Alternate Response,marking,FastOperator_v1,0,25,0.185277,0.009683,34.5529,11026.1,No,1
+../bpic_2011/data/1000/log.xes,T,1318.77,126.034,1000,608,6.95268e-310,4.65128e-310,0,0,KnoBAB + Max-SAT,Alternate Response,marking,FastOperator_v1,0,25,0.264088,0.011483,43.5706,11071.1,No,1
+../bpic_2011/data/1000/log.xes,T,1496.08,158.738,1000,608,6.95268e-310,4.65128e-310,0,0,KnoBAB + Max-SAT,Alternate Response,marking,FastOperator_v1,0,25,0.209066,0.01012,39.3656,11625.2,No,1
+../bpic_2011/data/10/log.xes,T,51.1905,2.75087,10,159,6.95289e-310,4.66418e-310,0,0,KnoBAB + Max-SAT,Chain Response,marking,FastOperator_v1,0,25,0.047544,0.009635,4.57206,3.301,No,1
+../bpic_2011/data/10/log.xes,T,48.0027,2.8423,10,159,6.95289e-310,4.66418e-310,0,0,KnoBAB + Max-SAT,Chain Response,marking,FastOperator_v1,0,25,0.042854,0.009361,4.55827,2.62279,No,1
+../bpic_2011/data/10/log.xes,T,45.6289,2.808,10,159,6.95289e-310,4.66418e-310,0,0,KnoBAB + Max-SAT,Chain Response,marking,FastOperator_v1,0,25,0.059236,0.009678,4.58419,2.47073,No,1
+../bpic_2011/data/10/log.xes,T,44.0753,2.84434,10,159,6.95289e-310,4.66418e-310,0,0,KnoBAB + Max-SAT,Chain Response,marking,FastOperator_v1,0,25,0.044067,0.00953,4.47832,2.49032,No,1
+../bpic_2011/data/10/log.xes,T,44.4985,2.90345,10,159,6.95289e-310,4.66418e-310,0,0,KnoBAB + Max-SAT,Chain Response,marking,FastOperator_v1,0,25,0.045232,0.009865,4.48541,2.42571,No,1
+../bpic_2011/data/100/log.xes,T,127.855,11.7571,100,277,6.9527e-310,4.6576e-310,0,0,KnoBAB + Max-SAT,Chain Response,marking,FastOperator_v1,0,25,0.070681,0.009094,7.77846,12.0564,No,1
+../bpic_2011/data/100/log.xes,T,120.942,11.5214,100,277,6.9527e-310,4.6576e-310,0,0,KnoBAB + Max-SAT,Chain Response,marking,FastOperator_v1,0,25,0.066106,0.009067,7.79568,9.91918,No,1
+../bpic_2011/data/100/log.xes,T,117.264,11.6968,100,277,6.9527e-310,4.6576e-310,0,0,KnoBAB + Max-SAT,Chain Response,marking,FastOperator_v1,0,25,0.066992,0.009205,7.83261,9.83436,No,1
+../bpic_2011/data/100/log.xes,T,119.76,11.6146,100,277,6.9527e-310,4.6576e-310,0,0,KnoBAB + Max-SAT,Chain Response,marking,FastOperator_v1,0,25,0.068466,0.009016,7.74019,9.61589,No,1
+../bpic_2011/data/100/log.xes,T,120.509,11.7907,100,277,6.9527e-310,4.6576e-310,0,0,KnoBAB + Max-SAT,Chain Response,marking,FastOperator_v1,0,25,0.067312,0.008773,7.85322,16.5086,No,1
+../bpic_2011/data/1000/log.xes,T,1139.39,124.703,1000,608,6.95319e-310,4.65124e-310,0,0,KnoBAB + Max-SAT,Chain Response,marking,FastOperator_v1,0,25,0.177596,0.009403,18.4335,138.424,No,1
+../bpic_2011/data/1000/log.xes,T,1111.04,126.248,1000,608,6.95319e-310,4.65124e-310,0,0,KnoBAB + Max-SAT,Chain Response,marking,FastOperator_v1,0,25,0.189095,0.012641,18.0905,136.827,No,1
+../bpic_2011/data/1000/log.xes,T,1109.75,122.795,1000,608,6.95319e-310,4.65124e-310,0,0,KnoBAB + Max-SAT,Chain Response,marking,FastOperator_v1,0,25,0.193206,0.009891,18.2083,134.694,No,1
+../bpic_2011/data/1000/log.xes,T,1112.33,122.864,1000,608,6.95319e-310,4.65124e-310,0,0,KnoBAB + Max-SAT,Chain Response,marking,FastOperator_v1,0,25,0.181466,0.010103,18.2961,133.145,No,1
+../bpic_2011/data/1000/log.xes,T,1114.74,123.195,1000,608,6.95319e-310,4.65124e-310,0,0,KnoBAB + Max-SAT,Chain Response,marking,FastOperator_v1,0,25,0.198969,0.009578,18.1363,134.349,No,1
+../bpic_2011/data/10/log.xes,T,48.7146,2.61139,10,159,6.95274e-310,4.67882e-310,0,0,KnoBAB + Max-SAT,Precedence,marking,FastOperator_v1,0,25,0.076259,0.010452,4.36826,3.28608,No,1
+../bpic_2011/data/10/log.xes,T,44.8716,2.60542,10,159,6.95274e-310,4.67882e-310,0,0,KnoBAB + Max-SAT,Precedence,marking,FastOperator_v1,0,25,0.041931,0.010316,4.22811,2.77181,No,1
+../bpic_2011/data/10/log.xes,T,42.2344,2.94975,10,159,6.95274e-310,4.67882e-310,0,0,KnoBAB + Max-SAT,Precedence,marking,FastOperator_v1,0,25,0.04678,0.010865,4.37832,2.86591,No,1
+../bpic_2011/data/10/log.xes,T,41.9436,2.68204,10,159,6.95274e-310,4.67882e-310,0,0,KnoBAB + Max-SAT,Precedence,marking,FastOperator_v1,0,25,0.076159,0.009924,4.39116,3.00015,No,1
+../bpic_2011/data/10/log.xes,T,41.7544,2.81459,10,159,6.95274e-310,4.67882e-310,0,0,KnoBAB + Max-SAT,Precedence,marking,FastOperator_v1,0,25,0.043679,0.024115,4.22976,2.85708,No,1
+../bpic_2011/data/100/log.xes,T,125.378,11.4946,100,277,6.95304e-310,4.66244e-310,0,0,KnoBAB + Max-SAT,Precedence,marking,FastOperator_v1,0,25,0.079128,0.012386,7.38438,11.2957,No,1
+../bpic_2011/data/100/log.xes,T,120.473,11.5,100,277,6.95304e-310,4.66244e-310,0,0,KnoBAB + Max-SAT,Precedence,marking,FastOperator_v1,0,25,0.133032,0.01011,7.33186,11.4309,No,1
+../bpic_2011/data/100/log.xes,T,118.468,11.5977,100,277,6.95304e-310,4.66244e-310,0,0,KnoBAB + Max-SAT,Precedence,marking,FastOperator_v1,0,25,0.079574,0.012353,7.38738,11.4739,No,1
+../bpic_2011/data/100/log.xes,T,120.878,11.8471,100,277,6.95304e-310,4.66244e-310,0,0,KnoBAB + Max-SAT,Precedence,marking,FastOperator_v1,0,25,0.08317,0.012335,7.47481,11.5044,No,1
+../bpic_2011/data/100/log.xes,T,118.153,11.6972,100,277,6.95304e-310,4.66244e-310,0,0,KnoBAB + Max-SAT,Precedence,marking,FastOperator_v1,0,25,0.081545,0.009171,7.41858,12.9073,No,1
+../bpic_2011/data/1000/log.xes,T,1126.73,121.41,1000,608,6.95318e-310,4.67412e-310,0,0,KnoBAB + Max-SAT,Precedence,marking,FastOperator_v1,0,25,0.170104,0.012487,17.8073,101.63,No,1
+../bpic_2011/data/1000/log.xes,T,1092.31,121.668,1000,608,6.95318e-310,4.67412e-310,0,0,KnoBAB + Max-SAT,Precedence,marking,FastOperator_v1,0,25,0.19892,0.011052,17.586,103.54,No,1
+../bpic_2011/data/1000/log.xes,T,1097.21,122.36,1000,608,6.95318e-310,4.67412e-310,0,0,KnoBAB + Max-SAT,Precedence,marking,FastOperator_v1,0,25,0.178357,0.010646,17.457,101.15,No,1
+../bpic_2011/data/1000/log.xes,T,1099.25,122.314,1000,608,6.95318e-310,4.67412e-310,0,0,KnoBAB + Max-SAT,Precedence,marking,FastOperator_v1,0,25,0.180286,0.029865,17.4903,100.827,No,1
+../bpic_2011/data/1000/log.xes,T,1100.45,122.966,1000,608,6.95318e-310,4.67412e-310,0,0,KnoBAB + Max-SAT,Precedence,marking,FastOperator_v1,0,25,0.215611,0.010296,17.5199,100.033,No,1
+../bpic_2011/data/10/log.xes,T,50.7347,2.76158,10,159,6.95268e-310,4.65899e-310,0,0,KnoBAB + Max-SAT,Alternate Precedence,marking,FastOperator_v1,0,25,0.042151,0.009673,14.5214,32.9372,No,1
+../bpic_2011/data/10/log.xes,T,47.933,2.8197,10,159,6.95268e-310,4.65899e-310,0,0,KnoBAB + Max-SAT,Alternate Precedence,marking,FastOperator_v1,0,25,0.043118,0.009441,14.0875,29.4394,No,1
+../bpic_2011/data/10/log.xes,T,48.4143,2.78851,10,159,6.95268e-310,4.65899e-310,0,0,KnoBAB + Max-SAT,Alternate Precedence,marking,FastOperator_v1,0,25,0.057688,0.009682,14.2591,29.1388,No,1
+../bpic_2011/data/10/log.xes,T,48.9715,2.79351,10,159,6.95268e-310,4.65899e-310,0,0,KnoBAB + Max-SAT,Alternate Precedence,marking,FastOperator_v1,0,25,0.058683,0.00962,14.0368,29.3566,No,1
+../bpic_2011/data/10/log.xes,T,48.2318,2.84628,10,159,6.95268e-310,4.65899e-310,0,0,KnoBAB + Max-SAT,Alternate Precedence,marking,FastOperator_v1,0,25,0.044861,0.009593,13.7657,30.2312,No,1
+../bpic_2011/data/100/log.xes,T,122.173,10.8198,100,277,6.95313e-310,4.67089e-310,0,0,KnoBAB + Max-SAT,Alternate Precedence,marking,FastOperator_v1,0,25,0.102641,0.008965,24.8347,1866.33,No,1
+../bpic_2011/data/100/log.xes,T,118.908,11.1614,100,277,6.95313e-310,4.67089e-310,0,0,KnoBAB + Max-SAT,Alternate Precedence,marking,FastOperator_v1,0,25,0.103083,0.00915,25.1829,1868.64,No,1
+../bpic_2011/data/100/log.xes,T,114.845,11.1415,100,277,6.95313e-310,4.67089e-310,0,0,KnoBAB + Max-SAT,Alternate Precedence,marking,FastOperator_v1,0,25,0.105741,0.009254,24.1544,1854.75,No,1
+../bpic_2011/data/100/log.xes,T,117.945,11.2619,100,277,6.95313e-310,4.67089e-310,0,0,KnoBAB + Max-SAT,Alternate Precedence,marking,FastOperator_v1,0,25,0.105678,0.009022,24.3025,1859.56,No,1
+../bpic_2011/data/100/log.xes,T,118.367,11.3779,100,277,6.95313e-310,4.67089e-310,0,0,KnoBAB + Max-SAT,Alternate Precedence,marking,FastOperator_v1,0,25,0.070507,0.009343,25.1125,1871.92,No,1
+../bpic_2011/data/1000/log.xes,T,1076.91,117.508,1000,608,6.95303e-310,4.64128e-310,0,0,KnoBAB + Max-SAT,Alternate Precedence,marking,FastOperator_v1,0,25,0.198142,0.010347,59.0226,10851.5,No,1
+../bpic_2011/data/1000/log.xes,T,1046.9,118.521,1000,608,6.95303e-310,4.64128e-310,0,0,KnoBAB + Max-SAT,Alternate Precedence,marking,FastOperator_v1,0,25,0.185591,0.009641,60.8279,10902.3,No,1
+../bpic_2011/data/1000/log.xes,T,1059.58,117.891,1000,608,6.95303e-310,4.64128e-310,0,0,KnoBAB + Max-SAT,Alternate Precedence,marking,FastOperator_v1,0,25,0.259476,0.009825,58.0365,10746.9,No,1
+../bpic_2011/data/1000/log.xes,T,1066.34,119.304,1000,608,6.95303e-310,4.64128e-310,0,0,KnoBAB + Max-SAT,Alternate Precedence,marking,FastOperator_v1,0,25,0.239199,0.009984,58.373,10900.1,No,1
+../bpic_2011/data/1000/log.xes,T,1188.91,120.93,1000,608,6.95303e-310,4.64128e-310,0,0,KnoBAB + Max-SAT,Alternate Precedence,marking,FastOperator_v1,0,25,0.19245,0.010253,58.7714,10850.7,No,1
+../bpic_2011/data/10/log.xes,T,50.0033,2.70106,10,159,6.95326e-310,4.65905e-310,0,0,KnoBAB + Max-SAT,Chain Precedence,marking,FastOperator_v1,0,25,0.06052,0.010058,5.04439,3.76659,No,1
+../bpic_2011/data/10/log.xes,T,46.8446,2.71612,10,159,6.95326e-310,4.65905e-310,0,0,KnoBAB + Max-SAT,Chain Precedence,marking,FastOperator_v1,0,25,0.056667,0.00953,4.44815,2.91475,No,1
+../bpic_2011/data/10/log.xes,T,45.3101,2.80998,10,159,6.95326e-310,4.65905e-310,0,0,KnoBAB + Max-SAT,Chain Precedence,marking,FastOperator_v1,0,25,0.042488,0.010816,4.39589,2.82028,No,1
+../bpic_2011/data/10/log.xes,T,44.4258,2.82532,10,159,6.95326e-310,4.65905e-310,0,0,KnoBAB + Max-SAT,Chain Precedence,marking,FastOperator_v1,0,25,0.044648,0.010513,4.4017,2.86975,No,1
+../bpic_2011/data/10/log.xes,T,45.0409,2.81678,10,159,6.95326e-310,4.65905e-310,0,0,KnoBAB + Max-SAT,Chain Precedence,marking,FastOperator_v1,0,25,0.044078,0.012177,4.3556,2.84656,No,1
+../bpic_2011/data/100/log.xes,T,124.162,11.5023,100,277,6.95329e-310,4.65328e-310,0,0,KnoBAB + Max-SAT,Chain Precedence,marking,FastOperator_v1,0,25,0.081888,0.009756,7.5642,14.8033,No,1
+../bpic_2011/data/100/log.xes,T,120.847,11.6497,100,277,6.95329e-310,4.65328e-310,0,0,KnoBAB + Max-SAT,Chain Precedence,marking,FastOperator_v1,0,25,0.079745,0.029175,7.5248,11.5604,No,1
+../bpic_2011/data/100/log.xes,T,117.776,11.6416,100,277,6.95329e-310,4.65328e-310,0,0,KnoBAB + Max-SAT,Chain Precedence,marking,FastOperator_v1,0,25,0.067959,0.011489,7.60167,12.263,No,1
+../bpic_2011/data/100/log.xes,T,120.273,11.6739,100,277,6.95329e-310,4.65328e-310,0,0,KnoBAB + Max-SAT,Chain Precedence,marking,FastOperator_v1,0,25,0.080058,0.009691,7.55211,12.1554,No,1
+../bpic_2011/data/100/log.xes,T,123.256,11.6532,100,277,6.95329e-310,4.65328e-310,0,0,KnoBAB + Max-SAT,Chain Precedence,marking,FastOperator_v1,0,25,0.068199,0.009195,7.67283,17.4017,No,1
+../bpic_2011/data/1000/log.xes,T,1127.63,120.312,1000,608,6.9532e-310,4.68248e-310,0,0,KnoBAB + Max-SAT,Chain Precedence,marking,FastOperator_v1,0,25,0.213153,0.010068,17.8939,160.689,No,1
+../bpic_2011/data/1000/log.xes,T,1107.97,120.223,1000,608,6.9532e-310,4.68248e-310,0,0,KnoBAB + Max-SAT,Chain Precedence,marking,FastOperator_v1,0,25,0.176363,0.010321,17.5855,158.455,No,1
+../bpic_2011/data/1000/log.xes,T,1118.66,123.287,1000,608,6.9532e-310,4.68248e-310,0,0,KnoBAB + Max-SAT,Chain Precedence,marking,FastOperator_v1,0,25,0.190262,0.009488,17.3814,157.19,No,1
+../bpic_2011/data/1000/log.xes,T,1115.86,123.037,1000,608,6.9532e-310,4.68248e-310,0,0,KnoBAB + Max-SAT,Chain Precedence,marking,FastOperator_v1,0,25,0.178574,0.010297,17.442,156.018,No,1
+../bpic_2011/data/1000/log.xes,T,1123.97,122.739,1000,608,6.9532e-310,4.68248e-310,0,0,KnoBAB + Max-SAT,Chain Precedence,marking,FastOperator_v1,0,25,0.182215,0.010288,17.7596,157.043,No,1
+../bpic_2011/data/10/log.xes,T,51.8577,2.75624,10,159,6.95305e-310,4.65904e-310,0,0,KnoBAB + Max-SAT,Responded Existence,marking,FastOperator_v1,0,25,0.047074,0.009614,0.492632,0.035152,No,1
+../bpic_2011/data/10/log.xes,T,46.8295,2.7481,10,159,6.95305e-310,4.65904e-310,0,0,KnoBAB + Max-SAT,Responded Existence,marking,FastOperator_v1,0,25,0.043176,0.009491,0.431839,0.032203,No,1
+../bpic_2011/data/10/log.xes,T,41.635,2.64925,10,159,6.95305e-310,4.65904e-310,0,0,KnoBAB + Max-SAT,Responded Existence,marking,FastOperator_v1,0,25,0.048689,0.014106,0.40842,0.032078,No,1
+../bpic_2011/data/10/log.xes,T,43.0882,2.61468,10,159,6.95305e-310,4.65904e-310,0,0,KnoBAB + Max-SAT,Responded Existence,marking,FastOperator_v1,0,25,0.045204,0.013692,0.417531,0.032619,No,1
+../bpic_2011/data/10/log.xes,T,43.2832,2.78632,10,159,6.95305e-310,4.65904e-310,0,0,KnoBAB + Max-SAT,Responded Existence,marking,FastOperator_v1,0,25,0.079686,0.018585,0.415415,0.032465,No,1
+../bpic_2011/data/100/log.xes,T,124.174,11.6425,100,277,6.95265e-310,4.66051e-310,0,0,KnoBAB + Max-SAT,Responded Existence,marking,FastOperator_v1,0,25,0.073461,0.01072,0.842169,0.189644,No,1
+../bpic_2011/data/100/log.xes,T,113.601,11.6098,100,277,6.95265e-310,4.66051e-310,0,0,KnoBAB + Max-SAT,Responded Existence,marking,FastOperator_v1,0,25,0.081534,0.0101,0.672249,0.214898,No,1
+../bpic_2011/data/100/log.xes,T,113.115,11.6017,100,277,6.95265e-310,4.66051e-310,0,0,KnoBAB + Max-SAT,Responded Existence,marking,FastOperator_v1,0,25,0.085544,0.009943,0.712731,0.196268,No,1
+../bpic_2011/data/100/log.xes,T,113.848,11.4611,100,277,6.95265e-310,4.66051e-310,0,0,KnoBAB + Max-SAT,Responded Existence,marking,FastOperator_v1,0,25,0.066807,0.009831,0.70974,0.201315,No,1
+../bpic_2011/data/100/log.xes,T,111.897,11.7809,100,277,6.95265e-310,4.66051e-310,0,0,KnoBAB + Max-SAT,Responded Existence,marking,FastOperator_v1,0,25,0.146419,0.00907,0.635789,0.192357,No,1
+../bpic_2011/data/1000/log.xes,T,1124.13,120.067,1000,608,6.95301e-310,4.68312e-310,0,0,KnoBAB + Max-SAT,Responded Existence,marking,FastOperator_v1,0,25,0.177051,0.010338,1.48459,1.39852,No,1
+../bpic_2011/data/1000/log.xes,T,1051.72,121.305,1000,608,6.95301e-310,4.68312e-310,0,0,KnoBAB + Max-SAT,Responded Existence,marking,FastOperator_v1,0,25,0.185805,0.010096,1.31606,1.62367,No,1
+../bpic_2011/data/1000/log.xes,T,1027.92,120.652,1000,608,6.95301e-310,4.68312e-310,0,0,KnoBAB + Max-SAT,Responded Existence,marking,FastOperator_v1,0,25,0.176096,0.010028,1.30759,1.52107,No,1
+../bpic_2011/data/1000/log.xes,T,1036.96,120.819,1000,608,6.95301e-310,4.68312e-310,0,0,KnoBAB + Max-SAT,Responded Existence,marking,FastOperator_v1,0,25,0.175034,0.01043,1.3385,1.46249,No,1
+../bpic_2011/data/1000/log.xes,T,1036.9,123.041,1000,608,6.95301e-310,4.68312e-310,0,0,KnoBAB + Max-SAT,Responded Existence,marking,FastOperator_v1,0,25,0.176862,0.010083,1.26879,1.59328,No,1
+../bpic_2011/data/10/log.xes,T,50.9001,2.71911,10,159,6.95298e-310,4.68052e-310,0,0,KnoBAB + Max-SAT,Not Succession,marking,FastOperator_v1,0,25,0.042868,0.0233,7.44539,12.3454,No,1
+../bpic_2011/data/10/log.xes,T,47.7778,2.81124,10,159,6.95298e-310,4.68052e-310,0,0,KnoBAB + Max-SAT,Not Succession,marking,FastOperator_v1,0,25,0.043366,0.010373,7.2901,11.9274,No,1
+../bpic_2011/data/10/log.xes,T,44.4658,2.84605,10,159,6.95298e-310,4.68052e-310,0,0,KnoBAB + Max-SAT,Not Succession,marking,FastOperator_v1,0,25,0.044382,0.010415,7.28375,11.738,No,1
+../bpic_2011/data/10/log.xes,T,45.8419,2.86867,10,159,6.95298e-310,4.68052e-310,0,0,KnoBAB + Max-SAT,Not Succession,marking,FastOperator_v1,0,25,0.043519,0.00987,7.67514,12.0416,No,1
+../bpic_2011/data/10/log.xes,T,45.448,2.86899,10,159,6.95298e-310,4.68052e-310,0,0,KnoBAB + Max-SAT,Not Succession,marking,FastOperator_v1,0,25,0.055955,0.009577,7.42736,11.5826,No,1
+../bpic_2011/data/100/log.xes,T,126.827,11.5709,100,277,6.95308e-310,4.65455e-310,0,0,KnoBAB + Max-SAT,Not Succession,marking,FastOperator_v1,0,25,0.066346,0.009177,12.9321,28.7437,No,1
+../bpic_2011/data/100/log.xes,T,120.06,11.4924,100,277,6.95308e-310,4.65455e-310,0,0,KnoBAB + Max-SAT,Not Succession,marking,FastOperator_v1,0,25,0.070484,0.009215,12.8877,27.2242,No,1
+../bpic_2011/data/100/log.xes,T,115.995,11.5812,100,277,6.95308e-310,4.65455e-310,0,0,KnoBAB + Max-SAT,Not Succession,marking,FastOperator_v1,0,25,0.067812,0.009216,12.7703,26.6407,No,1
+../bpic_2011/data/100/log.xes,T,118.178,11.7924,100,277,6.95308e-310,4.65455e-310,0,0,KnoBAB + Max-SAT,Not Succession,marking,FastOperator_v1,0,25,0.068042,0.009602,12.8259,26.459,No,1
+../bpic_2011/data/100/log.xes,T,121.386,12.8038,100,277,6.95308e-310,4.65455e-310,0,0,KnoBAB + Max-SAT,Not Succession,marking,FastOperator_v1,0,25,0.144571,0.043046,13.619,30.7014,No,1
+../bpic_2011/data/1000/log.xes,T,1131.78,120.512,1000,608,6.95312e-310,4.64667e-310,0,0,KnoBAB + Max-SAT,Not Succession,marking,FastOperator_v1,0,25,0.175319,0.010021,32.4289,313.659,No,1
+../bpic_2011/data/1000/log.xes,T,1102.25,122.523,1000,608,6.95312e-310,4.64667e-310,0,0,KnoBAB + Max-SAT,Not Succession,marking,FastOperator_v1,0,25,0.181562,0.010415,32.3567,312.2,No,1
+../bpic_2011/data/1000/log.xes,T,1245.34,232.279,1000,608,6.95312e-310,4.64667e-310,0,0,KnoBAB + Max-SAT,Not Succession,marking,FastOperator_v1,0,25,0.325507,0.018724,61.0399,393.625,No,1
+../bpic_2011/data/1000/log.xes,T,1112.86,121.91,1000,608,6.95312e-310,4.64667e-310,0,0,KnoBAB + Max-SAT,Not Succession,marking,FastOperator_v1,0,25,0.193711,0.009858,31.8806,309.695,No,1
+../bpic_2011/data/1000/log.xes,T,1120.78,122.794,1000,608,6.95312e-310,4.64667e-310,0,0,KnoBAB + Max-SAT,Not Succession,marking,FastOperator_v1,0,25,0.198088,0.00953,32.4445,309.862,No,1
+../bpic_2011/data/10/log.xes,T,50.8817,2.72551,10,159,6.95314e-310,4.64597e-310,0,0,KnoBAB + Support,Response,marking,FastOperator_v1,0,25,0.05168,0.009703,4.55271,12.2161,No,1
+../bpic_2011/data/10/log.xes,T,47.6436,2.80792,10,159,6.95314e-310,4.64597e-310,0,0,KnoBAB + Support,Response,marking,FastOperator_v1,0,25,0.045305,0.010272,4.45941,10.7143,No,1
+../bpic_2011/data/10/log.xes,T,45.7713,3.02234,10,159,6.95314e-310,4.64597e-310,0,0,KnoBAB + Support,Response,marking,FastOperator_v1,0,25,0.046261,0.0096,4.42088,10.8246,No,1
+../bpic_2011/data/10/log.xes,T,47.516,2.79247,10,159,6.95314e-310,4.64597e-310,0,0,KnoBAB + Support,Response,marking,FastOperator_v1,0,25,0.056533,0.023752,4.4122,10.8446,No,1
+../bpic_2011/data/10/log.xes,T,45.7601,2.82586,10,159,6.95314e-310,4.64597e-310,0,0,KnoBAB + Support,Response,marking,FastOperator_v1,0,25,0.04434,0.009942,4.51984,10.7211,No,1
+../bpic_2011/data/100/log.xes,T,126.386,11.5391,100,277,6.95304e-310,4.65743e-310,0,0,KnoBAB + Support,Response,marking,FastOperator_v1,0,25,0.068003,0.029283,7.78887,28.2649,No,1
+../bpic_2011/data/100/log.xes,T,120.154,11.5095,100,277,6.95304e-310,4.65743e-310,0,0,KnoBAB + Support,Response,marking,FastOperator_v1,0,25,0.130152,0.010414,10.1252,27.3047,No,1
+../bpic_2011/data/100/log.xes,T,119.155,11.5229,100,277,6.95304e-310,4.65743e-310,0,0,KnoBAB + Support,Response,marking,FastOperator_v1,0,25,0.067745,0.011758,7.81817,26.1873,No,1
+../bpic_2011/data/100/log.xes,T,119.959,11.6653,100,277,6.95304e-310,4.65743e-310,0,0,KnoBAB + Support,Response,marking,FastOperator_v1,0,25,0.066977,0.009126,7.89309,30.3184,No,1
+../bpic_2011/data/100/log.xes,T,122.184,11.8934,100,277,6.95304e-310,4.65743e-310,0,0,KnoBAB + Support,Response,marking,FastOperator_v1,0,25,0.070589,0.009098,8.17828,31.0613,No,1
+../bpic_2011/data/1000/log.xes,T,1087.79,118.198,1000,608,6.95274e-310,4.6617e-310,0,0,KnoBAB + Support,Response,marking,FastOperator_v1,0,25,0.207684,0.009424,17.4343,271.859,No,1
+../bpic_2011/data/1000/log.xes,T,1054.27,117.656,1000,608,6.95274e-310,4.6617e-310,0,0,KnoBAB + Support,Response,marking,FastOperator_v1,0,25,0.233428,0.00926,17.9626,269.769,No,1
+../bpic_2011/data/1000/log.xes,T,1064.19,119.265,1000,608,6.95274e-310,4.6617e-310,0,0,KnoBAB + Support,Response,marking,FastOperator_v1,0,25,0.204131,0.009514,17.5064,268.269,No,1
+../bpic_2011/data/1000/log.xes,T,1063.51,118.696,1000,608,6.95274e-310,4.6617e-310,0,0,KnoBAB + Support,Response,marking,FastOperator_v1,0,25,0.236118,0.009549,17.7022,271.084,No,1
+../bpic_2011/data/1000/log.xes,T,1070.05,119.02,1000,608,6.95274e-310,4.6617e-310,0,0,KnoBAB + Support,Response,marking,FastOperator_v1,0,25,0.227917,0.009396,17.6774,269.755,No,1
+../bpic_2011/data/10/log.xes,T,50.1628,2.60068,10,159,6.95314e-310,4.6769e-310,0,0,KnoBAB + Support,Alternate Response,marking,FastOperator_v1,0,25,0.041452,0.009619,7.83245,26.2092,No,1
+../bpic_2011/data/10/log.xes,T,45.8367,2.59912,10,159,6.95314e-310,4.6769e-310,0,0,KnoBAB + Support,Alternate Response,marking,FastOperator_v1,0,25,0.063824,0.010033,7.80703,24.1836,No,1
+../bpic_2011/data/10/log.xes,T,45.9173,2.76261,10,159,6.95314e-310,4.6769e-310,0,0,KnoBAB + Support,Alternate Response,marking,FastOperator_v1,0,25,0.058997,0.010636,7.49416,24.3605,No,1
+../bpic_2011/data/10/log.xes,T,46.2055,2.72875,10,159,6.95314e-310,4.6769e-310,0,0,KnoBAB + Support,Alternate Response,marking,FastOperator_v1,0,25,0.077364,0.009735,7.37014,24.2104,No,1
+../bpic_2011/data/10/log.xes,T,45.6095,2.95761,10,159,6.95314e-310,4.6769e-310,0,0,KnoBAB + Support,Alternate Response,marking,FastOperator_v1,0,25,0.086583,0.033614,7.27929,24.8711,No,1
+../bpic_2011/data/100/log.xes,T,124.605,11.3151,100,277,6.95256e-310,4.63608e-310,0,0,KnoBAB + Support,Alternate Response,marking,FastOperator_v1,0,25,0.117587,0.010745,13.0837,1802.87,No,1
+../bpic_2011/data/100/log.xes,T,116.167,11.4587,100,277,6.95256e-310,4.63608e-310,0,0,KnoBAB + Support,Alternate Response,marking,FastOperator_v1,0,25,0.065924,0.02421,13.1224,1784.37,No,1
+../bpic_2011/data/100/log.xes,T,113.852,11.0391,100,277,6.95256e-310,4.63608e-310,0,0,KnoBAB + Support,Alternate Response,marking,FastOperator_v1,0,25,0.066922,0.009271,12.8591,1777.86,No,1
+../bpic_2011/data/100/log.xes,T,113.627,10.983,100,277,6.95256e-310,4.63608e-310,0,0,KnoBAB + Support,Alternate Response,marking,FastOperator_v1,0,25,0.132701,0.009128,12.7708,1777.78,No,1
+../bpic_2011/data/100/log.xes,T,117.061,11.4513,100,277,6.95256e-310,4.63608e-310,0,0,KnoBAB + Support,Alternate Response,marking,FastOperator_v1,0,25,0.068952,0.00904,13.4798,1789.4,No,1
+../bpic_2011/data/1000/log.xes,T,1098.75,118.078,1000,608,6.95332e-310,4.64695e-310,0,0,KnoBAB + Support,Alternate Response,marking,FastOperator_v1,0,25,0.172157,0.009293,31.9747,10418.2,No,1
+../bpic_2011/data/1000/log.xes,T,1061.46,118.502,1000,608,6.95332e-310,4.64695e-310,0,0,KnoBAB + Support,Alternate Response,marking,FastOperator_v1,0,25,0.177471,0.009128,32.533,10266.1,No,1
+../bpic_2011/data/1000/log.xes,T,1070.72,117.819,1000,608,6.95332e-310,4.64695e-310,0,0,KnoBAB + Support,Alternate Response,marking,FastOperator_v1,0,25,0.180505,0.009404,32.283,10641,No,1
+../bpic_2011/data/1000/log.xes,T,1067.21,118.31,1000,608,6.95332e-310,4.64695e-310,0,0,KnoBAB + Support,Alternate Response,marking,FastOperator_v1,0,25,0.182322,0.009365,32.2658,10256,No,1
+../bpic_2011/data/1000/log.xes,T,1069.79,120.989,1000,608,6.95332e-310,4.64695e-310,0,0,KnoBAB + Support,Alternate Response,marking,FastOperator_v1,0,25,0.182797,0.00988,32.7013,10249.9,No,1
+../bpic_2011/data/10/log.xes,T,49.4882,2.70751,10,159,6.95321e-310,4.64587e-310,0,0,KnoBAB + Support,Chain Response,marking,FastOperator_v1,0,25,0.079821,0.009209,4.66362,3.2822,No,1
+../bpic_2011/data/10/log.xes,T,46.5271,2.71157,10,159,6.95321e-310,4.64587e-310,0,0,KnoBAB + Support,Chain Response,marking,FastOperator_v1,0,25,0.056771,0.010299,4.56902,2.79575,No,1
+../bpic_2011/data/10/log.xes,T,44.8772,2.8576,10,159,6.95321e-310,4.64587e-310,0,0,KnoBAB + Support,Chain Response,marking,FastOperator_v1,0,25,0.042478,0.009194,4.43857,2.46723,No,1
+../bpic_2011/data/10/log.xes,T,44.3919,2.80235,10,159,6.95321e-310,4.64587e-310,0,0,KnoBAB + Support,Chain Response,marking,FastOperator_v1,0,25,0.095862,0.009357,4.39882,2.52166,No,1
+../bpic_2011/data/10/log.xes,T,44.555,2.83889,10,159,6.95321e-310,4.64587e-310,0,0,KnoBAB + Support,Chain Response,marking,FastOperator_v1,0,25,0.044889,0.009697,4.56053,2.54649,No,1
+../bpic_2011/data/100/log.xes,T,124.556,11.4446,100,277,6.95321e-310,4.63597e-310,0,0,KnoBAB + Support,Chain Response,marking,FastOperator_v1,0,25,0.082161,0.009134,7.93243,12.5283,No,1
+../bpic_2011/data/100/log.xes,T,121.117,12.0784,100,277,6.95321e-310,4.63597e-310,0,0,KnoBAB + Support,Chain Response,marking,FastOperator_v1,0,25,0.133608,0.010127,7.99223,10.1631,No,1
+../bpic_2011/data/100/log.xes,T,116.401,11.5464,100,277,6.95321e-310,4.63597e-310,0,0,KnoBAB + Support,Chain Response,marking,FastOperator_v1,0,25,0.080346,0.009952,7.88307,10.0987,No,1
+../bpic_2011/data/100/log.xes,T,118.214,11.6177,100,277,6.95321e-310,4.63597e-310,0,0,KnoBAB + Support,Chain Response,marking,FastOperator_v1,0,25,0.080347,0.009857,7.67391,10.0204,No,1
+../bpic_2011/data/100/log.xes,T,121.751,11.8522,100,277,6.95321e-310,4.63597e-310,0,0,KnoBAB + Support,Chain Response,marking,FastOperator_v1,0,25,0.13874,0.009583,8.07208,14.4722,No,1
+../bpic_2011/data/1000/log.xes,T,1128.41,120.4,1000,608,6.95267e-310,4.66776e-310,0,0,KnoBAB + Support,Chain Response,marking,FastOperator_v1,0,25,0.197522,0.010427,17.911,143.752,No,1
+../bpic_2011/data/1000/log.xes,T,1099.51,120.914,1000,608,6.95267e-310,4.66776e-310,0,0,KnoBAB + Support,Chain Response,marking,FastOperator_v1,0,25,0.260818,0.009704,18.6318,142.381,No,1
+../bpic_2011/data/1000/log.xes,T,1105.4,121.358,1000,608,6.95267e-310,4.66776e-310,0,0,KnoBAB + Support,Chain Response,marking,FastOperator_v1,0,25,0.184583,0.009177,17.7412,137.933,No,1
+../bpic_2011/data/1000/log.xes,T,1108.49,122.7,1000,608,6.95267e-310,4.66776e-310,0,0,KnoBAB + Support,Chain Response,marking,FastOperator_v1,0,25,0.193084,0.009249,17.5602,139.264,No,1
+../bpic_2011/data/1000/log.xes,T,1107.6,122.38,1000,608,6.95267e-310,4.66776e-310,0,0,KnoBAB + Support,Chain Response,marking,FastOperator_v1,0,25,0.183194,0.00943,17.7564,142.456,No,1
+../bpic_2011/data/10/log.xes,T,50.9133,2.72098,10,159,6.95273e-310,4.65159e-310,0,0,KnoBAB + Support,Precedence,marking,FastOperator_v1,0,25,0.048321,0.009363,4.34574,3.27791,No,1
+../bpic_2011/data/10/log.xes,T,46.7749,2.73009,10,159,6.95273e-310,4.65159e-310,0,0,KnoBAB + Support,Precedence,marking,FastOperator_v1,0,25,0.042849,0.009196,4.94698,3.11908,No,1
+../bpic_2011/data/10/log.xes,T,43.3834,2.8485,10,159,6.95273e-310,4.65159e-310,0,0,KnoBAB + Support,Precedence,marking,FastOperator_v1,0,25,0.056879,0.009466,4.35036,2.96165,No,1
+../bpic_2011/data/10/log.xes,T,43.552,2.8021,10,159,6.95273e-310,4.65159e-310,0,0,KnoBAB + Support,Precedence,marking,FastOperator_v1,0,25,0.084603,0.009419,4.23491,2.95846,No,1
+../bpic_2011/data/10/log.xes,T,43.5816,2.80192,10,159,6.95273e-310,4.65159e-310,0,0,KnoBAB + Support,Precedence,marking,FastOperator_v1,0,25,0.057801,0.009541,4.48302,3.03575,No,1
+../bpic_2011/data/100/log.xes,T,126.236,11.6335,100,277,6.9532e-310,4.65862e-310,0,0,KnoBAB + Support,Precedence,marking,FastOperator_v1,0,25,0.069399,0.009246,7.25302,11.1781,No,1
+../bpic_2011/data/100/log.xes,T,118.729,11.5084,100,277,6.9532e-310,4.65862e-310,0,0,KnoBAB + Support,Precedence,marking,FastOperator_v1,0,25,0.104359,0.010727,7.62317,11.5302,No,1
+../bpic_2011/data/100/log.xes,T,117.238,11.4909,100,277,6.9532e-310,4.65862e-310,0,0,KnoBAB + Support,Precedence,marking,FastOperator_v1,0,25,0.079301,0.010132,7.22912,11.2086,No,1
+../bpic_2011/data/100/log.xes,T,117.025,11.8439,100,277,6.9532e-310,4.65862e-310,0,0,KnoBAB + Support,Precedence,marking,FastOperator_v1,0,25,0.068623,0.010121,7.20117,11.2307,No,1
+../bpic_2011/data/100/log.xes,T,116.813,11.573,100,277,6.9532e-310,4.65862e-310,0,0,KnoBAB + Support,Precedence,marking,FastOperator_v1,0,25,0.106549,0.02742,7.37738,12.9045,No,1
+../bpic_2011/data/1000/log.xes,T,1129.18,120.365,1000,608,6.9527e-310,4.68405e-310,0,0,KnoBAB + Support,Precedence,marking,FastOperator_v1,0,25,0.186073,0.009479,17.2805,102.807,No,1
+../bpic_2011/data/1000/log.xes,T,1091.2,119.998,1000,608,6.9527e-310,4.68405e-310,0,0,KnoBAB + Support,Precedence,marking,FastOperator_v1,0,25,0.176209,0.009419,17.6242,102.995,No,1
+../bpic_2011/data/1000/log.xes,T,1095.36,121.302,1000,608,6.9527e-310,4.68405e-310,0,0,KnoBAB + Support,Precedence,marking,FastOperator_v1,0,25,0.214486,0.009439,17.0947,101.07,No,1
+../bpic_2011/data/1000/log.xes,T,1094.11,121.119,1000,608,6.9527e-310,4.68405e-310,0,0,KnoBAB + Support,Precedence,marking,FastOperator_v1,0,25,0.180197,0.009286,17.2729,100.291,No,1
+../bpic_2011/data/1000/log.xes,T,1097.66,121.939,1000,608,6.9527e-310,4.68405e-310,0,0,KnoBAB + Support,Precedence,marking,FastOperator_v1,0,25,0.194308,0.010062,17.2462,100.094,No,1
+../bpic_2011/data/10/log.xes,T,50.0744,2.72406,10,159,6.95263e-310,4.64016e-310,0,0,KnoBAB + Support,Alternate Precedence,marking,FastOperator_v1,0,25,0.056506,0.009374,14.1735,33.0449,No,1
+../bpic_2011/data/10/log.xes,T,47.0667,2.747,10,159,6.95263e-310,4.64016e-310,0,0,KnoBAB + Support,Alternate Precedence,marking,FastOperator_v1,0,25,0.044107,0.029631,13.996,29.5349,No,1
+../bpic_2011/data/10/log.xes,T,48.3901,2.79845,10,159,6.95263e-310,4.64016e-310,0,0,KnoBAB + Support,Alternate Precedence,marking,FastOperator_v1,0,25,0.045454,0.009928,13.9566,29.9853,No,1
+../bpic_2011/data/10/log.xes,T,47.8097,2.88572,10,159,6.95263e-310,4.64016e-310,0,0,KnoBAB + Support,Alternate Precedence,marking,FastOperator_v1,0,25,0.109657,0.032965,13.3339,29.8292,No,1
+../bpic_2011/data/10/log.xes,T,48.695,2.83522,10,159,6.95263e-310,4.64016e-310,0,0,KnoBAB + Support,Alternate Precedence,marking,FastOperator_v1,0,25,0.058668,0.01029,14.1245,29.1122,No,1
+../bpic_2011/data/100/log.xes,T,126.087,11.622,100,277,6.95283e-310,4.67892e-310,0,0,KnoBAB + Support,Alternate Precedence,marking,FastOperator_v1,0,25,0.116778,0.009039,25.3941,1928.94,No,1
+../bpic_2011/data/100/log.xes,T,119.093,11.7738,100,277,6.95283e-310,4.67892e-310,0,0,KnoBAB + Support,Alternate Precedence,marking,FastOperator_v1,0,25,0.069208,0.009602,25.4655,1924.63,No,1
+../bpic_2011/data/100/log.xes,T,118.706,11.5584,100,277,6.95283e-310,4.67892e-310,0,0,KnoBAB + Support,Alternate Precedence,marking,FastOperator_v1,0,25,0.081809,0.010062,25.7152,1911.6,No,1
+../bpic_2011/data/100/log.xes,T,120.842,11.5588,100,277,6.95283e-310,4.67892e-310,0,0,KnoBAB + Support,Alternate Precedence,marking,FastOperator_v1,0,25,0.07229,0.023148,25.7111,2406.55,No,1
+../bpic_2011/data/100/log.xes,T,122.641,11.6885,100,277,6.95283e-310,4.67892e-310,0,0,KnoBAB + Support,Alternate Precedence,marking,FastOperator_v1,0,25,0.084502,0.009221,25.3964,1928.41,No,1
+../bpic_2011/data/1000/log.xes,T,1116.82,120.217,1000,608,6.95261e-310,4.68821e-310,0,0,KnoBAB + Support,Alternate Precedence,marking,FastOperator_v1,0,25,0.213387,0.009809,60.5254,11185.8,No,1
+../bpic_2011/data/1000/log.xes,T,1081.59,121.802,1000,608,6.95261e-310,4.68821e-310,0,0,KnoBAB + Support,Alternate Precedence,marking,FastOperator_v1,0,25,0.178811,0.009384,59.1313,11249.7,No,1
+../bpic_2011/data/1000/log.xes,T,1096.33,120.583,1000,608,6.95261e-310,4.68821e-310,0,0,KnoBAB + Support,Alternate Precedence,marking,FastOperator_v1,0,25,0.180427,0.009518,59.0522,11167.9,No,1
+../bpic_2011/data/1000/log.xes,T,1104.36,121.935,1000,608,6.95261e-310,4.68821e-310,0,0,KnoBAB + Support,Alternate Precedence,marking,FastOperator_v1,0,25,0.183682,0.010087,59.621,11429.9,No,1
+../bpic_2011/data/1000/log.xes,T,1105.29,122.457,1000,608,6.95261e-310,4.68821e-310,0,0,KnoBAB + Support,Alternate Precedence,marking,FastOperator_v1,0,25,0.25865,0.011866,59.9266,11181.8,No,1
+../bpic_2011/data/10/log.xes,T,50.6056,2.70579,10,159,6.95263e-310,4.65682e-310,0,0,KnoBAB + Support,Chain Precedence,marking,FastOperator_v1,0,25,0.044026,0.009727,4.41484,3.8023,No,1
+../bpic_2011/data/10/log.xes,T,47.4876,2.74467,10,159,6.95263e-310,4.65682e-310,0,0,KnoBAB + Support,Chain Precedence,marking,FastOperator_v1,0,25,0.042637,0.009182,4.40295,3.22866,No,1
+../bpic_2011/data/10/log.xes,T,45.6237,2.93856,10,159,6.95263e-310,4.65682e-310,0,0,KnoBAB + Support,Chain Precedence,marking,FastOperator_v1,0,25,0.060134,0.009422,4.32053,2.97833,No,1
+../bpic_2011/data/10/log.xes,T,45.4271,2.79731,10,159,6.95263e-310,4.65682e-310,0,0,KnoBAB + Support,Chain Precedence,marking,FastOperator_v1,0,25,0.043601,0.00958,4.4628,2.93077,No,1
+../bpic_2011/data/10/log.xes,T,44.5381,2.79527,10,159,6.95263e-310,4.65682e-310,0,0,KnoBAB + Support,Chain Precedence,marking,FastOperator_v1,0,25,0.078112,0.009754,4.37156,3.00288,No,1
+../bpic_2011/data/100/log.xes,T,127.224,11.6619,100,277,6.95311e-310,4.68607e-310,0,0,KnoBAB + Support,Chain Precedence,marking,FastOperator_v1,0,25,0.069417,0.009277,7.48893,15.2091,No,1
+../bpic_2011/data/100/log.xes,T,120.72,11.6187,100,277,6.95311e-310,4.68607e-310,0,0,KnoBAB + Support,Chain Precedence,marking,FastOperator_v1,0,25,0.065934,0.011845,7.56684,12.2037,No,1
+../bpic_2011/data/100/log.xes,T,117.902,11.6076,100,277,6.95311e-310,4.68607e-310,0,0,KnoBAB + Support,Chain Precedence,marking,FastOperator_v1,0,25,0.06789,0.009366,7.49085,13.0641,No,1
+../bpic_2011/data/100/log.xes,T,120.06,11.8738,100,277,6.95311e-310,4.68607e-310,0,0,KnoBAB + Support,Chain Precedence,marking,FastOperator_v1,0,25,0.067393,0.009171,7.44689,12.7748,No,1
+../bpic_2011/data/100/log.xes,T,121.689,11.5383,100,277,6.95311e-310,4.68607e-310,0,0,KnoBAB + Support,Chain Precedence,marking,FastOperator_v1,0,25,0.125626,0.009066,7.52262,16.8154,No,1
+../bpic_2011/data/1000/log.xes,T,1126.67,122.103,1000,608,6.95258e-310,4.6721e-310,0,0,KnoBAB + Support,Chain Precedence,marking,FastOperator_v1,0,25,0.171794,0.010341,17.4448,168.418,No,1
+../bpic_2011/data/1000/log.xes,T,1099.78,122.327,1000,608,6.95258e-310,4.6721e-310,0,0,KnoBAB + Support,Chain Precedence,marking,FastOperator_v1,0,25,0.175264,0.009989,17.6399,165.051,No,1
+../bpic_2011/data/1000/log.xes,T,1109.65,121.731,1000,608,6.95258e-310,4.6721e-310,0,0,KnoBAB + Support,Chain Precedence,marking,FastOperator_v1,0,25,0.189047,0.010435,17.5931,164.215,No,1
+../bpic_2011/data/1000/log.xes,T,1108.46,120.53,1000,608,6.95258e-310,4.6721e-310,0,0,KnoBAB + Support,Chain Precedence,marking,FastOperator_v1,0,25,0.183088,0.010263,17.6541,172.121,No,1
+../bpic_2011/data/1000/log.xes,T,1153.41,122.146,1000,608,6.95258e-310,4.6721e-310,0,0,KnoBAB + Support,Chain Precedence,marking,FastOperator_v1,0,25,0.187473,0.010137,17.4204,163.869,No,1
+../bpic_2011/data/10/log.xes,T,52.1485,2.72384,10,159,6.95278e-310,4.68252e-310,0,0,KnoBAB + Support,Responded Existence,marking,FastOperator_v1,0,25,0.047014,0.009435,0.47163,0.043806,No,1
+../bpic_2011/data/10/log.xes,T,47.3745,2.72715,10,159,6.95278e-310,4.68252e-310,0,0,KnoBAB + Support,Responded Existence,marking,FastOperator_v1,0,25,0.04295,0.012291,0.421784,0.037692,No,1
+../bpic_2011/data/10/log.xes,T,42.3037,2.75863,10,159,6.95278e-310,4.68252e-310,0,0,KnoBAB + Support,Responded Existence,marking,FastOperator_v1,0,25,0.043521,0.010206,0.474607,0.040025,No,1
+../bpic_2011/data/10/log.xes,T,42.8586,2.83161,10,159,6.95278e-310,4.68252e-310,0,0,KnoBAB + Support,Responded Existence,marking,FastOperator_v1,0,25,0.079223,0.030612,0.411157,0.037319,No,1
+../bpic_2011/data/10/log.xes,T,43.9235,2.80552,10,159,6.95278e-310,4.68252e-310,0,0,KnoBAB + Support,Responded Existence,marking,FastOperator_v1,0,25,0.043146,0.009743,0.481284,0.039225,No,1
+../bpic_2011/data/100/log.xes,T,126.124,12.0048,100,277,6.95322e-310,4.67194e-310,0,0,KnoBAB + Support,Responded Existence,marking,FastOperator_v1,0,25,0.067166,0.009472,0.719036,0.260367,No,1
+../bpic_2011/data/100/log.xes,T,112.827,11.9677,100,277,6.95322e-310,4.67194e-310,0,0,KnoBAB + Support,Responded Existence,marking,FastOperator_v1,0,25,0.071709,0.009646,0.730709,0.24137,No,1
+../bpic_2011/data/100/log.xes,T,114.305,11.7682,100,277,6.95322e-310,4.67194e-310,0,0,KnoBAB + Support,Responded Existence,marking,FastOperator_v1,0,25,0.098577,0.010002,0.657965,0.270317,No,1
+../bpic_2011/data/100/log.xes,T,111.525,12.3168,100,277,6.95322e-310,4.67194e-310,0,0,KnoBAB + Support,Responded Existence,marking,FastOperator_v1,0,25,0.065474,0.009406,0.636965,0.239449,No,1
+../bpic_2011/data/100/log.xes,T,111.379,11.9592,100,277,6.95322e-310,4.67194e-310,0,0,KnoBAB + Support,Responded Existence,marking,FastOperator_v1,0,25,0.105578,0.023216,0.654086,0.279094,No,1
+../bpic_2011/data/1000/log.xes,T,1131.91,120.726,1000,608,6.9532e-310,4.66655e-310,0,0,KnoBAB + Support,Responded Existence,marking,FastOperator_v1,0,25,0.178956,0.010679,1.42874,1.9387,No,1
+../bpic_2011/data/1000/log.xes,T,1052.15,120.508,1000,608,6.9532e-310,4.66655e-310,0,0,KnoBAB + Support,Responded Existence,marking,FastOperator_v1,0,25,0.173723,0.013511,1.3027,1.85332,No,1
+../bpic_2011/data/1000/log.xes,T,1036.05,122.198,1000,608,6.9532e-310,4.66655e-310,0,0,KnoBAB + Support,Responded Existence,marking,FastOperator_v1,0,25,0.177696,0.010558,1.27367,1.92461,No,1
+../bpic_2011/data/1000/log.xes,T,1035.85,121.411,1000,608,6.9532e-310,4.66655e-310,0,0,KnoBAB + Support,Responded Existence,marking,FastOperator_v1,0,25,0.20957,0.010296,1.25543,1.953,No,1
+../bpic_2011/data/1000/log.xes,T,1037.03,120.516,1000,608,6.9532e-310,4.66655e-310,0,0,KnoBAB + Support,Responded Existence,marking,FastOperator_v1,0,25,0.181702,0.010599,1.26026,1.91998,No,1
+../bpic_2011/data/10/log.xes,T,50.3934,2.7106,10,159,6.95263e-310,4.68694e-310,0,0,KnoBAB + Support,Not Succession,marking,FastOperator_v1,0,25,0.042648,0.031887,7.30183,12.2355,No,1
+../bpic_2011/data/10/log.xes,T,48.827,2.8276,10,159,6.95263e-310,4.68694e-310,0,0,KnoBAB + Support,Not Succession,marking,FastOperator_v1,0,25,0.043922,0.009823,7.44087,11.5308,No,1
+../bpic_2011/data/10/log.xes,T,44.9315,2.87365,10,159,6.95263e-310,4.68694e-310,0,0,KnoBAB + Support,Not Succession,marking,FastOperator_v1,0,25,0.05809,0.010284,7.34396,11.6117,No,1
+../bpic_2011/data/10/log.xes,T,44.344,2.79397,10,159,6.95263e-310,4.68694e-310,0,0,KnoBAB + Support,Not Succession,marking,FastOperator_v1,0,25,0.044289,0.009879,7.47348,11.5776,No,1
+../bpic_2011/data/10/log.xes,T,44.9252,2.86499,10,159,6.95263e-310,4.68694e-310,0,0,KnoBAB + Support,Not Succession,marking,FastOperator_v1,0,25,0.044331,0.030925,7.48886,11.4475,No,1
+../bpic_2011/data/100/log.xes,T,127.577,11.6045,100,277,6.95263e-310,4.6668e-310,0,0,KnoBAB + Support,Not Succession,marking,FastOperator_v1,0,25,0.065737,0.009679,13.0889,29.0082,No,1
+../bpic_2011/data/100/log.xes,T,122.122,11.7274,100,277,6.95263e-310,4.6668e-310,0,0,KnoBAB + Support,Not Succession,marking,FastOperator_v1,0,25,0.103552,0.043075,12.9314,27.0618,No,1
+../bpic_2011/data/100/log.xes,T,116.727,11.7523,100,277,6.95263e-310,4.6668e-310,0,0,KnoBAB + Support,Not Succession,marking,FastOperator_v1,0,25,0.066592,0.01002,12.9891,26.8445,No,1
+../bpic_2011/data/100/log.xes,T,118.898,12.0893,100,277,6.95263e-310,4.6668e-310,0,0,KnoBAB + Support,Not Succession,marking,FastOperator_v1,0,25,0.092589,0.011617,12.9196,26.93,No,1
+../bpic_2011/data/100/log.xes,T,121.714,11.672,100,277,6.95263e-310,4.6668e-310,0,0,KnoBAB + Support,Not Succession,marking,FastOperator_v1,0,25,0.100286,0.014469,12.6695,29.0796,No,1
+../bpic_2011/data/1000/log.xes,T,1130.56,120.803,1000,608,6.95296e-310,4.68755e-310,0,0,KnoBAB + Support,Not Succession,marking,FastOperator_v1,0,25,0.170232,0.010132,32.6952,319.234,No,1
+../bpic_2011/data/1000/log.xes,T,1104.94,120.816,1000,608,6.95296e-310,4.68755e-310,0,0,KnoBAB + Support,Not Succession,marking,FastOperator_v1,0,25,0.178448,0.009216,32.0994,317.611,No,1
+../bpic_2011/data/1000/log.xes,T,1112.06,121.533,1000,608,6.95296e-310,4.68755e-310,0,0,KnoBAB + Support,Not Succession,marking,FastOperator_v1,0,25,0.243308,0.010807,32.2654,316.551,No,1
+../bpic_2011/data/1000/log.xes,T,1120.93,121.84,1000,608,6.95296e-310,4.68755e-310,0,0,KnoBAB + Support,Not Succession,marking,FastOperator_v1,0,25,0.232455,0.010241,32.1956,313.909,No,1
+../bpic_2011/data/1000/log.xes,T,1121.58,122.737,1000,608,6.95296e-310,4.68755e-310,0,0,KnoBAB + Support,Not Succession,marking,FastOperator_v1,0,25,0.182293,0.009504,32.0532,314.991,No,1
