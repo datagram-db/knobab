@@ -3,17 +3,21 @@ library(dplyr)
 library(tidyr)
 library(ggplot2)
 library(scales)
-data <- read.csv("/home/giacomo/projects/knobab/mining_run.csv")
+data <- read.csv("/home/giacomo/projects/knobab/data/testing/results/knobab_sql_benchmark.csv")
+toAppend$model_filename <- toAppend$model_filename %>% str_replace("25", "")
+toAppend[toAppend$model_filename == "RespondedExistence", c("model_filename")] <- "RespExistence"
+data[data$model_filename == "NegSuccession", c("model_filename")] <- "NotSuccession"
 data$total <- data$model_data_decomposition_time + data$model_atomization_time + data$model_declare_to_ltlf + data$model_ltlf_query_time
 data <- aggregate(list(query_time=data[, 23]), list(n_traces=data$n_traces, model_filename=data$model_filename, atomization_conf=data$atomization_conf), mean)
-data[data$model_filename == "NegSuccession", c("model_filename")] <- "NotSuccession"
 
 
-toAppend <- read.csv("/home/giacomo/projects/knobab/competitors/SQLMinerBenchmarker/ht23.csv")
+
+toAppend <- read.csv("/home/giacomo/projects/knobab/data/testing/results/sql_benchmark.csv")
 #toAppend <- read.csv("/home/giacomo/projects/knobab/competitors/SQLMinerBenchmarker/hospital_timings.csv")
 toAppend$model_filename <- toAppend$model_filename %>% str_replace("25", "")
 toAppend[toAppend$model_filename == "RespondedExistence", c("model_filename")] <- "RespExistence"
-toAppend <- aggregate(list(query_time=toAppend$query_time), list(n_traces=toAppend$n_traces, model_filename=toAppend$model_filename, atomization_conf=toAppend$atomization_conf), mean)
+data[data$model_filename == "NegSuccession", c("model_filename")] <- "NotSuccession"
+toAppend <- aggregate(list(query_time=toAppend$execution_time), list(n_traces=toAppend$n_traces, model_filename=toAppend$model_filename, atomization_conf=toAppend$atomization_conf), mean)
 
 U <- union(data, toAppend)
 
