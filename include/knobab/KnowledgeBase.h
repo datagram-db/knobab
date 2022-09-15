@@ -30,6 +30,10 @@ enum ParsingState {
 };
 
 #include <bitset>
+#include "knobab/dataStructures/CountTableFPTree.h"
+#include "knobab/algorithms/mining/DataMiningMetrics.h"
+#include "knobab/algorithms/mining/RulesFromFrequentItemset.h"
+
 #include <knobab/trace_repairs/DataQuery.h>
 #include <knobab/operators/LTLFOperators.h>
 
@@ -185,6 +189,85 @@ public:
     void load_data_without_antlr4(const no_antlr_log& L, const std::string &source, const std::string &name);
 
 
+
+    /** Pattern mining **/
+    std::vector<DeclareDataAware> pattern_mining(uint64_t minimum_support_threshold,
+                        bool naif) {
+        uint64_t max_act_id = count_table.nAct();
+        FPTree t{count_table, minimum_support_threshold, max_act_id};
+        std::vector<DeclareDataAware> declarative_clauses;
+        auto result = fptree_growth(t, 2);
+        std::set<Pattern> binary_patterns;
+        for (const auto& x : result) {
+            if (x.first.size() == 1) {
+                if (naif) {
+                    DeclareDataAware clause;
+                    clause.left_act = event_label_mapper.get(*x.first.begin());
+                    clause.n = 1;
+                    clause.casusu = "Exists1";
+                    declarative_clauses.emplace_back(clause);
+                } else {
+                    DeclareDataAware clause;
+                    clause.left_act = event_label_mapper.get(*x.first.begin());
+                    event_t n = std::numeric_limits<event_t>::max(),
+                            N = 0;
+                    auto cp = count_table.resolve_primary_index2(*x.first.begin());
+                    while (cp.first != cp.second) {
+                        if (cp.first->id.parts.event_id > 0) {
+                            if (cp.first->id.parts.event_id < n) {
+                                n = cp.first->id.parts.event_id;
+                            }
+                            if (cp.first->id.parts.event_id > N) {
+                                N = cp.first->id.parts.event_id;
+                            }
+                        }
+                        cp.first++;
+                    }
+                    clause.n = n;
+                    clause.casusu = "Exists";
+                    declarative_clauses.emplace_back(clause);
+                    clause.n = N+1;
+                    clause.casusu = "Absence";
+                    declarative_clauses.emplace_back(clause);
+                }
+            } else {
+                binary_patterns.emplace(x);
+            }
+        }
+        result.clear();
+
+        DataMiningMetrics<act_t> counter{binary_patterns};
+        // For each frequent itemset, generate a set of possible relevant rules
+        for (const Pattern& pattern : binary_patterns) {
+            if (pattern.first.size() <= 1) continue;                            // I cannot extract any significant rule from a singleton!
+            RulesFromFrequentItemset<act_t> rffi{counter};                         // Generate the top rule
+            for (const auto& result: rffi.generate_hypotheses(pattern)) {            // Generate the hypotheses containing a lift greater than one
+                if (result.tail.empty()) {
+                    // CoExistence pattern
+                    DeclareDataAware clause;
+                    clause.left_act = event_label_mapper.get(result.head.at(0));
+                    clause.right_act = event_label_mapper.get(result.head.at(1));
+                    clause.n = 1;
+                    clause.casusu = "CoExistence";
+                    declarative_clauses.emplace_back(clause);
+                } else if (result.tail.size() == 1) {
+                    // Doing some further finicky processing to refine which kind of implication
+                    bool canBeRefined = false;
+                    if (canBeRefined) {
+                        // the result that was computed before
+                    } else {
+                        DeclareDataAware clause;
+                        clause.left_act = event_label_mapper.get(result.head.at(0));
+                        clause.right_act = event_label_mapper.get(result.tail.at(0));
+                        clause.n = 1;
+                        clause.casusu = "RespExistence";
+                        declarative_clauses.emplace_back(clause);
+                    }
+                }
+            }
+        }
+        return declarative_clauses;
+    }
 
 
 

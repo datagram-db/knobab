@@ -23,7 +23,19 @@ struct CountTemplate {
     void indexing(uint16_t maxAct, uint32_t maxTraceId);
 
     std::pair<const oid*, const oid*> resolve_primary_index(const uint16_t actId, uint32_t& start, uint32_t& send) const;
-
+    uint16_t resolve_length(const uint16_t actId, const uint32_t traceId) const {
+        return (actId < maxAct) && (traceId < maxTraceId) ? table.at(
+                (maxTraceId + 1) * actId + traceId).id.parts.event_id : 0;
+    }
+    std::pair<const oid*, const oid*> resolve_primary_index2(const uint16_t actId) const {
+        if (actId < maxAct) {
+            const uint32_t start = (maxTraceId + 1) * actId;
+            const uint32_t end = start + maxTraceId;
+            return {table.data() + start, table.data() + end};       // Pointers to first and last oid from Count Table subsection
+        } else {
+            return {nullptr, nullptr};
+        }
+    }
     std::pair<const uint32_t, const uint32_t> resolve_primary_index(const uint16_t actId) const;
 
     std::vector<size_t> actCounting() {
@@ -39,6 +51,9 @@ struct CountTemplate {
     void clear() {
         table.clear();
     }
+
+    uint32_t nTraces() const { return maxTraceId; }
+    uint16_t nAct() const { return maxAct; }
 
     friend std::ostream &operator<<(std::ostream &os, const CountTemplate &aTemplate);
 

@@ -22,8 +22,43 @@ protected:
     Environment env;
 };
 
+class holidays_operators : public testing::Test {
+protected:
+    void SetUp() override {
+        std::filesystem::path curr = std::filesystem::current_path().parent_path().parent_path() / "data" / "testing" / "basic_operator_testing" / "holidays.txt";
+        std::ifstream file{curr};
+        env.load_log(HUMAN_READABLE_YAUCL, true, curr.filename(), false, file);
+    }
+
+    Environment env;
+};
+
 #define DATA_EMPLACE_BACK(l,trace,event,isMatch)    do { (l).emplace_back(std::make_pair((trace),(event)), std::make_pair((1.0),MarkedEventsVector{})); if (isMatch) (l).back().second.second.emplace_back(marked_event::activation(event));} while (false)
 #define DATA_DECREMENT_EMPLACE_BACK(l,trace,event,isMatch)    do { (l).emplace_back(std::make_pair((trace),(event)-1), std::make_pair((1.0),MarkedEventsVector{})); if (isMatch) (l).back().second.second.emplace_back(marked_event::activation(event));} while (false)
+
+TEST_F(holidays_operators, exists) {
+    auto a = env.db.timed_dataless_exists("A", ActivationLeaf);
+    auto b = env.db.timed_dataless_exists("B", TargetLeaf);
+    std::cout << a << std::endl;
+    std::cout << b << std::endl;
+    Result result_slow_timed_b, result_slow_timed_a;
+    Result and_slow_timed, andF_fast_timed, FaFB_result;
+
+    future_logic_timed(b, result_slow_timed_b, env.db.act_table_by_act_id.trace_length);
+    std::cout << result_slow_timed_b << std::endl;
+
+    future_logic_timed(a, result_slow_timed_a, env.db.act_table_by_act_id.trace_length);
+    std::cout << result_slow_timed_a << std::endl;
+
+    and_fast_timed(a, result_slow_timed_b, and_slow_timed, nullptr, env.db.act_table_by_act_id.trace_length);
+    std::cout << and_slow_timed << std::endl;
+
+    aAndFutureB_timed(a, b, andF_fast_timed, nullptr, env.db.act_table_by_act_id.trace_length);
+    std::cout << andF_fast_timed << std::endl;
+
+    and_logic_timed(result_slow_timed_a, result_slow_timed_b, FaFB_result, nullptr, env.db.act_table_by_act_id.trace_length);
+    std::cout << FaFB_result << std::endl;
+}
 
 TEST_F(basic_operators, A) {
     for (int i = 0; i<2; i++) {
