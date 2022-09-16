@@ -3,7 +3,7 @@
 // Created by giacomo on 15/09/22.
 //
 
-#include <knobab/dataStructures/CountTableFPTree.h>
+#include "knobab/dataStructures/CountTableFPTree.h"
 
 static inline bool contains_single_path(const FPTree& fptree) {
     return fptree.empty() || contains_single_path( fptree.root );
