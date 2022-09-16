@@ -43,6 +43,7 @@ template <typename T> struct Rule {
     Rule(const std::vector<T>& itemset) : head{itemset}, tail{} {}
     Rule(const std::set<T>& itemset) : tail{} {
         for (const auto& x : itemset) head.emplace_back(x);
+        std::sort(head.begin(), head.end());
     }
 
     /**
@@ -103,11 +104,11 @@ namespace std {
         {
             size_t i = 31;
             size_t j = 7;
-            for (const std::string& x : s.head) {
-                i = std::hash<std::string>()(x) * 31 + i;
+            for (const T& x : s.head) {
+                i = std::hash<T>()(x) * 31 + i;
             }
-            for (const std::string& x : s.tail) {
-                j = std::hash<std::string>()(x) * 7 + i;
+            for (const T& x : s.tail) {
+                j = std::hash<T>()(x) * 7 + i;
             }
             return i ^ ( j << 1 );
         }

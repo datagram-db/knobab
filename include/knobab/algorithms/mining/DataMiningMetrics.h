@@ -21,24 +21,20 @@ using VTLexic = LexicographicalOrder<std::vector<std::string>, std::string>;
  * This struct stores the association itemset/number_of_occurrences returned from the FPGrowth algorithm and returns
  * a set of data mining metrics
  */
-template <typename T> struct DataMiningMetrics {
+struct DataMiningMetrics {
 
-    std::map<std::vector<T>, unsigned long, LexicographicalOrder<std::vector<T>, T>> f;///<  Storing the item-support information from the FPGrowth algorithm
+    std::vector<std::vector<trace_t>> act_to_traces;
+//    std::map<std::vector<T>, unsigned long, LexicographicalOrder<std::vector<T>, T>> f;///<  Storing the item-support information from the FPGrowth algorithm
     double sumAll = 0.0;                                         ///<  Sum of all the supports for |T|
 
     /**
      * Initialization via the output of the FPGrowth algorithm
      * @param S
      */
-    DataMiningMetrics(const std::set<GenPattern<T>>& S) {
-        for (auto x : S) { // For each pattern
-            std::vector<T> v{}; // Store it as a vector
-            v.reserve(x.first.size());
-            for (auto it = x.first.begin(); it != x.first.end(); ) {
-                v.push_back(std::move(x.first.extract(it++).value()));
-            }
-            f[v] = x.second; // Associate the support to the rule represented as a vector
-            sumAll += x.second; // Increment the number of the (frequent) transactions (Suggestion: replace it with the actual size of |T|)
+    DataMiningMetrics(const CountTemplate& S) : sumAll{(double)S.nTraces()}, act_to_traces(S.nAct()) {
+        for (const auto& ref : S.table) {
+            if (ref.id.parts.event_id > 0)
+                act_to_traces[ref.id.parts.act].emplace_back(ref.id.parts.trace_id);
         }
     }
 
@@ -47,14 +43,40 @@ template <typename T> struct DataMiningMetrics {
      * @param i
      * @return
      */
-    size_t support(const std::vector<T>& i) const {
-        size_t sum = 0;
-        for (auto it = f.begin(); it != f.end(); it++) {
-            if (IsSupsetOf(it->first, i)) {
-                sum += it->second;
+    size_t support(const std::vector<act_t>& i) const {
+        if (i.empty())
+            return sumAll;
+        else if (i.size() == 1)
+            return act_to_traces.at(i.at(0)).size();
+        else {
+            std::vector<trace_t> orig = act_to_traces[i.at(0)];
+            std::vector<trace_t> res;
+            for (size_t j = 1; j<i.size(); j++) {
+                const auto& ref = act_to_traces.at(i.at(j));
+                std::set_union(orig.begin(), orig.end(), ref.begin(), ref.end(),
+                               std::back_inserter(res));
+                std::swap(res, orig);
             }
+            return orig.size();
         }
-        return sum;
+    }
+
+    size_t and_(const std::vector<act_t>& i) const {
+        if (i.empty())
+            return sumAll;
+        else if (i.size() == 1)
+            return act_to_traces.at(i.at(0)).size();
+        else {
+            std::vector<trace_t> orig = act_to_traces[i.at(0)];
+            std::vector<trace_t> res;
+            for (size_t j = 1; j<i.size(); j++) {
+                const auto& ref = act_to_traces.at(i.at(j));
+                std::set_intersection(orig.begin(), orig.end(), ref.begin(), ref.end(),
+                               std::back_inserter(res));
+                std::swap(res, orig);
+            }
+            return orig.size();
+        }
     }
 
     /**
@@ -62,8 +84,8 @@ template <typename T> struct DataMiningMetrics {
      * @param r
      * @return
      */
-    double support(const Rule<T>& r) const {
-        std::vector<T> unione;
+    double support(const Rule<act_t>& r) const {
+        std::vector<act_t> unione;
         for (const auto& x: r.head) unione.emplace_back(x);
         for (const auto& x: r.tail) unione.emplace_back(x);
         std::sort(unione.begin(), unione.end());
@@ -71,14 +93,22 @@ template <typename T> struct DataMiningMetrics {
         return ((double)support(unione)) / sumAll;
     }
 
-
     /**
-     * Rule lift
+     * Rule confidence
      * @param r
      * @return
      */
-    double lift(const Rule<T>& r) const {
-        std::vector<T> unione;
+    double confidence(const Rule<act_t>& r) const {
+        std::vector<act_t> unione;
+        for (const auto& x: r.head) unione.emplace_back(x);
+        for (const auto& x: r.tail) unione.emplace_back(x);
+        std::sort(unione.begin(), unione.end());
+        unione.erase(std::unique(unione.begin(), unione.end()), unione.end());
+        return ((double)and_(unione)) / ((double) support(r.head));
+    }
+
+    double lift(const Rule<act_t>& r) const {
+        std::vector<act_t> unione;
         for (const auto& x: r.head) unione.emplace_back(x);
         for (const auto& x: r.tail) unione.emplace_back(x);
         std::sort(unione.begin(), unione.end());

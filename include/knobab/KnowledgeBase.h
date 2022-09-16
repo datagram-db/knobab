@@ -335,32 +335,50 @@ public:
         map.clear();
         inv_map.clear();
 
-        DataMiningMetrics<act_t> counter{binary_patterns};
-        // For each frequent itemset, generate a set of possible relevant rules
+        DataMiningMetrics counter{count_table};
         for (const Pattern& pattern : binary_patterns) {
-            if (pattern.first.size() <= 1) continue;                            // I cannot extract any significant rule from a singleton!
-            RulesFromFrequentItemset<act_t> rffi{counter};                         // Generate the top rule
-            for (const auto& result: rffi.generate_hypotheses(pattern)) {            // Generate the hypotheses containing a lift greater than one
-                if (result.tail.empty()) {
+            std::vector<std::pair<double, Rule<act_t>>> candidate_rule;
+            DEBUG_ASSERT(pattern.first.size() == 2);
+            Rule<act_t> lr, rl;
+            auto it = pattern.first.begin();
+            lr.head.emplace_back(*it); rl.tail.emplace_back(*it);
+            it++;
+            lr.tail.emplace_back(*it); rl.head.emplace_back(*it);
+            double lr_conf = counter.confidence(lr);
+            double rl_conf = counter.confidence(rl);
+            if ((lr_conf == rl_conf) && (rl_conf >= support)) {
+                candidate_rule.emplace_back(((double)pattern.second)/((double)log_size), Rule<act_t>{pattern.first});
+            } else {
+                if (lr_conf >= rl_conf) {
+                    if (lr_conf >= support)
+                        candidate_rule.emplace_back(lr_conf, lr);
+                } else if (rl_conf >= support) {
+                    if (rl_conf >= support)
+                        candidate_rule.emplace_back(rl_conf, rl);
+                }
+            }
+
+            for (const auto& result: candidate_rule) {            // Generate the hypotheses containing a lift greater than one
+                if (result.second.tail.empty()) {
                     // CoExistence pattern
                     DeclareDataAware clause;
-                    clause.left_act = event_label_mapper.get(result.head.at(0));
-                    clause.right_act = event_label_mapper.get(result.head.at(1));
+                    clause.left_act = event_label_mapper.get(result.second.head.at(0));
+                    clause.right_act = event_label_mapper.get(result.second.head.at(1));
                     clause.n = 1;
                     clause.casusu = "CoExistence";
-                    declarative_clauses.emplace_back(support, clause);
-                } else if (result.tail.size() == 1) {
+                    declarative_clauses.emplace_back(result.first, clause);
+                } else if (result.second.tail.size() == 1) {
                     // Doing some further finicky processing to refine which kind of implication
                     bool canBeRefined = false;
                     if (canBeRefined) {
                         // the result that was computed before
                     } else {
                         DeclareDataAware clause;
-                        clause.left_act = event_label_mapper.get(result.head.at(0));
-                        clause.right_act = event_label_mapper.get(result.tail.at(0));
+                        clause.left_act = event_label_mapper.get(result.second.head.at(0));
+                        clause.right_act = event_label_mapper.get(result.second.tail.at(0));
                         clause.n = 1;
                         clause.casusu = "RespExistence";
-                        declarative_clauses.emplace_back(support, clause);
+                        declarative_clauses.emplace_back(result.first, clause);
                     }
                 }
             }
