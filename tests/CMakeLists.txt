@@ -10,7 +10,7 @@ add_executable(gb_test group_by_test.cpp )
 target_link_libraries(gb_test gtest_main knobab yaucl_hashing)
 gtest_discover_tests(gb_test)
 
-add_executable(bop_test basic_operators_testing.cpp )
+add_executable(bop_test basic_operators_testing.cpp patterns.cpp)
 target_link_libraries(bop_test gtest_main knobab yaucl_hashing yaucl_bpm knobab_flloat Threads::Threads)
 gtest_discover_tests(bop_test)
 

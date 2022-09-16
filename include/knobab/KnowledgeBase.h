@@ -201,6 +201,7 @@ public:
         uint64_t max_act_id = count_table.nAct();
         FPTree t{count_table, minimum_support_threshold, max_act_id};
         std::vector<std::pair<double,DeclareDataAware>> declarative_clauses;
+        bool doInitA = false;
         auto result = fptree_growth(t, 2);
         std::set<Pattern> binary_patterns;
         std::unordered_set<act_t> unary_patterns_for_non_exact_support;
@@ -252,6 +253,7 @@ public:
                     // as this will maximise the score, precision-wise.
                     // We are postponing such discussion into point A)
                     unary_patterns_for_non_exact_support.insert(*x.first.begin());
+                    doInitA = true;
                 }
             } else {
                 binary_patterns.insert(x);
@@ -263,28 +265,32 @@ public:
         // Please observe that, given the support definition for traditional
         // event mining, I can extract a Choice pattern only when the support is
         // less than one, otherwise this choice can be rewritten simply as an exists
-        std::vector<std::vector<act_t>> map(log_size);
-        std::vector<std::vector<trace_t>> inv_map(max_act_id);
+        std::vector<std::vector<act_t>> map;
+        std::vector<std::vector<trace_t>> inv_map;
         std::set<std::vector<act_t>> S;
-        for (const act_t& act_id : unary_patterns_for_non_exact_support) {
-            for (size_t trace_id = 0; trace_id < log_size; trace_id++) {
-                event_t count = count_table.resolve_length(act_id, trace_id);
-                if (count > 0) {
-                    map[trace_id].emplace_back(act_id);
-                    inv_map[act_id].emplace_back(trace_id);
+        if (doInitA) {
+            map.insert(map.begin(), (log_size), std::vector<act_t>{});
+            inv_map.insert(inv_map.begin(), max_act_id, std::vector<trace_t>{});
+            for (const act_t& act_id : unary_patterns_for_non_exact_support) {
+                for (size_t trace_id = 0; trace_id < log_size; trace_id++) {
+                    event_t count = count_table.resolve_length(act_id, trace_id);
+                    if (count > 0) {
+                        map[trace_id].emplace_back(act_id);
+                        inv_map[act_id].emplace_back(trace_id);
+                    }
                 }
             }
         }
         unary_patterns_for_non_exact_support.clear();
 
-#ifdef DEBUG
-        for (const auto& v : map) {
-            assert(std::is_sorted(v.begin(), v.end()));
+        for (auto& v : map) {
+            std::sort(v.begin(), v.end());
         }
-        for (const auto& v : inv_map) {
-            assert(std::is_sorted(v.begin(), v.end()));
+        for (auto& v : inv_map) {
+            std::sort(v.begin(), v.end());
         }
-#endif
+        std::pair<act_t, act_t> curr_pair, inv_pair;
+        std::unordered_set<std::pair<act_t, act_t>> visited_pairs;
         // Point A)
         for (const auto& v : map)
             S.insert(v);
@@ -292,8 +298,12 @@ public:
             for (const auto& y : S) {
                 if (x != y) {
                     for (const auto& a : x) {
+                        curr_pair.first = inv_pair.second = a;
                         for (const auto& b : y) {
                             if (b == a) continue;
+                            curr_pair.second = inv_pair.first = b;
+                            if ((!visited_pairs.emplace(curr_pair).second) ||
+                                    (!visited_pairs.emplace(inv_pair).second)) continue;
                             const auto& aSet = inv_map.at(a);
                             const auto& bSet = inv_map.at(b);
                             std::pair<size_t, size_t> ratio = yaucl::iterators::ratio(aSet.begin(), aSet.end(), bSet.begin(), bSet.end());
@@ -364,22 +374,22 @@ public:
             std::vector<size_t> first(max_act_id, 0), last(max_act_id, 0);
             for (size_t trace_id = 0; trace_id < log_size; trace_id++) {
                 auto first_last = act_table_by_act_id.secondary_index.at(trace_id);
-                first[first_last.first->entry.id.parts.event_id]++;
-                last[first_last.second->entry.id.parts.event_id]++;
+                first[first_last.first->entry.id.parts.act]++;
+                last[first_last.second->entry.id.parts.act]++;
             }
             for (size_t act_id = 0; act_id < max_act_id; act_id++) {
                 DeclareDataAware clause;
                 clause.n = 1;
-                declarative_clauses.emplace_back(support, clause);
-                if (first.at(act_id) > minimum_support_threshold) {
+                auto first_occ = first.at(act_id), last_occ = last.at(act_id);
+                if (first_occ > minimum_support_threshold) {
                     clause.casusu = "Init";
                     clause.left_act = event_label_mapper.get(act_id);
-                    declarative_clauses.emplace_back(((double)(first.at(act_id))) / ((double)log_size), clause);
+                    declarative_clauses.emplace_back(((double)(first_occ)) / ((double)log_size), clause);
                 }
-                if (last.at(act_id) > minimum_support_threshold) {
+                if (last_occ > minimum_support_threshold) {
                     clause.casusu = "End";
                     clause.left_act = event_label_mapper.get(act_id);
-                    declarative_clauses.emplace_back(((double)(last.at(act_id))) / ((double)log_size), clause);
+                    declarative_clauses.emplace_back(((double)(last_occ)) / ((double)log_size), clause);
                 }
             }
 

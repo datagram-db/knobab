@@ -689,7 +689,25 @@ void parse_declare_query_planner() {
     }
 }
 
-int main(int argc, char **argv) {
+int main() {
+    Environment env;
+    env.doStats = false;
+    env.set_grounding_parameters(true, false, true,GroundingStrategyConf::NO_EXPANSION);
+    env.set_atomization_parameters("p", 20);
+    auto scripts = std::filesystem::current_path();
+    auto file = scripts / "data" / "testing" / "declare" / "choice_test";
+    {
+        std::ifstream if_{file};
+        env.load_log(TAB_SEPARATED_EVENTS, true, file.string(), true, if_);
+    }
+    std::filesystem::path declare_file_path, maxsat;
+    for (const auto& result : env.db.pattern_mining(0.5, false, true)) {
+        std::cout << "Score: " << result.first << " Pattern: "<< result.second << std::endl;
+    }
+    return 0;
+}
+
+int old(int argc, char **argv) {
 
 
 //    std::vector<std::set<size_t>> S;

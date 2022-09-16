@@ -9,7 +9,8 @@ static inline bool contains_single_path(const FPTree& fptree) {
     return fptree.empty() || contains_single_path( fptree.root );
 }
 
-std::set<Pattern> fptree_growth(const FPTree& fptree, size_t max_depth) {
+std::set<Pattern> fptree_growth(const FPTree& fptree,
+                                size_t max_depth) {
     if ( (max_depth == 0) || (fptree.empty()) ) { return {}; }
 
     if ( contains_single_path( fptree ) ) {
@@ -108,7 +109,8 @@ std::set<Pattern> fptree_growth(const FPTree& fptree, size_t max_depth) {
 
             // build the conditional fptree relative to the current item with the transactions just generated
             const FPTree conditional_fptree( conditional_fptree_transactions,
-                                             fptree.minimum_support_threshold );
+                                             fptree.minimum_support_threshold ,
+                                             fptree.max_act_id);
             // call recursively fptree_growth on the conditional fptree (empty fptree: no patterns)
             std::set<Pattern> conditional_patterns = fptree_growth( conditional_fptree, max_depth-1 );
 

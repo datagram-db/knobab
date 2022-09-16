@@ -56,8 +56,10 @@ struct FPTree {
     };
 
 
-    FPTree(const std::vector<Transaction>& transactions, uint64_t minimum_support_threshold) :
-            root(std::make_shared<FPNode<act_t>>( 0, nullptr )), header_table(),
+    FPTree(const std::vector<Transaction>& transactions,
+           uint64_t minimum_support_threshold,
+           uint64_t max_act_id) :
+            root(std::make_shared<FPNode<act_t>>( 0, nullptr )), header_table(max_act_id, nullptr), max_act_id(max_act_id),
             minimum_support_threshold( minimum_support_threshold ) {
         // scan the transactions counting the frequency of each item
         std::map<act_t, uint64_t> frequency_by_item;
