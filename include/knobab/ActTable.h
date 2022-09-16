@@ -58,8 +58,7 @@ struct ActTable {
     [[nodiscard]] std::pair<const uint32_t, const uint32_t> resolve_index(act_t id) const;
 
     /**
-     * M
-     * apping the trace id to the first and last event (see the log printer from the KnowledgeBase for a usage example)
+     * Mapping the trace id to the first and last event (see the log printer from the KnowledgeBase for a usage example)
      */
     std::vector<std::pair<record*, record*>> secondary_index;
 

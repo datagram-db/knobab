@@ -192,14 +192,15 @@ public:
 
 
     /** Pattern mining **/
-    std::vector<DeclareDataAware> pattern_mining(double support,
-                        bool naif) {
+    std::vector<std::pair<double,DeclareDataAware>> pattern_mining(double support,
+                        bool naif,
+                        bool init_end) {
         support = std::max(std::min(support, 1.0), 0.0); // forcing the value to be between 0 and 1.
         size_t log_size = count_table.nTraces();
         uint64_t minimum_support_threshold = std::min((uint64_t)std::ceil((double)log_size * support), log_size);
         uint64_t max_act_id = count_table.nAct();
         FPTree t{count_table, minimum_support_threshold, max_act_id};
-        std::vector<DeclareDataAware> declarative_clauses;
+        std::vector<std::pair<double,DeclareDataAware>> declarative_clauses;
         auto result = fptree_growth(t, 2);
         std::set<Pattern> binary_patterns;
         std::unordered_set<act_t> unary_patterns_for_non_exact_support;
@@ -215,7 +216,7 @@ public:
                         clause.left_act = event_label_mapper.get(*x.first.begin());
                         clause.n = 1;
                         clause.casusu = "Exists1";
-                        declarative_clauses.emplace_back(clause);
+                        declarative_clauses.emplace_back(support, clause);
                     } else {
                         // The non-naif version is exploiting the couting information from
                         // the counting table, and also providing an expected number of times
@@ -239,10 +240,10 @@ public:
                         }
                         clause.n = n;
                         clause.casusu = "Exists";
-                        declarative_clauses.emplace_back(clause);
+                        declarative_clauses.emplace_back(support, clause);
                         clause.n = N+1;
                         clause.casusu = "Absence";
-                        declarative_clauses.emplace_back(clause);
+                        declarative_clauses.emplace_back(support, clause);
                     }
                 } else {
                     // If the support is less than one, then we cannot state that
@@ -296,6 +297,7 @@ public:
                             const auto& aSet = inv_map.at(a);
                             const auto& bSet = inv_map.at(b);
                             std::pair<size_t, size_t> ratio = yaucl::iterators::ratio(aSet.begin(), aSet.end(), bSet.begin(), bSet.end());
+                            double local_support = ((double)(ratio.first)) / ((double)log_size);
                             if (ratio.first >= minimum_support_threshold) {
                                 // I can consider this pattern, again, only if it is within the expected
                                 // support rate which, in this case, is given by the amount of traces
@@ -305,14 +307,14 @@ public:
                                 clause.right_act = event_label_mapper.get(b);
                                 clause.n = 1;
                                 clause.casusu = "Choice";
-                                declarative_clauses.emplace_back(clause);
+                                declarative_clauses.emplace_back(local_support, clause);
                                 if ((!naif) && ratio.second == 0) {
                                     // If there is no intersection, I can also be more strict if I want,
                                     // and provide an exclusive choice pattern if I am confident that
                                     // the two events will never appear in the same trace (according to
                                     // the "training" data
                                     clause.casusu = "ExclChoice";
-                                    declarative_clauses.emplace_back(clause);
+                                    declarative_clauses.emplace_back(local_support, clause);
                                 }
                             }
                         }
@@ -336,7 +338,7 @@ public:
                     clause.right_act = event_label_mapper.get(result.head.at(1));
                     clause.n = 1;
                     clause.casusu = "CoExistence";
-                    declarative_clauses.emplace_back(clause);
+                    declarative_clauses.emplace_back(support, clause);
                 } else if (result.tail.size() == 1) {
                     // Doing some further finicky processing to refine which kind of implication
                     bool canBeRefined = false;
@@ -348,10 +350,39 @@ public:
                         clause.right_act = event_label_mapper.get(result.tail.at(0));
                         clause.n = 1;
                         clause.casusu = "RespExistence";
-                        declarative_clauses.emplace_back(clause);
+                        declarative_clauses.emplace_back(support, clause);
                     }
                 }
             }
+        }
+
+
+        if (init_end) {
+            // This is not directly mined via the frequent mining algorithm but,
+            // still, if needed, this can be obtained via an easy linear scan of the
+            // secondary index of the knowledge base
+            std::vector<size_t> first(max_act_id, 0), last(max_act_id, 0);
+            for (size_t trace_id = 0; trace_id < log_size; trace_id++) {
+                auto first_last = act_table_by_act_id.secondary_index.at(trace_id);
+                first[first_last.first->entry.id.parts.event_id]++;
+                last[first_last.second->entry.id.parts.event_id]++;
+            }
+            for (size_t act_id = 0; act_id < max_act_id; act_id++) {
+                DeclareDataAware clause;
+                clause.n = 1;
+                declarative_clauses.emplace_back(support, clause);
+                if (first.at(act_id) > minimum_support_threshold) {
+                    clause.casusu = "Init";
+                    clause.left_act = event_label_mapper.get(act_id);
+                    declarative_clauses.emplace_back(((double)(first.at(act_id))) / ((double)log_size), clause);
+                }
+                if (last.at(act_id) > minimum_support_threshold) {
+                    clause.casusu = "End";
+                    clause.left_act = event_label_mapper.get(act_id);
+                    declarative_clauses.emplace_back(((double)(last.at(act_id))) / ((double)log_size), clause);
+                }
+            }
+
         }
         return declarative_clauses;
     }
