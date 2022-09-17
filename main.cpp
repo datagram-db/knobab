@@ -701,15 +701,13 @@ int main() {
         env.load_log(TAB_SEPARATED_EVENTS, true, file.string(), true, if_);
     }
     std::filesystem::path declare_file_path, maxsat;
-    for (const auto& result : env.db.pattern_mining(0.5, false, true)) {
-        std::cout << "Score: " << result.first << " Pattern: "<< result.second << std::endl;
+    for (const auto& result : env.db.pattern_mining(0.1, false, true)) {
+        std::cout << result << std::endl;
     }
     return 0;
 }
 
 int old(int argc, char **argv) {
-
-
 //    std::vector<std::set<size_t>> S;
 //    S.emplace_back(std::set<size_t>{1,2,3});
 //    S.emplace_back(std::set<size_t>{1,2});

@@ -37,6 +37,7 @@ enum ParsingState {
 
 #include <knobab/trace_repairs/DataQuery.h>
 #include <knobab/operators/LTLFOperators.h>
+#include <ostream>
 
 
 using trace_set = std::bitset<sizeof(uint32_t)>;
@@ -45,6 +46,37 @@ using act_set = std::bitset<sizeof(uint16_t)>;
 //union_minimal resolveUnionMinimal(const AttributeTable &table, const AttributeTable::record &x);
 const uint16_t MAX_UINT16 = std::pow(2, 16) - 1;
 
+template <typename T>
+struct pattern_mining_result {
+    T clause;
+    double           support_generating_original_pattern;
+    double           support_declarative_pattern;
+    double           confidence_declarative_pattern;
+
+    pattern_mining_result(double support,
+                          const T &clause) : pattern_mining_result(clause, support, support, -1.0) {}
+    pattern_mining_result(const T &clause,
+                                                 double supportGeneratingOriginalPattern,
+                                                 double supportDeclarativePattern,
+                                                 double confidenceDeclarativePattern) : clause(clause),
+                                                                                        support_generating_original_pattern(
+                                                                                                supportGeneratingOriginalPattern),
+                                                                                        support_declarative_pattern(
+                                                                                                supportDeclarativePattern),
+                                                                                        confidence_declarative_pattern(confidenceDeclarativePattern) {}
+
+
+    DEFAULT_CONSTRUCTORS(pattern_mining_result);
+    friend std::ostream &operator<<(std::ostream &os, const pattern_mining_result &result){
+        os << "Clause: " << result.clause << std::endl
+           << "\t - Pattern Maching Support: " << result.support_generating_original_pattern << std::endl;
+        if (result.support_declarative_pattern >= 0.0)
+            os << "\t - Declarative Pattern's Support: " << result.support_declarative_pattern << std::endl;
+        if (result.confidence_declarative_pattern >= 0.0)
+            os << "\t - Declarative Pattern's Confidence: " << result.confidence_declarative_pattern << std::endl;
+        return os << std::endl;
+    }
+};
 
 class KnowledgeBase : public trace_visitor {
     CountTemplate                                   count_table;
@@ -192,7 +224,7 @@ public:
 
 
     /** Pattern mining **/
-    std::vector<std::pair<double,DeclareDataAware>> pattern_mining(double support,
+    std::vector<pattern_mining_result<DeclareDataAware>> pattern_mining(double support,
                         bool naif,
                         bool init_end) {
         support = std::max(std::min(support, 1.0), 0.0); // forcing the value to be between 0 and 1.
@@ -200,7 +232,7 @@ public:
         uint64_t minimum_support_threshold = std::min((uint64_t)std::ceil((double)log_size * support), log_size);
         uint64_t max_act_id = count_table.nAct();
         FPTree t{count_table, minimum_support_threshold, max_act_id};
-        std::vector<std::pair<double,DeclareDataAware>> declarative_clauses;
+        std::vector<pattern_mining_result<DeclareDataAware>> declarative_clauses;
         bool doInitA = false;
         auto result = fptree_growth(t, 2);
         std::set<Pattern> binary_patterns;
@@ -317,14 +349,14 @@ public:
                                 clause.right_act = event_label_mapper.get(b);
                                 clause.n = 1;
                                 clause.casusu = "Choice";
-                                declarative_clauses.emplace_back(local_support, clause);
+                                declarative_clauses.emplace_back(clause, support, local_support, -1);
                                 if ((!naif) && ratio.second == 0) {
                                     // If there is no intersection, I can also be more strict if I want,
                                     // and provide an exclusive choice pattern if I am confident that
                                     // the two events will never appear in the same trace (according to
                                     // the "training" data
                                     clause.casusu = "ExclChoice";
-                                    declarative_clauses.emplace_back(local_support, clause);
+                                    declarative_clauses.emplace_back(clause, support, local_support, -1);
                                 }
                             }
                         }
@@ -337,7 +369,7 @@ public:
 
         DataMiningMetrics counter{count_table};
         for (const Pattern& pattern : binary_patterns) {
-            std::vector<std::pair<double, Rule<act_t>>> candidate_rule;
+            std::vector<pattern_mining_result<Rule<act_t>>> candidate_rule;
             DEBUG_ASSERT(pattern.first.size() == 2);
             Rule<act_t> lr, rl;
             auto it = pattern.first.begin();
@@ -347,38 +379,44 @@ public:
             double lr_conf = counter.confidence(lr);
             double rl_conf = counter.confidence(rl);
             if ((lr_conf == rl_conf) && (rl_conf >= support)) {
-                candidate_rule.emplace_back(((double)pattern.second)/((double)log_size), Rule<act_t>{pattern.first});
+                candidate_rule.emplace_back(Rule<act_t>{pattern.first}, ((double)pattern.second)/((double)log_size), -1, -1);
             } else {
                 if (lr_conf >= rl_conf) {
                     if (lr_conf >= support)
-                        candidate_rule.emplace_back(lr_conf, lr);
+                        candidate_rule.emplace_back(lr, ((double)pattern.second)/((double)log_size), counter.support(lr), lr_conf);
                 } else if (rl_conf >= support) {
                     if (rl_conf >= support)
-                        candidate_rule.emplace_back(rl_conf, rl);
+                        candidate_rule.emplace_back(rl, ((double)pattern.second)/((double)log_size), counter.support(lr), rl_conf);
                 }
             }
 
             for (const auto& result: candidate_rule) {            // Generate the hypotheses containing a lift greater than one
-                if (result.second.tail.empty()) {
+                if (result.clause.tail.empty()) {
                     // CoExistence pattern
                     DeclareDataAware clause;
-                    clause.left_act = event_label_mapper.get(result.second.head.at(0));
-                    clause.right_act = event_label_mapper.get(result.second.head.at(1));
+                    clause.left_act = event_label_mapper.get(result.clause.head.at(0));
+                    clause.right_act = event_label_mapper.get(result.clause.head.at(1));
                     clause.n = 1;
                     clause.casusu = "CoExistence";
-                    declarative_clauses.emplace_back(result.first, clause);
-                } else if (result.second.tail.size() == 1) {
+                    declarative_clauses.emplace_back(clause,
+                                                     result.support_generating_original_pattern,
+                                                     result.support_declarative_pattern,
+                                                     result.confidence_declarative_pattern);
+                } else if (result.clause.tail.size() == 1) {
                     // Doing some further finicky processing to refine which kind of implication
                     bool canBeRefined = false;
                     if (canBeRefined) {
                         // the result that was computed before
                     } else {
                         DeclareDataAware clause;
-                        clause.left_act = event_label_mapper.get(result.second.head.at(0));
-                        clause.right_act = event_label_mapper.get(result.second.tail.at(0));
+                        clause.left_act = event_label_mapper.get(result.clause.head.at(0));
+                        clause.right_act = event_label_mapper.get(result.clause.tail.at(0));
                         clause.n = 1;
                         clause.casusu = "RespExistence";
-                        declarative_clauses.emplace_back(result.first, clause);
+                        declarative_clauses.emplace_back(clause,
+                                                         result.support_generating_original_pattern,
+                                                         result.support_declarative_pattern,
+                                                         result.confidence_declarative_pattern);
                     }
                 }
             }
