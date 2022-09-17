@@ -256,6 +256,15 @@ public:
     Result ends(const std::string& act, bool doExtractEvent, const double minThreshold = 1) const;
     std::vector<std::pair<std::pair<trace_t, event_t>, double>> timed_dataless_exists(const std::string& act) const;
 
+    std::pair<ActTable::record*, ActTable::record*> timed_dataless_exists(uint16_t mappedVal) const {
+        std::pair<ActTable::record*, ActTable::record*> foundData{nullptr, nullptr};
+        auto indexes = act_table_by_act_id.resolve_index(mappedVal);
+        if(indexes.first < 0){
+            return {nullptr, nullptr};
+        }
+        return {((ActTable::record*)act_table_by_act_id.table.begin().base()+ indexes.first), ((ActTable::record*)act_table_by_act_id.table.begin().base()+ indexes.second)};
+    }
+
     /**
      *
      * @author Samuel 'Sam' Appleby

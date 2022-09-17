@@ -11,6 +11,16 @@
 std::vector<pattern_mining_result<DeclareDataAware>> pattern_mining(const KnowledgeBase& kb,
                                                                     double support,
                                                                     bool naif,
-                                                                    bool init_end);
+                                                                    bool init_end,
+                                                                    bool special_temporal_patterns,
+                                                                    bool only_precise_temporal_patterns);
+
+std::vector<pattern_mining_result<DeclareDataAware>> classifier_mining(const KnowledgeBase& pos,
+                                                                       const KnowledgeBase& neg,
+                                                                    double support,
+                                                                    bool naif,
+                                                                    bool init_end,
+                                                                       bool special_temporal_patterns,
+                                                                       bool only_precise_temporal_patterns);
 
 #endif //KNOBAB_PATTERN_MINING_H
