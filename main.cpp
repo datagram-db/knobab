@@ -674,6 +674,7 @@ void sam_testing() {
 }
 
 #include "knobab/queries/DeclareQueryLanguageParser.h"
+#include "pattern_mining.h"
 
 void parse_declare_query_planner() {
     DeclareQueryLanguageParser dqlp;
@@ -701,7 +702,7 @@ int main() {
         env.load_log(TAB_SEPARATED_EVENTS, true, file.string(), true, if_);
     }
     std::filesystem::path declare_file_path, maxsat;
-    for (const auto& result : env.db.pattern_mining(0.1, false, true)) {
+    for (const auto& result : pattern_mining(env.db, 0.1, false, true)) {
         std::cout << result << std::endl;
     }
     return 0;
