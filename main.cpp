@@ -696,13 +696,13 @@ int main() {
     env.set_grounding_parameters(true, false, true,GroundingStrategyConf::NO_EXPANSION);
     env.set_atomization_parameters("p", 20);
     auto scripts = std::filesystem::current_path();
-    auto file = scripts / "data" / "testing" / "declare" / "respext_test";
+    auto file = scripts / "data" / "testing" / "declare" / "mining" / "response_test";
     {
         std::ifstream if_{file};
         env.load_log(TAB_SEPARATED_EVENTS, true, file.string(), true, if_);
     }
     std::filesystem::path declare_file_path, maxsat;
-    for (const auto& result : pattern_mining(env.db, 0.1, false, true)) {
+    for (const auto& result : pattern_mining(env.db, 1.0, false, true, true, false)) {
         std::cout << result << std::endl;
     }
     return 0;
