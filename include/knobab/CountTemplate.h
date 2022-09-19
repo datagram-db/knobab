@@ -53,7 +53,7 @@ struct CountTemplate {
     }
 
     uint32_t nTraces() const { return maxTraceId+1; }
-    uint16_t nAct() const { return maxAct+1; }
+    uint16_t nAct() const { return maxAct; }
 
     friend std::ostream &operator<<(std::ostream &os, const CountTemplate &aTemplate);
 

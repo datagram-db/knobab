@@ -702,7 +702,7 @@ int main() {
         env.load_log(TAB_SEPARATED_EVENTS, true, file.string(), true, if_);
     }
     std::filesystem::path declare_file_path, maxsat;
-    for (const auto& result : pattern_mining(env.db, 1.0, false, true, true, false)) {
+    for (const auto& result : pattern_mining(env.db, 0.01, false, true, true, false, true)) {
         std::cout << result << std::endl;
     }
     return 0;

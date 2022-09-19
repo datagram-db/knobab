@@ -262,7 +262,7 @@ public:
         if(indexes.first < 0){
             return {nullptr, nullptr};
         }
-        return {((ActTable::record*)act_table_by_act_id.table.begin().base()+ indexes.first), ((ActTable::record*)act_table_by_act_id.table.begin().base()+ indexes.second)};
+        return {((ActTable::record*)act_table_by_act_id.table.begin().base()+ indexes.first), ((ActTable::record*)act_table_by_act_id.table.begin().base()+ indexes.second+1)};
     }
 
     /**
