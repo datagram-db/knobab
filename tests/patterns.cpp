@@ -20,9 +20,9 @@ TEST(patterns, init) {
         env.load_log(TAB_SEPARATED_EVENTS, true, file.string(), true, if_);
     }
     std::filesystem::path declare_file_path, maxsat;
-    for (const auto& result : env.db.pattern_mining(0.5, false, true)) {
-        std::cout << "Score: " << result.first << " Pattern: "<< result.second << std::endl;
-    }
+//    for (const auto& result : env.db.pattern_mining(0.5, false, true)) {
+//        std::cout << "Score: " << result.first << " Pattern: "<< result.second << std::endl;
+//    }
 //    maxsat = (scripts / "scripts" / ("support_pipeline_singledecl_testing.yaml")).string();
 //    declare_file_path = (scripts / "data" /"testing"/ "ideas22" /  ("InitDataless.powerdecl"));
     std::filesystem::path root_folder = std::filesystem::current_path().parent_path().parent_path();
