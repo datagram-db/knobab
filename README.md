@@ -1,5 +1,5 @@
 
-![KnoBAB: Making Logic Fast](Transparent Logo.png)
+![KnoBAB: Making Logic Fast](knobab.png)
 
 
 # KNOwledge Base for Alignments and Business process modelling
