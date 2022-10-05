@@ -291,6 +291,7 @@ partition_sets_result<T> partition_sets(const std::vector<std::set<T>>& subsubSe
     for (size_t i = 0, N = result.decomposedIndexedSubsets.size(); ((N!=0) && (i<N-1)); i++) {
         auto& refI = result.decomposedIndexedSubsets.at(i).second;
         size_t sizeI = refI->size();
+        if (sizeI == 1) continue;
         bool hasElem = false;
         size_t refIId = 0;
         for (size_t j = N-1; j>i; j--) {

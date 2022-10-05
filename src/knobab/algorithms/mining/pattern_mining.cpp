@@ -2,7 +2,7 @@
 // Created by giacomo on 17/09/22.
 //
 
-#include "pattern_mining.h"
+#include "knobab/algorithms/mining/pattern_mining.h"
 
 static inline void decrease_support_X(const KnowledgeBase &kb,
                         size_t expected_support,

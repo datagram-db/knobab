@@ -192,11 +192,16 @@ target_link_libraries(knobab_flloat ${CppPythonBindings} yaucl_bpm yaucl_graph)
 
 
 add_subdirectory(submodules/backward-cpp)
-add_executable(server main.cpp pattern_mining.cpp pattern_mining.h)#${BACKWARD_ENABLE} ) #)
+add_executable(knobab-v1.0 main.cpp)#${BACKWARD_ENABLE} ) #)
 
-target_link_libraries(server Threads::Threads yaml-cpp  knobab antlr4_static ${CppPythonBindings}
+target_link_libraries(knobab-v1.0 Threads::Threads yaml-cpp  knobab antlr4_static ${CppPythonBindings}
                                   yaucl_stringutils yaucl_numeric yaucl_hashing yaucl_data yaucl_bpm yaucl_graph knobab_flloat yaucl_structures)
 #add_backward(server)
+
+add_executable(mining src/knobab/algorithms/mining/pattern_mining.cpp include/knobab/algorithms/mining/pattern_mining.h mining.cpp)#${BACKWARD_ENABLE} ) #)
+target_link_libraries(mining Threads::Threads yaml-cpp  knobab antlr4_static ${CppPythonBindings}
+        yaucl_stringutils yaucl_numeric yaucl_hashing yaucl_data yaucl_bpm yaucl_graph knobab_flloat yaucl_structures)
+
 
 add_executable(tests_generator tests/tests_generator.cpp) #${BACKWARD_ENABLE})
 target_link_libraries(tests_generator knobab

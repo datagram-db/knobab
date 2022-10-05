@@ -6,7 +6,7 @@
 #define KNOBAB_PATTERN_MINING_H
 
 #include <vector>
-#include <knobab/KnowledgeBase.h>
+#include "knobab/KnowledgeBase.h"
 
 std::vector<pattern_mining_result<DeclareDataAware>> pattern_mining(const KnowledgeBase& kb,
                                                                     double support,
