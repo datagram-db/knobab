@@ -258,21 +258,22 @@ partition_sets_result<T> partition_sets(const std::vector<std::set<T>>& subsubSe
                 }
             }
 
-            for (auto it = id_to_elems.begin(); it != id_to_elems.end(); ) { // O(k>m)
+            for (auto it = id_to_elems.begin(); it != id_to_elems.end(); it++) { // O(k>m)
                 elems_to_sets[it->second].emplace(it->first);
-                it = id_to_elems.erase(it);
+                //it = id_to_elems.erase(it);
             }
         }
 
 
-        for (auto it = elems_to_sets.begin(); it != elems_to_sets.end(); ) { //O(k*N)
+        for (auto it = elems_to_sets.begin(); it != elems_to_sets.end(); it++) { //O(k*N)
             size_t curr = result.minimal_common_subsets.size();
             for (const size_t set_id : it->first) {
                 result.decomposedSubsets[set_id].insert(curr);
             }
             result.minimal_common_subsets.emplace_back(it->second);
-            it = elems_to_sets.erase(it);
+//            it = elems_to_sets.erase(it);
         }
+        elems_to_sets.clear();
 
         for (size_t i = 0, N = subsubSets.size(); i<N; i++) { // O(N)
             auto& ref = result.decomposedSubsets.at(i);
