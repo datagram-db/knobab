@@ -256,7 +256,8 @@ std::vector<PartialResult> MAXSatPipeline::subqueriesRunning(const KnowledgeBase
                 // TODO: Given the query in ref.first, put the Result in ref.second
                 switch (ref.first.type) {
                     case ExistsQuery:
-                        ref.second = kb.untimed_dataless_exists(kb.resolveCountingData(ref.first.label),
+                        ref.second
+                        = kb.untimed_dataless_exists(kb.resolveCountingData(ref.first.label),
                                                                 ref.first.numeric_argument);
                         break;
                     case AtomQuery:
