@@ -33,8 +33,39 @@ protected:
     Environment env;
 };
 
+class mdpi_operators : public testing::Test {
+protected:
+    void SetUp() override {
+        std::filesystem::path curr = std::filesystem::current_path().parent_path().parent_path() / "data" / "testing" / "declare" / "NegSuccession_test";
+        std::ifstream file{curr};
+        env.load_log(TAB_SEPARATED_EVENTS, true, curr.filename(), false, file);
+    }
+
+    Environment env;
+};
+
 #define DATA_EMPLACE_BACK(l,trace,event,isMatch)    do { (l).emplace_back(std::make_pair((trace),(event)), std::make_pair((1.0),MarkedEventsVector{})); if (isMatch) (l).back().second.second.emplace_back(marked_event::activation(event));} while (false)
 #define DATA_DECREMENT_EMPLACE_BACK(l,trace,event,isMatch)    do { (l).emplace_back(std::make_pair((trace),(event)-1), std::make_pair((1.0),MarkedEventsVector{})); if (isMatch) (l).back().second.second.emplace_back(marked_event::activation(event));} while (false)
+
+TEST_F(mdpi_operators, ag) {
+    auto a = env.db.timed_dataless_exists("a", ActivationLeaf);
+    auto c = env.db.timed_dataless_exists("c", TargetLeaf);
+    Result not_b, ag1, ag2;
+    or_fast_timed(a, c, not_b, nullptr, env.db.act_table_by_act_id.trace_length);
+    aAndGloballyB_timed(a, not_b, ag1, nullptr,env.db.act_table_by_act_id.trace_length);
+    aAndGloballyB_timed_old(a, not_b, ag2, nullptr,env.db.act_table_by_act_id.trace_length);
+    EXPECT_EQ(ag1, ag2);
+}
+
+//TEST_F(mdpi_operators, axg) {
+//    auto a = env.db.timed_dataless_exists("a", ActivationLeaf);
+//    auto c = env.db.timed_dataless_exists("c", TargetLeaf);
+//    Result not_b, ag1, ag2;
+//    or_fast_timed(a, c, not_b, nullptr, env.db.act_table_by_act_id.trace_length);
+//    aAndNextGloballyB_timed(a, not_b, ag1, nullptr,env.db.act_table_by_act_id.trace_length);
+//    aAndNextGloballyB_timed_old(a, not_b, ag2, nullptr,env.db.act_table_by_act_id.trace_length);
+//    EXPECT_EQ(ag1, ag2);
+//}
 
 TEST_F(holidays_operators, exists) {
     auto a = env.db.timed_dataless_exists("A", ActivationLeaf);
