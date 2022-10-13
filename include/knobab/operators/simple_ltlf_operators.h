@@ -512,43 +512,43 @@ inline void global_logic_timed(const Result &section, Result &result, const std:
     auto lower = section.begin(), upper = section.begin();
     auto end = section.end();
 
-    ResultIndex first;
-    ResultRecordSemantics second{1.0, 0.0};
-    ResultRecord cp{{0,   0},
-                    {1.0, {}}};
+    ResultIndex first_g;
+    ResultRecordSemantics second_g{1.0, 0.0};
+    ResultRecord cp_g{{0,   0},
+                      {1.0, {}}};
 
     while (upper != end) {
         uint32_t currentTraceId = upper->first.first;
-        first.first = cp.first.first = currentTraceId;
-        cp.first.second = lengths.at(currentTraceId);
-        first.second = 0;
+        first_g.first = cp_g.first.first = currentTraceId;
+        cp_g.first.second = lengths.at(currentTraceId);
+        first_g.second = 0;
 
         lower = upper;
-        upper = std::upper_bound(lower, section.end(), cp);
+        upper = std::upper_bound(lower, section.end(), cp_g);
 
         Result toBeReversed;
         auto it = lower + std::distance(lower, upper) - 1;
         for (int64_t i = (upper - 1)->first.second; i >= 0; i--) {
-            first.second = i;
+            first_g.second = i;
             const uint32_t dist = std::distance(it, upper);
 
-            if ((cp.first.first == it->first.first) && (dist == (cp.first.second - it->first.second))) {
-                second.first = std::min(it->second.first, second.first);
-                second.second.insert(second.second.begin(), it->second.second.begin(), it->second.second.end());
-                remove_duplicates(second.second);
+            if ((cp_g.first.first == it->first.first) && (dist == (cp_g.first.second - it->first.second))) {
+                second_g.first = std::min(it->second.first, second_g.first);
+                second_g.second.insert(second_g.second.begin(), it->second.second.begin(), it->second.second.end());
+                remove_duplicates(second_g.second);
                 it--;
             } else {
                 break; // If after this the condition does not hold, then it means that in the remainder I will have
                 // events that are not matching the condition
             }
-            toBeReversed.emplace_back(first, second);
+            toBeReversed.emplace_back(first_g, second_g);
         }
 
         // Inserting the elements in reversed order
         result.insert(result.end(), std::make_move_iterator(toBeReversed.rbegin()),
                       std::make_move_iterator(toBeReversed.rend()));
 
-        second.second.clear();
+        second_g.second.clear();
     }
 }
 
@@ -565,26 +565,26 @@ inline void global_logic_untimed(const Result &section, Result &result, const st
     auto end = section.end();
     result.clear();
 
-    ResultIndex first{0, 0};
-    ResultRecordSemantics second{1.0, {}};
-    ResultRecord cp{{0,   0},
-                    {1.0, {}}};
-
+    ResultIndex first_g{0, 0};
+    ResultRecordSemantics second_g{1.0, {}};
+    ResultRecord cp_g{{0,   0},
+                      {1.0, {}}};
     while (upper != end) {
         uint32_t currentTraceId = upper->first.first;
-        first.first = cp.first.first = currentTraceId;
-        cp.first.second = lengths.at(currentTraceId);
-        cp.second.second.clear();
-        second.second.clear();
-
+        first_g.first = cp_g.first.first = currentTraceId;
+        cp_g.first.second = lengths.at(currentTraceId);
+        cp_g.second.second.clear();
         lower = upper;
-        upper = std::upper_bound(lower, section.end(), cp);
-
-        const uint32_t dist = std::distance(lower, upper - 1);
-
-        if (dist == cp.first.second - 1) {
-            populateAndReturnEvents(lower, upper, second.second);
-            result.emplace_back(first, second);
+        second_g.second.clear();
+        upper = lower + (cp_g.first.second - 1);//std::upper_bound(lower, section.end(), cp);
+        ///const uint32_t dist = std::distance(lower, upper - 1);
+        if ((upper < end) && (upper->first.first == lower->first.first)) {
+            populateAndReturnEvents(lower, ++upper, second_g.second);
+            result.emplace_back(first_g, second_g);
+        } else {
+            cp_g.first.first = currentTraceId + 1;
+            cp_g.first.second = 0;
+            upper = std::lower_bound(lower, section.end(), cp_g);
         }
     }
 }

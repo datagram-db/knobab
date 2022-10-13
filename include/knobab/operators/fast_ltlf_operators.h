@@ -446,7 +446,6 @@ inline void global_fast_timed(const Result &section, Result& result, const std::
 
         second.second.clear();
     }
-
 }
 
 inline void global_fast_untimed(const Result &section, Result& result, const std::vector<size_t>& lengths) {
@@ -458,22 +457,22 @@ inline void global_fast_untimed(const Result &section, Result& result, const std
     ResultRecordSemantics second{1.0, {}};
     ResultRecord cp{{0,   0},
                     {1.0, {}}};
+
     while (upper != end) {
         uint32_t currentTraceId = upper->first.first;
         first.first = cp.first.first = currentTraceId;
         cp.first.second = lengths.at(currentTraceId);
         cp.second.second.clear();
-        lower = upper;
         second.second.clear();
-        upper = lower + (cp.first.second-1);//std::upper_bound(lower, section.end(), cp);
-        ///const uint32_t dist = std::distance(lower, upper - 1);
-        if ((upper < end) && (upper->first.first == lower->first.first)) {
-            populateAndReturnEvents(lower, ++upper, second.second);
+
+        lower = upper;
+        upper = std::upper_bound(lower, section.end(), cp);
+
+        const uint32_t dist = std::distance(lower, upper - 1);
+
+        if (dist == cp.first.second - 1) {
+            populateAndReturnEvents(lower, upper, second.second);
             result.emplace_back(first, second);
-        } else {
-            cp.first.first = currentTraceId+1;
-            cp.first.second = 0;
-            upper = std::lower_bound(lower, section.end(), cp);
         }
     }
 }
@@ -640,6 +639,7 @@ inline void aAndNextGloballyB_timed(const Result& a, const Result& b,Result& res
     marked_event join = marked_event::join(0,0);
     bool hasMatch;
     std::unordered_set<std::string> cache;
+
 
     for (auto aCurrent = a.begin(), aEnd = a.end(); aCurrent != aEnd; ) {
 
@@ -833,6 +833,7 @@ inline double average(std::vector<size_t> const& v){
 //    }
 //
 //}
+//}f
 
 /**
  *
@@ -856,6 +857,12 @@ inline void aAndGloballyB_timed(const Result& a, const Result& b,Result& result,
     ssize_t current_trace = -1;
     Result toRevert;
     std::vector<std::pair<decltype(bCurrent), decltype(bCurrent)>> Replay;
+    std::vector<size_t> ofDistances;
+    std::vector<bool> ofMatchedDistances;
+    ResultIndex first_g{0, 0};
+    ResultRecordSemantics second_g{1.0, {}};
+    ResultRecord cp_g{{0,   0},
+                      {1.0, {}}};
 
     for (auto aCurrent = a.begin(), aEnd = a.end(); aCurrent != aEnd; ) {
         if (aCurrent->first > bCurrent->first) {
@@ -867,28 +874,46 @@ inline void aAndGloballyB_timed(const Result& a, const Result& b,Result& result,
             if (bCurrent == bEnd) return;
             toRevert.clear();
             Replay.clear();
+            ofMatchedDistances.clear();
+            ofDistances.clear();
             if (current_trace != aCurrent->first.first) {
                 current_trace = aCurrent->first.first;
             }
+            size_t count = 0;
             while ((aCurrent != aEnd) && (aCurrent->first.first == current_trace)) {
                     if ((bCurrent == bEnd) || (bCurrent->first.first != current_trace))
                         break;
                     if (aCurrent->first > bCurrent->first) {
                         bCurrent++;
+                        count++;
                     } else if (aCurrent->first < bCurrent->first) {
                         aCurrent++;
                     } else {
                         Replay.emplace_back(aCurrent, bCurrent);
                         aCurrent++;
                         bCurrent++;
+                        count++;
+                        ofDistances.emplace_back(count);
+                        ofMatchedDistances.emplace_back(true);
                     }
             }
+//            std::cout << ofDistances << std::endl;
             while ((aCurrent != aEnd) && (aCurrent->first.first == current_trace)) aCurrent++;
-            while ((bCurrent != bEnd) && (bCurrent->first.first == current_trace)) bCurrent++;
+            while ((bCurrent != bEnd) && (bCurrent->first.first == current_trace)) { bCurrent++; count++;}
+            ofDistances.emplace_back(count);
+            ofMatchedDistances.emplace_back(true);
+            count = 0;
+            auto totalLen = ofDistances.back();
+            for (size_t i = 0, N = Replay.size(); i<N; i++) {
+                auto curr = ofDistances.at(i);
+                if ((totalLen - count) != (lengths.at(current_trace) - Replay.at(i).first->first.second)) {
+                    ofMatchedDistances[i] = false;
+                }
+                count += ofDistances.at(i+1) - curr;
+            }
 
-            size_t count;
-//            decltype(bCurrent) currentLast = bCurrent;
             for (ssize_t i = (ssize_t)Replay.size()-1; i >= 0; i--) {
+                if (!ofMatchedDistances.at(i)) continue;
                 count = 0;
                 rcx.first = Replay.at(i).first->first;
                 decltype(bCurrent) currentIterIForB = Replay.at(i).second;
