@@ -17,7 +17,7 @@ df <- aggregate(list(Time = df$Time),
 
 # ggplot(df, aes(x=Log_Size, y=Time, fill=interaction(Max_Trace_Length,Type))) +
 #   geom_bar(position = "dodge", stat = "identity") +
-#   facet_wrap( ~ Test, nrow=2, ncol=2) +
+#   facet_wrap( ~ Test, nrow=4, ncol=2) +
 #   labs(x = "Log Size", y = "Time (ms)") +
 #   theme(legend.position="bottom") +
 #   guides(fill=guide_legend(title="")) +
