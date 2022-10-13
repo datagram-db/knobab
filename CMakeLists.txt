@@ -207,6 +207,10 @@ add_executable(tests_generator tests/tests_generator.cpp) #${BACKWARD_ENABLE})
 target_link_libraries(tests_generator knobab
         yaucl_stringutils yaucl_numeric yaucl_hashing yaucl_data yaucl_bpm yaucl_graph knobab_flloat yaucl_structures)
 
+add_executable(benchmarking benchmarking/benchmarking.cpp benchmarking/benchmarking.cpp) #${BACKWARD_ENABLE})
+target_link_libraries(benchmarking knobab
+        yaucl_stringutils yaucl_numeric yaucl_hashing yaucl_data yaucl_bpm yaucl_graph knobab_flloat yaucl_structures)
+
 enable_testing ()
 include(FetchContent)
 FetchContent_Declare(
