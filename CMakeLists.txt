@@ -204,11 +204,11 @@ target_link_libraries(mining Threads::Threads yaml-cpp  knobab antlr4_static ${C
 
 
 add_executable(tests_generator tests/tests_generator.cpp) #${BACKWARD_ENABLE})
-target_link_libraries(tests_generator knobab
+target_link_libraries(tests_generator knobab Threads::Threads
         yaucl_stringutils yaucl_numeric yaucl_hashing yaucl_data yaucl_bpm yaucl_graph knobab_flloat yaucl_structures)
 
 add_executable(benchmarking benchmarking/benchmarking.cpp benchmarking/benchmarking.cpp) #${BACKWARD_ENABLE})
-target_link_libraries(benchmarking knobab
+target_link_libraries(benchmarking knobab Threads::Threads
         yaucl_stringutils yaucl_numeric yaucl_hashing yaucl_data yaucl_bpm yaucl_graph knobab_flloat yaucl_structures)
 
 enable_testing ()
