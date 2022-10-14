@@ -404,6 +404,8 @@ inline void future_fast_untimed(const Result &section, Result& result, const std
 
 
 inline void global_fast_timed(const Result &section, Result& result, const std::vector<size_t>& lengths) {
+
+
     result.clear();
     auto lower = section.begin(), upper = section.begin();
     auto end = section.end();
@@ -418,16 +420,13 @@ inline void global_fast_timed(const Result &section, Result& result, const std::
         first.first = cp.first.first = currentTraceId;
         cp.first.second = lengths.at(currentTraceId);
         first.second = 0;
-
         lower = upper;
         upper = std::upper_bound(lower, section.end(), cp);
-
         Result toBeReversed;
         auto it = lower + std::distance(lower, upper) - 1;
         for (int64_t i = (upper - 1)->first.second; i >= 0; i--) {
             first.second = i;
             const uint32_t dist = std::distance(it, upper);
-
             if ((cp.first.first == it->first.first) && (dist == (cp.first.second - it->first.second))) {
                 second.first = std::min(it->second.first, second.first);
                 second.second.insert(second.second.begin(), it->second.second.begin(), it->second.second.end());
@@ -856,15 +855,15 @@ inline void aAndGloballyB_timed(const Result& a, const Result& b,Result& result,
     std::unordered_set<std::string> cache;
     ssize_t current_trace = -1;
     Result toRevert;
-    std::vector<std::pair<decltype(bCurrent), decltype(bCurrent)>> Replay;
-    std::vector<size_t> ofDistances;
-    std::vector<bool> ofMatchedDistances;
+
     ResultIndex first_g{0, 0};
     ResultRecordSemantics second_g{1.0, {}};
     ResultRecord cp_g{{0,   0},
                       {1.0, {}}};
+    std::vector<std::pair<ResultIndex, Result::iterator>> toBeReversed;
 
     for (auto aCurrent = a.begin(), aEnd = a.end(); aCurrent != aEnd; ) {
+        toBeReversed.clear();
         if (aCurrent->first > bCurrent->first) {
             bCurrent++;
             if (bCurrent == bEnd) break;
@@ -873,91 +872,80 @@ inline void aAndGloballyB_timed(const Result& a, const Result& b,Result& result,
             rcx.second.first = 1.0;
             if (bCurrent == bEnd) return;
             toRevert.clear();
-            Replay.clear();
-            ofMatchedDistances.clear();
-            ofDistances.clear();
             if (current_trace != aCurrent->first.first) {
-                current_trace = aCurrent->first.first;
+                rcx.first.first = current_trace = aCurrent->first.first;
             }
-            size_t count = 0;
-            while ((aCurrent != aEnd) && (aCurrent->first.first == current_trace)) {
-                    if ((bCurrent == bEnd) || (bCurrent->first.first != current_trace))
-                        break;
-                    if (aCurrent->first > bCurrent->first) {
-                        bCurrent++;
-                        count++;
-                    } else if (aCurrent->first < bCurrent->first) {
-                        aCurrent++;
-                    } else {
-                        Replay.emplace_back(aCurrent, bCurrent);
-                        aCurrent++;
-                        bCurrent++;
-                        count++;
-                        ofDistances.emplace_back(count);
-                        ofMatchedDistances.emplace_back(true);
-                    }
-            }
-//            std::cout << ofDistances << std::endl;
-            while ((aCurrent != aEnd) && (aCurrent->first.first == current_trace)) aCurrent++;
-            while ((bCurrent != bEnd) && (bCurrent->first.first == current_trace)) { bCurrent++; count++;}
-            ofDistances.emplace_back(count);
-            ofMatchedDistances.emplace_back(true);
-            count = 0;
-            auto totalLen = ofDistances.back();
-            for (size_t i = 0, N = Replay.size(); i<N; i++) {
-                auto curr = ofDistances.at(i);
-                if ((totalLen - count) != (lengths.at(current_trace) - Replay.at(i).first->first.second)) {
-                    ofMatchedDistances[i] = false;
-                }
-                count += ofDistances.at(i+1) - curr;
-            }
+            first_g.first = cp_g.first.first = current_trace;
+            cp_g.first.second = lengths.at(current_trace);
+            auto bBeforeScan = bCurrent;
+            bCurrent = std::upper_bound(bCurrent, bEnd, cp_g);
+            auto aMax = std::upper_bound(aCurrent, aEnd, cp_g);
+            auto aIter = aMax; aIter--;
 
-            for (ssize_t i = (ssize_t)Replay.size()-1; i >= 0; i--) {
-                if (!ofMatchedDistances.at(i)) continue;
-                count = 0;
-                rcx.first = Replay.at(i).first->first;
-                decltype(bCurrent) currentIterIForB = Replay.at(i).second;
-                while (currentIterIForB != bCurrent) {
-                    bool hasLocalMatch = false;
+            first_g.second = 0;
+            second_g.first = 1.0;
+            second_g.second.clear();
+            auto lower = bBeforeScan;
+            auto it = lower + std::distance(lower, bCurrent) - 1;
+
+            for (int64_t i = (bCurrent - 1)->first.second; i >= 0; i--) {
+                first_g.second = i;
+                const uint32_t dist = std::distance(it, bCurrent);
+
+                if ((cp_g.first.first == it->first.first) && (dist == (cp_g.first.second - it->first.second))) {
+                    second_g.first = std::min(it->second.first, second_g.first);
+                    second_g.second.insert(second_g.second.begin(), it->second.second.begin(), it->second.second.end());
+                    remove_duplicates(second_g.second);
+                    it--;
+                } else {
+                    break; // If after this the condition does not hold, then it means that in the remainder I will have
+                    // events that are not matching the condition
+                }
+
+                // Not performing the correlation if I have not met the right condition
+
+                while ((aIter->first.first == current_trace) && (aIter->first.second > i))
+                    aIter--;
+                if (aIter->first.first != current_trace) break;
+                if (aIter->first.second < i) continue;
+
+                {
+                    bool hasMatch = false;
                     if (manager) {
-                        for (const auto &elem: Replay.at(i).first->second.second) {
+                        for (const auto &elem: aIter->second.second) {
                             if (!IS_MARKED_EVENT_ACTIVATION(elem)) continue;
                             join.id.parts.left = GET_ACTIVATION_EVENT(elem);
-                            env e1 = manager->GetPayloadDataFromEvent(Replay.at(i).first->first.first, join.id.parts.left, true, cache);
-                            for (const auto &elem1: currentIterIForB->second.second) {
+                            env e1 = manager->GetPayloadDataFromEvent(aIter->first.first, join.id.parts.left, true, cache);
+                            for (const auto &elem1: second_g.second) {
                                 if (!IS_MARKED_EVENT_TARGET(elem1)) continue;
                                 join.id.parts.right = GET_TARGET_EVENT(elem1);
 
-                                if (manager->checkValidity(e1, currentIterIForB->first.first, join.id.parts.right)) {
+                                if (manager->checkValidity(e1, current_trace, join.id.parts.right)) {
                                     rcx.second.second.push_back(join);
-                                    rcx.second.first *= (1.0 - std::min(Replay.at(i).first->second.first, currentIterIForB->second.first));
-                                    count++;
-                                    hasLocalMatch = true;
+                                    rcx.second.first *= (1.0 - std::min(aIter->second.first, second_g.first));
+                                    hasMatch = true;
                                 }
                             }
                         }
                     } else {
-                        count++;
-                        hasLocalMatch = true;
-                        rcx.second.second.insert(rcx.second.second.end(), currentIterIForB->second.second.begin(), currentIterIForB->second.second.end());
+                        hasMatch = true;
+                        rcx.second.second.insert(rcx.second.second.end(), aIter->second.second.begin(), aIter->second.second.end());
+                        rcx.second.second.insert(rcx.second.second.end(), second_g.second.begin(), second_g.second.end());
                     }
-                    if (!hasLocalMatch) break;
-                    currentIterIForB++;
+                    if (hasMatch) {
+                        rcx.first.second = i;
+                        remove_duplicates(rcx.second.second);
+                        if (manager) rcx.second.first = 1.0 - rcx.second.first;
+                        toRevert.emplace_back(rcx);
+                    }
                 }
-
-                if (count == lengths.at(current_trace) - Replay.at(i).first->first.second) {
-                    if (!manager) rcx.second.second.insert(rcx.second.second.end(), Replay.at(i).first->second.second.begin(), Replay.at(i).first->second.second.end());
-                    if (manager) rcx.second.first = 1.0 - rcx.second.first;
-                    remove_duplicates(rcx.second.second);
-                    toRevert.emplace_back(rcx);
-                }
-//                currentLast = Replay.at(i).second;
             }
+
             if (!toRevert.empty()) {
                 result.insert(result.end(), std::make_move_iterator(toRevert.rbegin()),
                               std::make_move_iterator(toRevert.rend()));
             }
-
+            aCurrent = aMax;
             if (bCurrent == bEnd) break;
         }
     }

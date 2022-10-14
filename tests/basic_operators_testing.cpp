@@ -53,8 +53,6 @@ TEST_F(mdpi_operators, ag) {
     Result not_b, ag1, ag2, G;
     or_fast_timed(a, c, not_b, nullptr, env.db.act_table_by_act_id.trace_length);
 
-    global_fast_timed(not_b, G, env.db.act_table_by_act_id.trace_length);
-
     aAndGloballyB_timed(a, not_b, ag1, nullptr,env.db.act_table_by_act_id.trace_length);
     aAndGloballyB_timed_old(a, not_b, ag2, nullptr,env.db.act_table_by_act_id.trace_length);
     EXPECT_EQ(ag1, ag2);

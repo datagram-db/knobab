@@ -520,6 +520,7 @@ inline void global_logic_timed(const Result &section, Result &result, const std:
     while (upper != end) {
         uint32_t currentTraceId = upper->first.first;
         first_g.first = cp_g.first.first = currentTraceId;
+        second_g.first = 1.0;
         cp_g.first.second = lengths.at(currentTraceId);
         first_g.second = 0;
 

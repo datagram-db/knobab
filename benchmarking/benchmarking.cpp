@@ -110,6 +110,7 @@ void derived_operators(const Environment& environment, const uint16_t& iters){
         auto t1 = std::chrono::high_resolution_clock::now();
         auto t2 = std::chrono::high_resolution_clock::now();
 
+#if 1
         t1 = std::chrono::high_resolution_clock::now();
         global_fast_untimed(a,  r_aAndgb, environment.db.act_table_by_act_id.trace_length);
         t2 = std::chrono::high_resolution_clock::now();
@@ -126,10 +127,10 @@ void derived_operators(const Environment& environment, const uint16_t& iters){
         global_logic_untimed(b, r_global_logic_b, environment.db.act_table_by_act_id.trace_length);
         t2 = std::chrono::high_resolution_clock::now();
         write_to_file(environment, "GloballyUntimed", "logic", (t2 - t1).count());
+#endif
 
 
-
-#if 0
+#if 1
         // A&Ft(B)
         t1 = std::chrono::high_resolution_clock::now();
         aAndFutureB_timed(a, b, r_aAndfb, nullptr, environment.db.act_table_by_act_id.trace_length);
@@ -147,7 +148,7 @@ void derived_operators(const Environment& environment, const uint16_t& iters){
 
 #endif
 
-#if 0
+#if 1
         // A&G(B)
         t1 = std::chrono::high_resolution_clock::now();
         aAndGloballyB_timed(a, b, r_aAndgb, nullptr, environment.db.act_table_by_act_id.trace_length);
@@ -174,7 +175,7 @@ void derived_operators(const Environment& environment, const uint16_t& iters){
 #endif
 
 
-#if 0
+#if 1
         // A&XG(B)
         t1 = std::chrono::high_resolution_clock::now();
         aAndNextGloballyB_timed(a, b, r_aAndxgb, nullptr, environment.db.act_table_by_act_id.trace_length);
@@ -209,7 +210,7 @@ void derived_operators(const Environment& environment, const uint16_t& iters){
 }
 
 int main(){
-    const uint16_t iters = 50;
+    const uint16_t iters = 5;
 
     for (const auto& dirEntry : std::filesystem::recursive_directory_iterator("data/benchmarking/")){
         std::cout << dirEntry << std::endl;
