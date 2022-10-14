@@ -538,6 +538,144 @@ inline void negated_fast_timed(const Result &section, Result& result, const std:
 
 
 /**
+*
+* @author Giacomo Bergami
+*
+* @param aResult
+* @param bResult
+* @param result
+* @param manager
+* @param lengths
+*/
+inline void aAndFutureB_timed(const Result& a, const Result& b,Result& result, const PredicateManager *manager = nullptr, const std::vector<size_t> lengths = {}) {
+    if (b.empty()) {
+        result.clear();
+        return;
+    }
+    size_t max_len = 0;
+    if (!lengths.empty())
+        max_len = *std::max_element(lengths.begin(), lengths.end());
+    auto bCurrent = b.begin(), bEnd = b.end();
+    ResultRecord rcx;
+    MarkedEventsVector rcx_second_second;
+    marked_event join = marked_event::join(0,0);
+    std::unordered_set<std::string> cache;
+    ssize_t current_trace = -1;
+    Result toRevert;
+
+    ResultIndex first_g{0, 0};
+    ResultRecordSemantics second_g{1.0, {}};
+    ResultRecord cp_ub_g{{0,   0},
+                         {1.0, {}}}, cp_lb_g{{0,   0},
+                                             {1.0, {}}};
+    second_g.second.reserve(max_len);
+    cp_ub_g.second.second.reserve(max_len);
+    cp_lb_g.second.second.reserve(max_len);
+    std::vector<std::pair<ResultIndex, Result::iterator>> toBeReversed;
+
+    for (auto aCurrent = a.begin(), aEnd = a.end(); aCurrent != aEnd; ) {
+        toBeReversed.clear();
+        if (aCurrent->first > bCurrent->first) {
+            cp_lb_g.first = aCurrent->first;
+            bCurrent = std::lower_bound(bCurrent, bEnd, cp_lb_g);
+            if (bCurrent == bEnd) break;
+        } else if (aCurrent->first.first < bCurrent->first.first) {
+            cp_lb_g.first.second = 0;
+            cp_lb_g.first.first = bCurrent->first.first;
+            aCurrent = std::lower_bound(aCurrent, aEnd, cp_lb_g);
+        } else {
+            rcx.second.first = 1.0;
+            if (bCurrent == bEnd) return;
+            toRevert.clear();
+            if (current_trace != aCurrent->first.first) {
+                rcx.first.first = current_trace = aCurrent->first.first;
+            }
+            first_g.first = cp_ub_g.first.first = current_trace;
+            cp_ub_g.first.second = lengths.at(current_trace);
+            rcx_second_second.clear();
+            auto bBeforeScan = bCurrent;
+            bCurrent = std::upper_bound(bCurrent, bEnd, cp_ub_g);
+            auto aMax = std::upper_bound(aCurrent, aEnd, cp_ub_g);
+
+            if (((bCurrent-1)->first.first != current_trace)) {
+                aCurrent = aMax;
+                while ((aCurrent != aEnd) && (aCurrent->first.first == current_trace)) aCurrent++;
+                continue;
+            }
+            auto aIter = aMax; aIter--;
+
+            first_g.second = 0;
+            second_g.first = 0.0;
+            second_g.second.clear();
+            auto lower = bBeforeScan;
+            auto it = lower + std::distance(lower, bCurrent) - 1;
+
+            for (int64_t i = (bCurrent - 1)->first.second; i >= 0; i--) {
+                first_g.second = i;
+
+                if ((i == it->first.second) && (it >= lower)) {
+                    second_g.first = std::max(it->second.first, second_g.first);
+                    second_g.second.insert(second_g.second.begin(), it->second.second.begin(), it->second.second.end());
+                    it--;
+                }
+
+                // Not performing the correlation if I have not met the right condition
+                while ((aIter->first.first == current_trace) && (aIter->first.second > i)) aIter--;
+                if (aIter->first.first != current_trace) break;
+                if ((aIter < aCurrent) || (aIter->first.second < i)) continue;
+
+                {
+                    if (manager && ((!aIter->second.second.empty()) && (!second_g.second.empty()))) {
+                        bool hasMatch = false;
+                        for (const auto &elem: aIter->second.second) {
+                            if (!IS_MARKED_EVENT_ACTIVATION(elem)) continue;
+                            join.id.parts.left = GET_ACTIVATION_EVENT(elem);
+                            env e1 = manager->GetPayloadDataFromEvent(aIter->first.first, join.id.parts.left, true, cache);
+                            for (const auto &elem1: second_g.second) {
+                                if (!IS_MARKED_EVENT_TARGET(elem1)) continue;
+                                join.id.parts.right = GET_TARGET_EVENT(elem1);
+
+                                if (manager->checkValidity(e1, current_trace, join.id.parts.right)) {
+                                    rcx.second.second.push_back(join);
+                                    rcx.second.first *= (1.0 - std::min(aIter->second.first, second_g.first));
+                                    hasMatch = true;
+                                }
+                            }
+                        }
+                        if (hasMatch) {
+                            rcx.first.second = i;
+                            rcx.second.first = 1.0 - rcx.second.first;
+                            remove_duplicates(rcx.second.second);
+                            toRevert.emplace_back(rcx);
+                        }
+                    } else {
+                        rcx.first.second = i;
+                        MarkedEventsVector second_second(second_g.second.size()+aIter->second.second.size());
+                        size_t counter = 0;
+                        for (size_t j = 0, N = aIter->second.second.size(); j<N; j++)
+                            second_second[counter++] = aIter->second.second.at(j);
+                        for (size_t j = 0, N = second_g.second.size(); j<N; j++)
+                            second_second[counter++] = second_g.second.at(j);
+                        auto& back = toRevert.emplace_back(rcx);
+                        back.second.second = std::move(second_second);
+                    }
+                }
+            }
+
+
+            if (!toRevert.empty()) {
+                result.insert(result.end(), std::make_move_iterator(toRevert.rbegin()),
+                              std::make_move_iterator(toRevert.rend()));
+            }
+            aCurrent = aMax;
+            if (bCurrent == bEnd) break;
+        }
+    }
+
+}
+
+
+/**
  *
  * @author Samuel 'Sam' Appleby, Giacomo Bergami
  *
@@ -547,7 +685,7 @@ inline void negated_fast_timed(const Result &section, Result& result, const std:
  * @param manager
  * @param lengths
  */
-inline void aAndFutureB_timed(const Result& aResult, const Result& bResult, Result& result, const PredicateManager *manager = nullptr, const std::vector<size_t>& lengths = {}) {
+inline void aAndFutureB_timed_old(const Result& aResult, const Result& bResult, Result& result, const PredicateManager *manager = nullptr, const std::vector<size_t>& lengths = {}) {
     if (bResult.empty()) {
         result.clear();
         return;
@@ -604,6 +742,7 @@ inline void aAndFutureB_timed(const Result& aResult, const Result& bResult, Resu
                 if (!manager) rcx.second.second.insert(rcx.second.second.end(), aCurrent->second.second.begin(), aCurrent->second.second.end());
                 remove_duplicates(rcx.second.second);
                 if (manager) rcx.second.first = 1.0 - rcx.second.first;
+//                std::cout << rcx << std::endl;
                 result.emplace_back(rcx);
             }
 
@@ -894,7 +1033,7 @@ inline void aAndGloballyB_timed(const Result& a, const Result& b,Result& result,
 
                 if ((cp_g.first.first == it->first.first) && (dist == (cp_g.first.second - it->first.second))) {
                     second_g.first = std::min(it->second.first, second_g.first);
-                    second_g.second.insert(second_g.second.begin(), it->second.second.begin(), it->second.second.end());
+                    second_g.second.insert(second_g.second.end(), it->second.second.begin(), it->second.second.end());
                     remove_duplicates(second_g.second);
                     it--;
                 } else {

@@ -58,6 +58,16 @@ TEST_F(mdpi_operators, ag) {
     EXPECT_EQ(ag1, ag2);
 }
 
+TEST_F(mdpi_operators, af) {
+    auto a = env.db.timed_dataless_exists("a", ActivationLeaf);
+    auto b = env.db.timed_dataless_exists("b", TargetLeaf);
+    Result not_b, ag1, ag2, G;
+
+    aAndFutureB_timed(a, not_b, ag1, nullptr,env.db.act_table_by_act_id.trace_length);
+    aAndFutureB_timed_old(a, not_b, ag2, nullptr,env.db.act_table_by_act_id.trace_length);
+    EXPECT_EQ(ag1, ag2);
+}
+
 //TEST_F(mdpi_operators, axg) {
 //    auto a = env.db.timed_dataless_exists("a", ActivationLeaf);
 //    auto c = env.db.timed_dataless_exists("c", TargetLeaf);
