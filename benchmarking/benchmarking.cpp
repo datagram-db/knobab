@@ -8,7 +8,7 @@
 #include "knobab/operators/fast_ltlf_operators.h"
 #include <fstream>
 
-const std::string file_path = "data/testing/results/benchmarking/results.csv";
+const std::string file_path = "data/testing/results/benchmarking/results2.csv";
 
 Environment setup(const std::filesystem::path f){
     Environment env;
@@ -102,15 +102,39 @@ void derived_operators(const Environment& environment, const uint16_t& iters){
     const Result& a = environment.db.timed_dataless_exists("A", ActivationLeaf);
     const Result& b = environment.db.timed_dataless_exists("B", TargetLeaf);
 
-    Result r_aAndfb, r_future_t_logic_a, r_future_t_logic_b, r_future_t_a_and_t_future_t_b, r_global_logic_b,
-    r_next_logic_global_logic_b, r_aAndgb, r_aAndxgb, r_future_t_a_and_t_globally_t_b, r_a_and_t_next_t_globally_t_b,
-    r_aufb, r_aulb;
-
     for (int i = 0; i < iters; ++i){
-        // A&Ft(B)
+        Result r_aAndfb, r_future_t_logic_a, r_future_t_logic_b, r_future_t_a_and_t_future_t_b, r_global_logic_b,
+                r_next_logic_global_logic_b, r_aAndgb, r_aAndgb2, r_aAndxgb, r_future_t_a_and_t_globally_t_b, r_a_and_t_next_t_globally_t_b,
+                r_aufb, r_aulb, globalt_fast, globalt_slow, globalu_fast, globalu_slow;
+
         auto t1 = std::chrono::high_resolution_clock::now();
-        aAndFutureB_timed(a, b, r_aAndfb, nullptr, environment.db.act_table_by_act_id.trace_length);
         auto t2 = std::chrono::high_resolution_clock::now();
+
+#if 1
+        t1 = std::chrono::high_resolution_clock::now();
+        global_fast_untimed(a,  r_aAndgb, environment.db.act_table_by_act_id.trace_length);
+        t2 = std::chrono::high_resolution_clock::now();
+        write_to_file(environment, "GloballyTimed", "fast", (t2 - t1).count());
+        t1 = std::chrono::high_resolution_clock::now();
+        global_logic_untimed(b, r_global_logic_b, environment.db.act_table_by_act_id.trace_length);
+        t2 = std::chrono::high_resolution_clock::now();
+        write_to_file(environment, "GloballyTimed", "logic", (t2 - t1).count());
+        t1 = std::chrono::high_resolution_clock::now();
+        global_fast_untimed(a,  r_aAndgb, environment.db.act_table_by_act_id.trace_length);
+        t2 = std::chrono::high_resolution_clock::now();
+        write_to_file(environment, "GloballyUntimed", "fast", (t2 - t1).count());
+        t1 = std::chrono::high_resolution_clock::now();
+        global_logic_untimed(b, r_global_logic_b, environment.db.act_table_by_act_id.trace_length);
+        t2 = std::chrono::high_resolution_clock::now();
+        write_to_file(environment, "GloballyUntimed", "logic", (t2 - t1).count());
+#endif
+
+
+#if 1
+        // A&Ft(B)
+        t1 = std::chrono::high_resolution_clock::now();
+        aAndFutureB_timed(a, b, r_aAndfb, nullptr, environment.db.act_table_by_act_id.trace_length);
+        t2 = std::chrono::high_resolution_clock::now();
         std::chrono::duration<double, std::milli> r_aAndfb_time = t2 - t1;
         write_to_file(environment, "And_Future", "fast", r_aAndfb_time.count());
 
@@ -122,21 +146,36 @@ void derived_operators(const Environment& environment, const uint16_t& iters){
         std::chrono::duration<double, std::milli> r_future_t_a_and_t_future_t_b_time = t2 - t1;
         write_to_file(environment, "And_Future", "logic", r_future_t_a_and_t_future_t_b_time.count());
 
+#endif
+
+#if 1
         // A&G(B)
         t1 = std::chrono::high_resolution_clock::now();
         aAndGloballyB_timed(a, b, r_aAndgb, nullptr, environment.db.act_table_by_act_id.trace_length);
         t2 = std::chrono::high_resolution_clock::now();
         std::chrono::duration<double, std::milli> r_a_and_globally_b_ut_time = t2 - t1;
-        write_to_file(environment, "And_Globally", "fast", r_a_and_globally_b_ut_time.count());
+        write_to_file(environment, "And_Globally", "fast2", r_a_and_globally_b_ut_time.count());
+
+        // A&G2(B)
+        t1 = std::chrono::high_resolution_clock::now();
+        aAndGloballyB_timed_old(a, b, r_aAndgb, nullptr, environment.db.act_table_by_act_id.trace_length);
+        t2 = std::chrono::high_resolution_clock::now();
+        std::chrono::duration<double, std::milli> r_a_and_globally_b_ut_time2 = t2 - t1;
+        write_to_file(environment, "And_Globally", "fast", r_a_and_globally_b_ut_time2.count());
+
 
         // A AND Gt(B)
         t1 = std::chrono::high_resolution_clock::now();
-        global_logic_timed(b, r_global_logic_b, environment.db.act_table_by_act_id.trace_length);
+        global_fast_timed(b, r_global_logic_b, environment.db.act_table_by_act_id.trace_length);
         and_fast_timed(a, r_global_logic_b, r_future_t_a_and_t_globally_t_b, nullptr, environment.db.act_table_by_act_id.trace_length);
         t2 = std::chrono::high_resolution_clock::now();
         std::chrono::duration<double, std::milli> r_a_and_t_globally_t_b_time = t2 - t1;
         write_to_file(environment, "And_Globally", "logic", r_a_and_t_globally_t_b_time.count());
 
+#endif
+
+
+#if 1
         // A&XG(B)
         t1 = std::chrono::high_resolution_clock::now();
         aAndNextGloballyB_timed(a, b, r_aAndxgb, nullptr, environment.db.act_table_by_act_id.trace_length);
@@ -166,6 +205,7 @@ void derived_operators(const Environment& environment, const uint16_t& iters){
         t2 = std::chrono::high_resolution_clock::now();
         std::chrono::duration<double, std::milli> r_aulb_time = t2 - t1;
         write_to_file(environment, "Until", "logic", r_aulb_time.count());
+#endif
     }
 }
 

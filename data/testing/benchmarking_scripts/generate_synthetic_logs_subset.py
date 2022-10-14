@@ -1,6 +1,6 @@
 import random
 from random import randint
-import numpy as np
+#import numpy as np
 
 
 def get_activity_from_probability(current_alphabet):
@@ -60,8 +60,9 @@ def create_log(alphabet, sample_sizes, sample_lengths, save_log=True):
 
 def main():
     alphabet = load_alphabet('data/alphabets/ABCDE.txt')
-    create_log(alphabet, [10, 100, 1000, 10000], [10, 100, 1000])
+    create_log(alphabet, [10, 100, 1000], [10, 100, 1000, 10000])
 
 
 if __name__ == "__main__":
     main()
+
