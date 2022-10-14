@@ -756,6 +756,127 @@ inline void aAndFutureB_timed_old(const Result& aResult, const Result& bResult, 
     }
 }
 
+/**
+ *
+ * @author Giacomo Bergami
+ *
+ * @param aResult
+ * @param bResult
+ * @param result
+ * @param manager
+ * @param lengths
+ */
+inline void aAndNextGloballyB_timed(const Result& a, const Result& b,Result& result, const PredicateManager *manager = nullptr, const std::vector<size_t> lengths = {}) {
+    if (b.empty()) {
+        result.clear();
+        return;
+    }
+    auto bCurrent = b.begin(), bEnd = b.end();
+    ResultRecord rcx;
+    marked_event join = marked_event::join(0,0);
+    std::unordered_set<std::string> cache;
+    ssize_t current_trace = -1;
+    Result toRevert;
+
+    ResultIndex first_g{0, 0};
+    ResultRecordSemantics second_g{1.0, {}};
+    ResultRecord cp_g{{0,   0},
+                      {1.0, {}}};
+    std::vector<std::pair<ResultIndex, Result::iterator>> toBeReversed;
+
+    for (auto aCurrent = a.begin(), aEnd = a.end(); aCurrent != aEnd; ) {
+        toBeReversed.clear();
+        if (aCurrent->first > bCurrent->first) {
+            bCurrent++;
+            if (bCurrent == bEnd) break;
+        } else {
+            rcx.second.second.clear();
+            rcx.second.first = 1.0;
+            if (bCurrent == bEnd) return;
+            toRevert.clear();
+            if (current_trace != aCurrent->first.first) {
+                rcx.first.first = current_trace = aCurrent->first.first;
+            }
+            first_g.first = cp_g.first.first = current_trace;
+            cp_g.first.second = lengths.at(current_trace);
+            auto bBeforeScan = bCurrent;
+            bCurrent = std::upper_bound(bCurrent, bEnd, cp_g);
+            auto aMax = std::upper_bound(aCurrent, aEnd, cp_g);
+            auto aIter = aMax; aIter--;
+
+            first_g.second = 0;
+            second_g.first = 1.0;
+            second_g.second.clear();
+            auto lower = bBeforeScan;
+            auto it = lower + std::distance(lower, bCurrent) - 1;
+            if ((it) < bBeforeScan) {
+                aCurrent = aMax;
+                continue;
+            }
+
+            for (int64_t i = (bCurrent - 1)->first.second; i >= 0; i--) {
+                first_g.second = i;
+                const uint32_t dist = std::distance(it, bCurrent);
+
+                if ((it >= lower) && (cp_g.first.first == it->first.first) && (dist == (cp_g.first.second - it->first.second))) {
+                    second_g.first = std::min(it->second.first, second_g.first);
+                    second_g.second.insert(second_g.second.end(), it->second.second.begin(), it->second.second.end());
+                    remove_duplicates(second_g.second);
+                    it--;
+                } else {
+                    break; // If after this the condition does not hold, then it means that in the remainder I will have
+                    // events that are not matching the condition
+                }
+
+                // Not performing the correlation if I have not met the right condition
+
+                while ((aIter->first.first == current_trace) && (aIter->first.second > (i+1)))
+                    aIter--;
+                if (aIter->first.first != current_trace) break;
+                if (aIter->first.second < (i+1)) continue;
+
+                {
+                    bool hasMatch = false;
+                    if (manager) {
+                        for (const auto &elem: aIter->second.second) {
+                            if (!IS_MARKED_EVENT_ACTIVATION(elem)) continue;
+                            join.id.parts.left = GET_ACTIVATION_EVENT(elem);
+                            env e1 = manager->GetPayloadDataFromEvent(aIter->first.first, join.id.parts.left, true, cache);
+                            for (const auto &elem1: second_g.second) {
+                                if (!IS_MARKED_EVENT_TARGET(elem1)) continue;
+                                join.id.parts.right = GET_TARGET_EVENT(elem1);
+
+                                if (manager->checkValidity(e1, current_trace, join.id.parts.right)) {
+                                    rcx.second.second.push_back(join);
+                                    rcx.second.first *= (1.0 - std::min(aIter->second.first, second_g.first));
+                                    hasMatch = true;
+                                }
+                            }
+                        }
+                    } else {
+                        hasMatch = true;
+                        rcx.second.second.insert(rcx.second.second.end(), aIter->second.second.begin(), aIter->second.second.end());
+                        rcx.second.second.insert(rcx.second.second.end(), second_g.second.begin(), second_g.second.end());
+                    }
+                    if (hasMatch) {
+                        rcx.first.second = i-1;
+                        remove_duplicates(rcx.second.second);
+                        if (manager) rcx.second.first = 1.0 - rcx.second.first;
+                        toRevert.emplace_back(rcx);
+                    }
+                }
+            }
+
+            if (!toRevert.empty()) {
+                result.insert(result.end(), std::make_move_iterator(toRevert.rbegin()),
+                              std::make_move_iterator(toRevert.rend()));
+            }
+            aCurrent = aMax;
+            if (bCurrent == bEnd) break;
+        }
+    }
+
+}
 
 /**
  *
@@ -767,7 +888,7 @@ inline void aAndFutureB_timed_old(const Result& aResult, const Result& bResult, 
  * @param manager
  * @param lengths
  */
-inline void aAndNextGloballyB_timed(const Result& a, const Result& b,Result& result, const PredicateManager *manager = nullptr, const std::vector<size_t> lengths = {}) {
+inline void aAndNextGloballyB_timed_old(const Result& a, const Result& b,Result& result, const PredicateManager *manager = nullptr, const std::vector<size_t> lengths = {}) {
     if (b.empty()) {
         result.clear();
         return;
@@ -1025,13 +1146,14 @@ inline void aAndGloballyB_timed(const Result& a, const Result& b,Result& result,
             second_g.first = 1.0;
             second_g.second.clear();
             auto lower = bBeforeScan;
-            auto it = lower + std::distance(lower, bCurrent) - 1;
+//            std::cout << *lower << " vs. " << *bCurrent << std::endl;
+            auto it = (lower == bCurrent) ? (lower-1) : (lower + std::distance(lower, bCurrent) - 1);
 
             for (int64_t i = (bCurrent - 1)->first.second; i >= 0; i--) {
                 first_g.second = i;
                 const uint32_t dist = std::distance(it, bCurrent);
 
-                if ((cp_g.first.first == it->first.first) && (dist == (cp_g.first.second - it->first.second))) {
+                if ((it >= lower) && (cp_g.first.first == it->first.first) && (dist == (cp_g.first.second - it->first.second))) {
                     second_g.first = std::min(it->second.first, second_g.first);
                     second_g.second.insert(second_g.second.end(), it->second.second.begin(), it->second.second.end());
                     remove_duplicates(second_g.second);
