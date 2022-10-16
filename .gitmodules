@@ -16,9 +16,6 @@
 [submodule "submodules/aaltaf"]
 	path = submodules/aaltaf
 	url = https://github.com/jackbergus/aaltaf
-[submodule "submodules/thread-pool"]
-	path = submodules/thread-pool
-	url = https://github.com/bshoshany/thread-pool
 [submodule "submodules/cpp-httplib"]
 	path = submodules/cpp-httplib
 	url = https://github.com/yhirose/cpp-httplib
