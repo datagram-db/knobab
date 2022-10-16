@@ -16,7 +16,7 @@
 #include <yaucl/numeric/ssize_t.h>
 struct LTLfQueryManager;
 
-#define MAXSatPipeline_PARALLEL
+//#define MAXSatPipeline_PARALLEL
 
 #ifdef MAXSatPipeline_PARALLEL
 #include <BS_thread_pool_light.hpp>

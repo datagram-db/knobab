@@ -18,8 +18,8 @@ MAXSatPipeline::MAXSatPipeline(const std::string& plan_file,
                                size_t blocks)
 #ifdef MAXSatPipeline_PARALLEL
     : pool(nThreads),
-#endif
       schedulingType{schedulingType}, blocks{blocks}
+#endif
 {
     // Equivalent to the old expansion of the declare formula into LTLF, and then into the negated normal form.
     std::ifstream file{plan_file};
