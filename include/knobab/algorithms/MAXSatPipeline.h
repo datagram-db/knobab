@@ -10,19 +10,20 @@
 #include "atomization_pipeline.h"
 #include "knobab/trace_repairs/DataQuery.h"
 #include "knobab/queries/LTLfQueryManager.h"
+#include "knobab/algorithms/parallelization/scheduling_types.h"
 #include <yaucl/numeric/ssize_t.h>
 #include <knobab/queries/DeclareQueryLanguageParser.h>
 #include <yaucl/numeric/ssize_t.h>
 struct LTLfQueryManager;
 
-//#define MAXSatPipeline_PARALLEL
+#define MAXSatPipeline_PARALLEL
 
 #ifdef MAXSatPipeline_PARALLEL
-#include <thread_pool.hpp>
-#define PARALLELIZE_LOOP_BEGIN(pool, lower, upper, varA, varB)    (pool).parallelize_loop((lower), (upper), [&](const size_t varA, const size_t varB) {
-#define PARALLELIZE_LOOP_END                                      });
+#include <BS_thread_pool_light.hpp>
+#define PARALLELIZE_LOOP_BEGIN(pool,schedulingType,blocks,data_accessing,f)    do { schedule(pool, schedulingType, blocks, data_accessing, f,[&](const std::vector<size_t>& idx) {for (size_t i: idx) {
+#define PARALLELIZE_LOOP_END                                                   }}); (pool).wait_for_tasks(); } while(false);
 #else
-#define PARALLELIZE_LOOP_BEGIN(pool, lower, upper, varA, varB)    do { auto varA = (lower); auto varB = (upper);
+#define PARALLELIZE_LOOP_BEGIN(pool,schedulingType,blocks,data_accessing,f)    for (size_t i = 0, N = (data_accessing).size();i<N; i++) {
 #define PARALLELIZE_LOOP_END                                      } while(0);
 #endif
 
@@ -45,7 +46,9 @@ struct MAXSatPipeline {
 
 #ifdef MAXSatPipeline_PARALLEL
     // A global thread pool object, automatically determining the threads with the number of the architecture ones
-    thread_pool pool;
+    BS::thread_pool_light pool;
+    scheduling_type schedulingType;
+    size_t blocks;
 #endif
 
     // Input
@@ -62,20 +65,26 @@ struct MAXSatPipeline {
     size_t maxFormulaId = 0;
     //std::vector<LTLfQuery*> fomulaidToFormula;
 
-    MAXSatPipeline(const std::string& plan_file, const std::string& plan, size_t nThreads);
+    MAXSatPipeline(const std::string& plan_file,
+                   const std::string& plan,
+                   size_t nThreads,
+                   scheduling_type schedulingType,
+                   size_t blocks);
     
     
 #ifdef MAXSatPipeline_PARALLEL
-    MAXSatPipeline() : MAXSatPipeline{"", "", 1} {}
-    MAXSatPipeline(const MAXSatPipeline& x) : qm{x.qm}, pool{1}, declare_to_ltlf_time{x.declare_to_ltlf_time},
-                                              ltlf_query_time{x.ltlf_query_time}, dqlp{x.dqlp}, ptr{x.ptr}, 
+    MAXSatPipeline() : MAXSatPipeline{"", "", 1, BLOCK_STATIC_SCHEDULE, 1} {}
+    MAXSatPipeline(const MAXSatPipeline& x) : qm{x.qm}, pool{pool.get_thread_count()}, declare_to_ltlf_time{x.declare_to_ltlf_time},
+                                              ltlf_query_time{x.ltlf_query_time}, dqlp{x.dqlp}, //ptr{x.ptr},
                                               declare_to_query{x.declare_to_query}, atomToFormulaId{x.atomToFormulaId},
-                                              maxFormulaId{x.maxFormulaId}, fomulaidToFormula{x.fomulaidToFormula}, 
+                                              maxFormulaId{x.maxFormulaId}, //fomulaidToFormula{x.fomulaidToFormula},
                                               final_ensemble{x.final_ensemble}, operators{x.operators}, support_per_declare{x.support_per_declare},
-                                              max_sat_per_trace{x.max_sat_per_trace}, maxPartialResultId{x.maxPartialResultId}, 
+                                              max_sat_per_trace{x.max_sat_per_trace}, //maxPartialResultId{x.maxPartialResultId},
                                               data_offset{x.data_offset}, data_accessing{x.data_accessing}, data_accessing_range_query_to_offsets{x.data_accessing_range_query_to_offsets},
-                                              declare_atomization{x.declare_atomization}, atomToResultOffset{x.atomToResultOffset}, toUseAtoms{x.toUseAtoms}, 
-                                              barrier_to_range_queries{x.barrier_to_range_queries}, barriers_to_atfo{x.barriers_to_atfo}, atomicPartIntersectionResult{x.atomicPartIntersectionResult} {}
+                                              declare_atomization{x.declare_atomization}, atomToResultOffset{x.atomToResultOffset}, toUseAtoms{x.toUseAtoms}, //barrier_to_range_queries{x.barrier_to_range_queries}, barriers_to_atfo{x.barriers_to_atfo},
+                                              atomicPartIntersectionResult{x.atomicPartIntersectionResult}, schedulingType{x.schedulingType}, blocks{x.blocks} {
+
+    }
     MAXSatPipeline& operator=(const MAXSatPipeline&) = default;
 #else    
     DEFAULT_COPY_ASSGN(MAXSatPipeline)

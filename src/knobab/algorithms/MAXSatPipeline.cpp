@@ -11,10 +11,15 @@
 #include <knobab/operators/fast_ltlf_operators.h>
 #include "knobab/algorithms/MAXSatPipeline.h"
 
-MAXSatPipeline::MAXSatPipeline(const std::string& plan_file, const std::string& plan, size_t nThreads)
+MAXSatPipeline::MAXSatPipeline(const std::string& plan_file,
+                               const std::string& plan,
+                               size_t nThreads,
+                               scheduling_type schedulingType,
+                               size_t blocks)
 #ifdef MAXSatPipeline_PARALLEL
-    : pool(nThreads)
+    : pool(nThreads),
 #endif
+      schedulingType{schedulingType}, blocks{blocks}
 {
     // Equivalent to the old expansion of the declare formula into LTLF, and then into the negated normal form.
     std::ifstream file{plan_file};
@@ -248,44 +253,42 @@ size_t MAXSatPipeline::pushNonRangeQuery(const DataQuery &q, bool directlyFromCa
     return offset;
 }
 
-std::vector<PartialResult> MAXSatPipeline::subqueriesRunning(const KnowledgeBase &kb) {// 1. Performing the query over each single predicate that we have extracted, so not to duplicate the data access
-    /*if (barrier_to_range_queries > 0)*/ {
-        PARALLELIZE_LOOP_BEGIN(pool, 0, data_accessing.size(), a, b)
-            for (size_t i = a; i < b; i++) {
-                auto& ref = data_accessing.at(i);
-                // TODO: Given the query in ref.first, put the Result in ref.second
-                switch (ref.first.type) {
-                    case ExistsQuery:
-                        ref.second
-                        = kb.untimed_dataless_exists(kb.resolveCountingData(ref.first.label),
-                                                                ref.first.numeric_argument);
-                        break;
-                    case AtomQuery:
-                        ref.second = kb.timed_dataless_exists(ref.first.label);
-                        break;
-                    case AbsenceQuery:
-                        ref.second = kb.untimed_dataless_absence(kb.resolveCountingData(ref.first.label),
+std::vector<PartialResult> MAXSatPipeline::subqueriesRunning(const KnowledgeBase &kb) {
+    // 1. Performing the query over each single predicate that we have extracted, so not to duplicate the data access
+    PARALLELIZE_LOOP_BEGIN(pool,BLOCK_STATIC_SCHEDULE,blocks,data_accessing,[](auto& x ){return 1;})
+        auto &ref = data_accessing.at(i);
+        // TODO: Given the query in ref.first, put the Result in ref.second
+        switch (ref.first.type) {
+            case ExistsQuery:
+                ref.second
+                    = kb.untimed_dataless_exists(kb.resolveCountingData(ref.first.label),
                                                                  ref.first.numeric_argument);
-                        break;
-                    case InitQuery:
-                        ref.second = kb.initOrig(ref.first.label);
-                        break;
-                    case EndsQuery:
-                        ref.second = kb.endsOrig(ref.first.label);
-                        break;
-                    case FirstQuery:
-                        ref.second = kb.getFirstLastOtherwise(true);
-                        break;
-                    case LastQuery:
-                        ref.second = kb.getFirstLastOtherwise(false);
-                        break;
+                break;
+            case AtomQuery:
+                ref.second = kb.timed_dataless_exists(ref.first.label);
+                break;
+            case AbsenceQuery:
+                ref.second = kb.untimed_dataless_absence(kb.resolveCountingData(ref.first.label),
+                                                                     ref.first.numeric_argument);
+                break;
+            case InitQuery:
+                ref.second = kb.initOrig(ref.first.label);
+                break;
+           case EndsQuery:
+                ref.second = kb.endsOrig(ref.first.label);
+                break;
+           case FirstQuery:
+                ref.second = kb.getFirstLastOtherwise(true);
+                break;
+           case LastQuery:
+                ref.second = kb.getFirstLastOtherwise(false);
+                break;
 
-                    default: continue; // Skipping the other data range queries for a further parallelization task
-                        ///DEBUG_ASSERT(false); // This should be dealt in (B)
-                }
-            }
-                PARALLELIZE_LOOP_END
-    }
+           default:
+                continue; // Skipping the other data range queries for a further parallelization task
+                            ///DEBUG_ASSERT(false); // This should be dealt in (B)
+        }
+    PARALLELIZE_LOOP_END
 
 
     // 2. Performing the queries over the range queries
@@ -293,23 +296,13 @@ std::vector<PartialResult> MAXSatPipeline::subqueriesRunning(const KnowledgeBase
 #ifdef MAXSatPipeline_PARALLEL
         // If this is a parallel execution, I can exploit the current library only if I have a vector. Otherwise,
         // the map data structures are not safe for iteration
-        std::vector<std::pair<std::string, std::unordered_map<std::string,std::vector<size_t>>>> someVector;
-        std::transform(std::move_iterator(data_accessing_range_query_to_offsets.begin()),
-                       std::move_iterator(data_accessing_range_query_to_offsets.end()),
-                       std::back_inserter(someVector),
-                       [](auto&& entry){ return std::forward<decltype(entry)>(entry); });
 
-        PARALLELIZE_LOOP_BEGIN(pool, 0,someVector.size(), lb, ub)
-            for (size_t i = lb; i < ub; i++) {
-                auto& rangeQueryRefs = someVector.at(i);
-                kb.exact_range_query(rangeQueryRefs.first, rangeQueryRefs.second, data_accessing);
-            }
-        PARALLELIZE_LOOP_END
-
-        std::transform(std::move_iterator(someVector.begin()),
-                       std::move_iterator(someVector.end()),
-                       std::inserter(data_accessing_range_query_to_offsets, data_accessing_range_query_to_offsets.begin()),
-                       [](auto&& entry){ return std::forward<decltype(entry)>(entry); });
+        for (auto& rangeQueryRefs : data_accessing_range_query_to_offsets) {
+            pool.push_task([kb,this](auto& x) {
+                kb.exact_range_query(x.first, x.second, data_accessing);
+            }, rangeQueryRefs);
+        };
+        pool.wait_for_tasks();
 #else
         // If this is not in parallel mode, then there is no purpose to create a temporary vector for the parallelization:
         // therefore, I can directly iterate over the map.
@@ -332,48 +325,46 @@ std::vector<PartialResult> MAXSatPipeline::subqueriesRunning(const KnowledgeBase
 
     // result.minimal_common_subsets.size() + result.minimal_common_subsets_composition.size()
     std::vector<PartialResult> resultOfS(set_decomposition_result.minimal_common_subsets.size() + set_decomposition_result.minimal_common_subsets_composition.size());
-    PARALLELIZE_LOOP_BEGIN(pool, 0, set_decomposition_result.minimal_common_subsets.size(), lb, ub)
-        for (size_t i = lb; i < ub; i++) {
-            auto& S = set_decomposition_result.minimal_common_subsets.at(i);
-//            std::cout << i << " is " << S << std::endl;
-            // resultOfS for collecting the intermediate computations
-            resultOfS[i] = partialResultIntersection(S, data_accessing);
-//            for (const auto x : S) {
-//                edges.emplace("data_accessing:"+std::to_string(x), "resultOfS:"+std::to_string(i));
-//            }
-        }
-            PARALLELIZE_LOOP_END
 
-    PARALLELIZE_LOOP_BEGIN(pool, 0, set_decomposition_result.minimal_common_subsets_composition.size(), lb, ub)
-        for (size_t i = lb; i < ub; i++) {
-            auto& S = set_decomposition_result.minimal_common_subsets_composition.at(i);
-            // Perform the intersection among all of the elements in S,
-            // using the intermediate results from resultOfSSecond
-            resultOfS[isFromFurtherDecomposition + i] = partialResultIntersection(S, resultOfS);
-//            for (const auto x : S) {
-//                edges.emplace("resultOfS:"+std::to_string(x), "resultOfS:"+std::to_string(i));
-//            }
-        }
-            PARALLELIZE_LOOP_END
+    PARALLELIZE_LOOP_BEGIN(pool,BLOCK_STATIC_SCHEDULE,blocks,set_decomposition_result.minimal_common_subsets,[](auto& x ){return 1;})
+        auto& S = set_decomposition_result.minimal_common_subsets.at(i);
+        resultOfS[i] = partialResultIntersection(S, data_accessing);
+    PARALLELIZE_LOOP_END
 
+//    PARALLELIZE_LOOP_BEGIN(pool, 0, set_decomposition_result.minimal_common_subsets_composition.size(), lb, ub)
+//        for (size_t i = lb; i < ub; i++) {
+//            auto& S = set_decomposition_result.minimal_common_subsets_composition.at(i);
+//            // Perform the intersection among all of the elements in S,
+//            // using the intermediate results from resultOfSSecond
+//            resultOfS[isFromFurtherDecomposition + i] = partialResultIntersection(S, resultOfS);
+////            for (const auto x : S) {
+////                edges.emplace("resultOfS:"+std::to_string(x), "resultOfS:"+std::to_string(i));
+////            }
+//        }
+//            PARALLELIZE_LOOP_END
 //    for (size_t i = 0; i<resultOfS.size(); i++) {
 //        std::cout << i << "->>->" << resultOfS.at(i) << std::endl;
 //    }
-
     ///results_cache.resize(toUseAtoms.size());
+
     std::vector<PartialResult> results_cache(atomToResultOffset.size(), PartialResult{});
-    PARALLELIZE_LOOP_BEGIN(pool, 0, set_decomposition_result.decomposedIndexedSubsets.size(), lb, ub)
-        for (size_t j = lb; j < ub; j++) {
-            auto& ref = set_decomposition_result.decomposedIndexedSubsets.at(j);
-//            std::cout << ref.first << "-@->" << *ref.second << std::endl;
-            // put the global intersection into a map representation.
-            // ref->first will correspond to the atom in that same position in toUseAtoms.
-            results_cache[ref.first] = partialResultIntersection(*ref.second, resultOfS);
-//            for (const auto x : *ref.second) {
-//                edges.emplace("resultOfS:"+std::to_string(x), "results_cache:"+std::to_string(ref.first));
-//            }
-        }
-            PARALLELIZE_LOOP_END
+    PARALLELIZE_LOOP_BEGIN(pool,BLOCK_STATIC_SCHEDULE,blocks,set_decomposition_result.decomposedIndexedSubsets,[](auto& x ){return 1;})
+        auto& ref = set_decomposition_result.decomposedIndexedSubsets.at(i);
+        results_cache[ref.first] = partialResultIntersection(*ref.second, resultOfS);
+    PARALLELIZE_LOOP_END
+
+//                        PARALLELIZE_LOOP_BEGIN(pool, 0, set_decomposition_result.decomposedIndexedSubsets.size(), lb, ub)
+//        for (size_t j = lb; j < ub; j++) {
+//            auto& ref = set_decomposition_result.decomposedIndexedSubsets.at(j);
+////            std::cout << ref.first << "-@->" << *ref.second << std::endl;
+//            // put the global intersection into a map representation.
+//            // ref->first will correspond to the atom in that same position in toUseAtoms.
+//            results_cache[ref.first] = partialResultIntersection(*ref.second, resultOfS);
+////            for (const auto x : *ref.second) {
+////                edges.emplace("resultOfS:"+std::to_string(x), "results_cache:"+std::to_string(ref.first));
+////            }
+//        }
+//            PARALLELIZE_LOOP_END
 
     resultOfS.clear();
 //    for (size_t i = 0; i<results_cache.size(); i++) {
@@ -1021,16 +1012,26 @@ static inline void import_from_partial_results(LTLfQuery* formula, size_t offset
     }
 }
 
+size_t estimate_operator_time_cost(LTLfQuery* formula) {
+    size_t prod = 1;
+    for (const auto& x : formula->args)
+        prod *= x->result.size();
+    return prod;
+}
+
 void MAXSatPipeline::abidinglogic_query_running(const std::vector<PartialResult>& results_cache, const KnowledgeBase& kb) {
     /// Scanning the query plan starting from the leaves (rbegin) towards the actual declare formulae (rend)
     auto it = qm.Q.rbegin(), en = qm.Q.rend();
     size_t idx = qm.Q.size()-1;
     for (; it != en; it++) {
         Result tmp_result;
-        PARALLELIZE_LOOP_BEGIN(pool, 0, it->second.size(), lb, ub)
-            for (size_t j = lb; j < ub; j++) {
-                LTLfQuery* formula = it->second.at(j); // TODO: run this query
+
+        PARALLELIZE_LOOP_BEGIN(pool,BLOCK_STATIC_SCHEDULE,blocks,it->second,estimate_operator_time_cost)
+//        PARALLELIZE_LOOP_BEGIN(pool, 0, it->second.size(), lb, ub)
+//            for (size_t j = lb; j < ub; j++) {
+                LTLfQuery* formula = it->second.at(i); // TODO: run this query
                 if (!formula) continue;
+
 
 //                if (formula->fields.id.parts.directly_from_cache) {
 //// import_from_partial_results
@@ -1252,7 +1253,7 @@ void MAXSatPipeline::abidinglogic_query_running(const std::vector<PartialResult>
                             return; // TODO: Now, skipping the computation! Later on, do something!
                     }
                 }
-            }
+//            }
         PARALLELIZE_LOOP_END
 
 //        // Clearing the caches, so to free potentially unrequired memory for the next computational steps
@@ -1279,9 +1280,9 @@ void MAXSatPipeline::fast_v1_query_running(const std::vector<PartialResult>& res
     size_t idx = qm.Q.size()-1;
     for (; it != en; it++) {
         Result tmp_result;
-        PARALLELIZE_LOOP_BEGIN(pool, 0, it->second.size(), lb, ub)
-            for (size_t j = lb; j < ub; j++) {
-                auto formula = it->second.at(j); // TODO: run this query
+        PARALLELIZE_LOOP_BEGIN(pool,BLOCK_STATIC_SCHEDULE,blocks,it->second,estimate_operator_time_cost)
+//            for (size_t j = lb; j < ub; j++) {
+                auto formula = it->second.at(i); // TODO: run this query
                 if (!formula) continue;
 
 //                if (formula->fields.id.parts.directly_from_cache) {
@@ -1497,7 +1498,7 @@ void MAXSatPipeline::fast_v1_query_running(const std::vector<PartialResult>& res
                             return; // TODO: Now, skipping the computation! Later on, do something!
                     }
                 }
-            }
+//            }
         PARALLELIZE_LOOP_END
 
         // Clearing the caches, so to free potentially unrequired memory for the next computational steps

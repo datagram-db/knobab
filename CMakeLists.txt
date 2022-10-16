@@ -67,6 +67,10 @@ include_directories(submodules/magic_enum/include)
 #set(CMAKE_CXX_COMPILER g++)
 include_directories(include)
 add_library(knobab STATIC
+        src/knobab/algorithms/parallelization/CanonicalLoop.cpp
+        include/knobab/algorithms/parallelization/CanonicalLoop.h
+        src/knobab/algorithms/parallelization/scheduling_types.cpp
+        include/knobab/algorithms/parallelization/scheduling_types.h
         src/knobab/queries/LTLfQueryManager.cpp
         src/knobab/queries/LTLfQueryLexer.cpp
         src/knobab/queries/LTLfQueryParser.cpp
@@ -192,7 +196,7 @@ target_link_libraries(knobab_flloat ${CppPythonBindings} yaucl_bpm yaucl_graph)
 
 
 add_subdirectory(submodules/backward-cpp)
-add_executable(knobab-v1.0 main.cpp)#${BACKWARD_ENABLE} ) #)
+add_executable(knobab-v1.0 main.cpp )#${BACKWARD_ENABLE} ) #)
 
 target_link_libraries(knobab-v1.0 Threads::Threads yaml-cpp  knobab antlr4_static ${CppPythonBindings}
                                   yaucl_stringutils yaucl_numeric yaucl_hashing yaucl_data yaucl_bpm yaucl_graph knobab_flloat yaucl_structures)
