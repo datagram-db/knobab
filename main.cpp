@@ -34,6 +34,7 @@ void whole_testing(const std::string& log_file = "data/testing/log.txt",
     Environment env;
     env.clear();
     env.doStats = doStats;
+    env.scheduling_strategy = strategyForScheduling;
 
     std::cout << "Current path is " << std::filesystem::current_path() << '\n';
     std::flush(std::cout);
@@ -737,7 +738,7 @@ int main(int argc, char **argv) {
     args::Flag do_notcompute_trace_Stats(group, "do_not_compute_trace_stats", "Whether the code will lose time in calculating the statistics for the traces", {'n', "nostats"});
     args::ValueFlagList<std::string> queriesFiles(group, "Model/Query Files", "The queries expressed as Declare models", {'f', "declareFile"});
     args::ValueFlagList<std::string> queriesActual(group, "Models/Queries", "The queries expressed as Declare models", {'d', "declare"});
-    args::ValueFlag<std::string> scheduler(group, "Scheduler", "Specifies the task decomposition strategy", {'h', "scheduler"});
+    args::ValueFlag<std::string> scheduler(group, "Scheduler", "Specifies the task decomposition strategy", {'e', "scheduler"});
 
     args::ValueFlag<std::string> decomposition(group, "Script", "specifies the path where to load the declare LTLf decomposition model", {'c', "declareDecomposition"});
     args::ValueFlag<std::string> plan(group, "Plan", "specifies the preferred plan to be run from the script", {'l', "plan"});

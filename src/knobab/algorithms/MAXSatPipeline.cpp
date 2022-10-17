@@ -1022,7 +1022,7 @@ size_t estimate_operator_time_cost(LTLfQuery* formula) {
 void MAXSatPipeline::abidinglogic_query_running(const std::vector<PartialResult>& results_cache, const KnowledgeBase& kb) {
     /// Scanning the query plan starting from the leaves (rbegin) towards the actual declare formulae (rend)
     auto it = qm.Q.rbegin(), en = qm.Q.rend();
-    size_t idx = qm.Q.size()-1;
+    size_t Depthidx = qm.Q.size()-1;
     for (; it != en; it++) {
         Result tmp_result;
 
@@ -1258,17 +1258,22 @@ void MAXSatPipeline::abidinglogic_query_running(const std::vector<PartialResult>
 
 //        // Clearing the caches, so to free potentially unrequired memory for the next computational steps
 //        // This might help save some memory in big-data scenarios
+#ifdef MAXSatPipeline_PARALLEL
+        PARALLELIZE_LOOP_BEGIN(pool,BLOCK_STATIC_SCHEDULE,blocks,it->second,[](auto& x ){return 1;})
 //        PARALLELIZE_LOOP_BEGIN(pool, 0, it->second.size(), lb, ub)
 //        for (size_t j = lb; j < ub; j++) {
-//            auto formula = it->second.at(j);
-//            for (auto ptr : formula->args) {
-//                // Preserving the cache only if I need it for computing the Support
-//                if (ptr->parentMin == idx && (((final_ensemble != PerDeclareSupport) || (ptr->isLeaf != ActivationLeaf))))
-//                    ptr->result.clear();
-//            }
+            auto formula = it->second.at(i);
+            for (auto ptr : formula->args) {
+                // Preserving the cache only if I need it for computing the Support
+                if (ptr->parentMin == Depthidx && (((final_ensemble != PerDeclareSupport) || (ptr->isLeaf != ActivationLeaf)))) {
+                    ptr->result.clear(); ptr->result.shrink_to_fit();
+                }
+            }
 //        }
+                PARALLELIZE_LOOP_END
+#endif
 //        PARALLELIZE_LOOP_END
-        idx--;
+                            Depthidx--;
     }
 }
 
@@ -1277,7 +1282,7 @@ void MAXSatPipeline::abidinglogic_query_running(const std::vector<PartialResult>
 void MAXSatPipeline::fast_v1_query_running(const std::vector<PartialResult>& results_cache, const KnowledgeBase& kb) {
 /// Scanning the query plan starting from the leaves (rbegin) towards the actual declare formulae (rend)
     auto it = qm.Q.rbegin(), en = qm.Q.rend();
-    size_t idx = qm.Q.size()-1;
+    size_t Depthidx = qm.Q.size()-1;
     for (; it != en; it++) {
         Result tmp_result;
         PARALLELIZE_LOOP_BEGIN(pool,BLOCK_STATIC_SCHEDULE,blocks,it->second,estimate_operator_time_cost)
@@ -1503,17 +1508,21 @@ void MAXSatPipeline::fast_v1_query_running(const std::vector<PartialResult>& res
 
         // Clearing the caches, so to free potentially unrequired memory for the next computational steps
         // This might help save some memory in big-data scenarios
+#ifdef MAXSatPipeline_PARALLEL
+        PARALLELIZE_LOOP_BEGIN(pool,BLOCK_STATIC_SCHEDULE,blocks,it->second,[](auto& x ){return 1;})
 //        PARALLELIZE_LOOP_BEGIN(pool, 0, it->second.size(), lb, ub)
-//            for (size_t j = lb; j < ub; j++) {
-//                auto formula = it->second.at(j);
-//                for (auto ptr : formula->args) {
-//                    // Preserving the cache only if I need it for computing the Support
-//                    if (ptr->parentMin == idx && (((final_ensemble != PerDeclareSupport) || (ptr->isLeaf != ActivationLeaf))))
-//                        ptr->result.clear();
-//                }
-//            }
-//        PARALLELIZE_LOOP_END
-        idx--;
+//        for (size_t j = lb; j < ub; j++) {
+                            auto formula = it->second.at(i);
+                            for (auto ptr : formula->args) {
+                                // Preserving the cache only if I need it for computing the Support
+                                if (ptr->parentMin == Depthidx && (((final_ensemble != PerDeclareSupport) || (ptr->isLeaf != ActivationLeaf)))) {
+                                    ptr->result.clear(); ptr->result.shrink_to_fit();
+                                }
+                            }
+//        }
+                PARALLELIZE_LOOP_END
+#endif
+        Depthidx--;
     }
 }
 
