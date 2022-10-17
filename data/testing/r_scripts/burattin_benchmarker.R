@@ -5,7 +5,7 @@ library(dplyr)
 library(tidyr)
 setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 
-knoababtimings <- read.csv(file = '/home/sam/Documents/Repositories/CodeBases/knobab/data/testing/results/knobab_burattin_benchmark.csv')
+knoababtimings <- read.csv(file = '/home/sam/Documents/Repositories/CodeBases/knobab/data/testing/results/old/knobab_burattin_benchmark.csv')
 
 knoababtimings$execution_time <- knoababtimings$model_data_decomposition_time + knoababtimings$model_atomization_time + knoababtimings$model_declare_to_ltlf + knoababtimings$model_ltlf_query_time
 
