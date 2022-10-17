@@ -1227,9 +1227,9 @@ inline void until_fast_untimed(const Result &aSection, const Result &bSection, R
                                               bCurrent->second.second.end());
                 atLeastOneResult = true;
             } else {
+                if (aIt >= upperA) break;
                 if (aIt->first.second > 0) break;
                 cpAEn.first.second = bCurrent->first.second - 1;
-                if (aIt >= upperA) break;
 
                 // Applying the same concept from the new globally timed... (2)
                 aEn = aIt + (cpAEn.first.second);//std::upper_bound(aEn, upperA, cpAEn);

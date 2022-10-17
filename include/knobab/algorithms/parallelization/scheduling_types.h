@@ -161,7 +161,7 @@ void schedule(BS::thread_pool_light& pool,
               const S& size_quantifier,
               F&& task) {
     if (V.empty()) return;
-    std::cout << "ComputingTask" << std::endl;
+//    std::cout << "ComputingTask" << std::endl;
     multithreading::CanonicalLoop cl;
     cl.init(0, V.size()-1, 1, blocks);
     std::vector<size_t> elems;
@@ -209,7 +209,7 @@ void schedule(BS::thread_pool_light& pool,
             elems.clear();
         }
     }
-    std::cout << "Splitting & Scheduling: done" << std::endl;
+//    std::cout << "Splitting & Scheduling: done" << std::endl;
 }
 
 #endif //KNOBAB_SCHEDULING_TYPES_H

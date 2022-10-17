@@ -9,12 +9,19 @@ declare -a SchedArray=("BLOCK_STATIC_SCHEDULE" "CYCLIC_STATIC_SCHEDULE" "GUIDED_
 # Read the array values with space
 
 for val in "${StringArray[@]}"; do
-	./parall/knobab-v1.0 -n -o -q 5 -e $ms --topN=5 --topNTemplate=$val --xes=/home/giacomo/projects/knobab/data/testing/bpic_2011/data/original/log.xes  --maxsat=scripts/maxsat_pipeline.yaml --csv=parall.csv
+	./cmake-build-release/knobab-v1.0 -n -o -q 5 -e $ms --topN=5 --topNTemplate=$val --xes=/home/giacomo/projects/knobab/data/testing/bpic_2011/data/original/log.xes  --maxsat=scripts/maxsat_pipeline.yaml --csv=parall.csv
+	if [ $? -neq 0 ]; then
+	    echo "It crashed!"
+	    exit 1
+	fi
 	for proc in "${ProcArray[@]}"; do
 		for ms in "${SchedArray[@]}"; do
 			echo "$ms $val $proc"
-			echo ./parall/knobab-v1.0 -n -o -q 5 -e $ms --topN=5 --topNTemplate=$val --xes=/home/giacomo/projects/knobab/data/testing/bpic_2011/data/original/log.xes  --maxsat=$proc --csv=parall.csv
 			./parall/knobab-v1.0 -n -o -q 5 -e $ms --topN=5 --topNTemplate=$val --xes=/home/giacomo/projects/knobab/data/testing/bpic_2011/data/original/log.xes  --maxsat=$proc --csv=parall.csv
+			if [ $? -neq 0 ]; then
+	    			echo "It crashed!"
+	    			exit 1
+			fi
 		done
 	done
 done

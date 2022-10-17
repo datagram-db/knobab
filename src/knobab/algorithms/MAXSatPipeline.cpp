@@ -1258,7 +1258,7 @@ void MAXSatPipeline::abidinglogic_query_running(const std::vector<PartialResult>
 
 //        // Clearing the caches, so to free potentially unrequired memory for the next computational steps
 //        // This might help save some memory in big-data scenarios
-#ifdef MAXSatPipeline_PARALLEL
+#if 0
         PARALLELIZE_LOOP_BEGIN(pool,BLOCK_STATIC_SCHEDULE,blocks,it->second,[](auto& x ){return 1;})
 //        PARALLELIZE_LOOP_BEGIN(pool, 0, it->second.size(), lb, ub)
 //        for (size_t j = lb; j < ub; j++) {
@@ -1508,7 +1508,7 @@ void MAXSatPipeline::fast_v1_query_running(const std::vector<PartialResult>& res
 
         // Clearing the caches, so to free potentially unrequired memory for the next computational steps
         // This might help save some memory in big-data scenarios
-#ifdef MAXSatPipeline_PARALLEL
+#if 0
         PARALLELIZE_LOOP_BEGIN(pool,BLOCK_STATIC_SCHEDULE,blocks,it->second,[](auto& x ){return 1;})
 //        PARALLELIZE_LOOP_BEGIN(pool, 0, it->second.size(), lb, ub)
 //        for (size_t j = lb; j < ub; j++) {
