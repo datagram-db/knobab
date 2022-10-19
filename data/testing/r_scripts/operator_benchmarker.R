@@ -60,7 +60,7 @@ names(labels) <- c("Choice")
 print_chart(df[df$Test == "Choice",],  labels, c(TeX(r'($OPTIMIZED$)'), TeX(r'($LOGICAL$)')))
 
 labels = c("TIMED AND FUTURE", "TIMED AND GLOBALLY", "UNTIL")
-names(labels) <- c("And_Future", "And_Globally", "AUB")
+names(labels) <- c("And_Future", "And_Globally", "Until")
 print_chart(df[df$Test == "And_Future" | df$Test == "And_Globally" | df$Test == "Until",], labels, c(TeX(r'($VARIANT-2$)'), TeX(r'($VARIANT-1$)'), TeX(r'($LOGICAL$)')))
 
 # ggplot(df, aes(x=Log_Size, y=Time, fill=interaction(Max_Trace_Length,Type))) +
