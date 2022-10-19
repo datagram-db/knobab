@@ -99,7 +99,7 @@ TEST(ideas22_uce, InitDataAE) { //
     Environment env;
     env.doStats = false;
     env.set_grounding_parameters(true, false, true,GroundingStrategyConf::NO_EXPANSION);
-    env.set_atomization_parameters("p", 20);
+    env.set_atomization_parameters("p", 20, AtomizeEverythingIfAnyDataPredicate);
     auto scripts = std::filesystem::current_path().parent_path().parent_path();
     auto file = scripts / "data" / "testing" / "ideas22" / "anything.txt";
     {
@@ -214,7 +214,7 @@ TEST(ideas22_uce, InitDataMixAE) {
     Environment env;
     env.doStats = false;
     env.set_grounding_parameters(true, false, true,GroundingStrategyConf::NO_EXPANSION);
-    env.set_atomization_parameters("p", 20);
+    env.set_atomization_parameters("p", 20, AtomizeEverythingIfAnyDataPredicate);
     auto scripts = std::filesystem::current_path().parent_path().parent_path();
     auto file = scripts / "data" / "testing" / "ideas22" / "anything.txt";
     {
