@@ -8,7 +8,7 @@
 #include "knobab/operators/fast_ltlf_operators.h"
 #include <fstream>
 
-const std::string file_path = "data/testing/results/benchmarking/results.csv";
+const std::string file_path = "data/testing/results/benchmarking/knobab_custom_operators.csv";
 
 Environment setup(const std::filesystem::path f){
     Environment env;
@@ -121,14 +121,14 @@ void test_aAndFutureb(const Environment& environment){
 
     // A&Ft_new(B)
     t1 = std::chrono::high_resolution_clock::now();
-    aAndFutureB_timed(a, b, r_aAndfb, nullptr, environment.db.act_table_by_act_id.trace_length);
+    aAndFutureB_timed_variant_2(a, b, r_aAndfb, nullptr, environment.db.act_table_by_act_id.trace_length);
     t2 = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double, std::milli> r_aAndfb_time = t2 - t1;
     write_to_file(environment, "And_Future", "fast", r_aAndfb_time.count());
 
-//     A&Ft_old(B)
+    // A&Ft_old(B)
     t1 = std::chrono::high_resolution_clock::now();
-    aAndFutureB_timed_old(a, b, r_aAndfb, nullptr, environment.db.act_table_by_act_id.trace_length);
+    aAndFutureB_timed_variant_1(a, b, r_aAndfb, nullptr, environment.db.act_table_by_act_id.trace_length);
     t2 = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double, std::milli> r_aAndfb_old_time = t2 - t1;
     write_to_file(environment, "And_Future", "fast_old", r_aAndfb_old_time.count());
@@ -153,14 +153,14 @@ void test_aAndGloballyb(const Environment& environment){
 
     // A&G_new(B)
     t1 = std::chrono::high_resolution_clock::now();
-    aAndGloballyB_timed(a, b, r_aAndgb, nullptr, environment.db.act_table_by_act_id.trace_length);
+    aAndGloballyB_timed_variant_2(a, b, r_aAndgb, nullptr, environment.db.act_table_by_act_id.trace_length);
     t2 = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double, std::milli> r_a_and_globally_b_ut_time = t2 - t1;
     write_to_file(environment, "And_Globally", "fast", r_a_and_globally_b_ut_time.count());
 
     // A&G_old(B)
     t1 = std::chrono::high_resolution_clock::now();
-    aAndGloballyB_timed_old(a, b, r_aAndgb, nullptr, environment.db.act_table_by_act_id.trace_length);
+    aAndGloballyB_timed_variant_1(a, b, r_aAndgb, nullptr, environment.db.act_table_by_act_id.trace_length);
     t2 = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double, std::milli> r_a_and_globally_b_ut_time2 = t2 - t1;
     write_to_file(environment, "And_Globally", "fast_old", r_a_and_globally_b_ut_time2.count());

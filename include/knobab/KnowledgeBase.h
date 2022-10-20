@@ -45,6 +45,7 @@ using act_set = std::bitset<sizeof(uint16_t)>;
 
 //union_minimal resolveUnionMinimal(const AttributeTable &table, const AttributeTable::record &x);
 const uint16_t MAX_UINT16 = std::pow(2, 16) - 1;
+const size_t HYBRID_QUERY_THRESHOLD = std::pow(10, 2) / 2;
 
 template <typename T>
 struct pattern_mining_result {
@@ -95,6 +96,7 @@ class KnowledgeBase : public trace_visitor {
     size_t maximumStringLength = 0;
 
 public:
+    size_t average_trace_length;
     size_t noTraces;
     size_t actId;
     static constexpr double    default_double   = 0.0;

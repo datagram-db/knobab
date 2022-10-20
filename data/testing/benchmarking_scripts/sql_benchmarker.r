@@ -6,18 +6,18 @@ library(scales)
 
 setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 
-knoababtimings <- read.csv(file = '/home/sam/Documents/Repositories/CodeBases/knobab/data/testing/results/old/knobab_sql_benchmark.csv')
+knobabdf <- read.csv(file = '/home/sam/Documents/Repositories/CodeBases/knobab/data/testing/results/benchmarking/knobab_sql.csv')
 
-knoababtimings$execution_time <- knoababtimings$model_data_decomposition_time + knoababtimings$model_atomization_time + knoababtimings$model_declare_to_ltlf + knoababtimings$model_ltlf_query_time
+knobabdf$execution_time <- knobabdf$model_data_decomposition_time + knobabdf$model_atomization_time + knobabdf$model_declare_to_ltlf + knobabdf$model_ltlf_query_time
 
-knoababtimings = knoababtimings[,c('n_traces', 'model_filename', 'atomization_conf', 'execution_time')]
+knobabdf = knobabdf[,c('n_traces', 'model_filename', 'atomization_conf', 'execution_time')]
 
-knoababtimings <- aggregate(list(execution_time = knoababtimings$execution_time),
-                     by=list(atomization_conf = knoababtimings$atomization_conf, n_traces=knoababtimings$n_traces,model_filename=knoababtimings$model_filename),data=knoababtimings,FUN=mean)
+knobabdf <- aggregate(list(execution_time = knobabdf$execution_time),
+                     by=list(atomization_conf = knobabdf$atomization_conf, n_traces=knobabdf$n_traces,model_filename=knobabdf$model_filename),data=knobabdf,FUN=mean)
 
-knobabdf <- as.data.frame(melt(knoababtimings, id.vars = c("n_traces", "model_filename", "atomization_conf","execution_time")))
+knobabdf <- as.data.frame(melt(knobabdf, id.vars = c("n_traces", "model_filename", "atomization_conf","execution_time")))
 
-sqltimings <- read.csv(file = '/home/sam/Documents/Repositories/CodeBases/knobab/data/testing/results/sql_benchmark.csv')
+sqltimings <- read.csv(file = '/home/sam/Documents/Repositories/CodeBases/knobab/data/testing/results/benchmarking/sqlminer.csv')
 
 sqltimings <- aggregate(list(execution_time = sqltimings$execution_time),
                         by=list(n_traces=sqltimings$n_traces,model_filename=sqltimings$model_filename,atomization_conf=sqltimings$atomization_conf,failure=sqltimings$failure),data=sqltimings,FUN=mean)

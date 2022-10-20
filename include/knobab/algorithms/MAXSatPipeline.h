@@ -37,6 +37,7 @@ enum EnsembleMethods {
 enum OperatorQueryPlan {
     AbidingLogic,
     FastOperator_v1,
+    Hybrid,
     NoQueryRunning
 };
 
@@ -63,7 +64,11 @@ struct MAXSatPipeline {
     //std::vector<LTLfQuery*> fomulaidToFormula;
 
     MAXSatPipeline(const std::string& plan_file, const std::string& plan, size_t nThreads);
-    
+
+
+    ~MAXSatPipeline() {
+        clear();
+    }
     
 #ifdef MAXSatPipeline_PARALLEL
     MAXSatPipeline() : MAXSatPipeline{"", "", 1} {}
@@ -117,6 +122,7 @@ private:
     std::vector<PartialResult> subqueriesRunning(const KnowledgeBase &kb);
     void abidinglogic_query_running(const std::vector<PartialResult>& results_cache, const KnowledgeBase& kb);
     void fast_v1_query_running(const std::vector<PartialResult>& results_cache, const KnowledgeBase& kb);
+    void hybrid_query_running(const std::vector<PartialResult>& results_cache, const KnowledgeBase& kb);
 //    LTLfQuery *pushAtomicQueries(const AtomizingPipeline &atomization, LTLfQuery *formula);
 
 };

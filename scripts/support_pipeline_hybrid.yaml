@@ -1,0 +1,6 @@
+ensemble: "PerDeclareSupport"
+decomposition_script: "/home/sam/Documents/Repositories/CodeBases/knobab/scripts/testing.decl_sem"
+#decomposition_script: "/home/giacomo/projects/knobab/scripts/testing.decl_sem"
+script_plan: "marking"
+threads: 1
+operators: "Hybrid"

@@ -27,6 +27,22 @@ MAXSatPipeline::MAXSatPipeline(const std::string& plan_file, const std::string& 
 }
 
 void MAXSatPipeline::clear() {
+    std::unordered_set<LTLfQuery*> visited;
+
+    for(std::map<size_t, std::vector<LTLfQuery*>>::reverse_iterator it = qm.Q.rbegin(); it != qm.Q.rend(); ++it) {
+        for(LTLfQuery* ptr : it->second) {
+            if(visited.insert(ptr).second) {
+                for(LTLfQuery* arg : ptr->args){
+                    if(visited.insert(arg).second){
+                        delete arg;
+                    }
+                }
+
+                delete ptr;
+            }
+        }
+    }
+
     atomToFormulaId.clear();
     declare_to_query.clear();
     data_accessing.clear();
@@ -1458,7 +1474,7 @@ void MAXSatPipeline::fast_v1_query_running(const std::vector<PartialResult>& res
 
                         case LTLfQuery::AF_QPT:
                             if (formula->fields.id.parts.is_timed)
-                                aAndFutureB_timed(formula->args.at(0)->result,
+                                aAndFutureB_timed_variant_1(formula->args.at(0)->result,
                                                   formula->args.at(1)->result,
                                                   formula->result,
                                                   formula->joinCondition,
@@ -1480,7 +1496,7 @@ void MAXSatPipeline::fast_v1_query_running(const std::vector<PartialResult>& res
 
                         case LTLfQuery::AG_QPT:
                             if (formula->fields.id.parts.is_timed)
-                                aAndGloballyB_timed(formula->args.at(0)->result,
+                                aAndGloballyB_timed_variant_1(formula->args.at(0)->result,
                                                         formula->args.at(1)->result,
                                                         formula->result,
                                                         formula->joinCondition,
@@ -1499,6 +1515,265 @@ void MAXSatPipeline::fast_v1_query_running(const std::vector<PartialResult>& res
                 }
             }
         PARALLELIZE_LOOP_END
+
+        // Clearing the caches, so to free potentially unrequired memory for the next computational steps
+        // This might help save some memory in big-data scenarios
+//        PARALLELIZE_LOOP_BEGIN(pool, 0, it->second.size(), lb, ub)
+//            for (size_t j = lb; j < ub; j++) {
+//                auto formula = it->second.at(j);
+//                for (auto ptr : formula->args) {
+//                    // Preserving the cache only if I need it for computing the Support
+//                    if (ptr->parentMin == idx && (((final_ensemble != PerDeclareSupport) || (ptr->isLeaf != ActivationLeaf))))
+//                        ptr->result.clear();
+//                }
+//            }
+//        PARALLELIZE_LOOP_END
+        idx--;
+    }
+}
+
+void MAXSatPipeline::hybrid_query_running(const std::vector<PartialResult>& results_cache, const KnowledgeBase& kb) {
+/// Scanning the query plan starting from the leaves (rbegin) towards the actual declare formulae (rend)
+    auto it = qm.Q.rbegin(), en = qm.Q.rend();
+    size_t idx = qm.Q.size()-1;
+    for (; it != en; it++) {
+        Result tmp_result;
+        PARALLELIZE_LOOP_BEGIN(pool, 0, it->second.size(), lb, ub)
+            for (size_t j = lb; j < ub; j++) {
+                auto formula = it->second.at(j); // TODO: run this query
+                if (!formula) continue;
+
+//                if (formula->fields.id.parts.directly_from_cache) {
+//// import_from_partial_results
+//                } else
+                {
+                    // Combine the results from the results_cache
+                    switch (formula->t) {
+                        case LTLfQuery::INIT_QP:
+                            /// CORRECTNESS CHECK: The INIT shall either contain one single table atom or a set
+                            /// of predicates in conjunction
+                            DEBUG_ASSERT((formula->table_query.size() == 1) != (!formula->range_query.empty()));
+                            if (formula->table_query.size() == 1) {
+                                // In this situation, I'm directly taking the pre-computated data
+                                import_from_partial_results(formula, 0, data_accessing);
+                            } else {
+                                data_merge(formula->range_query, results_cache, formula->result, formula->isLeaf, true);
+                                formula->result.erase(std::remove_if(formula->result.begin(),
+                                                                     formula->result.end(),
+                                                                     [](const auto&  x){return x.first.second > 0;}),
+                                                      formula->result.end());
+                            } break;
+
+                        case LTLfQuery::END_QP:
+                            DEBUG_ASSERT((formula->table_query.size() == 1) != (!formula->range_query.empty()));
+                            if (formula->table_query.size() == 1) {
+                                // In this situation, I'm directly taking the pre-computated data
+                                import_from_partial_results(formula, 0, data_accessing);
+                            } else {
+                                data_merge(formula->range_query, results_cache, formula->result, formula->isLeaf, true);
+                                formula->result.erase(std::remove_if(formula->result.begin(),
+                                                                     formula->result.end(),
+                                                                     [kb](const auto&  x){return x.first.second < kb.act_table_by_act_id.trace_length.at(x.first.first)-1;}),
+                                                      formula->result.end());
+                            } break;
+
+                        case LTLfQuery::FIRST_QP:
+                        case LTLfQuery::LAST_QP: {
+                            DEBUG_ASSERT((formula->table_query.size() == 1));
+                            import_from_partial_results(formula, 0, data_accessing);
+                        } break;
+
+                        case LTLfQuery::EXISTS_QP: {
+                            if (formula->fields.id.parts.is_timed) {
+                                DEBUG_ASSERT((formula->n == 1));
+                                holistic_merge(formula, results_cache, data_accessing);
+                            } else {
+                                DEBUG_ASSERT((formula->table_query.size() == 1) != (!formula->range_query.empty()));
+                                if (formula->table_query.size() == 1) {
+                                    // In this situation, I'm directly taking the pre-computated data
+                                    import_from_partial_results(formula, 0, data_accessing);
+                                } else {
+                                    untimed_exists_for_data_queries(formula, results_cache);
+                                } break;
+                            }
+                        } break;
+
+                        case LTLfQuery::ABSENCE_QP: {
+                            DEBUG_ASSERT(formula->table_query.size() == 1);
+                            DEBUG_ASSERT(!formula->fields.id.parts.is_timed);
+                            import_from_partial_results(formula, 0, data_accessing);
+
+                        } break;
+
+// TODO: replace with novel node semantics
+//                        case LTLfQuery::ABSENCE_QP:
+//                            // The difference with absence is that, if it is absent, then it shall not be there with the same number
+//                            if (formula->fields.id.parts.is_timed)
+//                                data_merge(formula->partial_results, results_cache, formula->result, formula->isLeaf);
+//                            else
+//                                absence_or_exists(formula, results_cache);
+//                            if (formula->fields.id.parts.preserve && (!formula->fields.id.parts.is_timed)) {
+//                                formula->result = negateUntimed(formula->result, kb.act_table_by_act_id.trace_length, true);
+//                            } else if (formula->fields.id.parts.is_timed) {
+//                                if (formula->fields.id.parts.preserve)
+//                                    throw std::runtime_error("At this stage, cannot preserve data for timed");
+//                                negated_fast_timed(formula->result, tmp_result, kb.act_table_by_act_id.trace_length);
+//                                std::swap(formula->result, tmp_result);
+//                            } else {
+//                                negated_fast_untimed(formula->result, tmp_result, kb.act_table_by_act_id.trace_length);
+//                                std::swap(formula->result, tmp_result);
+//                            }
+//                            break;
+
+                        case LTLfQuery::NEXT_QP:
+                            formula->result = next(formula->args.at(0)->result);
+                            break;
+
+                        case LTLfQuery::OR_QP:
+                            local_fast_union(formula, formula->result, formula->fields.id.parts.is_timed);
+                            break;
+
+                        case LTLfQuery::AND_QP:
+                            local_fast_intersection(formula, formula->result, formula->fields.id.parts.is_timed);
+                            break;
+
+                        case LTLfQuery::IMPL_QP:
+                            if (formula->fields.id.parts.is_timed) {
+                                negated_fast_timed(formula->args[0]->result, tmp_result, kb.act_table_by_act_id.trace_length);
+                                implies_fast_timed(formula->args.at(0)->result,
+                                                   formula->args.at(1)->result,
+                                                   tmp_result,
+                                                   formula->result,
+                                                   formula->joinCondition,
+                                                   kb.act_table_by_act_id.trace_length);
+                            } else {
+                                negated_fast_untimed(formula->args[0]->result, tmp_result, kb.act_table_by_act_id.trace_length);
+                                implies_fast_untimed(formula->args.at(0)->result,
+                                                     formula->args.at(1)->result,
+                                                     tmp_result,
+                                                     formula->result,
+                                                     formula->joinCondition,
+                                                     kb.act_table_by_act_id.trace_length);
+                            }
+                            break;
+
+                        case LTLfQuery::IFTE_QP:
+                            if (formula->fields.id.parts.is_timed)
+                                implies_fast_timed(formula->args.at(0)->result,
+                                                   formula->args.at(1)->result,
+                                                   formula->args.at(2)->result,
+                                                   formula->result,
+                                                   formula->joinCondition,
+                                                   kb.act_table_by_act_id.trace_length);
+                            else
+                                implies_fast_untimed(formula->args.at(0)->result,
+                                                     formula->args.at(1)->result,
+                                                     formula->args.at(3)->result,
+                                                     formula->result,
+                                                     formula->joinCondition,
+                                                     kb.act_table_by_act_id.trace_length);
+                            break;
+
+                        case LTLfQuery::U_QP:
+                            if (formula->fields.id.parts.is_timed)
+                                until_fast_timed(formula->args.at(0)->result,
+                                                 formula->args.at(1)->result,
+                                                 formula->result,
+                                                 formula->joinCondition,
+                                                 kb.act_table_by_act_id.trace_length);
+                            else
+                                until_fast_untimed(formula->args.at(0)->result,
+                                                   formula->args.at(1)->result,
+                                                   formula->result,
+                                                   formula->joinCondition,
+                                                   kb.act_table_by_act_id.trace_length);
+                            break;
+
+                        case LTLfQuery::G_QP:
+                            if (formula->fields.id.parts.is_timed)
+                                global_fast_timed(formula->args.at(0)->result, formula->result, kb.act_table_by_act_id.trace_length);
+                            else
+                                global_fast_untimed(formula->args.at(0)->result, formula->result, kb.act_table_by_act_id.trace_length);
+                            break;
+
+                        case LTLfQuery::F_QP:
+                            if (formula->fields.id.parts.is_timed)
+                                future_fast_timed(formula->args[0]->result, formula->result, kb.act_table_by_act_id.trace_length);
+                            else
+                                future_fast_untimed(formula->args[0]->result, formula->result, kb.act_table_by_act_id.trace_length);
+                            break;
+
+                        case LTLfQuery::NOT_QP:
+                            if (formula->fields.id.parts.preserve && (!formula->fields.id.parts.is_timed)) {
+                                formula->result = negateUntimed(formula->args[0]->result, kb.act_table_by_act_id.trace_length, true);
+                            } else if (formula->fields.id.parts.is_timed) {
+                                if (formula->fields.id.parts.preserve)
+                                    throw std::runtime_error("At this stage, cannot preserve data for timed");
+                                negated_fast_timed(formula->args[0]->result, formula->result, kb.act_table_by_act_id.trace_length);
+                            } else {
+                                negated_fast_untimed(formula->args[0]->result, formula->result, kb.act_table_by_act_id.trace_length);
+                            }
+                            break;
+
+                        case LTLfQuery::AF_QPT:
+                            if (formula->fields.id.parts.is_timed){
+                                if(kb.average_trace_length > HYBRID_QUERY_THRESHOLD)
+                                    aAndFutureB_timed_variant_2(formula->args.at(0)->result,
+                                                      formula->args.at(1)->result,
+                                                      formula->result,
+                                                      formula->joinCondition,
+                                                      kb.act_table_by_act_id.trace_length);
+                                else
+                                    aAndFutureB_timed_variant_1(formula->args.at(0)->result,
+                                                      formula->args.at(1)->result,
+                                                      formula->result,
+                                                      formula->joinCondition,
+                                                      kb.act_table_by_act_id.trace_length);
+                            }
+                            else
+                                throw std::runtime_error("AndFuture is untimed: unexpected implementation!");
+                            break;
+
+                        case LTLfQuery::AXG_QPT:
+                            if (formula->fields.id.parts.is_timed)
+                                aAndNextGloballyB_timed(formula->args.at(0)->result,
+                                                        formula->args.at(1)->result,
+                                                        formula->result,
+                                                        formula->joinCondition,
+                                                        kb.act_table_by_act_id.trace_length);
+                            else
+                                throw std::runtime_error("AndNextGlobally is untimed: unexpected implementation!");
+                            break;
+
+                        case LTLfQuery::AG_QPT:
+                            if (formula->fields.id.parts.is_timed) {
+                                if (kb.average_trace_length > HYBRID_QUERY_THRESHOLD)
+                                    aAndGloballyB_timed_variant_2(formula->args.at(0)->result,
+                                                        formula->args.at(1)->result,
+                                                        formula->result,
+                                                        formula->joinCondition,
+                                                        kb.act_table_by_act_id.trace_length);
+                                else
+                                    aAndGloballyB_timed_variant_1(formula->args.at(0)->result,
+                                                                formula->args.at(1)->result,
+                                                                formula->result,
+                                                                formula->joinCondition,
+                                                                kb.act_table_by_act_id.trace_length);
+                            }
+                            else
+                                throw std::runtime_error("AndNextGlobally is untimed: unexpected implementation!");
+                            break;
+
+                        case LTLfQuery::FALSEHOOD_QP:
+                            formula->result.clear();
+                            break;
+
+                        default:
+                            return; // TODO: Now, skipping the computation! Later on, do something!
+                    }
+                }
+            }
+                PARALLELIZE_LOOP_END
 
         // Clearing the caches, so to free potentially unrequired memory for the next computational steps
         // This might help save some memory in big-data scenarios
@@ -1544,6 +1819,10 @@ void MAXSatPipeline::pipeline(CNFDeclareDataAware* model,
 
             case FastOperator_v1:
                 fast_v1_query_running(pr, kb);
+                break;
+
+            case Hybrid:
+                hybrid_query_running(pr, kb);
                 break;
 
             default:
