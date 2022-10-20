@@ -70,8 +70,12 @@ struct MAXSatPipeline {
                    size_t nThreads,
                    scheduling_type schedulingType,
                    size_t blocks);
-    
-    
+
+
+     ~MAXSatPipeline() {
+        clear();
+    }
+
 #ifdef MAXSatPipeline_PARALLEL
     MAXSatPipeline() : MAXSatPipeline{"", "", 1, BLOCK_STATIC_SCHEDULE, 1} {}
     MAXSatPipeline(const MAXSatPipeline& x) : qm{x.qm}, pool{pool.get_thread_count()}, declare_to_ltlf_time{x.declare_to_ltlf_time},

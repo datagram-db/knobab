@@ -32,6 +32,19 @@ MAXSatPipeline::MAXSatPipeline(const std::string& plan_file,
 }
 
 void MAXSatPipeline::clear() {
+    // TODO: @Sam, please use Q from the LTLfQueryManager (qm)
+//    std::unordered_set<LTLfQuery*> visitedPointers;
+//    for (auto& cp : atomToFormulaId)
+//        for (LTLfQuery* ptr : cp.second) {
+//            if (visitedPointers.insert(ptr).second) {
+//                for (LTLfQuery* child : ptr->args) {
+//                    if (visitedPointers.insert(child).second){
+//                        delete child;
+//                    }
+//                }
+//                delete ptr;
+//            }
+//        }
     atomToFormulaId.clear();
     declare_to_query.clear();
     data_accessing.clear();
