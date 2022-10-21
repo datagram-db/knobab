@@ -8,7 +8,7 @@
 #include "knobab/operators/fast_ltlf_operators.h"
 #include <fstream>
 
-const std::string file_path = "data/testing/results/benchmarking/knobab_custom_operators.csv";
+const std::string file_path = "data/testing/results/benchmarking/custom_operators.csv";
 
 Environment setup(const std::filesystem::path f){
     Environment env;
