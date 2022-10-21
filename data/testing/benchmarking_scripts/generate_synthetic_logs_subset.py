@@ -60,7 +60,7 @@ def create_log(alphabet, sample_sizes, sample_lengths, save_log=True):
 
 def main():
     alphabet = load_alphabet('data/alphabets/ABCDE.txt')
-    create_log(alphabet, [10, 100, 1000], [10, 100, 1000, 10000])
+    create_log(alphabet, [10000], [10, 100, 1000, 10000])
 
 
 if __name__ == "__main__":

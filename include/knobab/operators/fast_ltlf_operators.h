@@ -547,7 +547,7 @@ inline void negated_fast_timed(const Result &section, Result& result, const std:
 * @param manager
 * @param lengths
 */
-inline void aAndFutureB_timed(const Result& a, const Result& b,Result& result, const PredicateManager *manager = nullptr, const std::vector<size_t> lengths = {}) {
+inline void aAndFutureB_timed_variant_2(const Result& a, const Result& b,Result& result, const PredicateManager *manager = nullptr, const std::vector<size_t> lengths = {}) {
     if (b.empty()) {
         result.clear();
         return;
@@ -685,7 +685,7 @@ inline void aAndFutureB_timed(const Result& a, const Result& b,Result& result, c
  * @param manager
  * @param lengths
  */
-inline void aAndFutureB_timed_old(const Result& aResult, const Result& bResult, Result& result, const PredicateManager *manager = nullptr, const std::vector<size_t>& lengths = {}) {
+inline void aAndFutureB_timed_variant_1(const Result& aResult, const Result& bResult, Result& result, const PredicateManager *manager = nullptr, const std::vector<size_t>& lengths = {}) {
     if (bResult.empty()) {
         result.clear();
         return;
@@ -984,7 +984,7 @@ inline double average(std::vector<size_t> const& v){
  * @param manager
  * @param lengths
  */
-inline void aAndGloballyB_timed(const Result& a, const Result& b,Result& result, const PredicateManager *manager = nullptr, const std::vector<size_t> lengths = {}) {
+inline void aAndGloballyB_timed_variant_2(const Result& a, const Result& b,Result& result, const PredicateManager *manager = nullptr, const std::vector<size_t> lengths = {}) {
     if (b.empty()) {
         result.clear();
         return;
@@ -1103,7 +1103,7 @@ inline void aAndGloballyB_timed(const Result& a, const Result& b,Result& result,
  * @param manager
  * @param lengths
  */
-inline void aAndGloballyB_timed_old(const Result& a, const Result& b,Result& result, const PredicateManager *manager = nullptr, const std::vector<size_t> lengths = {}) {
+inline void aAndGloballyB_timed_variant_1(const Result& a, const Result& b,Result& result, const PredicateManager *manager = nullptr, const std::vector<size_t> lengths = {}) {
     if (b.empty()) {
         result.clear();
         return;

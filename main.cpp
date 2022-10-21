@@ -60,7 +60,7 @@ void whole_testing(const std::string& log_file = "data/testing/log.txt",
         if (topN > 0) {
             auto model = env.generateTopBinaryClauses(template_name, topN, !sqlminer_dump_dir.empty());
             std::cout << "Loading generated declarative model " << model << std::endl;
-            env.load_model(model.begin(), model.end(), template_name + std::to_string(topN * topN));
+            env.load_model(model.begin(), model.end(), template_name);
             envAfterModelLoad(doDebugServer, benchmarking_file, atomization_file, maxsat, env);
         } else {
             for (const auto& declare_file_string : declare_files) {
@@ -846,18 +846,19 @@ int main(int argc, char **argv) {
     // --tab=data/testing/ltlf/WeakUntil --sqlminer=/home/giacomo/IdeaProjects/JavaConcurrentAPI/SQLMinerBenchmarker/log
     // --tab=data/testing/ltlf/WeakUntil --nostats --sqlminer=/home/giacomo/IdeaProjects/JavaConcurrentAPI/SQLMinerBenchmarker/log
     // --xes=/home/giacomo/Scaricati/hospital_corrected.xes --nostats --sqlminer=/home/giacomo/Scaricati/sump
-// --nostats --log=data/testing/log_response.txt --declareFile=data/testing/response.powerdecl
-// --nostats --log=data/testing/log_response.txt --declareFile=data/testing/InitDataA.txt --server
-//
-// --xes=/home/giacomo/Scaricati/hospital_corrected.xes --nostats -o
+    // --nostats --log=data/testing/log_response.txt --declareFile=data/testing/response.powerdecl
+    // --nostats --log=data/testing/log_response.txt --declareFile=data/testing/InitDataA.txt --server
+    //
+    // --xes=/home/giacomo/Scaricati/hospital_corrected.xes --nostats -o
     // --tab=data/testing/declare/Response --nostats --nodata --declareFile=data/testing/declare/Response.powerdecl
 
     //--tab=data/testing/declare/AltResponse --nostats --nodata --declareFile=data/testing/declare/AltResponse.powerdecl --server
-// --nostats --log=data/testing/log_response.txt --declareFile=data/testing/response.powerdecl --maxsat=scripts/support_pipeline.yaml
+    // --nostats --log=data/testing/log_response.txt --declareFile=data/testing/response.powerdecl --maxsat=scripts/support_pipeline.yaml
 
-// --nostats --log=data/testing/log_until.txt --declareFile=data/testing/declare/ResponseData1.powerdecl --maxsat=scripts/maxsat_pipeline.yaml
+    // --nostats --log=data/testing/log_until.txt --declareFile=data/testing/declare/ResponseData1.powerdecl --maxsat=scripts/maxsat_pipeline.yaml
 
-// --nostats --log=data/testing/log_until.txt --declareFile=data/testing/declare/ResponseData1.powerdecl --maxsat=scripts/maxsat_pipeline.yaml
+    // --nostats --log=data/testing/log_until.txt --declareFile=data/testing/declare/ResponseData1.powerdecl --maxsat=scripts/maxsat_pipeline.yaml
+
+    // --nostats --xes=data/testing/bpic_2011/data/10/log.xes --maxsat=scripts/maxsat_pipeline_hybrid.yaml --topNTemplate=Response --topN=5 --csv=data/testing/results/benchmarking/knobab_sql_hybrid_benchmark.csv --queryCount=5
     return 0;
 }
-        ///
