@@ -29,10 +29,12 @@ void whole_testing(const std::string& log_file = "data/testing/log.txt",
                    bool load_data = true,
                    const std::string& maxsat = "scripts/maxsat_pipeline.yaml",
                    size_t topN = 0,
-                   const std::string& template_name = "Response") {
+                   const std::string& template_name = "Response",
+                   scheduling_type strategyForScheduling = BLOCK_STATIC_SCHEDULE) {
     Environment env;
     env.clear();
     env.doStats = doStats;
+    env.scheduling_strategy = strategyForScheduling;
 
     std::cout << "Current path is " << std::filesystem::current_path() << '\n';
     std::flush(std::cout);
@@ -716,6 +718,7 @@ int main(int argc, char **argv) {
     std::string sql_miner_dump_folder = "";
     std::vector<std::string> queriesV{}, queriesA;
     uint16_t iters = 1;
+    scheduling_type strategyForScheduling = BLOCK_STATIC_SCHEDULE;
 
     args::ArgumentParser parser("KnoBAB  (c) 2020-2022 by Giacomo Bergami & Samuel 'Sam' Appleby.", "This free and open software program implements the MaxSat problem via a Knowledge Base, KnoBAB. Nicer things are still to come!");
     args::HelpFlag help(parser, "help", "Display this help menu", {'h', "help"});
@@ -728,13 +731,14 @@ int main(int argc, char **argv) {
 
 
     args::Group group(parser, "You can use the following parameters", args::Group::Validators::DontCare, args::Options::Global);
-    args::Flag server(group, "server", "Runs the HTTP server for visualizing the internal representation of both the knowledge base and the associated query plan", {'s', "server"});
+    args::Flag server(group, "server", "Runs the HTTP server for visualizing the internal representation of both the knowledge base and the associated query plan", {'r', "server"});
     args::Flag no_data(group, "nodata", "Ignores the payload when loading the data", {'o', "nodata"});
     args::ValueFlag<size_t> topN(group, "topN", "If non-zero, it specifies how many declare clauses to instantiate with a given template (default: Response)", {'p', "topN"});
     args::ValueFlag<std::string> topNTemplate(group, "template", "If topN is non-zero, it specifies the template associated to generate assocaited to topN", {"topNTemplate"});
     args::Flag do_notcompute_trace_Stats(group, "do_not_compute_trace_stats", "Whether the code will lose time in calculating the statistics for the traces", {'n', "nostats"});
     args::ValueFlagList<std::string> queriesFiles(group, "Model/Query Files", "The queries expressed as Declare models", {'f', "declareFile"});
     args::ValueFlagList<std::string> queriesActual(group, "Models/Queries", "The queries expressed as Declare models", {'d', "declare"});
+    args::ValueFlag<std::string> scheduler(group, "Scheduler", "Specifies the task decomposition strategy", {'e', "scheduler"});
 
     args::ValueFlag<std::string> decomposition(group, "Script", "specifies the path where to load the declare LTLf decomposition model", {'c', "declareDecomposition"});
     args::ValueFlag<std::string> plan(group, "Plan", "specifies the preferred plan to be run from the script", {'l', "plan"});
@@ -743,6 +747,7 @@ int main(int argc, char **argv) {
     args::ValueFlag<std::string>  sqlMinerDump(group, "SQLMinerDump", "If present, specifies the dump for the SQL miner representation", {'s', "sqlminer"});
     args::ValueFlag<std::string>  maxSatConf(group, "MaxSatConfigurationFile", "If present, specifies the configurations for the maxsatpipeline", {'m', "maxsat"});
     args::ValueFlag<uint16_t>  iterNum(group, "Number of Iterations", "If present, specifies the number of times the pipeline will be run (for benchmarking)", {'q', "queryCount"});
+
 
     try {
         parser.ParseCLI(argc, argv);
@@ -811,9 +816,15 @@ int main(int argc, char **argv) {
     if(iterNum){
         iters = args::get(iterNum);
     }
+    if (scheduler) {
+        auto v = magic_enum::enum_cast<scheduling_type>(args::get(scheduler));
+        if (v.has_value()) {
+            strategyForScheduling = v.value();
+        }
+    }
 
     for(uint16_t i = 0; i < iters; ++i){
-        whole_testing(log_file, format, queriesV, queriesA, setUpServer, benchmark, sql_miner_dump_folder, doStats, atomization_file, do_data, max_conf_file, topNVal, topNDefaultR);
+        whole_testing(log_file, format, queriesV, queriesA, setUpServer, benchmark, sql_miner_dump_folder, doStats, atomization_file, do_data, max_conf_file, topNVal, topNDefaultR, strategyForScheduling);
     }
 
     //

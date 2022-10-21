@@ -56,7 +56,7 @@ void LoggerInformation::log_csv_file(std::ostream &csv_log) {
             << model_declare_to_ltlf<< ","
             << model_ltlf_query_time << ","
             << (is_multithreaded ? "1" : "No") << ","
-            << no_threads << std::endl;
+            << no_threads << "," << strategyForScheduling <<  std::endl << std::flush_emit;
 }
 
 void LoggerInformation::log_csv_file_header(std::ostream &csv_log) {
@@ -81,5 +81,5 @@ void LoggerInformation::log_csv_file_header(std::ostream &csv_log) {
             << "model_declare_to_ltlf" << ","
             << "model_ltlf_query_time" << ","
             << ("is_multithreaded") << ","
-            << "no_threads" << std::endl;
+            << "no_threads" << "," << "scheduling_strategy" << std::endl;
 }

@@ -59,6 +59,8 @@ struct Environment {
     GroundingStrategyConf grounding_conf;
 
     DeclareModelParse dmp;
+    scheduling_type scheduling_strategy;
+    size_t blocks;
 
     CNFDeclareDataAware grounding;
 

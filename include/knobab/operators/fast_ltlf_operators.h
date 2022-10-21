@@ -1192,7 +1192,7 @@ inline void until_fast_untimed(const Result &aSection, const Result &bSection, R
     auto localBUpper = bCurrent;
     auto upper = bSection.end();
 
-    auto aIt = aSection.begin(), aEn = aSection.begin(), bestAEn = aSection.begin();
+    auto aIt = aSection.begin(), aEn = aSection.begin();
     auto upperA = aSection.end();
 
     ResultRecord cpAIt{{0, 0},
@@ -1217,7 +1217,7 @@ inline void until_fast_untimed(const Result &aSection, const Result &bSection, R
 
         localBUpper = std::upper_bound(bCurrent, upper, cpLocalUpper);
         aIt = std::lower_bound(aIt, upperA, cpAIt);
-        aEn = bestAEn = aIt;
+        aEn = aIt;
 
         bool atLeastOneResult = false;
         for (; bCurrent != localBUpper; bCurrent++) {
@@ -1227,9 +1227,9 @@ inline void until_fast_untimed(const Result &aSection, const Result &bSection, R
                                               bCurrent->second.second.end());
                 atLeastOneResult = true;
             } else {
+                if (aIt >= upperA) break;
                 if (aIt->first.second > 0) break;
                 cpAEn.first.second = bCurrent->first.second - 1;
-                if (aIt >= upperA) break;
 
                 // Applying the same concept from the new globally timed... (2)
                 aEn = aIt + (cpAEn.first.second);//std::upper_bound(aEn, upperA, cpAEn);
@@ -1242,7 +1242,7 @@ inline void until_fast_untimed(const Result &aSection, const Result &bSection, R
                 } else {
                     if (manager) {
                         ++aEn;
-                        bestAEn = aEn;
+//                        bestAEn = aEn;
                         bool hasFail = false;
                         for (auto &activationEvent: bCurrent->second.second) {
                             if (hasFail) break;
@@ -1271,7 +1271,7 @@ inline void until_fast_untimed(const Result &aSection, const Result &bSection, R
                         else atLeastOneResult = true;
                     } else {
                         populateAndReturnEvents(aIt, ++aEn, cpResult.second.second);
-                        bestAEn = aEn;
+//                        bestAEn = aEn;
                         cpResult.second.second.insert(cpResult.second.second.end(), bCurrent->second.second.begin(),
                                                       bCurrent->second.second.end());
                         atLeastOneResult = true;
@@ -1287,7 +1287,7 @@ inline void until_fast_untimed(const Result &aSection, const Result &bSection, R
         cpResult.second.second.clear();
 
         bCurrent = localBUpper;
-        aIt = bestAEn;
+//        aIt = bestAEn;
     }
 }
 

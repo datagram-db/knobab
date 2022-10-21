@@ -638,7 +638,8 @@ void Environment::set_atomization_parameters(const std::filesystem::path &atomiz
 }
 
 MAXSatPipeline Environment::query_model() {
-    MAXSatPipeline maxsat_pipeline(script_for_decomposition, preferred_plan, noThreads);
+    experiment_logger.strategyForScheduling = magic_enum::enum_name(scheduling_strategy);
+    MAXSatPipeline maxsat_pipeline(script_for_decomposition, preferred_plan, noThreads, scheduling_strategy, 3);
     maxsat_pipeline.final_ensemble = strategy;
     maxsat_pipeline.operators = operators;
     maxsat_pipeline.pipeline(&grounding, ap, db);
