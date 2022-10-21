@@ -271,7 +271,7 @@ size_t MAXSatPipeline::pushNonRangeQuery(const DataQuery &q, bool directlyFromCa
 
 std::vector<PartialResult> MAXSatPipeline::subqueriesRunning(const KnowledgeBase &kb) {
     // 1. Performing the query over each single predicate that we have extracted, so not to duplicate the data access
-    PARALLELIZE_LOOP_BEGIN(pool,BLOCK_STATIC_SCHEDULE,blocks,data_accessing,[](auto& x ){return 1;})
+    PARALLELIZE_LOOP_BEGIN(pool,schedulingType,blocks,data_accessing,[](auto& x ){return 1;})
         auto &ref = data_accessing.at(i);
         // TODO: Given the query in ref.first, put the Result in ref.second
         switch (ref.first.type) {
@@ -342,7 +342,7 @@ std::vector<PartialResult> MAXSatPipeline::subqueriesRunning(const KnowledgeBase
     // result.minimal_common_subsets.size() + result.minimal_common_subsets_composition.size()
     std::vector<PartialResult> resultOfS(set_decomposition_result.minimal_common_subsets.size() + set_decomposition_result.minimal_common_subsets_composition.size());
 
-    PARALLELIZE_LOOP_BEGIN(pool,BLOCK_STATIC_SCHEDULE,blocks,set_decomposition_result.minimal_common_subsets,[](auto& x ){return 1;})
+    PARALLELIZE_LOOP_BEGIN(pool, schedulingType  ,blocks,set_decomposition_result.minimal_common_subsets,[](auto& x ){return 1;})
         auto& S = set_decomposition_result.minimal_common_subsets.at(i);
         resultOfS[i] = partialResultIntersection(S, data_accessing);
     PARALLELIZE_LOOP_END
@@ -364,7 +364,7 @@ std::vector<PartialResult> MAXSatPipeline::subqueriesRunning(const KnowledgeBase
     ///results_cache.resize(toUseAtoms.size());
 
     std::vector<PartialResult> results_cache(atomToResultOffset.size(), PartialResult{});
-    PARALLELIZE_LOOP_BEGIN(pool,BLOCK_STATIC_SCHEDULE,blocks,set_decomposition_result.decomposedIndexedSubsets,[](auto& x ){return 1;})
+    PARALLELIZE_LOOP_BEGIN(pool, schedulingType  ,blocks,set_decomposition_result.decomposedIndexedSubsets,[](auto& x ){return 1;})
         auto& ref = set_decomposition_result.decomposedIndexedSubsets.at(i);
         results_cache[ref.first] = partialResultIntersection(*ref.second, resultOfS);
     PARALLELIZE_LOOP_END
@@ -1042,7 +1042,7 @@ void MAXSatPipeline::abidinglogic_query_running(const std::vector<PartialResult>
     for (; it != en; it++) {
         Result tmp_result;
 
-        PARALLELIZE_LOOP_BEGIN(pool,BLOCK_STATIC_SCHEDULE,blocks,it->second,estimate_operator_time_cost)
+        PARALLELIZE_LOOP_BEGIN(pool,schedulingType  ,blocks,it->second,estimate_operator_time_cost)
 //        PARALLELIZE_LOOP_BEGIN(pool, 0, it->second.size(), lb, ub)
 //            for (size_t j = lb; j < ub; j++) {
                 LTLfQuery* formula = it->second.at(i); // TODO: run this query
@@ -1275,7 +1275,7 @@ void MAXSatPipeline::abidinglogic_query_running(const std::vector<PartialResult>
 //        // Clearing the caches, so to free potentially unrequired memory for the next computational steps
 //        // This might help save some memory in big-data scenarios
 #if 0
-        PARALLELIZE_LOOP_BEGIN(pool,BLOCK_STATIC_SCHEDULE,blocks,it->second,[](auto& x ){return 1;})
+        PARALLELIZE_LOOP_BEGIN(pool, schedulingType ,blocks,it->second,[](auto& x ){return 1;})
 //        PARALLELIZE_LOOP_BEGIN(pool, 0, it->second.size(), lb, ub)
 //        for (size_t j = lb; j < ub; j++) {
             auto formula = it->second.at(i);
@@ -1301,7 +1301,7 @@ void MAXSatPipeline::fast_v1_query_running(const std::vector<PartialResult>& res
     size_t Depthidx = qm.Q.size()-1;
     for (; it != en; it++) {
         Result tmp_result;
-        PARALLELIZE_LOOP_BEGIN(pool,BLOCK_STATIC_SCHEDULE,blocks,it->second,estimate_operator_time_cost)
+        PARALLELIZE_LOOP_BEGIN(pool,schedulingType  ,blocks,it->second,estimate_operator_time_cost)
 //            for (size_t j = lb; j < ub; j++) {
                 auto formula = it->second.at(i); // TODO: run this query
                 if (!formula) continue;
@@ -1525,7 +1525,7 @@ void MAXSatPipeline::fast_v1_query_running(const std::vector<PartialResult>& res
         // Clearing the caches, so to free potentially unrequired memory for the next computational steps
         // This might help save some memory in big-data scenarios
 #if 0
-        PARALLELIZE_LOOP_BEGIN(pool,BLOCK_STATIC_SCHEDULE,blocks,it->second,[](auto& x ){return 1;})
+        PARALLELIZE_LOOP_BEGIN(pool, schedulingType  ,blocks,it->second,[](auto& x ){return 1;})
 //        PARALLELIZE_LOOP_BEGIN(pool, 0, it->second.size(), lb, ub)
 //        for (size_t j = lb; j < ub; j++) {
                             auto formula = it->second.at(i);
@@ -1548,7 +1548,7 @@ void MAXSatPipeline::hybrid_query_running(const std::vector<PartialResult>& resu
     size_t idx = qm.Q.size()-1;
     for (; it != en; it++) {
         Result tmp_result;
-        PARALLELIZE_LOOP_BEGIN(pool,BLOCK_STATIC_SCHEDULE,blocks,it->second,estimate_operator_time_cost)
+        PARALLELIZE_LOOP_BEGIN(pool, schedulingType ,blocks,it->second,estimate_operator_time_cost)
 //            for (size_t j = lb; j < ub; j++) {
             auto formula = it->second.at(i); // TODO: run this query
             if (!formula) continue;
@@ -1789,7 +1789,7 @@ void MAXSatPipeline::hybrid_query_running(const std::vector<PartialResult>& resu
         // Clearing the caches, so to free potentially unrequired memory for the next computational steps
         // This might help save some memory in big-data scenarios
 #if 0
-        PARALLELIZE_LOOP_BEGIN(pool,BLOCK_STATIC_SCHEDULE,blocks,it->second,[](auto& x ){return 1;})
+        PARALLELIZE_LOOP_BEGIN(pool, schedulingType ,blocks,it->second,[](auto& x ){return 1;})
 //        PARALLELIZE_LOOP_BEGIN(pool, 0, it->second.size(), lb, ub)
 //        for (size_t j = lb; j < ub; j++) {
                             auto formula = it->second.at(i);
