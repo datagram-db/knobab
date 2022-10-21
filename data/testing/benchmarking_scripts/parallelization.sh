@@ -16,7 +16,7 @@ for ms in "${plist[@]}"; do
 		for proc in "${ProcArray[@]}"; do
 			echo "$ms $val $proc"
 			#sleep 3
-			./cmake-build-release/knobab-v1.0 -n -o -q 5 -p $ms --topNTemplate=$val --topN=15 --xes=data/testing/bpic_2011/data/original/log.xes  --maxsat=$proc --csv=data/testing/results/benchmarking/parallel.csv --queryCount=5
+			./cmake-build-release/knobab-v1.0 --nostats --nodata --queryCount 5 --topN $ms --topNTemplate=$val --xes=data/testing/bpic_2011/data/original/log.xes --maxsat=$proc --csv=data/testing/results/benchmarking/parallel.csv 
 		done
 	done
 done

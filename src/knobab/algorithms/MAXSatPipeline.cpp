@@ -1548,15 +1548,15 @@ void MAXSatPipeline::hybrid_query_running(const std::vector<PartialResult>& resu
     size_t idx = qm.Q.size()-1;
     for (; it != en; it++) {
         Result tmp_result;
-        PARALLELIZE_LOOP_BEGIN(pool, 0, it->second.size(), lb, ub)
-            for (size_t j = lb; j < ub; j++) {
-                auto formula = it->second.at(j); // TODO: run this query
-                if (!formula) continue;
+        PARALLELIZE_LOOP_BEGIN(pool,BLOCK_STATIC_SCHEDULE,blocks,it->second,estimate_operator_time_cost)
+//            for (size_t j = lb; j < ub; j++) {
+            auto formula = it->second.at(i); // TODO: run this query
+            if (!formula) continue;
 
 //                if (formula->fields.id.parts.directly_from_cache) {
 //// import_from_partial_results
 //                } else
-                {
+            {
                     // Combine the results from the results_cache
                     switch (formula->t) {
                         case LTLfQuery::INIT_QP:
@@ -1782,21 +1782,26 @@ void MAXSatPipeline::hybrid_query_running(const std::vector<PartialResult>& resu
                             return; // TODO: Now, skipping the computation! Later on, do something!
                     }
                 }
-            }
-                PARALLELIZE_LOOP_END
+//            }
+
+            PARALLELIZE_LOOP_END
 
         // Clearing the caches, so to free potentially unrequired memory for the next computational steps
         // This might help save some memory in big-data scenarios
+#if 0
+        PARALLELIZE_LOOP_BEGIN(pool,BLOCK_STATIC_SCHEDULE,blocks,it->second,[](auto& x ){return 1;})
 //        PARALLELIZE_LOOP_BEGIN(pool, 0, it->second.size(), lb, ub)
-//            for (size_t j = lb; j < ub; j++) {
-//                auto formula = it->second.at(j);
-//                for (auto ptr : formula->args) {
-//                    // Preserving the cache only if I need it for computing the Support
-//                    if (ptr->parentMin == idx && (((final_ensemble != PerDeclareSupport) || (ptr->isLeaf != ActivationLeaf))))
-//                        ptr->result.clear();
-//                }
-//            }
-//        PARALLELIZE_LOOP_END
+//        for (size_t j = lb; j < ub; j++) {
+                            auto formula = it->second.at(i);
+                            for (auto ptr : formula->args) {
+                                // Preserving the cache only if I need it for computing the Support
+                                if (ptr->parentMin == Depthidx && (((final_ensemble != PerDeclareSupport) || (ptr->isLeaf != ActivationLeaf)))) {
+                                    ptr->result.clear(); ptr->result.shrink_to_fit();
+                                }
+                            }
+//        }
+                PARALLELIZE_LOOP_END
+#endif
         idx--;
     }
 }
