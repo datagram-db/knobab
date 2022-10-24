@@ -1691,8 +1691,14 @@ void MAXSatPipeline::hybrid_query_running(const std::vector<PartialResult>& resu
                                                  formula->result,
                                                  formula->joinCondition,
                                                  kb.act_table_by_act_id.trace_length);
-                            else
+                            else if (kb.noTraces >= HYBRID_LOG_QUERY_THRESHOLD)
                                 until_fast_untimed(formula->args.at(0)->result,
+                                                   formula->args.at(1)->result,
+                                                   formula->result,
+                                                   formula->joinCondition,
+                                                   kb.act_table_by_act_id.trace_length);
+                            else 
+                              until_logic_untimed(formula->args.at(0)->result,
                                                    formula->args.at(1)->result,
                                                    formula->result,
                                                    formula->joinCondition,
