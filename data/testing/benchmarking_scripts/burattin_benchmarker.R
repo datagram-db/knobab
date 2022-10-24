@@ -5,32 +5,49 @@ library(dplyr)
 library(tidyr)
 setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 
-knoababtimings <- read.csv(file = '/home/sam/Documents/Repositories/CodeBases/knobab/data/testing/results/old/knobab_burattin_benchmark.csv')
+knobabdf <- read.csv(file = '/home/sam/Documents/Repositories/CodeBases/knobab/data/testing/results/benchmarking/burattin.csv')
 
-knoababtimings$execution_time <- knoababtimings$model_data_decomposition_time + knoababtimings$model_atomization_time + knoababtimings$model_declare_to_ltlf + knoababtimings$model_ltlf_query_time
+knobabdf$execution_time <- knobabdf$model_data_decomposition_time + knobabdf$model_atomization_time + knobabdf$model_declare_to_ltlf + knobabdf$model_ltlf_query_time
 
-knoababtimings = knoababtimings[,c('model_filename', 'atomization_conf', 'execution_time')]
+knobabdf = knobabdf[,c('model_filename', 'atomization_conf', 'execution_time', 'model_type')]
 
-knoababtimings <- aggregate(list(execution_time = knoababtimings$execution_time),
-                     by=list(atomization_conf = knoababtimings$atomization_conf,model_filename=knoababtimings$model_filename),data=knoababtimings,FUN=mean)
+knobabdf <- aggregate(list(execution_time = knobabdf$execution_time),
+                     by=list(atomization_conf = knobabdf$atomization_conf,model_filename=knobabdf$model_filename,model_type=knobabdf$model_type),data=knobabdf,FUN=mean)
 
-knobabdf <- as.data.frame(melt(knoababtimings, id.vars = c("model_filename", "atomization_conf","execution_time")))
+knobabdf <- as.data.frame(melt(knobabdf, id.vars = c("model_filename", "atomization_conf","execution_time", "model_type")))
 
-burattintimings <- read.csv(file = '/home/sam/Documents/Repositories/CodeBases/knobab/data/testing/results/burattin_benchmark.csv')
+burattindf <- read.csv(file = '/home/sam/Documents/Repositories/CodeBases/knobab/data/testing/results/benchmarking/declare_analyzer.csv')
 
-burattintimings <- aggregate(list(execution_time = burattintimings$execution_time),
-                        by=list(model_filename=burattintimings$model_filename,atomization_conf=burattintimings$atomization_conf),data=burattintimings,FUN=mean)
+burattindf <- aggregate(list(execution_time = burattindf$execution_time),
+                        by=list(model_filename=burattindf$model_filename,atomization_conf=burattindf$atomization_conf,model_type=burattindf$model_type),data=burattindf,FUN=mean)
 
-burattindf <- as.data.frame(melt(burattintimings, id.vars = c("model_filename", "atomization_conf", "execution_time")))
+burattindf <- as.data.frame(melt(burattindf, id.vars = c("model_filename", "atomization_conf", "execution_time", "model_type")))
 
 combineddf <- rbind(knobabdf, burattindf)  
 
-combineddf <- combineddf[order(combineddf[,1], combineddf[,3]), ]
+scenario1df <- combineddf[combineddf$model_type == "SCENARIO_1", ]
 
-combineddf$atomization_conf <- factor(combineddf$atomization_conf, levels=c("KnoBAB + CQ", "KnoBAB + Support", "Declare Analyzer"))
+scenario2df <- combineddf[combineddf$model_type == "SCENARIO_2", ]
+# combineddf <- combineddf[order(combineddf[,1], combineddf[,3]), ]
+# 
+# combineddf$atomization_conf <- factor(combineddf$atomization_conf, levels=c("KnoBAB + CQ", "KnoBAB + Support", "Declare Analyzer"))
 
-ggplot(combineddf, aes(x=model_filename, y=execution_time, fill=atomization_conf)) +
+scenario2df$model_filename <- factor(scenario2df$model_filename, levels=c("q1", "q2", "q3", "q4", "q5", "q1^q2", "q1^q2^q4", "q1^q3^q4", "q1^q2^q5", "q1^q3^q5", "q1^q2^q3^q4^q5"))
+
+
+ggplot(scenario1df, aes(x=model_filename, y=execution_time, fill=atomization_conf)) +
   geom_bar(position = "dodge", stat = "identity") +
+  facet_wrap( ~ model_type, nrow=2, ncol=4) +
+  labs(x = "Model", y = "Time (ms)") + 
+  theme(legend.position="bottom") + 
+  guides(fill=guide_legend(title="")) +
+  scale_y_log10(
+    breaks = scales::trans_breaks("log10", function(x) 10^x),
+    labels = scales::trans_format("log10", scales::math_format(10^.x)))
+
+ggplot(scenario2df, aes(x=model_filename, y=execution_time, fill=atomization_conf)) +
+  geom_bar(position = "dodge", stat = "identity") +
+  facet_wrap( ~ model_type, nrow=2, ncol=4) +
   labs(x = "Model", y = "Time (ms)") + 
   theme(legend.position="bottom") + 
   guides(fill=guide_legend(title="")) +
