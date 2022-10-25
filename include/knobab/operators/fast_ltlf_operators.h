@@ -161,34 +161,35 @@ inline void or_fast_untimed(const Result& lhs, const Result& rhs, Result& out, c
             decltype(endFirst1) endFirst2;
             for (; first1 != endFirst1; first1++) {
                 auto dx = first2;
-                do {
+                if (!completeInsertionRight) {
+                    do {
+                        if (manager && (!first1->second.second.empty()) && (!first2->second.second.empty())) {
+                            for (const marked_event &elem: first1->second.second) {
+                                if (!IS_MARKED_EVENT_ACTIVATION(elem)) continue;
+                                join.id.parts.left = pair.second = GET_ACTIVATION_EVENT(elem);
+                                e1 = manager->GetPayloadDataFromEvent(pair.first, pair.second, true, cache);
 
-                    if (manager && (!first1->second.second.empty()) && (!first2->second.second.empty())) {
-                        for (const marked_event &elem: first1->second.second) {
-                            if (!IS_MARKED_EVENT_ACTIVATION(elem)) continue;
-                            join.id.parts.left = pair.second = GET_ACTIVATION_EVENT(elem);
-                            e1 = manager->GetPayloadDataFromEvent(pair.first, pair.second, true, cache);
+                                for (const marked_event &elem1: first2->second.second) {
+                                    if (!IS_MARKED_EVENT_TARGET(elem1)) continue;
+                                    join.id.parts.right = pair1.second = GET_TARGET_EVENT(elem1);
 
-                            for (const marked_event &elem1: first2->second.second) {
-                                if (!IS_MARKED_EVENT_TARGET(elem1)) continue;
-                                join.id.parts.right = pair1.second = GET_TARGET_EVENT(elem1);
-
-                                if (manager->checkValidity(e1, localTrace, join.id.parts.right)) {
-                                    hasMatch = true;
-                                    result.second.second.emplace_back(join);
+                                    if (manager->checkValidity(e1, localTrace, join.id.parts.right)) {
+                                        hasMatch = true;
+                                        result.second.second.emplace_back(join);
+                                    }
                                 }
                             }
+                        } else {
+                            hasMatch = true;
+                            if (!completeInsertionRight) {
+                                result.second.second.insert(result.second.second.end(), dx->second.second.begin(), dx->second.second.end());
+                            }
                         }
-                    } else {
-                        hasMatch = true;
-                        if (!completeInsertionRight) {
-                            result.second.second.insert(result.second.second.end(), dx->second.second.begin(), dx->second.second.end());
-                        }
-                    }
 
-                    dx++;
-                } while ((dx != last2) && (dx->first.first == localTrace));
-                endFirst2 = dx;
+                        dx++;
+                    } while ((dx != last2) && (dx->first.first == localTrace));
+                    endFirst2 = dx;
+                }
 
                 if (!manager) {
                     result.second.second.insert(result.second.second.end(), first1->second.second.begin(), first1->second.second.end());
@@ -329,35 +330,36 @@ inline void and_fast_untimed(const Result& lhs, const Result& rhs, Result& out, 
             hasMatch = completeInsertionRight = false;
             for (; first1 != endFirst1; first1++) {
                 auto dx = first2;
-                do {
+                if (!completeInsertionRight){
+                    do {
+                        if (manager && (!first1->second.second.empty()) && (!first2->second.second.empty())) {
+                            for (const marked_event &elem: first1->second.second) {
+                                if (!IS_MARKED_EVENT_ACTIVATION(elem)) continue;
+                                join.id.parts.left = pair.second = GET_ACTIVATION_EVENT(elem);
+                                e1 = manager->GetPayloadDataFromEvent(pair.first, pair.second, true, cache);
 
-                    if (manager && (!first1->second.second.empty()) && (!first2->second.second.empty())) {
-                        for (const marked_event &elem: first1->second.second) {
-                            if (!IS_MARKED_EVENT_ACTIVATION(elem)) continue;
-                            join.id.parts.left = pair.second = GET_ACTIVATION_EVENT(elem);
-                            e1 = manager->GetPayloadDataFromEvent(pair.first, pair.second, true, cache);
+                                for (const marked_event &elem1: first2->second.second) {
+                                    if (!IS_MARKED_EVENT_TARGET(elem1)) continue;
+                                    join.id.parts.right = GET_TARGET_EVENT(elem1);
 
-                            for (const marked_event &elem1: first2->second.second) {
-                                if (!IS_MARKED_EVENT_TARGET(elem1)) continue;
-                                join.id.parts.right = GET_TARGET_EVENT(elem1);
-
-                                if (manager->checkValidity(e1, localTrace, join.id.parts.right)) {
-                                    hasMatch = true;
-                                    result.second.second.emplace_back(join);
+                                    if (manager->checkValidity(e1, localTrace, join.id.parts.right)) {
+                                        hasMatch = true;
+                                        result.second.second.emplace_back(join);
+                                    }
                                 }
                             }
+                        } else {
+                            hasMatch = true;
+                            if (!completeInsertionRight) {
+                                result.second.second.insert(result.second.second.end(), dx->second.second.begin(), dx->second.second.end());
+                            }
                         }
-                    } else {
-                        hasMatch = true;
-                        if (!completeInsertionRight) {
-                            result.second.second.insert(result.second.second.end(), dx->second.second.begin(), dx->second.second.end());
-                        }
-                    }
 
-                    dx++;
-                } while ((dx != last2) && (dx->first.first == localTrace));
+                        dx++;
+                    } while ((dx != last2) && (dx->first.first == localTrace));
+                    endFirst2 = dx;
+                }
 
-                endFirst2 = dx;
                 if (!manager){
                     completeInsertionRight = true;
                     result.second.second.insert(result.second.second.end(), first1->second.second.begin(), first1->second.second.end());
