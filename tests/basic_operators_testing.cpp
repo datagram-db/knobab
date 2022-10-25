@@ -53,8 +53,8 @@ TEST_F(mdpi_operators, ag) {
     Result not_b, ag1, ag2, G;
     or_fast_timed(a, c, not_b, nullptr, env.db.act_table_by_act_id.trace_length);
 
-    aAndGloballyB_timed(a, not_b, ag1, nullptr,env.db.act_table_by_act_id.trace_length);
-    aAndGloballyB_timed_old(a, not_b, ag2, nullptr,env.db.act_table_by_act_id.trace_length);
+    aAndGloballyB_timed_variant_2(a, not_b, ag1, nullptr,env.db.act_table_by_act_id.trace_length);
+    aAndGloballyB_timed_variant_1(a, not_b, ag2, nullptr,env.db.act_table_by_act_id.trace_length);
     EXPECT_EQ(ag1, ag2);
 }
 
@@ -63,8 +63,8 @@ TEST_F(mdpi_operators, ag2) {
     auto b = env.db.timed_dataless_exists("b", TargetLeaf);
     Result not_b, ag1, ag2, G;
 
-    aAndGloballyB_timed(a, b, ag1, nullptr,env.db.act_table_by_act_id.trace_length);
-    aAndGloballyB_timed_old(a, b, ag2, nullptr,env.db.act_table_by_act_id.trace_length);
+    aAndGloballyB_timed_variant_2(a, b, ag1, nullptr,env.db.act_table_by_act_id.trace_length);
+    aAndGloballyB_timed_variant_1(a, b, ag2, nullptr,env.db.act_table_by_act_id.trace_length);
     EXPECT_EQ(ag1, ag2);
 }
 
@@ -73,8 +73,8 @@ TEST_F(mdpi_operators, af) {
     auto b = env.db.timed_dataless_exists("b", TargetLeaf);
     Result not_b, ag1, ag2, G;
 
-    aAndFutureB_timed(a, not_b, ag1, nullptr,env.db.act_table_by_act_id.trace_length);
-    aAndFutureB_timed_old(a, not_b, ag2, nullptr,env.db.act_table_by_act_id.trace_length);
+    aAndFutureB_timed_variant_2(a, not_b, ag1, nullptr,env.db.act_table_by_act_id.trace_length);
+    aAndFutureB_timed_variant_1(a, not_b, ag2, nullptr,env.db.act_table_by_act_id.trace_length);
     EXPECT_EQ(ag1, ag2);
 }
 
@@ -90,7 +90,7 @@ TEST_F(holidays_operators, exists) {
     future_logic_timed(a, result_slow_timed_a, env.db.act_table_by_act_id.trace_length);
 
     and_fast_timed(a, result_slow_timed_b, and_slow_timed, nullptr, env.db.act_table_by_act_id.trace_length);
-    aAndFutureB_timed(a, b, andF_fast_timed, nullptr, env.db.act_table_by_act_id.trace_length);
+    aAndFutureB_timed_variant_1(a, b, andF_fast_timed, nullptr, env.db.act_table_by_act_id.trace_length);
     EXPECT_EQ(and_slow_timed, andF_fast_timed);
 
     and_logic_untimed(result_slow_timed_a, result_slow_timed_b, FaFB_result, nullptr, env.db.act_table_by_act_id.trace_length);

@@ -110,7 +110,8 @@ antlrcpp::Any DeclareQueryLanguageParser::visitOr(LTLfQueryParser::OrContext *co
     fromNowOnTimedStack.pop();
     return {LTLfQuery::qOR(lhs, rhs,
                            GET_TIMING(context),
-                           context->THETA() != nullptr)};
+                           context->THETA() != nullptr,
+                           context->INV() != nullptr)};
 }
 
 antlrcpp::Any DeclareQueryLanguageParser::visitAnd(LTLfQueryParser::AndContext *context) {
@@ -122,7 +123,8 @@ antlrcpp::Any DeclareQueryLanguageParser::visitAnd(LTLfQueryParser::AndContext *
     return {LTLfQuery::qAND(lhs,
                              rhs,
                              GET_TIMING(context),
-                             context->THETA() != nullptr)};
+                             context->THETA() != nullptr,
+                            context->INV() != nullptr)};
 }
 
 antlrcpp::Any DeclareQueryLanguageParser::visitBox(LTLfQueryParser::BoxContext *context) {
@@ -174,7 +176,8 @@ antlrcpp::Any DeclareQueryLanguageParser::visitAnd_next_globally(LTLfQueryParser
     fromNowOnTimed = fromNowOnTimedStack.top();
     fromNowOnTimedStack.pop();
 
-    return {LTLfQuery::qANDNEXTGLOBALLY(lhs, rhs, true, context->THETA() != nullptr)};
+    return {LTLfQuery::qANDNEXTGLOBALLY(lhs, rhs, true, context->THETA() != nullptr,
+                                        context->INV() != nullptr)};
 }
 
 antlrcpp::Any DeclareQueryLanguageParser::visitAnd_future(LTLfQueryParser::And_futureContext *context) {
@@ -191,7 +194,8 @@ antlrcpp::Any DeclareQueryLanguageParser::visitAnd_future(LTLfQueryParser::And_f
     fromNowOnTimed = fromNowOnTimedStack.top();
     fromNowOnTimedStack.pop();
 
-    return {LTLfQuery::qANDFUTURE(lhs, rhs, true, context->THETA() != nullptr)};
+    return {LTLfQuery::qANDFUTURE(lhs, rhs, true, context->THETA() != nullptr,
+                                  context->INV() != nullptr)};
 }
 
 antlrcpp::Any DeclareQueryLanguageParser::visitParen(LTLfQueryParser::ParenContext *context) {
@@ -208,7 +212,8 @@ antlrcpp::Any DeclareQueryLanguageParser::visitImplication(LTLfQueryParser::Impl
     return {LTLfQuery::qIMPLICATION(lhs,
                                     rhs,
                                     GET_TIMING(context),
-                                    context->THETA() != nullptr)};
+                                    context->THETA() != nullptr,
+                                    context->INV() != nullptr)};
 }
 
 antlrcpp::Any DeclareQueryLanguageParser::visitUntil(LTLfQueryParser::UntilContext *context) {
@@ -221,7 +226,8 @@ antlrcpp::Any DeclareQueryLanguageParser::visitUntil(LTLfQueryParser::UntilConte
     return {LTLfQuery::qUNTIL(lhs,
                                rhs,
                                GET_TIMING(context),
-                               context->THETA() != nullptr)};
+                               context->THETA() != nullptr,
+                              context->INV() != nullptr)};
 }
 
 antlrcpp::Any DeclareQueryLanguageParser::visitIfte(LTLfQueryParser::IfteContext *context) {
@@ -236,7 +242,8 @@ antlrcpp::Any DeclareQueryLanguageParser::visitIfte(LTLfQueryParser::IfteContext
                              mhs,
                              rhs,
                              GET_TIMING(context),
-                             context->THETA() != nullptr)};
+                             context->THETA() != nullptr,
+                             context->INV() != nullptr)};
 }
 
 antlrcpp::Any DeclareQueryLanguageParser::visitAnd_globally(LTLfQueryParser::And_globallyContext *context) {
@@ -253,7 +260,8 @@ antlrcpp::Any DeclareQueryLanguageParser::visitAnd_globally(LTLfQueryParser::And
     fromNowOnTimed = fromNowOnTimedStack.top();
     fromNowOnTimedStack.pop();
 
-    return {LTLfQuery::qANDGLOBALLY(lhs, rhs, true, context->THETA() != nullptr)};
+    return {LTLfQuery::qANDGLOBALLY(lhs, rhs, true, context->THETA() != nullptr,
+                                    context->INV() != nullptr)};
 }
 
 

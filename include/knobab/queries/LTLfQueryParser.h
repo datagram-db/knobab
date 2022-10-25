@@ -1,5 +1,5 @@
 
-// Generated from ../src/knobab/queries/LTLfQuery.g4 by ANTLR 4.9.3
+// Generated from src/knobab/queries/LTLfQuery.g4 by ANTLR 4.9.3
 
 #pragma once
 
@@ -17,8 +17,8 @@ public:
     END = 14, EXISTS = 15, ABSENCE = 16, NEXT = 17, OR = 18, AND = 19, FIRST = 20, 
     LAST = 21, IF = 22, THEN = 23, ELSE = 24, UNTIL = 25, BOX = 26, DIAMOND = 27, 
     AUTO_TIMED = 28, LPAREN = 29, RPAREN = 30, PRESERVE = 31, TIMED = 32, 
-    THETA = 33, LEFT = 34, RIGHT = 35, MIDDLE = 36, NEGATED = 37, INTNUMBER = 38, 
-    STRING = 39, SPACE = 40, COMMENT = 41, LINE_COMMENT = 42
+    THETA = 33, LEFT = 34, INV = 35, RIGHT = 36, MIDDLE = 37, NEGATED = 38, 
+    INTNUMBER = 39, STRING = 40, SPACE = 41, COMMENT = 42, LINE_COMMENT = 43
   };
 
   enum {
@@ -160,6 +160,7 @@ public:
     antlr4::tree::TerminalNode *OR();
     antlr4::tree::TerminalNode *TIMED();
     antlr4::tree::TerminalNode *THETA();
+    antlr4::tree::TerminalNode *INV();
     virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
     virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
 
@@ -251,6 +252,7 @@ public:
     std::vector<QueryContext *> query();
     QueryContext* query(size_t i);
     antlr4::tree::TerminalNode *THETA();
+    antlr4::tree::TerminalNode *INV();
     virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
     virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
 
@@ -266,6 +268,7 @@ public:
     antlr4::tree::TerminalNode *AND();
     antlr4::tree::TerminalNode *TIMED();
     antlr4::tree::TerminalNode *THETA();
+    antlr4::tree::TerminalNode *INV();
     virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
     virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
 
@@ -280,6 +283,7 @@ public:
     QueryContext* query(size_t i);
     antlr4::tree::TerminalNode *TIMED();
     antlr4::tree::TerminalNode *THETA();
+    antlr4::tree::TerminalNode *INV();
     virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
     virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
 
@@ -293,6 +297,7 @@ public:
     std::vector<QueryContext *> query();
     QueryContext* query(size_t i);
     antlr4::tree::TerminalNode *THETA();
+    antlr4::tree::TerminalNode *INV();
     virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
     virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
 
@@ -338,6 +343,7 @@ public:
     antlr4::tree::TerminalNode *UNTIL();
     antlr4::tree::TerminalNode *TIMED();
     antlr4::tree::TerminalNode *THETA();
+    antlr4::tree::TerminalNode *INV();
     virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
     virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
 
@@ -351,6 +357,7 @@ public:
     std::vector<QueryContext *> query();
     QueryContext* query(size_t i);
     antlr4::tree::TerminalNode *THETA();
+    antlr4::tree::TerminalNode *INV();
     virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
     virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
 
@@ -380,6 +387,7 @@ public:
     antlr4::tree::TerminalNode *ELSE();
     antlr4::tree::TerminalNode *TIMED();
     antlr4::tree::TerminalNode *THETA();
+    antlr4::tree::TerminalNode *INV();
     virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
     virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
 

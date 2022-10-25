@@ -389,7 +389,12 @@ struct LTLfQueryManager {
         }
 
         if (input.fields.id.parts.has_theta) {
-            q.joinCondition = joinCondition;
+            if (input.doInvTheta && (joinCondition)) {
+                DEBUG_ASSERT(joinCondition->isFlippedComputed);
+                q.joinCondition = joinCondition->flipped_equivalent;
+            } else {
+                q.joinCondition = joinCondition;
+            }
         }
         for (auto& args : input.args_from_script)
             q.args_from_script.emplace_back(instantiate(atom, formulaId, args, joinCondition, data_atom, atom_universe, left, right));
