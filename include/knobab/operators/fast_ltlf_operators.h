@@ -423,11 +423,13 @@ inline void global_fast_timed(const Result &section, Result& result, const std::
         lower = upper;
         upper = std::upper_bound(lower, section.end(), cp);
         Result toBeReversed;
-        auto it = lower + std::distance(lower, upper) - 1;
+        auto it = (lower == upper) ? (lower-1) : (lower + std::distance(lower, upper) - 1);
         for (int64_t i = (upper - 1)->first.second; i >= 0; i--) {
             first.second = i;
             const uint32_t dist = std::distance(it, upper);
-            if ((cp.first.first == it->first.first) && (dist == (cp.first.second - it->first.second))) {
+            if ((it >= lower) &&
+                (cp.first.first == it->first.first) &&
+                (dist == (cp.first.second - it->first.second))) {
                 second.first = std::min(it->second.first, second.first);
                 second.second.insert(second.second.begin(), it->second.second.begin(), it->second.second.end());
                 remove_duplicates(second.second);

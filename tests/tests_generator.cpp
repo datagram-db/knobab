@@ -225,10 +225,10 @@ int main() {
 //    generatePatternLog(map, cache_path, log_path, "Diamond", 5);
     map.clear(); // Ignoring pure ltlf formulae from the tests
 
-//    generatePatternLog(map, cache_path, dec_path, "AltPrecedence", 5);
+    generatePatternLog(map, cache_path, dec_path, "AltPrecedence", 5);
 //    generatePatternLog(map, cache_path, dec_path, "AltResponse", 5);
 //    generatePatternLog(map, cache_path, dec_path, "AltSuccession", 5);
-    generatePatternLog(map, cache_path, dec_path, "ChainPrecedence", 5);
+//    generatePatternLog(map, cache_path, dec_path, "ChainPrecedence", 5);
 //    generatePatternLog(map, cache_path, dec_path, "ChainResponse", 5);
 //    generatePatternLog(map, cache_path, dec_path, "ChainSuccession", 5);
 //    generatePatternLog(map, cache_path, dec_path, "Choice", 5);
