@@ -718,7 +718,8 @@ inline void aAndFutureB_timed_variant_1(const Result& aResult, const Result& bRe
                 if(newItr->first.first != aCurrent->first.first){
                     break;
                 }
-                if (manager) {
+                bool condition = manager && (!aCurrent->second.second.empty()) && (!newItr->second.second.empty());
+                if (manager && (!aCurrent->second.second.empty()) && (!newItr->second.second.empty())) {
                     for (const auto &elem: aCurrent->second.second) {
                         if (!IS_MARKED_EVENT_ACTIVATION(elem)) continue;
                         join.id.parts.left = GET_ACTIVATION_EVENT(elem);
@@ -737,8 +738,8 @@ inline void aAndFutureB_timed_variant_1(const Result& aResult, const Result& bRe
                 } else {
                     hasMatch = true;
                     rcx.second.second.insert(rcx.second.second.end(), newItr->second.second.begin(), newItr->second.second.end());
+                    if (manager) rcx.second.second.insert(rcx.second.second.end(), aCurrent->second.second.begin(), aCurrent->second.second.end());
                 }
-
                 newItr++;
             }
 
@@ -1056,7 +1057,7 @@ inline void aAndGloballyB_timed_variant_2(const Result& a, const Result& b,Resul
 
                 {
                     bool hasMatch = false;
-                    if (manager) {
+                    if (manager && (!aIter->second.second.empty()) && (!second_g.second.empty())) {
                         for (const auto &elem: aIter->second.second) {
                             if (!IS_MARKED_EVENT_ACTIVATION(elem)) continue;
                             join.id.parts.left = GET_ACTIVATION_EVENT(elem);
@@ -1138,7 +1139,7 @@ inline void aAndGloballyB_timed_variant_1(const Result& a, const Result& b,Resul
                     if(newItr->first.first != aCurrent->first.first){
                         break;
                     }
-                    if (manager) {
+                    if (manager && (!aCurrent->second.second.empty()) && (!newItr->second.second.empty())) {
                         for (const auto &elem: aCurrent->second.second) {
                             if (!IS_MARKED_EVENT_ACTIVATION(elem)) continue;
                             join.id.parts.left = GET_ACTIVATION_EVENT(elem);
@@ -1244,9 +1245,8 @@ inline void until_fast_untimed(const Result &aSection, const Result &bSection, R
                     // that you have.
                     break;
                 } else {
-                    if (manager) {
+                    if (manager && (!bCurrent->second.second.empty())) {
                         ++aEn;
-//                        bestAEn = aEn;
                         bool hasFail = false;
                         for (auto &activationEvent: bCurrent->second.second) {
                             if (hasFail) break;
@@ -1256,27 +1256,32 @@ inline void until_fast_untimed(const Result &aSection, const Result &bSection, R
                             for (auto curr = aIt; curr != aEn; curr++) {
                                 if (hasFail) break;
                                 Prev.first = curr->first.first;
-                                for (auto &targetEvent: curr->second.second) {
-                                    if (!IS_MARKED_EVENT_ACTIVATION(targetEvent)) continue;
-                                    Prev.second = GET_ACTIVATION_EVENT(targetEvent);
-                                    e2 = manager->GetPayloadDataFromEvent(Prev);
-                                    if (!manager->checkValidity(e2, e1)) {
-                                        hasFail = true;
-                                        break;
-                                    } else {
-                                        join.id.parts.left = Fut.second;
-                                        join.id.parts.right = Prev.second;
-                                        cpResult.second.second.emplace_back(join);
+                                if (!curr->second.second.empty())
+                                    for (auto &targetEvent: curr->second.second) {
+                                        if (!IS_MARKED_EVENT_ACTIVATION(targetEvent)) continue;
+                                        Prev.second = GET_ACTIVATION_EVENT(targetEvent);
+                                        e2 = manager->GetPayloadDataFromEvent(Prev);
+                                        if (!manager->checkValidity(e2, e1)) {
+                                            hasFail = true;
+                                            break;
+                                        } else {
+                                            join.id.parts.left = Fut.second;
+                                            join.id.parts.right = Prev.second;
+                                            cpResult.second.second.emplace_back(join);
+                                        }
                                     }
-                                }
+                                else
+                                    cpResult.second.second.insert(cpResult.second.second.end(),
+                                                                  bCurrent->second.second.begin(),
+                                                                  bCurrent->second.second.end());
                             }
                         }
                         if (hasFail) break;
                         else atLeastOneResult = true;
                     } else {
                         populateAndReturnEvents(aIt, ++aEn, cpResult.second.second);
-//                        bestAEn = aEn;
-                        cpResult.second.second.insert(cpResult.second.second.end(), bCurrent->second.second.begin(),
+                        cpResult.second.second.insert(cpResult.second.second.end(),
+                                                      bCurrent->second.second.begin(),
                                                       bCurrent->second.second.end());
                         atLeastOneResult = true;
                     }
