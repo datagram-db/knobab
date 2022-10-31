@@ -11,14 +11,17 @@ int main() {
     env.set_grounding_parameters(true, false, true,GroundingStrategyConf::NO_EXPANSION);
     env.set_atomization_parameters("p", 20);
     auto scripts = std::filesystem::current_path();
-    auto file = scripts / "data" / "testing" / "declare" / "mining" / "response_test";
+    std::filesystem::path file{"/home/giacomo/projects/knobab/data/benchmarking/1000_10000_log.tab"};
+//    auto file = scripts / "data" / "testing" / "declare" / "mining" / "response_test";
     {
         std::ifstream if_{file};
         env.load_log(TAB_SEPARATED_EVENTS, true, file.string(), true, if_);
     }
     std::filesystem::path declare_file_path, maxsat;
-    for (const auto& result : pattern_mining(env.db, 0.01, false, true, true, false, true)) {
-        std::cout << result << std::endl;
-    }
+    std::cout << "Starting from now!" << std::endl;
+    auto list = pattern_mining(env.db, 0.01, false, true, true, false, false);
+//    for (const auto& result : list) {
+//        std::cout << result << std::endl;
+//    }
     return 0;
 }

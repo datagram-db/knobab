@@ -161,34 +161,35 @@ inline void or_fast_untimed(const Result& lhs, const Result& rhs, Result& out, c
             decltype(endFirst1) endFirst2;
             for (; first1 != endFirst1; first1++) {
                 auto dx = first2;
-                do {
+                if (!completeInsertionRight) {
+                    do {
+                        if (manager && (!first1->second.second.empty()) && (!first2->second.second.empty())) {
+                            for (const marked_event &elem: first1->second.second) {
+                                if (!IS_MARKED_EVENT_ACTIVATION(elem)) continue;
+                                join.id.parts.left = pair.second = GET_ACTIVATION_EVENT(elem);
+                                e1 = manager->GetPayloadDataFromEvent(pair.first, pair.second, true, cache);
 
-                    if (manager && (!first1->second.second.empty()) && (!first2->second.second.empty())) {
-                        for (const marked_event &elem: first1->second.second) {
-                            if (!IS_MARKED_EVENT_ACTIVATION(elem)) continue;
-                            join.id.parts.left = pair.second = GET_ACTIVATION_EVENT(elem);
-                            e1 = manager->GetPayloadDataFromEvent(pair.first, pair.second, true, cache);
+                                for (const marked_event &elem1: first2->second.second) {
+                                    if (!IS_MARKED_EVENT_TARGET(elem1)) continue;
+                                    join.id.parts.right = pair1.second = GET_TARGET_EVENT(elem1);
 
-                            for (const marked_event &elem1: first2->second.second) {
-                                if (!IS_MARKED_EVENT_TARGET(elem1)) continue;
-                                join.id.parts.right = pair1.second = GET_TARGET_EVENT(elem1);
-
-                                if (manager->checkValidity(e1, localTrace, join.id.parts.right)) {
-                                    hasMatch = true;
-                                    result.second.second.emplace_back(join);
+                                    if (manager->checkValidity(e1, localTrace, join.id.parts.right)) {
+                                        hasMatch = true;
+                                        result.second.second.emplace_back(join);
+                                    }
                                 }
                             }
+                        } else {
+                            hasMatch = true;
+                            if (!completeInsertionRight) {
+                                result.second.second.insert(result.second.second.end(), dx->second.second.begin(), dx->second.second.end());
+                            }
                         }
-                    } else {
-                        hasMatch = true;
-                        if (!completeInsertionRight) {
-                            result.second.second.insert(result.second.second.end(), dx->second.second.begin(), dx->second.second.end());
-                        }
-                    }
 
-                    dx++;
-                } while ((dx != last2) && (dx->first.first == localTrace));
-                endFirst2 = dx;
+                        dx++;
+                    } while ((dx != last2) && (dx->first.first == localTrace));
+                    endFirst2 = dx;
+                }
 
                 if (!manager) {
                     result.second.second.insert(result.second.second.end(), first1->second.second.begin(), first1->second.second.end());
@@ -329,35 +330,36 @@ inline void and_fast_untimed(const Result& lhs, const Result& rhs, Result& out, 
             hasMatch = completeInsertionRight = false;
             for (; first1 != endFirst1; first1++) {
                 auto dx = first2;
-                do {
+                if (!completeInsertionRight){
+                    do {
+                        if (manager && (!first1->second.second.empty()) && (!first2->second.second.empty())) {
+                            for (const marked_event &elem: first1->second.second) {
+                                if (!IS_MARKED_EVENT_ACTIVATION(elem)) continue;
+                                join.id.parts.left = pair.second = GET_ACTIVATION_EVENT(elem);
+                                e1 = manager->GetPayloadDataFromEvent(pair.first, pair.second, true, cache);
 
-                    if (manager && (!first1->second.second.empty()) && (!first2->second.second.empty())) {
-                        for (const marked_event &elem: first1->second.second) {
-                            if (!IS_MARKED_EVENT_ACTIVATION(elem)) continue;
-                            join.id.parts.left = pair.second = GET_ACTIVATION_EVENT(elem);
-                            e1 = manager->GetPayloadDataFromEvent(pair.first, pair.second, true, cache);
+                                for (const marked_event &elem1: first2->second.second) {
+                                    if (!IS_MARKED_EVENT_TARGET(elem1)) continue;
+                                    join.id.parts.right = GET_TARGET_EVENT(elem1);
 
-                            for (const marked_event &elem1: first2->second.second) {
-                                if (!IS_MARKED_EVENT_TARGET(elem1)) continue;
-                                join.id.parts.right = GET_TARGET_EVENT(elem1);
-
-                                if (manager->checkValidity(e1, localTrace, join.id.parts.right)) {
-                                    hasMatch = true;
-                                    result.second.second.emplace_back(join);
+                                    if (manager->checkValidity(e1, localTrace, join.id.parts.right)) {
+                                        hasMatch = true;
+                                        result.second.second.emplace_back(join);
+                                    }
                                 }
                             }
+                        } else {
+                            hasMatch = true;
+                            if (!completeInsertionRight) {
+                                result.second.second.insert(result.second.second.end(), dx->second.second.begin(), dx->second.second.end());
+                            }
                         }
-                    } else {
-                        hasMatch = true;
-                        if (!completeInsertionRight) {
-                            result.second.second.insert(result.second.second.end(), dx->second.second.begin(), dx->second.second.end());
-                        }
-                    }
 
-                    dx++;
-                } while ((dx != last2) && (dx->first.first == localTrace));
+                        dx++;
+                    } while ((dx != last2) && (dx->first.first == localTrace));
+                    endFirst2 = dx;
+                }
 
-                endFirst2 = dx;
                 if (!manager){
                     completeInsertionRight = true;
                     result.second.second.insert(result.second.second.end(), first1->second.second.begin(), first1->second.second.end());
@@ -423,11 +425,13 @@ inline void global_fast_timed(const Result &section, Result& result, const std::
         lower = upper;
         upper = std::upper_bound(lower, section.end(), cp);
         Result toBeReversed;
-        auto it = lower + std::distance(lower, upper) - 1;
+        auto it = (lower == upper) ? (lower-1) : (lower + std::distance(lower, upper) - 1);
         for (int64_t i = (upper - 1)->first.second; i >= 0; i--) {
             first.second = i;
             const uint32_t dist = std::distance(it, upper);
-            if ((cp.first.first == it->first.first) && (dist == (cp.first.second - it->first.second))) {
+            if ((it >= lower) &&
+                (cp.first.first == it->first.first) &&
+                (dist == (cp.first.second - it->first.second))) {
                 second.first = std::min(it->second.first, second.first);
                 second.second.insert(second.second.begin(), it->second.second.begin(), it->second.second.end());
                 remove_duplicates(second.second);
@@ -714,7 +718,8 @@ inline void aAndFutureB_timed_variant_1(const Result& aResult, const Result& bRe
                 if(newItr->first.first != aCurrent->first.first){
                     break;
                 }
-                if (manager) {
+                bool condition = manager && (!aCurrent->second.second.empty()) && (!newItr->second.second.empty());
+                if (manager && (!aCurrent->second.second.empty()) && (!newItr->second.second.empty())) {
                     for (const auto &elem: aCurrent->second.second) {
                         if (!IS_MARKED_EVENT_ACTIVATION(elem)) continue;
                         join.id.parts.left = GET_ACTIVATION_EVENT(elem);
@@ -733,8 +738,8 @@ inline void aAndFutureB_timed_variant_1(const Result& aResult, const Result& bRe
                 } else {
                     hasMatch = true;
                     rcx.second.second.insert(rcx.second.second.end(), newItr->second.second.begin(), newItr->second.second.end());
+                    if (manager) rcx.second.second.insert(rcx.second.second.end(), aCurrent->second.second.begin(), aCurrent->second.second.end());
                 }
-
                 newItr++;
             }
 
@@ -1052,7 +1057,7 @@ inline void aAndGloballyB_timed_variant_2(const Result& a, const Result& b,Resul
 
                 {
                     bool hasMatch = false;
-                    if (manager) {
+                    if (manager && (!aIter->second.second.empty()) && (!second_g.second.empty())) {
                         for (const auto &elem: aIter->second.second) {
                             if (!IS_MARKED_EVENT_ACTIVATION(elem)) continue;
                             join.id.parts.left = GET_ACTIVATION_EVENT(elem);
@@ -1134,7 +1139,7 @@ inline void aAndGloballyB_timed_variant_1(const Result& a, const Result& b,Resul
                     if(newItr->first.first != aCurrent->first.first){
                         break;
                     }
-                    if (manager) {
+                    if (manager && (!aCurrent->second.second.empty()) && (!newItr->second.second.empty())) {
                         for (const auto &elem: aCurrent->second.second) {
                             if (!IS_MARKED_EVENT_ACTIVATION(elem)) continue;
                             join.id.parts.left = GET_ACTIVATION_EVENT(elem);
@@ -1240,9 +1245,8 @@ inline void until_fast_untimed(const Result &aSection, const Result &bSection, R
                     // that you have.
                     break;
                 } else {
-                    if (manager) {
+                    if (manager && (!bCurrent->second.second.empty())) {
                         ++aEn;
-//                        bestAEn = aEn;
                         bool hasFail = false;
                         for (auto &activationEvent: bCurrent->second.second) {
                             if (hasFail) break;
@@ -1252,27 +1256,32 @@ inline void until_fast_untimed(const Result &aSection, const Result &bSection, R
                             for (auto curr = aIt; curr != aEn; curr++) {
                                 if (hasFail) break;
                                 Prev.first = curr->first.first;
-                                for (auto &targetEvent: curr->second.second) {
-                                    if (!IS_MARKED_EVENT_ACTIVATION(targetEvent)) continue;
-                                    Prev.second = GET_ACTIVATION_EVENT(targetEvent);
-                                    e2 = manager->GetPayloadDataFromEvent(Prev);
-                                    if (!manager->checkValidity(e2, e1)) {
-                                        hasFail = true;
-                                        break;
-                                    } else {
-                                        join.id.parts.left = Fut.second;
-                                        join.id.parts.right = Prev.second;
-                                        cpResult.second.second.emplace_back(join);
+                                if (!curr->second.second.empty())
+                                    for (auto &targetEvent: curr->second.second) {
+                                        if (!IS_MARKED_EVENT_ACTIVATION(targetEvent)) continue;
+                                        Prev.second = GET_ACTIVATION_EVENT(targetEvent);
+                                        e2 = manager->GetPayloadDataFromEvent(Prev);
+                                        if (!manager->checkValidity(e2, e1)) {
+                                            hasFail = true;
+                                            break;
+                                        } else {
+                                            join.id.parts.left = Fut.second;
+                                            join.id.parts.right = Prev.second;
+                                            cpResult.second.second.emplace_back(join);
+                                        }
                                     }
-                                }
+                                else
+                                    cpResult.second.second.insert(cpResult.second.second.end(),
+                                                                  bCurrent->second.second.begin(),
+                                                                  bCurrent->second.second.end());
                             }
                         }
                         if (hasFail) break;
                         else atLeastOneResult = true;
                     } else {
                         populateAndReturnEvents(aIt, ++aEn, cpResult.second.second);
-//                        bestAEn = aEn;
-                        cpResult.second.second.insert(cpResult.second.second.end(), bCurrent->second.second.begin(),
+                        cpResult.second.second.insert(cpResult.second.second.end(),
+                                                      bCurrent->second.second.begin(),
                                                       bCurrent->second.second.end());
                         atLeastOneResult = true;
                     }

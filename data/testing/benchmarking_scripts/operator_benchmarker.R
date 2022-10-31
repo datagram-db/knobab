@@ -8,7 +8,7 @@ library(latex2exp)
 
 setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 
-df <- read.csv(file = '/home/sam/Documents/Repositories/CodeBases/knobab/data/testing/results/benchmarking/results.csv')
+df <- read.csv(file = '/home/giacomo/projects/knobab/data/testing/results/benchmarking/custom_operators.csv')
 
 df <- aggregate(list(Time = df$Time),
                             by=list(Test = df$Test,Type=df$Type,Log_Size=df$Log_Size,Max_Trace_Length=df$Max_Trace_Length,Alphabet=df$Alphabet),data=df,FUN=mean)
@@ -60,8 +60,10 @@ names(labels) <- c("Choice")
 print_chart(df[df$Test == "Choice",],  labels, c(TeX(r'($OPTIMIZED$)'), TeX(r'($LOGICAL$)')))
 
 labels = c("TIMED AND FUTURE", "TIMED AND GLOBALLY", "UNTIL")
-names(labels) <- c("And_Future", "And_Globally", "Until")
-print_chart(df[df$Test == "And_Future" | df$Test == "And_Globally" | df$Test == "Until",], labels, c(TeX(r'($VARIANT-2$)'), TeX(r'($VARIANT-1$)'), TeX(r'($LOGICAL$)')))
+names(labels) <- c("And_Future", "And_Globally", "Untimed Until")
+print_chart(df[df$Test == "And_Future" | df$Test == "And_Globally" ,], labels, c(TeX(r'($VARIANT-2$)'), TeX(r'($VARIANT-1$)'), TeX(r'($LOGICAL$)')))
+
+print_chart(df[df$Test == "Until"  ,], labels, c( TeX(r'($VARIANT-1$)'), TeX(r'($VARIANT-2$)')))
 
 # ggplot(df, aes(x=Log_Size, y=Time, fill=interaction(Max_Trace_Length,Type))) +
 #   geom_bar(position = "dodge", stat = "identity") +

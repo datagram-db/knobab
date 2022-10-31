@@ -1,24 +1,25 @@
 "marking" {
-     template "Init"               := INIT  activation
-     template "End"                := END activation
-     template "Exists1"            := (EXISTS 1 activation)
-     template "Absence1"           := ABSENCE 1 activation
-     template "Absence2"           := ABSENCE 2 activation
-     template "Choice" args 2      := (EXISTS 1 t #1 activation) OR THETA (EXISTS 1 t #2 activation)
-     template "Response" args 2    := G ( ((EXISTS ~ 1 t #1)) OR t ((EXISTS 1 t #1 activation) &Ft THETA (EXISTS 1 t #2 target)) )
-     template "ChainResponse" args 2 := G ( ((EXISTS ~ 1 t #1)) OR t ((EXISTS 1 t #1 activation) AND t THETA (NEXT EXISTS 1 t #2 target)))
-     template "RespExistence" args 2 := ( ((ABSENCE 1 #1)) OR ((EXISTS 1 #1 activation) AND THETA (EXISTS 1 #2 target)))
-     template "ExlChoice" args 2 := ((EXISTS 1 t #1 activation) OR THETA (EXISTS 1 t #2 activation)) AND ((ABSENCE 1 #1) OR (ABSENCE 1 #2))
-     template "CoExistence" args 2 := ( ((ABSENCE 1 #1)) OR ((EXISTS 1 #1 activation) AND THETA (EXISTS 1 #2 target))) AND ( ((ABSENCE 1 #2)) OR ((EXISTS 1 #2 activation) AND THETA (EXISTS 1 #1 target)))
-     template "NotCoExistence" args 2 := ~ ((EXISTS 1 t #1 activation) AND THETA (EXISTS 1 t #2 target)) PRESERVE
-     template "Precedence" args 2 := ((EXISTS  ~ 1 t #2) U (EXISTS 1 t #1 target)) OR (ABSENCE 1 #2)
-     template "Succession" args 2 := (G ( ((EXISTS ~ 1 t #1)) OR t ((EXISTS 1 t #1 activation) &Ft THETA (EXISTS 1 t #2 target)) )) AND (((EXISTS  ~ 1 t #2) U (EXISTS 1 t #1 target)) OR (ABSENCE 1 #2))
-     template "NegSuccession" args 2 := (G ( ((EXISTS ~ 1 t #1)) OR t ((EXISTS 1 t #1 activation) &Gt  (EXISTS ~ 1 t #2)) ))
-     template "ChainPrecedence" args 2 := G(((LAST OR t (NEXT EXISTS ~ 1 t #2))) OR t ((EXISTS 1 t #1 target) AND t (NEXT EXISTS 1 t #2 activation)))
-     template "ChainSuccession" args 2 := G( (((LAST OR t (NEXT EXISTS ~ 1 t #2))) OR t ((EXISTS 1 t #1 target) AND t (NEXT EXISTS 1 t #2 activation))) AND t
+     template "Init"                   := INIT  activation
+     template "End"                    := END activation
+     template "Exists1"                := (EXISTS 1 activation)
+     template "Absence1"               := ABSENCE 1 activation
+     template "Absence2"               := ABSENCE 2 activation
+     template "Precedence" args 2      := ((EXISTS  ~ 1 t #2) U (EXISTS 1 t #1 activation)) OR (ABSENCE 1 #2)
+     template "ChainPrecedence" args 2 := G(((LAST OR t (NEXT EXISTS ~ 1 t #1))) OR t ((NEXT EXISTS 1 t #1 activation) AND t THETA INV (EXISTS 1 t #2 target) ))
+     template "Choice" args 2          := (EXISTS 1 t #1 activation) OR THETA (EXISTS 1 t #2 activation)
+     template "Response" args 2        := G ( ((EXISTS ~ 1 t #1)) OR t ((EXISTS 1 t #1 activation) &Ft THETA (EXISTS 1 t #2 target)) )
+     template "ChainResponse" args 2   := G ( ((EXISTS ~ 1 t #1)) OR t ((EXISTS 1 t #1 activation) AND t THETA (NEXT EXISTS 1 t #2 target)))
+     template "RespExistence" args 2   := ( ((ABSENCE 1 #1)) OR ((EXISTS 1 #1 activation) AND THETA (EXISTS 1 #2 target)))
+     template "ExlChoice" args 2       := ((EXISTS 1 t #1 activation) OR THETA (EXISTS 1 t #2 activation)) AND ((ABSENCE 1 #1) OR (ABSENCE 1 #2))
+     template "CoExistence" args 2     := ( ((ABSENCE 1 #1)) OR ((EXISTS 1 #1 activation) AND THETA (EXISTS 1 #2 target))) AND ( ((ABSENCE 1 #2)) OR ((EXISTS 1 #2 activation) AND THETA INV (EXISTS 1 #1 target)))
+     template "NotCoExistence" args 2  := ~ ((EXISTS 1 t #1 activation) AND THETA (EXISTS 1 t #2 target)) PRESERVE
+
+     template "Succession" args 2      := (G ( ((EXISTS ~ 1 t #1)) OR t ((EXISTS 1 t #1 activation) &Ft THETA (EXISTS 1 t #2 target)) )) AND (((EXISTS  ~ 1 t #2) U (EXISTS 1 t #1 target)) OR (ABSENCE 1 #2))
+     template "NegSuccession" args 2   := (G ( ((EXISTS ~ 1 t #1)) OR t ((EXISTS 1 t #1 activation) &Gt  (EXISTS ~ 1 t #2)) ))
+     template "ChainSuccession" args 2 := G( (((LAST OR t (NEXT EXISTS ~ 1 t #2))) OR t ((NEXT EXISTS 1 t #2 activation) AND t THETA INV (EXISTS 1 t #1 target))) AND t
                                              ( ((EXISTS ~ 1 t #1)) OR t ((EXISTS 1 t #1 activation) AND t THETA (NEXT EXISTS 1 t #2 target)))
                                            )
-     template "AltResponse" args 2 := G ( (EXISTS ~ 1 t #1) OR t ((EXISTS 1 t #1 activation) AND t THETA (NEXT ((EXISTS ~ 1 t #1) U t (EXISTS 1 t #2 target)) )))
-     template "AltPrecedence" args 2 := (((EXISTS  ~ 1 t #2) U (EXISTS 1 t #1 target)) OR (ABSENCE 1 #2)) AND
-                                        (G(((EXISTS ~ 1 t #2)) OR t ((NEXT (((EXISTS  ~ 1 t #2) U t (EXISTS 1 t #1 activation)) OR t (G t (EXISTS  ~ 1 t #2)))) AND t THETA ((EXISTS 1 t #2 target)))))
+     template "AltResponse" args 2     := G ( (EXISTS ~ 1 t #1) OR t ((EXISTS 1 t #1 activation) AND t THETA (NEXT ((EXISTS ~ 1 t #1) U t (EXISTS 1 t #2 target)) )))
+     template "AltPrecedence" args 2   := (((EXISTS  ~ 1 t #2) U (EXISTS 1 t #1 activation)) OR (ABSENCE 1 #2)) AND
+                                           (G(((EXISTS ~ 1 t #1)) OR t (((EXISTS 1 t #1 activation)) AND t THETA (NEXT (((EXISTS  ~ 1 t #1) U t (EXISTS 1 t #2 target)) OR t (G t (EXISTS  ~ 1 t #1))))  )))
 }

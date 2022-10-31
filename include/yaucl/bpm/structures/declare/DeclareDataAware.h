@@ -125,6 +125,9 @@ struct DeclareDataAware {
     size_t n;
     std::string left_act, right_act;
     const KnowledgeBase* kb = nullptr;
+    bool isFlippedComputed = false;
+    bool isOriginal = true;
+    DeclareDataAware* flipped_equivalent = nullptr;
 
     // Each map represents a conjunction among different atoms over distinct variables, while the vector represents the disjunction
     std::vector<std::unordered_map<std::string, DataPredicate>> dnf_left_map, dnf_right_map, conjunctive_map;
@@ -140,6 +143,13 @@ struct DeclareDataAware {
 
     DEFAULT_CONSTRUCTORS(DeclareDataAware)
     DeclareDataAware(const std::vector<std::vector<DataPredicate>>& predicate, const KnowledgeBase* kb);
+    ~DeclareDataAware() {
+        if (isOriginal && isFlippedComputed && flipped_equivalent) {
+            delete flipped_equivalent;
+            isFlippedComputed = false;
+            flipped_equivalent = nullptr;
+        }
+    }
 
     static DeclareDataAware unary(const declare_templates&, const std::string& argument, size_t n);
     static DeclareDataAware binary(const declare_templates& t, const std::string& left, const std::string right);
@@ -184,6 +194,7 @@ struct DeclareDataAware {
     env GetPayloadDataFromEvent(uint32_t first, uint16_t second, bool isLeft, std::unordered_set<std::string>& leftArgs) const;
 
     DeclareDataAware flip() const;
+    DeclareDataAware* flipLocal();
 
     //[[deprecated]] ltlf toFiniteSemantics(bool isForGraph = true) const;
 

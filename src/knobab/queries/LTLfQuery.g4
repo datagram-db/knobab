@@ -16,18 +16,18 @@ query : INIT TIMED?                      declare_arguments? declare_act_target? 
       | EXISTS NEGATED? INTNUMBER TIMED? declare_arguments? declare_act_target?        #exists
       | ABSENCE INTNUMBER TIMED?         declare_arguments? declare_act_target?        #absence
       | NEXT query                                                                     #next
-      |<assoc=right> query OR TIMED? THETA? query                                      #or
-      |<assoc=right> query AND TIMED? THETA? query                                     #and
-      |<assoc=right> query '=>' TIMED? THETA? query                                    #implication
-      |<assoc=right> IF TIMED? query THEN query THETA? ELSE query                      #ifte
-      |<assoc=right> query UNTIL TIMED? THETA?  query                                  #until
+      |<assoc=right> query OR TIMED? THETA? INV? query                                      #or
+      |<assoc=right> query AND TIMED? THETA? INV? query                                     #and
+      |<assoc=right> query '=>' TIMED? THETA? INV? query                                    #implication
+      |<assoc=right> IF TIMED? query THEN query THETA? INV? ELSE query                      #ifte
+      |<assoc=right> query UNTIL TIMED? THETA? INV? query                                  #until
       | BOX TIMED?  query                                                              #box
       | DIAMOND TIMED?   query                                                         #diamond
       | NEGATED TIMED? query PRESERVE?                                                 #not
       | '(' query ')'                                                                  #paren
-      |<assoc=right> query '&Ft' THETA? query                                          #and_future
-      |<assoc=right> query '&XGt' THETA? query                                         #and_next_globally
-      |<assoc=right> query '&Gt' THETA? query                                          #and_globally
+      |<assoc=right> query '&Ft' THETA? INV? query                                          #and_future
+      |<assoc=right> query '&XGt' THETA? INV? query                                         #and_next_globally
+      |<assoc=right> query '&Gt' THETA? INV? query                                          #and_globally
       ;
 
 
@@ -58,6 +58,7 @@ PRESERVE: 'PRESERVE';
 TIMED: 't';
 THETA: 'THETA';
 LEFT : 'L';
+INV: 'INV';
 RIGHT: 'R';
 MIDDLE: 'M';
 NEGATED: '~';

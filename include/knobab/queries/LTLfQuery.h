@@ -54,6 +54,7 @@ struct LTLfQuery {
         LAST_QP = 17,
         FALSEHOOD_QP = 18
     };
+    bool doInvTheta = false;
     type t;
     declare_type_t declare_arg = 0; // Representation of a specific argument providing data/label condition
     LeafType       isLeaf;           // Marking whether the query is going to be an activation or a target condition
@@ -101,14 +102,14 @@ struct LTLfQuery {
     static LTLfQuery qABSENCE(size_t narg, short declare_argument, LeafType marking, bool isTimed);
     static LTLfQuery qNEXT(const LTLfQuery& arg, bool isTimed);
     static LTLfQuery qNOT(const LTLfQuery& arg, bool isTimed, bool preserve);
-    static LTLfQuery qOR(const LTLfQuery& lhs, const LTLfQuery& rhs, bool isTimed, bool hasTheta);
-    static LTLfQuery qIMPLICATION(const LTLfQuery& lhs, const LTLfQuery& rhs, bool isTimed, bool hasTheta);
-    static LTLfQuery qIFTE(const LTLfQuery& lhs, const LTLfQuery& middle, const LTLfQuery& rhs, bool isTimed, bool hasTheta);
-    static LTLfQuery qAND(const LTLfQuery& lhs, const LTLfQuery& rhs, bool isTimed, bool hasTheta);
-    static LTLfQuery qANDGLOBALLY(const LTLfQuery& lhs, const LTLfQuery& rhs, bool isTimed, bool hasTheta);
-    static LTLfQuery qANDNEXTGLOBALLY(const LTLfQuery& lhs, const LTLfQuery& rhs, bool isTimed, bool hasTheta);
-    static LTLfQuery qANDFUTURE(const LTLfQuery& lhs, const LTLfQuery& rhs, bool isTimed, bool hasTheta);
-    static LTLfQuery qUNTIL(const LTLfQuery& lhs, const LTLfQuery& rhs, bool isTimed, bool hasTheta);
+    static LTLfQuery qOR(const LTLfQuery& lhs, const LTLfQuery& rhs, bool isTimed, bool hasTheta, bool isInv);
+    static LTLfQuery qIMPLICATION(const LTLfQuery& lhs, const LTLfQuery& rhs, bool isTimed, bool hasTheta, bool isInv);
+    static LTLfQuery qIFTE(const LTLfQuery& lhs, const LTLfQuery& middle, const LTLfQuery& rhs, bool isTimed, bool hasTheta, bool isInv);
+    static LTLfQuery qAND(const LTLfQuery& lhs, const LTLfQuery& rhs, bool isTimed, bool hasTheta, bool isInv);
+    static LTLfQuery qANDGLOBALLY(const LTLfQuery& lhs, const LTLfQuery& rhs, bool isTimed, bool hasTheta, bool isInv);
+    static LTLfQuery qANDNEXTGLOBALLY(const LTLfQuery& lhs, const LTLfQuery& rhs, bool isTimed, bool hasTheta, bool isInv);
+    static LTLfQuery qANDFUTURE(const LTLfQuery& lhs, const LTLfQuery& rhs, bool isTimed, bool hasTheta, bool isInv);
+    static LTLfQuery qUNTIL(const LTLfQuery& lhs, const LTLfQuery& rhs, bool isTimed, bool hasTheta, bool isInv);
     static LTLfQuery qBOX(const LTLfQuery& lhs, bool isTimed);
     static LTLfQuery qDIAMOND(const LTLfQuery& lhs, bool isTimed);
 };
@@ -127,11 +128,11 @@ namespace std {
     {
         std::size_t operator()(const LTLfQuery& k) const
         {
-            using yaucl::hashing::hash_combine;
-            size_t init = 31;
-            for (const auto& x : k.args_from_script)
-                init = hash_combine<LTLfQuery>(init, x);
-            size_t f= hash_combine<size_t>(hash_combine<unsigned char>(hash_combine<short>(hash_combine<size_t>(init, k.t), k.isLeaf), 'A'), k.n);
+//            using yaucl::hashing::hash_combine;
+//            size_t init = 31;
+//            for (const auto& x : k.args_from_script)
+//                init = hash_combine<LTLfQuery>(init, x);
+//            size_t f= hash_combine<size_t>(hash_combine<unsigned char>(hash_combine<short>(hash_combine<size_t>(init, k.t), k.isLeaf), 'A'), k.n);
             return 0;
         }
     };

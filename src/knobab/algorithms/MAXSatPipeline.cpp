@@ -34,6 +34,9 @@ MAXSatPipeline::MAXSatPipeline(const std::string& plan_file,
 void MAXSatPipeline::clear() {
     std::unordered_set<LTLfQuery*> visited;
 
+    /// TODO:
+    /// If this worked for the current standard:
+    /// for (auto & it : std::ranges::reverse_view(qm.Q))
     for(std::map<size_t, std::vector<LTLfQuery*>>::reverse_iterator it = qm.Q.rbegin(); it != qm.Q.rend(); ++it) {
         for(LTLfQuery* ptr : it->second) {
             if(visited.insert(ptr).second) {
@@ -42,7 +45,6 @@ void MAXSatPipeline::clear() {
                         delete arg;
                     }
                 }
-
                 delete ptr;
             }
         }
@@ -163,6 +165,7 @@ void MAXSatPipeline::data_chunk(CNFDeclareDataAware *model,
             if (it2 == xtLTLfTemplates->end()) {
                 throw std::runtime_error(item.casusu+": missing from the loaded query decomposition");
             }
+            item.flipLocal(); // ensuring that the inverse predicate is always computed, so that I can pass it as a const!
 
             // Caching the query, so to generate a pointer to an experssion that was already computed.
             // The query plan manager will identfy the common expressions, and will let represent those only ones
@@ -1691,8 +1694,14 @@ void MAXSatPipeline::hybrid_query_running(const std::vector<PartialResult>& resu
                                                  formula->result,
                                                  formula->joinCondition,
                                                  kb.act_table_by_act_id.trace_length);
-                            else
+                            else if (kb.noTraces >= HYBRID_LOG_QUERY_THRESHOLD)
                                 until_fast_untimed(formula->args.at(0)->result,
+                                                   formula->args.at(1)->result,
+                                                   formula->result,
+                                                   formula->joinCondition,
+                                                   kb.act_table_by_act_id.trace_length);
+                            else 
+                              until_logic_untimed(formula->args.at(0)->result,
                                                    formula->args.at(1)->result,
                                                    formula->result,
                                                    formula->joinCondition,

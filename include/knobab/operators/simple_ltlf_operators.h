@@ -528,12 +528,12 @@ inline void global_logic_timed(const Result &section, Result &result, const std:
         upper = std::upper_bound(lower, section.end(), cp_g);
 
         Result toBeReversed;
-        auto it = lower + std::distance(lower, upper) - 1;
+        auto it = (lower == upper) ? (lower-1) : ( lower + std::distance(lower, upper) - 1);
         for (int64_t i = (upper - 1)->first.second; i >= 0; i--) {
             first_g.second = i;
             const uint32_t dist = std::distance(it, upper);
 
-            if ((cp_g.first.first == it->first.first) && (dist == (cp_g.first.second - it->first.second))) {
+            if ((it >= lower) && (cp_g.first.first == it->first.first) && (dist == (cp_g.first.second - it->first.second))) {
                 second_g.first = std::min(it->second.first, second_g.first);
                 second_g.second.insert(second_g.second.begin(), it->second.second.begin(), it->second.second.end());
                 remove_duplicates(second_g.second);

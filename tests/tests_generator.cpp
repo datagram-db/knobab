@@ -218,59 +218,59 @@ int main() {
     std::filesystem::path log_path = data / "testing" / "ltlf";
     std::filesystem::path dec_path = data / "testing" / "declare";
 
-    generatePatternLog(map, cache_path, log_path, "Until", 5);
-    generatePatternLog(map, cache_path, log_path, "WeakUntil", 5);
-    generatePatternLog(map, cache_path, log_path, "Release", 5);
-    generatePatternLog(map, cache_path, log_path, "Box", 5);
-    generatePatternLog(map, cache_path, log_path, "Diamond", 5);
+//    generatePatternLog(map, cache_path, log_path, "Until", 5);
+//    generatePatternLog(map, cache_path, log_path, "WeakUntil", 5);
+//    generatePatternLog(map, cache_path, log_path, "Release", 5);
+//    generatePatternLog(map, cache_path, log_path, "Box", 5);
+//    generatePatternLog(map, cache_path, log_path, "Diamond", 5);
     map.clear(); // Ignoring pure ltlf formulae from the tests
 
     generatePatternLog(map, cache_path, dec_path, "AltPrecedence", 5);
-    generatePatternLog(map, cache_path, dec_path, "AltResponse", 5);
-    generatePatternLog(map, cache_path, dec_path, "AltSuccession", 5);
-    generatePatternLog(map, cache_path, dec_path, "ChainPrecedence", 5);
-    generatePatternLog(map, cache_path, dec_path, "ChainResponse", 5);
-    generatePatternLog(map, cache_path, dec_path, "ChainSuccession", 5);
-    generatePatternLog(map, cache_path, dec_path, "Choice", 5);
-    generatePatternLog(map, cache_path, dec_path, "CoExistence", 5);
-    generatePatternLog(map, cache_path, dec_path, "ExlChoice", 5);
-    generatePatternLog(map, cache_path, dec_path, "NegChainSuccession", 5);
-    generatePatternLog(map, cache_path, dec_path, "NegSuccession", 5);
-    generatePatternLog(map, cache_path, dec_path, "NotCoExistence", 5);
-    generatePatternLog(map, cache_path, dec_path, "Precedence", 5);
-    generatePatternLog(map, cache_path, dec_path, "RespExistence", 5);
-    generatePatternLog(map, cache_path, dec_path, "Response", 5);
-    generatePatternLog(map, cache_path, dec_path, "Succession", 5);
+//    generatePatternLog(map, cache_path, dec_path, "AltResponse", 5);
+//    generatePatternLog(map, cache_path, dec_path, "AltSuccession", 5);
+//    generatePatternLog(map, cache_path, dec_path, "ChainPrecedence", 5);
+//    generatePatternLog(map, cache_path, dec_path, "ChainResponse", 5);
+//    generatePatternLog(map, cache_path, dec_path, "ChainSuccession", 5);
+//    generatePatternLog(map, cache_path, dec_path, "Choice", 5);
+//    generatePatternLog(map, cache_path, dec_path, "CoExistence", 5);
+//    generatePatternLog(map, cache_path, dec_path, "ExlChoice", 5);
+//    generatePatternLog(map, cache_path, dec_path, "NegChainSuccession", 5);
+//    generatePatternLog(map, cache_path, dec_path, "NegSuccession", 5);
+//    generatePatternLog(map, cache_path, dec_path, "NotCoExistence", 5);
+//    generatePatternLog(map, cache_path, dec_path, "Precedence", 5);
+//    generatePatternLog(map, cache_path, dec_path, "RespExistence", 5);
+//    generatePatternLog(map, cache_path, dec_path, "Response", 5);
+//    generatePatternLog(map, cache_path, dec_path, "Succession", 5);
 
     ////////////////////////////////////////////////////////////////
-    {
-        std::cout << "Writing ensemble testing file [all clauses traces]" << std::endl;
-        std::ofstream tab{dec_path / "all_clauses_traces.tab"};
-        std::ofstream clazz{dec_path / "all_clauses_traces_class.tab"};
-        for (const auto& ref : map) {
-            {
-                auto& trace = ref.first;
-                for (size_t j = 0, N = trace.size()-1; j<=N; j++) {
-                    tab << trace.at(j);
-                    if (j != N) tab  << "\t";
-                }
-                tab << std::endl;
-            }
-            {
-                auto& clazzez = ref.second;
-                for (size_t j = 0, N = clazzez.size()-1; j<=N; j++) {
-                    clazz << clazzez.at(j);
-                    if (j != N) clazz  << "\t";
-                }
-                clazz << std::endl;
-            }
-
-        }
-        std::cout << std::endl << std::endl;
-    }
+//    {
+//        std::cout << "Writing ensemble testing file [all clauses traces]" << std::endl;
+//        std::ofstream tab{dec_path / "all_clauses_traces.tab"};
+//        std::ofstream clazz{dec_path / "all_clauses_traces_class.tab"};
+//        for (const auto& ref : map) {
+//            {
+//                auto& trace = ref.first;
+//                for (size_t j = 0, N = trace.size()-1; j<=N; j++) {
+//                    tab << trace.at(j);
+//                    if (j != N) tab  << "\t";
+//                }
+//                tab << std::endl;
+//            }
+//            {
+//                auto& clazzez = ref.second;
+//                for (size_t j = 0, N = clazzez.size()-1; j<=N; j++) {
+//                    clazz << clazzez.at(j);
+//                    if (j != N) clazz  << "\t";
+//                }
+//                clazz << std::endl;
+//            }
+//
+//        }
+//        std::cout << std::endl << std::endl;
+//    }
 
     ////////////////////////////////////////////////////////////////
-    generateMultiplePatternLog( cache_path, dec_path, "Response", 5);
+//    generateMultiplePatternLog( cache_path, dec_path, "Response", 5);
 
     return 0;
 }
