@@ -1,3 +1,0 @@
-"Response"("Referral", var "ca" >= 23.5, "FollowUp", var "ca" < 23.5) where var "ca" > var "ca"
-"Succession"("Referral", var "ca" >= 23.5, "FollowUp", var "ca" < 23.5) where var "ca" > var "ca"
-"Choice"("Mastectomy", var "ca" >= 23.5 && var "biopsy" >= 1.0, "Lumpectomy", var "ca" >= 23.5 && var "biopsy" >= 1.0)
