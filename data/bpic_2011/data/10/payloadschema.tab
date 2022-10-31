@@ -1,0 +1,47 @@
+event_id	bigint
+start date:4	real
+treatment code:4	bigint
+age:4	bigint
+diagnosis treatment combination id:4	varchar
+end date:3	real
+start date:1	real
+start date:3	real
+specialism code:4	bigint
+start date:2	real
+diagnosis:4	varchar
+specialism code:1	bigint
+treatment code:2	bigint
+age:3	bigint
+producer code	varchar
+start date	real
+specialism code	bigint
+section	varchar
+diagnosis:3	varchar
+age	bigint
+lifecycle:transition	varchar
+activity code	varchar
+age:1	bigint
+end date	real
+end date:2	real
+number of executions	bigint
+diagnosis:1	varchar
+diagnosis code:1	varchar
+diagnosis code	varchar
+__time	bigint
+org:group	varchar
+diagnosis treatment combination id:3	varchar
+diagnosis:2	varchar
+diagnosis code:2	varchar
+diagnosis treatment combination id	varchar
+diagnosis treatment combination id:1	varchar
+diagnosis code:4	varchar
+end date:1	real
+diagnosis treatment combination id:2	varchar
+diagnosis code:3	varchar
+specialism code:2	bigint
+treatment code:3	bigint
+treatment code:1	bigint
+treatment code	bigint
+specialism code:3	bigint
+diagnosis	varchar
+age:2	bigint
