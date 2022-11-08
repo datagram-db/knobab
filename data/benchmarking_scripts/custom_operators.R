@@ -8,12 +8,12 @@ library(latex2exp)
 
 setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 
-df <- read.csv(file = '/home/giacomo/projects/knobab/data/testing/results/benchmarking/custom_operators.csv')
+df <- read.csv(file = '/home/sam/Documents/Repositories/CodeBases/knobab/data/results/custom_operators.csv')
 
 df <- aggregate(list(Time = df$Time),
                             by=list(Test = df$Test,Type=df$Type,Log_Size=df$Log_Size,Max_Trace_Length=df$Max_Trace_Length,Alphabet=df$Alphabet),data=df,FUN=mean)
 
-print_chart <- function(df, labels, type.labs){
+print_chart <- function(df, labels, type.labs, scale){
   # test.labs <- c(TeX(r'(x)'), TeX(r'(x)'), TeX(r'(x)'))
   test = c("hello", "there", "i", "am", "sam")
   test1 = lapply(test, TeX)
@@ -29,12 +29,12 @@ print_chart <- function(df, labels, type.labs){
   ggplot(df, aes(x=Log_Size, y=Time, shape=Type, color=Max_Trace_Length)) +
     geom_line() +
     geom_point(size=3) +
-    labs(x = "Log Size", y = "Time (ms)") +
+    labs(x = TeX(r'($ |{L}| $)'), y = "Execution Time (ms)") +
     facet_wrap( ~ Test, nrow=2, ncol=2, labeller = labeller(Test = labels)) +
     theme(legend.position="bottom") +
-    scale_color_discrete(name = TeX(r'($Max Trace Length$)')) +
-    scale_shape_discrete(labels=type.labs, name = TeX(r'($Algorithm$)')) + 
-    scale_y_continuous(trans='log10') +
+    scale_color_discrete(name = TeX(r'($\epsilon$)')) +
+    scale_shape_discrete(labels=type.labs, name = "Algorithm") + 
+    scale_y_continuous(trans=scale) +
     scale_x_log10(
       breaks = scales::trans_breaks("log10", function(x) 10^x),
       labels = scales::trans_format("log10", scales::math_format(10^.x))) + 
@@ -42,6 +42,7 @@ print_chart <- function(df, labels, type.labs){
 }
 
 df$Max_Trace_Length <- as.character(df$Max_Trace_Length)
+df <- df[df$Time != -1, ] 
 # df$Test[df$Test == "And_Future"] <- TeX("X")
 # df$Test[df$Test == "And_Future"] <- "A&F(B)"
 # df$Test[df$Test == "And_Globally"] <- "A&G(B)"
@@ -53,17 +54,19 @@ df$Max_Trace_Length <- as.character(df$Max_Trace_Length)
 
 labels = c("AND", "OR")
 names(labels) <- c("And", "Or")
-print_chart(df[df$Test == "And" | df$Test == "Or",],  labels, c(TeX(r'($OPTIMIZED$)'), TeX(r'($LOGICAL$)')))
+print_chart(df[df$Test == "And" | df$Test == "Or",],  labels, c(TeX(r'($OPTIMIZED$)'), TeX(r'($LOGICAL$)')), 'log10')
 
-labels = c("Choice")
+labels = c("CHOICE")
 names(labels) <- c("Choice")
-print_chart(df[df$Test == "Choice",],  labels, c(TeX(r'($OPTIMIZED$)'), TeX(r'($LOGICAL$)')))
+print_chart(df[df$Test == "Choice",],  labels, c(TeX(r'($OPTIMIZED$)'), TeX(r'($LOGICAL$)')), 'log10')
 
-labels = c("TIMED AND FUTURE", "TIMED AND GLOBALLY", "UNTIL")
-names(labels) <- c("And_Future", "And_Globally", "Untimed Until")
-print_chart(df[df$Test == "And_Future" | df$Test == "And_Globally" ,], labels, c(TeX(r'($VARIANT-2$)'), TeX(r'($VARIANT-1$)'), TeX(r'($LOGICAL$)')))
+labels = c("TIMED AND FUTURE", "TIMED AND GLOBALLY")
+names(labels) <- c("And_Future", "And_Globally")
+print_chart(df[df$Test == "And_Future" | df$Test == "And_Globally" ,], labels, c(TeX(r'($VARIANT-1$)'), TeX(r'($VARIANT-2$)'), TeX(r'($LOGICAL$)')), 'log10')
 
-print_chart(df[df$Test == "Until"  ,], labels, c( TeX(r'($VARIANT-1$)'), TeX(r'($VARIANT-2$)')))
+labels = c("UNTIL")
+names(labels) <- c("Until")
+print_chart(df[df$Test == "Until" ,], labels, c(TeX(r'($OPTIMIZED$)'), TeX(r'($LOGICAL$)')), 'log10')
 
 # ggplot(df, aes(x=Log_Size, y=Time, fill=interaction(Max_Trace_Length,Type))) +
 #   geom_bar(position = "dodge", stat = "identity") +

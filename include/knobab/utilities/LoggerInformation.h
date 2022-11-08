@@ -36,6 +36,8 @@ struct LoggerInformation {
 
     std::string strategyForScheduling;
 
+    std::string atomization_type;
+
 #ifdef MAXSatPipeline_PARALLEL
     bool is_multithreaded = true;
 #else

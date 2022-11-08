@@ -8,7 +8,7 @@
 #include "knobab/operators/fast_ltlf_operators.h"
 #include <fstream>
 
-const std::string file_path = "data/testing/results/benchmarking/custom_operators.csv";
+const std::string file_path = "data/results/custom_operators.csv";
 
 Environment setup(const std::filesystem::path f){
     Environment env;
@@ -119,19 +119,18 @@ void test_aAndFutureb(const Environment& environment){
     auto t1 = std::chrono::high_resolution_clock::now();
     auto t2 = std::chrono::high_resolution_clock::now();
 
-    // A&Ft_new(B)
-    t1 = std::chrono::high_resolution_clock::now();
-    aAndFutureB_timed_variant_2(a, b, r_aAndfb, nullptr, environment.db.act_table_by_act_id.trace_length);
-    t2 = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double, std::milli> r_aAndfb_time = t2 - t1;
-    write_to_file(environment, "And_Future", "fast", r_aAndfb_time.count());
-
     // A&Ft_old(B)
     t1 = std::chrono::high_resolution_clock::now();
     aAndFutureB_timed_variant_1(a, b, r_aAndfb, nullptr, environment.db.act_table_by_act_id.trace_length);
     t2 = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double, std::milli> r_aAndfb_old_time = t2 - t1;
-    write_to_file(environment, "And_Future", "fast_old", r_aAndfb_old_time.count());
+    write_to_file(environment, "And_Future", "fast_variant_1", r_aAndfb_old_time.count());
+
+    t1 = std::chrono::high_resolution_clock::now();
+    aAndFutureB_timed_variant_2(a, b, r_aAndfb, nullptr, environment.db.act_table_by_act_id.trace_length);
+    t2 = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double, std::milli> r_aAndfb_time = t2 - t1;
+    write_to_file(environment, "And_Future", "fast_variant_2", r_aAndfb_time.count());
 
     // A AND Ft(B)
     t1 = std::chrono::high_resolution_clock::now();
@@ -151,19 +150,19 @@ void test_aAndGloballyb(const Environment& environment){
     auto t1 = std::chrono::high_resolution_clock::now();
     auto t2 = std::chrono::high_resolution_clock::now();
 
-    // A&G_new(B)
-    t1 = std::chrono::high_resolution_clock::now();
-    aAndGloballyB_timed_variant_2(a, b, r_aAndgb, nullptr, environment.db.act_table_by_act_id.trace_length);
-    t2 = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double, std::milli> r_a_and_globally_b_ut_time = t2 - t1;
-    write_to_file(environment, "And_Globally", "fast", r_a_and_globally_b_ut_time.count());
-
     // A&G_old(B)
     t1 = std::chrono::high_resolution_clock::now();
     aAndGloballyB_timed_variant_1(a, b, r_aAndgb, nullptr, environment.db.act_table_by_act_id.trace_length);
     t2 = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double, std::milli> r_a_and_globally_b_ut_time2 = t2 - t1;
-    write_to_file(environment, "And_Globally", "fast_old", r_a_and_globally_b_ut_time2.count());
+    write_to_file(environment, "And_Globally", "fast_variant_1", r_a_and_globally_b_ut_time2.count());
+
+    // A&G_new(B)
+    t1 = std::chrono::high_resolution_clock::now();
+    aAndGloballyB_timed_variant_2(a, b, r_aAndgb, nullptr, environment.db.act_table_by_act_id.trace_length);
+    t2 = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double, std::milli> r_a_and_globally_b_ut_time = t2 - t1;
+    write_to_file(environment, "And_Globally", "fast_variant_2", r_a_and_globally_b_ut_time.count());
 
     // A AND Gt(B)
     t1 = std::chrono::high_resolution_clock::now();
@@ -227,7 +226,7 @@ void test_until(const Environment& environment){
 int main(){
     const uint16_t iters = 5;
 
-    for (const auto& dirEntry : std::filesystem::recursive_directory_iterator("data/benchmarking/incomplete")){
+    for (const auto& dirEntry : std::filesystem::recursive_directory_iterator("data/synthetic")){
         std::cout << dirEntry << std::endl;
         std::filesystem::path curr = (dirEntry);
         Environment environment = setup(curr);
@@ -237,7 +236,7 @@ int main(){
             test_or(environment);
             test_aAndFutureb(environment);
             test_aAndGloballyb(environment);
-            test_aAndNextGloballyb(environment);
+//            test_aAndNextGloballyb(environment);
             test_until(environment);
             test_choice(environment);
         }
