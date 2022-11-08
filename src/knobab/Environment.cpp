@@ -139,6 +139,7 @@ void Environment::set_atomization_parameters(const std::string &fresh_atom_label
     ap.fresh_atom_label = fresh_atom_label;
     ap.s_max = std::string(mslength, std::numeric_limits<char>::max());
     ap.strategy = strategy;
+    experiment_logger.atomization_type = magic_enum::enum_name(ap.strategy);
     DataPredicate::MAX_STRING = ap.s_max;
     DataPredicate::msl = mslength;
 }

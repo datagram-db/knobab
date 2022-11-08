@@ -12,12 +12,12 @@ declare -a schedulesArray=("BLOCK_STATIC_SCHEDULE" "CYCLIC_STATIC_SCHEDULE" "GUI
 # Read the array values with space
 for ms in "${plist[@]}"; do
 	for val in "${StringArray[@]}"; do
-		./parall/knobab-v1.0 --nostats --nodata --queryCount 5 --topN $ms --topNTemplate=$val --xes=data/bpic_2011/data/original/log.xes --maxsat=scripts/maxsat_pipeline.yaml --csv=data/results/benchmarking/parallel.csv
+		./parall/knobab-v1.0 --nostats --nodata --queryCount 5 --topN $ms --topNTemplate=$val --xes=data/bpic_2011/data/original/log.xes --maxsat=scripts/maxsat_pipeline.yaml --csv=data/results/parallel.csv
 		for proc in "${ProcArray[@]}"; do
 		  	for sched in "${schedulesArray[@]}"; do
 #			      echo "$ms $val $proc $sched"
 #			      sleep 3
-			      ./parall/knobab-v1.0 --nostats --nodata --queryCount 5 --topN $ms --topNTemplate=$val --xes=data/bpic_2011/data/original/log.xes --maxsat=$proc --csv=data/results/benchmarking/parallel.csv --scheduler=$sched
+			      ./parall/knobab-v1.0 --nostats --nodata --queryCount 5 --topN $ms --topNTemplate=$val --xes=data/bpic_2011/data/original/log.xes --maxsat=$proc --csv=data/results/parallel.csv --scheduler=$sched
 			done
 		done
 	done

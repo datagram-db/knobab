@@ -799,7 +799,7 @@ int main(int argc, char **argv) {
         sql_miner_dump_folder = args::get(sqlMinerDump);
     }
     if (atomization_pipeline) {
-        atomization_file = args::get(plan);
+        atomization_file = args::get(atomization_pipeline);
     }
     if (no_data) {
         do_data = false;

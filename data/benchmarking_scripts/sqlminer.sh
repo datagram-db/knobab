@@ -9,7 +9,7 @@ declare -a pipeline=("scripts/maxsat_pipeline.yaml" "scripts/maxsat_pipeline_hyb
 for clause in "${clauses[@]}"; do
 	for sample in "${samples[@]}"; do
 		for p in "${pipeline[@]}"; do
-			./cmake-build-release/knobab-v1.0 --xes="$sample" --maxsat="$p" --topNTemplate="$clause" --topN=5 --csv=data/results/benchmarking/knobab_sql.csv --queryCount=5
+			./cmake-build-release/knobab-v1.0 --xes="$sample" --maxsat="$p" --topNTemplate="$clause" --topN=5 --csv=data/results/sql.csv --queryCount=5
 		done
 	done
 done

@@ -8,6 +8,6 @@ declare -a pipelines=("scripts/atomization_pipeline.yaml" "scripts/atomization_a
 
 for model in "${models[@]}"; do
 	for pipeline in "${pipelines[@]}"; do
-		./cmake-build-release/knobab-v1.0 --nostats --atomization="$pipeline" --xes=data/bpic_2012/data/original/bpi12_knobab.xes --maxsat=scripts/maxsat_pipeline.yaml --declareFile="$model" --csv=data/results/benchmarking/phi.csv --queryCount=5
+		./cmake-build-release/knobab-v1.0 --nostats --atomization="$pipeline" --xes=data/bpic_2012/data/original/bpi12_knobab.xes --maxsat=scripts/maxsat_pipeline.yaml --declareFile="$model" --csv=data/results/phi.csv --queryCount=5
 	done
 done
