@@ -15,14 +15,14 @@ TEST(ideas22_uce, InitDataless) {
     env.set_grounding_parameters(true, false, true,GroundingStrategyConf::NO_EXPANSION);
     env.set_atomization_parameters("p", 20);
     auto scripts = std::filesystem::current_path().parent_path().parent_path();
-    auto file = scripts / "data" / "testing" / "ideas22" / "anything.txt";
+    auto file = scripts / "data" /"cancer_example"/ "log.txt";
     {
         std::ifstream if_{file};
         env.load_log(HUMAN_READABLE_YAUCL, true, file.string(), true, if_);
     }
     std::filesystem::path declare_file_path, maxsat;
     maxsat = (scripts / "scripts" / ("support_pipeline_singledecl_testing.yaml")).string();
-    declare_file_path = (scripts / "data" /"testing"/ "ideas22" /  ("InitDataless.powerdecl"));
+    declare_file_path = (scripts / "data" /"cancer_example"/  ("InitDataless.powerdecl"));
     std::filesystem::path root_folder = std::filesystem::current_path().parent_path().parent_path();
     env.load_model(declare_file_path);
     env.set_grounding_parameters(true, false, true,GroundingStrategyConf::NO_EXPANSION);
@@ -44,14 +44,14 @@ TEST(ideas22_uce, InitDataless2) {
     env.set_grounding_parameters(true, false, true,GroundingStrategyConf::NO_EXPANSION);
     env.set_atomization_parameters("p", 20);
     auto scripts = std::filesystem::current_path().parent_path().parent_path();
-    auto file = scripts / "data" / "testing" / "ideas22" / "anything.txt";
+    auto file = scripts / "data" /"cancer_example"/ "log.txt";
     {
         std::ifstream if_{file};
         env.load_log(HUMAN_READABLE_YAUCL, true, file.string(), true, if_);
     }
     std::filesystem::path declare_file_path, maxsat;
     maxsat = (scripts / "scripts" / ("support_pipeline_singledecl_testing.yaml")).string();
-    declare_file_path = (scripts / "data" /"testing"/ "ideas22" /  ("InitDataless2.powerdecl"));
+    declare_file_path = (scripts / "data" /"cancer_example"/  ("InitDataless2.powerdecl"));
     std::filesystem::path root_folder = std::filesystem::current_path().parent_path().parent_path();
     env.load_model(declare_file_path);
     env.set_grounding_parameters(true, false, true,GroundingStrategyConf::NO_EXPANSION);
@@ -73,14 +73,14 @@ TEST(ideas22_uce, InitData) { //AtomizeEverythingIfAnyDataPredicate
     env.set_grounding_parameters(true, false, true,GroundingStrategyConf::NO_EXPANSION);
     env.set_atomization_parameters("p", 20);
     auto scripts = std::filesystem::current_path().parent_path().parent_path();
-    auto file = scripts / "data" / "testing" / "ideas22" / "anything.txt";
+    auto file = scripts / "data" /"cancer_example"/ "log.txt";
     {
         std::ifstream if_{file};
         env.load_log(HUMAN_READABLE_YAUCL, true, file.string(), true, if_);
     }
     std::filesystem::path declare_file_path, maxsat;
     maxsat = (scripts / "scripts" / ("support_pipeline_singledecl_testing.yaml")).string();
-    declare_file_path = (scripts / "data" /"testing"/ "ideas22" /  ("InitData.powerdecl"));
+    declare_file_path = (scripts / "data" /"cancer_example"/  ("InitData.powerdecl"));
     std::filesystem::path root_folder = std::filesystem::current_path().parent_path().parent_path();
     env.load_model(declare_file_path);
     env.set_grounding_parameters(true, false, true,GroundingStrategyConf::NO_EXPANSION);
@@ -101,14 +101,14 @@ TEST(ideas22_uce, InitDataAE) { //
     env.set_grounding_parameters(true, false, true,GroundingStrategyConf::NO_EXPANSION);
     env.set_atomization_parameters("p", 20, AtomizeEverythingIfAnyDataPredicate);
     auto scripts = std::filesystem::current_path().parent_path().parent_path();
-    auto file = scripts / "data" / "testing" / "ideas22" / "anything.txt";
+    auto file = scripts / "data" /"cancer_example"/ "log.txt";
     {
         std::ifstream if_{file};
         env.load_log(HUMAN_READABLE_YAUCL, true, file.string(), true, if_);
     }
     std::filesystem::path declare_file_path, maxsat;
     maxsat = (scripts / "scripts" / ("support_pipeline_singledecl_testing.yaml")).string();
-    declare_file_path = (scripts / "data" /"testing"/ "ideas22" /  ("InitData.powerdecl"));
+    declare_file_path = (scripts / "data" /"cancer_example"/  ("InitData.powerdecl"));
     std::filesystem::path root_folder = std::filesystem::current_path().parent_path().parent_path();
     env.load_model(declare_file_path);
     env.set_grounding_parameters(true, false, true,GroundingStrategyConf::NO_EXPANSION);
@@ -130,14 +130,14 @@ TEST(ideas22_uce, InitDataNeq) {
     env.set_grounding_parameters(true, false, true,GroundingStrategyConf::NO_EXPANSION);
     env.set_atomization_parameters("p", 20);
     auto scripts = std::filesystem::current_path().parent_path().parent_path();
-    auto file = scripts / "data" / "testing" / "ideas22" / "anything.txt";
+    auto file = scripts / "data" /"cancer_example"/ "log.txt";
     {
         std::ifstream if_{file};
         env.load_log(HUMAN_READABLE_YAUCL, true, file.string(), true, if_);
     }
     std::filesystem::path declare_file_path, maxsat;
     maxsat = (scripts / "scripts" / ("support_pipeline_singledecl_testing.yaml")).string();
-    declare_file_path = (scripts / "data" /"testing"/ "ideas22" /  ("InitDataNeq.powerdecl"));
+    declare_file_path = (scripts / "data" /"cancer_example"/  ("InitDataNeq.powerdecl"));
     std::filesystem::path root_folder = std::filesystem::current_path().parent_path().parent_path();
     env.load_model(declare_file_path);
     env.set_grounding_parameters(true, false, true,GroundingStrategyConf::NO_EXPANSION);
@@ -159,14 +159,14 @@ TEST(ideas22_uce, InitData2) {
     env.set_grounding_parameters(true, false, true,GroundingStrategyConf::NO_EXPANSION);
     env.set_atomization_parameters("p", 20);
     auto scripts = std::filesystem::current_path().parent_path().parent_path();
-    auto file = scripts / "data" / "testing" / "ideas22" / "anything.txt";
+    auto file = scripts / "data" /"cancer_example"/ "log.txt";
     {
         std::ifstream if_{file};
         env.load_log(HUMAN_READABLE_YAUCL, true, file.string(), true, if_);
     }
     std::filesystem::path declare_file_path, maxsat;
     maxsat = (scripts / "scripts" / ("support_pipeline_singledecl_testing.yaml")).string();
-    declare_file_path = (scripts / "data" /"testing"/ "ideas22" /  ("InitData2.powerdecl"));
+    declare_file_path = (scripts / "data" /"cancer_example"/  ("InitData2.powerdecl"));
     std::filesystem::path root_folder = std::filesystem::current_path().parent_path().parent_path();
     env.load_model(declare_file_path);
     env.set_grounding_parameters(true, false, true,GroundingStrategyConf::NO_EXPANSION);
@@ -188,14 +188,14 @@ TEST(ideas22_uce, InitDataMix) {
     env.set_grounding_parameters(true, false, true,GroundingStrategyConf::NO_EXPANSION);
     env.set_atomization_parameters("p", 20);
     auto scripts = std::filesystem::current_path().parent_path().parent_path();
-    auto file = scripts / "data" / "testing" / "ideas22" / "anything.txt";
+    auto file = scripts / "data" /"cancer_example"/ "log.txt";
     {
         std::ifstream if_{file};
         env.load_log(HUMAN_READABLE_YAUCL, true, file.string(), true, if_);
     }
     std::filesystem::path declare_file_path, maxsat;
     maxsat = (scripts / "scripts" / ("support_pipeline_singledecl_testing.yaml")).string();
-    declare_file_path = (scripts / "data" /"testing"/ "ideas22" /  ("InitDataMix.powerdecl"));
+    declare_file_path = (scripts / "data" /"cancer_example"/  ("InitDataMix.powerdecl"));
     std::filesystem::path root_folder = std::filesystem::current_path().parent_path().parent_path();
     env.load_model(declare_file_path);
     env.set_grounding_parameters(true, false, true,GroundingStrategyConf::NO_EXPANSION);
@@ -216,14 +216,14 @@ TEST(ideas22_uce, InitDataMixAE) {
     env.set_grounding_parameters(true, false, true,GroundingStrategyConf::NO_EXPANSION);
     env.set_atomization_parameters("p", 20, AtomizeEverythingIfAnyDataPredicate);
     auto scripts = std::filesystem::current_path().parent_path().parent_path();
-    auto file = scripts / "data" / "testing" / "ideas22" / "anything.txt";
+    auto file = scripts / "data" /"cancer_example"/ "log.txt";
     {
         std::ifstream if_{file};
         env.load_log(HUMAN_READABLE_YAUCL, true, file.string(), true, if_);
     }
     std::filesystem::path declare_file_path, maxsat;
     maxsat = (scripts / "scripts" / ("support_pipeline_singledecl_testing.yaml")).string();
-    declare_file_path = (scripts / "data" /"testing"/ "ideas22" /  ("InitDataMix.powerdecl"));
+    declare_file_path = (scripts / "data" /"cancer_example"/  ("InitDataMix.powerdecl"));
     std::filesystem::path root_folder = std::filesystem::current_path().parent_path().parent_path();
     env.load_model(declare_file_path);
     env.set_grounding_parameters(true, false, true,GroundingStrategyConf::NO_EXPANSION);
@@ -244,14 +244,14 @@ TEST(ideas22_uce, InitEndsMix) {
     env.set_grounding_parameters(true, false, true,GroundingStrategyConf::NO_EXPANSION);
     env.set_atomization_parameters("p", 20);
     auto scripts = std::filesystem::current_path().parent_path().parent_path();
-    auto file = scripts / "data" / "testing" / "ideas22" / "anything.txt";
+    auto file = scripts / "data" /"cancer_example"/ "log.txt";
     {
         std::ifstream if_{file};
         env.load_log(HUMAN_READABLE_YAUCL, true, file.string(), true, if_);
     }
     std::filesystem::path declare_file_path, maxsat;
     maxsat = (scripts / "scripts" / ("support_pipeline_singledecl_testing.yaml")).string();
-    declare_file_path = (scripts / "data" /"testing"/ "ideas22" /  ("InitEndsMix.powerdecl"));
+    declare_file_path = (scripts / "data" /"cancer_example"/  ("InitEndsMix.powerdecl"));
     std::filesystem::path root_folder = std::filesystem::current_path().parent_path().parent_path();
     env.load_model(declare_file_path);
     env.set_grounding_parameters(true, false, true,GroundingStrategyConf::NO_EXPANSION);
@@ -272,14 +272,14 @@ TEST(ideas22_uce, InitEndsMix2) {
     env.set_grounding_parameters(true, false, true,GroundingStrategyConf::NO_EXPANSION);
     env.set_atomization_parameters("p", 20);
     auto scripts = std::filesystem::current_path().parent_path().parent_path();
-    auto file = scripts / "data" / "testing" / "ideas22" / "anything.txt";
+    auto file = scripts / "data" /"cancer_example"/ "log.txt";
     {
         std::ifstream if_{file};
         env.load_log(HUMAN_READABLE_YAUCL, true, file.string(), true, if_);
     }
     std::filesystem::path declare_file_path, maxsat;
     maxsat = (scripts / "scripts" / ("support_pipeline_singledecl_testing.yaml")).string();
-    declare_file_path = (scripts / "data" /"testing"/ "ideas22" /  ("InitEndsMix2.powerdecl"));
+    declare_file_path = (scripts / "data" /"cancer_example"/  ("InitEndsMix2.powerdecl"));
     std::filesystem::path root_folder = std::filesystem::current_path().parent_path().parent_path();
     env.load_model(declare_file_path);
     env.set_grounding_parameters(true, false, true,GroundingStrategyConf::NO_EXPANSION);
@@ -301,14 +301,14 @@ TEST(ideas22_uce, InitEndsMix2AE) {
     env.set_grounding_parameters(true, false, true,GroundingStrategyConf::NO_EXPANSION);
     env.set_atomization_parameters("p", 20);
     auto scripts = std::filesystem::current_path().parent_path().parent_path();
-    auto file = scripts / "data" / "testing" / "ideas22" / "anything.txt";
+    auto file = scripts / "data" /"cancer_example"/ "log.txt";
     {
         std::ifstream if_{file};
         env.load_log(HUMAN_READABLE_YAUCL, true, file.string(), true, if_);
     }
     std::filesystem::path declare_file_path, maxsat;
     maxsat = (scripts / "scripts" / ("support_pipeline_singledecl_testing.yaml")).string();
-    declare_file_path = (scripts / "data" /"testing"/ "ideas22" /  ("InitEndsMix2.powerdecl"));
+    declare_file_path = (scripts / "data" /"cancer_example"/  ("InitEndsMix2.powerdecl"));
     std::filesystem::path root_folder = std::filesystem::current_path().parent_path().parent_path();
     env.load_model(declare_file_path);
     env.set_grounding_parameters(true, false, true,GroundingStrategyConf::NO_EXPANSION);
@@ -329,14 +329,14 @@ TEST(ideas22_uce, ExistsData) {
     env.set_grounding_parameters(true, false, true,GroundingStrategyConf::NO_EXPANSION);
     env.set_atomization_parameters("p", 20);
     auto scripts = std::filesystem::current_path().parent_path().parent_path();
-    auto file = scripts / "data" / "testing" / "ideas22" / "anything.txt";
+    auto file = scripts / "data" /"cancer_example"/ "log.txt";
     {
         std::ifstream if_{file};
         env.load_log(HUMAN_READABLE_YAUCL, true, file.string(), true, if_);
     }
     std::filesystem::path declare_file_path, maxsat;
     maxsat = (scripts / "scripts" / ("support_pipeline_singledecl_testing.yaml")).string();
-    declare_file_path = (scripts / "data" /"testing"/ "ideas22" /  ("ExistsData.powerdecl"));
+    declare_file_path = (scripts / "data" /"cancer_example"/  ("ExistsData.powerdecl"));
     std::filesystem::path root_folder = std::filesystem::current_path().parent_path().parent_path();
     env.load_model(declare_file_path);
     env.set_grounding_parameters(true, false, true,GroundingStrategyConf::NO_EXPANSION);
@@ -357,14 +357,14 @@ TEST(ideas22_uce, ResponseData) {
     env.set_grounding_parameters(true, false, true,GroundingStrategyConf::NO_EXPANSION);
     env.set_atomization_parameters("p", 20);
     auto scripts = std::filesystem::current_path().parent_path().parent_path();
-    auto file = scripts / "data" / "testing" / "ideas22" / "anything.txt";
+    auto file = scripts / "data" /"cancer_example"/ "log.txt";
     {
         std::ifstream if_{file};
         env.load_log(HUMAN_READABLE_YAUCL, true, file.string(), true, if_);
     }
     std::filesystem::path declare_file_path, maxsat;
     maxsat = (scripts / "scripts" / ("support_pipeline_singledecl_testing.yaml")).string();
-    declare_file_path = (scripts / "data" /"testing"/ "ideas22" /  ("ResponseData.powerdecl"));
+    declare_file_path = (scripts / "data" /"cancer_example"/  ("ResponseData.powerdecl"));
     std::filesystem::path root_folder = std::filesystem::current_path().parent_path().parent_path();
     env.load_model(declare_file_path);
     env.set_grounding_parameters(true, false, true,GroundingStrategyConf::NO_EXPANSION);
@@ -385,14 +385,14 @@ TEST(ideas22_uce, ResponseDataTheta) {
     env.set_grounding_parameters(true, false, true,GroundingStrategyConf::NO_EXPANSION);
     env.set_atomization_parameters("p", 20);
     auto scripts = std::filesystem::current_path().parent_path().parent_path();
-    auto file = scripts / "data" / "testing" / "ideas22" / "anything.txt";
+    auto file = scripts / "data" /"cancer_example"/ "log.txt";
     {
         std::ifstream if_{file};
         env.load_log(HUMAN_READABLE_YAUCL, true, file.string(), true, if_);
     }
     std::filesystem::path declare_file_path, maxsat;
     maxsat = (scripts / "scripts" / ("support_pipeline_singledecl_testing.yaml")).string();
-    declare_file_path = (scripts / "data" /"testing"/ "ideas22" /  ("ResponseDataTheta.powerdecl"));
+    declare_file_path = (scripts / "data" /"cancer_example"/  ("ResponseDataTheta.powerdecl"));
     std::filesystem::path root_folder = std::filesystem::current_path().parent_path().parent_path();
     env.load_model(declare_file_path);
     env.set_grounding_parameters(true, false, true,GroundingStrategyConf::NO_EXPANSION);
@@ -413,14 +413,14 @@ TEST(ideas22_uce, ResponseDataTheta2) {
     env.set_grounding_parameters(true, false, true,GroundingStrategyConf::NO_EXPANSION);
     env.set_atomization_parameters("p", 20);
     auto scripts = std::filesystem::current_path().parent_path().parent_path();
-    auto file = scripts / "data" / "testing" / "ideas22" / "anything.txt";
+    auto file = scripts / "data" /"cancer_example"/ "log.txt";
     {
         std::ifstream if_{file};
         env.load_log(HUMAN_READABLE_YAUCL, true, file.string(), true, if_);
     }
     std::filesystem::path declare_file_path, maxsat;
     maxsat = (scripts / "scripts" / ("support_pipeline_singledecl_testing.yaml")).string();
-    declare_file_path = (scripts / "data" /"testing"/ "ideas22" /  ("ResponseDataTheta2.powerdecl"));
+    declare_file_path = (scripts / "data" /"cancer_example"/  ("ResponseDataTheta2.powerdecl"));
     std::filesystem::path root_folder = std::filesystem::current_path().parent_path().parent_path();
     env.load_model(declare_file_path);
     env.set_grounding_parameters(true, false, true,GroundingStrategyConf::NO_EXPANSION);
@@ -442,14 +442,14 @@ TEST(ideas22_uce, ActualExampleSupp) {
     env.set_grounding_parameters(true, false, true,GroundingStrategyConf::NO_EXPANSION);
     env.set_atomization_parameters("p", 20);
     auto scripts = std::filesystem::current_path().parent_path().parent_path();
-    auto file = scripts / "data" / "testing" / "ideas22" / "anything.txt";
+    auto file = scripts / "data" /"cancer_example"/ "log.txt";
     {
         std::ifstream if_{file};
         env.load_log(HUMAN_READABLE_YAUCL, true, file.string(), true, if_);
     }
     std::filesystem::path declare_file_path, maxsat;
     maxsat = (scripts / "scripts" / ("support_pipeline_singledecl_testing.yaml")).string();
-    declare_file_path = (scripts / "data" /"testing"/ "ideas22" /  ("ActualExample.powerdecl"));
+    declare_file_path = (scripts / "data" /"cancer_example"/  ("ActualExample.powerdecl"));
     std::filesystem::path root_folder = std::filesystem::current_path().parent_path().parent_path();
     env.load_model(declare_file_path);
     env.set_grounding_parameters(true, false, true,GroundingStrategyConf::NO_EXPANSION);
@@ -470,14 +470,14 @@ TEST(ideas22_uce, ActualExampleConf) {
     env.set_grounding_parameters(true, false, true,GroundingStrategyConf::NO_EXPANSION);
     env.set_atomization_parameters("p", 20);
     auto scripts = std::filesystem::current_path().parent_path().parent_path();
-    auto file = scripts / "data" / "testing" / "ideas22" / "anything.txt";
+    auto file = scripts / "data" /"cancer_example"/ "log.txt";
     {
         std::ifstream if_{file};
         env.load_log(HUMAN_READABLE_YAUCL, true, file.string(), true, if_);
     }
     std::filesystem::path declare_file_path, maxsat;
     maxsat = (scripts / "scripts" / ("confidence_pipeline_singledecl_testing.yaml")).string();
-    declare_file_path = (scripts / "data" /"testing"/ "ideas22" /  ("ActualExample.powerdecl"));
+    declare_file_path = (scripts / "data" /"cancer_example"/  ("ActualExample.powerdecl"));
     std::filesystem::path root_folder = std::filesystem::current_path().parent_path().parent_path();
     env.load_model(declare_file_path);
     env.set_grounding_parameters(true, false, true,GroundingStrategyConf::NO_EXPANSION);
@@ -498,14 +498,14 @@ TEST(ideas22_uce, ActualExampleMAXSat) {
     env.set_grounding_parameters(true, false, true,GroundingStrategyConf::NO_EXPANSION);
     env.set_atomization_parameters("p", 20);
     auto scripts = std::filesystem::current_path().parent_path().parent_path();
-    auto file = scripts / "data" / "testing" / "ideas22" / "anything.txt";
+    auto file = scripts / "data" /"cancer_example"/ "log.txt";
     {
         std::ifstream if_{file};
         env.load_log(HUMAN_READABLE_YAUCL, true, file.string(), true, if_);
     }
     std::filesystem::path declare_file_path, maxsat;
     maxsat = (scripts / "scripts" / ("maxsat_pipeline_singledecl_testing.yaml")).string();
-    declare_file_path = (scripts / "data" /"testing"/ "ideas22" /  ("ActualExample.powerdecl"));
+    declare_file_path = (scripts / "data" /"cancer_example"/  ("ActualExample.powerdecl"));
     std::filesystem::path root_folder = std::filesystem::current_path().parent_path().parent_path();
     env.load_model(declare_file_path);
     env.set_grounding_parameters(true, false, true,GroundingStrategyConf::NO_EXPANSION);
