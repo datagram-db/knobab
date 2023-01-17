@@ -20,6 +20,15 @@ include_directories(submodules/yaucl/submodules/CRoaring/cpp)
 set(THREADS_PREFER_PTHREAD_FLAG TRUE)
 find_package(Threads REQUIRED)
 
+IF(CMAKE_BUILD_TYPE MATCHES Debug)
+    message(WARNING "Compiling in debug mode")
+    add_compile_definitions(DEBUG)
+    set(CMAKE_CXX_FLAGS_DEBUG "-g")
+else()
+    message(WARNING "Compiling in optimized mode. Level=2")
+    set(CMAKE_CXX_FLAGS_RELEASE "-O2")
+ENDIF(CMAKE_BUILD_TYPE MATCHES Debug)
+
 add_executable(knobab_client src/knobab/client/client.cpp)
 
 add_library(knobab OBJECT
