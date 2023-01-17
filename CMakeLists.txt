@@ -4,78 +4,31 @@ set(CMAKE_CXX_STANDARD 20)
 set(WITH_DEMO false)
 include_directories(include)
 include_directories(submodules/httplib)
-include_directories(submodules/magic_enum/include)
 include_directories(submodules/date/include)
 include_directories(submodules/json/include)
 add_subdirectory(submodules/antlr4/runtime/Cpp)
 include_directories(submodules/antlr4/runtime/Cpp/runtime/src)
 include_directories(antlr4/cpp/antlr4)
 include_directories(submodules/thread-pool)
-
+add_subdirectory(submodules/yaucl)
+include_directories(submodules/yaucl/include)
+include_directories(submodules/yaucl/submodules/rapidcsv/src)
+include_directories(submodules/yaucl/submodules/yaucl/submodules/json/include)
+include_directories(submodules/yaucl/submodules/magic_enum/include)
+include_directories(submodules/yaucl/submodules/CRoaring/include)
+include_directories(submodules/yaucl/submodules/CRoaring/cpp)
 set(THREADS_PREFER_PTHREAD_FLAG TRUE)
 find_package(Threads REQUIRED)
-
-add_library(yaucl_numeric OBJECT
-        src/yaucl/numeric/numeric_base.cpp
-        include/yaucl/numeric/numeric_base.h)
-
-add_library(yaucl_hashing OBJECT
-        include/yaucl/hashing/evaluateHashes.h
-        src/yaucl/hashing/evaluateHashes.c
-        src/yaucl/hashing/hash_combine.cpp
-        include/yaucl/hashing/hash_combine.h
-        src/yaucl/hashing/hashing.cpp
-        include/yaucl/hashing/hashing.h
-        include/yaucl/hashing/pair_hash.h
-        include/yaucl/hashing/vector_hash.h
-        include/yaucl/hashing/uset_hash.h)
-target_include_directories(yaucl_hashing PUBLIC ${CMAKE_SOURCE_DIR}/include/yaucl/hashing/ ${CMAKE_CURRENT_BINARY_DIR})
-
-add_library(yaucl_graph OBJECT
-        src/yaucl/graphs/adjacency_graph.cpp
-        include/yaucl/graphs/adjacency_graph.h
-        include/yaucl/graphs/FlexibleGraph.h
-        include/yaucl/graphs/NodeLabelBijectionGraph.h
-        src/yaucl/graphs/graph_join_pm_algorithms.cpp
-        src/yaucl/graphs/graph_join_pm_conversion.cpp
-        include/yaucl/graphs/NodeLabelBijectionFA.h
-        src/yaucl/graphs/adjacency_entry.cpp
-        include/yaucl/graphs/adjacency_entry.h
-        src/yaucl/graphs/graph_join_pm.cpp
-        include/yaucl/graphs/graph_join_pm.h
-        include/yaucl/graphs/graph_join_pm.h
-        src/yaucl/graphs/graph_join_pm_conversion.cpp
-        src/yaucl/graphs/graph_join_pm_algorithms.cpp src/yaucl/graphs/minimizeDFA.cpp include/yaucl/graphs/algorithms/minimizeDFA.h)
-
-add_library(yaucl_stringutils OBJECT
-        src/yaucl/strings/string_utils.cpp include/yaucl/strings/string_utils.h)
-
-add_library(yaucl_data OBJECT
-        src/yaucl/data/new_iovec.cpp
-        src/yaucl/data/MemoryMappingFile.cpp
-        src/yaucl/data/mmapFile.cpp
-        src/yaucl/data/xml.cpp include/yaucl/data/json.h src/yaucl/data/VarSizeNDPSorter.cpp)
-
-add_library(yaucl_structures OBJECT src/yaucl/structures/StringPrevNext.cpp include/yaucl/structures/StringPrevNext.h src/yaucl/structures/DoublePrevNext.cpp include/yaucl/structures/DoublePrevNext.h)
-
-add_library(yaucl_bpm OBJECT
-        src/knobab/server/declare/CNFDeclareDataAware.cpp
-        src/yaucl/bpm/structures/log/trace_visitor.cpp
-        src/yaucl/bpm/structures/log/DataTraceParse.cpp
-        src/yaucl/bpm/structures/commons/DataPredicate.cpp
-        src/yaucl/bpm/structures/ltlf/PropositionalizedAtomsSet.cpp
-         src/yaucl/bpm/structures/commons/testing_predicates.cpp
-        src/yaucl/bpm/structures/ltlf/easy_prop.cpp
-        src/yaucl/bpm/structures/ltlf/ltlf.cpp)
 
 add_executable(knobab_client src/knobab/client/client.cpp)
 
 add_library(knobab OBJECT
-                             src/knobab/server/query_manager/KnoBABQueryBaseListener.cpp
+        src/knobab/server/algorithms/atomization/AtomizingPipeline.cpp #Legacy atomisation
+        src/knobab/server/declare/CNFDeclareDataAware.cpp
+        src/knobab/server/query_manager/KnoBABQueryBaseListener.cpp
         src/SimplifiedFuzzyStringMatching.cpp
         src/knobab/server/query_manager/KnoBABQueryBaseVisitor.cpp
         src/knobab/server/declare/DeclareDataAware.cpp
-        src/yaucl/bpm/structures/log/data_loader.cpp
         src/knobab/server/query_manager/KnoBABQueryLexer.cpp
         src/knobab/server/query_manager/KnoBABQueryListener.cpp
         src/knobab/server/query_manager/KnoBABQueryParser.cpp
@@ -85,12 +38,6 @@ add_library(knobab OBJECT
         src/knobab/server/tables/CountTable.cpp
         src/knobab/server/tables/ActTable.cpp
         src/knobab/server/tables/AttributeTable.cpp
-        src/yaucl/bpm/structures/log/TracesParser.cpp
-        ./src/yaucl/bpm/structures/log/TracesLexer.cpp
-        ./src/yaucl/bpm/structures/log/TracesBaseListener.cpp
-        ./src/yaucl/bpm/structures/log/TracesBaseVisitor.cpp
-        ./src/yaucl/bpm/structures/log/TracesListener.cpp
-        ./src/yaucl/bpm/structures/log/TracesVisitor.cpp
         src/knobab/server/declare/DisjunctiveDeclareDataAware.cpp
         src/knobab/server/dataStructures/oid.cpp
         src/knobab/server/tables/CountTable.cpp
@@ -100,13 +47,19 @@ add_library(knobab OBJECT
         src/knobab/server/tables/KnowledgeBase.cpp
         src/knobab/server/algorithms/grounding/kb_grounding.cpp
         src/knobab/server/query_manager/Environment.cpp
-        src/knobab/server/algorithms/atomization/AtomizingPipeline.cpp
         src/knobab/server/benchmarking/LoggerInformation.cpp
         src/knobab/server/algorithms/querymanager/MAXSatPipeline.cpp
         src/knobab/server/operators/base_ltlf.cpp
         src/knobab/server/ndp/KnowledgeBaseNDPLoader.cpp
         src/knobab/server/algorithms/querymanager/LTLfQueryManager.cpp
-        src/knobab/server/ndp/NDPFuzzyStringMatching.cpp include/knobab/server/query_manager/NDPFuzzyStringMatching.h src/knobab/server/ndp/NDPAttributeTable.cpp include/knobab/server/ndp/NDPAttributeTable.h include/yaucl/bpm/structures/ltlf/ltlf.h include/knobab/server/algorithms/querymanager/DataQuery.h src/knobab/server/algorithms/querymanager/DataQuery.cpp include/knobab/server/algorithms/querymanager/LTLfQuery.h src/knobab/server/algorithms/querymanager/LTLfQuery.cpp)
+        src/knobab/server/ndp/NDPFuzzyStringMatching.cpp
+        include/knobab/server/query_manager/NDPFuzzyStringMatching.h
+        src/knobab/server/ndp/NDPAttributeTable.cpp
+        include/knobab/server/ndp/NDPAttributeTable.h
+        include/knobab/server/algorithms/querymanager/DataQuery.h
+        src/knobab/server/algorithms/querymanager/DataQuery.cpp
+        include/knobab/server/algorithms/querymanager/LTLfQuery.h
+        src/knobab/server/algorithms/querymanager/LTLfQuery.cpp)
 
 add_executable(knobab_server src/knobab/server/server.cpp)
 add_executable(tests_main src/knobab/tests/main.cpp)
@@ -114,13 +67,12 @@ add_executable(tests_main src/knobab/tests/main.cpp)
 add_library(knobab_ndp
         src/knobab/server/ndp/count_table_rcx.cpp
         src/knobab/server/ndp/KnowledgeBaseNDPLoader.cpp
-        include/yaucl/data/FixedSizeNDPSorter.h
         src/knobab/server/ndp/act_table_rcx.cpp
         include/knobab/server/ndp/act_table_rcx.h
-        src/knobab/server/ndp/KnowledgeBaseNDPReader.cpp
-        src/yaucl/data/VariadicSizeArrayElements.cpp include/yaucl/data/VariadicSizeArrayElements.h)
+        src/knobab/server/ndp/KnowledgeBaseNDPReader.cpp)
 
-add_executable(benchmarking benchmarking/benchmarking.cpp benchmarking/benchmarking.cpp src/knobab/mining/pattern_mining.cpp) #${BACKWARD_ENABLE})
+
+add_executable(benchmarking benchmarking/benchmarking.cpp benchmarking/benchmarking.cpp) #${BACKWARD_ENABLE})
 
 add_executable(mining
         src/knobab/mining/pattern_mining.cpp
@@ -130,24 +82,24 @@ add_executable(mining
         src/knobab/mining/CountTableFPTree.cpp)
 
 if(MSVC OR MSYS OR MINGW)
-    target_link_libraries(knobab_server Threads::Threads antlr4_shared yaucl_bpm yaucl_structures
-            yaucl_numeric yaucl_data yaucl_graph yaucl_hashing knobab knobab_ndp)
+    target_link_libraries(knobab_server Threads::Threads antlr4_shared yaucl_hashing yaucl_bpm yaucl_structures
+            yaucl_numeric yaucl_data yaucl_graph  yaucl_data yaucl_bpm knobab  knobab_ndp)
     target_link_libraries(tests_main antlr4_shared yaucl_bpm yaucl_structures
-            yaucl_numeric yaucl_data yaucl_graph yaucl_hashing knobab knobab_ndp)
-    target_link_libraries(benchmarking knobab antlr4_shared knobab_ndp
-            yaucl_stringutils yaucl_numeric yaucl_hashing yaucl_data yaucl_bpm yaucl_graph yaucl_structures)
-    target_link_libraries(mining Threads::Threads knobab antlr4_shared
-            yaucl_stringutils yaucl_numeric yaucl_hashing yaucl_data yaucl_bpm yaucl_graph yaucl_structures knobab_ndp)
+            yaucl_numeric yaucl_data yaucl_graph yaucl_hashing yaucl_data yaucl_bpm knobab  knobab_ndp)
+    target_link_libraries(benchmarking knobab antlr4_shared yaucl_hashing yaucl_data knobab_ndp
+            yaucl_stringutils yaucl_numeric  yaucl_data yaucl_bpm yaucl_graph yaucl_structures)
+    target_link_libraries(mining Threads::Threads knobab antlr4_shared yaucl_hashing
+            yaucl_stringutils yaucl_numeric  yaucl_data yaucl_bpm yaucl_graph yaucl_structures yaucl_data knobab_ndp)
 
 else()
-    target_link_libraries(knobab_server Threads::Threads antlr4_static yaucl_bpm yaucl_structures
-            yaucl_numeric yaucl_data yaucl_graph yaucl_hashing knobab knobab_ndp)
-    target_link_libraries(tests_main antlr4_static yaucl_bpm yaucl_structures
-            yaucl_numeric yaucl_data yaucl_graph yaucl_hashing knobab knobab_ndp)
-    target_link_libraries(mining Threads::Threads knobab antlr4_static
-            yaucl_stringutils yaucl_numeric yaucl_hashing yaucl_data yaucl_bpm yaucl_graph yaucl_structures knobab_ndp)
-    target_link_libraries(benchmarking knobab antlr4_static knobab_ndp
-            yaucl_stringutils yaucl_numeric yaucl_hashing yaucl_data yaucl_bpm yaucl_graph yaucl_structures)
+    target_link_libraries(knobab_server Threads::Threads antlr4_static yaucl_hashing yaucl_bpm yaucl_structures
+            yaucl_numeric yaucl_data yaucl_graph  yaucl_data yaucl_bpm knobab  knobab_ndp)
+    target_link_libraries(tests_main antlr4_static yaucl_hashing yaucl_bpm yaucl_structures
+            yaucl_numeric yaucl_data yaucl_graph  yaucl_data yaucl_bpm knobab  knobab_ndp)
+    target_link_libraries(mining Threads::Threads knobab antlr4_static yaucl_hashing
+            yaucl_stringutils yaucl_numeric  yaucl_data yaucl_bpm yaucl_graph yaucl_structures yaucl_data knobab_ndp)
+    target_link_libraries(benchmarking knobab antlr4_static yaucl_hashing yaucl_data knobab_ndp
+            yaucl_stringutils yaucl_numeric  yaucl_data yaucl_bpm yaucl_graph yaucl_structures)
 endif()
 
 
