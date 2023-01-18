@@ -19,7 +19,7 @@ void bolt_algorithm(const std::string& logger_file,
     }
     std::filesystem::path declare_file_path, maxsat;
     std::cout << "Starting from now!" << std::endl;
-    auto list = pattern_mining(env.db, support, false, true, true, false, false);
+    auto list = pattern_mining(env.db, support, false, true, true, false, true);
     for (const auto& result : list) {
         std::cout << result << std::endl;
     }

@@ -93,6 +93,8 @@ std::vector<DeclareDataAware> actual(Environment& env,
             map_to_multiple_patterns.emplace(v);
             unary.emplace_back(DeclareDataAware::unary("Init", v, 1));
             unary.emplace_back(DeclareDataAware::unary("End", v, 1));
+            unary.emplace_back(DeclareDataAware::unary("Absence", v, 1));
+            unary.emplace_back(DeclareDataAware::unary("Exists", v, 1));
         }
     }
 
