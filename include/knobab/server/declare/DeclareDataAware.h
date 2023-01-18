@@ -151,7 +151,7 @@ struct DeclareDataAware {
         }
     }
 
-    static DeclareDataAware unary(const declare_templates&, const std::string& argument, size_t n);
+    static DeclareDataAware unary(const declare_templates&, const std::string& argument, size_t n = 1);
     static DeclareDataAware binary(const declare_templates& t, const std::string& left, const std::string right);
     static DeclareDataAware doExistence(size_t n, const std::string& left_act, const std::vector<std::unordered_map<std::string, DataPredicate>>& dnf_left_map);
     static DeclareDataAware doAbsence(size_t n, const std::string& left_act, const std::vector<std::unordered_map<std::string, DataPredicate>>& dnf_left_map);
@@ -265,11 +265,6 @@ struct DeclareDataAware {
         }
         return forJoin;
     }
-
-
-
-
-
 };
 
 //ltlf toFiniteSemantics(declare_templates casusu, size_t n, const std::string& left_act, const std::string& right_act = "");

@@ -6,8 +6,7 @@ include_directories(include)
 include_directories(submodules/httplib)
 include_directories(submodules/date/include)
 include_directories(submodules/json/include)
-add_subdirectory(submodules/antlr4/runtime/Cpp)
-include_directories(submodules/antlr4/runtime/Cpp/runtime/src)
+include_directories(submodules/yaucl/submodules/antlr4/runtime/Cpp/runtime/src)
 include_directories(antlr4/cpp/antlr4)
 include_directories(submodules/thread-pool)
 add_subdirectory(submodules/yaucl)
@@ -88,7 +87,7 @@ add_executable(mining
         include/knobab/mining/pattern_mining.h
         src/knobab/mining/mining.cpp
         include/knobab/mining/pattern_mining.h
-        src/knobab/mining/CountTableFPTree.cpp)
+        src/knobab/mining/CountTableFPTree.cpp src/knobab/mining/apriori.cpp include/knobab/mining/apriori.h)
 
 if(MSVC OR MSYS OR MINGW)
     target_link_libraries(knobab_server Threads::Threads antlr4_shared yaucl_hashing yaucl_bpm yaucl_structures

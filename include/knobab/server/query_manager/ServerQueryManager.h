@@ -22,14 +22,13 @@
 #undef ERROR
 #endif
 
+#include "KnoBABQueryBaseVisitor.h"
 #include <knobab/server/query_manager/KnoBABQueryVisitor.h>
 #include <unordered_map>
 #include <string>
 #include <knobab/server/operators/base_ltlf.h>
 
 #include "Environment.h"
-#include "KnoBABQueryBaseVisitor.h"
-
 
 inline unsigned char decleare_templates_determine(KnoBABQueryParser::Declare_argumentsContext* ptr) {
     if (!ptr) return DECLARE_TYPE_NONE;
@@ -60,6 +59,10 @@ class ServerQueryManager : public KnoBABQueryBaseVisitor {
     Environment* tmpEnv = nullptr;
 public:
     double parsing_time_ms = -1.0;
+
+    std::string getContent() const {
+        return content.str();
+    }
 
     /// Server entry point
     void run(const std::string& host, int port);

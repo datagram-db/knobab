@@ -65,7 +65,10 @@ void Environment::load_model(const std::string &model) {
 #endif
 }
 
-void Environment::load_log(log_data_format format, bool loadData, const std::string &filename, bool setMaximumStrLen,
+void Environment::load_log(log_data_format format,
+                           bool loadData,
+                           const std::string &filename,
+                           bool setMaximumStrLen,
                            std::istream &input_stream) {
     using std::chrono::high_resolution_clock;
     using std::chrono::duration_cast;

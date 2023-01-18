@@ -8,6 +8,11 @@
 #include <vector>
 #include "knobab/server/tables/KnowledgeBase.h"
 #include "knobab/server/declare/DeclareDataAware.h"
+#include <knobab/mining/apriori.h>
+
+void bolt_algorithm(const std::string& logger_file,
+                    const FeedQueryLoadFromFile& conf,
+                    double support);
 
 std::vector<pattern_mining_result<DeclareDataAware>> pattern_mining(const KnowledgeBase& kb,
                                                                     double support,

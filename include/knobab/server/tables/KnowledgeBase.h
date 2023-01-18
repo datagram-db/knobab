@@ -103,6 +103,23 @@ public:
     static std::string         default_string;//= "";
     static double    maximum_reliability_for_insertion;
 
+    size_t doTraceCounting(const std::vector<size_t>& toTest) {
+        std::unordered_map<std::vector<size_t>, size_t> result;
+        size_t nTraces = count_table.nTraces();
+        size_t M = toTest.size();
+        size_t count = 0;
+        for (size_t i = 0; i<nTraces; i++) {
+            bool allEventsInTrace = true;
+            for (size_t j = 0; j<M; j++) {
+                if (count_table.table.at((nTraces)*toTest.at(j)+i).id.parts.event_id == 0) {
+                    allEventsInTrace = false;
+                    break;
+                }
+            }
+            if (allEventsInTrace) count++;
+        }
+        return count;
+    }
 
     std::multimap<size_t, std::string> doActCounting() {
         auto res = count_table.actCounting();
@@ -110,6 +127,14 @@ public:
         for (size_t i = 0, N = res.size(); i<N; i++)
             Result.emplace(res.at(i), event_label_mapper.get(i));
         //Result.size();
+        return Result;
+    }
+
+    std::multimap<size_t, std::string> doTraceCounting() {
+        auto res = count_table.traceCounting();
+        std::multimap<size_t, std::string> Result;
+        for (size_t i = 0, N = res.size(); i<N; i++)
+            Result.emplace(res.at(i), event_label_mapper.get(i));
         return Result;
     }
 

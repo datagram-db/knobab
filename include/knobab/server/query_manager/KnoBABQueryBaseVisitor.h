@@ -6,7 +6,10 @@
 
 #include "antlr4-runtime.h"
 #include "KnoBABQueryVisitor.h"
-
+#ifdef CLASSIFIERS_PAIR_HASH_H
+#undef CLASSIFIERS_PAIR_HASH_H
+#define CLASSIFIERS_PAIR_HASH_H_RESET
+#endif
 
 /**
  * This class provides an empty implementation of KnoBABQueryVisitor, which can be
@@ -278,3 +281,6 @@ public:
 
 };
 
+#ifdef CLASSIFIERS_PAIR_HASH_H_RESET
+#define CLASSIFIERS_PAIR_HASH_H
+#endif

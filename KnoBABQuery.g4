@@ -21,7 +21,7 @@ data_part: '{' field* '}';
 field : var '=' (NUMBER | STRING) ;
 
 model_query: 'model-check' model
-             'using' ensemble=STRING
+             'using' ensemble=STRING 'over' env=STRING
              ('plan' plan=STRING)
              ('with' 'operators' operators=STRING)?
              ('multithreaded' nothreads=INTNUMBER)?

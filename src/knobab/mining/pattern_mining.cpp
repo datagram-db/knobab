@@ -4,7 +4,26 @@
 
 #include "knobab/algorithms/mining/pattern_mining.h"
 #include <chrono>
+#include <knobab/server/query_manager/Environment.h>
 
+void bolt_algorithm(const std::string& logger_file,
+                    const FeedQueryLoadFromFile& conf,
+                    double support) {
+    Environment env;
+    env.doStats = false;
+    auto scripts = std::filesystem::current_path();
+    std::filesystem::path file{conf.file};
+    {
+        std::ifstream if_{file};
+        env.load_log(conf.format, conf.with_data, file.string(), true, if_);
+    }
+    std::filesystem::path declare_file_path, maxsat;
+    std::cout << "Starting from now!" << std::endl;
+    auto list = pattern_mining(env.db, support, false, true, true, false, false);
+    for (const auto& result : list) {
+        std::cout << result << std::endl;
+    }
+}
 
 static inline void decrease_support_X(const KnowledgeBase &kb,
                                       size_t expected_support,
@@ -53,152 +72,152 @@ static inline DeclareDataAware &getAware(const KnowledgeBase &kb,
                                          const CountTemplate &count_table,
                                          uint64_t minimum_support_threshold,
                                          std::vector<pattern_mining_result<DeclareDataAware>> &declarative_clauses,
-const pattern_mining_result<Rule<act_t>> &result,
-        act_t A,
-act_t B,
-        DeclareDataAware &clause,
-std::unordered_map<std::string, std::unordered_map<act_t, std::vector<forNegation>>>* ptn) {
-auto ntraces = kb.nTraces();
-auto nacts = kb.nAct();
-std::vector<trace_t> allTraces;
-for (trace_t sigma = 0; sigma<ntraces; sigma++) allTraces.emplace_back(sigma);
-if (special_temporal_patterns) {
-size_t expected_support = only_precise_temporal_patterns ?
-                          ntraces :
-                          minimum_support_threshold;
+                                         const pattern_mining_result<Rule<act_t>> &result,
+                                         act_t A,
+                                         act_t B,
+                                         DeclareDataAware &clause,
+                                         std::unordered_map<std::string, std::unordered_map<act_t, std::vector<forNegation>>>* ptn) {
+    auto ntraces = kb.nTraces();
+    auto nacts = kb.nAct();
+    std::vector<trace_t> allTraces;
+    for (trace_t sigma = 0; sigma<ntraces; sigma++) allTraces.emplace_back(sigma);
+    if (special_temporal_patterns) {
+        size_t expected_support = only_precise_temporal_patterns ?
+                                  ntraces :
+                                  minimum_support_threshold;
 
 
 
 // 1) First kind of specialized patterns:
 // events happening immediately previously and next:
 // This might leverage the prev/next pointers!
-size_t alles_not_nexte = 0;
-bool alles_nexte = true;
-for (auto sigma = 0; sigma < ntraces; sigma++) {
-auto lA = count_table.resolve_length(A, sigma);
-if (lA > 0) {
-if (lA != count_table.resolve_length(B, sigma)) {
-alles_not_nexte++;
-if ((ntraces - alles_not_nexte) < expected_support) {
-alles_nexte = false;
-break; // skipping if this is going out of hand
-}
-}
-}
-}
+        size_t alles_not_nexte = 0;
+        bool alles_nexte = true;
+        for (auto sigma = 0; sigma < ntraces; sigma++) {
+            auto lA = count_table.resolve_length(A, sigma);
+            if (lA > 0) {
+                if (lA != count_table.resolve_length(B, sigma)) {
+                    alles_not_nexte++;
+                    if ((ntraces - alles_not_nexte) < expected_support) {
+                        alles_nexte = false;
+                        break; // skipping if this is going out of hand
+                    }
+                }
+            }
+        }
 // Only if the heuristic was activated (for next-based conditions
 // to happen I need to have As and Bs in the same number. Otherwise,
 // this is unlikely to happen, and I do not ever start performing the
 // search.
-std::vector<bool> isTraceVisitedU(ntraces, false);
-if (alles_nexte) {
-size_t alles_not_prev = 0,
-        alles_not_next = 0;
-bool alles_prev = true, alles_next = true;
+        std::vector<bool> isTraceVisitedU(ntraces, false);
+        if (alles_nexte) {
+            size_t alles_not_prev = 0,
+                    alles_not_next = 0;
+            bool alles_prev = true, alles_next = true;
 // This is still computed, as it is required for both 1) and 2)
-auto a_beginend = kb.timed_dataless_exists(A);
-DEBUG_ASSERT(a_beginend.first != a_beginend.second);
-while (a_beginend.first != a_beginend.second) {
-if (!isTraceVisitedU.at(a_beginend.first->entry.id.parts.trace_id)) {
-if (alles_prev && (a_beginend.first->prev == nullptr ||
-(a_beginend.first->prev->entry.id.parts.act != B))) {
-alles_not_prev++;
-if ((ntraces - alles_not_prev) < expected_support) {
-alles_prev = false;
-}
-}
-if (alles_next && (a_beginend.first->next == nullptr ||
-(a_beginend.first->next->entry.id.parts.act != B))) {
-alles_not_next++;
-if ((ntraces - alles_not_next) < expected_support) {
-alles_next = false;
-}
-}
-isTraceVisitedU[a_beginend.first->entry.id.parts.trace_id] = true;
-}
-if ((!alles_next) && (!alles_prev)) {
-break; // Breaking only if both conditions are never met
-}
-a_beginend.first++;
-}
-if (alles_prev) {
-clause.casusu = "ChainPrecedence";
-declarative_clauses.emplace_back(clause,
-        result.support_generating_original_pattern,
-(((double) (ntraces - alles_not_prev)) /
-((double) ntraces)),
--1);
-}
-if (alles_next) {
-clause.casusu = "ChainResponse";
-declarative_clauses.emplace_back(clause,
-        result.support_generating_original_pattern,
-(((double) (ntraces - alles_not_next)) /
-((double) ntraces)),
--1);
-}
+            auto a_beginend = kb.timed_dataless_exists(A);
+            DEBUG_ASSERT(a_beginend.first != a_beginend.second);
+            while (a_beginend.first != a_beginend.second) {
+                if (!isTraceVisitedU.at(a_beginend.first->entry.id.parts.trace_id)) {
+                    if (alles_prev && (a_beginend.first->prev == nullptr ||
+                                       (a_beginend.first->prev->entry.id.parts.act != B))) {
+                        alles_not_prev++;
+                        if ((ntraces - alles_not_prev) < expected_support) {
+                            alles_prev = false;
+                        }
+                    }
+                    if (alles_next && (a_beginend.first->next == nullptr ||
+                                       (a_beginend.first->next->entry.id.parts.act != B))) {
+                        alles_not_next++;
+                        if ((ntraces - alles_not_next) < expected_support) {
+                            alles_next = false;
+                        }
+                    }
+                    isTraceVisitedU[a_beginend.first->entry.id.parts.trace_id] = true;
+                }
+                if ((!alles_next) && (!alles_prev)) {
+                    break; // Breaking only if both conditions are never met
+                }
+                a_beginend.first++;
+            }
+            if (alles_prev) {
+                clause.casusu = "ChainPrecedence";
+                declarative_clauses.emplace_back(clause,
+                                                 result.support_generating_original_pattern,
+                                                 (((double) (ntraces - alles_not_prev)) /
+                                                  ((double) ntraces)),
+                                                 -1);
+            }
+            if (alles_next) {
+                clause.casusu = "ChainResponse";
+                declarative_clauses.emplace_back(clause,
+                                                 result.support_generating_original_pattern,
+                                                 (((double) (ntraces - alles_not_next)) /
+                                                  ((double) ntraces)),
+                                                 -1);
+            }
 
 // re-setting the vector to all falses!
-std::fill(isTraceVisitedU.begin(), isTraceVisitedU.end(), false);
-}
+            std::fill(isTraceVisitedU.begin(), isTraceVisitedU.end(), false);
+        }
 
 // 2) Second kind of patters, always starting scanning from the
 // activation condition (that is also the premise of the rule).
 // This is still computed, as it is required for both 1) and 2)
-auto a_beginend = kb.timed_dataless_exists(A);
-DEBUG_ASSERT(a_beginend.first != a_beginend.second);
+        auto a_beginend = kb.timed_dataless_exists(A);
+        DEBUG_ASSERT(a_beginend.first != a_beginend.second);
 
-auto b_beginend = kb.timed_dataless_exists(B);
+        auto b_beginend = kb.timed_dataless_exists(B);
 // As I obtained the rule, there should be some data pertaining to it!
-DEBUG_ASSERT(b_beginend.first != b_beginend.second);
+        DEBUG_ASSERT(b_beginend.first != b_beginend.second);
 
-std::vector<trace_t> removed_traces_from_response;
+        std::vector<trace_t> removed_traces_from_response;
 
-auto alles_precedence = true;
-size_t alles_not_precedence = 0;
-auto alles_response = true;
-size_t alles_not_response = 0;
-auto alles_altresponse = true;
-size_t alles_not_altresponse = 0;
+        auto alles_precedence = true;
+        size_t alles_not_precedence = 0;
+        auto alles_response = true;
+        size_t alles_not_response = 0;
+        auto alles_altresponse = true;
+        size_t alles_not_altresponse = 0;
 
-while (a_beginend.first < a_beginend.second) {
-if ((!alles_precedence) && (!alles_response) && (!alles_altresponse))
-break;
-auto trace_id = a_beginend.first->entry.id.parts.trace_id;
-DEBUG_ASSERT(!isTraceVisitedU.at(trace_id));
-auto trace_id_visited = isTraceVisitedU.at(trace_id);
+        while (a_beginend.first < a_beginend.second) {
+            if ((!alles_precedence) && (!alles_response) && (!alles_altresponse))
+                break;
+            auto trace_id = a_beginend.first->entry.id.parts.trace_id;
+            DEBUG_ASSERT(!isTraceVisitedU.at(trace_id));
+            auto trace_id_visited = isTraceVisitedU.at(trace_id);
 
-if (b_beginend.first == b_beginend.second) {
+            if (b_beginend.first == b_beginend.second) {
 // Problem 1)
 // This might be a valid precedence, as nothing is stated
 // to what should happen after the A, but I cannot exploit
 // for a response: therefore, I'm counting it
-decrease_support_X(kb, expected_support, alles_response, alles_not_response);
+                decrease_support_X(kb, expected_support, alles_response, alles_not_response);
 
 // Now, skipping to the next trace, as there is no more information for as
-fast_forward_equals(trace_id, a_beginend.first, a_beginend.second);
-isTraceVisitedU[trace_id] = true;
-continue;
-} else {
+                fast_forward_equals(trace_id, a_beginend.first, a_beginend.second);
+                isTraceVisitedU[trace_id] = true;
+                continue;
+            } else {
 // Otherwise, I have something to check related to B!
-if (a_beginend.first->entry.id.parts.trace_id >
-b_beginend.first->entry.id.parts.trace_id) {
+                if (a_beginend.first->entry.id.parts.trace_id >
+                    b_beginend.first->entry.id.parts.trace_id) {
 
 // Moving b until I find something related to b. A is kept fixed and not incremented
-fast_forward_lower(trace_id, b_beginend.first, b_beginend.second);
+                    fast_forward_lower(trace_id, b_beginend.first, b_beginend.second);
 // Not setting the current trace to be visited, as we need to fast-forward B first
-continue;
-} else if (a_beginend.first->entry.id.parts.trace_id <
-        b_beginend.first->entry.id.parts.trace_id) {
+                    continue;
+                } else if (a_beginend.first->entry.id.parts.trace_id <
+                           b_beginend.first->entry.id.parts.trace_id) {
 
 // If I am not able to find a B, then this is detrimental to A's response
 // (Problem 1)
-decrease_support_X(kb, expected_support, alles_response, alles_not_response);
+                    decrease_support_X(kb, expected_support, alles_response, alles_not_response);
 
 // Now, skipping to the next trace, as there is no more information for as
-fast_forward_equals(trace_id, a_beginend.first, a_beginend.second);
-continue;
-} else {
+                    fast_forward_equals(trace_id, a_beginend.first, a_beginend.second);
+                    continue;
+                } else {
 // Please remember, we are not visiting traces, rather than
 // events associated to traces. Therefore, it is of the
 // uttermost importance to remember conditions related to
@@ -210,95 +229,95 @@ continue;
 // to the precedence, and therefore this should be decreased
 // Still, this consideration should be performed only up until
 // the first event is visited
-if (b_beginend.first->entry.id.parts.event_id <
-        a_beginend.first->entry.id.parts.event_id) {
-decrease_support_X(kb, expected_support, alles_precedence, alles_not_precedence);
-}
+                    if (b_beginend.first->entry.id.parts.event_id <
+                        a_beginend.first->entry.id.parts.event_id) {
+                        decrease_support_X(kb, expected_support, alles_precedence, alles_not_precedence);
+                    }
 
 // While I'm scanning the A events within the same trace
-bool all_response_in_trace = true,
-        all_altresponse_in_trace = true;
+                    bool all_response_in_trace = true,
+                            all_altresponse_in_trace = true;
 
-while ((a_beginend.first != a_beginend.second) &&
-(a_beginend.first->entry.id.parts.trace_id == trace_id)) {
+                    while ((a_beginend.first != a_beginend.second) &&
+                           (a_beginend.first->entry.id.parts.trace_id == trace_id)) {
 // ignoring all of the B events that are not relevant for the task!
-while ((b_beginend.first != b_beginend.second) &&
-(b_beginend.first->entry.id.parts.trace_id == trace_id) &&
-(b_beginend.first->entry.id.parts.event_id <
-        a_beginend.first->entry.id.parts.event_id)) {
-b_beginend.first++;
-}
-if ((b_beginend.first != b_beginend.second) &&
-(b_beginend.first->entry.id.parts.trace_id == trace_id) &&
-(b_beginend.first->entry.id.parts.event_id >=
-a_beginend.first->entry.id.parts.event_id)) {
+                        while ((b_beginend.first != b_beginend.second) &&
+                               (b_beginend.first->entry.id.parts.trace_id == trace_id) &&
+                               (b_beginend.first->entry.id.parts.event_id <
+                                a_beginend.first->entry.id.parts.event_id)) {
+                            b_beginend.first++;
+                        }
+                        if ((b_beginend.first != b_beginend.second) &&
+                            (b_beginend.first->entry.id.parts.trace_id == trace_id) &&
+                            (b_beginend.first->entry.id.parts.event_id >=
+                             a_beginend.first->entry.id.parts.event_id)) {
 // Ok, I have a match!
-} else {
+                        } else {
 // If there is no match for the B event, then I'm setting this to false
 // and quitting the iteration
-all_response_in_trace = false;
-break;
-}
+                            all_response_in_trace = false;
+                            break;
+                        }
 
-{
-auto tmp = a_beginend.first++;
-if ((tmp != a_beginend.second) &&
-(tmp->entry.id.parts.event_id <
-        b_beginend.first->entry.id.parts.event_id)) {
-all_altresponse_in_trace = false;
-}
-}
+                        {
+                            auto tmp = a_beginend.first++;
+                            if ((tmp != a_beginend.second) &&
+                                (tmp->entry.id.parts.event_id <
+                                 b_beginend.first->entry.id.parts.event_id)) {
+                                all_altresponse_in_trace = false;
+                            }
+                        }
 
 //                                a_beginend.first++;
-}
-if (!all_response_in_trace) {
-removed_traces_from_response.emplace_back(trace_id);
-decrease_support_X(kb, expected_support, alles_response, alles_not_response);
-}
-if (!all_altresponse_in_trace) {
-decrease_support_X(kb, expected_support, alles_altresponse, alles_not_altresponse);
-}
-fast_forward_equals(trace_id, a_beginend.first, a_beginend.second);
-}
-}
+                    }
+                    if (!all_response_in_trace) {
+                        removed_traces_from_response.emplace_back(trace_id);
+                        decrease_support_X(kb, expected_support, alles_response, alles_not_response);
+                    }
+                    if (!all_altresponse_in_trace) {
+                        decrease_support_X(kb, expected_support, alles_altresponse, alles_not_altresponse);
+                    }
+                    fast_forward_equals(trace_id, a_beginend.first, a_beginend.second);
+                }
+            }
 
-isTraceVisitedU[trace_id] = true;
-}
+            isTraceVisitedU[trace_id] = true;
+        }
 
-if (alles_precedence) {
-clause.casusu = "Precedence";
-declarative_clauses.emplace_back(clause,
-        result.support_generating_original_pattern,
-(((double) (ntraces - alles_not_precedence)) /
-((double) ntraces)),
--1);
-}
-if (alles_response) {
-clause.casusu = "Response";
-declarative_clauses.emplace_back(clause,
-        result.support_generating_original_pattern,
-(((double) (ntraces - alles_not_response)) /
-((double) ntraces)),
--1);
-if (ptn) {
-std::vector<trace_t> responseSupp;
-std::set_difference(allTraces.begin(), allTraces.end(),
-        removed_traces_from_response.begin(), removed_traces_from_response.end(),
-        std::back_inserter(responseSupp));
-auto it_1 = ptn->find("Response");
-if (it_1 == ptn->end()) {
-it_1 = ptn->emplace("Response", std::unordered_map < act_t, std::vector<forNegation> > {}).first;
-}
-auto it_2 = it_1->second.find(A);
-if (it_2 == it_1->second.end()) {
-it_2 = it_1->second.emplace(A, std::vector<forNegation>{}).first;
-}
-it_2->second.emplace_back(B, responseSupp, (((double) (ntraces - alles_not_response)) /
-((double) ntraces)));
-}
-}
-}
-return clause;
+        if (alles_precedence) {
+            clause.casusu = "Precedence";
+            declarative_clauses.emplace_back(clause,
+                                             result.support_generating_original_pattern,
+                                             (((double) (ntraces - alles_not_precedence)) /
+                                              ((double) ntraces)),
+                                             -1);
+        }
+        if (alles_response) {
+            clause.casusu = "Response";
+            declarative_clauses.emplace_back(clause,
+                                             result.support_generating_original_pattern,
+                                             (((double) (ntraces - alles_not_response)) /
+                                              ((double) ntraces)),
+                                             -1);
+            if (ptn) {
+                std::vector<trace_t> responseSupp;
+                std::set_difference(allTraces.begin(), allTraces.end(),
+                                    removed_traces_from_response.begin(), removed_traces_from_response.end(),
+                                    std::back_inserter(responseSupp));
+                auto it_1 = ptn->find("Response");
+                if (it_1 == ptn->end()) {
+                    it_1 = ptn->emplace("Response", std::unordered_map < act_t, std::vector<forNegation> > {}).first;
+                }
+                auto it_2 = it_1->second.find(A);
+                if (it_2 == it_1->second.end()) {
+                    it_2 = it_1->second.emplace(A, std::vector<forNegation>{}).first;
+                }
+                it_2->second.emplace_back(B, responseSupp, (((double) (ntraces - alles_not_response)) /
+                                                            ((double) ntraces)));
+            }
+        }
+    }
+    return clause;
 }
 
 

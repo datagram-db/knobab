@@ -475,6 +475,7 @@ std::any ServerQueryManager::visitQuery_plan(KnoBABQueryParser::Query_planContex
         ref.emplace(UNESCAPE(declare->STRING()->getText()),
                     visitQuery(declare->ltlf()));
     }
+    return {};
 }
 
 LTLfQuery ServerQueryManager::visitQuery(KnoBABQueryParser::LtlfContext *pContext) {

@@ -187,7 +187,7 @@ bool DeclareDataAware::operator!=(const DeclareDataAware &rhs) const {
     return !(rhs == *this);
 }
 
-DeclareDataAware DeclareDataAware::unary(const declare_templates& t, const std::string &argument, size_t n = 1) {
+DeclareDataAware DeclareDataAware::unary(const declare_templates& t, const std::string &argument, size_t n) {
     DEBUG_ASSERT(isUnaryPredicate(t));
     DeclareDataAware result;
     result.casusu = t;
