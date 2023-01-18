@@ -24,4 +24,9 @@ void apriori(const std::string& benchmarking_logger,
              double support,
              std::vector<std::string>& templates);
 
+void previous_mining(const std::string& benchmarking_logger,
+             const FeedQueryLoadFromFile& log,
+             double support,
+             std::vector<std::string>& templates);
+
 #endif //KNOBAB_SERVER_APRIORI_H

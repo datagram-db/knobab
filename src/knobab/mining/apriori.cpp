@@ -93,8 +93,8 @@ std::vector<DeclareDataAware> actual(Environment& env,
             map_to_multiple_patterns.emplace(v);
             unary.emplace_back(DeclareDataAware::unary("Init", v, 1));
             unary.emplace_back(DeclareDataAware::unary("End", v, 1));
-            unary.emplace_back(DeclareDataAware::unary("Absence", v, 1));
-            unary.emplace_back(DeclareDataAware::unary("Exists", v, 1));
+            unary.emplace_back(DeclareDataAware::unary("Absence1", v, 1));
+            unary.emplace_back(DeclareDataAware::unary("Exists1", v, 1));
         }
     }
 
@@ -126,7 +126,7 @@ void apriori(const std::string& logger_file,
              std::vector<std::string>& templates) {
     ServerQueryManager sqm;
     std::stringstream ss;
-    constexpr size_t chunk_size = 20;
+    constexpr size_t chunk_size = 40;
 
     // Loading the data
     ss << log;
@@ -164,7 +164,7 @@ void apriori(const std::string& logger_file,
         for (const auto& d : x) {
             ss << "\t" << std::quoted(d.casusu) << "( " << std::quoted(d.left_act) << ", true, 1 ) " << std::endl;
         }
-        ss << " using " << std::quoted(log.env_name) << std::endl;
+        ss << " using \"PerDeclareSupport\" over " << std::quoted(log.env_name) << std::endl;
         ss << " plan \"mdpi23\" "  << std::endl;
         ss << " with operators \"Hybrid\" ";
         sqm.runQuery(ss.str());
@@ -174,7 +174,63 @@ void apriori(const std::string& logger_file,
     }
 
     //Dumping to the logger file
-    ss << "benchmarking-logger " << std::quoted(logger_file);
+    ss << "benchmarking-log " << std::quoted(logger_file);
+    sqm.runQuery(ss.str());
+    ss.str(std::string());
+    ss.clear();
+    std::cout << "Dumper: "<< sqm.getContent() << std::endl << std::endl;
+}
+
+
+void previous_mining(const std::string& logger_file,
+             const FeedQueryLoadFromFile& log,
+             double support,
+             std::vector<std::string>& templates) {
+    ServerQueryManager sqm;
+    std::stringstream ss;
+
+    // Loading the data
+    ss << log;
+    sqm.runQuery(ss.str());
+    ss.str(std::string());
+    ss.clear();
+    std::cout << "Loading Outcome: " << sqm.getContent() << std::endl << std::endl;
+
+    Environment& env = sqm.multiple_logs[log.env_name];
+    size_t support_int = (size_t)((1.0 - support) * (double)env.db.nAct());
+
+    // Setting up the operators
+    sqm.runQuery(query_plan);
+    std::cout << "Operators Setting: " << sqm.getContent() << std::endl << std::endl;
+
+    std::vector<DeclareDataAware> unary;
+    size_t batch = 1;
+    for (const std::string& x : templates) {
+        ss << "model-check template " << std::quoted(x) << " logtop " << support_int << std::endl;
+        ss << " using \"PerDeclareSupport\" over " << std::quoted(log.env_name) << std::endl;
+        ss << " plan \"mdpi23\" "  << std::endl;
+        ss << " with operators \"Hybrid\" ";
+        sqm.runQuery(ss.str());
+        ss.str(std::string());
+        ss.clear();
+        std::cout << "Query Batch #" <<  batch << ": " << sqm.getContent() << std::endl << std::endl;
+        batch++;
+    }
+
+    for (const auto& x : {"Init", "End", "Absence1", "Exists1"}) {
+        ss << "model-check template " << std::quoted(x) << " logtop " << support_int << std::endl;
+        ss << " using \"PerDeclareSupport\" over " << std::quoted(log.env_name) << std::endl;
+        ss << " plan \"mdpi23\" "  << std::endl;
+        ss << " with operators \"Hybrid\" ";
+        sqm.runQuery(ss.str());
+        ss.str(std::string());
+        ss.clear();
+        std::cout << "Query Batch #" <<  batch << ": " << sqm.getContent() << std::endl << std::endl;
+        batch++;
+    }
+
+    //Dumping to the logger file
+    ss << "benchmarking-log " << std::quoted(logger_file);
     sqm.runQuery(ss.str());
     ss.str(std::string());
     ss.clear();
