@@ -217,17 +217,18 @@ void previous_mining(const std::string& logger_file,
         batch++;
     }
 
-    for (const auto& x : {"Init", "End", "Absence1", "Exists1"}) {
-        ss << "model-check template " << std::quoted(x) << " logtop " << support_int << std::endl;
-        ss << " using \"PerDeclareSupport\" over " << std::quoted(log.env_name) << std::endl;
-        ss << " plan \"mdpi23\" "  << std::endl;
-        ss << " with operators \"Hybrid\" ";
-        sqm.runQuery(ss.str());
-        ss.str(std::string());
-        ss.clear();
-        std::cout << "Query Batch #" <<  batch << ": " << sqm.getContent() << std::endl << std::endl;
-        batch++;
-    }
+    // TODO: the current function by Samuel only supports binary clauses
+//    for (const auto& x : {"Init", "End", "Absence1", "Exists1"}) {
+//        ss << "model-check template " << std::quoted(x) << " logtop " << support_int << std::endl;
+//        ss << " using \"PerDeclareSupport\" over " << std::quoted(log.env_name) << std::endl;
+//        ss << " plan \"mdpi23\" "  << std::endl;
+//        ss << " with operators \"Hybrid\" ";
+//        sqm.runQuery(ss.str());
+//        ss.str(std::string());
+//        ss.clear();
+//        std::cout << "Query Batch #" <<  batch << ": " << sqm.getContent() << std::endl << std::endl;
+//        batch++;
+//    }
 
     //Dumping to the logger file
     ss << "benchmarking-log " << std::quoted(logger_file);
