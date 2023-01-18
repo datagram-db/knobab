@@ -1,5 +1,5 @@
 
-// Generated from .\KnoBABQuery.g4 by ANTLR 4.10.1
+// Generated from KnoBABQuery.g4 by ANTLR 4.11.1
 
 #pragma once
 
@@ -21,15 +21,15 @@ public:
     T__38 = 39, T__39 = 40, T__40 = 41, T__41 = 42, T__42 = 43, T__43 = 44, 
     T__44 = 45, T__45 = 46, T__46 = 47, T__47 = 48, T__48 = 49, T__49 = 50, 
     T__50 = 51, T__51 = 52, T__52 = 53, T__53 = 54, T__54 = 55, T__55 = 56, 
-    T__56 = 57, T__57 = 58, T__58 = 59, ACT_TABLE = 60, CNT_TABLE = 61, 
-    ATT_TABLE = 62, ACTIVITYLABEL = 63, LOGS = 64, ATT = 65, ACTIVATION = 66, 
-    TARGET = 67, INIT = 68, END = 69, EXISTS = 70, ABSENCE = 71, NEXT = 72, 
-    OR = 73, AND = 74, FIRST = 75, LAST = 76, IF = 77, THEN = 78, ELSE = 79, 
-    UNTIL = 80, BOX = 81, DIAMOND = 82, AUTO_TIMED = 83, LPAREN = 84, RPAREN = 85, 
-    PRESERVE = 86, TIMED = 87, THETA = 88, LEFT = 89, INV = 90, RIGHT = 91, 
-    MIDDLE = 92, NEGATED = 93, HRF = 94, TAB = 95, XES = 96, LABEL = 97, 
-    INTNUMBER = 98, NUMBER = 99, STRING = 100, SPACE = 101, COMMENT = 102, 
-    LINE_COMMENT = 103
+    T__56 = 57, T__57 = 58, T__58 = 59, T__59 = 60, ACT_TABLE = 61, CNT_TABLE = 62, 
+    ATT_TABLE = 63, ACTIVITYLABEL = 64, LOGS = 65, ATT = 66, ACTIVATION = 67, 
+    TARGET = 68, INIT = 69, END = 70, EXISTS = 71, ABSENCE = 72, NEXT = 73, 
+    OR = 74, AND = 75, FIRST = 76, LAST = 77, IF = 78, THEN = 79, ELSE = 80, 
+    UNTIL = 81, BOX = 82, DIAMOND = 83, AUTO_TIMED = 84, LPAREN = 85, RPAREN = 86, 
+    PRESERVE = 87, TIMED = 88, THETA = 89, LEFT = 90, INV = 91, RIGHT = 92, 
+    MIDDLE = 93, NEGATED = 94, HRF = 95, TAB = 96, XES = 97, LABEL = 98, 
+    INTNUMBER = 99, NUMBER = 100, STRING = 101, SPACE = 102, COMMENT = 103, 
+    LINE_COMMENT = 104
   };
 
   explicit KnoBABQueryLexer(antlr4::CharStream *input);

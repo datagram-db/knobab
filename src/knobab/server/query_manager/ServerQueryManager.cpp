@@ -855,7 +855,7 @@ std::any ServerQueryManager::visitSet_benchmarking_file(KnoBABQueryParser::Set_b
 std::any ServerQueryManager::visitModel_query(KnoBABQueryParser::Model_queryContext *ctx) {
     bool none = true;
     if (ctx) {
-        auto env = UNESCAPE(ctx->ensemble->getText());
+        auto env = UNESCAPE(ctx->env->getText());
         auto it = multiple_logs.find(env);
         if (it != multiple_logs.end()) {
             auto plan = UNESCAPE(ctx->plan->getText());

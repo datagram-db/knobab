@@ -129,6 +129,7 @@ void apriori(const std::string& logger_file,
     // Loading the data
     ss << log;
     sqm.runQuery(ss.str());
+    ss.str(std::string());
     ss.clear();
     std::cout << "Loading Outcome: " << sqm.getContent() << std::endl << std::endl;
 
@@ -146,10 +147,11 @@ void apriori(const std::string& logger_file,
         for (const auto& d : x) {
             ss << "\t" << std::quoted(d.casusu) << "(" << std::quoted(d.left_act) << " , true , " << std::quoted(d.right_act) << " , true ) " << std::endl;
         }
-        ss << " using " << std::quoted(log.env_name) << std::endl;
+        ss << " using \"PerDeclareSupport\" over " << std::quoted(log.env_name) << std::endl;
         ss << " plan \"mdpi23\" "  << std::endl;
-        ss << " with operators Hybrid ";
+        ss << " with operators \"Hybrid\" ";
         sqm.runQuery(ss.str());
+        ss.str(std::string());
         ss.clear();
         std::cout << "Query Batch #" <<  batch << ": " << sqm.getContent() << std::endl << std::endl;
         batch++;
@@ -162,8 +164,9 @@ void apriori(const std::string& logger_file,
         }
         ss << " using " << std::quoted(log.env_name) << std::endl;
         ss << " plan \"mdpi23\" "  << std::endl;
-        ss << " with operators Hybrid ";
+        ss << " with operators \"Hybrid\" ";
         sqm.runQuery(ss.str());
+        ss.str(std::string());
         ss.clear();
         std::cout << "Unary Batch: " << sqm.getContent() << std::endl << std::endl;
     }
@@ -171,6 +174,7 @@ void apriori(const std::string& logger_file,
     //Dumping to the logger file
     ss << "benchmarking-logger " << std::quoted(logger_file);
     sqm.runQuery(ss.str());
+    ss.str(std::string());
     ss.clear();
     std::cout << "Dumper: "<< sqm.getContent() << std::endl << std::endl;
 }
