@@ -16,6 +16,7 @@ include_directories(submodules/yaucl/submodules/yaucl/submodules/json/include)
 include_directories(submodules/yaucl/submodules/magic_enum/include)
 include_directories(submodules/yaucl/submodules/CRoaring/include)
 include_directories(submodules/yaucl/submodules/CRoaring/cpp)
+include_directories(submodules/args)
 set(THREADS_PREFER_PTHREAD_FLAG TRUE)
 find_package(Threads REQUIRED)
 
