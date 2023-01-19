@@ -733,6 +733,7 @@ std::vector<pattern_mining_result<DeclareDataAware>> pattern_mining(const Knowle
                                             // If there is no match for the B event, then I'm setting this to false
                                             // and quitting the iteration
                                         }
+                                        a_beginend.first++;
                                     }
                                     if (!all_response_in_trace) {
                                         decrease_support_X(kb, minimum_support_threshold, alles_response, alles_not_response);
