@@ -14,12 +14,10 @@ enum Algorithm {
 
 int main() {
     log_data_format format = XES1;
-    std::string log_file = "/home/sam/Documents/Repositories/CodeBases/knobab/data/benchmarking/mining/bpic_2019/logs/10.xes";
-
-//    log_data_format format = TAB_SEPARATED_EVENTS;
-//    std::string log_file = "/home/sam/Documents/Repositories/CodeBases/knobab/data/benchmarking/completed/10_10_log.tab";
-
-    std::string model_file = "/home/sam/Documents/Repositories/CodeBases/knobab/data/benchmarking/mining/models/model.txt";
+    std::string log_file = "/home/giacomo/Scaricati/10.xes";
+    std::string model_file = "data/benchmarking/mining/models/model.txt";
+//    std::string log_file = "data/benchmarking/mining/bpic_2019/logs/10.xes";
+//    std::string model_file = "data/benchmarking/mining/models/model.txt";
     double support = 0.00001;
     Algorithm algorithm = BOLT;
 
@@ -73,20 +71,15 @@ int main() {
 
     FeedQueryLoadFromFile log;
     log.env_name = "env";
-//<<<<<<< HEAD
-    log.file =file "/home/giacomo/projects/knobab2/data/testing/mining/tab.tab";
-    log.format = TAB_SEPARATED_EVENTS;
-//=======
-    log.file = log_file_file;
+    log.file = log_file;
     log.format = format;
-//>>>>>>> 4e65cdba191d33e8c059a09d1973af4bd606f357
     log.no_stats = true;
 
     std::ifstream input_stream(model_file);
-    if (!input_stream) {
-        std::cerr << "Can't open model file!";
-        return 1;
-    }
+//    if (!input_stream) {
+//        std::cerr << "Can't open model file!";
+//        return 1;
+//    }
 
     templates.clear();
     std::string line;
@@ -94,7 +87,7 @@ int main() {
         templates.push_back(line);
     }
 
-    std::string logger_file = "/home/sam/Documents/Repositories/CodeBases/knobab/data/benchmarking/mining/output.text";
+    std::string logger_file = "data/benchmarking/mining/output.text";
 
     switch (algorithm) {
         case BOLT:
