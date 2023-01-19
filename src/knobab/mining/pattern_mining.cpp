@@ -79,6 +79,9 @@ static inline DeclareDataAware &getAware(const KnowledgeBase &kb,
                                          std::unordered_map<std::string, std::unordered_map<act_t, std::vector<forNegation>>>* ptn) {
     auto ntraces = kb.nTraces();
     auto nacts = kb.nAct();
+    if ((clause.left_act == "b") && (clause.right_act == "c")) {
+        std::cout << "HERE" << std::endl;
+    }
     std::vector<trace_t> allTraces;
     for (trace_t sigma = 0; sigma<ntraces; sigma++) allTraces.emplace_back(sigma);
     if (special_temporal_patterns) {
