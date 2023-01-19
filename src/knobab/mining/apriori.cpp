@@ -206,7 +206,7 @@ void previous_mining(const std::string& logger_file,
     std::vector<DeclareDataAware> unary;
     size_t batch = 1;
     for (const std::string& x : templates) {
-        ss << "model-check template " << std::quoted(x) << " logtop " << support_int << std::endl;
+        ss << "model-check template " << std::quoted(x) << " logtop " << support_int << std::endl; //  ServerQueryManager::visitTopn
         ss << " using \"PerDeclareSupport\" over " << std::quoted(log.env_name) << std::endl;
         ss << " plan \"mdpi23\" "  << std::endl;
         ss << " with operators \"Hybrid\" ";

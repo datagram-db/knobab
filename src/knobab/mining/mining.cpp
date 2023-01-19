@@ -14,7 +14,7 @@ enum Algorithm {
 int main() {
     FeedQueryLoadFromFile log;
     log.env_name = "env";
-    log.file = "/home/giacomo/projects/knobab2/data/benchmarking/completed/1000_1000_log.tab";
+    log.file = "/home/giacomo/projects/knobab2/data/testing/mining/tab.tab";
     log.format = TAB_SEPARATED_EVENTS;
     log.no_stats = true;
     std::vector<std::string> templates{"Choice", "ExlChoice", "CoExistence", "RespExistence", "ChainPrecedence", "ChainResponse", "Precedence", "Response"};
