@@ -442,7 +442,7 @@ std::vector<pattern_mining_result<DeclareDataAware>> pattern_mining(const Knowle
                     declarative_clauses.emplace_back(((double)x.second)/((double)kb.nTraces()), clause);
                     clause.n = N+1;
                     clause.casusu = "Absence";
-                    declarative_clauses.emplace_back(1.0-((double)x.second)/((double)kb.nTraces()), clause);
+                    declarative_clauses.emplace_back(((double)x.second)/((double)kb.nTraces()), clause);
                 }
             } else {
                 // If the support is less than one, then we cannot state that
