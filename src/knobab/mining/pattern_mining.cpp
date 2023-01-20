@@ -397,12 +397,15 @@ std::vector<pattern_mining_result<DeclareDataAware>> pattern_mining(const Knowle
     bool doInitA = false;
     auto fpt_result = fptree_growth(t, 2);
     std::set<Pattern> binary_patterns;
+    std::unordered_map<std::set<act_t>, uint64_t> mapper;
     std::unordered_set<act_t> unary_patterns_for_non_exact_support;
     for (const auto& x : fpt_result) {
         if (x.first.size() == 1) {
             auto it = *x.first.begin();
             absent_acts.erase(it);
-            if (support == 1.0) {
+//            std::cout <<
+//                      kb.event_label_mapper.get(it)  <<"=" << it << "!" << x.second << std::endl;
+            if (x.second >= kb.nTraces()-1) {
                 // If the support is actually one, then we can infer that if an event
                 // exists in all of the events, that should always happen
                 if (naif) {
@@ -412,7 +415,7 @@ std::vector<pattern_mining_result<DeclareDataAware>> pattern_mining(const Knowle
                     clause.left_act = kb.event_label_mapper.get(it);
                     clause.n = 1;
                     clause.casusu = "Exists1";
-                    declarative_clauses.emplace_back(support, clause);
+                    declarative_clauses.emplace_back(((double)x.second)/((double)kb.nTraces()), clause);
                 } else {
                     // The non-naif version is exploiting the couting information from
                     // the counting table, and also providing an expected number of times
@@ -436,10 +439,10 @@ std::vector<pattern_mining_result<DeclareDataAware>> pattern_mining(const Knowle
                     }
                     clause.n = n;
                     clause.casusu = "Exists";
-                    declarative_clauses.emplace_back(support, clause);
+                    declarative_clauses.emplace_back(((double)x.second)/((double)kb.nTraces()), clause);
                     clause.n = N+1;
                     clause.casusu = "Absence";
-                    declarative_clauses.emplace_back(support, clause);
+                    declarative_clauses.emplace_back(((double)x.second)/((double)kb.nTraces()), clause);
                 }
             } else {
                 // If the support is less than one, then we cannot state that
@@ -455,6 +458,7 @@ std::vector<pattern_mining_result<DeclareDataAware>> pattern_mining(const Knowle
             DEBUG_ASSERT(x.first.size() == 2);
             for (const auto& y : x.first) absent_acts.erase(y);
             binary_patterns.insert(x);
+            mapper[x.first] = x.second;
         }
     }
     if (negative_patterns) {
@@ -474,7 +478,7 @@ std::vector<pattern_mining_result<DeclareDataAware>> pattern_mining(const Knowle
             }
             if ((log_size-absence1_not_supp) > minimum_support_threshold) {
                 clause.n = 1;
-                declarative_clauses.emplace_back(support, clause);
+                declarative_clauses.emplace_back(((double)(log_size-absence1_not_supp))/((double)kb.nTraces()), clause);
             }
             clause.n = N+1;
             declarative_clauses.emplace_back(1.0, clause);
@@ -524,6 +528,7 @@ std::vector<pattern_mining_result<DeclareDataAware>> pattern_mining(const Knowle
                     curr_pair.first = inv_pair.second = a;
                     for (const auto& b : y) {
                         if (b == a) continue;
+                        std::set<act_t> lS{a,b};
                         curr_pair.second = inv_pair.first = b;
                         if ((!visited_pairs.emplace(curr_pair).second) ||
                             (!visited_pairs.emplace(inv_pair).second)) continue;
@@ -540,14 +545,16 @@ std::vector<pattern_mining_result<DeclareDataAware>> pattern_mining(const Knowle
                             clause.right_act = kb.event_label_mapper.get(b);
                             clause.n = 1;
                             clause.casusu = "Choice";
-                            declarative_clauses.emplace_back(clause, support, local_support, -1);
+
+                            auto it = mapper.find(lS);
+                            declarative_clauses.emplace_back(clause, (it != mapper.end()) ? ((double)it->second)/((double)log_size) : 0.0, local_support, -1);
                             if ((!naif) && ratio.second == 0) {
                                 // If there is no intersection, I can also be more strict if I want,
                                 // and provide an exclusive choice pattern if I am confident that
                                 // the two events will never appear in the same trace (according to
                                 // the "training" data
                                 clause.casusu = "ExclChoice";
-                                declarative_clauses.emplace_back(clause, support, local_support, -1);
+                                declarative_clauses.emplace_back(clause,  (it != mapper.end()) ? ((double)it->second)/((double)log_size) : 0.0, local_support, -1);
                             }
                         }
                     }

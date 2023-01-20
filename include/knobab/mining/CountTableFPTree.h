@@ -65,7 +65,10 @@ struct FPTree {
         std::map<act_t, uint64_t> frequency_by_item;
         for ( const Transaction& transaction : transactions ) {
             for ( const auto& item : transaction ) {
-                ++frequency_by_item[item];
+                if (!frequency_by_item.contains(item))
+                    frequency_by_item[item] = 1;
+                else
+                    frequency_by_item[item] += 1;
             }
         }
 
@@ -143,7 +146,7 @@ struct FPTree {
         std::map<act_t, uint64_t> frequency_by_item;
         for ( const auto& transaction_item : transactions.table ) {
             if (transaction_item.id.parts.event_id > 0) {
-                ++frequency_by_item[transaction_item.id.parts.act];
+                frequency_by_item[transaction_item.id.parts.act]++;
             }
         }
 
@@ -199,7 +202,7 @@ struct FPTree {
                     else {
                         // the child exist, increment its frequency
                         auto curr_fpnode_child = *it;
-                        ++curr_fpnode_child->frequency;
+                        curr_fpnode_child->frequency+=1;
 
                         // advance to the next node of the current transaction
                         curr_fpnode = curr_fpnode_child;
