@@ -169,9 +169,8 @@ public:
     void print_count_table(std::ostream& os) const;
     void print_act_table(std::ostream& os) const;
     void print_attribute_tables(std::ostream& os) const;
-
-
-
+    void dump_tab_format(std::ostream& tab) const;
+    void dump_xes_format(std::ostream& xes) const;
 
     /***************************
      * Other Utility Functions *

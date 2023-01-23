@@ -5,6 +5,8 @@ queries : load_data_query
         | model_query
         | query_plan
         | set_benchmarking_file
+        | dump_log
+        | with_model
         ;
 
 set_benchmarking_file: 'benchmarking-log' file=STRING;
@@ -13,7 +15,7 @@ display_data: 'display' (ACT_TABLE|CNT_TABLE|(ATT_TABLE attr=STRING)) 'for' STRI
             | 'list'    (ATT|ACTIVITYLABEL|LOGS)                                         'for' STRING #list
             | 'droplog' env_name=STRING #droplog
             ;
-
+dump_log: 'dump-env' env=STRING 'as' (TAB|XES) 'in' file=STRING;
 log : 'log' LPAREN (trace ';')* trace RPAREN ;
 trace: data_part ':' event*;
 event : LABEL data_part?;
@@ -28,6 +30,20 @@ model_query: 'model-check' model
              display_qp?
              atomization?
              grounding?
+           ;
+
+with_model: 'model-log' model
+            'from-automata-in' cachePath=STRING
+            ('sample-to' (TAB|XES) toFile=STRING
+            'min-length' minL=INTNUMBER
+            'max-length' maxL=INTNUMBER
+            'n-traces' logSize=INTNUMBER
+            ('sample' ratio=NUMBER)?)?
+            (WITH_ALIGNMENT_STRATEGY doAlign=STRING)?
+            ('serialize-dot-to' graphDot=STRING)?
+            atomization?
+            grounding?
+            dump_log?
            ;
 
 model: 'file' STRING                          #file_model
@@ -106,6 +122,7 @@ with_missing: 'with' 'missing';
 no_stats: 'no' 'stats';
 
 ACT_TABLE: 'ACTTABLE';
+WITH_ALIGNMENT_STRATEGY: 'with' 'alignment' 'strategy';
 CNT_TABLE: 'COUNTTABLE';
 ATT_TABLE: 'ATTRIBUTETABLE';
 ACTIVITYLABEL: 'ACTIVITYLABEL';

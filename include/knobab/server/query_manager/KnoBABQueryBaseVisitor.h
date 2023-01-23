@@ -39,6 +39,10 @@ public:
     return visitChildren(ctx);
   }
 
+  virtual std::any visitDump_log(KnoBABQueryParser::Dump_logContext *ctx) override {
+    return visitChildren(ctx);
+  }
+
   virtual std::any visitLog(KnoBABQueryParser::LogContext *ctx) override {
     return visitChildren(ctx);
   }
@@ -60,6 +64,10 @@ public:
   }
 
   virtual std::any visitModel_query(KnoBABQueryParser::Model_queryContext *ctx) override {
+    return visitChildren(ctx);
+  }
+
+  virtual std::any visitWith_model(KnoBABQueryParser::With_modelContext *ctx) override {
     return visitChildren(ctx);
   }
 

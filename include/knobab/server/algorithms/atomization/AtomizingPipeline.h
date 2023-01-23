@@ -59,6 +59,8 @@ struct AtomizingPipeline {
     std::unordered_map<std::string, size_t>                                  max_ctam_iteration;
     std::unordered_map<std::string, std::vector<DataPredicate>>              atom_to_conjunctedPredicates;
 
+    void serialize_atom_list_to_xes(const std::vector<std::vector<std::string>>& atomised_log, std::ostream& stream) const;
+
     /**
      * Generating a new atom associated to the data interval associated to an event label
      * @return  Fresh atom

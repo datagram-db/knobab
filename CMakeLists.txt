@@ -68,7 +68,7 @@ add_library(knobab OBJECT
         include/knobab/server/algorithms/querymanager/DataQuery.h
         src/knobab/server/algorithms/querymanager/DataQuery.cpp
         include/knobab/server/algorithms/querymanager/LTLfQuery.h
-        src/knobab/server/algorithms/querymanager/LTLfQuery.cpp)
+        src/knobab/server/algorithms/querymanager/LTLfQuery.cpp src/knobab/server/algorithms/dfa_generator/GenerateGraphFromAtomisedClause.cpp include/knobab/server/algorithms/dfa_generator/GenerateGraphFromAtomisedClause.h src/knobab/server/algorithms/dfa_generator/GenerateGraphFromEnvironment.cpp include/knobab/server/algorithms/dfa_generator/GenerateGraphFromEnvironment.h)
 
 add_executable(knobab_server src/knobab/server/server.cpp)
 add_executable(tests_main src/knobab/tests/main.cpp)

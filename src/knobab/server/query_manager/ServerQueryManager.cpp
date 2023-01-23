@@ -6,6 +6,8 @@
 #include <yaucl/functional/assert.h>
 #include <yaucl/data/json.h>
 #include "knobab/server/query_manager/ServerQueryManager.h"
+#include "knobab/server/algorithms/dfa_generator/GenerateGraphFromEnvironment.h"
+#include "yaucl/bpm/SimpleXESSerializer.h"
 
 std::any ServerQueryManager::visitData_aware_declare(KnoBABQueryParser::Data_aware_declareContext *ctx) {
     std::vector<DeclareDataAware> v;
@@ -1010,6 +1012,283 @@ std::any ServerQueryManager::visitDroplog(KnoBABQueryParser::DroplogContext *ctx
         if (!(it == multiple_logs.end())) {
             multiple_logs.erase(it);
         }
+    }
+    return {};
+}
+
+std::any ServerQueryManager::visitDump_log(KnoBABQueryParser::Dump_logContext *ctx) {
+    bool none = true;
+    if (ctx) {
+        std::string env = UNESCAPE(ctx->env->getText());
+        auto it = multiple_logs.find(env);
+        if (it != multiple_logs.end()) {
+            none = false;
+            std::string filename = UNESCAPE(ctx->file->getText());
+            nlohmann::json result;
+            result["to"] = filename;
+            if (ctx->XES()) {
+                std::ofstream file{filename};
+                auto start = std::chrono::system_clock::now();
+                it->second.db.dump_xes_format(file);
+                auto end = std::chrono::system_clock::now();
+                auto elapsed =
+                        std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+                result["format"] = "XES";
+                result["time"] = elapsed.count();
+                content << result.dump();
+            } else if (ctx->TAB()) {
+                std::ofstream file{filename};
+                auto start = std::chrono::system_clock::now();
+                it->second.db.dump_tab_format(file);
+                auto end = std::chrono::system_clock::now();
+                auto elapsed =
+                        std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+                result["format"] = "TAB";
+                result["time"] = elapsed.count();
+                content << result.dump();
+            }
+        }
+    }
+    format  = "text/json";
+    if (none) {
+        content << "{}";
+    }
+    return {};
+}
+
+std::any ServerQueryManager::visitWith_model(KnoBABQueryParser::With_modelContext *ctx) {
+    bool none = true;
+    if (ctx) {
+        Environment env;
+        Environment* ptr = &env;
+        auto dump_log = ctx->dump_log();
+        if (dump_log) {
+            auto stringa = UNESCAPE(dump_log->env->getText());
+            auto it = multiple_logs.find(stringa);
+            if (it != multiple_logs.end()) ptr = &it->second;
+        }
+        {
+            AlignmentStrategy astr = XES_FOR_ALIGNER;
+            ptr->clearModel(); // initializing the model pipeline
+            tmpEnv = ptr;
+            visit(ctx->model());
+            none = false;
+            std::string cache_path = UNESCAPE(ctx->cachePath->getText());
+
+            /// GROUNDING
+            bool doPreliminaryFill = true;
+            bool ignoreActForAttributes = false;
+            bool creamOffSingleValues = true;
+            GroundingStrategyConf::pruning_strategy grounding_strategy = GroundingStrategyConf::NO_EXPANSION;
+            if (ctx->grounding()) {
+                auto ground = ctx->grounding();
+                if (ground->no_preliminary_fill()) doPreliminaryFill = false;
+                if (ground->act_for_attributes()) ignoreActForAttributes = true;
+                if (ground->no_cream_off()) creamOffSingleValues = false;
+                if (ground->strategy) {
+                    grounding_strategy = magic_enum::enum_cast<GroundingStrategyConf::pruning_strategy>(
+                            UNESCAPE(ground->strategy->getText())).value_or(grounding_strategy);
+                }
+            }
+            tmpEnv->set_grounding_parameters(doPreliminaryFill, ignoreActForAttributes, creamOffSingleValues,
+                                                grounding_strategy);
+            tmpEnv->doGrounding();
+
+            /// ATOMIZATION
+            std::string atomj{"p"};
+            AtomizationStrategy atom_strategy = AtomizationStrategy::AtomizeOnlyOnDataPredicates;
+            size_t n = 3;
+            if (ctx->atomization()) {
+                auto atom = ctx->atomization();
+                if (atom->label) atomj = UNESCAPE(atom->label->getText());
+                if (atom->strlen) n = std::stoull(atom->strlen->getText());
+                if (atom->strategy)
+                    atom_strategy = magic_enum::enum_cast<AtomizationStrategy>(
+                            UNESCAPE(atom->strategy->getText())).value_or(atom_strategy);
+            }
+            tmpEnv->set_atomization_parameters(atomj, n, atom_strategy);
+            tmpEnv->init_atomize_tables();
+            tmpEnv->first_atomize_model();
+            if (ctx->doAlign) {
+                astr = magic_enum::enum_cast<AlignmentStrategy>(UNESCAPE(ctx->doAlign->getText())).value_or(XES_FOR_ALIGNER);
+            }
+
+
+            if (dump_log) {
+                bool isXes = dump_log->XES() ? true : false;
+                constexpr size_t record_size = sizeof(ActTable::record);
+                std::string file_name = UNESCAPE(dump_log->file->getText());
+                std::ofstream xes{file_name};
+                if (isXes) begin_log(xes);
+
+                for (size_t trace_id = 0, N = ptr->db.act_table_by_act_id.secondary_index.size(); trace_id < N; trace_id++) {
+                    begin_trace_serialize(xes, std::to_string(trace_id));
+                    //os << "Trace #" << trace_id << std::endl << "\t- ";
+                    const auto& ref = ptr->db.act_table_by_act_id.secondary_index[trace_id];
+                    auto ptrTrace = ref.first;
+                    while (ptrTrace) {
+                        begin_event_serialize(xes);
+                        size_t offset = (((size_t)ptrTrace) - ((size_t)ptr->db.act_table_by_act_id.table.data()));
+                        offset = offset / record_size;
+                        std::string event_label = ptr->db.event_label_mapper.get(ptrTrace->entry.id.parts.act);
+                        auto hasTime = ptr->db.attribute_name_to_table.find("__time");
+                        long long milliseconds = std::chrono::duration_cast< std::chrono::milliseconds >(
+                                std::chrono::system_clock::now().time_since_epoch()
+                        ).count();
+                        if (hasTime != ptr->db.attribute_name_to_table.end()) {
+                            const AttributeTable::record* recordPtr = hasTime->second.resolve_record_if_exists(offset);
+                            if (recordPtr) {
+                                DEBUG_ASSERT(recordPtr->act_table_offset == offset);
+                                union_type val = hasTime->second.resolve(*recordPtr);
+                                DEBUG_ASSERT(std::holds_alternative<long long>(val));
+                                milliseconds = std::get<long long>(val);
+                            }
+                        }
+
+
+                        semantic_atom_set S;
+                        bool first = true;
+                        auto it = ptr->db.attribute_name_to_table.begin(), en = ptr->db.attribute_name_to_table.end();
+                        while (it != en) {
+                            {
+                                const AttributeTable::record* recordPtr = it->second.resolve_record_if_exists(offset);
+                                if (recordPtr) {
+                                    DEBUG_ASSERT(recordPtr->act_table_offset == offset);
+                                    union_type val = it->second.resolve(*recordPtr);
+                                    double valore; std::string strval;
+                                    bool hasDouble = false;
+                                    if (std::holds_alternative<bool>(val)) {
+                                        valore = (std::get<bool>(val)) ? 1.0 : 0.0;
+                                        hasDouble = true;
+                                    } else if (std::holds_alternative<long long>(val)) {
+                                        valore = (std::get<long long>(val));
+                                        hasDouble = true;
+                                    } else if (std::holds_alternative<std::string>(val)) {
+                                        strval = (std::get<std::string>(val));
+                                    } else if (std::holds_alternative<double>(val)) {
+                                        valore = (std::get<double>(val));
+                                        hasDouble = true;
+                                    }
+
+                                    if (!hasDouble) {
+                                        // Dealing with the case of a missing attribute, that is in the data, but not in the model:
+                                        // 1) The element should have still some data
+//                                        assert(ptr->ap.string_map.contains(event_label)||ptr->ap.double_map.contains(event_label));
+                                        if (!ptr->ap.string_map.contains(event_label)) continue;
+                                        // 2) There should be other data conditions: skip
+                                        if (!ptr->ap.string_map.at(event_label).contains(it->first)) continue;
+                                        auto& ref = ptr->ap.string_map.at(event_label).at(it->first);
+                                        for (const auto& I : ref.collect_intervals2()) {
+                                            DataPredicate dp{event_label,it->first, I.first, I.second};
+                                            if (dp.testOverSingleVariable(strval)) {
+                                                assert(ptr->ap.Mcal.contains(dp));
+                                                auto v = ptr->ap.Mcal.at(dp);
+                                                if (first) {
+                                                    S.insert(v.begin(), v.end());
+                                                    first = false;
+                                                } else {
+                                                    semantic_atom_set S2;
+                                                    S2.insert(v.begin(), v.end());
+                                                    S = unordered_intersection(S, S2);
+                                                }
+                                            }
+                                        }
+                                    } else {
+                                        // Dealing with the case of a missing attribute, that is in the data, but not in the model:
+                                        // 1) The element should have still some data
+//                                        assert(ptr->ap.string_map.contains(event_label)||ptr->ap.double_map.contains(event_label));
+                                        if (!ptr->ap.double_map.contains(event_label)) continue;
+                                        // 2) There should be other data conditions: skip
+                                        if (!ptr->ap.double_map.at(event_label).contains(it->first)) continue;
+                                        auto& ref = ptr->ap.double_map.at(event_label).at(it->first);
+                                        for (const auto& I : ref.collect_intervals2()) {
+                                            DataPredicate dp{event_label, it->first, I.first, I.second};
+                                            if (dp.testOverSingleVariable(valore)) {
+                                                assert(ptr->ap.Mcal.contains(dp));
+                                                auto v = ptr->ap.Mcal.at(dp);
+                                                if (first) {
+                                                    S.insert(v.begin(), v.end());
+                                                    first = false;
+                                                } else {
+                                                    semantic_atom_set S2;
+                                                    S2.insert(v.begin(), v.end());
+                                                    S = unordered_intersection(S, S2);
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            it++;
+                        }
+                        DEBUG_ASSERT(S.size() == 1);
+                        serialize_event_label(xes, *S.begin(), milliseconds);
+                        ptrTrace = ptrTrace->next;
+                        if (isXes) end_event_serialize(xes); else if (ptrTrace) xes << "\t";
+                    }
+                    if (isXes) end_trace_serialize(xes); else if (trace_id<N-1) xes << std::endl;
+                }
+                if (isXes) end_log(xes);
+            }
+
+            if ((ctx->minL && ctx->maxL && ctx->logSize && ctx->toFile) || (ctx->graphDot)) {
+                /// Graph Generation
+                std::string graph_cache_path = UNESCAPE(ctx->cachePath->getText());
+                double sample_ratio = .3;
+                bool isSampleRatioSet = false;
+                auto g = generateGraphFromEnvironment(*ptr, std::filesystem::path{cache_path});
+
+                /// Serialising the graph in a .dot format
+                if (ctx->graphDot) {
+                    std::string dotFile = UNESCAPE(ctx->graphDot->getText());
+                    std::ofstream file{dotFile};
+                    g.dot(file); file << std::endl;
+                    file.close();
+                }
+
+                /// If I want to sample a log from the graph and store it somewhere
+                if (ctx->minL && ctx->maxL && ctx->logSize && ctx->toFile) {
+                    size_t minL = std::stoull(ctx->minL->getText());
+                    size_t maxL = std::stoull(ctx->maxL->getText());
+                    size_t nTraces = std::stoull(ctx->logSize->getText());
+                    std::string dest_sample = UNESCAPE(ctx->toFile->getText());
+                    if (ctx->ratio) {
+                        sample_ratio = std::stod(ctx->ratio->getText());
+                        isSampleRatioSet = true;
+                    }
+                    std::vector<std::vector<std::string>> atom_lists;
+                    generative(g, atom_lists, minL, maxL, nTraces, isSampleRatioSet, sample_ratio);
+                    if (ctx->TAB()) {
+                        std::ofstream file{dest_sample};
+                        for (size_t j = 0, M = atom_lists.size(); j<M; j++) {
+                            const auto& ref = atom_lists.at(j);
+                            for (size_t i = 0, N = ref.size(); i<N; i++) {
+                                file << ref.at(i);
+                                if (i<(N-1))
+                                    file << "\t";
+                            }
+                            if (j<(M-1))
+                                file << std::endl;
+                        }
+                        file.close();
+                    } else if (ctx->XES()) {
+                        if (astr == XES_FOR_ALIGNER) {
+                            // Printing the log in its atomised representation
+                            serialize_non_data_log(atom_lists, dest_sample);
+                        } else {
+                            // Printing the log in its expanded representation, by randomly generating some data!
+                            std::ofstream file{dest_sample};
+                            ptr->ap.serialize_atom_list_to_xes(atom_lists, file);
+                            file.close();
+                        }
+                    }
+                }
+            }
+        }
+    }
+    format  = "text/json";
+    if (none) {
+        content << "{}";
     }
     return {};
 }

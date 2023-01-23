@@ -110,6 +110,52 @@ std::ostream &operator<<(std::ostream &os, const AtomizingPipeline &pipeline) {
     return os;
 }
 
+#include <yaucl/bpm/SimpleXESSerializer.h>
+#include <random>
+
+void AtomizingPipeline::serialize_atom_list_to_xes(const std::vector<std::vector<std::string>> &atomised_log,
+                                                   std::ostream &xes) const {
+//    constexpr size_t record_size = sizeof(ActTable::record);
+    begin_log(xes);
+    std::mt19937_64 eng{0};
+    std::uniform_real_distribution<double>   prob(0.0, 1.0);
+    for (size_t trace_id = 0, N = atomised_log.size(); trace_id < N; trace_id++) {
+        begin_trace_serialize(xes, std::to_string(trace_id));
+        const auto& trace = atomised_log.at(trace_id);
+        for (size_t event_id = 1, M = trace.size(); event_id<M; event_id++) {
+            begin_event_serialize(xes);
+            const auto& atom_p = trace.at(event_id);
+            auto it = atom_to_conjunctedPredicates.find(atom_p);
+            if (it == atom_to_conjunctedPredicates.end()) {
+                serialize_event_label(xes, atom_p, -1);
+            } else {
+                bool firstLabel = true;
+                for (const auto& dp : it->second) {
+                    if (firstLabel) {
+                        serialize_event_label(xes, atom_p, -1);
+                        firstLabel = false;
+                    }
+                    const std::string& var = dp.var;
+                    DEBUG_ASSERT(dp.casusu == INTERVAL);
+                    if (std::holds_alternative<double>(dp.value)) {
+                        std::uniform_real_distribution<double>    distr(std::get<double>(dp.value), std::get<double>(dp.value_upper_bound));
+                        serialize_event_attribute(xes, var, distr(eng));
+                    } else {
+                        if (prob(eng) < 0.5) {
+                            serialize_event_attribute(xes, var, std::get<std::string>(dp.value));
+                        } else {
+                            serialize_event_attribute(xes, var, std::get<std::string>(dp.value_upper_bound));
+                        }
+                    }
+                }
+            }
+            end_event_serialize(xes);
+        }
+        end_trace_serialize(xes);
+    }
+    end_log(xes);
+}
+
 #include <chrono>
 #include <yaucl/functional/assert.h>
 

@@ -6,6 +6,8 @@
 
 #include <cassert>
 #include <cmath>
+#include "yaucl/bpm/SimpleXESSerializer.h"
+
 #include <magic_enum.hpp>
 
 std::string KnowledgeBase::default_string;
@@ -1076,6 +1078,81 @@ PartialResult KnowledgeBase::getFirstLastOtherwise(const bool isFirst) const {
         elems.push_back(traceEventPair);
     }
     return elems;
+}
+
+void KnowledgeBase::dump_tab_format(std::ostream &tab) const {
+    constexpr size_t record_size = sizeof(ActTable::record);
+    for (size_t trace_id = 0, N = act_table_by_act_id.secondary_index.size(); trace_id < N; trace_id++) {
+        const auto& ref = act_table_by_act_id.secondary_index[trace_id];
+        auto ptr = ref.first;
+        size_t time = 0;
+        while (ptr) {
+            size_t offset = (((size_t)ptr) - ((size_t)act_table_by_act_id.table.data()));
+            offset = offset / record_size;
+            tab << event_label_mapper.get(ptr->entry.id.parts.act);
+            if (ptr->next)
+                tab << "\t";
+            else
+                tab << std::endl;
+            ptr = ptr->next;
+            time++;
+        }
+    }
+}
+
+void KnowledgeBase::dump_xes_format(std::ostream &xes) const {
+    constexpr size_t record_size = sizeof(ActTable::record);
+    begin_log(xes);
+    for (size_t trace_id = 0, N = act_table_by_act_id.secondary_index.size(); trace_id < N; trace_id++) {
+        begin_trace_serialize(xes, std::to_string(trace_id));
+        //os << "Trace #" << trace_id << std::endl << "\t- ";
+        const auto& ref = act_table_by_act_id.secondary_index[trace_id];
+        auto ptr = ref.first;
+        while (ptr) {
+            begin_event_serialize(xes);
+            size_t offset = (((size_t)ptr) - ((size_t)act_table_by_act_id.table.data()));
+            offset = offset / record_size;
+            std::string eventName = event_label_mapper.get(ptr->entry.id.parts.act);
+            auto hasTime = attribute_name_to_table.find("__time");
+            long long milliseconds = std::chrono::duration_cast< std::chrono::milliseconds >(
+                    std::chrono::system_clock::now().time_since_epoch()
+            ).count();
+            if (hasTime != attribute_name_to_table.end()) {
+                const AttributeTable::record* recordPtr = hasTime->second.resolve_record_if_exists(offset);
+                if (recordPtr) {
+                    DEBUG_ASSERT(recordPtr->act_table_offset == offset);
+                    union_type val = hasTime->second.resolve(*recordPtr);
+                    DEBUG_ASSERT(std::holds_alternative<long long>(val));
+                    milliseconds = std::get<long long>(val);
+                }
+            }
+            serialize_event_label(xes, eventName, milliseconds);
+            auto it = this->attribute_name_to_table.begin(), en = this->attribute_name_to_table.end();
+            while (it != en) {
+                if (it->first != "__time") {
+                    const AttributeTable::record* recordPtr = it->second.resolve_record_if_exists(offset);
+                    if (recordPtr) {
+                        DEBUG_ASSERT(recordPtr->act_table_offset == offset);
+                        union_type val = it->second.resolve(*recordPtr);
+                        if (std::holds_alternative<bool>(val)) {
+                            serialize_event_attribute(xes, it->first, std::get<bool>(val));
+                        } else if (std::holds_alternative<long long>(val)) {
+                            serialize_event_attribute(xes, it->first, std::get<long long>(val));
+                        } else if (std::holds_alternative<std::string>(val)) {
+                            serialize_event_attribute(xes, it->first, std::get<std::string>(val));
+                        } else if (std::holds_alternative<double>(val)) {
+                            serialize_event_attribute(xes, it->first, std::get<double>(val));
+                        }
+                    }
+                }
+                it++;
+            }
+            ptr = ptr->next;
+            end_event_serialize(xes);
+        }
+        end_trace_serialize(xes);
+    }
+    end_log(xes);
 }
 
 

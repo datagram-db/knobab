@@ -22,13 +22,14 @@
 #undef ERROR
 #endif
 
-#include "KnoBABQueryBaseVisitor.h"
-#include <knobab/server/query_manager/KnoBABQueryVisitor.h>
+
 #include <unordered_map>
 #include <string>
-#include <knobab/server/operators/base_ltlf.h>
+//#include <knobab/server/operators/base_ltlf.h>
 
 #include "Environment.h"
+#include "KnoBABQueryBaseVisitor.h"
+#include <knobab/server/query_manager/KnoBABQueryVisitor.h>
 
 inline unsigned char decleare_templates_determine(KnoBABQueryParser::Declare_argumentsContext* ptr) {
     if (!ptr) return DECLARE_TYPE_NONE;
@@ -46,6 +47,12 @@ inline LeafType decleare_leaf_determine(KnoBABQueryParser::Declare_act_targetCon
 #define DEFAULT_TIMING()     ((isAutoTimed && fromNowOnTimed))
 #define ASSERT_ON_TIMING(context)       DEBUG_ASSERT((!isAutoTimed) || (GET_TIMING(context) == fromNowOnTimed))
 #define ASSERT_ON_GIVEN_TIMING(b)       DEBUG_ASSERT(((b) == fromNowOnTimed))
+
+enum AlignmentStrategy {
+    BPM21_ALIGN,
+    XES_FOR_ALIGNER,
+    XES_FOR_SAMPLER
+};
 
 class ServerQueryManager : public KnoBABQueryBaseVisitor {
     bool asConjunctiveModel;
@@ -137,6 +144,11 @@ public:
     antlrcpp::Any visitTrace(KnoBABQueryParser::TraceContext *ctx)override;
     antlrcpp::Any visitEvent(KnoBABQueryParser::EventContext *ctx) override;
     antlrcpp::Any visitData_part(KnoBABQueryParser::Data_partContext *ctx);
+
+    /// Model generator and atomisation pipeline
+    std::any visitDump_log(KnoBABQueryParser::Dump_logContext *ctx) override;
+
+    std::any visitWith_model(KnoBABQueryParser::With_modelContext *ctx) override;
 };
 
 

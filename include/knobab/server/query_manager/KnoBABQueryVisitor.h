@@ -31,6 +31,8 @@ public:
 
     virtual std::any visitDroplog(KnoBABQueryParser::DroplogContext *context) = 0;
 
+    virtual std::any visitDump_log(KnoBABQueryParser::Dump_logContext *context) = 0;
+
     virtual std::any visitLog(KnoBABQueryParser::LogContext *context) = 0;
 
     virtual std::any visitTrace(KnoBABQueryParser::TraceContext *context) = 0;
@@ -42,6 +44,8 @@ public:
     virtual std::any visitField(KnoBABQueryParser::FieldContext *context) = 0;
 
     virtual std::any visitModel_query(KnoBABQueryParser::Model_queryContext *context) = 0;
+
+    virtual std::any visitWith_model(KnoBABQueryParser::With_modelContext *context) = 0;
 
     virtual std::any visitFile_model(KnoBABQueryParser::File_modelContext *context) = 0;
 

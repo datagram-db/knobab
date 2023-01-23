@@ -32,6 +32,9 @@ public:
   virtual void enterDroplog(KnoBABQueryParser::DroplogContext *ctx) = 0;
   virtual void exitDroplog(KnoBABQueryParser::DroplogContext *ctx) = 0;
 
+  virtual void enterDump_log(KnoBABQueryParser::Dump_logContext *ctx) = 0;
+  virtual void exitDump_log(KnoBABQueryParser::Dump_logContext *ctx) = 0;
+
   virtual void enterLog(KnoBABQueryParser::LogContext *ctx) = 0;
   virtual void exitLog(KnoBABQueryParser::LogContext *ctx) = 0;
 
@@ -49,6 +52,9 @@ public:
 
   virtual void enterModel_query(KnoBABQueryParser::Model_queryContext *ctx) = 0;
   virtual void exitModel_query(KnoBABQueryParser::Model_queryContext *ctx) = 0;
+
+  virtual void enterWith_model(KnoBABQueryParser::With_modelContext *ctx) = 0;
+  virtual void exitWith_model(KnoBABQueryParser::With_modelContext *ctx) = 0;
 
   virtual void enterFile_model(KnoBABQueryParser::File_modelContext *ctx) = 0;
   virtual void exitFile_model(KnoBABQueryParser::File_modelContext *ctx) = 0;

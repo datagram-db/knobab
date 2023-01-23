@@ -21,15 +21,17 @@ public:
     T__38 = 39, T__39 = 40, T__40 = 41, T__41 = 42, T__42 = 43, T__43 = 44, 
     T__44 = 45, T__45 = 46, T__46 = 47, T__47 = 48, T__48 = 49, T__49 = 50, 
     T__50 = 51, T__51 = 52, T__52 = 53, T__53 = 54, T__54 = 55, T__55 = 56, 
-    T__56 = 57, T__57 = 58, T__58 = 59, T__59 = 60, ACT_TABLE = 61, CNT_TABLE = 62, 
-    ATT_TABLE = 63, ACTIVITYLABEL = 64, LOGS = 65, ATT = 66, ACTIVATION = 67, 
-    TARGET = 68, INIT = 69, END = 70, EXISTS = 71, ABSENCE = 72, NEXT = 73, 
-    OR = 74, AND = 75, FIRST = 76, LAST = 77, IF = 78, THEN = 79, ELSE = 80, 
-    UNTIL = 81, BOX = 82, DIAMOND = 83, AUTO_TIMED = 84, LPAREN = 85, RPAREN = 86, 
-    PRESERVE = 87, TIMED = 88, THETA = 89, LEFT = 90, INV = 91, RIGHT = 92, 
-    MIDDLE = 93, NEGATED = 94, HRF = 95, TAB = 96, XES = 97, LABEL = 98, 
-    INTNUMBER = 99, NUMBER = 100, STRING = 101, SPACE = 102, COMMENT = 103, 
-    LINE_COMMENT = 104
+    T__56 = 57, T__57 = 58, T__58 = 59, T__59 = 60, T__60 = 61, T__61 = 62, 
+    T__62 = 63, T__63 = 64, T__64 = 65, T__65 = 66, T__66 = 67, T__67 = 68, 
+    T__68 = 69, T__69 = 70, ACT_TABLE = 71, WITH_ALIGNMENT_STRATEGY = 72, 
+    CNT_TABLE = 73, ATT_TABLE = 74, ACTIVITYLABEL = 75, LOGS = 76, ATT = 77, 
+    ACTIVATION = 78, TARGET = 79, INIT = 80, END = 81, EXISTS = 82, ABSENCE = 83, 
+    NEXT = 84, OR = 85, AND = 86, FIRST = 87, LAST = 88, IF = 89, THEN = 90, 
+    ELSE = 91, UNTIL = 92, BOX = 93, DIAMOND = 94, AUTO_TIMED = 95, LPAREN = 96, 
+    RPAREN = 97, PRESERVE = 98, TIMED = 99, THETA = 100, LEFT = 101, INV = 102, 
+    RIGHT = 103, MIDDLE = 104, NEGATED = 105, HRF = 106, TAB = 107, XES = 108, 
+    LABEL = 109, INTNUMBER = 110, NUMBER = 111, STRING = 112, SPACE = 113, 
+    COMMENT = 114, LINE_COMMENT = 115
   };
 
   explicit KnoBABQueryLexer(antlr4::CharStream *input);

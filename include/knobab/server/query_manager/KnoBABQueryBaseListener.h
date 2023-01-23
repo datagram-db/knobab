@@ -34,6 +34,9 @@ public:
   virtual void enterDroplog(KnoBABQueryParser::DroplogContext * /*ctx*/) override { }
   virtual void exitDroplog(KnoBABQueryParser::DroplogContext * /*ctx*/) override { }
 
+  virtual void enterDump_log(KnoBABQueryParser::Dump_logContext * /*ctx*/) override { }
+  virtual void exitDump_log(KnoBABQueryParser::Dump_logContext * /*ctx*/) override { }
+
   virtual void enterLog(KnoBABQueryParser::LogContext * /*ctx*/) override { }
   virtual void exitLog(KnoBABQueryParser::LogContext * /*ctx*/) override { }
 
@@ -51,6 +54,9 @@ public:
 
   virtual void enterModel_query(KnoBABQueryParser::Model_queryContext * /*ctx*/) override { }
   virtual void exitModel_query(KnoBABQueryParser::Model_queryContext * /*ctx*/) override { }
+
+  virtual void enterWith_model(KnoBABQueryParser::With_modelContext * /*ctx*/) override { }
+  virtual void exitWith_model(KnoBABQueryParser::With_modelContext * /*ctx*/) override { }
 
   virtual void enterFile_model(KnoBABQueryParser::File_modelContext * /*ctx*/) override { }
   virtual void exitFile_model(KnoBABQueryParser::File_modelContext * /*ctx*/) override { }

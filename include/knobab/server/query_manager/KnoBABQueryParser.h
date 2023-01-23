@@ -21,27 +21,30 @@ public:
     T__38 = 39, T__39 = 40, T__40 = 41, T__41 = 42, T__42 = 43, T__43 = 44, 
     T__44 = 45, T__45 = 46, T__46 = 47, T__47 = 48, T__48 = 49, T__49 = 50, 
     T__50 = 51, T__51 = 52, T__52 = 53, T__53 = 54, T__54 = 55, T__55 = 56, 
-    T__56 = 57, T__57 = 58, T__58 = 59, T__59 = 60, ACT_TABLE = 61, CNT_TABLE = 62, 
-    ATT_TABLE = 63, ACTIVITYLABEL = 64, LOGS = 65, ATT = 66, ACTIVATION = 67, 
-    TARGET = 68, INIT = 69, END = 70, EXISTS = 71, ABSENCE = 72, NEXT = 73, 
-    OR = 74, AND = 75, FIRST = 76, LAST = 77, IF = 78, THEN = 79, ELSE = 80, 
-    UNTIL = 81, BOX = 82, DIAMOND = 83, AUTO_TIMED = 84, LPAREN = 85, RPAREN = 86, 
-    PRESERVE = 87, TIMED = 88, THETA = 89, LEFT = 90, INV = 91, RIGHT = 92, 
-    MIDDLE = 93, NEGATED = 94, HRF = 95, TAB = 96, XES = 97, LABEL = 98, 
-    INTNUMBER = 99, NUMBER = 100, STRING = 101, SPACE = 102, COMMENT = 103, 
-    LINE_COMMENT = 104
+    T__56 = 57, T__57 = 58, T__58 = 59, T__59 = 60, T__60 = 61, T__61 = 62, 
+    T__62 = 63, T__63 = 64, T__64 = 65, T__65 = 66, T__66 = 67, T__67 = 68, 
+    T__68 = 69, T__69 = 70, ACT_TABLE = 71, WITH_ALIGNMENT_STRATEGY = 72, 
+    CNT_TABLE = 73, ATT_TABLE = 74, ACTIVITYLABEL = 75, LOGS = 76, ATT = 77, 
+    ACTIVATION = 78, TARGET = 79, INIT = 80, END = 81, EXISTS = 82, ABSENCE = 83, 
+    NEXT = 84, OR = 85, AND = 86, FIRST = 87, LAST = 88, IF = 89, THEN = 90, 
+    ELSE = 91, UNTIL = 92, BOX = 93, DIAMOND = 94, AUTO_TIMED = 95, LPAREN = 96, 
+    RPAREN = 97, PRESERVE = 98, TIMED = 99, THETA = 100, LEFT = 101, INV = 102, 
+    RIGHT = 103, MIDDLE = 104, NEGATED = 105, HRF = 106, TAB = 107, XES = 108, 
+    LABEL = 109, INTNUMBER = 110, NUMBER = 111, STRING = 112, SPACE = 113, 
+    COMMENT = 114, LINE_COMMENT = 115
   };
 
   enum {
     RuleQueries = 0, RuleSet_benchmarking_file = 1, RuleLoad_data_query = 2, 
-    RuleDisplay_data = 3, RuleLog = 4, RuleTrace = 5, RuleEvent = 6, RuleData_part = 7, 
-    RuleField = 8, RuleModel_query = 9, RuleModel = 10, RuleAtomization = 11, 
-    RuleGrounding = 12, RuleDisplay_qp = 13, RuleQuery_plan = 14, RuleDeclare_syntax = 15, 
-    RuleHas_args = 16, RuleLtlf = 17, RuleData_aware_declare = 18, RuleDeclare = 19, 
-    RuleFields = 20, RuleProp = 21, RuleProp_within_dijunction = 22, RuleAtom = 23, 
-    RuleRel = 24, RuleDeclare_arguments = 25, RuleDeclare_act_target = 26, 
-    RuleNo_preliminary_fill = 27, RuleAct_for_attributes = 28, RuleNo_cream_off = 29, 
-    RuleWith_data = 30, RuleWith_missing = 31, RuleNo_stats = 32, RuleVar = 33
+    RuleDisplay_data = 3, RuleDump_log = 4, RuleLog = 5, RuleTrace = 6, 
+    RuleEvent = 7, RuleData_part = 8, RuleField = 9, RuleModel_query = 10, 
+    RuleWith_model = 11, RuleModel = 12, RuleAtomization = 13, RuleGrounding = 14, 
+    RuleDisplay_qp = 15, RuleQuery_plan = 16, RuleDeclare_syntax = 17, RuleHas_args = 18, 
+    RuleLtlf = 19, RuleData_aware_declare = 20, RuleDeclare = 21, RuleFields = 22, 
+    RuleProp = 23, RuleProp_within_dijunction = 24, RuleAtom = 25, RuleRel = 26, 
+    RuleDeclare_arguments = 27, RuleDeclare_act_target = 28, RuleNo_preliminary_fill = 29, 
+    RuleAct_for_attributes = 30, RuleNo_cream_off = 31, RuleWith_data = 32, 
+    RuleWith_missing = 33, RuleNo_stats = 34, RuleVar = 35
   };
 
   explicit KnoBABQueryParser(antlr4::TokenStream *input);
@@ -65,12 +68,14 @@ public:
   class Set_benchmarking_fileContext;
   class Load_data_queryContext;
   class Display_dataContext;
+  class Dump_logContext;
   class LogContext;
   class TraceContext;
   class EventContext;
   class Data_partContext;
   class FieldContext;
   class Model_queryContext;
+  class With_modelContext;
   class ModelContext;
   class AtomizationContext;
   class GroundingContext;
@@ -105,6 +110,8 @@ public:
     Model_queryContext *model_query();
     Query_planContext *query_plan();
     Set_benchmarking_fileContext *set_benchmarking_file();
+    Dump_logContext *dump_log();
+    With_modelContext *with_model();
 
     virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
     virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
@@ -212,6 +219,26 @@ public:
   };
 
   Display_dataContext* display_data();
+
+  class  Dump_logContext : public antlr4::ParserRuleContext {
+  public:
+    antlr4::Token *env = nullptr;
+    antlr4::Token *file = nullptr;
+    Dump_logContext(antlr4::ParserRuleContext *parent, size_t invokingState);
+    virtual size_t getRuleIndex() const override;
+    std::vector<antlr4::tree::TerminalNode *> STRING();
+    antlr4::tree::TerminalNode* STRING(size_t i);
+    antlr4::tree::TerminalNode *TAB();
+    antlr4::tree::TerminalNode *XES();
+
+    virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
+    virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
+
+    virtual std::any accept(antlr4::tree::ParseTreeVisitor *visitor) override;
+   
+  };
+
+  Dump_logContext* dump_log();
 
   class  LogContext : public antlr4::ParserRuleContext {
   public:
@@ -324,6 +351,40 @@ public:
   };
 
   Model_queryContext* model_query();
+
+  class  With_modelContext : public antlr4::ParserRuleContext {
+  public:
+    antlr4::Token *cachePath = nullptr;
+    antlr4::Token *toFile = nullptr;
+    antlr4::Token *minL = nullptr;
+    antlr4::Token *maxL = nullptr;
+    antlr4::Token *logSize = nullptr;
+    antlr4::Token *ratio = nullptr;
+    antlr4::Token *doAlign = nullptr;
+    antlr4::Token *graphDot = nullptr;
+    With_modelContext(antlr4::ParserRuleContext *parent, size_t invokingState);
+    virtual size_t getRuleIndex() const override;
+    ModelContext *model();
+    std::vector<antlr4::tree::TerminalNode *> STRING();
+    antlr4::tree::TerminalNode* STRING(size_t i);
+    antlr4::tree::TerminalNode *WITH_ALIGNMENT_STRATEGY();
+    AtomizationContext *atomization();
+    GroundingContext *grounding();
+    Dump_logContext *dump_log();
+    antlr4::tree::TerminalNode *TAB();
+    antlr4::tree::TerminalNode *XES();
+    std::vector<antlr4::tree::TerminalNode *> INTNUMBER();
+    antlr4::tree::TerminalNode* INTNUMBER(size_t i);
+    antlr4::tree::TerminalNode *NUMBER();
+
+    virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
+    virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
+
+    virtual std::any accept(antlr4::tree::ParseTreeVisitor *visitor) override;
+   
+  };
+
+  With_modelContext* with_model();
 
   class  ModelContext : public antlr4::ParserRuleContext {
   public:
