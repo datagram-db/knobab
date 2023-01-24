@@ -122,7 +122,7 @@ with_missing: 'with' 'missing';
 no_stats: 'no' 'stats';
 
 ACT_TABLE: 'ACTTABLE';
-WITH_ALIGNMENT_STRATEGY: 'with' 'alignment' 'strategy';
+WITH_ALIGNMENT_STRATEGY: 'with-alignment-strategy';
 CNT_TABLE: 'COUNTTABLE';
 ATT_TABLE: 'ATTRIBUTETABLE';
 ACTIVITYLABEL: 'ACTIVITYLABEL';

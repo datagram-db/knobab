@@ -1100,8 +1100,10 @@ std::any ServerQueryManager::visitWith_model(KnoBABQueryParser::With_modelContex
             size_t n = 3;
             if (ctx->atomization()) {
                 auto atom = ctx->atomization();
-                if (atom->label) atomj = UNESCAPE(atom->label->getText());
-                if (atom->strlen) n = std::stoull(atom->strlen->getText());
+                if (atom->label)
+                    atomj = UNESCAPE(atom->label->getText());
+                if (atom->strlen)
+                    n = std::stoull(atom->strlen->getText());
                 if (atom->strategy)
                     atom_strategy = magic_enum::enum_cast<AtomizationStrategy>(
                             UNESCAPE(atom->strategy->getText())).value_or(atom_strategy);
@@ -1109,10 +1111,10 @@ std::any ServerQueryManager::visitWith_model(KnoBABQueryParser::With_modelContex
             tmpEnv->set_atomization_parameters(atomj, n, atom_strategy);
             tmpEnv->init_atomize_tables();
             tmpEnv->first_atomize_model();
+            tmpEnv->print_grounding_tables(std::cerr);
             if (ctx->doAlign) {
                 astr = magic_enum::enum_cast<AlignmentStrategy>(UNESCAPE(ctx->doAlign->getText())).value_or(XES_FOR_ALIGNER);
             }
-
 
             if (dump_log) {
                 bool isXes = dump_log->XES() ? true : false;
@@ -1123,7 +1125,6 @@ std::any ServerQueryManager::visitWith_model(KnoBABQueryParser::With_modelContex
 
                 for (size_t trace_id = 0, N = ptr->db.act_table_by_act_id.secondary_index.size(); trace_id < N; trace_id++) {
                     begin_trace_serialize(xes, std::to_string(trace_id));
-                    //os << "Trace #" << trace_id << std::endl << "\t- ";
                     const auto& ref = ptr->db.act_table_by_act_id.secondary_index[trace_id];
                     auto ptrTrace = ref.first;
                     while (ptrTrace) {

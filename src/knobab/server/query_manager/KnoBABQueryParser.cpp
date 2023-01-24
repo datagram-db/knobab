@@ -64,12 +64,13 @@ void knobabqueryParserInitialize() {
       "'&Gt'", "','", "'where'", "'||'", "'true'", "'&&'", "'<'", "'<='", 
       "'>'", "'>='", "'!='", "'#'", "'no'", "'preliminary'", "'fill'", "'act'", 
       "'attributes'", "'cream'", "'off'", "'data'", "'missing'", "'stats'", 
-      "'var'", "'ACTTABLE'", "", "'COUNTTABLE'", "'ATTRIBUTETABLE'", "'ACTIVITYLABEL'", 
-      "'LOGS'", "'ATTRIBUTES'", "'activation'", "'target'", "'INIT'", "'END'", 
-      "'EXISTS'", "'ABSENCE'", "'NEXT'", "'OR'", "'AND'", "'FIRST'", "'LAST'", 
-      "'IF'", "'THEN'", "'ELSE'", "'U'", "'G'", "'F'", "'auto-timed'", "'{'", 
-      "'}'", "'PRESERVE'", "'t'", "'THETA'", "'L'", "'INV'", "'R'", "'M'", 
-      "'~'", "'HRF'", "'TAB'", "'XES'"
+      "'var'", "'ACTTABLE'", "'with-alignment-strategy'", "'COUNTTABLE'", 
+      "'ATTRIBUTETABLE'", "'ACTIVITYLABEL'", "'LOGS'", "'ATTRIBUTES'", "'activation'", 
+      "'target'", "'INIT'", "'END'", "'EXISTS'", "'ABSENCE'", "'NEXT'", 
+      "'OR'", "'AND'", "'FIRST'", "'LAST'", "'IF'", "'THEN'", "'ELSE'", 
+      "'U'", "'G'", "'F'", "'auto-timed'", "'{'", "'}'", "'PRESERVE'", "'t'", 
+      "'THETA'", "'L'", "'INV'", "'R'", "'M'", "'~'", "'HRF'", "'TAB'", 
+      "'XES'"
     },
     std::vector<std::string>{
       "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", 

@@ -113,16 +113,27 @@ std::ostream &operator<<(std::ostream &os, const AtomizingPipeline &pipeline) {
 #include <yaucl/bpm/SimpleXESSerializer.h>
 #include <random>
 
+static inline bool are_all_printable(const std::string& s) {
+    if ( std::all_of( s.begin(), s.end(), []( char c ) { return std::isgraph( c ); } ) )
+    {
+        return true;
+    } return false;
+}
+
 void AtomizingPipeline::serialize_atom_list_to_xes(const std::vector<std::vector<std::string>> &atomised_log,
                                                    std::ostream &xes) const {
 //    constexpr size_t record_size = sizeof(ActTable::record);
     begin_log(xes);
     std::mt19937_64 eng{0};
+    static const char MIN_CHAR = static_cast<char>(33);
+    static const char MAX_CHAR = static_cast<char>(126);
+    static const char MIN_NP_CHAR = static_cast<char>(std::numeric_limits<unsigned char>::min()+1);
+    static const char MAX_NP_CHAR = static_cast<char>(std::numeric_limits<unsigned char>::max());
     std::uniform_real_distribution<double>   prob(0.0, 1.0);
     for (size_t trace_id = 0, N = atomised_log.size(); trace_id < N; trace_id++) {
         begin_trace_serialize(xes, std::to_string(trace_id));
         const auto& trace = atomised_log.at(trace_id);
-        for (size_t event_id = 1, M = trace.size(); event_id<M; event_id++) {
+        for (size_t event_id = 0, M = trace.size(); event_id<M; event_id++) {
             begin_event_serialize(xes);
             const auto& atom_p = trace.at(event_id);
             auto it = atom_to_conjunctedPredicates.find(atom_p);
@@ -132,7 +143,7 @@ void AtomizingPipeline::serialize_atom_list_to_xes(const std::vector<std::vector
                 bool firstLabel = true;
                 for (const auto& dp : it->second) {
                     if (firstLabel) {
-                        serialize_event_label(xes, atom_p, -1);
+                        serialize_event_label(xes, dp.label, -1);
                         firstLabel = false;
                     }
                     const std::string& var = dp.var;
@@ -141,10 +152,26 @@ void AtomizingPipeline::serialize_atom_list_to_xes(const std::vector<std::vector
                         std::uniform_real_distribution<double>    distr(std::get<double>(dp.value), std::get<double>(dp.value_upper_bound));
                         serialize_event_attribute(xes, var, distr(eng));
                     } else {
-                        if (prob(eng) < 0.5) {
+                        std::vector<std::string> values;
+                        values.reserve(100);
+                        std::string min = std::get<std::string>(dp.value);
+                        std::replace( min.begin(), min.end(), MIN_NP_CHAR, MIN_CHAR);
+                        std::replace( min.begin(), min.end(), MAX_NP_CHAR, MAX_CHAR);
+//                        min = next_printable_char(std::get<std::string>(dp.value), DataPredicate::msl);
+                        std::string max = std::get<std::string>(dp.value_upper_bound);
+                        std::replace( max.begin(), max.end(), MIN_NP_CHAR, MIN_CHAR);
+                        std::replace( max.begin(), max.end(), MAX_NP_CHAR, MAX_CHAR);
+                        max = prev_printable_char(max, DataPredicate::msl);
+                        while ((min <= max) && (values.size() <= 100)) {
+                            if (are_all_printable(min))
+                                values.emplace_back(min);
+                            min = next_printable_char(min, DataPredicate::msl);
+                        }
+                        if (values.empty()) {
                             serialize_event_attribute(xes, var, std::get<std::string>(dp.value));
                         } else {
-                            serialize_event_attribute(xes, var, std::get<std::string>(dp.value_upper_bound));
+                            std::uniform_int_distribution<size_t>    distr(0, values.size()-1);
+                            serialize_event_attribute(xes, var, values.at(distr(eng)));
                         }
                     }
                 }

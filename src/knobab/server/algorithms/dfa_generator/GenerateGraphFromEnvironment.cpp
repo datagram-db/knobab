@@ -13,6 +13,7 @@
 FlexibleFA<size_t, std::string> generateGraphFromEnvironment(Environment& env,
                                   const std::filesystem::path& cache_path) {
     auto sigma = env.getSigmaAll();
+    size_t result_count = 0;
     std::vector<FlexibleFA<std::string, size_t>> result(env.grounding.singleElementOfConjunction.size());
     for (const auto& ref : env.grounding.singleElementOfConjunction) {
         std::vector<FlexibleFA<std::string, size_t>> localResult(ref.elementsInDisjunction.size());
@@ -20,11 +21,12 @@ FlexibleFA<size_t, std::string> generateGraphFromEnvironment(Environment& env,
         for (const auto& clause : ref.elementsInDisjunction) {
             FlexibleFA<size_t, std::string> curr;
             generateGraphFromPattern(cache_path, clause,  sigma, curr);
-            result[local_counting++] = curr.shiftLabelsToNodes();
+            localResult[local_counting] = curr.shiftLabelsToNodes();
+            localResult[local_counting++].removeStatesNotLeadingToAcceptance();
         }
         if (!localResult.empty()) {
             if (localResult.size() == 1) {
-                std::swap(result.emplace_back(), localResult[0]);
+                result[result_count++] = localResult[0];
             } else {
                 FlexibleFA<std::string, size_t> unionG;
                 std::unordered_map<size_t, std::unordered_map<size_t, size_t>> mmap;
@@ -41,22 +43,27 @@ FlexibleFA<size_t, std::string> generateGraphFromEnvironment(Environment& env,
                                                 currG.getEdgeLabel(eid));
                     }
                 }
-                minimizeDFA(unionG).ignoreNodeLabels(result.emplace_back());
-                result.back().removeStatesNotLeadingToAcceptance();
+                minimizeDFA(unionG).ignoreNodeLabels(result[result_count]);
+                result[result_count++].removeStatesNotLeadingToAcceptance();
             }
         } else {
             return {};
         }
     }
+//    result[0].dot(std::cout); std::cout << std::endl;
     for (size_t i = 1; i<result.size(); i++) {
-        std::cout << "join" << i << std::endl;
-        result[0] = FlexibleFA<std::string,size_t>::crossProductWithNodeLabels(result[0], result[i], true);
+//        std::cout << "join" << i << std::endl;
+//        result[i].dot(std::cout); std::cout << std::endl;
+        result[0] = FlexibleFA<std::string,size_t>::crossProductWithNodeLabels(result[0], result[i], false);
     }
     {
         auto g = result[0].shiftLabelsToEdges();
         result.clear();
-        g.makeDFAAsInTheory(sigma);
-        g.removeStatesNotLeadingToAcceptance();
+//        g.makeDFAAsInTheory(sigma);
+//        g.removeStatesNotLeadingToAcceptance();
+//        g.pruneUnreachableNodes();
+//        g.dot(std::cout); std::cout <<"HIS"<< std::endl;
+
         return g;
 //        g.dot(std::cout); std::cout << std::endl;
 //        std::vector<std::vector<std::string>> tab;
