@@ -13,8 +13,8 @@ enum Algorithm {
 };
 
 int main() {
-    log_data_format format = TAB_SEPARATED_EVENTS;
-    std::string log_file = "/home/giacomo/logs/30_30_1000.tab";
+    log_data_format format = XES1;
+    std::string log_file = "/home/giacomo/Scaricati/synthetic_logs(1)/1000_10_10.xes";
     std::string model_file = "data/benchmarking/mining/models/model.txt";
 //    std::string log_file = "data/benchmarking/mining/bpic_2019/logs/10.xes";
 //    std::string model_file = "data/benchmarking/mining/models/model.txt";

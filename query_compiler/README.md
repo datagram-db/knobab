@@ -1,9 +1,5 @@
-# Haxe project
+# KINJ (KINJ Is Not JDBC)
 
-This is an example Haxe project scaffolded by Visual Studio Code.
+This project aims at transpiling the querying to the KnoBAB server for many programming languages as possible.
 
-Without further changes the structure is following:
-
- * `src/Main.hx`: Entry point Haxe source file
- * `build.hxml`: Haxe command line file used to build the project
- * `README.md`: This file
+In order to do so, you need to install [Haxe](https://haxe.org/download/) first. After this, you can generate the C#, Java, and Python3 clients for KnoBAB by running the ```compile_to_languages.sh``` script. 

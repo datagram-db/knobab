@@ -21,4 +21,4 @@ query_compiler/cs/*
 query_compiler/java/*
 query_compiler/kinj/*
 query_compiler/python3/*
-
+query_compiler/.vscode/*
