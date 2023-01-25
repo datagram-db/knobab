@@ -17,3 +17,8 @@ dist/*
 /cmake-build-release/
 /cmake-build-release-linux/
 /cmake-build-debug-linux/
+query_compiler/cs/*
+query_compiler/java/*
+query_compiler/kinj/*
+query_compiler/python3/*
+
