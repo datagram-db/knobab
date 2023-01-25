@@ -47,7 +47,7 @@ void generateGraphFromPattern(const std::filesystem::path& cache_path,
                               FlexibleFA<size_t, std::string>& result) {
     ParseFFLOATDot graph_loader;
     std::string full_name = atomised_clause.casusu;
-    if (!atomised_clause.right_act.empty())
+    if (atomised_clause.right_act.empty())
         full_name = full_name+"_"+std::to_string(atomised_clause.n);
     std::ifstream strm{cache_path / full_name};
     auto patternGraphToInstantiate = graph_loader.parse(strm);

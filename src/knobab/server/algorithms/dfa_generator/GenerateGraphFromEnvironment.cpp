@@ -59,7 +59,7 @@ FlexibleFA<size_t, std::string> generateGraphFromEnvironment(Environment& env,
     {
         auto g = result[0].shiftLabelsToEdges();
         result.clear();
-//        g.makeDFAAsInTheory(sigma);
+        g.makeDFAAsInTheory(sigma);
 //        g.removeStatesNotLeadingToAcceptance();
 //        g.pruneUnreachableNodes();
 //        g.dot(std::cout); std::cout <<"HIS"<< std::endl;

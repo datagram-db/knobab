@@ -1243,7 +1243,7 @@ std::any ServerQueryManager::visitWith_model(KnoBABQueryParser::With_modelContex
                 if (ctx->graphDot) {
                     std::string dotFile = UNESCAPE(ctx->graphDot->getText());
                     std::ofstream file{dotFile};
-                    g.dot(file); file << std::endl;
+                    g.dot_for_java_aligner(file); file << std::endl;
                     file.close();
                 }
 
