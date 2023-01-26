@@ -15,15 +15,15 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
- package kinj;
-import kinj.Log.DumpLog;
-import kinj.XtLTLf.QueryPlan;
-import kinj.Log.logformat_to_string;
-import kinj.Log.LogFormat;
-import kinj.Display.displaytable_to_string;
-import kinj.Display.displaylist_to_string;
-import kinj.Utils.quoted;
-import kinj.Display.Displays;
+ package uk.knobab.kinj;
+import uk.knobab.kinj.Log.DumpLog;
+import uk.knobab.kinj.XtLTLf.QueryPlan;
+import uk.knobab.kinj.Log.logformat_to_string;
+import uk.knobab.kinj.Log.LogFormat;
+import uk.knobab.kinj.Display.displaytable_to_string;
+import uk.knobab.kinj.Display.displaylist_to_string;
+import uk.knobab.kinj.Utils.quoted;
+import uk.knobab.kinj.Display.Displays;
 
 @:keep 
 enum QueryCompiler {
