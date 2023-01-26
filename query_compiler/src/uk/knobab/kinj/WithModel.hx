@@ -1,13 +1,30 @@
-package kinj;
-import kinj.Declare.model_to_string;
-import kinj.Log.DumpLog;
-import kinj.ModelQuery.Grounding;
-import kinj.ModelQuery.Atomization;
-import kinj.Utils.float_to_number;
-import kinj.Utils.quoted;
-import kinj.Log.logformat_to_string;
-import kinj.Declare.Model;
-import kinj.Log.LogFormat;
+/*
+ * GNU General Public License, Version 3.0
+ *
+ * Copyright (c) 2023 Giacomo Bergami
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+ package uk.knobab.kinj;
+import uk.knobab.kinj.Declare.model_to_string;
+import uk.knobab.kinj.Log.DumpLog;
+import uk.knobab.kinj.ModelQuery.Grounding;
+import uk.knobab.kinj.ModelQuery.Atomization;
+import uk.knobab.kinj.Utils.float_to_number;
+import uk.knobab.kinj.Utils.quoted;
+import uk.knobab.kinj.Log.logformat_to_string;
+import uk.knobab.kinj.Declare.Model;
+import uk.knobab.kinj.Log.LogFormat;
 
 @:keep 
 class SampleTo {

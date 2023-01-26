@@ -4,7 +4,7 @@
 	Author: Nate Chen
 	Date: 9/29/2014 11:32:02
 */
-package kinj;
+package uk.knobab.kinj;
 @:keep 
 class Csv{
 	private var seperator:String;
