@@ -12,9 +12,11 @@
 
 void bolt_algorithm(const std::string& logger_file,
                     const FeedQueryLoadFromFile& conf,
-                    double support);
+                    double support,
+                    uint16_t iter_num,
+                    bool no_stats = false);
 
-std::vector<pattern_mining_result<DeclareDataAware>> pattern_mining(const KnowledgeBase& kb,
+std::pair<std::vector<pattern_mining_result<DeclareDataAware>>, double> pattern_mining(const KnowledgeBase& kb,
                                                                     double support,
                                                                     bool naif,
                                                                     bool init_end,

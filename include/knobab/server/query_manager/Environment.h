@@ -90,7 +90,7 @@ public:
         return db.range_query(prop, min_threshold, c);
     }
 
-    std::vector<DeclareDataAware> generateTopBinaryClauses(const std::string& template_name, size_t topN = 0, const std::string& writeFile = "") {
+    std::vector<DeclareDataAware> generate_top_n_clauses(const std::string& template_name, size_t topN = 0, const std::string& writeFile = "") {
         auto n = db.doActCounting();
         std::vector<std::string> cpy;
         std::vector<DeclareDataAware> toGen;
@@ -101,16 +101,27 @@ public:
         }
 
         for (auto it = n.rbegin(), en = n.rend(); it != en; it++) {
-            if (count >= topN) break;
+            if (count > topN) break;
             cpy.emplace_back(it->second);
             count++;
         }
 
-        for (const auto& x : cpy) {
-            for (const auto& y : cpy) {
-                toGen.emplace_back(DeclareDataAware::binary_for_testing(template_name, x, y));
+        if(isUnaryPredicate(template_name)){
+            for (const auto& x : cpy) {
+                toGen.emplace_back(DeclareDataAware::unary_for_testing(template_name, x, 1));
             }
         }
+
+        else {
+            for (const auto& x : cpy) {
+                for (const auto& y : cpy) {
+                    if(x == y)
+                        continue;
+                    toGen.emplace_back(DeclareDataAware::binary_for_testing(template_name, x, y));
+                }
+            }
+        }
+
         if(!writeFile.empty()){
             std::ofstream outF(writeFile, std::ofstream::trunc);
             for(const DeclareDataAware& dec : toGen){

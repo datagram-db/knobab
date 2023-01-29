@@ -81,38 +81,42 @@ std::ostream &operator<<(std::ostream &os, const FeedQueryLoadFromFile &file) {
 
 std::vector<DeclareDataAware> actual(Environment& env,
              double support,
-             std::vector<std::string>& templates,
+             std::vector<std::string>& unary_templates,
+             std::vector<std::string>& binary_templates,
              std::vector<DeclareDataAware>& unary) {
     std::vector<size_t> act_support;
     std::unordered_set<std::string> map_to_multiple_patterns;
     auto actCounting = env.db.doTraceCounting();
     double nTraces = env.db.nTraces();
+
     for (const auto& [k, v] : actCounting) {
         double toK = ((double )k)/nTraces;
         if (toK >= support) {
             map_to_multiple_patterns.emplace(v);
-            unary.emplace_back(DeclareDataAware::unary("Init", v, 1));
-            unary.emplace_back(DeclareDataAware::unary("End", v, 1));
-            unary.emplace_back(DeclareDataAware::unary("Absence1", v, 1));
-            unary.emplace_back(DeclareDataAware::unary("Exists1", v, 1));
+            for (const std::string& ref : unary_templates) {
+                unary.emplace_back(DeclareDataAware::unary(ref, v, 1));
+            }
         }
     }
 
-    std::vector<DeclareDataAware> result;
+    std::vector<DeclareDataAware> binary_result;
     for (const std::string& L : map_to_multiple_patterns) {
         for (const std::string& R : map_to_multiple_patterns) {
+            if(L == R)
+                continue;
             std::vector<size_t> Candidate(2);
             Candidate[0] = env.db.event_label_mapper.get(L);
             Candidate[1] = env.db.event_label_mapper.get(R);
             double toK = ((double)env.db.doTraceCounting(Candidate))/nTraces;
             if (toK >= support) {
-                for (const auto& ref : templates) {
-                    result.emplace_back(DeclareDataAware::binary_for_testing(ref, L, R));
+                for (const auto& ref : binary_templates) {
+                    binary_result.emplace_back(DeclareDataAware::binary_for_testing(ref, L, R));
                 }
             }
         }
     }
-    return result;
+
+    return binary_result;
 }
 
 /*
@@ -123,8 +127,14 @@ std::vector<DeclareDataAware> actual(Environment& env,
 void apriori(const std::string& logger_file,
              const FeedQueryLoadFromFile& log,
              double support,
-             std::vector<std::string>& templates) {
+             std::vector<std::string>& unary_templates,
+             std::vector<std::string>& binary_templates,
+             uint16_t iteration_num,
+             bool no_stats) {
     ServerQueryManager sqm;
+    sqm.iteration_num = iteration_num;
+    sqm.mining_algorithm = "APRIORI";
+    sqm.min_support = support;
     std::stringstream ss;
     constexpr size_t chunk_size = 40;
 
@@ -141,9 +151,10 @@ void apriori(const std::string& logger_file,
 
     // Obtaining the model
     Environment& env = sqm.multiple_logs[log.env_name];
+
     std::vector<DeclareDataAware> unary;
     size_t batch = 1;
-    auto binary_clauses = actual(env, support, templates, unary);
+    auto binary_clauses = actual(env, support, unary_templates, binary_templates, unary);
     for (const std::vector<DeclareDataAware>& x : chunker(binary_clauses, chunk_size)) {
         ss << "model-check declare " << std::endl;
         for (const auto& d : x) {
@@ -173,11 +184,14 @@ void apriori(const std::string& logger_file,
         std::cout << "Unary Batch: " << sqm.getContent() << std::endl << std::endl;
     }
 
-    //Dumping to the logger file
-    ss << "benchmarking-log " << std::quoted(logger_file);
-    sqm.runQuery(ss.str());
-    ss.str(std::string());
-    ss.clear();
+    if(!no_stats) {
+        //Dumping to the logger file
+        ss << "benchmarking-log " << std::quoted(logger_file);
+        sqm.runQuery(ss.str());
+        ss.str(std::string());
+        ss.clear();
+    }
+
     std::cout << "Dumper: "<< sqm.getContent() << std::endl << std::endl;
 }
 
@@ -185,8 +199,14 @@ void apriori(const std::string& logger_file,
 void previous_mining(const std::string& logger_file,
              const FeedQueryLoadFromFile& log,
              double support,
-             std::vector<std::string>& templates) {
+             std::vector<std::string>& templates,
+             uint16_t iteration_num,
+             bool no_stats) {
     ServerQueryManager sqm;
+    sqm.min_support = support;
+    sqm.mining_algorithm = "PREVIOUS_MINING";
+    sqm.iteration_num = iteration_num;
+
     std::stringstream ss;
 
     // Loading the data
@@ -197,10 +217,11 @@ void previous_mining(const std::string& logger_file,
     std::cout << "Loading Outcome: " << sqm.getContent() << std::endl << std::endl;
 
     Environment& env = sqm.multiple_logs[log.env_name];
-    size_t support_int = (size_t)((1.0 - support) * (double)env.db.nAct());
+    size_t support_int = (size_t)std::ceil((1.0 - support) * (double)env.db.nAct());
 
     // Setting up the operators
     sqm.runQuery(query_plan);
+
     std::cout << "Operators Setting: " << sqm.getContent() << std::endl << std::endl;
 
     std::vector<DeclareDataAware> unary;
@@ -230,10 +251,13 @@ void previous_mining(const std::string& logger_file,
 //        batch++;
 //    }
 
-    //Dumping to the logger file
-    ss << "benchmarking-log " << std::quoted(logger_file);
-    sqm.runQuery(ss.str());
-    ss.str(std::string());
-    ss.clear();
+    if(!no_stats) {
+        //Dumping to the logger file
+        ss << "benchmarking-log " << std::quoted(logger_file);
+        sqm.runQuery(ss.str());
+        ss.str(std::string());
+        ss.clear();
+    }
+
     std::cout << "Dumper: "<< sqm.getContent() << std::endl << std::endl;
 }
