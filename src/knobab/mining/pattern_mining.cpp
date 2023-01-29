@@ -79,19 +79,19 @@ static inline void decrease_support_X(const KnowledgeBase &kb,
 static inline void fast_forward_equals(trace_t trace_id,
                                        ActTable::record*& to_increment,
                                        ActTable::record *&end) {
-    do {
+    while ((to_increment != end) &&
+             (to_increment->entry.id.parts.trace_id == trace_id)) {
         to_increment++;
-    } while ((to_increment != end) &&
-             (to_increment->entry.id.parts.trace_id == trace_id));
+    }
 }
 
 static inline void fast_forward_lower(trace_t trace_id,
                                       ActTable::record*& to_increment,
                                       ActTable::record *&end) {
-    do {
+    while ((to_increment != end) &&
+             (to_increment->entry.id.parts.trace_id < trace_id)) {
         to_increment++;
-    } while ((to_increment != end) &&
-             (to_increment->entry.id.parts.trace_id < trace_id));
+    }
 }
 
 struct forNegation {
