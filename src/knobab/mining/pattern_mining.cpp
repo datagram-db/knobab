@@ -8,9 +8,14 @@
 
 void bolt_algorithm(const std::string& logger_file,
                     const FeedQueryLoadFromFile& conf,
-                    double support) {
+                    double support,
+                    uint16_t iter_num,
+                    bool no_stats) {
     Environment env;
-    env.doStats = false;
+    env.doStats = true;
+    env.experiment_logger.min_support = support;
+    env.experiment_logger.mining_algorithm = "BOLT";
+    env.experiment_logger.iteration_num = iter_num;
     auto scripts = std::filesystem::current_path();
     std::filesystem::path file{conf.file};
     {
@@ -19,9 +24,43 @@ void bolt_algorithm(const std::string& logger_file,
     }
     std::filesystem::path declare_file_path, maxsat;
     std::cout << "Starting from now!" << std::endl;
-    auto list = pattern_mining(env.db, support, false, true, true, false, false);
-    for (const auto& result : list) {
+    std::pair<std::vector<pattern_mining_result<DeclareDataAware>>, double> list = pattern_mining(env.db, support, false, true, true, false, false);
+
+    bool filePreexists1 = std::filesystem::exists("/home/sam/Documents/Repositories/CodeBases/knobab/data/benchmarking/mining/mined_clauses.csv");
+    std::ofstream log1("/home/sam/Documents/Repositories/CodeBases/knobab/data/benchmarking/mining/mined_clauses.csv", std::ios_base::app | std::ios_base::out);
+    if (!filePreexists1) {
+        log1 << "algorithm" << ","
+                << "clause" << ","
+                << "support" << std::endl;
+    }
+
+    for (const pattern_mining_result<DeclareDataAware>& result : list.first) {
         std::cout << result << std::endl;
+        if(result.clause.right_act != "") {
+            log1 << "BOLT" << ","
+                 << result.clause.casusu + "(" + result.clause.left_act + "+" + result.clause.right_act <<  + ")" << ","
+                 << result.support_declarative_pattern << std::endl;
+        }
+        else {
+            log1 << "BOLT" << ","
+                 << result.clause.casusu + "(" + result.clause.left_act <<  + ")" << ","
+                 << result.support_declarative_pattern << std::endl;
+        }
+    }
+
+    if(!no_stats){
+        bool filePreexists = std::filesystem::exists(logger_file);
+        std::ofstream log(logger_file, std::ios_base::app | std::ios_base::out);
+        if (!filePreexists) {
+            LoggerInformation::log_csv_file_header(log);
+        }
+
+        env.experiment_logger.model_data_decomposition_time = 0;
+        env.experiment_logger.model_atomization_time = 0;
+        env.experiment_logger.model_declare_to_ltlf = 0;
+        env.experiment_logger.model_ltlf_query_time = list.second;
+
+        env.experiment_logger.log_csv_file(log);
     }
 }
 
@@ -372,7 +411,7 @@ inline void globallyA_And_FutureB(const std::pair<ActTable::record*, ActTable::r
 
 
 /** Pattern mining **/
-std::vector<pattern_mining_result<DeclareDataAware>> pattern_mining(const KnowledgeBase& kb,
+std::pair<std::vector<pattern_mining_result<DeclareDataAware>>, double> pattern_mining(const KnowledgeBase& kb,
                                                                     double support,
                                                                     bool naif,
                                                                     bool init_end,
@@ -600,12 +639,25 @@ std::vector<pattern_mining_result<DeclareDataAware>> pattern_mining(const Knowle
             DeclareDataAware clause;
             clause.n = 1;
             bool alsoFlip = false;
+            double dss = result.support_declarative_pattern;
             if (result.clause.tail.empty()) {
                 // CoExistence pattern
                 A = result.clause.head.at(0);
                 B = result.clause.head.at(1);
                 clause.casusu = "CoExistence";
                 alsoFlip = true;
+                auto cpA = kb.getCountTable().resolve_primary_index2(A);
+                auto cpB = kb.getCountTable().resolve_primary_index2(B);
+                size_t countOk = 0;
+                while ((cpA.first != cpA.second) && (cpB.first != cpB.second)) {
+                    if ((cpA.first->id.parts.event_id > 0) && (cpB.first->id.parts.event_id > 0))
+                        countOk++;
+                    else if ((cpA.first->id.parts.event_id == 0) && (cpB.first->id.parts.event_id == 0))
+                        countOk++;
+                    cpA.first++;
+                    cpB.first++;
+                }
+                dss = ((double)countOk)/((double)log_size);
             } else if (result.clause.tail.size() == 1) {
                 A = result.clause.head.at(0);
                 B = result.clause.tail.at(0);
@@ -616,7 +668,7 @@ std::vector<pattern_mining_result<DeclareDataAware>> pattern_mining(const Knowle
             clause.right_act = kb.event_label_mapper.get(B);
             declarative_clauses.emplace_back(clause,
                                              result.support_generating_original_pattern,
-                                             result.support_declarative_pattern,
+                                             dss,
                                              result.confidence_declarative_pattern);
 
             getAware(kb, special_temporal_patterns, only_precise_temporal_patterns, count_table,
@@ -805,7 +857,7 @@ std::vector<pattern_mining_result<DeclareDataAware>> pattern_mining(const Knowle
     /* Getting number of milliseconds as a double. */
     duration<double, std::milli> ms_double = t2 - t1;
     std::cout << ms_double.count() << "ms\n";
-    return declarative_clauses;
+    return std::pair<std::vector<pattern_mining_result<DeclareDataAware>>, double>(declarative_clauses, ms_double.count());
 }
 
 

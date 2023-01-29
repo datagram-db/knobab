@@ -17,3 +17,4 @@ dist/*
 /cmake-build-release/
 /cmake-build-release-linux/
 /cmake-build-debug-linux/
+/data/benchmarking

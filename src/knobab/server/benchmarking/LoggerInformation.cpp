@@ -58,7 +58,11 @@ void LoggerInformation::log_csv_file(std::ostream &csv_log) const {
             << model_declare_to_ltlf<< ","
             << model_ltlf_query_time << ","
             << (is_multithreaded ? "1" : "No") << ","
-            << no_threads << "," << strategyForScheduling <<  std::endl;
+            << no_threads << ","
+            << strategyForScheduling << ","
+            << min_support << ","
+            << mining_algorithm << ","
+            << iteration_num << std::endl;
     std::flush(csv_log);
 }
 
@@ -84,7 +88,11 @@ void LoggerInformation::log_csv_file_header(std::ostream &csv_log) {
             << "model_declare_to_ltlf" << ","
             << "model_ltlf_query_time" << ","
             << ("is_multithreaded") << ","
-            << "no_threads" << std::endl;
+            << "no_threads" << ","
+            << "scheduling_strategy" << ","
+            << "min_support" << ","
+            << "mining_algorithm" << ","
+            << "iteration_num" << std::endl;
 }
 
 #include <nlohmann/json.hpp>
