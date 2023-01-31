@@ -26,27 +26,27 @@ void bolt_algorithm(const std::string& logger_file,
     std::cout << "Starting from now!" << std::endl;
     std::pair<std::vector<pattern_mining_result<DeclareDataAware>>, double> list = pattern_mining(env.db, support, false, true, true, false, false);
 
-    bool filePreexists1 = std::filesystem::exists("/home/sam/Documents/Repositories/CodeBases/knobab/data/benchmarking/mining/mined_clauses.csv");
-    std::ofstream log1("/home/sam/Documents/Repositories/CodeBases/knobab/data/benchmarking/mining/mined_clauses.csv", std::ios_base::app | std::ios_base::out);
-    if (!filePreexists1) {
-        log1 << "algorithm" << ","
-                << "clause" << ","
-                << "support" << std::endl;
-    }
-
-    for (const pattern_mining_result<DeclareDataAware>& result : list.first) {
-        std::cout << result << std::endl;
-        if(result.clause.right_act != "") {
-            log1 << "BOLT" << ","
-                 << result.clause.casusu + "(" + result.clause.left_act + "+" + result.clause.right_act <<  + ")" << ","
-                 << result.support_declarative_pattern << std::endl;
-        }
-        else {
-            log1 << "BOLT" << ","
-                 << result.clause.casusu + "(" + result.clause.left_act <<  + ")" << ","
-                 << result.support_declarative_pattern << std::endl;
-        }
-    }
+//    bool filePreexists1 = std::filesystem::exists("/home/sam/Documents/Repositories/CodeBases/knobab/data/benchmarking/mining/mined_clauses.csv");
+//    std::ofstream log1("/home/sam/Documents/Repositories/CodeBases/knobab/data/benchmarking/mining/mined_clauses.csv", std::ios_base::app | std::ios_base::out);
+//    if (!filePreexists1) {
+//        log1 << "algorithm" << ","
+//                << "clause" << ","
+//                << "support" << std::endl;
+//    }
+//
+//    for (const pattern_mining_result<DeclareDataAware>& result : list.first) {
+//        std::cout << result << std::endl;
+//        if(result.clause.right_act != "") {
+//            log1 << "BOLT" << ","
+//                 << result.clause.casusu + "(" + result.clause.left_act + "+" + result.clause.right_act <<  + ")" << ","
+//                 << result.support_declarative_pattern << std::endl;
+//        }
+//        else {
+//            log1 << "BOLT" << ","
+//                 << result.clause.casusu + "(" + result.clause.left_act <<  + ")" << ","
+//                 << result.support_declarative_pattern << std::endl;
+//        }
+//    }
 
     if(!no_stats){
         bool filePreexists = std::filesystem::exists(logger_file);

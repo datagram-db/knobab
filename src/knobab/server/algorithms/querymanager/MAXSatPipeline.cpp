@@ -1887,30 +1887,30 @@ void MAXSatPipeline::pipeline(CNFDeclareDataAware* model,
                         }
                     }
 
-                    bool filePreexists = std::filesystem::exists("/home/sam/Documents/Repositories/CodeBases/knobab/data/benchmarking/mining/mined_clauses.csv");
-                    std::ofstream log("/home/sam/Documents/Repositories/CodeBases/knobab/data/benchmarking/mining/mined_clauses.csv", std::ios_base::app | std::ios_base::out);
-                    if (!filePreexists) {
-                        log << "algorithm" << ","
-                            << "clause" << ","
-                            << "support" << std::endl;
-                    }
-
-                    uint16_t num = 0;
-                    for(const DisjunctiveDeclareDataAware& val : model->singleElementOfConjunction){
-                        const DeclareDataAware& clause = val.elementsInDisjunction.at(0);
-
-                        if (clause.right_act != "") {
-                            log << "ADM" << ","
-                                 << clause.casusu + "(" + clause.left_act + "+" + clause.right_act << +")" << ","
-                                 << support_per_declare.at(num) << std::endl;
-                        } else {
-                            log << "ADM" << ","
-                                 << clause.casusu + "(" + clause.left_act << +")" << ","
-                                    << support_per_declare.at(num) << std::endl;
-                        }
-
-                        ++num;
-                    }
+//                    bool filePreexists = std::filesystem::exists("/home/sam/Documents/Repositories/CodeBases/knobab/data/benchmarking/mining/mined_clauses.csv");
+//                    std::ofstream log("/home/sam/Documents/Repositories/CodeBases/knobab/data/benchmarking/mining/mined_clauses.csv", std::ios_base::app | std::ios_base::out);
+//                    if (!filePreexists) {
+//                        log << "algorithm" << ","
+//                            << "clause" << ","
+//                            << "support" << std::endl;
+//                    }
+//
+//                    uint16_t num = 0;
+//                    for(const DisjunctiveDeclareDataAware& val : model->singleElementOfConjunction){
+//                        const DeclareDataAware& clause = val.elementsInDisjunction.at(0);
+//
+//                        if (clause.right_act != "") {
+//                            log << "ADM" << ","
+//                                 << clause.casusu + "(" + clause.left_act + "+" + clause.right_act << +")" << ","
+//                                 << support_per_declare.at(num) << std::endl;
+//                        } else {
+//                            log << "ADM" << ","
+//                                 << clause.casusu + "(" + clause.left_act << +")" << ","
+//                                    << support_per_declare.at(num) << std::endl;
+//                        }
+//
+//                        ++num;
+//                    }
 
                     break;
                 }
