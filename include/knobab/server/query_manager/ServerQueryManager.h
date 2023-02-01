@@ -66,6 +66,9 @@ class ServerQueryManager : public KnoBABQueryBaseVisitor {
     Environment* tmpEnv = nullptr;
 public:
     double parsing_time_ms = -1.0;
+    uint16_t iteration_num = 0;
+    double min_support = 0;
+    std::string mining_algorithm = "APRIORI";
 
     std::string getContent() const {
         return content.str();
