@@ -40,19 +40,19 @@ static inline void decrease_support_X(const KnowledgeBase &kb,
 static inline void fast_forward_equals(trace_t trace_id,
                                        ActTable::record*& to_increment,
                                        ActTable::record *&end) {
-    do {
+    while ((to_increment != end) &&
+           (to_increment->entry.id.parts.trace_id == trace_id)) {
         to_increment++;
-    } while ((to_increment != end) &&
-             (to_increment->entry.id.parts.trace_id == trace_id));
+    }
 }
 
 static inline void fast_forward_lower(trace_t trace_id,
                                       ActTable::record*& to_increment,
                                       ActTable::record *&end) {
-    do {
+    while ((to_increment != end) &&
+           (to_increment->entry.id.parts.trace_id < trace_id)) {
         to_increment++;
-    } while ((to_increment != end) &&
-             (to_increment->entry.id.parts.trace_id < trace_id));
+    }
 }
 
 struct forNegation {
@@ -79,9 +79,7 @@ static inline DeclareDataAware &getAware(const KnowledgeBase &kb,
                                          std::unordered_map<std::string, std::unordered_map<act_t, std::vector<forNegation>>>* ptn) {
     auto ntraces = kb.nTraces();
     auto nacts = kb.nAct();
-    if ((clause.left_act == "b") && (clause.right_act == "c")) {
-        std::cout << "HERE" << std::endl;
-    }
+
     std::vector<trace_t> allTraces;
     for (trace_t sigma = 0; sigma<ntraces; sigma++) allTraces.emplace_back(sigma);
     if (special_temporal_patterns) {
@@ -187,6 +185,18 @@ static inline DeclareDataAware &getAware(const KnowledgeBase &kb,
             if ((!alles_precedence) && (!alles_response) && (!alles_altresponse))
                 break;
             auto trace_id = a_beginend.first->entry.id.parts.trace_id;
+//            if ((clause.left_act == "c") && (clause.right_act == "b") && (trace_id == 7)) {
+//                auto cp = kb.act_table_by_act_id.secondary_index.at(8);
+//                std::cout << kb.act_table_by_act_id << std::endl;
+//                while (cp.first) {
+//                    std::cout <<
+//                              kb.event_label_mapper.get(
+//                                      cp.first->entry.id.parts.act) << " ";
+//                    cp.first = cp.first->next;
+//                }
+//                std::cout << std::endl;
+//                std::cout << ": HERE" << std::endl;
+//            }
             DEBUG_ASSERT(!isTraceVisitedU.at(trace_id));
             auto trace_id_visited = isTraceVisitedU.at(trace_id);
 
@@ -583,6 +593,7 @@ std::vector<pattern_mining_result<DeclareDataAware>> pattern_mining(const Knowle
 //        std::cout << "   conf: " << counter.lift(lr) << " conf: " << counter.lift(rl) << std::endl;
 //        std::cout << "   lift: " << counter.lift(lr) << " lift: " << counter.lift(rl) << std::endl;
         if ((lr_conf == rl_conf) && (rl_conf >= support)) {
+            Rule<act_t> lrBoth;
             candidate_rule.emplace_back(Rule<act_t>{pattern.first}, ((double)pattern.second)/((double)log_size), -1, -1);
         } else {
             if (lr_conf >= rl_conf) {
@@ -600,12 +611,25 @@ std::vector<pattern_mining_result<DeclareDataAware>> pattern_mining(const Knowle
             DeclareDataAware clause;
             clause.n = 1;
             bool alsoFlip = false;
+            double sdp = result.support_declarative_pattern;
             if (result.clause.tail.empty()) {
                 // CoExistence pattern
                 A = result.clause.head.at(0);
                 B = result.clause.head.at(1);
                 clause.casusu = "CoExistence";
                 alsoFlip = true;
+                auto cpA = kb.getCountTable().resolve_primary_index2(A);
+                auto cpB = kb.getCountTable().resolve_primary_index2(B);
+                size_t traceId = 0;
+                size_t countOk = 0;
+                while ((cpA.first != cpA.second) && (cpB.first != cpB.second)) {
+                    if ((cpA.first->id.parts.event_id > 0) || (cpB.first->id.parts.event_id > 0))
+                        countOk++;
+                    else if ((cpA.first->id.parts.event_id == 0) && (cpB.first->id.parts.event_id == 0))
+                        countOk++;
+                    cpA.first++; cpB.first++;
+                }
+                sdp = ((double)countOk)/((double)kb.nTraces());
             } else if (result.clause.tail.size() == 1) {
                 A = result.clause.head.at(0);
                 B = result.clause.tail.at(0);
@@ -614,9 +638,15 @@ std::vector<pattern_mining_result<DeclareDataAware>> pattern_mining(const Knowle
             };
             clause.left_act = kb.event_label_mapper.get(A);
             clause.right_act = kb.event_label_mapper.get(B);
+//            if (alsoFlip && ((clause.left_act == "i" || clause.left_act == "h"))
+//                         && ((clause.right_act == "i" || clause.right_act == "h"))) {
+//                std::cout << counter.support(lr) << " vs. " << counter.support(rl) << std::endl;
+//                std::cout << "DEBUG" << std::endl;
+//
+//            }
             declarative_clauses.emplace_back(clause,
                                              result.support_generating_original_pattern,
-                                             result.support_declarative_pattern,
+                                             sdp,
                                              result.confidence_declarative_pattern);
 
             getAware(kb, special_temporal_patterns, only_precise_temporal_patterns, count_table,
@@ -805,6 +835,7 @@ std::vector<pattern_mining_result<DeclareDataAware>> pattern_mining(const Knowle
     /* Getting number of milliseconds as a double. */
     duration<double, std::milli> ms_double = t2 - t1;
     std::cout << ms_double.count() << "ms\n";
+//    exit(1);
     return declarative_clauses;
 }
 

@@ -1873,14 +1873,14 @@ void MAXSatPipeline::pipeline(CNFDeclareDataAware* model,
                         else {
                             auto it2 = visited.emplace(declare, 0);
                             if (it2.second) {
-                                double numerator = 0.0;
-                                for (const auto& trace : declare->result) {
-                                    if (!trace.second.second.empty()) {
-                                        if (IS_MARKED_EVENT_ACTIVATION(*trace.second.second.begin()) || IS_MARKED_EVENT_MATCH(*trace.second.second.rbegin()))
-                                            numerator++;
-                                    }
-                                }
-                                it2.first->second = numerator / ((double)kb.noTraces);
+//                                double numerator = 0.0;
+//                                for (const auto& trace : declare->result) {
+//                                    if (!trace.second.second.empty()) {
+//                                        if (IS_MARKED_EVENT_ACTIVATION(*trace.second.second.begin()) || IS_MARKED_EVENT_MATCH(*trace.second.second.rbegin()))
+//                                            numerator++;
+//                                    }
+//                                }
+                                it2.first->second = declare->result.size() / ((double)kb.noTraces);
                             }
                             support_per_declare.emplace_back(it2.first->second);
                         }

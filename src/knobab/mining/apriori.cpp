@@ -35,6 +35,8 @@ std::string query_plan = "queryplan \"mdpi23\" {\n"
 #include <algorithm>
 #include <stdexcept>
 
+#include <nlohmann/json.hpp>
+
 /// https://gist.github.com/marcinwol/3283a92331ff64a8f531
 template <typename T,
         typename A,
@@ -144,6 +146,7 @@ void apriori(const std::string& logger_file,
     std::vector<DeclareDataAware> unary;
     size_t batch = 1;
     auto binary_clauses = actual(env, support, templates, unary);
+    std::vector<std::pair<DeclareDataAware,double>> W;
     for (const std::vector<DeclareDataAware>& x : chunker(binary_clauses, chunk_size)) {
         ss << "model-check declare " << std::endl;
         for (const auto& d : x) {
@@ -155,6 +158,10 @@ void apriori(const std::string& logger_file,
         sqm.runQuery(ss.str());
         ss.str(std::string());
         ss.clear();
+        auto j = nlohmann::json::parse(sqm.getContent())["PerDeclareSupport"];
+        for (size_t i = 0, N = x.size(); i<N; i++) {
+            W.emplace_back(x[i], j[i]);
+        }
         std::cout << "Query Batch #" <<  batch << ": " << sqm.getContent() << std::endl << std::endl;
         batch++;
     }
@@ -170,6 +177,10 @@ void apriori(const std::string& logger_file,
         sqm.runQuery(ss.str());
         ss.str(std::string());
         ss.clear();
+        auto j = nlohmann::json::parse(sqm.getContent())["PerDeclareSupport"];
+        for (size_t i = 0, N = x.size(); i<N; i++) {
+            W.emplace_back(x[i], j[i]);
+        }
         std::cout << "Unary Batch: " << sqm.getContent() << std::endl << std::endl;
     }
 
@@ -179,6 +190,9 @@ void apriori(const std::string& logger_file,
     ss.str(std::string());
     ss.clear();
     std::cout << "Dumper: "<< sqm.getContent() << std::endl << std::endl;
+    for (const auto& ref : W) {
+        std::cout << ref << std::endl;
+    }
 }
 
 
