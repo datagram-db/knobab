@@ -14,11 +14,11 @@ enum Algorithm {
 
 int main() {
     log_data_format format = XES1;
-    std::string log_file = "/home/giacomo/Scaricati/synthetic_logs(1)/1000_10_10.xes";
-    std::string model_file = "data/benchmarking/mining/models/model.txt";
+    std::string log_file = "/home/giacomo/Scaricati/logs (1)/10_10_1000.xes";
+    std::string model_file = "/home/giacomo/projects/knobab2/data/benchmarking/mining/models/model.txt";
 //    std::string log_file = "data/benchmarking/mining/bpic_2019/logs/10.xes";
 //    std::string model_file = "data/benchmarking/mining/models/model.txt";
-    double support = 0;
+    double support = 0.1;
     Algorithm algorithm = BOLT;
 
     std::vector<std::string> templates{};

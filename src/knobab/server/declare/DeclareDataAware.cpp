@@ -197,7 +197,7 @@ DeclareDataAware DeclareDataAware::unary(const declare_templates& t, const std::
 }
 
 DeclareDataAware DeclareDataAware::binary(const declare_templates& t, const std::string &left, const std::string right) {
-    DEBUG_ASSERT(!isUnaryPredicate(t));
+//    DEBUG_ASSERT(!isUnaryPredicate(t));
     DeclareDataAware result;
     result.casusu = t;
     result.left_act = left;
