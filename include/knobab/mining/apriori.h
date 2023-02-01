@@ -22,11 +22,16 @@ struct FeedQueryLoadFromFile {
 void apriori(const std::string& benchmarking_logger,
              const FeedQueryLoadFromFile& log,
              double support,
-             std::vector<std::string>& templates);
+             std::vector<std::string>& unary_templates,
+             std::vector<std::string>& binary_templates,
+             uint16_t iteration_num = 0,
+             bool no_stats = false);
 
 void previous_mining(const std::string& benchmarking_logger,
              const FeedQueryLoadFromFile& log,
              double support,
-             std::vector<std::string>& templates);
+             std::vector<std::string>& templates,
+             uint16_t iteration_num,
+             bool no_stats = false);
 
 #endif //KNOBAB_SERVER_APRIORI_H

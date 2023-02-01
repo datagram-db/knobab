@@ -108,7 +108,7 @@ void Environment::load_log(log_data_format format,
 
 
     experiment_logger.n_traces = db.noTraces;
-    experiment_logger.n_acts = db.actId;
+    experiment_logger.n_acts = db.nAct();
     // Compute some more trace statistics
 
     double trace_avg = 0, trace_pow2 = 0, N;

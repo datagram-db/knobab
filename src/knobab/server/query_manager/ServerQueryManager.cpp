@@ -304,6 +304,9 @@ std::any ServerQueryManager::visitLoad_data_query(KnoBABQueryParser::Load_data_q
         using std::chrono::duration;
         using std::chrono::milliseconds;
         env.experiment_logger.log_filename = filename;
+        env.experiment_logger.min_support = min_support;
+        env.experiment_logger.mining_algorithm = mining_algorithm;
+        env.experiment_logger.iteration_num = iteration_num;
 
         {
             //log_data_format format, bool loadData, std::istream &stream, KnowledgeBase &output,
@@ -341,7 +344,7 @@ std::any ServerQueryManager::visitLoad_data_query(KnoBABQueryParser::Load_data_q
         DataPredicate::msl = tmp;
 
         env.experiment_logger.n_traces = env.db.noTraces;
-        env.experiment_logger.n_acts = env.db.actId;
+        env.experiment_logger.n_acts = env.db.event_label_mapper.int_to_T.size();
         // Compute some more trace statistics
 
         double trace_avg = 0, trace_pow2 = 0, N;
@@ -902,6 +905,7 @@ std::any ServerQueryManager::visitModel_query(KnoBABQueryParser::Model_queryCont
 
                 /// Init Query
                 size_t nThreads = 1;
+                auto& ref2 = it->second.experiment_logger;
                 EnsembleMethods em = EnsembleMethods::TraceIntersection;
                 em = magic_enum::enum_cast<EnsembleMethods>(UNESCAPE(ctx->ensemble->getText())).value_or(em);
                 OperatorQueryPlan op = AbidingLogic;
@@ -919,8 +923,13 @@ std::any ServerQueryManager::visitModel_query(KnoBABQueryParser::Model_queryCont
                 ref.operators = op;
                 ref.pipeline(&it->second.grounding, it->second.ap, it->second.db);
                 nlohmann::json result;
-                result["model_declare_to_ltlf"] = ref.declare_to_ltlf_time;
-                result["model_ltlf_query_time"] = ref.ltlf_query_time;
+                result["model_declare_to_ltlf"] = ref.declare_to_ltlf_time < 0 ? 0 : ref.declare_to_ltlf_time;
+                result["model_ltlf_query_time"] = ref.ltlf_query_time < 0 ? 0 : ref.ltlf_query_time;
+                ref2.model_declare_to_ltlf = ref.declare_to_ltlf_time;
+                ref2.model_ltlf_query_time = ref.ltlf_query_time;
+                ref2.min_support = min_support;
+                ref2.mining_algorithm = mining_algorithm;
+                ref2.iteration_num = iteration_num;
 #ifdef MAXSatPipeline_PARALLEL
                 experiment_logger.is_multithreaded = true;
         experiment_logger.no_threads = noThreads;
@@ -997,10 +1006,12 @@ std::any ServerQueryManager::visitTopn(KnoBABQueryParser::TopnContext *ctx) {
     if (ctx) {
         auto topN = std::stoull(ctx->INTNUMBER()->getText());
         auto template_name = UNESCAPE(ctx->STRING()->getText());
-        auto v = tmpEnv->generateTopBinaryClauses(template_name,
+        auto v = tmpEnv->generate_top_n_clauses(template_name,
                                                   topN,
                                                   "");
-        tmpEnv->load_model(v.begin(), v.end(), template_name + std::to_string(topN * topN));
+
+        std::string file_name = "_" + (isUnaryPredicate(template_name) ? std::to_string(topN) : std::to_string(topN * topN));
+        tmpEnv->load_model(v.begin(), v.end(), template_name + file_name);
     }
     return {};
 }

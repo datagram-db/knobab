@@ -196,6 +196,12 @@ DeclareDataAware DeclareDataAware::unary(const declare_templates& t, const std::
     return result;
 }
 
+DeclareDataAware DeclareDataAware::unary_for_testing(const declare_templates& t, const std::string &argument, size_t n) {
+    auto result = unary(t, argument, n);
+    result.left_decomposed_atoms.insert(argument);
+    return result;
+}
+
 DeclareDataAware DeclareDataAware::binary(const declare_templates& t, const std::string &left, const std::string right) {
 //    DEBUG_ASSERT(!isUnaryPredicate(t));
     DeclareDataAware result;

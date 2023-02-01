@@ -5,6 +5,7 @@
 #include <knobab/algorithms/mining/pattern_mining.h>
 #include <knobab/mining/apriori.h>
 #include <fstream>
+#include "knobab/server/query_manager/ServerQueryManager.h"
 
 enum Algorithm {
     BOLT,
@@ -12,16 +13,20 @@ enum Algorithm {
     PREVIOUS_MINING
 };
 
-int main() {
+int main(int argc, char **argv) {
     log_data_format format = XES1;
-    std::string log_file = "/home/giacomo/Scaricati/logs (1)/10_10_1000.xes";
-    std::string model_file = "/home/giacomo/projects/knobab2/data/benchmarking/mining/models/model.txt";
-//    std::string log_file = "data/benchmarking/mining/bpic_2019/logs/10.xes";
-//    std::string model_file = "data/benchmarking/mining/models/model.txt";
-    double support = 0.1;
-    Algorithm algorithm = BOLT;
+    std::string log_file = "/home/sam/Documents/Repositories/CodeBases/knobab/data/benchmarking/mining/synthetic/logs/no_model/10_5_10.xes";
+    std::string unary_model_file = "/home/sam/Documents/Repositories/CodeBases/knobab/data/benchmarking/mining/models/unary.txt";
+    std::string binary_model_file = "/home/sam/Documents/Repositories/CodeBases/knobab/data/benchmarking/mining/models/binary.txt";
+    std::string logger_file = "/home/sam/Documents/Repositories/CodeBases/knobab/data/benchmarking/mining/results.csv";
 
-    std::vector<std::string> templates{};
+    double support = 0.9;
+    Algorithm algorithm = APRIORI;
+    uint16_t iters = 1;
+    bool no_stats = false;
+
+    std::vector<std::string> unary_templates{};
+    std::vector<std::string> binary_templates{};
 
     args::ArgumentParser parser("Title", "Description");
     args::HelpFlag help(parser, "help", "Display this help menu", {'h', "help"});
@@ -37,8 +42,27 @@ int main() {
     args::Flag previousAlgorithm(algorithm_group, "Previous Algorithm", "Previous algorithm for the mining", {'p', "previous"});
 
     args::Group group(parser, "You can use the following parameters", args::Group::Validators::DontCare, args::Options::Global);
-    args::ValueFlag<uint16_t>  supportVal(group, "Support Value", "If present, specifies the support value", {'s', "support"});
-    args::ValueFlag<std::string> modelFile(group, "Clauses to mine", "The model containing the clause templates to mine", {'m', "model"});
+    args::ValueFlag<double>  supportVal(group, "Support Value", "If present, specifies the support value", {'s', "support"});
+    args::ValueFlag<std::string> unaryModelFile(group, "Unary clauses to mine", "The model containing the unary clauses templates to mine", {'u', "unary"});
+    args::ValueFlag<std::string> binaryModelFile(group, "Binary Clauses to mine", "The model containing the binary clause templates to mine", {'n', "binary"});
+    args::ValueFlag<uint16_t>  iterNum(group, "Number of Iterations", "If present, specifies the number of times the pipeline will be run (for benchmarking)", {'q', "queryCount"});
+    args::ValueFlag<std::string> loggerFile(group, "Logger File Location", "The file to logs output (times etc) to", {'o', "output"});
+    args::Flag noStats(group, "No Stats", "Whether or not to generate statistical data", {"noStats"});
+
+    try {
+        parser.ParseCLI(argc, argv);
+    } catch (args::Help) {
+        std::cout << parser;
+        return 0;
+    } catch (args::ParseError e) {
+        std::cerr << e.what() << std::endl;
+        std::cerr << parser;
+        return 1;
+    } catch (args::ValidationError e) {
+        std::cerr << e.what() << std::endl;
+        std::cerr << parser;
+        return 1;
+    }
 
     if (logFile) {
         log_file = args::get(logFile);
@@ -62,43 +86,63 @@ int main() {
     if (previousAlgorithm) {
         algorithm = PREVIOUS_MINING;
     }
+
     if(supportVal){
         support = args::get(supportVal);
     }
-    if(modelFile){
-        model_file = args::get(modelFile);
+    if(unaryModelFile){
+        unary_model_file = args::get(unaryModelFile);
+    }
+    if(binaryModelFile){
+        binary_model_file = args::get(binaryModelFile);
+    }
+    if(loggerFile){
+        logger_file = args::get(loggerFile);
+    }
+    if(noStats){
+        no_stats = true;
     }
 
     FeedQueryLoadFromFile log;
     log.env_name = "env";
     log.file = log_file;
     log.format = format;
-    log.no_stats = true;
+    log.no_stats = false;
 
-    std::ifstream input_stream(model_file);
-//    if (!input_stream) {
-//        std::cerr << "Can't open model file!";
-//        return 1;
-//    }
+    std::ifstream u_input_stream(unary_model_file);
 
-    templates.clear();
+    unary_templates.clear();
     std::string line;
-    while (getline(input_stream, line)) {
-        templates.push_back(line);
+    while (getline(u_input_stream, line)) {
+        unary_templates.push_back(line);
     }
 
-    std::string logger_file = "data/benchmarking/mining/output.text";
+    std::ifstream b_input_stream(binary_model_file);
 
-    switch (algorithm) {
-        case BOLT:
-            bolt_algorithm(logger_file, log, support);       // Using directly the relational database representation without querying
-            break;
-        case APRIORI:
-            apriori(logger_file, log, support, templates);   // Using A-Priori + Querying for checking satisfiability
-            break;
-        case PREVIOUS_MINING:
-            previous_mining(logger_file, log, support, templates);   // Using A-Priori + Querying for checking satisfiability
-            break;
+    binary_templates.clear();
+    line.clear();
+    while (getline(b_input_stream, line)) {
+        binary_templates.push_back(line);
     }
+
+    if(iterNum){
+        iters = args::get(iterNum);
+    }
+
+    for(uint16_t i = 0; i < iters; ++i){
+        switch (algorithm) {
+            case BOLT:
+                bolt_algorithm(logger_file, log, support, i, no_stats);       // Using directly the relational database representation without querying
+                break;
+            case APRIORI:
+                apriori(logger_file, log, support, unary_templates, binary_templates, i, no_stats);   // Using A-Priori + Querying for checking satisfiability
+                break;
+            case PREVIOUS_MINING:
+                binary_templates.insert(binary_templates.end(), unary_templates.begin(), unary_templates.end());
+                previous_mining(logger_file, log, support, binary_templates, i, no_stats);   // Using A-Priori + Querying for checking satisfiability
+                break;
+        }
+    }
+
     return 0;
 }

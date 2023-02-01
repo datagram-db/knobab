@@ -35,8 +35,10 @@ struct LoggerInformation {
     double model_data_decomposition_time = -1.0;
     double model_atomization_time = -1.0;
     double model_declare_to_ltlf = -1.0;
-    double model_ltlf_query_time = -1.0;\
-
+    double model_ltlf_query_time = -1.0;
+    double min_support = 0.5;
+    std::string mining_algorithm = "APRIORI";
+    int iteration_num = 0;
     std::string strategyForScheduling;
 
 #ifdef MAXSatPipeline_PARALLEL

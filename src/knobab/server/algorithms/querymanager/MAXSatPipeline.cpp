@@ -601,6 +601,7 @@ static inline void local_fast_intersection(const LTLfQuery* q, Result& last_unio
 }
 
 #include <chrono>
+#include <fstream>
 
 static inline void partialResultUnion(const PartialResult& lhs,
                                       const PartialResult& rhs,
@@ -1873,20 +1874,46 @@ void MAXSatPipeline::pipeline(CNFDeclareDataAware* model,
                         else {
                             auto it2 = visited.emplace(declare, 0);
                             if (it2.second) {
-//                                double numerator = 0.0;
-//                                for (const auto& trace : declare->result) {
-//                                    if (!trace.second.second.empty()) {
-//                                        if (IS_MARKED_EVENT_ACTIVATION(*trace.second.second.begin()) || IS_MARKED_EVENT_MATCH(*trace.second.second.rbegin()))
-//                                            numerator++;
-//                                    }
-//                                }
+                                /*double numerator = 0.0;
+                                for (const auto& trace : declare->result) {
+                                    if (!trace.second.second.empty()) {
+                                        if (IS_MARKED_EVENT_ACTIVATION(*trace.second.second.begin()) || IS_MARKED_EVENT_MATCH(*trace.second.second.rbegin()))
+                                            numerator++;
+                                    }
+                                }*/
                                 it2.first->second = declare->result.size() / ((double)kb.noTraces);
                             }
                             support_per_declare.emplace_back(it2.first->second);
                         }
                     }
-                } break;
 
+//                    bool filePreexists = std::filesystem::exists("/home/sam/Documents/Repositories/CodeBases/knobab/data/benchmarking/mining/mined_clauses.csv");
+//                    std::ofstream log("/home/sam/Documents/Repositories/CodeBases/knobab/data/benchmarking/mining/mined_clauses.csv", std::ios_base::app | std::ios_base::out);
+//                    if (!filePreexists) {
+//                        log << "algorithm" << ","
+//                            << "clause" << ","
+//                            << "support" << std::endl;
+//                    }
+//
+//                    uint16_t num = 0;
+//                    for(const DisjunctiveDeclareDataAware& val : model->singleElementOfConjunction){
+//                        const DeclareDataAware& clause = val.elementsInDisjunction.at(0);
+//
+//                        if (clause.right_act != "") {
+//                            log << "ADM" << ","
+//                                 << clause.casusu + "(" + clause.left_act + "+" + clause.right_act << +")" << ","
+//                                 << support_per_declare.at(num) << std::endl;
+//                        } else {
+//                            log << "ADM" << ","
+//                                 << clause.casusu + "(" + clause.left_act << +")" << ","
+//                                    << support_per_declare.at(num) << std::endl;
+//                        }
+//
+//                        ++num;
+//                    }
+
+                    break;
+                }
 
                 case PerDeclareConfidence: {
                     std::unordered_map<LTLfQuery*, double> visited;
