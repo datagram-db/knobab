@@ -26,14 +26,8 @@ static const MarkedEventsVector maxVec(max,MAX_MARKED_EVENT());
 #include <functional>
 
 
-enum LeafType {
-    ActivationLeaf = 1,
-    TargetLeaf = 2,
-    NoneLeaf = 0,
-    NotALeaf = 4,
-    MatchActivationTarget = 3
-};
 
+#include <yaucl/bpm/structures/ltlf/LeafType.h>
 
 
 #include <vector>
