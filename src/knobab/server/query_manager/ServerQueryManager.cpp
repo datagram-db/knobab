@@ -754,6 +754,16 @@ void ServerQueryManager::run(const std::string& host, int port) {
 #include <knobab/server/query_manager/KnoBABQueryLexer.h>
 #include <magic_enum.hpp>
 
+void ServerQueryManager::loadModel(std::istream& stream) {
+    antlr4::ANTLRInputStream input(stream);
+    KnoBABQueryLexer lexer(&input);
+    antlr4::CommonTokenStream tokens(&lexer);
+    KnoBABQueryParser parser(&tokens);
+    visit(parser.model());
+//    parser.queries()->children[0]->accept(this);
+//    return {content.str(), format};
+}
+
 std::pair<std::string,std::string> ServerQueryManager::runQuery(const std::string &query) {
     antlr4::ANTLRInputStream input(query);
     KnoBABQueryLexer lexer(&input);
@@ -1128,7 +1138,7 @@ std::any ServerQueryManager::visitWith_model(KnoBABQueryParser::With_modelContex
             }
 
             if (dump_log) {
-                bool isXes = dump_log->XES() ? true : false;
+                bool isXes = dump_log->XES() != nullptr;
                 constexpr size_t record_size = sizeof(ActTable::record);
                 std::string file_name = UNESCAPE(dump_log->file->getText());
                 std::ofstream xes{file_name};
@@ -1248,7 +1258,13 @@ std::any ServerQueryManager::visitWith_model(KnoBABQueryParser::With_modelContex
                 std::string graph_cache_path = UNESCAPE(ctx->cachePath->getText());
                 double sample_ratio = .3;
                 bool isSampleRatioSet = false;
+
+                auto t1 = std::chrono::high_resolution_clock::now();
                 auto g = generateGraphFromEnvironment(*ptr, std::filesystem::path{cache_path});
+                auto t2 = std::chrono::high_resolution_clock::now();
+                // floating-point duration: no duration_cast needed
+                std::chrono::duration<double, std::milli> graph_gen_time_c = t2 - t1;
+                double graph_gen_time = graph_gen_time_c.count();
 
                 /// Serialising the graph in a .dot format
                 if (ctx->graphDot) {
