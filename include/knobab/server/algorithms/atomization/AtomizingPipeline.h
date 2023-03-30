@@ -18,6 +18,7 @@
 #include <ostream>
 #include <yaucl/bpm/structures/commons/easy_prop.h>
 #include <yaucl/structures/query_interval_set/structures/segment_partition_tree.h>
+#include <random>
 
 
 using label_var_atoms_map_t = std::unordered_map<std::string, std::unordered_map<std::string, std::unordered_set<DataPredicate>>>;
@@ -75,6 +76,29 @@ struct AtomizingPipeline {
      */
     semantic_atom_set atom_decomposition(const std::string &act, bool isNegated = false);
 
+    template <typename T>
+    void atom_decomposition(const std::string &act, bool isNegated, T& inserter) {
+        semantic_atom_set S;
+        auto it = interval_map.find(act);
+        if (it == interval_map.end()) {
+            // If the atom is not associated to an interval, then return the atom itself
+//            DEBUG_ASSERT(act_atoms.contains(act));
+            if (!isNegated) AddToContainer(inserter, act); else AddToContainer(S, act);
+        } else {
+            std::pair<std::string, size_t> cp; // convenience element, so not to re-allocate the memory all the time
+            cp.first = act;
+            for (size_t i = 0, N = max_ctam_iteration.at(act); i<N; i++) {
+                cp.second = i;
+                if (!isNegated) AddToContainer(inserter, clause_to_atomization_map.at(cp)); else AddToContainer(S, clause_to_atomization_map.at(cp));
+            }
+        }
+        if (isNegated) {
+            auto tmp = unordered_difference(atom_universe, S);
+            for (const auto& x : tmp)
+                AddToContainer(inserter, x);
+        }
+    }
+
     /**
      * Decomposition of a data predicate associated to a Act/Event
      * @param pred          Predicate information, containing also the Act/Event label one
@@ -95,9 +119,15 @@ struct AtomizingPipeline {
      * @return
      */
     friend std::ostream &operator<<(std::ostream &os, const AtomizingPipeline &pipeline);
+    void serialise_trace(std::ostream &xes,
+                         std::mt19937_64 &eng,
+                         size_t trace_id, const std::vector<std::string> &trace) const;
 
+    void serialise_event_in_trace(std::ostream &xes, std::mt19937_64 &eng, const std::basic_string<char> &atom_p) const;
 private:
     size_t count_fresh_atoms = 0;
+
+
 };
 #include <yaucl/structures/any_to_uint_bimap.h>
 

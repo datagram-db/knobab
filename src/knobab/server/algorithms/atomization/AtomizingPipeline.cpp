@@ -125,62 +125,74 @@ void AtomizingPipeline::serialize_atom_list_to_xes(const std::vector<std::vector
 //    constexpr size_t record_size = sizeof(ActTable::record);
     begin_log(xes);
     std::mt19937_64 eng{0};
+    for (size_t trace_id = 0, N = atomised_log.size(); trace_id < N; trace_id++) {
+        const auto& trace = atomised_log.at(trace_id);
+        serialise_trace(xes, eng, trace_id, trace);
+    }
+    end_log(xes);
+}
+
+void AtomizingPipeline::serialise_trace(std::ostream &xes, std::mt19937_64 &eng, size_t trace_id,
+                                        const std::vector<std::string> &trace) const {
+
+    begin_trace_serialize(xes, std::to_string(trace_id));
+    for (size_t event_id = 0, M = trace.size(); event_id<M; event_id++) {
+        const auto& atom_p = trace.at(event_id);
+        serialise_event_in_trace(xes, eng, atom_p);
+    }
+    end_trace_serialize(xes);
+}
+
+void AtomizingPipeline::serialise_event_in_trace(std::ostream &xes,
+                                                 std::mt19937_64 &eng,
+                                                 const std::basic_string<char> &atom_p) const {
     static const char MIN_CHAR = static_cast<char>(33);
     static const char MAX_CHAR = static_cast<char>(126);
     static const char MIN_NP_CHAR = static_cast<char>(std::numeric_limits<unsigned char>::min()+1);
     static const char MAX_NP_CHAR = static_cast<char>(std::numeric_limits<unsigned char>::max());
-    std::uniform_real_distribution<double>   prob(0.0, 1.0);
-    for (size_t trace_id = 0, N = atomised_log.size(); trace_id < N; trace_id++) {
-        begin_trace_serialize(xes, std::to_string(trace_id));
-        const auto& trace = atomised_log.at(trace_id);
-        for (size_t event_id = 0, M = trace.size(); event_id<M; event_id++) {
-            begin_event_serialize(xes);
-            const auto& atom_p = trace.at(event_id);
-            auto it = atom_to_conjunctedPredicates.find(atom_p);
-            if (it == atom_to_conjunctedPredicates.end()) {
-                serialize_event_label(xes, atom_p, -1);
+    static const std::uniform_real_distribution<double>   prob(0.0, 1.0);
+    begin_event_serialize(xes);
+    auto it = atom_to_conjunctedPredicates.find(atom_p);
+    if (it == atom_to_conjunctedPredicates.end()) {
+        serialize_event_label(xes, atom_p, -1);
+    } else {
+        bool firstLabel = true;
+        for (const auto& dp : it->second) {
+            if (firstLabel) {
+                serialize_event_label(xes, dp.label, -1);
+                firstLabel = false;
+            }
+            const std::string& var = dp.var;
+            DEBUG_ASSERT(dp.casusu == INTERVAL);
+            if (std::holds_alternative<double>(dp.value)) {
+                std::uniform_real_distribution<double>    distr(std::get<double>(dp.value), std::get<double>(dp.value_upper_bound));
+                serialize_event_attribute(xes, var, distr(eng));
             } else {
-                bool firstLabel = true;
-                for (const auto& dp : it->second) {
-                    if (firstLabel) {
-                        serialize_event_label(xes, dp.label, -1);
-                        firstLabel = false;
-                    }
-                    const std::string& var = dp.var;
-                    DEBUG_ASSERT(dp.casusu == INTERVAL);
-                    if (std::holds_alternative<double>(dp.value)) {
-                        std::uniform_real_distribution<double>    distr(std::get<double>(dp.value), std::get<double>(dp.value_upper_bound));
-                        serialize_event_attribute(xes, var, distr(eng));
-                    } else {
-                        std::vector<std::string> values;
-                        values.reserve(100);
-                        std::string min = std::get<std::string>(dp.value);
-                        std::replace( min.begin(), min.end(), MIN_NP_CHAR, MIN_CHAR);
-                        std::replace( min.begin(), min.end(), MAX_NP_CHAR, MAX_CHAR);
+                std::vector<std::string> values;
+                values.reserve(100);
+                std::string min = std::get<std::string>(dp.value);
+                std::replace( min.begin(), min.end(), MIN_NP_CHAR, MIN_CHAR);
+                std::replace( min.begin(), min.end(), MAX_NP_CHAR, MAX_CHAR);
 //                        min = next_printable_char(std::get<std::string>(dp.value), DataPredicate::msl);
-                        std::string max = std::get<std::string>(dp.value_upper_bound);
-                        std::replace( max.begin(), max.end(), MIN_NP_CHAR, MIN_CHAR);
-                        std::replace( max.begin(), max.end(), MAX_NP_CHAR, MAX_CHAR);
-                        max = prev_printable_char(max, DataPredicate::msl);
-                        while ((min <= max) && (values.size() <= 100)) {
-                            if (are_all_printable(min))
-                                values.emplace_back(min);
-                            min = next_printable_char(min, DataPredicate::msl);
-                        }
-                        if (values.empty()) {
-                            serialize_event_attribute(xes, var, std::get<std::string>(dp.value));
-                        } else {
-                            std::uniform_int_distribution<size_t>    distr(0, values.size()-1);
-                            serialize_event_attribute(xes, var, values.at(distr(eng)));
-                        }
-                    }
+                std::string max = std::get<std::string>(dp.value_upper_bound);
+                std::replace( max.begin(), max.end(), MIN_NP_CHAR, MIN_CHAR);
+                std::replace( max.begin(), max.end(), MAX_NP_CHAR, MAX_CHAR);
+                max = prev_printable_char(max, DataPredicate::msl);
+                while ((min <= max) && (values.size() <= 100)) {
+                    if (are_all_printable(min))
+                        values.emplace_back(min);
+                    min = next_printable_char(min, DataPredicate::msl);
+                }
+                if (values.empty()) {
+                    serialize_event_attribute(xes, var, std::get<std::string>(dp.value));
+                } else {
+                    std::uniform_int_distribution<size_t>    distr(0, values.size()-1);
+                    serialize_event_attribute(xes, var, values.at(distr(eng)));
                 }
             }
-            end_event_serialize(xes);
         }
-        end_trace_serialize(xes);
     }
-    end_log(xes);
+    end_event_serialize(xes);
 }
 
 #include <chrono>
