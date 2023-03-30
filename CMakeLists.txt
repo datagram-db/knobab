@@ -81,7 +81,7 @@ add_library(knobab_ndp
         src/knobab/server/ndp/KnowledgeBaseNDPReader.cpp)
 
 
-add_executable(benchmarking benchmarking/benchmarking.cpp benchmarking/benchmarking.cpp generate_traces.cpp) #${BACKWARD_ENABLE})
+add_executable(benchmarking benchmarking/benchmarking.cpp benchmarking/benchmarking.cpp) #${BACKWARD_ENABLE})
 
 add_executable(mining
         src/knobab/mining/pattern_mining.cpp
@@ -91,6 +91,7 @@ add_executable(mining
         src/knobab/mining/CountTableFPTree.cpp src/knobab/mining/apriori.cpp include/knobab/mining/apriori.h)
 
 add_executable(log_generator generate_traces.cpp)
+
 
 if(MSVC OR MSYS OR MINGW)
     target_link_libraries(knobab_server Threads::Threads antlr4_shared yaucl_hashing yaucl_bpm yaucl_structures
