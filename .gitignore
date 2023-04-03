@@ -22,4 +22,8 @@ query_compiler/java/*
 query_compiler/kinj/*
 query_compiler/python3/*
 query_compiler/.vscode/*
-/data/benchmarking
+*.RData
+*.Rhistory
+benchmarking/ideas_22/data/
+benchmarking/ideas_23/data/
+benchmarking/mdpi_22/data/

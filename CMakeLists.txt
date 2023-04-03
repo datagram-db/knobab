@@ -81,7 +81,7 @@ add_library(knobab_ndp
         src/knobab/server/ndp/KnowledgeBaseNDPReader.cpp)
 
 
-add_executable(benchmarking benchmarking/benchmarking.cpp benchmarking/benchmarking.cpp) #${BACKWARD_ENABLE})
+add_executable(custom_operators benchmarking/mdpi_22/custom_operators.cpp benchmarking/mdpi_22/custom_operators.cpp) #${BACKWARD_ENABLE})
 
 add_executable(mining
         src/knobab/mining/pattern_mining.cpp
@@ -95,7 +95,7 @@ if(MSVC OR MSYS OR MINGW)
             yaucl_numeric yaucl_data yaucl_graph  yaucl_data yaucl_bpm knobab  knobab_ndp)
     target_link_libraries(tests_main antlr4_shared yaucl_bpm yaucl_structures
             yaucl_numeric yaucl_data yaucl_graph yaucl_hashing yaucl_data yaucl_bpm knobab  knobab_ndp)
-    target_link_libraries(benchmarking knobab antlr4_shared yaucl_hashing yaucl_data knobab_ndp
+    target_link_libraries(custom_operators knobab antlr4_shared yaucl_hashing yaucl_data knobab_ndp
             yaucl_stringutils yaucl_numeric  yaucl_data yaucl_bpm yaucl_graph yaucl_structures)
     target_link_libraries(mining Threads::Threads knobab antlr4_shared yaucl_hashing
             yaucl_stringutils yaucl_numeric  yaucl_data yaucl_bpm yaucl_graph yaucl_structures yaucl_data knobab_ndp)
@@ -107,7 +107,7 @@ else()
             yaucl_numeric yaucl_data yaucl_graph  yaucl_data yaucl_bpm knobab  knobab_ndp)
     target_link_libraries(mining Threads::Threads knobab antlr4_static yaucl_hashing
             yaucl_stringutils yaucl_numeric  yaucl_data yaucl_bpm yaucl_graph yaucl_structures yaucl_data knobab_ndp)
-    target_link_libraries(benchmarking knobab antlr4_static yaucl_hashing yaucl_data knobab_ndp
+    target_link_libraries(custom_operators knobab antlr4_static yaucl_hashing yaucl_data knobab_ndp
             yaucl_stringutils yaucl_numeric  yaucl_data yaucl_bpm yaucl_graph yaucl_structures)
 endif()
 

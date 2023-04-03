@@ -129,10 +129,10 @@ void apriori(const std::string& logger_file,
              double support,
              std::vector<std::string>& unary_templates,
              std::vector<std::string>& binary_templates,
-             uint16_t iteration_num,
+             uint16_t iter_num,
              bool no_stats) {
     ServerQueryManager sqm;
-    sqm.iteration_num = iteration_num;
+    sqm.iteration_num = iter_num;
     sqm.mining_algorithm = "APRIORI";
     sqm.min_support = support;
     std::stringstream ss;
@@ -184,7 +184,7 @@ void apriori(const std::string& logger_file,
         std::cout << "Unary Batch: " << sqm.getContent() << std::endl << std::endl;
     }
 
-    if(!no_stats) {
+    if(!no_stats && iter_num != 0) {
         //Dumping to the logger file
         ss << "benchmarking-log " << std::quoted(logger_file);
         sqm.runQuery(ss.str());
@@ -200,12 +200,12 @@ void previous_mining(const std::string& logger_file,
              const FeedQueryLoadFromFile& log,
              double support,
              std::vector<std::string>& templates,
-             uint16_t iteration_num,
+             uint16_t iter_num,
              bool no_stats) {
     ServerQueryManager sqm;
     sqm.min_support = support;
     sqm.mining_algorithm = "PREVIOUS_MINING";
-    sqm.iteration_num = iteration_num;
+    sqm.iteration_num = iter_num;
 
     std::stringstream ss;
 
@@ -251,7 +251,7 @@ void previous_mining(const std::string& logger_file,
 //        batch++;
 //    }
 
-    if(!no_stats) {
+    if(!no_stats && iter_num != 0) {
         //Dumping to the logger file
         ss << "benchmarking-log " << std::quoted(logger_file);
         sqm.runQuery(ss.str());

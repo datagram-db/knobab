@@ -48,7 +48,7 @@ void bolt_algorithm(const std::string& logger_file,
 //        }
 //    }
 
-    if(!no_stats){
+    if(!no_stats && iter_num != 0){
         bool filePreexists = std::filesystem::exists(logger_file);
         std::ofstream log(logger_file, std::ios_base::app | std::ios_base::out);
         if (!filePreexists) {
