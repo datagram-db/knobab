@@ -15,9 +15,9 @@ enum Algorithm {
 
 int main(int argc, char **argv) {
     log_data_format format = XES1;
-    std::string log_file = "/home/sam/Documents/Repositories/Codebases/knobab/data/benchmarking/mining/synthetic/logs/no_model/10_5_10.xes";
-    std::string unary_model_file = "/home/sam/Documents/Repositories/Codebases/knobab/data/benchmarking/mining/models/unary.txt";
-    std::string binary_model_file = "/home/sam/Documents/Repositories/Codebases/knobab/data/benchmarking/mining/models/binary.txt";
+    std::string log_file = "/home/sam/Documents/Repositories/Codebases/knobab/benchmarking/ideas_23/data/synthetic/logs/10_10_10.xes";
+    std::string unary_model_file = "/home/sam/Documents/Repositories/Codebases/knobab/benchmarking/ideas_23/data/models/unary.txt";
+    std::string binary_model_file = "/home/sam/Documents/Repositories/Codebases/knobab/benchmarking/ideas_23/data/models/binary.txt";
     std::string logger_file = "/home/sam/Documents/Repositories/Codebases/knobab/data/benchmarking/mining/results.csv";
 
     double support = 0.9;

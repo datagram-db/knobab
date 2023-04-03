@@ -12,6 +12,6 @@ logs=("benchmarking/ideas_23/data/synthetic/logs/10_10_10.xes" "benchmarking/ide
 
 for a in "${algorithm[@]}"; do
 	for l in "${logs[@]}"; do
-		./cmake-build-release/mining -s 0.9 -"$a" -x "$l" -o "benchmarking/ideas_23/data/results/results_synthetic.csv" -q 5
+		./cmake-build-release/mining -s 0.9 -"$a" -x "$l" -o "benchmarking/ideas_23/data/results/synthetic.csv" -q 5
 	done
 done

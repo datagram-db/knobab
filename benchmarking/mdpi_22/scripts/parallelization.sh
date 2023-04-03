@@ -16,7 +16,7 @@ for ms in "${plist[@]}"; do
 		  	for sched in "${schedulesArray[@]}"; do
 #			      echo "$ms $val $proc $sched"
 #			      sleep 3
-			      ./parall/knobab-v1.0 --nostats --nodata --queryCount 5 --topN $ms --topNTemplate=$val --xes=benchmarking/mdpi_22/data/bpic_2011/logs/original/log.xes --maxsat=$proc --csv=benchmarking/mdpi_22/data/results/parallel.csv --scheduler=$sched
+			      ./parall/knobab-v1.0 --nostats --nodata --queryCount 5 --topN $ms --topNTemplate=$val --xes=benchmarking/mdpi_22/data/bpic_2011/logs/original/log.xes --maxsat=$proc --csv=benchmarking/mdpi_22/data/results/parallelization.csv --scheduler=$sched
 			done
 		done
 	done
