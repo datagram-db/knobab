@@ -25,5 +25,5 @@ query_compiler/.vscode/*
 *.RData
 *.Rhistory
 benchmarking/ideas_22/data/
-benchmarking/ideas_23/data/
 benchmarking/mdpi_22/data/
+benchmarking/ideas_23/data/
