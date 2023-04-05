@@ -2,6 +2,7 @@ library(reshape2)
 library(ggplot2)
 library(latex2exp)
 library(extrafont)
+library(dplyr)
 
 loadfonts(device="pdf")
 setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
@@ -34,31 +35,51 @@ df_knobab_batches <- aggregate(cbind(loading_and_indexing_time, mining_time) ~ n
 
 df_merge <- rbind(df_adms, df_knobab_bolt, df_knobab_batches)
 
-df_merge$execution_time <- (df_merge$loading_and_indexing_time + df_merge$mining_time)
-
 scientific_10 <- function(x) {
   parse(text=gsub("e", "%*% 10^", scales::scientific_format()(x/10)))
 }
 
 df_merge$mining_algorithm <- factor(df_merge$mining_algorithm, levels = c("BOLT", "PREVIOUS_MINING", "APRIORI", "ADM_S"))
+
+
+df_merge$mining_time <- df_merge$mining_time * 10
+df_merge$loading_and_indexing_time <- df_merge$loading_and_indexing_time * 10
+df_merge$execution_time <- (df_merge$loading_and_indexing_time + df_merge$mining_time)
 df_merge$min_support <- factor(df_merge$min_support)
 
-df_merge$n_traces <- factor(df_merge$n_traces, 
-                  labels= c(expression("|" ~ L ~ "|" == 1%*%10^1),
-                            expression("|" ~ L ~ "|" == 1%*%10^2),
-                            expression("|" ~ L ~ "|" == 1%*%10^3),
-                            expression("|" ~ L ~ "|" == 1%*%10^4),
-                            expression("|" ~ L ~ "|" == 1%*%10^5)))
+df_merge$n_traces <- factor(df_merge$n_traces,
+                       labels= c(expression("|" ~ L ~ "|" == 1%*%10^1),
+                                 expression("|" ~ L ~ "|" == 1%*%10^2),
+                                 expression("|" ~ L ~ "|" == 1%*%10^3),
+                                 expression("|" ~ L ~ "|" == 1%*%10^4),
+                                 expression("|" ~ L ~ "|" == 1%*%10^5)))
 
-df_plot <- ggplot(data=df_merge, aes(x=min_support, y=execution_time*10, fill=mining_algorithm)) +
-  geom_col(position = "dodge") +
-  labs(x = expression(theta), y = expression(lambda + mu  ~ "(ms)")) +
+df_stack <- df_merge
+df_stack$execution_time <- NULL;
+df_stack <- melt(df_stack, id.vars=c('min_support', 'n_traces', 'mining_algorithm'))
+
+df_stack %>%
+  group_by(mining_algorithm, min_support) %>%
+  mutate(cum_tot = cumsum(value)) %>%
+  ggplot(aes(min_support, cum_tot, fill=mining_algorithm)) +
+  geom_col(data = . %>% filter(variable=="loading_and_indexing_time"), position = position_dodge(width = 0.9), alpha = 1) +
+  geom_col(data = . %>% filter(variable=="mining_time"), position = position_dodge(width = 0.9), alpha = 0.4) +
+  geom_tile(aes(y=NA_integer_, alpha = variable)) +
+  scale_alpha_manual(values = c(1,0.4)) +
   scale_y_log10(labels = scientific_10, breaks=sapply(10, function(v) v**(-2:6))) +
-  theme(legend.position="bottom", text = element_text(family = "Linux Libertine")) +
-  labs(fill="Algorithm", linetype=expression("|" ~ sigma ~ "|"), shape=expression("|" ~ sigma ~ "|"))+ 
+  labs(x = expression(theta), y = expression(lambda + mu  ~ "(ms)"), fill="Algorithm") + 
+  theme(legend.position="bottom", text = element_text(family = "Linux Libertine")) + 
   scale_fill_discrete(labels=c("Bolt", "TopN Declare", "ADM", "ADM + S")) +
   facet_wrap( ~ n_traces, nrow=1, ncol=5, labeller=label_parsed)
 
-df_plot
+# df_plot <- ggplot(data=df_merge, aes(x=min_support, y=execution_time*10, fill=mining_algorithm)) +
+#   geom_col(position = "dodge", stat="identity") +
+#   labs(x = expression(theta), y = expression(lambda + mu  ~ "(ms)"), fill="Algorithm") +
+#   scale_y_log10(labels = scientific_10, breaks=sapply(10, function(v) v**(-2:6))) +
+#   theme(legend.position="bottom", text = element_text(family = "Linux Libertine")) +
+#   scale_fill_discrete(labels=c("Bolt", "TopN Declare", "ADM", "ADM + S")) +
+#   facet_wrap( ~ n_traces, nrow=1, ncol=5, labeller=label_parsed)
+# 
+# df_plot
 # ggsave("benchmark_real.pdf", df_plot, width=16, height=6, device=cairo_pdf)
 
