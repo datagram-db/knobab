@@ -56,18 +56,23 @@ df_merge$n_traces <- factor(df_merge$n_traces,
 
 df_stack <- df_merge
 df_stack$execution_time <- NULL;
-df_stack <- melt(df_stack, id.vars=c('min_support', 'n_traces', 'mining_algorithm'))
+df_stack <- melt(df_stack, id.vars=c('n_traces', 'min_support', 'mining_algorithm'))
+names(df_stack)[names(df_stack) == "variable"] <- "Time"
 
-df_stack %>%
-  group_by(mining_algorithm, min_support) %>%
-  mutate(cum_tot = cumsum(value)) %>%
-  ggplot(aes(min_support, cum_tot, fill=mining_algorithm)) +
-  geom_col(data = . %>% filter(variable=="loading_and_indexing_time"), position = position_dodge(width = 0.9), alpha = 1) +
-  geom_col(data = . %>% filter(variable=="mining_time"), position = position_dodge(width = 0.9), alpha = 0.4) +
-  geom_tile(aes(y=NA_integer_, alpha = variable)) +
+df_stack$Time <- factor(df_stack$Time,
+                            labels= c("Loading + Indexing",
+                                      "Mining"))
+
+df_stack <- df_stack %>% group_by(n_traces, min_support, mining_algorithm)
+df_stack <- df_stack %>% mutate(cum_tot = cumsum(value))
+
+ggplot(data = df_stack, aes(min_support, cum_tot, fill=mining_algorithm)) +
+  geom_col(data = . %>% filter(Time=="Loading + Indexing"), position = position_dodge(width = 0.9), alpha = 1) +
+  geom_col(data = . %>% filter(Time=="Mining"), position = position_dodge(width = 0.9), alpha = 0.4) +
+  geom_tile(aes(y=NA_integer_, alpha = Time)) +
   scale_alpha_manual(values = c(1,0.4)) +
   scale_y_log10(labels = scientific_10, breaks=sapply(10, function(v) v**(-2:6))) +
-  labs(x = expression(theta), y = expression(lambda + mu  ~ "(ms)"), fill="Algorithm") + 
+  labs(x = expression(theta), y = expression(lambda + mu  ~ "(ms)"), fill="Algorithm", group="test") + 
   theme(legend.position="bottom", text = element_text(family = "Linux Libertine")) + 
   scale_fill_discrete(labels=c("Bolt", "TopN Declare", "ADM", "ADM + S")) +
   facet_wrap( ~ n_traces, nrow=1, ncol=5, labeller=label_parsed)
@@ -79,7 +84,7 @@ df_stack %>%
 #   theme(legend.position="bottom", text = element_text(family = "Linux Libertine")) +
 #   scale_fill_discrete(labels=c("Bolt", "TopN Declare", "ADM", "ADM + S")) +
 #   facet_wrap( ~ n_traces, nrow=1, ncol=5, labeller=label_parsed)
-# 
+
 # df_plot
 # ggsave("benchmark_real.pdf", df_plot, width=16, height=6, device=cairo_pdf)
 
