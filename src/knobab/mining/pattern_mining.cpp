@@ -26,32 +26,28 @@ void bolt_algorithm(const std::string& logger_file,
     std::cout << "Starting from now!" << std::endl;
     std::pair<std::vector<pattern_mining_result<DeclareDataAware>>, double> list = pattern_mining(env.db, support, false, true, true, false, false);
 
-//    bool filePreexists1 = std::filesystem::exists("/home/sam/Documents/Repositories/CodeBases/knobab/data/benchmarking/mining/mined_clauses.csv");
-//    std::ofstream log1("/home/sam/Documents/Repositories/CodeBases/knobab/data/benchmarking/mining/mined_clauses.csv", std::ios_base::app | std::ios_base::out);
-//    if (!filePreexists1) {
-//        log1 << "algorithm" << ","
-//                << "clause" << ","
-//                << "support" << std::endl;
-//    }
-//
-//    for (const pattern_mining_result<DeclareDataAware>& result : list.first) {
-//        std::cout << result << std::endl;
-//        if(result.clause.right_act != "") {
-//            log1 << "BOLT" << ","
-//                 << result.clause.casusu + "(" + result.clause.left_act + "+" + result.clause.right_act <<  + ")" << ","
-//                 << result.support_declarative_pattern << std::endl;
+    std::string validation_file = "/home/sam/Documents/Repositories/Codebases/knobab/benchmarking/ideas_23/data/mined_clauses.csv";
+    std::ofstream validation_stream(validation_file, std::ios_base::out);
+
+    validation_stream << "algorithm" << ","
+                      << "clause" << ","
+                      << "support";
+
+    for (const pattern_mining_result<DeclareDataAware>& result : list.first) {
+//        if(result.support_declarative_pattern != 1){
+//            continue;
 //        }
-//        else {
-//            log1 << "BOLT" << ","
-//                 << result.clause.casusu + "(" + result.clause.left_act <<  + ")" << ","
-//                 << result.support_declarative_pattern << std::endl;
-//        }
-//    }
+        std::cout << result << std::endl;
+        std::string output = result.clause.right_act != "" ? result.clause.casusu + "(" + result.clause.left_act + "+" + result.clause.right_act  + ")" : result.clause.casusu + "(" + result.clause.left_act +  + ")";
+
+        validation_stream << std::endl << "BOLT" << ","
+             << output << ","
+             << result.support_declarative_pattern;
+    }
 
     if(!no_stats && iter_num != 0){
-        bool filePreexists = std::filesystem::exists(logger_file);
         std::ofstream log(logger_file, std::ios_base::app | std::ios_base::out);
-        if (!filePreexists) {
+        if (!std::filesystem::exists(logger_file)) {
             LoggerInformation::log_csv_file_header(log);
         }
 
@@ -150,10 +146,11 @@ static inline DeclareDataAware &getAware(const KnowledgeBase &kb,
 // this is unlikely to happen, and I do not ever start performing the
 // search.
         std::vector<bool> isTraceVisitedU(ntraces, false);
+        double sup_chain_prec = 0.0, sup_chain_resp = 0.0;
         if (alles_nexte) {
+            bool alles_prev = true, alles_next = true;
             size_t alles_not_prev = 0,
                     alles_not_next = 0;
-            bool alles_prev = true, alles_next = true;
 // This is still computed, as it is required for both 1) and 2)
             auto a_beginend = kb.timed_dataless_exists(A);
             DEBUG_ASSERT(a_beginend.first != a_beginend.second);
@@ -181,19 +178,19 @@ static inline DeclareDataAware &getAware(const KnowledgeBase &kb,
                 a_beginend.first++;
             }
             if (alles_prev) {
+                sup_chain_prec = (((double) (ntraces - alles_not_prev)) / ((double) ntraces));
                 clause.casusu = "ChainPrecedence";
                 declarative_clauses.emplace_back(clause,
                                                  result.support_generating_original_pattern,
-                                                 (((double) (ntraces - alles_not_prev)) /
-                                                  ((double) ntraces)),
+                                                 sup_chain_prec,
                                                  -1);
             }
             if (alles_next) {
+                sup_chain_resp = (((double) (ntraces - alles_not_next)) / ((double) ntraces));
                 clause.casusu = "ChainResponse";
                 declarative_clauses.emplace_back(clause,
                                                  result.support_generating_original_pattern,
-                                                 (((double) (ntraces - alles_not_next)) /
-                                                  ((double) ntraces)),
+                                                 sup_chain_resp,
                                                  -1);
             }
 
@@ -336,20 +333,23 @@ static inline DeclareDataAware &getAware(const KnowledgeBase &kb,
             isTraceVisitedU[trace_id] = true;
         }
 
-        if (alles_precedence) {
+        /* Sam.A We don't want to add Precedence if we already have a ChainPrecedence */
+        /* TODO Need to discuss below */
+        double sup_prec = (((double) (ntraces - alles_not_precedence)) / ((double) ntraces));
+        if (alles_precedence && sup_chain_prec != sup_prec) {
             clause.casusu = "Precedence";
             declarative_clauses.emplace_back(clause,
                                              result.support_generating_original_pattern,
-                                             (((double) (ntraces - alles_not_precedence)) /
-                                              ((double) ntraces)),
+                                             sup_prec,
                                              -1);
         }
-        if (alles_response) {
+        /* Sam.A We don't want to add Response if we already have a ChainResponse */
+        double resp_sup = (((double) (ntraces - alles_not_response)) / ((double) ntraces));
+        if (alles_response && sup_chain_resp != resp_sup) {
             clause.casusu = "Response";
             declarative_clauses.emplace_back(clause,
                                              result.support_generating_original_pattern,
-                                             (((double) (ntraces - alles_not_response)) /
-                                              ((double) ntraces)),
+                                             resp_sup,
                                              -1);
             if (ptn) {
                 std::vector<trace_t> responseSupp;
@@ -683,11 +683,8 @@ std::pair<std::vector<pattern_mining_result<DeclareDataAware>>, double> pattern_
 //                std::cout << "DEBUG" << std::endl;
 //
 //            }
-            declarative_clauses.emplace_back(clause,
-                                             result.support_generating_original_pattern,
-                                             dss,
-                                             result.confidence_declarative_pattern);
 
+            size_t beforeInsertion = declarative_clauses.size();
             getAware(kb, special_temporal_patterns, only_precise_temporal_patterns, count_table,
                      minimum_support_threshold,
                      declarative_clauses, result, A, B, clause,
@@ -699,6 +696,14 @@ std::pair<std::vector<pattern_mining_result<DeclareDataAware>>, double> pattern_
                          minimum_support_threshold,
                          declarative_clauses, result, B, A, clause,
                          negative_patterns ? &patterns_to_negate : nullptr);
+            }
+            /* We have inserted any of Response, Precedence or their chains, don't insert their ancestors */
+            /* TODO Sam.A Below needs to be discussed wrt the email, support of RespEx may be greater than any of the ancestors so we can't disregard it */
+            if (beforeInsertion == declarative_clauses.size()) {
+                declarative_clauses.emplace_back(clause,
+                                                 result.support_generating_original_pattern,
+                                                 dss,
+                                                 result.confidence_declarative_pattern);
             }
         }
     }
@@ -835,12 +840,7 @@ std::pair<std::vector<pattern_mining_result<DeclareDataAware>>, double> pattern_
                     }
                 }
             }
-
-
         }
-
-
-
     }
 
     if (init_end) {

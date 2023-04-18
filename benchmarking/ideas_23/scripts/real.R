@@ -68,9 +68,9 @@ df_stack <- df_stack %>% mutate(cum_tot = cumsum(value))
 
 ggplot(data = df_stack, aes(min_support, cum_tot, fill=mining_algorithm)) +
   geom_col(data = . %>% filter(Time=="Loading + Indexing"), position = position_dodge(width = 0.9), alpha = 1) +
-  geom_col(data = . %>% filter(Time=="Mining"), position = position_dodge(width = 0.9), alpha = 0.4) +
+  geom_col(data = . %>% filter(Time=="Mining"), position = position_dodge(width = 0.9), alpha = 0.3) +
   geom_tile(aes(y=NA_integer_, alpha = Time)) +
-  scale_alpha_manual(values = c(1,0.4)) +
+  scale_alpha_manual(values = c(1,0.3), labels = c(expression(lambda), expression(mu))) +
   scale_y_log10(labels = scientific_10, breaks=sapply(10, function(v) v**(-2:6))) +
   labs(x = expression(theta), y = expression(lambda + mu  ~ "(ms)"), fill="Algorithm", group="test") + 
   theme(legend.position="bottom", text = element_text(family = "Linux Libertine")) + 
