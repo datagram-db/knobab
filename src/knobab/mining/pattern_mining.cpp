@@ -34,19 +34,19 @@ void bolt_algorithm(const std::string& logger_file,
 //                << "support" << std::endl;
 //    }
 //
-//    for (const pattern_mining_result<DeclareDataAware>& result : list.first) {
-//        std::cout << result << std::endl;
+    for (const pattern_mining_result<DeclareDataAware>& result : list.first) {
+        std::cout << result << std::endl;
 //        if(result.clause.right_act != "") {
-//            log1 << "BOLT" << ","
+//            std::cout << "BOLT" << ","
 //                 << result.clause.casusu + "(" + result.clause.left_act + "+" + result.clause.right_act <<  + ")" << ","
 //                 << result.support_declarative_pattern << std::endl;
 //        }
 //        else {
-//            log1 << "BOLT" << ","
+//            std::cout << "BOLT" << ","
 //                 << result.clause.casusu + "(" + result.clause.left_act <<  + ")" << ","
 //                 << result.support_declarative_pattern << std::endl;
 //        }
-//    }
+    }
 
     if(!no_stats){
         bool filePreexists = std::filesystem::exists(logger_file);
