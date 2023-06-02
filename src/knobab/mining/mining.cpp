@@ -15,13 +15,13 @@ enum Algorithm {
 
 int main(int argc, char **argv) {
     log_data_format format = XES1;
-    std::string log_file = "/home/sam/Documents/Repositories/CodeBases/knobab/data/benchmarking/mining/synthetic/logs/no_model/10_5_10.xes";
+    std::string log_file = "/home/giacomo/Scaricati/1000_30_10.xes";
     std::string unary_model_file = "/home/sam/Documents/Repositories/CodeBases/knobab/data/benchmarking/mining/models/unary.txt";
     std::string binary_model_file = "/home/sam/Documents/Repositories/CodeBases/knobab/data/benchmarking/mining/models/binary.txt";
     std::string logger_file = "/home/sam/Documents/Repositories/CodeBases/knobab/data/benchmarking/mining/results.csv";
 
-    double support = 0.9;
-    Algorithm algorithm = APRIORI;
+    double support = 0.1;
+    Algorithm algorithm = BOLT;
     uint16_t iters = 1;
     bool no_stats = false;
 
