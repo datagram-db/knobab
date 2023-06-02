@@ -15,21 +15,26 @@ void bolt_algorithm(const std::string& logger_file,
                     double support,
                     uint16_t iter_num,
                     bool no_stats = false);
-
 std::pair<std::vector<pattern_mining_result<DeclareDataAware>>, double> pattern_mining(const KnowledgeBase& kb,
                                                                     double support,
-                                                                    bool naif,
-                                                                    bool init_end,
-                                                                    bool special_temporal_patterns,
-                                                                    bool only_precise_temporal_patterns,
-                                                                    bool negative_patterns);
+                                                                    bool naif = false,
+                                                                    bool init_end = true,
+                                                                    bool special_temporal_patterns = true,
+                                                                    bool only_precise_temporal_patterns = false,
+                                                                    bool negative_patterns = false);
 
-std::vector<pattern_mining_result<DeclareDataAware>> classifier_mining(const KnowledgeBase& pos,
-                                                                       const KnowledgeBase& neg,
+
+#include <knobab/server/query_manager/ServerQueryManager.h>
+
+std::pair<std::vector<pattern_mining_result<DeclareDataAware>>,
+        std::vector<pattern_mining_result<DeclareDataAware>>> classifier_mining(ServerQueryManager sqm,
+                                                                                const std::string& pos,
+                                                                                const std::string& neg,
                                                                     double support,
-                                                                    bool naif,
-                                                                    bool init_end,
-                                                                       bool special_temporal_patterns,
-                                                                       bool only_precise_temporal_patterns);
+                                                                       bool naif = false,
+                                                                       bool init_end = true,
+                                                                       bool special_temporal_patterns = true,
+                                                                       bool only_precise_temporal_patterns = false,
+                                                                       bool negative_patterns = false);
 
 #endif //KNOBAB_PATTERN_MINING_H
