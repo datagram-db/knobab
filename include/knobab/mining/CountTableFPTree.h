@@ -16,13 +16,14 @@
 #include <vector>
 #include <utility>
 #include <algorithm>
+#include <unordered_set>
 #include "knobab/server/tables/CountTemplate.h"
 
 #define ForAll(T)       template <typename T>
 
 using Transaction           = std::vector<act_t>;
 using TransformedPrefixPath = std::pair<std::vector<act_t>, uint64_t>;
-using Pattern               = std::pair<std::set<act_t>, uint64_t>;
+using Pattern               = std::pair<std::unordered_set<act_t>, uint64_t>;
 ForAll(T) using GenPattern  = std::pair<std::set<T>, uint64_t>;
 
 /*

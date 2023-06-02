@@ -463,8 +463,8 @@ std::pair<std::vector<pattern_mining_result<DeclareDataAware>>, double> pattern_
     std::cout << max_act_id << std::endl;
     auto fpt_result = fpgrowth(count_table, max_act_id, final_element_for_scan, minimum_support_threshold, 2);
 //    std::cout << fpt_result << std::endl;
-    std::set<Pattern> binary_patterns;
-    std::map<std::set<act_t>, uint64_t> mapper;
+    std::unordered_set<Pattern> binary_patterns;
+    std::unordered_map<std::unordered_set<act_t>, uint64_t> mapper;
     std::unordered_set<act_t> unary_patterns_for_non_exact_support;
     for (const auto& x : fpt_result) {
         if (x.second.size() == 1) {
@@ -528,9 +528,9 @@ std::pair<std::vector<pattern_mining_result<DeclareDataAware>>, double> pattern_
         } else {
             DEBUG_ASSERT(x.second.size() == 2);
             for (const auto& y : x.second) absent_acts.erase(y);
-            std::set<act_t> S{x.second.begin(), x.second.end()};
-            binary_patterns.emplace(S, x.first);
-            mapper[S] = x.first;
+//            std::set<act_t> S{x.second.begin(), x.second.end()};
+            binary_patterns.emplace(x.second, x.first);
+            mapper[x.second] = x.first;
         }
     }
     if (negative_patterns) {
@@ -600,7 +600,7 @@ std::pair<std::vector<pattern_mining_result<DeclareDataAware>>, double> pattern_
                     curr_pair.first = inv_pair.second = a;
                     for (const auto& b : y) {
                         if (b == a) continue;
-                        std::set<act_t> lS{a,b};
+                        std::unordered_set<act_t> lS{a,b};
                         curr_pair.second = inv_pair.first = b;
                         if ((!visited_pairs.emplace(curr_pair).second) ||
                             (!visited_pairs.emplace(inv_pair).second)) continue;
