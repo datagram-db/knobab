@@ -125,14 +125,29 @@ static inline DeclareDataAware &getAware(const KnowledgeBase &kb,
         size_t expected_support = only_precise_temporal_patterns ?
                                   ntraces :
                                   minimum_support_threshold;
+        size_t tolerated_errors = expected_support - ntraces;
 
 
+        size_t alles_not_nexte = 0;
+        bool alles_nexte = true;
+        bool hasClausesMined = false;
+        size_t alles_not_prev = 0,
+                alles_not_next = 0;
+        bool alles_prev = true, alles_next = true;
+        std::vector<trace_t> removed_traces_from_response;
+        auto alles_precedence = true;
+        size_t alles_not_precedence = 0;
+        auto alles_response = true;
+        size_t alles_not_response = 0;
+        auto alles_altresponse = true;
+        size_t alles_not_altresponse = 0;
+        std::vector<bool> isTraceVisitedU(ntraces, false);
 
 // 1) First kind of specialized patterns:
 // events happening immediately previously and next:
 // This might leverage the prev/next pointers!
-        size_t alles_not_nexte = 0;
-        bool alles_nexte = true;
+
+
         for (auto sigma = 0; sigma < ntraces; sigma++) {
             auto lA = count_table.resolve_length(A, sigma);
             if (lA > 0) {
@@ -150,11 +165,9 @@ static inline DeclareDataAware &getAware(const KnowledgeBase &kb,
 // this is unlikely to happen, and I do not ever start performing the
 // search.
 //        std::vector<bool> isTraceVisitedU(ntraces, false);
-        bool hasClausesMined = false;
+
+
         if ((!alles_nexte) || (alles_not_nexte > 0)) {
-            size_t alles_not_prev = 0,
-                    alles_not_next = 0;
-            bool alles_prev = true, alles_next = true;
 // This is still computed, as it is required for both 1) and 2)
             auto a_beginend = kb.timed_dataless_exists(A);
             DEBUG_ASSERT(a_beginend.first != a_beginend.second);
@@ -182,36 +195,12 @@ static inline DeclareDataAware &getAware(const KnowledgeBase &kb,
                 }
                 a_beginend.first++;
             }
-            if (alles_prev && (alles_not_prev < alles_not_next)) {
-                hasClausesMined = true;
-                clause.casusu = "ChainPrecedence";
-                declarative_clauses.emplace_back(clause,
-                                                 result.support_generating_original_pattern,
-                                                 (((double) (ntraces - alles_not_prev)) /
-                                                  ((double) ntraces)),
-                                                 -1);
-            }
-            if (alles_next && (alles_not_prev > alles_not_next)) {
-                hasClausesMined = true;
-                clause.casusu = "ChainResponse";
-                declarative_clauses.emplace_back(clause,
-                                                 result.support_generating_original_pattern,
-                                                 (((double) (ntraces - alles_not_next)) /
-                                                  ((double) ntraces)),
-                                                 -1);
-            }
+
 
 // re-setting the vector to all falses!
 //            std::fill(isTraceVisitedU.begin(), isTraceVisitedU.end(), false);
         }
-        if (!hasClausesMined) {
-            clause.casusu = "ChainSuccession";
-            declarative_clauses.emplace_back(clause,
-                                             result.support_generating_original_pattern,
-                                             (((double) (ntraces - alles_not_nexte)) /
-                                              ((double) ntraces)),
-                                             -1);
-        }
+
 
 // 2) Second kind of patters, always starting scanning from the
 // activation condition (that is also the premise of the rule).
@@ -223,15 +212,7 @@ static inline DeclareDataAware &getAware(const KnowledgeBase &kb,
 // As I obtained the rule, there should be some data pertaining to it!
         DEBUG_ASSERT(b_beginend.first != b_beginend.second);
 
-        std::vector<trace_t> removed_traces_from_response;
 
-        auto alles_precedence = true;
-        size_t alles_not_precedence = 0;
-        auto alles_response = true;
-        size_t alles_not_response = 0;
-        auto alles_altresponse = true;
-        size_t alles_not_altresponse = 0;
-        std::vector<bool> isTraceVisitedU(ntraces, false);
 
         while (a_beginend.first < a_beginend.second) {
             if ((!alles_precedence) && (!alles_response) && (!alles_altresponse))
@@ -349,7 +330,33 @@ static inline DeclareDataAware &getAware(const KnowledgeBase &kb,
             isTraceVisitedU[trace_id] = true;
         }
 
-        if (alles_precedence) {
+        if (alles_prev && (alles_not_prev < alles_not_next) && (alles_not_prev < tolerated_errors)) {
+            hasClausesMined = true;
+            clause.casusu = "ChainPrecedence";
+            declarative_clauses.emplace_back(clause,
+                                             result.support_generating_original_pattern,
+                                             (((double) (ntraces - alles_not_prev)) /
+                                              ((double) ntraces)),
+                                             -1);
+        }
+        if (alles_next && (alles_not_prev > alles_not_next) && (alles_not_next < tolerated_errors)) {
+            hasClausesMined = true;
+            clause.casusu = "ChainResponse";
+            declarative_clauses.emplace_back(clause,
+                                             result.support_generating_original_pattern,
+                                             (((double) (ntraces - alles_not_next)) /
+                                              ((double) ntraces)),
+                                             -1);
+        }
+        if ((!hasClausesMined) && (alles_not_nexte< tolerated_errors)) {
+            clause.casusu = "ChainSuccession";
+            declarative_clauses.emplace_back(clause,
+                                             result.support_generating_original_pattern,
+                                             (((double) (ntraces - alles_not_nexte)) /
+                                              ((double) ntraces)),
+                                             -1);
+        }
+        if (alles_precedence && (alles_not_precedence< tolerated_errors)) {
             clause.casusu = "Precedence";
             declarative_clauses.emplace_back(clause,
                                              result.support_generating_original_pattern,
@@ -357,7 +364,7 @@ static inline DeclareDataAware &getAware(const KnowledgeBase &kb,
                                               ((double) ntraces)),
                                              -1);
         }
-        if (alles_response) {
+        if (alles_response && (alles_not_response< tolerated_errors)) {
             clause.casusu = "Response";
             declarative_clauses.emplace_back(clause,
                                              result.support_generating_original_pattern,
@@ -672,7 +679,7 @@ std::pair<std::vector<pattern_mining_result<DeclareDataAware>>, double> pattern_
                     candidate_rule.emplace_back(lr, ((double)pattern.second)/((double)log_size), counter.support(lr), lr_conf);
             } else if (rl_conf >= support) {
                 if (rl_conf >= support)
-                    candidate_rule.emplace_back(rl, ((double)pattern.second)/((double)log_size), counter.support(lr), rl_conf);
+                    candidate_rule.emplace_back(rl, ((double)pattern.second)/((double)log_size), counter.support(rl), rl_conf);
             }
         }
 
@@ -683,6 +690,7 @@ std::pair<std::vector<pattern_mining_result<DeclareDataAware>>, double> pattern_
             clause.n = 1;
             bool alsoFlip = false;
             double dss = result.support_declarative_pattern;
+            size_t countOk = std::ceil(dss * kb.nTraces());
             if (result.clause.tail.empty()) {
                 // CoExistence pattern
                 A = result.clause.head.at(0);
@@ -691,7 +699,7 @@ std::pair<std::vector<pattern_mining_result<DeclareDataAware>>, double> pattern_
                 alsoFlip = true;
                 auto cpA = kb.getCountTable().resolve_primary_index2(A);
                 auto cpB = kb.getCountTable().resolve_primary_index2(B);
-                size_t countOk = 0;
+                countOk = 0;
                 while ((cpA.first != cpA.second) && (cpB.first != cpB.second)) {
                     if ((cpA.first->id.parts.event_id > 0) && (cpB.first->id.parts.event_id > 0))
                         countOk++;
@@ -717,14 +725,14 @@ std::pair<std::vector<pattern_mining_result<DeclareDataAware>>, double> pattern_
 //
 //            }
             getAware(kb, special_temporal_patterns, only_precise_temporal_patterns, count_table,
-                     minimum_support_threshold,
+                     std::max(countOk, minimum_support_threshold),
                      declarative_clauses, result, A, B, clause,
                      negative_patterns ? &patterns_to_negate : nullptr);
             if (alsoFlip) {
                 clause.right_act = kb.event_label_mapper.get(A);
                 clause.left_act = kb.event_label_mapper.get(B);
                 getAware(kb, special_temporal_patterns, only_precise_temporal_patterns, count_table,
-                         minimum_support_threshold,
+                         std::max(countOk, minimum_support_threshold),
                          declarative_clauses, result, B, A, clause,
                          negative_patterns ? &patterns_to_negate : nullptr);
             }
