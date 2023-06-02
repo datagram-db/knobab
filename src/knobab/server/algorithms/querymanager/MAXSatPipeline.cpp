@@ -539,29 +539,7 @@ static inline void local_logic_intersection(const std::unordered_set<LTLfQuery*>
 }
 
 
-static inline void local_logic_union(const std::unordered_set<LTLfQuery*>& q, Result& last_union, bool isTimed = true) {
-    size_t N = q.size();
-    if ((N == 0)) {
-        last_union.clear();
-        return;
-    } else if (N == 1) {
-        last_union = (*q.begin())->result;
-    } else {
-        auto it = q.begin();
-        last_union = (*it)->result;
-        Result curr_union;
-        for (std::size_t i = 1; i < N; ++i) {
-            it++;
-            auto ref = (*it)->result;
-            if (isTimed)
-                or_fast_timed(last_union, ref, curr_union);
-            else
-                or_fast_untimed(last_union, ref, curr_union);
-            std::swap(last_union, curr_union);
-            curr_union.clear();
-        }
-    }
-}
+
 
 static inline void local_fast_intersection(const LTLfQuery* q, Result& last_union, bool isTimed = true) {
     size_t N = q->args.size();
