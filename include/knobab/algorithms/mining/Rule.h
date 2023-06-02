@@ -45,6 +45,10 @@ template <typename T> struct Rule {
         for (const auto& x : itemset) head.emplace_back(x);
         std::sort(head.begin(), head.end());
     }
+    Rule(const std::unordered_set<T>& itemset) : tail{} {
+        for (const auto& x : itemset) head.emplace_back(x);
+        std::sort(head.begin(), head.end());
+    }
 
     /**
      * Printing some rules in output
