@@ -256,7 +256,8 @@ void fpgrowth_expand(struct fpgrowth_node* tree,
     }
 
     for (act_t next = 0; next < toTraverseNext.size(); next++) { // Using the updated support table to traverse the remaining nodes
-        if ((next != current) && ( !prefix.contains(next))) // Visiting next only other strings that were not part of the prefix
-            fpgrowth_expand(tree, next, toTraverseNext.at(next), prefix, in_tree, new_firsttraverse, results, minsupport, min_length);
+        size_t as = toTraverseNext.at(next);
+        if ((next != current) && ( !prefix.contains(next)) && (as >= minsupport)) // Visiting next only other strings that were not part of the prefix
+            fpgrowth_expand(tree, next, as, prefix, in_tree, new_firsttraverse, results, minsupport, min_length);
     }
 }
