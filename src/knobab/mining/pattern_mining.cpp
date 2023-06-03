@@ -388,54 +388,56 @@ getAware(const KnowledgeBase &kb, bool special_temporal_patterns, bool only_prec
 }
 
 
-// Todo:
-inline void globallyA_And_FutureB(const std::pair<ActTable::record*, ActTable::record*>& left,
-                                  const std::pair<ActTable::record*, ActTable::record*>& right,
-                                  std::vector<ResultIndex>& result) {
-//    if (right.first == right.second) {
-//        result.clear();
-//        return;
+//// Todo:
+//inline void globallyA_And_FutureB(const std::pair<ActTable::record*, ActTable::record*>& left,
+//                                  const std::pair<ActTable::record*, ActTable::record*>& right,
+//                                  std::vector<ResultIndex>& result) {
+////    if (right.first == right.second) {
+////        result.clear();
+////        return;
+////    }
+//    auto bCurrent = right.first, bEnd = right.second;
+//    ResultIndex rcx;
+//    bool hasMatch;
+//
+//    for (auto aCurrent = left.first, aEnd = left.second; aCurrent != aEnd; ) {
+//        if ((aCurrent->entry.id.parts.trace_id > bCurrent->entry.id.parts.trace_id) ||
+//            ((aCurrent->entry.id.parts.trace_id == bCurrent->entry.id.parts.trace_id) &&
+//             (aCurrent->entry.id.parts.event_id > bCurrent->entry.id.parts.event_id))) {
+//            bCurrent++;
+//            if (bCurrent == bEnd) break;
+//        } else {
+//            auto newItr = bCurrent;
+//            rcx.first = aCurrent->entry.id.parts.trace_id;
+//            rcx.second = aCurrent->entry.id.parts.event_id;
+//            hasMatch = false;
+//
+//            while (newItr != bEnd) {
+//                if(newItr->entry.id.parts.trace_id != aCurrent->entry.id.parts.trace_id){
+//                    break;
+//                }
+//                if (!hasMatch) {
+//                    result.emplace_back(rcx);
+//                    hasMatch = true;
+//                }
+//                newItr++;
+//            }
+//
+//            if ((aCurrent->entry.id.parts.trace_id == bCurrent->entry.id.parts.trace_id) &&
+//                (aCurrent->entry.id.parts.event_id == bCurrent->entry.id.parts.event_id)) {
+//                bCurrent++;
+//                if (bCurrent == bEnd) break;
+//            }
+//
+//            aCurrent++;
+//        }
 //    }
-    auto bCurrent = right.first, bEnd = right.second;
-    ResultIndex rcx;
-    bool hasMatch;
-
-    for (auto aCurrent = left.first, aEnd = left.second; aCurrent != aEnd; ) {
-        if ((aCurrent->entry.id.parts.trace_id > bCurrent->entry.id.parts.trace_id) ||
-            ((aCurrent->entry.id.parts.trace_id == bCurrent->entry.id.parts.trace_id) &&
-             (aCurrent->entry.id.parts.event_id > bCurrent->entry.id.parts.event_id))) {
-            bCurrent++;
-            if (bCurrent == bEnd) break;
-        } else {
-            auto newItr = bCurrent;
-            rcx.first = aCurrent->entry.id.parts.trace_id;
-            rcx.second = aCurrent->entry.id.parts.event_id;
-            hasMatch = false;
-
-            while (newItr != bEnd) {
-                if(newItr->entry.id.parts.trace_id != aCurrent->entry.id.parts.trace_id){
-                    break;
-                }
-                if (!hasMatch) {
-                    result.emplace_back(rcx);
-                    hasMatch = true;
-                }
-                newItr++;
-            }
-
-            if ((aCurrent->entry.id.parts.trace_id == bCurrent->entry.id.parts.trace_id) &&
-                (aCurrent->entry.id.parts.event_id == bCurrent->entry.id.parts.event_id)) {
-                bCurrent++;
-                if (bCurrent == bEnd) break;
-            }
-
-            aCurrent++;
-        }
-    }
-}
+//}
 
 #include <yaucl/strings/serializers.h>
 #include <unordered_map>
+#include <yaucl/hashing/pair_hash.h>
+#include <yaucl/hashing/uset_hash.h>
 
 
 /** Pattern mining **/
@@ -521,46 +523,47 @@ std::pair<std::vector<pattern_mining_result<DeclareDataAware>>, double> pattern_
                 // we need to relax such conditions into a choice between the patterns,
                 // as this will maximise the score, precision-wise.
                 // We are postponing such discussion into point A)
-//#ifdef DEBUG
-//                std::cout <<  kb.event_label_mapper.get(it) << std::endl;
-//#endif
+
                 absent_acts.erase(it);
                 unary_patterns_for_non_exact_support.insert(it);
                 doInitA = true;
             }
         } else {
             DEBUG_ASSERT(x.second.size() == 2);
+#ifdef DEBUG
+            std::cout <<  kb.event_label_mapper.get(*x.second.begin()) << "." << kb.event_label_mapper.get(*(++x.second.begin())) << std::endl;
+#endif
             for (const auto& y : x.second) absent_acts.erase(y);
 //            std::set<act_t> S{x.second.begin(), x.second.end()};
             binary_patterns.emplace(x.second, x.first);
             mapper[x.second] = x.first;
         }
     }
-    if (negative_patterns) {
-        DeclareDataAware clause;
-        clause.casusu = "Absence";
-        for (const auto& y : absent_acts) {
-            clause.left_act = kb.event_label_mapper.get(y);
-            auto cp = count_table.resolve_primary_index2(y);
-            size_t absence1_not_supp = 0;
-            event_t N = 0;
-            while (cp.first != cp.second) {
-                if (cp.first->id.parts.event_id > 0) absence1_not_supp++;
-                if (cp.first->id.parts.event_id > N) {
-                    N = cp.first->id.parts.event_id;
-                }
-                cp.first++;
-            }
-            if ((log_size-absence1_not_supp) > minimum_support_threshold) {
-                clause.n = 1;
-                declarative_clauses.emplace_back(((double)(log_size-absence1_not_supp))/((double)kb.nTraces()), clause);
-            }
-            clause.n = N+1;
-            declarative_clauses.emplace_back(1.0, clause);
-        }
-        // NotCoexistence
-
-    }
+//    if (negative_patterns) {
+//        DeclareDataAware clause;
+//        clause.casusu = "Absence";
+//        for (const auto& y : absent_acts) {
+//            clause.left_act = kb.event_label_mapper.get(y);
+//            auto cp = count_table.resolve_primary_index2(y);
+//            size_t absence1_not_supp = 0;
+//            event_t N = 0;
+//            while (cp.first != cp.second) {
+//                if (cp.first->id.parts.event_id > 0) absence1_not_supp++;
+//                if (cp.first->id.parts.event_id > N) {
+//                    N = cp.first->id.parts.event_id;
+//                }
+//                cp.first++;
+//            }
+//            if ((log_size-absence1_not_supp) > minimum_support_threshold) {
+//                clause.n = 1;
+//                declarative_clauses.emplace_back(((double)(log_size-absence1_not_supp))/((double)kb.nTraces()), clause);
+//            }
+//            clause.n = N+1;
+//            declarative_clauses.emplace_back(1.0, clause);
+//        }
+//        // NotCoexistence
+//
+//    }
     fpt_result.clear();
 
     // Point A): initialisation.
@@ -611,27 +614,27 @@ std::pair<std::vector<pattern_mining_result<DeclareDataAware>>, double> pattern_
                         const auto& bSet = inv_map.at(b);
                         std::pair<size_t, size_t> ratio = yaucl::iterators::ratio(aSet.begin(), aSet.end(), bSet.begin(), bSet.end());
                         double local_support = ((double)(ratio.first)) / ((double)log_size);
+                        DeclareDataAware clause;
+                        clause.left_act = kb.event_label_mapper.get(a);
+                        clause.right_act = kb.event_label_mapper.get(b);
+                        clause.n = 1;
                         if (ratio.first >= minimum_support_threshold) {
                             // I can consider this pattern, again, only if it is within the expected
                             // support rate which, in this case, is given by the amount of traces
                             // globally setting up this pattern
-                            DeclareDataAware clause;
-                            clause.left_act = kb.event_label_mapper.get(a);
-                            clause.right_act = kb.event_label_mapper.get(b);
-                            clause.n = 1;
-                            clause.casusu = "Choice";
-
                             auto it = mapper.find(lS);
-                            declarative_clauses.emplace_back(clause, (it != mapper.end()) ? ((double)it->second)/((double)log_size) : 0.0, local_support, -1);
-                            if ((!naif) && ratio.second == 0) {
+                            if (ratio.second == 0) {
                                 // If there is no intersection, I can also be more strict if I want,
                                 // and provide an exclusive choice pattern if I am confident that
                                 // the two events will never appear in the same trace (according to
                                 // the "training" data
                                 clause.casusu = "ExclChoice";
-                                declarative_clauses.emplace_back(clause,  (it != mapper.end()) ? ((double)it->second)/((double)log_size) : 0.0, local_support, -1);
+                            } else {
+                                clause.casusu = "Choice";
                             }
+                            declarative_clauses.emplace_back(clause, (it != mapper.end()) ? ((double)it->second)/((double)log_size) : 0.0, local_support, -1);
                         }
+
                     }
                 }
             }
@@ -654,7 +657,7 @@ std::pair<std::vector<pattern_mining_result<DeclareDataAware>>, double> pattern_
         auto cp = it;
         SSSS.insert(kb.event_label_mapper.get(*it));
         SSSS.insert(kb.event_label_mapper.get(*(++cp)));
-        if (SSSS.contains("h") && SSSS.contains("i")) {
+        if (SSSS.contains("g") && SSSS.contains("f")) {
             std::cout <<"HERE"<< std::endl;
         }
 #endif
@@ -915,31 +918,6 @@ std::pair<std::vector<pattern_mining_result<DeclareDataAware>>, double> pattern_
 }
 
 
-std::string query_plan = "queryplan \"nfmcp23\" {\n"
-                         "     template \"Init\"                   := INIT  activation\n"
-                         "     template \"End\"                    := END activation\n"
-                         "     template \"Exists1\"                := (EXISTS 1 activation)\n"
-                         "     template \"Absence1\"               := ABSENCE 1 activation\n"
-                         "     template \"Absence2\"               := ABSENCE 2 activation\n"
-                         "     template \"Precedence\" args 2      := ((EXISTS  ~ 1 t #2) U (EXISTS 1 t #1 activation)) OR (ABSENCE 1 #2)\n"
-                         "     template \"ChainPrecedence\" args 2 := G(((LAST OR t (NEXT EXISTS ~ 1 t #1))) OR t ((NEXT EXISTS 1 t #1 activation) AND t THETA INV (EXISTS 1 t #2 target) ))\n"
-                         "     template \"Choice\" args 2          := (EXISTS 1 t #1 activation) OR THETA (EXISTS 1 t #2 activation)\n"
-                         "     template \"Response\" args 2        := G ( ((EXISTS ~ 1 t #1)) OR t ((EXISTS 1 t #1 activation) &Ft THETA (EXISTS 1 t #2 target)) )\n"
-                         "     template \"ChainResponse\" args 2   := G ( ((EXISTS ~ 1 t #1)) OR t ((EXISTS 1 t #1 activation) AND t THETA (NEXT EXISTS 1 t #2 target)))\n"
-                         "     template \"RespExistence\" args 2   := ( ((ABSENCE 1 #1)) OR ((EXISTS 1 #1 activation) AND THETA (EXISTS 1 #2 target)))\n"
-                         "     template \"ExlChoice\" args 2       := ((EXISTS 1 t #1 activation) OR THETA (EXISTS 1 t #2 activation)) AND ((ABSENCE 1 #1) OR (ABSENCE 1 #2))\n"
-                         "     template \"CoExistence\" args 2     := ( ((ABSENCE 1 #1)) OR ((EXISTS 1 #1 activation) AND THETA (EXISTS 1 #2 target))) AND ( ((ABSENCE 1 #2)) OR ((EXISTS 1 #2 activation) AND THETA INV (EXISTS 1 #1 target)))\n"
-                         "     template \"NotCoExistence\" args 2  := ~ ((EXISTS 1 t #1 activation) AND THETA (EXISTS 1 t #2 target)) PRESERVE\n"
-                         "\n"
-                         "     template \"Succession\" args 2      := (G ( ((EXISTS ~ 1 t #1)) OR t ((EXISTS 1 t #1 activation) &Ft THETA (EXISTS 1 t #2 target)) )) AND (((EXISTS  ~ 1 t #2) U (EXISTS 1 t #1 target)) OR (ABSENCE 1 #2))\n"
-                         "     template \"NegSuccession\" args 2   := (G ( ((EXISTS ~ 1 t #1)) OR t ((EXISTS 1 t #1 activation) &Gt  (EXISTS ~ 1 t #2)) ))\n"
-                         "     template \"ChainSuccession\" args 2 := G( (((LAST OR t (NEXT EXISTS ~ 1 t #2))) OR t ((NEXT EXISTS 1 t #2 activation) AND t THETA INV (EXISTS 1 t #1 target))) AND t\n"
-                         "                                             ( ((EXISTS ~ 1 t #1)) OR t ((EXISTS 1 t #1 activation) AND t THETA (NEXT EXISTS 1 t #2 target)))\n"
-                         "                                           )\n"
-                         "     template \"AltResponse\" args 2     := G ( (EXISTS ~ 1 t #1) OR t ((EXISTS 1 t #1 activation) AND t THETA (NEXT ((EXISTS ~ 1 t #1) U t (EXISTS 1 t #2 target)) )))\n"
-                         "     template \"AltPrecedence\" args 2   := (((EXISTS  ~ 1 t #2) U (EXISTS 1 t #1 activation)) OR (ABSENCE 1 #2)) AND\n"
-                         "                                           (G(((EXISTS ~ 1 t #1)) OR t (((EXISTS 1 t #1 activation)) AND t THETA (NEXT (((EXISTS  ~ 1 t #1) U t (EXISTS 1 t #2 target)) OR t (G t (EXISTS  ~ 1 t #1))))  )))\n"
-                         "}";
 
 
 void extractActivations(std::unordered_map<std::string, std::unordered_map<std::string, LTLfQuery>>::iterator it2,
@@ -997,6 +975,32 @@ std::pair<std::vector<pattern_mining_result<DeclareDataAware>>,
                                                                        bool special_temporal_patterns,
                                                                        bool only_precise_temporal_patterns,
                                                                        bool negative_ones) {
+    std::string query_plan = "queryplan \"nfmcp23\" {\n"
+                             "     template \"Init\"                   := INIT  activation\n"
+                             "     template \"End\"                    := END activation\n"
+                             "     template \"Exists1\"                := (EXISTS 1 activation)\n"
+                             "     template \"Absence1\"               := ABSENCE 1 activation\n"
+                             "     template \"Absence2\"               := ABSENCE 2 activation\n"
+                             "     template \"Precedence\" args 2      := ((EXISTS  ~ 1 t #2) U (EXISTS 1 t #1 activation)) OR (ABSENCE 1 #2)\n"
+                             "     template \"ChainPrecedence\" args 2 := G(((LAST OR t (NEXT EXISTS ~ 1 t #1))) OR t ((NEXT EXISTS 1 t #1 activation) AND t THETA INV (EXISTS 1 t #2 target) ))\n"
+                             "     template \"Choice\" args 2          := (EXISTS 1 t #1 activation) OR THETA (EXISTS 1 t #2 activation)\n"
+                             "     template \"Response\" args 2        := G ( ((EXISTS ~ 1 t #1)) OR t ((EXISTS 1 t #1 activation) &Ft THETA (EXISTS 1 t #2 target)) )\n"
+                             "     template \"ChainResponse\" args 2   := G ( ((EXISTS ~ 1 t #1)) OR t ((EXISTS 1 t #1 activation) AND t THETA (NEXT EXISTS 1 t #2 target)))\n"
+                             "     template \"RespExistence\" args 2   := ( ((ABSENCE 1 #1)) OR ((EXISTS 1 #1 activation) AND THETA (EXISTS 1 #2 target)))\n"
+                             "     template \"ExlChoice\" args 2       := ((EXISTS 1 t #1 activation) OR THETA (EXISTS 1 t #2 activation)) AND ((ABSENCE 1 #1) OR (ABSENCE 1 #2))\n"
+                             "     template \"CoExistence\" args 2     := ( ((ABSENCE 1 #1)) OR ((EXISTS 1 #1 activation) AND THETA (EXISTS 1 #2 target))) AND ( ((ABSENCE 1 #2)) OR ((EXISTS 1 #2 activation) AND THETA INV (EXISTS 1 #1 target)))\n"
+                             "     template \"NotCoExistence\" args 2  := ~ ((EXISTS 1 t #1 activation) AND THETA (EXISTS 1 t #2 target)) PRESERVE\n"
+                             "\n"
+                             "     template \"Succession\" args 2      := (G ( ((EXISTS ~ 1 t #1)) OR t ((EXISTS 1 t #1 activation) &Ft THETA (EXISTS 1 t #2 target)) )) AND (((EXISTS  ~ 1 t #2) U (EXISTS 1 t #1 target)) OR (ABSENCE 1 #2))\n"
+                             "     template \"NegSuccession\" args 2   := (G ( ((EXISTS ~ 1 t #1)) OR t ((EXISTS 1 t #1 activation) &Gt  (EXISTS ~ 1 t #2)) ))\n"
+                             "     template \"ChainSuccession\" args 2 := G( (((LAST OR t (NEXT EXISTS ~ 1 t #2))) OR t ((NEXT EXISTS 1 t #2 activation) AND t THETA INV (EXISTS 1 t #1 target))) AND t\n"
+                             "                                             ( ((EXISTS ~ 1 t #1)) OR t ((EXISTS 1 t #1 activation) AND t THETA (NEXT EXISTS 1 t #2 target)))\n"
+                             "                                           )\n"
+                             "     template \"AltResponse\" args 2     := G ( (EXISTS ~ 1 t #1) OR t ((EXISTS 1 t #1 activation) AND t THETA (NEXT ((EXISTS ~ 1 t #1) U t (EXISTS 1 t #2 target)) )))\n"
+                             "     template \"AltPrecedence\" args 2   := (((EXISTS  ~ 1 t #2) U (EXISTS 1 t #1 activation)) OR (ABSENCE 1 #2)) AND\n"
+                             "                                           (G(((EXISTS ~ 1 t #1)) OR t (((EXISTS 1 t #1 activation)) AND t THETA (NEXT (((EXISTS  ~ 1 t #1) U t (EXISTS 1 t #2 target)) OR t (G t (EXISTS  ~ 1 t #1))))  )))\n"
+                             "}";
+
     sqm.runQuery(query_plan);
     auto it2 = sqm.planname_to_declare_to_ltlf.find("nfmcp23");
     auto P = pattern_mining(sqm.multiple_logs[pos].db, support, naif, init_end, special_temporal_patterns, only_precise_temporal_patterns, negative_ones);
