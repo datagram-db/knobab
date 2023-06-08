@@ -31,6 +31,7 @@ std::pair<std::vector<pattern_mining_result<DeclareDataAware>>,
                                                                                 const std::string& pos,
                                                                                 const std::string& neg,
                                                                     double support,
+                                                                       double tau,// @author: Samuel Appleby
                                                                        bool naif = false,
                                                                        bool init_end = true,
                                                                        bool special_temporal_patterns = true,

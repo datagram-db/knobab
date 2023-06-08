@@ -4,6 +4,7 @@
 #include "yaucl/learning/DecisionTree.h"
 #include "yaucl/bpm/structures/commons/DeclareDataAware.h"
 #include "knobab/server/query_manager/Environment.h"
+#include "knobab/mining/refinery.h"
 #include "args.hxx"
 
 //using result = std::variant<std::monostate, std::pair<DeclareDataAware, DeclareDataAware>>;
@@ -31,6 +32,9 @@
 
 using worlds_activations = std::unordered_map<Environment*, std::vector<payload_data>>;
 using refining_extraction = std::unordered_map<std::vector<Environment*>, std::vector<DeclareDataAware>>;
+
+
+
 
 void refine_clause(refining_extraction& extraction, float theta){
     std::vector<std::pair<payload_data, int>> V;
@@ -61,44 +65,28 @@ void refine_clause(refining_extraction& extraction, float theta){
                 cpy.first_atomize_model();
 
                 Result result = cpy.query_model().result;
+                RefineOver refiningOn = RefineOverActivation;
 
-                for (const ResultRecord &rec: result) {      // Every trace
-                    ResultIndex match;
-                    match.first = rec.first.first;
-
-                    for (const marked_event &ev: rec.second.second) {        // Every activation/target
-                        // TODO Add target condition support
-                        if (!IS_MARKED_EVENT_ACTIVATION(ev)) continue;
-                        match.second = GET_ACTIVATION_EVENT(ev);
-                        payload_data payload = env->GetPayloadDataFromEvent(match);
-
-                        for (std::unordered_map<std::string, union_minimal>::iterator it = payload.begin();
-                             it != payload.end();) {
-                            (it->first == "__time") ? payload.erase(it++) : (++it);
-                        }
-
-                        world_it.first->second.push_back(payload);
-                    }
-                }
+//                extractPayload(env, world_it, result);
 
                 for (const payload_data &e: world_it.first->second) {
-                    for (auto e_it = e.begin(); e_it != e.end(); e_it++) {
-                        if (std::holds_alternative<double>(e_it->second)) {
-                            numeric_keys.insert(e_it->first);
-                        } else {
-                            categorical_keys.insert(e_it->first);
-                        }
-                    }
+//                    for (auto e_it = e.begin(); e_it != e.end(); e_it++) {
+//                        if (std::holds_alternative<double>(e_it->second)) {
+//                            numeric_keys.insert(e_it->first);
+//                        } else {
+//                            categorical_keys.insert(e_it->first);
+//                        }
+//                    }
 
                     V.emplace_back(e, w_activations.size() - 1);
                 }
             }
 
-            std::function<union_minimal(const payload_data &, const std::string &)> selector = [](const payload_data &x,
-                                                                                                const std::string &key) -> union_minimal {
-                std::unordered_map<std::string, union_minimal>::const_iterator found = x.find(key);
-                return found != x.end() ? found->second : 0.0;
-            };
+//            std::function<union_minimal(const payload_data &, const std::string &)> selector = [](const payload_data &x,
+//                                                                                                const std::string &key) -> union_minimal {
+//                auto found = x.find(key);
+//                return found != x.end() ? found->second : 0.0;
+//            };
 
             auto it = V.begin(), en = V.end();
             DecisionTree<payload_data> dt(it,
@@ -126,58 +114,13 @@ void refine_clause(refining_extraction& extraction, float theta){
 
             std::unordered_map<int, std::vector<std::vector<dt_predicate>>> world_to_paths = {};
             dt.populate_children_predicates(world_to_paths);
+            RefineOver what = RefineOverActivation;
 
             for(const std::pair<int, std::vector<std::vector<dt_predicate>>>& pair : world_to_paths){
                 std::unordered_map<int, Environment*>::iterator ref = tree_to_env.find(pair.first);
                 DEBUG_ASSERT(ref != tree_to_env.end());
 
-                DeclareDataAware c = clause;
-
-                for(const std::vector<dt_predicate>& cond : pair.second){
-                    std::unordered_map<std::string, DataPredicate> current_conds;
-
-                    for(const dt_predicate& dt_p : cond){
-                        DataPredicate p;
-                        p.label = c.left_act;
-                        p.var = dt_p.field;
-
-                        switch (dt_p.pred) {
-                            case dt_predicate::LEQ_THAN:
-                                p.casusu = numeric_atom_cases::LEQ;
-                                break;
-                            case dt_predicate::GEQ_THAN:
-                                p.casusu = numeric_atom_cases::GEQ;
-                                break;
-                            case dt_predicate::IN_SET:
-                                p.casusu = numeric_atom_cases::IN_SET;
-                                break;
-                            case dt_predicate::NOT_IN_SET:
-                                p.casusu = numeric_atom_cases::NOT_IN_SET;
-                                break;
-                        }
-
-                        if(dt_p.categoric_set.size()){
-                            p.categoric_set = dt_p.categoric_set;
-                        }
-                        else{
-                            p.value = dt_p.value;
-                        }
-
-                        std::unordered_map<std::string, DataPredicate>::iterator found = current_conds.find(p.var);
-
-                        if(found != current_conds.end()){
-                            // Our path has two conditions on the same var, perform intersection
-                            p.intersect_with(found->second);
-                            found->second = p;
-                        }
-                        else{
-                            current_conds.insert({p.var, p});
-                        }
-                    }
-
-                    // Activation conditions
-                    c.dnf_left_map.push_back(current_conds);
-                }
+                DeclareDataAware c = actualClauseRefine(clause, what, pair);
 
                 ref->second->conjunctive_model.push_back(c);
             }
