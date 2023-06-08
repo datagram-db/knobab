@@ -51,6 +51,14 @@ struct pattern_mining_result {
     double           support_declarative_pattern;
     double           confidence_declarative_pattern;
 
+    pattern_mining_result(const pattern_mining_result& orig, const T& clause) :clause(clause),
+                                                                               support_generating_original_pattern(
+                                                                                       orig.support_generating_original_pattern),
+                                                                               support_declarative_pattern(
+                                                                                       orig.support_declarative_pattern),
+                                                                               confidence_declarative_pattern(orig.confidence_declarative_pattern) {
+
+    }
     pattern_mining_result(double support,
                           const T &clause) : pattern_mining_result(clause, support, support, -1.0) {}
     pattern_mining_result(const T &clause,

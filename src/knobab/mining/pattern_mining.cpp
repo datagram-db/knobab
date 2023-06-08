@@ -919,12 +919,17 @@ std::pair<std::vector<pattern_mining_result<DeclareDataAware>>, double> pattern_
 
 
 
+#include "knobab/mining/refinery.h"
 
-void extractActivations(std::unordered_map<std::string, std::unordered_map<std::string, LTLfQuery>>::iterator it2,
+
+void extractPayloads(std::unordered_map<std::string, std::unordered_map<std::string, LTLfQuery>>::iterator it2,
                         std::vector<pattern_mining_result<DeclareDataAware>> &v_intersection,
                         Environment &tmpEnv,
-                        std::vector<std::vector<std::pair<ResultRecord,int>>> &activations,
-                        bool marker) {
+                        std::vector<std::vector<std::pair<payload_data, int>>> &a,
+                     std::vector<std::vector<std::pair<payload_data, int>>> &t,
+                     std::vector<std::vector<std::pair<payload_data, int>>> &corr,
+//                        RefineOver what,
+                        int clazz) {
     tmpEnv.clearModel(); // initializing the model pipeline
     std::unordered_map<std::string, LTLfQuery>* plans = &it2->second;
     tmpEnv.conjunctive_model.clear();
@@ -955,12 +960,32 @@ void extractActivations(std::unordered_map<std::string, std::unordered_map<std::
     ref.final_ensemble = em;
     ref.operators = op;
     ref.pipeline(&tmpEnv.grounding, tmpEnv.ap, tmpEnv.db);
-    for (size_t i = 0, N = ref.declare_to_query.size(); i<N; i++) {
-        Result tmp;
-        local_logic_union(ref.qm.activations.at(i), tmp, false);
-        auto& ref = marker ? activations.emplace_back() : activations[i];
-        for (auto&& x : tmp) {
-            ref.emplace_back(std::move(x), marker ? 1 : 0);
+    for (auto & i : ref.declare_to_query) {
+        auto& clause_result = i->result;
+        extractPayload(&tmpEnv,a.emplace_back(),t.emplace_back(),corr.emplace_back(),clause_result,
+//         what,
+         clazz);
+    }
+}
+
+#include <cmath>
+
+void collectRefinedClause(std::pair<std::vector<pattern_mining_result<DeclareDataAware>>, double> &P,
+                          std::pair<std::vector<pattern_mining_result<DeclareDataAware>>, double> &N,
+                          std::unordered_map<int, Environment *> &tree_to_env,
+                          std::unordered_map<int, std::vector<std::vector<dt_predicate>>> &world_to_paths,
+                          pattern_mining_result<DeclareDataAware> &clause, const DecisionTree<payload_data> &dtA,
+                          const RefineOver &what) {
+    world_to_paths.clear();
+    dtA.populate_children_predicates(world_to_paths);
+    for(auto& pair : world_to_paths){
+        auto ref = tree_to_env.find(pair.first);
+        DEBUG_ASSERT(ref != tree_to_env.end());
+        DeclareDataAware c = actualClauseRefine(clause.clause, what, pair);
+        if (pair.first == 1) {
+            P.first.emplace_back(clause, c);
+        } else if (pair.first == 0) {
+            N.first.emplace_back(clause, c);
         }
     }
 }
@@ -970,6 +995,7 @@ std::pair<std::vector<pattern_mining_result<DeclareDataAware>>,
                                                                        const std::string& pos,
                                                                        const std::string& neg,
                                                                        double support,
+                                                                       double tau,
                                                                        bool naif,
                                                                        bool init_end,
                                                                        bool special_temporal_patterns,
@@ -1008,8 +1034,14 @@ std::pair<std::vector<pattern_mining_result<DeclareDataAware>>,
     auto f = [](const pattern_mining_result<DeclareDataAware>& l, const pattern_mining_result<DeclareDataAware>& r) {
         return std::tie(l.clause.casusu, l.clause.left_act, l.clause.right_act, l.clause.n) < std::tie(r.clause.casusu, r.clause.left_act, r.clause.right_act, r.clause.n);
     };
+    auto e = [](const pattern_mining_result<DeclareDataAware>& l, const pattern_mining_result<DeclareDataAware>& r) {
+        return std::tie(l.clause.casusu, l.clause.left_act, l.clause.right_act, l.clause.n) == std::tie(r.clause.casusu, r.clause.left_act, r.clause.right_act, r.clause.n);
+    };
     std::sort(P.first.begin(), P.first.end(), f);
+    P.first.erase( std::unique( P.first.begin(), P.first.end(), e ), P.first.end() );
     std::sort(N.first.begin(), N.first.end(), f);
+    N.first.erase( std::unique( N.first.begin(), N.first.end(), e ), N.first.end() );
+
     std::vector<pattern_mining_result<DeclareDataAware>> v_intersection;
     std::set_intersection(P.first.begin(), P.first.end(), N.first.begin(), N.first.end(),
                           std::back_inserter(v_intersection),
@@ -1019,60 +1051,131 @@ std::pair<std::vector<pattern_mining_result<DeclareDataAware>>,
     if (v_intersection.empty()) {
         return {P.first, N.first};
     }
+    tau = std::clamp(tau, 0.5, 1.);
 
     // Removing the elements at the intersection
-    P.first.erase(std::remove_if(P.first.begin(), P.first.end(), [&v_intersection,&f](const pattern_mining_result<DeclareDataAware>& l){
-        return std::find_if(v_intersection.begin(), v_intersection.end(), [&l,&f](const auto &x) {
-            return f(x,l);
+    P.first.erase(std::remove_if(P.first.begin(), P.first.end(), [&v_intersection,&e](const pattern_mining_result<DeclareDataAware>& l){
+        return std::find_if(v_intersection.begin(), v_intersection.end(), [&l,&e](const auto &x) {
+            return e(x,l);
         }) != v_intersection.end();
     }), P.first.end());
-    N.first.erase(std::remove_if(N.first.begin(), N.first.end(), [&v_intersection,&f](const pattern_mining_result<DeclareDataAware>& l){
-        return std::find_if(v_intersection.begin(), v_intersection.end(), [&l,&f](const auto &x) {
-            return f(x,l);
+    N.first.erase(std::remove_if(N.first.begin(), N.first.end(), [&v_intersection,&e](const pattern_mining_result<DeclareDataAware>& l){
+        return std::find_if(v_intersection.begin(), v_intersection.end(), [&l,&e](const auto &x) {
+            return e(x,l);
         }) != v_intersection.end();
     }), N.first.end());
 
-    // Extraction of activation conditions per clause
-    std::vector<std::vector<std::pair<ResultRecord,int>>> activations;
-    extractActivations(it2, v_intersection, sqm.multiple_logs[pos], activations, true);
-    extractActivations(it2, v_intersection, sqm.multiple_logs[pos], activations, false);
 
-    std::function<simple_data(const ResultRecord&, const std::string&)> fpos = [&sqm,&pos,&neg](const ResultRecord& x, const std::string& key) -> simple_data {
-            auto& kb = x.second.first == 1.0 ? sqm.multiple_logs[pos].db : sqm.multiple_logs[neg].db;
-            auto it = kb.attribute_name_to_table.find(key);
-            if (it != kb.attribute_name_to_table.end()) {
-                size_t offset = kb.act_table_by_act_id.getBuilder().trace_id_to_event_id_to_offset.at(x.first.first).at(x.first.second);
-                std::optional<union_minimal> data = it->second.resolve_record_if_exists2(offset);
-                if(data.has_value()) {
-                    return data.value();
-                } else {
-                    switch (it->second.type) {
-                        case DoubleAtt:
-                        case LongAtt:
-                        case SizeTAtt:
-                        case BoolAtt:
-                            return 0.0;
-                        case StringAtt:
-                            return "";
-                    }
-                }
-            } else
-                return 0.0;
-    };
+    // Attempting at classifying per activation
+    std::vector<std::vector<std::pair<payload_data, int>>> per_clause_AV, per_clause_TV, per_clause_CV;
+    extractPayloads(it2, v_intersection, sqm.multiple_logs[pos], per_clause_AV, per_clause_TV, per_clause_CV,  1);
+    extractPayloads(it2, v_intersection, sqm.multiple_logs[neg], per_clause_AV, per_clause_TV, per_clause_CV,   0);
 
-    std::unordered_set<std::string> numerical_data, categorical_data;
+
+
+//    // Extraction of activation conditions per clause
+//    std::vector<std::vector<std::pair<ResultRecord,int>>> activations;
+//    extractActivations(it2, v_intersection, sqm.multiple_logs[pos], activations, true);
+//    extractActivations(it2, v_intersection, sqm.multiple_logs[pos], activations, false);
+
+//    std::function<simple_data(const ResultRecord&, const std::string&)> fpos = [&sqm,&pos,&neg](const ResultRecord& x, const std::string& key) -> simple_data {
+//            auto& kb = x.second.first == 1.0 ? sqm.multiple_logs[pos].db : sqm.multiple_logs[neg].db;
+//            auto it = kb.attribute_name_to_table.find(key);
+//            if (it != kb.attribute_name_to_table.end()) {
+//                size_t offset = kb.act_table_by_act_id.getBuilder().trace_id_to_event_id_to_offset.at(x.first.first).at(x.first.second);
+//                std::optional<union_minimal> data = it->second.resolve_record_if_exists2(offset);
+//                if(data.has_value()) {
+//                    return data.value();
+//                } else {
+//                    switch (it->second.type) {
+//                        case DoubleAtt:
+//                        case LongAtt:
+//                        case SizeTAtt:
+//                        case BoolAtt:
+//                            return 0.0;
+//                        case StringAtt:
+//                            return "";
+//                    }
+//                }
+//            } else
+//                return 0.0;
+//    };
+
+    std::unordered_set<std::string> numeric_keys, categorical_keys;
     for (const auto& [k,v] : sqm.multiple_logs[pos].db.attribute_name_to_table) {
         if (v.type == StringAtt)
-            categorical_data.insert(k);
+            categorical_keys.insert(k);
         else
-            numerical_data.insert(k);
+            numeric_keys.insert(k);
+    }
+    for (const auto& [k,v] : sqm.multiple_logs[neg].db.attribute_name_to_table) {
+        if (v.type == StringAtt)
+            categorical_keys.insert(k);
+        else
+            numeric_keys.insert(k);
     }
 
-    for (size_t i = 0, N = activations.size(); i<N; i++) {
-        auto it = activations[i].begin(), en = activations[i].end();
-        // TODO: apply the refinery here!, as well as updating P or N depending on this
+    worlds_activations w_activations;
+    std::unordered_map<int, Environment*> tree_to_env;
+    std::unordered_map<int, std::vector<std::vector<dt_predicate>>> world_to_paths;
+    for (size_t i = 0, M = per_clause_AV.size(); i<M; i++) {
+        auto& clause = v_intersection.at(i);
 
+        // Refining over the activations first
+        auto& V = per_clause_AV[i];
+        auto it = V.begin(), en = V.end();
+        DecisionTree<payload_data> dtA(it,
+                                      en,
+                                      1,
+                                      selector,
+                                      numeric_keys,
+                                      categorical_keys,
+                                      ForTheWin::gain_measures::Entropy,
+                                      0.9,
+                                      1,
+                                      V.size(),
+                                      1);
+        if (dtA.goodness >= tau) {
+            collectRefinedClause(P, N, tree_to_env, world_to_paths, clause, dtA, RefineOverActivation);
+            // Do refine!
+        } else {
+            // Refining by target
+            auto& W = per_clause_TV[i];
+            auto itT = W.begin(), enT = W.end();
+            DecisionTree<payload_data> dtT(itT,
+                                          enT,
+                                          1,
+                                          selector,
+                                          numeric_keys,
+                                          categorical_keys,
+                                          ForTheWin::gain_measures::Entropy,
+                                          0.9,
+                                          1,
+                                          W.size(),
+                                          1);
+            if (dtT.goodness >= tau) {
+                collectRefinedClause(P, N, tree_to_env, world_to_paths, clause, dtT, RefineOverTarget);
+                // Do refine!
+            } else {
+                auto& C = per_clause_TV[i];
+                auto itC = C.begin(), enC = C.end();
+                DecisionTree<payload_data> dtC(itC,
+                                               enC,
+                                               1,
+                                               selector,
+                                               numeric_keys,
+                                               categorical_keys,
+                                               ForTheWin::gain_measures::Entropy,
+                                               0.9,
+                                               1,
+                                               C.size(),
+                                               1);
+                if (dtC.goodness >= tau) {
+                    collectRefinedClause(P, N, tree_to_env, world_to_paths, clause, dtC, RefineOverMatch);
+                }
+            }
+        }
     }
 
-
+    return {P.first, N.first};
 }
