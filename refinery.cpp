@@ -2,8 +2,8 @@
 #include <functional>
 #include "submodules/yaucl/submodules/csv.h"
 #include "yaucl/learning/DecisionTree.h"
-#include "yaucl/bpm/structures/declare/DeclareDataAware.h"
-#include "knobab/Environment.h"
+#include "yaucl/bpm/structures/commons/DeclareDataAware.h"
+#include "knobab/server/query_manager/Environment.h"
 #include "args.hxx"
 
 //using result = std::variant<std::monostate, std::pair<DeclareDataAware, DeclareDataAware>>;
@@ -72,7 +72,7 @@ void refine_clause(refining_extraction& extraction, float theta){
                         match.second = GET_ACTIVATION_EVENT(ev);
                         payload_data payload = env->GetPayloadDataFromEvent(match);
 
-                        for (std::map<std::string, union_minimal>::iterator it = payload.begin();
+                        for (std::unordered_map<std::string, union_minimal>::iterator it = payload.begin();
                              it != payload.end();) {
                             (it->first == "__time") ? payload.erase(it++) : (++it);
                         }
@@ -96,7 +96,7 @@ void refine_clause(refining_extraction& extraction, float theta){
 
             std::function<union_minimal(const payload_data &, const std::string &)> selector = [](const payload_data &x,
                                                                                                 const std::string &key) -> union_minimal {
-                std::map<std::string, union_minimal>::const_iterator found = x.find(key);
+                std::unordered_map<std::string, union_minimal>::const_iterator found = x.find(key);
                 return found != x.end() ? found->second : 0.0;
             };
 

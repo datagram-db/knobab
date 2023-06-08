@@ -116,7 +116,9 @@ else()
             yaucl_stringutils yaucl_numeric  yaucl_data yaucl_bpm yaucl_graph yaucl_structures)
 endif()
 
-
+add_executable(refinery refinery.cpp)
+target_link_libraries(refinery Threads::Threads yaml-cpp antlr4_static ${CppPythonBindings}
+        yaucl_stringutils yaucl_numeric yaucl_hashing yaucl_data yaucl_bpm yaucl_graph knobab_flloat yaucl_structures yaucl_learning knobab)
 
 enable_testing ()
 include(FetchContent)
