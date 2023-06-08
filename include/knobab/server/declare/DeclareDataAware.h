@@ -73,6 +73,7 @@ bool isPredicateNegative(const std::string& type);
  * @author Samuel 'Sam' Appleby
  */
 using env = std::unordered_map<std::string, union_minimal>;
+using payload_data = env;
 
 /**
  *
