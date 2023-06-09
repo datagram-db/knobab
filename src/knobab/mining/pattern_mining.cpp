@@ -921,9 +921,9 @@ std::pair<std::vector<pattern_mining_result<DeclareDataAware>>, double> pattern_
 
 #include "knobab/mining/refinery.h"
 
-
+static inline
 void extractPayloads(std::unordered_map<std::string, std::unordered_map<std::string, LTLfQuery>>::iterator it2,
-                        std::vector<pattern_mining_result<DeclareDataAware>> &v_intersection,
+                        std::vector<DeclareDataAware> &v_intersection,
                         Environment &tmpEnv,
                         std::vector<std::vector<std::pair<payload_data, int>>> &a,
                      std::vector<std::vector<std::pair<payload_data, int>>> &t,
@@ -932,10 +932,7 @@ void extractPayloads(std::unordered_map<std::string, std::unordered_map<std::str
                         int clazz) {
     tmpEnv.clearModel(); // initializing the model pipeline
     std::unordered_map<std::string, LTLfQuery>* plans = &it2->second;
-    tmpEnv.conjunctive_model.clear();
-    for (const auto& ref : v_intersection) {
-        tmpEnv.conjunctive_model.emplace_back(ref.clause);
-    }
+    tmpEnv.conjunctive_model = v_intersection;
     tmpEnv.experiment_logger.model_parsing_ms = 0;
     tmpEnv.experiment_logger.model_size = v_intersection.size();
     tmpEnv.experiment_logger.model_filename = "Intersection";
@@ -970,30 +967,29 @@ void extractPayloads(std::unordered_map<std::string, std::unordered_map<std::str
 
 #include <cmath>
 
-void collectRefinedClause(std::pair<std::vector<pattern_mining_result<DeclareDataAware>>, double> &P,
-                          std::pair<std::vector<pattern_mining_result<DeclareDataAware>>, double> &N,
+void collectRefinedClause(std::vector<std::vector<DeclareDataAware>> &VVV,
                           std::unordered_map<int, Environment *> &tree_to_env,
                           std::unordered_map<int, std::vector<std::vector<dt_predicate>>> &world_to_paths,
-                          pattern_mining_result<DeclareDataAware> &clause, const DecisionTree<payload_data> &dtA,
+                          DeclareDataAware &clause, const DecisionTree<payload_data> &dtA,
                           const RefineOver &what) {
     world_to_paths.clear();
     dtA.populate_children_predicates(world_to_paths);
     for(auto& pair : world_to_paths){
         auto ref = tree_to_env.find(pair.first);
         DEBUG_ASSERT(ref != tree_to_env.end());
-        DeclareDataAware c = actualClauseRefine(clause.clause, what, pair);
-        if (pair.first == 1) {
-            P.first.emplace_back(clause, c);
-        } else if (pair.first == 0) {
-            N.first.emplace_back(clause, c);
-        }
+        DeclareDataAware c = actualClauseRefine(clause, what, pair);
+        VVV[pair.first].emplace_back(c);
+//        if (pair.first == 1) {
+//
+//            .first.emplace_back(clause, c);
+//        } else if (pair.first == 0) {
+//            N.first.emplace_back(clause, c);
+//        }
     }
 }
 
-std::pair<std::vector<pattern_mining_result<DeclareDataAware>>,
-          std::vector<pattern_mining_result<DeclareDataAware>>> classifier_mining(ServerQueryManager sqm,
-                                                                       const std::string& pos,
-                                                                       const std::string& neg,
+std::vector<std::vector<DeclareDataAware>> classifier_mining(ServerQueryManager sqm,
+                                                                       const std::vector<std::string>& model_entry_names,
                                                                        double support,
                                                                        double tau,
                                                                        bool naif,
@@ -1029,49 +1025,84 @@ std::pair<std::vector<pattern_mining_result<DeclareDataAware>>,
 
     sqm.runQuery(query_plan);
     auto it2 = sqm.planname_to_declare_to_ltlf.find("nfmcp23");
-    auto P = pattern_mining(sqm.multiple_logs[pos].db, support, naif, init_end, special_temporal_patterns, only_precise_temporal_patterns, negative_ones);
-    auto N = pattern_mining(sqm.multiple_logs[neg].db, support, naif, init_end, special_temporal_patterns, only_precise_temporal_patterns, negative_ones);
-    auto f = [](const pattern_mining_result<DeclareDataAware>& l, const pattern_mining_result<DeclareDataAware>& r) {
-        return std::tie(l.clause.casusu, l.clause.left_act, l.clause.right_act, l.clause.n) < std::tie(r.clause.casusu, r.clause.left_act, r.clause.right_act, r.clause.n);
-    };
-    auto e = [](const pattern_mining_result<DeclareDataAware>& l, const pattern_mining_result<DeclareDataAware>& r) {
-        return std::tie(l.clause.casusu, l.clause.left_act, l.clause.right_act, l.clause.n) == std::tie(r.clause.casusu, r.clause.left_act, r.clause.right_act, r.clause.n);
-    };
-    std::sort(P.first.begin(), P.first.end(), f);
-    P.first.erase( std::unique( P.first.begin(), P.first.end(), e ), P.first.end() );
-    std::sort(N.first.begin(), N.first.end(), f);
-    N.first.erase( std::unique( N.first.begin(), N.first.end(), e ), N.first.end() );
+    std::vector<std::vector<DeclareDataAware>> VVV;
+    std::vector<DeclareDataAware> last_VVV_intersection, curr_VVV_insersection;
+    // TODO: would have been more efficient with a min-heap, but we don't have time.
+    double overall_dataless_mining_time = 0;
+    for (size_t i = 0, M = model_entry_names.size(); i<M; i++) {
+        const auto &ref = model_entry_names.at(i);
+        auto tmp = pattern_mining(sqm.multiple_logs[ref].db, support, naif, init_end, special_temporal_patterns, only_precise_temporal_patterns, negative_ones);
+        overall_dataless_mining_time += tmp.second;
+        auto WWW = VVV.emplace_back();
+        for (auto& ref2 : tmp.first) {
+            WWW.emplace_back(std::move(ref2.clause));
+        }
+        remove_duplicates(WWW);
+        if (i == 0)
+             last_VVV_intersection = WWW;
+        else {
+            std::set_intersection(WWW.begin(), WWW.end(),
+                                  last_VVV_intersection.begin(), last_VVV_intersection.end(),
+                                  std::back_inserter(curr_VVV_insersection));
+            std::swap(last_VVV_intersection, curr_VVV_insersection);
+            curr_VVV_insersection.clear();
+        }
+    }
 
-    std::vector<pattern_mining_result<DeclareDataAware>> v_intersection;
-    std::set_intersection(P.first.begin(), P.first.end(), N.first.begin(), N.first.end(),
-                          std::back_inserter(v_intersection),
-                          [](const pattern_mining_result<DeclareDataAware>& l, const pattern_mining_result<DeclareDataAware>& r) {
-                              return std::tie(l.clause.casusu, l.clause.left_act, l.clause.right_act, l.clause.n) == std::tie(r.clause.casusu, r.clause.left_act, r.clause.right_act, r.clause.n);
-                          });
-    if (v_intersection.empty()) {
-        return {P.first, N.first};
+//    auto f = [](const pattern_mining_result<DeclareDataAware>& l, const pattern_mining_result<DeclareDataAware>& r) {
+//        return std::tie(l.clause.casusu, l.clause.left_act, l.clause.right_act, l.clause.n) < std::tie(r.clause.casusu, r.clause.left_act, r.clause.right_act, r.clause.n);
+//    };
+//    auto e = [](const pattern_mining_result<DeclareDataAware>& l, const pattern_mining_result<DeclareDataAware>& r) {
+//        return std::tie(l.clause.casusu, l.clause.left_act, l.clause.right_act, l.clause.n) == std::tie(r.clause.casusu, r.clause.left_act, r.clause.right_act, r.clause.n);
+//    };
+//    std::sort(P.first.begin(), P.first.end(), f);
+//    P.first.erase( std::unique( P.first.begin(), P.first.end(), e ), P.first.end() );
+//    std::sort(N.first.begin(), N.first.end(), f);
+//    N.first.erase( std::unique( N.first.begin(), N.first.end(), e ), N.first.end() );
+
+//    std::vector<pattern_mining_result<DeclareDataAware>> v_intersection;
+//    std::set_intersection(P.first.begin(), P.first.end(), N.first.begin(), N.first.end(),
+//                          std::back_inserter(v_intersection),
+//                          [](const pattern_mining_result<DeclareDataAware>& l, const pattern_mining_result<DeclareDataAware>& r) {
+//                              return std::tie(l.clause.casusu, l.clause.left_act, l.clause.right_act, l.clause.n) == std::tie(r.clause.casusu, r.clause.left_act, r.clause.right_act, r.clause.n);
+//                          });
+    if (last_VVV_intersection.empty()) {
+        return VVV;
     }
     tau = std::clamp(tau, 0.5, 1.);
 
     // Removing the elements at the intersection
-    P.first.erase(std::remove_if(P.first.begin(), P.first.end(), [&v_intersection,&e](const pattern_mining_result<DeclareDataAware>& l){
-        return std::find_if(v_intersection.begin(), v_intersection.end(), [&l,&e](const auto &x) {
-            return e(x,l);
-        }) != v_intersection.end();
-    }), P.first.end());
-    N.first.erase(std::remove_if(N.first.begin(), N.first.end(), [&v_intersection,&e](const pattern_mining_result<DeclareDataAware>& l){
-        return std::find_if(v_intersection.begin(), v_intersection.end(), [&l,&e](const auto &x) {
-            return e(x,l);
-        }) != v_intersection.end();
-    }), N.first.end());
+    std::vector<DeclareDataAware> v3;
+    for (auto& ref : VVV) {
+        v3.clear();
+        std::set_difference(ref.begin(), ref.end(), last_VVV_intersection.begin(), last_VVV_intersection.end(), std::back_inserter(v3));
+        std::swap(v3, ref);
+    }
+//    P.first.erase(std::remove_if(P.first.begin(), P.first.end(), [&v_intersection,&e](const pattern_mining_result<DeclareDataAware>& l){
+//        return std::find_if(v_intersection.begin(), v_intersection.end(), [&l,&e](const auto &x) {
+//            return e(x,l);
+//        }) != v_intersection.end();
+//    }), P.first.end());
+//    N.first.erase(std::remove_if(N.first.begin(), N.first.end(), [&v_intersection,&e](const pattern_mining_result<DeclareDataAware>& l){
+//        return std::find_if(v_intersection.begin(), v_intersection.end(), [&l,&e](const auto &x) {
+//            return e(x,l);
+//        }) != v_intersection.end();
+//    }), N.first.end());
 
 
     // Attempting at classifying per activation
     std::vector<std::vector<std::pair<payload_data, int>>> per_clause_AV, per_clause_TV, per_clause_CV;
-    extractPayloads(it2, v_intersection, sqm.multiple_logs[pos], per_clause_AV, per_clause_TV, per_clause_CV,  1);
-    extractPayloads(it2, v_intersection, sqm.multiple_logs[neg], per_clause_AV, per_clause_TV, per_clause_CV,   0);
-
-
+    std::unordered_set<std::string> numeric_keys, categorical_keys;
+    for (size_t i = 0, M = model_entry_names.size(); i<M; i++) {
+        const auto& ref = model_entry_names.at(i);
+        for (const auto& [k,v] : sqm.multiple_logs[ref].db.attribute_name_to_table) {
+            if (v.type == StringAtt)
+                categorical_keys.insert(k);
+            else
+                numeric_keys.insert(k);
+        }
+        extractPayloads(it2, last_VVV_intersection, sqm.multiple_logs[ref], per_clause_AV, per_clause_TV, per_clause_CV, i);
+    }
 
 //    // Extraction of activation conditions per clause
 //    std::vector<std::vector<std::pair<ResultRecord,int>>> activations;
@@ -1101,25 +1132,13 @@ std::pair<std::vector<pattern_mining_result<DeclareDataAware>>,
 //                return 0.0;
 //    };
 
-    std::unordered_set<std::string> numeric_keys, categorical_keys;
-    for (const auto& [k,v] : sqm.multiple_logs[pos].db.attribute_name_to_table) {
-        if (v.type == StringAtt)
-            categorical_keys.insert(k);
-        else
-            numeric_keys.insert(k);
-    }
-    for (const auto& [k,v] : sqm.multiple_logs[neg].db.attribute_name_to_table) {
-        if (v.type == StringAtt)
-            categorical_keys.insert(k);
-        else
-            numeric_keys.insert(k);
-    }
+
 
     worlds_activations w_activations;
     std::unordered_map<int, Environment*> tree_to_env;
     std::unordered_map<int, std::vector<std::vector<dt_predicate>>> world_to_paths;
     for (size_t i = 0, M = per_clause_AV.size(); i<M; i++) {
-        auto& clause = v_intersection.at(i);
+        auto& clause = last_VVV_intersection.at(i);
 
         // Refining over the activations first
         auto& V = per_clause_AV[i];
@@ -1136,7 +1155,7 @@ std::pair<std::vector<pattern_mining_result<DeclareDataAware>>,
                                       V.size(),
                                       1);
         if (dtA.goodness >= tau) {
-            collectRefinedClause(P, N, tree_to_env, world_to_paths, clause, dtA, RefineOverActivation);
+            collectRefinedClause(VVV, tree_to_env, world_to_paths, clause, dtA, RefineOverActivation);
             // Do refine!
         } else {
             // Refining by target
@@ -1154,7 +1173,7 @@ std::pair<std::vector<pattern_mining_result<DeclareDataAware>>,
                                           W.size(),
                                           1);
             if (dtT.goodness >= tau) {
-                collectRefinedClause(P, N, tree_to_env, world_to_paths, clause, dtT, RefineOverTarget);
+                collectRefinedClause(VVV, tree_to_env, world_to_paths, clause, dtT, RefineOverTarget);
                 // Do refine!
             } else {
                 auto& C = per_clause_TV[i];
@@ -1171,11 +1190,11 @@ std::pair<std::vector<pattern_mining_result<DeclareDataAware>>,
                                                C.size(),
                                                1);
                 if (dtC.goodness >= tau) {
-                    collectRefinedClause(P, N, tree_to_env, world_to_paths, clause, dtC, RefineOverMatch);
+                    collectRefinedClause(VVV, tree_to_env, world_to_paths, clause, dtC, RefineOverMatch);
                 }
             }
         }
     }
 
-    return {P.first, N.first};
+    return VVV;
 }

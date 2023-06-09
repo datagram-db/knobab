@@ -26,10 +26,8 @@ std::pair<std::vector<pattern_mining_result<DeclareDataAware>>, double> pattern_
 
 #include <knobab/server/query_manager/ServerQueryManager.h>
 
-std::pair<std::vector<pattern_mining_result<DeclareDataAware>>,
-        std::vector<pattern_mining_result<DeclareDataAware>>> classifier_mining(ServerQueryManager sqm,
-                                                                                const std::string& pos,
-                                                                                const std::string& neg,
+std::vector<std::vector<DeclareDataAware>> classifier_mining(ServerQueryManager sqm,
+                                                                                const std::vector<std::string>& model_entry_names,
                                                                     double support,
                                                                        double tau,// @author: Samuel Appleby
                                                                        bool naif = false,

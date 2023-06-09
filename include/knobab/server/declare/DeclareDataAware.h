@@ -267,6 +267,11 @@ struct DeclareDataAware {
         }
         return forJoin;
     }
+
+    friend bool operator<(const DeclareDataAware& l, const DeclareDataAware& r)
+    {
+        return std::tie(l.casusu, l.left_act, l.right_act, l.n) < std::tie(r.casusu, r.left_act, r.right_act, r.n); // keep the same order
+    }
 };
 
 //ltlf toFiniteSemantics(declare_templates casusu, size_t n, const std::string& left_act, const std::string& right_act = "");
