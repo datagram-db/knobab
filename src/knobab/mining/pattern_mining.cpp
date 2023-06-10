@@ -323,9 +323,11 @@ getAware(const KnowledgeBase &kb, bool special_temporal_patterns, bool only_prec
 //            std::fill(isTraceVisitedU.begin(), isTraceVisitedU.end(), false);
         }
 
+        bool hasChainPrecedence = (alles_prev && (alles_not_prev <= alles_not_next) && (alles_not_prev <= tolerated_errors)) && ((alles_not_prev < alles_not_nexte) && (alles_not_nexte<= tolerated_errors));
+        bool hasChainResponse = alles_next && (alles_not_prev >= alles_not_next) && (alles_not_next <= tolerated_errors) && ((alles_not_next < alles_not_nexte) && (alles_not_nexte<= tolerated_errors));
+        bool hasChainSuccession = (!hasChainPrecedence) && (!hasChainResponse) && (alles_not_nexte<= tolerated_errors);
 
-
-        if (alles_prev && (alles_not_prev <= alles_not_next) && (alles_not_prev <= tolerated_errors)) {
+        if (hasChainPrecedence) {
             hasClausesMined = true;
             clause.casusu = "ChainPrecedence";
             declarative_clauses.emplace_back(clause,
@@ -334,7 +336,7 @@ getAware(const KnowledgeBase &kb, bool special_temporal_patterns, bool only_prec
                                               ((double) ntraces)),
                                              -1);
         }
-        if (alles_next && (alles_not_prev >= alles_not_next) && (alles_not_next <= tolerated_errors)) {
+        if (hasChainResponse) {
             hasClausesMined = true;
             clause.casusu = "ChainResponse";
             declarative_clauses.emplace_back(clause,
@@ -343,7 +345,7 @@ getAware(const KnowledgeBase &kb, bool special_temporal_patterns, bool only_prec
                                               ((double) ntraces)),
                                              -1);
         }
-        if ((!hasClausesMined) && alles_nexte && (alles_not_nexte<= tolerated_errors)) {
+        if (hasChainSuccession) {
             clause.casusu = "ChainSuccession";
             declarative_clauses.emplace_back(clause,
                                              result.support_generating_original_pattern,
@@ -351,7 +353,7 @@ getAware(const KnowledgeBase &kb, bool special_temporal_patterns, bool only_prec
                                               ((double) ntraces)),
                                              -1);
         }
-        if (alles_precedence && (alles_not_precedence<= tolerated_errors)) {
+        if (alles_precedence && (alles_not_precedence<= tolerated_errors) && (!hasChainSuccession)) {
             clause.casusu = "Precedence";
             declarative_clauses.emplace_back(clause,
                                              result.support_generating_original_pattern,
@@ -359,7 +361,7 @@ getAware(const KnowledgeBase &kb, bool special_temporal_patterns, bool only_prec
                                               ((double) ntraces)),
                                              -1);
         }
-        if (alles_response && (alles_not_response<= tolerated_errors)) {
+        if (alles_response && (alles_not_response<= tolerated_errors) && (!(hasChainSuccession || hasChainResponse))) {
             clause.casusu = "Response";
             declarative_clauses.emplace_back(clause,
                                              result.support_generating_original_pattern,
@@ -920,6 +922,7 @@ std::pair<std::vector<pattern_mining_result<DeclareDataAware>>, double> pattern_
 
 
 #include "knobab/mining/refinery.h"
+#include "knobab/server/dataStructures/marked_event.h"
 
 static inline
 void extractPayloads(std::unordered_map<std::string, std::unordered_map<std::string, LTLfQuery>>::iterator it2,
@@ -930,7 +933,7 @@ void extractPayloads(std::unordered_map<std::string, std::unordered_map<std::str
                         std::vector<std::vector<std::pair<payload_data, int>>> &a,
                         std::vector<std::vector<std::pair<payload_data, int>>> &t,
                         std::vector<std::vector<std::pair<payload_data, int>>> &corr,
-                        int clazz) {
+                        size_t clazz) {
     tmpEnv.clearModel(); // initializing the model pipeline
     std::unordered_map<std::string, LTLfQuery>* plans = &it2->second;
     tmpEnv.conjunctive_model = v_intersection;
@@ -957,35 +960,50 @@ void extractPayloads(std::unordered_map<std::string, std::unordered_map<std::str
     MAXSatPipeline ref(plans, nThreads, BLOCK_STATIC_SCHEDULE, 3);
     ref.final_ensemble = em;
     ref.operators = op;
+    marked_event me;
+    me.id.parts.type =MARKED_EVENT_ACTIVATION;
     ref.pipeline(&tmpEnv.grounding, tmpEnv.ap, tmpEnv.db);
     for (size_t i = 0, N = ref.declare_to_query.size(); i<N; i++) {
         auto& x = ref.declare_to_query.at(i);
-        auto& clause_result = x->result;
-        extractPayload(&tmpEnv,activations.at(i), targets.at(i), a.emplace_back(),t.emplace_back(),corr.emplace_back(),clause_result,clazz);
+        if ((x->t == LTLfQuery::EXISTS_QP || x->t == LTLfQuery::ABSENCE_QP) && (!x->fields.id.parts.is_timed)) {
+            auto cpy = x->result;
+            // If the clause is untimed, then I have to get as results all the events appearing in the trace of interest
+            for (auto& ref2 : cpy) {
+                auto it = tmpEnv.db.act_table_by_act_id.secondary_index.at(x->declare_arg);
+                while (it.first != it.second) {
+                    if (ref2.first.first == it.first->entry.id.parts.trace_id) {
+                        me.id.parts.left = it.first->entry.id.parts.event_id;
+                        ref2.second.second.emplace_back(me);
+                    }
+                    it.first++;
+                }
+            }
+            extractPayload(&tmpEnv,activations.at(i), targets.at(i), a[i],t[i],corr[i],cpy,clazz);
+        } else {
+            extractPayload(&tmpEnv,activations.at(i), targets.at(i), a[i],t[i],corr[i],x->result,clazz);
+        }
+        std::cerr << *x << std::endl;
     }
 }
 
 #include <cmath>
 
 void collectRefinedClause(std::vector<std::vector<DeclareDataAware>> &VVV,
-                          std::unordered_map<int, Environment *> &tree_to_env,
+//                          std::unordered_map<int, Environment *> &tree_to_env,
                           std::unordered_map<int, std::vector<std::vector<dt_predicate>>> &world_to_paths,
                           DeclareDataAware &clause, const DecisionTree<payload_data> &dtA,
-                          const RefineOver &what) {
+                          const RefineOver &what,
+                          bool doNegate) {
     world_to_paths.clear();
-    dtA.populate_children_predicates(world_to_paths);
+    dtA.populate_children_predicates(world_to_paths, nullptr, doNegate);
     for(auto& pair : world_to_paths){
-        auto ref = tree_to_env.find(pair.first);
-        DEBUG_ASSERT(ref != tree_to_env.end());
+//        auto ref = tree_to_env.find(pair.first);
+//        DEBUG_ASSERT(ref != tree_to_env.end());
         DeclareDataAware c = actualClauseRefine(clause, what, pair);
+        std::cout << pair.first  << " -- " << c << std::endl;
         VVV[pair.first].emplace_back(c);
-//        if (pair.first == 1) {
-//
-//            .first.emplace_back(clause, c);
-//        } else if (pair.first == 0) {
-//            N.first.emplace_back(clause, c);
-//        }
     }
+    std::cout <<"~~~~~~~" <<  std::endl;
 }
 
 std::tuple<std::vector<std::vector<DeclareDataAware>>,double,double> classifier_mining(ServerQueryManager& sqm,
@@ -1033,7 +1051,9 @@ std::tuple<std::vector<std::vector<DeclareDataAware>>,double,double> classifier_
     std::string query_plan = "queryplan \"nfmcp23\" {\n"
                              "     template \"Init\"                   := INIT  activation\n"
                              "     template \"End\"                    := END activation\n"
+                             "     template \"Exists\"                := (EXISTS $ activation)\n"
                              "     template \"Exists1\"                := (EXISTS 1 activation)\n"
+                             "     template \"Absence\"               := ABSENCE $ activation\n"
                              "     template \"Absence1\"               := ABSENCE 1 activation\n"
                              "     template \"Absence2\"               := ABSENCE 2 activation\n"
                              "     template \"Precedence\" args 2      := ((EXISTS  ~ 1 t #2) U (EXISTS 1 t #1 activation)) OR (ABSENCE 1 #2)\n"
@@ -1062,11 +1082,12 @@ std::tuple<std::vector<std::vector<DeclareDataAware>>,double,double> classifier_
     auto it2 = sqm.planname_to_declare_to_ltlf.find("nfmcp23");
 
 
+
     ////////////////////////////////////////////////////////////////////////////
     /// Removing the clauses having neither activation nor target conditions ///
     ////////////////////////////////////////////////////////////////////////////
     std::vector<size_t> index;
-    std::unordered_set<std::string> toExclude;
+    std::unordered_set<std::string> toExclude{"Absence"}; // TODO: dealing correctly with Absence!
     std::vector<bool> hasActivations(last_VVV_intersection.size(), false), hasTargets(last_VVV_intersection.size(), false);
     for (size_t i = 0, M = last_VVV_intersection.size(); i<M; i++) {
         const auto& ref = last_VVV_intersection.at(i);
@@ -1132,7 +1153,9 @@ std::tuple<std::vector<std::vector<DeclareDataAware>>,double,double> classifier_
 
 
     // Attempting at classifying per activation
-    std::vector<std::vector<std::pair<payload_data, int>>> per_clause_AV, per_clause_TV, per_clause_CV;
+    std::vector<std::vector<std::pair<payload_data, int>>> per_clause_AV(last_VVV_intersection.size()),
+                                                           per_clause_TV(last_VVV_intersection.size()),
+                                                           per_clause_CV(last_VVV_intersection.size());
     std::unordered_set<std::string> numeric_keys, categorical_keys;
     for (size_t i = 0, M = model_entry_names.size(); i<M; i++) {
         const auto& ref = model_entry_names.at(i);
@@ -1146,30 +1169,34 @@ std::tuple<std::vector<std::vector<DeclareDataAware>>,double,double> classifier_
     }
 
     worlds_activations w_activations;
-    std::unordered_map<int, Environment*> tree_to_env;
+//    std::unordered_map<int, Environment*> tree_to_env;
     std::unordered_map<int, std::vector<std::vector<dt_predicate>>> world_to_paths;
     for (size_t i = 0, M = per_clause_AV.size(); i<M; i++) {
         auto& clause = last_VVV_intersection.at(i);
-
+        bool doNegate = it2->second.at(clause.casusu).t == LTLfQuery::ABSENCE_QP;
         // Refining over the activations first
         bool hasFound = false;
         if (hasActivations.at(i)) {
             auto& V = per_clause_AV[i];
-            auto it = V.begin(), en = V.end();
-            DecisionTree<payload_data> dtA(it,
-                                           en,
-                                           1,
-                                           selector,
-                                           numeric_keys,
-                                           categorical_keys,
-                                           ForTheWin::gain_measures::Entropy,
-                                           purity,
-                                           maxL,
-                                           V.size(),
-                                           minL);
-            if (dtA.goodness >= tau) {
-                collectRefinedClause(VVV, tree_to_env, world_to_paths, clause, dtA, RefineOverActivation);
-                hasFound = true;
+            if (!V.empty()) {
+                auto it = V.begin(), en = V.end();
+                DecisionTree<payload_data> dtA(it,
+                                               en,
+                                               1,
+                                               selector,
+                                               numeric_keys,
+                                               categorical_keys,
+                                               ForTheWin::gain_measures::Entropy,
+                                               purity,
+                                               maxL,
+                                               V.size(),
+                                               minL);
+                if ((!dtA.isLeafNode()) && (dtA.goodness >= tau)) {
+                    collectRefinedClause(VVV, world_to_paths, clause, dtA, RefineOverActivation, doNegate);
+                    hasFound = true;
+                } else if (dtA.isLeafNode()) {
+                    VVV[dtA.getMajorityClass()].emplace_back(clause);
+                }
             }
         }
         if (hasFound) continue;
@@ -1177,41 +1204,49 @@ std::tuple<std::vector<std::vector<DeclareDataAware>>,double,double> classifier_
         if (hasTargets.at(i)) {
             // Refining by target
             auto& W = per_clause_TV[i];
-            auto itT = W.begin(), enT = W.end();
-            DecisionTree<payload_data> dtT(itT,
-                                           enT,
-                                           1,
-                                           selector,
-                                           numeric_keys,
-                                           categorical_keys,
-                                           ForTheWin::gain_measures::Entropy,
-                                           purity,
-                                           maxL,
-                                           W.size(),
-                                           minL);
-            if (dtT.goodness >= tau) {
-                collectRefinedClause(VVV, tree_to_env, world_to_paths, clause, dtT, RefineOverTarget);
-                hasFound = true;
+            if (!W.empty()) {
+                auto itT = W.begin(), enT = W.end();
+                DecisionTree<payload_data> dtT(itT,
+                                               enT,
+                                               1,
+                                               selector,
+                                               numeric_keys,
+                                               categorical_keys,
+                                               ForTheWin::gain_measures::Entropy,
+                                               purity,
+                                               maxL,
+                                               W.size(),
+                                               minL);
+                if ((!dtT.isLeafNode()) && (dtT.goodness >= tau)) {
+                    collectRefinedClause(VVV, world_to_paths, clause, dtT, RefineOverTarget, doNegate);
+                    hasFound = true;
+                } else if (dtT.isLeafNode()) {
+                    VVV[dtT.getMajorityClass()].emplace_back(clause);
+                }
             }
         }
         if (hasFound) continue;
 
         if (hasActivations.at(i) && hasTargets.at(i)) {
             auto& C = per_clause_TV[i];
-            auto itC = C.begin(), enC = C.end();
-            DecisionTree<payload_data> dtC(itC,
-                                           enC,
-                                           1,
-                                           selector,
-                                           numeric_keys,
-                                           categorical_keys,
-                                           ForTheWin::gain_measures::Entropy,
-                                           purity,
-                                           maxL,
-                                           C.size(),
-                                           minL);
-            if (dtC.goodness >= tau) {
-                collectRefinedClause(VVV, tree_to_env, world_to_paths, clause, dtC, RefineOverMatch);
+            if (!C.empty()) {
+                auto itC = C.begin(), enC = C.end();
+                DecisionTree<payload_data> dtC(itC,
+                                               enC,
+                                               1,
+                                               selector,
+                                               numeric_keys,
+                                               categorical_keys,
+                                               ForTheWin::gain_measures::Entropy,
+                                               purity,
+                                               maxL,
+                                               C.size(),
+                                               minL);
+                if ((!dtC.isLeafNode()) && (dtC.goodness >= tau)) {
+                    collectRefinedClause(VVV, world_to_paths, clause, dtC, RefineOverMatch, doNegate);
+                } else if (dtC.isLeafNode()) {
+                    VVV[dtC.getMajorityClass()].emplace_back(clause);
+                }
             }
         }
     }
@@ -1219,5 +1254,8 @@ std::tuple<std::vector<std::vector<DeclareDataAware>>,double,double> classifier_
     /* Getting number of milliseconds as a double. */
     duration<double, std::milli> ms_double = t2 - t1;
     std::cout << overall_dataless_mining_time << "+" << ms_double.count() << "=" << overall_dataless_mining_time+ms_double.count() << "ms\n";
+    for (const auto& ref : VVV) {
+        std::cout << ref << std::endl;
+    }
     return std::make_tuple(VVV,overall_dataless_mining_time, ms_double.count());
 }

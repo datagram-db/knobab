@@ -2,7 +2,7 @@
 // Generated from KnoBABQuery.g4 by ANTLR 4.11.1
 
 
-#include "KnoBABQueryLexer.h"
+#include "knobab/server/query_manager/KnoBABQueryLexer.h"
 
 
 using namespace antlr4;

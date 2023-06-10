@@ -25,19 +25,19 @@ id.parts.right = right;
 id.parts.future = future;
 }
 
-static marked_event left(event_t left) {
+static inline marked_event left(event_t left) {
 return {MARKED_EVENT_LEFT, left};
 }
-static marked_event activation(event_t left) {
+static inline marked_event activation(event_t left) {
 return {MARKED_EVENT_ACTIVATION, left};
 }
-static marked_event right(event_t right) {
+static inline marked_event right(event_t right) {
 return {MARKED_EVENT_RIGHT, 0, right};
 }
-static marked_event target(event_t right) {
+static inline marked_event target(event_t right) {
 return {MARKED_EVENT_TARGET, 0, right};
 }
-static marked_event join(event_t left, event_t right) {
+static inline marked_event join(event_t left, event_t right) {
 return {MARKED_EVENT_MATCH, left, right};
 }
 TAGGED_UNION_ENCAPSULATOR_END

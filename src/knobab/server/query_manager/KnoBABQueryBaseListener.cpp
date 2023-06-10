@@ -2,6 +2,6 @@
 // Generated from KnoBABQuery.g4 by ANTLR 4.11.1
 
 
-#include "KnoBABQueryBaseListener.h"
+#include "knobab/server/query_manager/KnoBABQueryBaseListener.h"
 
 
