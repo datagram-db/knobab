@@ -41,11 +41,13 @@ using refining_extraction = std::unordered_map<std::vector<Environment*>, std::v
 
 // @author: Samuel Appleby and Giacomo Bergami
 static inline void extractPayload(const Environment *e,
+                                  bool hasActivations,
+                                  bool hasTargets,
                                   std::vector<std::pair<payload_data, int>> &activations,
                                   std::vector<std::pair<payload_data, int>> &targets,
                                   std::vector<std::pair<payload_data, int>> &correlations,
-                    const Result &result,
-                    int clazz) {
+                                  const Result &result,
+                                  int clazz) {
     env envM;
     static std::unordered_set<std::string> toIgnore{"__time"};
     for (const ResultRecord &rec: result) {      // Every trace
@@ -53,8 +55,8 @@ static inline void extractPayload(const Environment *e,
         match.first = rec.first.first;
         std::vector<std::vector<event_t>> act_targ(2, std::vector<event_t>{});
         for (const marked_event &ev: rec.second.second) {        // Every activation/target
-            bool isMatch = IS_MARKED_EVENT_MATCH(ev);
-            if (IS_MARKED_EVENT_ACTIVATION(ev) || isMatch) {
+            bool isMatch = IS_MARKED_EVENT_MATCH(ev) && (hasActivations && hasTargets);
+            if ((IS_MARKED_EVENT_ACTIVATION(ev) && hasActivations) || isMatch) {
                 match.second = GET_ACTIVATION_EVENT(ev);
                 auto tmp = e->GetPayloadDataFromEvent(match, toIgnore);
                 activations.emplace_back(tmp, clazz);
@@ -65,7 +67,7 @@ static inline void extractPayload(const Environment *e,
                 } else
                     act_targ[0].emplace_back( GET_ACTIVATION_EVENT(ev));
             }
-            if (IS_MARKED_EVENT_TARGET(ev) || isMatch) {
+            if ((IS_MARKED_EVENT_TARGET(ev) && hasTargets) || isMatch) {
                 match.second = GET_TARGET_EVENT(ev);
                 auto tmp = e->GetPayloadDataFromEvent(match, toIgnore);
                 targets.emplace_back(tmp, clazz);
