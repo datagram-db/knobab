@@ -347,11 +347,13 @@ getAware(const KnowledgeBase &kb, bool special_temporal_patterns, bool only_prec
         }
         if (hasChainSuccession) {
             clause.casusu = "ChainSuccession";
-            declarative_clauses.emplace_back(clause,
+            auto it = declarative_clauses.emplace_back(clause,
                                              result.support_generating_original_pattern,
                                              (((double) (ntraces - alles_not_nexte)) /
                                               ((double) ntraces)),
                                              -1);
+            if (A > B)
+                std::swap(declarative_clauses.back().clause.left_act, declarative_clauses.back().clause.right_act);
         }
         if (alles_precedence && (alles_not_precedence<= tolerated_errors) && (!hasChainSuccession)) {
             clause.casusu = "Precedence";
@@ -619,6 +621,7 @@ std::pair<std::vector<pattern_mining_result<DeclareDataAware>>, double> pattern_
                         DeclareDataAware clause;
                         clause.left_act = kb.event_label_mapper.get(a);
                         clause.right_act = kb.event_label_mapper.get(b);
+                        if (a>b) std::swap(clause.left_act,clause.right_act);
                         clause.n = 1;
                         if (ratio.first >= minimum_support_threshold) {
                             // I can consider this pattern, again, only if it is within the expected
@@ -659,9 +662,9 @@ std::pair<std::vector<pattern_mining_result<DeclareDataAware>>, double> pattern_
         auto cp = it;
         SSSS.insert(kb.event_label_mapper.get(*it));
         SSSS.insert(kb.event_label_mapper.get(*(++cp)));
-        if (SSSS.contains("g") && SSSS.contains("f")) {
-            std::cout <<"HERE"<< std::endl;
-        }
+//        if (SSSS.contains("g") && SSSS.contains("f")) {
+//            std::cout <<"HERE"<< std::endl;
+//        }
 #endif
 //        std::cout << " - Pattern: " << kb.event_label_mapper.get(*it) << ",";
         it++;
@@ -696,6 +699,7 @@ std::pair<std::vector<pattern_mining_result<DeclareDataAware>>, double> pattern_
                 // CoExistence pattern
                 A = result.clause.head.at(0);
                 B = result.clause.head.at(1);
+                if (A>B) std::swap(A,B);
                 clause.casusu = "CoExistence";
                 alsoFlip = true;
                 auto cpA = kb.getCountTable().resolve_primary_index2(A);
@@ -911,6 +915,12 @@ std::pair<std::vector<pattern_mining_result<DeclareDataAware>>, double> pattern_
         }
 
     }
+    std::sort(declarative_clauses.begin(), declarative_clauses.end(), [](const pattern_mining_result<DeclareDataAware>& l, const pattern_mining_result<DeclareDataAware>& r) {
+        return std::tie(l.clause.casusu, l.clause.left_act, l.clause.right_act, l.clause.n, l.confidence_declarative_pattern, l.support_declarative_pattern) > std::tie(r.clause.casusu, r.clause.left_act, r.clause.right_act, r.clause.n, r.confidence_declarative_pattern, r.support_declarative_pattern);
+    });
+    declarative_clauses.erase(std::unique(declarative_clauses.begin(), declarative_clauses.end(), [](const pattern_mining_result<DeclareDataAware>& l, const pattern_mining_result<DeclareDataAware>& r) {
+        return std::tie(l.clause.casusu, l.clause.left_act, l.clause.right_act, l.clause.n) == std::tie(r.clause.casusu, r.clause.left_act, r.clause.right_act, r.clause.n);
+    }), declarative_clauses.end());
     auto t2 = high_resolution_clock::now();
     /* Getting number of milliseconds as a double. */
     duration<double, std::milli> ms_double = t2 - t1;
@@ -1186,7 +1196,7 @@ std::tuple<std::vector<std::vector<DeclareDataAware>>,double,double> classifier_
                                                selector,
                                                numeric_keys,
                                                categorical_keys,
-                                               ForTheWin::gain_measures::Entropy,
+                                               ForTheWin::gain_measures::Gini,
                                                purity,
                                                maxL,
                                                V.size(),
@@ -1212,7 +1222,7 @@ std::tuple<std::vector<std::vector<DeclareDataAware>>,double,double> classifier_
                                                selector,
                                                numeric_keys,
                                                categorical_keys,
-                                               ForTheWin::gain_measures::Entropy,
+                                               ForTheWin::gain_measures::Gini,
                                                purity,
                                                maxL,
                                                W.size(),
@@ -1237,7 +1247,7 @@ std::tuple<std::vector<std::vector<DeclareDataAware>>,double,double> classifier_
                                                selector,
                                                numeric_keys,
                                                categorical_keys,
-                                               ForTheWin::gain_measures::Entropy,
+                                               ForTheWin::gain_measures::Gini,
                                                purity,
                                                maxL,
                                                C.size(),
