@@ -29,9 +29,9 @@ public:
     NEXT = 84, OR = 85, AND = 86, FIRST = 87, LAST = 88, IF = 89, THEN = 90, 
     ELSE = 91, UNTIL = 92, BOX = 93, DIAMOND = 94, AUTO_TIMED = 95, LPAREN = 96, 
     RPAREN = 97, PRESERVE = 98, TIMED = 99, THETA = 100, LEFT = 101, INV = 102, 
-    RIGHT = 103, MIDDLE = 104, NEGATED = 105, HRF = 106, TAB = 107, XES = 108, 
-    LABEL = 109, INTNUMBER = 110, NUMBER = 111, STRING = 112, SPACE = 113, 
-    COMMENT = 114, LINE_COMMENT = 115
+    RIGHT = 103, MIDDLE = 104, NEGATED = 105, JOLLY = 106, HRF = 107, TAB = 108, 
+    XES = 109, LABEL = 110, INTNUMBER = 111, NUMBER = 112, STRING = 113, 
+    SPACE = 114, COMMENT = 115, LINE_COMMENT = 116
   };
 
   enum {
@@ -613,6 +613,7 @@ public:
 
     antlr4::tree::TerminalNode *ABSENCE();
     antlr4::tree::TerminalNode *INTNUMBER();
+    antlr4::tree::TerminalNode *JOLLY();
     antlr4::tree::TerminalNode *TIMED();
     Declare_argumentsContext *declare_arguments();
     Declare_act_targetContext *declare_act_target();
@@ -738,6 +739,7 @@ public:
 
     antlr4::tree::TerminalNode *EXISTS();
     antlr4::tree::TerminalNode *INTNUMBER();
+    antlr4::tree::TerminalNode *JOLLY();
     antlr4::tree::TerminalNode *NEGATED();
     antlr4::tree::TerminalNode *TIMED();
     Declare_argumentsContext *declare_arguments();

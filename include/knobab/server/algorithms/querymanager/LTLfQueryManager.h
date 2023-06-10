@@ -295,7 +295,8 @@ struct LTLfQueryManager {
                                         const std::unordered_set<std::string> &data_atom,
                                           const std::unordered_set<std::string> &atom_universe,
                                           const std::unordered_set<std::string> &left,
-                                          const std::unordered_set<std::string> &right) {
+                                          const std::unordered_set<std::string> &right,
+                                          size_t value) {
 
         bool firstOrLast = false;
         // Time assumptions on the Init and End operator!
@@ -313,7 +314,7 @@ struct LTLfQueryManager {
 
         LTLfQuery q;
         q.t = input.t;
-        q.n = input.n;
+        q.n = ((input.t == LTLfQuery::EXISTS_QP || input.t == LTLfQuery::ABSENCE_QP) || (input.n == -1)) ? value : input.n ;
         q.isLeaf = input.isLeaf;
         q.fields = input.fields;
         q.fields.id.parts.is_negated = true; // input.fields.id.parts.is_negated; /// TODO: BUGFIX, false always // I need to remember whether this was an intersection or a union, depending on the negation of the atom!
@@ -326,9 +327,9 @@ struct LTLfQueryManager {
         auto& V = focc_atomsets[key];
 
         bool hasAtLeastOneDataAtom = false;
-        if (!((q.t == LTLfQuery::FIRST_QP) || (q.t == LTLfQuery::LAST_QP))) {
-
-        }
+//        if (!((q.t == LTLfQuery::FIRST_QP) || (q.t == LTLfQuery::LAST_QP))) {
+//
+//        }
 
         if(!((q.t == LTLfQuery::FIRST_QP) || (q.t == LTLfQuery::LAST_QP))) {
             if ((input.declare_arg == DECLARE_TYPE_LEFT) || (input.declare_arg == DECLARE_TYPE_NONE)) {
@@ -421,8 +422,9 @@ struct LTLfQueryManager {
             trueAbsence.args_from_script.emplace_back(q);
             V.emplace_back(q.atom);
             return trueAbsence;
-        } else
+        } else {
             return q;
+        }
 //        auto tmp = simplify(q);
 //        if (q.isLeaf == ActivationLeaf) {
 //            if (current_query_id == activations.size()) { // Query Id counting from zero, so, if that happens, then it means that I need to add the activation in here!

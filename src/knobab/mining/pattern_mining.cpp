@@ -914,7 +914,7 @@ std::pair<std::vector<pattern_mining_result<DeclareDataAware>>, double> pattern_
     duration<double, std::milli> ms_double = t2 - t1;
     std::cout << ms_double.count() << "ms\n";
 //    exit(1);
-    return std::pair<std::vector<pattern_mining_result<DeclareDataAware>>, double>(declarative_clauses, ms_double.count());
+    return {declarative_clauses, ms_double.count()};
 }
 
 
@@ -988,15 +988,55 @@ void collectRefinedClause(std::vector<std::vector<DeclareDataAware>> &VVV,
     }
 }
 
-std::vector<std::vector<DeclareDataAware>> classifier_mining(ServerQueryManager sqm,
+std::tuple<std::vector<std::vector<DeclareDataAware>>,double,double> classifier_mining(ServerQueryManager& sqm,
                                                                        const std::vector<std::string>& model_entry_names,
                                                                        double support,
                                                                        double tau,
+                                                                       double purity,
+                                                                       size_t maxL,
+                                                                       size_t minL,
                                                                        bool naif,
                                                                        bool init_end,
                                                                        bool special_temporal_patterns,
                                                                        bool only_precise_temporal_patterns,
                                                                        bool negative_ones) {
+
+    std::vector<std::vector<DeclareDataAware>> VVV;
+    std::vector<DeclareDataAware> last_VVV_intersection, curr_VVV_insersection;
+    // TODO: would have been more efficient with a min-heap, but we don't have time.
+    double overall_dataless_mining_time = 0;
+    using std::chrono::high_resolution_clock;
+    using std::chrono::duration_cast;
+    using std::chrono::duration;
+    using std::chrono::milliseconds;
+    auto t1 = high_resolution_clock::now();
+    for (size_t i = 0, M = model_entry_names.size(); i<M; i++) {
+        const auto &ref = model_entry_names.at(i);
+        auto tmp = pattern_mining(sqm.multiple_logs[ref].db, support, naif, init_end, special_temporal_patterns, only_precise_temporal_patterns, negative_ones);
+        overall_dataless_mining_time += tmp.second;
+        auto WWW = VVV.emplace_back();
+        for (auto& ref2 : tmp.first) {
+            WWW.emplace_back(std::move(ref2.clause));
+        }
+        remove_duplicates(WWW);
+        if (i == 0)
+             last_VVV_intersection = WWW;
+        else {
+            std::set_intersection(WWW.begin(), WWW.end(),
+                                  last_VVV_intersection.begin(), last_VVV_intersection.end(),
+                                  std::back_inserter(curr_VVV_insersection));
+            std::swap(last_VVV_intersection, curr_VVV_insersection);
+            curr_VVV_insersection.clear();
+        }
+    }
+    if (last_VVV_intersection.empty()) {
+        auto t2 = high_resolution_clock::now();
+        /* Getting number of milliseconds as a double. */
+        duration<double, std::milli> ms_double = t2 - t1;
+        std::cout << overall_dataless_mining_time << "+" << ms_double.count() << "=" << overall_dataless_mining_time+ms_double.count() << "ms\n";
+        return std::make_tuple(VVV,overall_dataless_mining_time, ms_double.count());
+    }
+
     std::string query_plan = "queryplan \"nfmcp23\" {\n"
                              "     template \"Init\"                   := INIT  activation\n"
                              "     template \"End\"                    := END activation\n"
@@ -1023,31 +1063,10 @@ std::vector<std::vector<DeclareDataAware>> classifier_mining(ServerQueryManager 
                              "                                           (G(((EXISTS ~ 1 t #1)) OR t (((EXISTS 1 t #1 activation)) AND t THETA (NEXT (((EXISTS  ~ 1 t #1) U t (EXISTS 1 t #2 target)) OR t (G t (EXISTS  ~ 1 t #1))))  )))\n"
                              "}";
 
+
+
     sqm.runQuery(query_plan);
     auto it2 = sqm.planname_to_declare_to_ltlf.find("nfmcp23");
-    std::vector<std::vector<DeclareDataAware>> VVV;
-    std::vector<DeclareDataAware> last_VVV_intersection, curr_VVV_insersection;
-    // TODO: would have been more efficient with a min-heap, but we don't have time.
-    double overall_dataless_mining_time = 0;
-    for (size_t i = 0, M = model_entry_names.size(); i<M; i++) {
-        const auto &ref = model_entry_names.at(i);
-        auto tmp = pattern_mining(sqm.multiple_logs[ref].db, support, naif, init_end, special_temporal_patterns, only_precise_temporal_patterns, negative_ones);
-        overall_dataless_mining_time += tmp.second;
-        auto WWW = VVV.emplace_back();
-        for (auto& ref2 : tmp.first) {
-            WWW.emplace_back(std::move(ref2.clause));
-        }
-        remove_duplicates(WWW);
-        if (i == 0)
-             last_VVV_intersection = WWW;
-        else {
-            std::set_intersection(WWW.begin(), WWW.end(),
-                                  last_VVV_intersection.begin(), last_VVV_intersection.end(),
-                                  std::back_inserter(curr_VVV_insersection));
-            std::swap(last_VVV_intersection, curr_VVV_insersection);
-            curr_VVV_insersection.clear();
-        }
-    }
 
 //    auto f = [](const pattern_mining_result<DeclareDataAware>& l, const pattern_mining_result<DeclareDataAware>& r) {
 //        return std::tie(l.clause.casusu, l.clause.left_act, l.clause.right_act, l.clause.n) < std::tie(r.clause.casusu, r.clause.left_act, r.clause.right_act, r.clause.n);
@@ -1066,9 +1085,7 @@ std::vector<std::vector<DeclareDataAware>> classifier_mining(ServerQueryManager 
 //                          [](const pattern_mining_result<DeclareDataAware>& l, const pattern_mining_result<DeclareDataAware>& r) {
 //                              return std::tie(l.clause.casusu, l.clause.left_act, l.clause.right_act, l.clause.n) == std::tie(r.clause.casusu, r.clause.left_act, r.clause.right_act, r.clause.n);
 //                          });
-    if (last_VVV_intersection.empty()) {
-        return VVV;
-    }
+
     tau = std::clamp(tau, 0.5, 1.);
 
     // Removing the elements at the intersection
@@ -1150,10 +1167,10 @@ std::vector<std::vector<DeclareDataAware>> classifier_mining(ServerQueryManager 
                                       numeric_keys,
                                       categorical_keys,
                                       ForTheWin::gain_measures::Entropy,
-                                      0.9,
-                                      1,
+                                       purity,
+                                      maxL,
                                       V.size(),
-                                      1);
+                                      minL);
         if (dtA.goodness >= tau) {
             collectRefinedClause(VVV, tree_to_env, world_to_paths, clause, dtA, RefineOverActivation);
             // Do refine!
@@ -1168,10 +1185,10 @@ std::vector<std::vector<DeclareDataAware>> classifier_mining(ServerQueryManager 
                                           numeric_keys,
                                           categorical_keys,
                                           ForTheWin::gain_measures::Entropy,
-                                          0.9,
-                                          1,
+                                           purity,
+                                          maxL,
                                           W.size(),
-                                          1);
+                                          minL);
             if (dtT.goodness >= tau) {
                 collectRefinedClause(VVV, tree_to_env, world_to_paths, clause, dtT, RefineOverTarget);
                 // Do refine!
@@ -1185,16 +1202,19 @@ std::vector<std::vector<DeclareDataAware>> classifier_mining(ServerQueryManager 
                                                numeric_keys,
                                                categorical_keys,
                                                ForTheWin::gain_measures::Entropy,
-                                               0.9,
-                                               1,
+                                               purity,
+                                               maxL,
                                                C.size(),
-                                               1);
+                                               minL);
                 if (dtC.goodness >= tau) {
                     collectRefinedClause(VVV, tree_to_env, world_to_paths, clause, dtC, RefineOverMatch);
                 }
             }
         }
     }
-
-    return VVV;
+    auto t2 = high_resolution_clock::now();
+    /* Getting number of milliseconds as a double. */
+    duration<double, std::milli> ms_double = t2 - t1;
+    std::cout << overall_dataless_mining_time << "+" << ms_double.count() << "=" << overall_dataless_mining_time+ms_double.count() << "ms\n";
+    return std::make_tuple(VVV,overall_dataless_mining_time, ms_double.count());
 }

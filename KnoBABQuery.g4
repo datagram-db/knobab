@@ -9,6 +9,8 @@ queries : load_data_query
         | with_model
         ;
 
+//
+
 set_benchmarking_file: 'benchmarking-log' file=STRING;
 load_data_query: 'load' (HRF|TAB|XES|log) file=STRING with_data? no_stats? with_missing? 'as' env_name=STRING ;
 display_data: 'display' (ACT_TABLE|CNT_TABLE|(ATT_TABLE attr=STRING)) 'for' STRING #display
@@ -68,8 +70,8 @@ ltlf : INIT TIMED?                      declare_arguments? declare_act_target?  
       | END  TIMED?                      declare_arguments? declare_act_target?        #end
       | LAST                                                declare_act_target?        #last
       | FIRST                                               declare_act_target?        #first
-      | EXISTS NEGATED? INTNUMBER TIMED? declare_arguments? declare_act_target?        #exists
-      | ABSENCE INTNUMBER TIMED?         declare_arguments? declare_act_target?        #absence
+      | EXISTS NEGATED? (INTNUMBER|JOLLY) TIMED? declare_arguments? declare_act_target?        #exists
+      | ABSENCE (INTNUMBER|JOLLY) TIMED?         declare_arguments? declare_act_target?        #absence
       | NEXT ltlf                                                                     #next
       |<assoc=right> ltlf OR TIMED? THETA? INV? ltlf                                      #or
       |<assoc=right> ltlf AND TIMED? THETA? INV? ltlf                                     #and
@@ -156,6 +158,7 @@ INV: 'INV';
 RIGHT: 'R';
 MIDDLE: 'M';
 NEGATED: '~';
+JOLLY: '$';
 
 HRF: 'HRF';
 TAB: 'TAB';
