@@ -2,10 +2,10 @@
 // Generated from KnoBABQuery.g4 by ANTLR 4.11.1
 
 
-#include "KnoBABQueryListener.h"
-#include "KnoBABQueryVisitor.h"
+#include "knobab/server/query_manager/KnoBABQueryListener.h"
+#include "knobab/server/query_manager/KnoBABQueryVisitor.h"
 
-#include "KnoBABQueryParser.h"
+#include "knobab/server/query_manager/KnoBABQueryParser.h"
 
 
 using namespace antlrcpp;

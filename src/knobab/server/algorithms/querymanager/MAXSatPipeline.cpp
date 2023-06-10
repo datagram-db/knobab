@@ -175,7 +175,8 @@ void MAXSatPipeline::data_chunk(CNFDeclareDataAware *model,
                            atomization.data_query_atoms,
                            atomization.atom_universe,
                            item.left_decomposed_atoms,
-                           item.right_decomposed_atoms));
+                           item.right_decomposed_atoms,
+                           item.n));
 
             maxFormulaId++;
             qm.current_query_id++;

@@ -403,7 +403,7 @@ struct LTLfQueryManager {
             }
         }
         for (auto& args : input.args_from_script)
-            q.args_from_script.emplace_back(instantiate(atom, formulaId, args, joinCondition, data_atom, atom_universe, left, right));
+            q.args_from_script.emplace_back(instantiate(atom, formulaId, args, joinCondition, data_atom, atom_universe, left, right, value));
         q.fields.id.parts.is_queryplan = false;
 //        q.fields.id.parts.is_negated = false;
         q.declare_arg = input.declare_arg; //DECLARE_TYPE_NONE;
