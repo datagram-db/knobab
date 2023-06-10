@@ -6,6 +6,7 @@
 #include "knobab/server/query_manager/Environment.h"
 #include "knobab/mining/refinery.h"
 #include "args.hxx"
+#include "knobab/server/query_manager/ServerQueryManager.h"
 
 ////using result = std::variant<std::monostate, std::pair<DeclareDataAware, DeclareDataAware>>;
 ////result refine_clause(const DeclareDataAware& dec_temp, const DecisionTree<DeclareDataAware>& tree){
@@ -128,14 +129,25 @@
 //    }
 //}
 
+#include <magic_enum.hpp>
+#include <knobab/mining/pattern_mining.h>
+
 int main(int argc, char **argv) {
     args::ArgumentParser parser("DBolt±", "This extension provides the data-aware declarative mining algorithm presented");
     args::HelpFlag help(parser, "help", "Display this help menu", {'h', "help"});
-
+    std::unordered_map<std::string, log_data_format> map{
+            {"hrf", log_data_format::HUMAN_READABLE_YAUCL},
+            {"xes", log_data_format::XES1},
+            {"bar", log_data_format::TAB_SEPARATED_EVENTS}};
     args::Group group(parser, "You can use the following parameters", args::Group::Validators::DontCare, args::Options::Global);
-    args::ValueFlag<std::string> world_1_file(group, "World 1 file directory", "World 1 file path", {'1', "world_1"});
-    args::ValueFlag<std::string> world_2_file(group, "World 2 file directory", "World 2 file path", {'2', "world_2"});
-    args::ValueFlag<float>  tau_val(group, "Tau Value", "If present, specifies the tau value", {'t', "tau"});
+    args::MapFlagList<std::string, log_data_format> log(parser, "w", "allocates the n-th world associated to a given file to be read in a given format", {'w', "world"}, map);
+    args::ValueFlag<double>  tau_val(group, "Tau Value", "If present, specifies the tau value", {'t', "tau"});
+    args::ValueFlag<double>  supp_val(group, "Support Value", "If present, specifies the support value", {'s', "supp"});
+    args::ValueFlag<std::string> dt_measure(group, "DT Measure", "If present, specifies the quality measure for the decision tree", {'q', "quality"});
+    args::ValueFlag<double> dt_purity(group, "DT Minimum Purity", "If present, specifies the minimum purity condition (def=1.)", {'p', "minpure"});
+    args::ValueFlag<size_t> dt_max_l(group, "DT Maximum Categoric Set Size", "If present, specifies the maximum size of a categorical set (def=1)", {'l', "maxlen"});
+    args::ValueFlag<size_t> dt_min_l(group, "DT Maximum Categoric Set Size", "If present, specifies the minimum leaf size (def=1)", {'m', "minleaf"});
+    args::PositionalList<std::string> files(parser, "files", "Files associated to the specific worlds");
 
     try {
         parser.ParseCLI(argc, argv);
@@ -152,20 +164,67 @@ int main(int argc, char **argv) {
         return 1;
     }
 
-    std::string world_1_file_dir = "/home/sam/Documents/Repositories/Codebases/refinery/data/refinery/positive",
-                world_2_file_dir = "/home/sam/Documents/Repositories/Codebases/refinery/data/refinery/negative";
-
-    float tau = 0.75;
-
-    if (world_1_file) {
-        world_1_file_dir = args::get(world_1_file);
+    std::vector<std::string> log_parse_format_type{"HRF", "XES", "TAB"};
+    std::vector<log_data_format> worlds_format_to_load = args::get(log);
+    std::vector<std::string>     worlds_file_to_load = args::get(files);
+    ForTheWin::gain_measures measure = ForTheWin::Entropy;
+    double tau = 0.75;
+    double supp = 0.75;
+    double purity = 1.0;
+    size_t max_set_size = 1;
+    size_t min_leaf_size = 1;
+    if(tau_val) {
+        tau = std::clamp(args::get(tau_val), 0.5, 1.);
     }
-    if (world_2_file) {
-        world_2_file_dir = args::get(world_2_file);
+    if(supp_val) {
+        supp = std::clamp(args::get(supp_val), 0.0, 1.);
     }
     if(tau_val) {
-        tau = std::clamp(args::get(tau_val), 0.5f, 1.f);
+        tau = std::clamp(args::get(tau_val), 0.5, 1.);
     }
+    if(dt_purity) {
+        purity = std::clamp(args::get(tau_val), 0., 1.);
+    }
+    if(dt_max_l) {
+        max_set_size = std::max(args::get(dt_max_l), 1UL);
+    }
+    if(dt_min_l) {
+        min_leaf_size = std::max(args::get(dt_min_l), 1UL);
+    }
+    if (dt_measure) {
+        auto tmp = magic_enum::enum_cast<ForTheWin::gain_measures>(args::get(dt_measure));
+        if (tmp) {
+            measure = tmp.value();
+        }
+    }
+
+    ServerQueryManager sqm;
+    double loading_and_indexing = 0;
+    std::vector<std::string> bogus_model_name;
+    for (size_t i = 0, N = std::min(worlds_format_to_load.size(), worlds_file_to_load.size()); i<N; i++) {
+        std::stringstream ss;
+        std::string model_name = std::to_string(i);
+        bogus_model_name.emplace_back(model_name);
+        ss << "load "
+           << log_parse_format_type.at((size_t)worlds_format_to_load.at(i))
+           << " "
+           << std::quoted(worlds_file_to_load.at(i))
+           <<  " with data as "
+           << std::quoted(model_name);
+        auto tmp = sqm.runQuery(ss.str());
+        std::cerr << tmp.first << " && " << tmp.second << std::endl;
+        loading_and_indexing += sqm.multiple_logs[model_name].experiment_logger.log_indexing_ms+sqm.multiple_logs[model_name].experiment_logger.log_loading_and_parsing_ms;
+    }
+
+    std::cout << "loading+indexing=" << loading_and_indexing << std::endl;
+    classifier_mining(sqm,
+                      bogus_model_name,
+                      supp,
+                      tau,
+                      purity,
+                      max_set_size,
+                      min_leaf_size);
+
 
 //    std::vector<Environment*> envs{};
 //

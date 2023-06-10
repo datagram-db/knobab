@@ -520,14 +520,14 @@ antlrcpp::Any ServerQueryManager::visitAbsence(KnoBABQueryParser::AbsenceContext
     ASSERT_ON_TIMING(context);
     auto argument = decleare_templates_determine(context->declare_arguments());
     max_aspect = std::max(max_aspect, argument);
-    return {LTLfQuery::qABSENCE(std::stoull(context->INTNUMBER()->getText()), argument, decleare_leaf_determine(context->declare_act_target()), GET_TIMING(context))};
+    return {LTLfQuery::qABSENCE(context->JOLLY() != nullptr ? -1 :std::stoull(context->INTNUMBER()->getText()), argument, decleare_leaf_determine(context->declare_act_target()), GET_TIMING(context))};
 }
 
 antlrcpp::Any ServerQueryManager::visitExists(KnoBABQueryParser::ExistsContext *context) {
     ASSERT_ON_TIMING(context);
     auto argument = decleare_templates_determine(context->declare_arguments());
     max_aspect = std::max(max_aspect, argument);
-    return {LTLfQuery::qEXISTS(std::stoull(context->INTNUMBER()->getText()), argument, decleare_leaf_determine(context->declare_act_target()), GET_TIMING(context), context->NEGATED())};
+    return {LTLfQuery::qEXISTS(context->JOLLY() != nullptr ? -1 : std::stoull(context->INTNUMBER()->getText()), argument, decleare_leaf_determine(context->declare_act_target()), GET_TIMING(context), context->NEGATED())};
 }
 
 antlrcpp::Any ServerQueryManager::visitNext(KnoBABQueryParser::NextContext *context) {
