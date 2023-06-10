@@ -40,7 +40,8 @@ using refining_extraction = std::unordered_map<std::vector<Environment*>, std::v
 
 
 // @author: Samuel Appleby and Giacomo Bergami
-static inline void extractPayload(const Environment *e,
+static inline void extractPayload(size_t leftAct, size_t rightAct,
+                                  const Environment *e,
                                   bool hasActivations,
                                   bool hasTargets,
                                   std::vector<std::pair<payload_data, int>> &activations,
@@ -53,30 +54,36 @@ static inline void extractPayload(const Environment *e,
     for (const ResultRecord &rec: result) {      // Every trace
         ResultIndex match;
         match.first = rec.first.first;
+        const auto& thisRef =
+                e->db.act_table_by_act_id.getBuilder().trace_id_to_event_id_to_offset.at(match.first);
         std::vector<std::vector<event_t>> act_targ(2, std::vector<event_t>{});
         for (const marked_event &ev: rec.second.second) {        // Every activation/target
             bool isMatch = IS_MARKED_EVENT_MATCH(ev) && (hasActivations && hasTargets);
             if ((IS_MARKED_EVENT_ACTIVATION(ev) && hasActivations) || isMatch) {
                 match.second = GET_ACTIVATION_EVENT(ev);
-                auto tmp = e->GetPayloadDataFromEvent(match, toIgnore);
-                activations.emplace_back(tmp, clazz);
-                if (isMatch) {
-                    envM.clear();
-                    for (const auto&[k,v] : tmp)
-                        envM["A."+k] = v;
-                } else
-                    act_targ[0].emplace_back( GET_ACTIVATION_EVENT(ev));
+                if (e->db.act_table_by_act_id.table.at(thisRef.at(match.second)).entry.id.parts.act == leftAct) {
+                    auto tmp = e->GetPayloadDataFromEvent(match, toIgnore);
+                    activations.emplace_back(tmp, clazz);
+                    if (isMatch) {
+                        envM.clear();
+                        for (const auto&[k,v] : tmp)
+                            envM["A."+k] = v;
+                    } else
+                        act_targ[0].emplace_back( GET_ACTIVATION_EVENT(ev));
+                }
             }
             if ((IS_MARKED_EVENT_TARGET(ev) && hasTargets) || isMatch) {
                 match.second = GET_TARGET_EVENT(ev);
-                auto tmp = e->GetPayloadDataFromEvent(match, toIgnore);
-                targets.emplace_back(tmp, clazz);
-                if (isMatch) {
-                    for (const auto&[k,v] : tmp)
-                        envM["T."+k] = v;
-                    correlations.emplace_back(envM, clazz);
-                } else
-                    act_targ[1].emplace_back( GET_TARGET_EVENT(ev));
+                if (e->db.act_table_by_act_id.table.at(thisRef.at(match.second)).entry.id.parts.act == rightAct) {
+                    auto tmp = e->GetPayloadDataFromEvent(match, toIgnore);
+                    targets.emplace_back(tmp, clazz);
+                    if (isMatch) {
+                        for (const auto&[k,v] : tmp)
+                            envM["T."+k] = v;
+                        correlations.emplace_back(envM, clazz);
+                    } else
+                        act_targ[1].emplace_back( GET_TARGET_EVENT(ev));
+                }
             }
         }
         if ((!act_targ.at(0).empty()) && (!act_targ.at(1).empty())) {
