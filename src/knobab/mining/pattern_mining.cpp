@@ -37,7 +37,9 @@ void bolt_algorithm(const std::string& logger_file,
 //    }
 //
     for (const pattern_mining_result<DeclareDataAware>& result : list.first) {
+#ifdef DEBUG
         std::cout << result << std::endl;
+#endif
 //        if(result.clause.right_act != "") {
 //            std::cout << "BOLT" << ","
 //                 << result.clause.casusu + "(" + result.clause.left_act + "+" + result.clause.right_act <<  + ")" << ","
@@ -924,6 +926,7 @@ std::pair<std::vector<pattern_mining_result<DeclareDataAware>>, double> pattern_
     auto t2 = high_resolution_clock::now();
     /* Getting number of milliseconds as a double. */
     duration<double, std::milli> ms_double = t2 - t1;
+
     std::cout << ms_double.count() << "ms\n";
 //    exit(1);
     return {declarative_clauses, ms_double.count()};
@@ -974,6 +977,11 @@ void extractPayloads(std::unordered_map<std::string, std::unordered_map<std::str
     me.id.parts.type =MARKED_EVENT_ACTIVATION;
     ref.pipeline(&tmpEnv.grounding, tmpEnv.ap, tmpEnv.db);
     for (size_t i = 0, N = ref.declare_to_query.size(); i<N; i++) {
+        const auto& clauseRef = v_intersection.at(i);
+        size_t leftAct = tmpEnv.db.event_label_mapper.get(clauseRef.left_act);
+        size_t rightAct = -1;
+        if (!clauseRef.right_act.empty())
+            rightAct = tmpEnv.db.event_label_mapper.get(clauseRef.right_act);
         auto& x = ref.declare_to_query.at(i);
         if ((x->t == LTLfQuery::EXISTS_QP || x->t == LTLfQuery::ABSENCE_QP) && (!x->fields.id.parts.is_timed)) {
             auto cpy = x->result;
@@ -988,11 +996,13 @@ void extractPayloads(std::unordered_map<std::string, std::unordered_map<std::str
                     it.first++;
                 }
             }
-            extractPayload(&tmpEnv,activations.at(i), targets.at(i), a[i],t[i],corr[i],cpy,clazz);
+            extractPayload(leftAct, rightAct, &tmpEnv,activations.at(i), targets.at(i), a[i],t[i],corr[i],cpy,clazz);
         } else {
-            extractPayload(&tmpEnv,activations.at(i), targets.at(i), a[i],t[i],corr[i],x->result,clazz);
+            extractPayload(leftAct, rightAct, &tmpEnv,activations.at(i), targets.at(i), a[i],t[i],corr[i],x->result,clazz);
         }
+#ifdef DEBUG
         std::cerr << *x << std::endl;
+#endif
     }
 }
 
@@ -1010,10 +1020,14 @@ void collectRefinedClause(std::vector<std::vector<DeclareDataAware>> &VVV,
 //        auto ref = tree_to_env.find(pair.first);
 //        DEBUG_ASSERT(ref != tree_to_env.end());
         DeclareDataAware c = actualClauseRefine(clause, what, pair);
+#ifdef DEBUG
         std::cout << pair.first  << " -- " << c << std::endl;
+#endif
         VVV[pair.first].emplace_back(c);
     }
+#ifdef DEBUG
     std::cout <<"~~~~~~~" <<  std::endl;
+#endif
 }
 
 std::tuple<std::vector<std::vector<DeclareDataAware>>,double,double> classifier_mining(ServerQueryManager& sqm,
@@ -1097,7 +1111,7 @@ std::tuple<std::vector<std::vector<DeclareDataAware>>,double,double> classifier_
     /// Removing the clauses having neither activation nor target conditions ///
     ////////////////////////////////////////////////////////////////////////////
     std::vector<size_t> index;
-    std::unordered_set<std::string> toExclude{"Absence"}; // TODO: dealing correctly with Absence!
+    std::unordered_set<std::string> toExclude{"Absence", "CoExistence"}; // TODO: dealing correctly with Absence!
     std::vector<bool> hasActivations(last_VVV_intersection.size(), false), hasTargets(last_VVV_intersection.size(), false);
     for (size_t i = 0, M = last_VVV_intersection.size(); i<M; i++) {
         const auto& ref = last_VVV_intersection.at(i);
@@ -1147,7 +1161,9 @@ std::tuple<std::vector<std::vector<DeclareDataAware>>,double,double> classifier_
         auto t2 = high_resolution_clock::now();
         /* Getting number of milliseconds as a double. */
         duration<double, std::milli> ms_double = t2 - t1;
+#ifdef DEBUG
         std::cout << overall_dataless_mining_time << "+" << ms_double.count() << "=" << overall_dataless_mining_time+ms_double.count() << "ms\n";
+#endif
         return std::make_tuple(VVV,overall_dataless_mining_time, ms_double.count());
     }
 
@@ -1201,12 +1217,15 @@ std::tuple<std::vector<std::vector<DeclareDataAware>>,double,double> classifier_
                                                maxL,
                                                V.size(),
                                                minL);
-                if ((!dtA.isLeafNode()) && (dtA.goodness >= tau)) {
-                    collectRefinedClause(VVV, world_to_paths, clause, dtA, RefineOverActivation, doNegate);
-                    hasFound = true;
-                } else if (dtA.isLeafNode()) {
-                    VVV[dtA.getMajorityClass()].emplace_back(clause);
+                if (dtA.goodness >= tau) {
+                    if ((!dtA.isLeafNode())) {
+                        collectRefinedClause(VVV, world_to_paths, clause, dtA, RefineOverActivation, doNegate);
+                        hasFound = true;
+                    } else {
+                        VVV[dtA.getMajorityClass()].emplace_back(clause);
+                    }
                 }
+
             }
         }
         if (hasFound) continue;
@@ -1227,11 +1246,13 @@ std::tuple<std::vector<std::vector<DeclareDataAware>>,double,double> classifier_
                                                maxL,
                                                W.size(),
                                                minL);
-                if ((!dtT.isLeafNode()) && (dtT.goodness >= tau)) {
-                    collectRefinedClause(VVV, world_to_paths, clause, dtT, RefineOverTarget, doNegate);
-                    hasFound = true;
-                } else if (dtT.isLeafNode()) {
-                    VVV[dtT.getMajorityClass()].emplace_back(clause);
+                if (dtT.goodness >= tau) {
+                    if ((!dtT.isLeafNode())) {
+                        collectRefinedClause(VVV, world_to_paths, clause, dtT, RefineOverTarget, doNegate);
+                        hasFound = true;
+                    } else  {
+                        VVV[dtT.getMajorityClass()].emplace_back(clause);
+                    }
                 }
             }
         }
@@ -1252,10 +1273,12 @@ std::tuple<std::vector<std::vector<DeclareDataAware>>,double,double> classifier_
                                                maxL,
                                                C.size(),
                                                minL);
-                if ((!dtC.isLeafNode()) && (dtC.goodness >= tau)) {
-                    collectRefinedClause(VVV, world_to_paths, clause, dtC, RefineOverMatch, doNegate);
-                } else if (dtC.isLeafNode()) {
-                    VVV[dtC.getMajorityClass()].emplace_back(clause);
+                if (dtC.goodness >= tau) {
+                    if ((!dtC.isLeafNode())) {
+                        collectRefinedClause(VVV, world_to_paths, clause, dtC, RefineOverMatch, doNegate);
+                    } else {
+                        VVV[dtC.getMajorityClass()].emplace_back(clause);
+                    }
                 }
             }
         }
@@ -1263,9 +1286,11 @@ std::tuple<std::vector<std::vector<DeclareDataAware>>,double,double> classifier_
     auto t2 = high_resolution_clock::now();
     /* Getting number of milliseconds as a double. */
     duration<double, std::milli> ms_double = t2 - t1;
+#ifdef DEBUG
     std::cout << overall_dataless_mining_time << "+" << ms_double.count() << "=" << overall_dataless_mining_time+ms_double.count() << "ms\n";
     for (const auto& ref : VVV) {
         std::cout << ref << std::endl;
     }
+#endif
     return std::make_tuple(VVV,overall_dataless_mining_time, ms_double.count());
 }
