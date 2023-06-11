@@ -227,59 +227,25 @@ bool DeclareDataAware::checkValidity(const env &e1, const env &e2) const {
         bool result = true;
         for (const auto& predDummy : pred_withConj) {
             for (const auto& pred : predDummy.second.BiVariableConditions) {
-                if(!test_decomposed_data_predicate(e1, e2, pred.var, pred.varRHS, pred.casusu)){
-                    result = false;
-                    break;
-                }
-            }
-        }
-        if (result) return true;
-    }
-    return false;
-}
-
-bool DeclareDataAware::checkValidity(uint32_t t1, uint16_t e1, const env &e2) const {
-    if (conjunctive_map.empty()) return true;
-    for(const auto& pred_withConj : conjunctive_map){
-        bool result = true;
-        for (const auto & predDummy : pred_withConj) {
-            for (const auto& pred : predDummy.second.BiVariableConditions) {
-                bool test = false;
-                auto temp1 = e2.find(pred.varRHS);
-                if (temp1 == e2.end())
-                    test = false;
-                else {
-                    auto temp2_a = kb->attribute_name_to_table.find(pred.var);
-                    if (temp2_a != kb->attribute_name_to_table.end()) {
-                        size_t offset = kb->act_table_by_act_id.getBuilder().trace_id_to_event_id_to_offset.at(t1).at(e1);
-                        std::optional<union_minimal> data = temp2_a->second.resolve_record_if_exists2(offset);
-                        if (data.has_value()) {
-                            auto lhs = data.value();
-                            switch (pred.casusu) {
-                                case LT:
-                                    test = lhs < temp1->second ; break;
-                                case LEQ:
-                                    test = lhs <= temp1->second; break;
-                                case GT:
-                                    test = lhs > temp1->second; break;
-                                case GEQ:
-                                    test =  lhs >= temp1->second; break;
-                                case EQ:
-                                    test =  lhs == temp1->second; break;
-                                case NEQ:
-                                    test =  lhs != temp1->second; break;
-                                case TTRUE:
-                                    test =  true; break;
-                                default:
-                                    test =  false; break;
-                            }
-                        } else
-                            test = false;
-                    } else {
-                        test = false;
+                if ((!pred.var.empty()) && (!pred.varRHS.empty())) {
+                    if(!test_decomposed_data_predicate(e1, e2, pred.var, pred.varRHS, pred.casusu)){
+                        result = false;
+                        break;
                     }
-                }
-                if(!test){
+                } else if (pred.varRHS.empty()) {
+                    union_minimal val = 0.0;
+                    if (pred.is_left_for_activation) {
+                        auto it =  e1.find(pred.var);
+                        if (it != e1.end()) val = it->second;
+                    } else {
+                        auto it =  e2.find(pred.var);
+                        if (it != e2.end()) val = it->second;
+                    }
+                    if (!pred.testOverSingleVariable(val)) {
+                        result = false;
+                        break;
+                    }
+                } else {
                     result = false;
                     break;
                 }
@@ -297,39 +263,63 @@ bool DeclareDataAware::checkValidity(const env &e1, uint32_t t2, uint16_t e2) co
         for (const auto& predDummy : pred_withConj) {
             for (const auto& pred : predDummy.second.BiVariableConditions) {
                 bool test = false;
+                if (pred.var.empty()) {
+                    result = false;
+                    break;
+                }
+                union_minimal val = 0.0, rhs = pred.value;
                 auto temp1 = e1.find(pred.var);
-                if (temp1 == e1.end())
-                    test = false;
-                else {
-                    auto temp2_a = kb->attribute_name_to_table.find(pred.varRHS);
-                    if (temp2_a != kb->attribute_name_to_table.end()) {
-                        size_t offset = kb->act_table_by_act_id.getBuilder().trace_id_to_event_id_to_offset.at(t2).at(e2);
-                        std::optional<union_minimal> data = temp2_a->second.resolve_record_if_exists2(offset);
-                        if (data.has_value()) {
-                            auto rhs = data.value();
+                if (temp1 != e1.end())
+                    val = temp1->second;
+                if (!pred.varRHS.empty()) {
+                    {
+                        auto temp2_a = kb->attribute_name_to_table.find(pred.varRHS);
+                        if (temp2_a != kb->attribute_name_to_table.end()) {
+                            size_t offset = kb->act_table_by_act_id.getBuilder().trace_id_to_event_id_to_offset.at(
+                                    t2).at(e2);
+                            std::optional<union_minimal> data = temp2_a->second.resolve_record_if_exists2(offset);
+                            if (data.has_value()) {
+                                rhs = data.value();
+                            }
+                        }
                             switch (pred.casusu) {
                                 case LT:
-                                    test = temp1->second < rhs; break;
+                                    test = val < rhs; break;
                                 case LEQ:
-                                    test =  temp1->second <= rhs; break;
+                                    test =  val <= rhs; break;
                                 case GT:
-                                    test =  temp1->second > rhs; break;
+                                    test =  val > rhs; break;
                                 case GEQ:
-                                    test =  temp1->second >= rhs; break;
+                                    test =  val >= rhs; break;
                                 case EQ:
-                                    test =  temp1->second == rhs; break;
+                                    test =  val == rhs; break;
                                 case NEQ:
-                                    test =  temp1->second != rhs; break;
+                                    test =  val != rhs; break;
                                 case TTRUE:
                                     test =  true; break;
+                                case INTERVAL:
+                                    DEBUG_ASSERT(false);
                                 default:
                                     test =  false; break;
                             }
-                        } else
-                            test = false;
-                    } else {
-                        test = false;
+//                        } else {
+//                            test = false;
+//                        }
                     }
+                } else {
+                    if (!pred.is_left_for_activation) {
+                        auto temp2_a = kb->attribute_name_to_table.find(pred.varRHS);
+                        if (temp2_a != kb->attribute_name_to_table.end()) {
+                            size_t offset = kb->act_table_by_act_id.getBuilder().trace_id_to_event_id_to_offset.at(
+                                    t2).at(e2);
+                            std::optional<union_minimal> data = temp2_a->second.resolve_record_if_exists2(offset);
+                            if (data.has_value()) {
+                                val = data.value();
+                            }
+                        }
+                    } // otherwise, using the lhs val!
+
+                    test = pred.testOverSingleVariable(val);
                 }
                 if(!test){
                     result = false;
