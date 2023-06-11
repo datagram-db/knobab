@@ -423,6 +423,17 @@ int main(int argc, char **argv) {
     micro_average_precision = micro_prec_rec_tppc / (micro_prec_rec_tppc+micro_precision_fppc);
     macro_agerage_recall = micro_prec_rec_tppc / (micro_prec_rec_tppc+micro_recall_fnpc);
 
+    bool results_file_exists = std::filesystem::exists("results.csv");
+    std::ofstream out("results.csv", std::ios::app);
+    if (!results_file_exists) {
+        out << "macro_average_precision" << "," << "macro_agerage_recall" << "," << "micro_average_precision" << "," << "macro_agerage_recall" << ","
+            << "loading_and_indexing" << "," << "loading_and_indexing_test" << "," << "dataless_mining" << "," << "refinery_time" << std::endl;
+    } else {
+        out << std::endl;
+    }
+    out << macro_average_precision << "," << macro_agerage_recall << "," << micro_average_precision << "," << macro_agerage_recall << ","
+        << loading_and_indexing << "," << loading_and_indexing_test << "," << dataless_mining << "," << refinery_time;
+
     return 0;
 
 //    std::vector<Environment*> envs{};
