@@ -132,6 +132,46 @@
 #include <magic_enum.hpp>
 #include <knobab/mining/pattern_mining.h>
 
+struct ConfusionMatrix {
+    std::vector<size_t> expected_prediction;
+    std::vector<size_t> actual_prediction;
+    double true_positive, true_negative, false_positive, false_negative;
+
+    double precision() const {
+        return true_positive / (true_positive+false_positive);
+    }
+    double recall() const {
+        return true_positive / (true_positive+false_positive);
+    }
+    void compute() {
+        for (size_t i = 0, N = expected_prediction.size(); i<N; i++) {
+            size_t true_label = expected_prediction.at(i);
+            size_t predicted_label = actual_prediction.at(i);
+            if (true_label == predicted_label) {
+                // True
+                if (true_label == 0) {
+                    true_positive+=1.0;
+                } else {
+                    true_negative+=1.0;
+                }
+            } else {
+                // False
+                if (predicted_label == 0) {
+                    false_positive+=1.0;
+                } else {
+                    false_negative+=1.0;
+                }
+            }
+        }
+    }
+
+    ConfusionMatrix() = default;
+    ConfusionMatrix(const ConfusionMatrix&) = default;
+    ConfusionMatrix(ConfusionMatrix&&) = default;
+    ConfusionMatrix& operator=(const ConfusionMatrix&) = default;
+    ConfusionMatrix& operator=(ConfusionMatrix&&) = default;
+};
+
 int main(int argc, char **argv) {
     args::ArgumentParser parser("DBolt±", "This extension provides the data-aware declarative mining algorithm presented");
     args::HelpFlag help(parser, "help", "Display this help menu", {'h', "help"});
@@ -140,6 +180,9 @@ int main(int argc, char **argv) {
             {"xes", log_data_format::XES1},
             {"bar", log_data_format::TAB_SEPARATED_EVENTS}};
     args::Group group(parser, "You can use the following parameters", args::Group::Validators::DontCare, args::Options::Global);
+    args::ValueFlag<std::string>  testing_log(group, "Testing log", "The log against which conduct the prediction", {'e', "testing"});
+    args::ValueFlag<std::string>  expected_tab(group, "Expected Classes", "The expected prediction classes for the testing log", {'x', "expected"});
+    args::ValueFlag<std::string>  testing_f(group, "Testing log format", "The format of the testing log", {'f', "format"});
     args::MapFlagList<std::string, log_data_format> log(parser, "w", "allocates the n-th world associated to a given file to be read in a given format", {'w', "world"}, map);
     args::ValueFlag<double>  tau_val(group, "Tau Value", "If present, specifies the tau value", {'t', "tau"});
     args::ValueFlag<double>  supp_val(group, "Support Value", "If present, specifies the support value", {'s', "supp"});
@@ -165,6 +208,12 @@ int main(int argc, char **argv) {
     }
 
     std::vector<std::string> log_parse_format_type{"HRF", "XES", "TAB"};
+    std::string testing_file = args::get(testing_log);
+    std::string expected_File = args::get(expected_tab);
+    log_data_format testing_format = log_data_format::XES1;
+    if (testing_f) {
+        testing_format = magic_enum::enum_cast<log_data_format>(args::get(testing_f)).value();
+    }
     std::vector<log_data_format> worlds_format_to_load = args::get(log);
     std::vector<std::string>     worlds_file_to_load = args::get(files);
     ForTheWin::gain_measures measure = ForTheWin::Entropy;
@@ -198,13 +247,18 @@ int main(int argc, char **argv) {
         }
     }
 
+
+    // Loading the different classes
     ServerQueryManager sqm;
     double loading_and_indexing = 0;
+    double loading_and_indexing_test = 0;
     std::vector<std::string> bogus_model_name;
+    std::vector<ConfusionMatrix> matrices(worlds_format_to_load.size());
     for (size_t i = 0, N = std::min(worlds_format_to_load.size(), worlds_file_to_load.size()); i<N; i++) {
         std::stringstream ss;
         std::string model_name = std::to_string(i);
         bogus_model_name.emplace_back(model_name);
+
         ss << "load "
            << log_parse_format_type.at((size_t)worlds_format_to_load.at(i))
            << " "
@@ -216,15 +270,160 @@ int main(int argc, char **argv) {
         loading_and_indexing += sqm.multiple_logs[model_name].experiment_logger.log_indexing_ms+sqm.multiple_logs[model_name].experiment_logger.log_loading_and_parsing_ms;
     }
 
+    // Loading the testing log
+    {
+        std::stringstream ss;
+        ss << "load "
+           << log_parse_format_type.at(testing_format)
+           << " "
+           << std::quoted(testing_file)
+           <<  " with data as "
+           << std::quoted("testing");
+        auto tmp = sqm.runQuery(ss.str());
+        loading_and_indexing_test += sqm.multiple_logs["testing"].experiment_logger.log_indexing_ms+sqm.multiple_logs["testing"].experiment_logger.log_loading_and_parsing_ms;
+    }
+    // Setting up the confusion matrices from the models
+    size_t nTestingTraces = 0;
+    {
+        std::fstream myfile(expected_File, std::ios_base::in);
+        size_t expected_class;
+        while (myfile >> expected_class)
+        {
+            for (size_t i = 0, N = matrices.size(); i<N; i++) {
+                if (i==expected_class) {
+                    matrices[i].expected_prediction.emplace_back(1);
+                } else {
+                    matrices[i].expected_prediction.emplace_back(0);
+                }
+            }
+            nTestingTraces++;
+        }
+        for (auto& M : matrices) {
+            M.actual_prediction = std::vector<size_t>(nTestingTraces, 0);
+        }
+    }
+
+    // Setting up the xtLTLf semantics for the Declare clauses
+    {
+        std::string query_plan = "queryplan \"nfmcp23\" {\n"
+                                 "     template \"Init\"                   := INIT  activation\n"
+                                 "     template \"End\"                    := END activation\n"
+                                 "     template \"Exists\"                := (EXISTS $ activation)\n"
+                                 "     template \"Exists1\"                := (EXISTS 1 activation)\n"
+                                 "     template \"Absence\"               := ABSENCE $ activation\n"
+                                 "     template \"Absence1\"               := ABSENCE 1 activation\n"
+                                 "     template \"Absence2\"               := ABSENCE 2 activation\n"
+                                 "     template \"Precedence\" args 2      := ((EXISTS  ~ 1 t #2) U (EXISTS 1 t #1 activation)) OR (ABSENCE 1 #2)\n"
+                                 "     template \"ChainPrecedence\" args 2 := G(((LAST OR t (NEXT EXISTS ~ 1 t #1))) OR t ((NEXT EXISTS 1 t #1 activation) AND t THETA INV (EXISTS 1 t #2 target) ))\n"
+                                 "     template \"Choice\" args 2          := (EXISTS 1 t #1 activation) OR THETA (EXISTS 1 t #2 activation)\n"
+                                 "     template \"Response\" args 2        := G ( ((EXISTS ~ 1 t #1)) OR t ((EXISTS 1 t #1 activation) &Ft THETA (EXISTS 1 t #2 target)) )\n"
+                                 "     template \"ChainResponse\" args 2   := G ( ((EXISTS ~ 1 t #1)) OR t ((EXISTS 1 t #1 activation) AND t THETA (NEXT EXISTS 1 t #2 target)))\n"
+                                 "     template \"RespExistence\" args 2   := ( ((ABSENCE 1 #1)) OR ((EXISTS 1 #1 activation) AND THETA (EXISTS 1 #2 target)))\n"
+                                 "     template \"ExlChoice\" args 2       := ((EXISTS 1 t #1 activation) OR THETA (EXISTS 1 t #2 activation)) AND ((ABSENCE 1 #1) OR (ABSENCE 1 #2))\n"
+                                 "     template \"CoExistence\" args 2     := ( ((ABSENCE 1 #1)) OR ((EXISTS 1 #1 activation) AND THETA (EXISTS 1 #2 target))) AND ( ((ABSENCE 1 #2)) OR ((EXISTS 1 #2 activation) AND THETA INV (EXISTS 1 #1 target)))\n"
+                                 "     template \"NotCoExistence\" args 2  := ~ ((EXISTS 1 t #1 activation) AND THETA (EXISTS 1 t #2 target)) PRESERVE\n"
+                                 "\n"
+                                 "     template \"Succession\" args 2      := (G ( ((EXISTS ~ 1 t #1)) OR t ((EXISTS 1 t #1 activation) &Ft THETA (EXISTS 1 t #2 target)) )) AND (((EXISTS  ~ 1 t #2) U (EXISTS 1 t #1 target)) OR (ABSENCE 1 #2))\n"
+                                 "     template \"NegSuccession\" args 2   := (G ( ((EXISTS ~ 1 t #1)) OR t ((EXISTS 1 t #1 activation) &Gt  (EXISTS ~ 1 t #2)) ))\n"
+                                 "     template \"ChainSuccession\" args 2 := G( (((LAST OR t (NEXT EXISTS ~ 1 t #2))) OR t ((NEXT EXISTS 1 t #2 activation) AND t THETA INV (EXISTS 1 t #1 target))) AND t\n"
+                                 "                                             ( ((EXISTS ~ 1 t #1)) OR t ((EXISTS 1 t #1 activation) AND t THETA (NEXT EXISTS 1 t #2 target)))\n"
+                                 "                                           )\n"
+                                 "     template \"AltResponse\" args 2     := G ( (EXISTS ~ 1 t #1) OR t ((EXISTS 1 t #1 activation) AND t THETA (NEXT ((EXISTS ~ 1 t #1) U t (EXISTS 1 t #2 target)) )))\n"
+                                 "     template \"AltPrecedence\" args 2   := (((EXISTS  ~ 1 t #2) U (EXISTS 1 t #1 activation)) OR (ABSENCE 1 #2)) AND\n"
+                                 "                                           (G(((EXISTS ~ 1 t #1)) OR t (((EXISTS 1 t #1 activation)) AND t THETA (NEXT (((EXISTS  ~ 1 t #1) U t (EXISTS 1 t #2 target)) OR t (G t (EXISTS  ~ 1 t #1))))  )))\n"
+                                 "}";
+        sqm.runQuery(query_plan);
+    }
+    auto it2 = sqm.planname_to_declare_to_ltlf.find("nfmcp23");
+
+
     std::cout << "loading+indexing=" << loading_and_indexing << std::endl;
-    classifier_mining(sqm,
+
+    // "Training" the models
+    auto model_and_times = classifier_mining(sqm,
                       bogus_model_name,
                       supp,
                       tau,
                       purity,
                       max_set_size,
                       min_leaf_size);
+    auto model = std::get<0>(model_and_times);
+    double dataless_mining = std::get<1>(model_and_times);
+    double refinery_time = std::get<2>(model_and_times);
 
+    // Running the MaxSat per model
+    {
+        std::vector<std::vector<double>> results(nTestingTraces, std::vector<double>(model.size(), 0));
+        std::vector<size_t> pos;
+        auto& tmpEnv = sqm.multiple_logs["testing"];
+        for (size_t i = 0, N = model.size(); i<N; i++) {
+            tmpEnv.clearModel(); // initializing the model pipeline
+            std::unordered_map<std::string, LTLfQuery>* plans = &it2->second;
+            tmpEnv.conjunctive_model = model.at(i);
+            tmpEnv.experiment_logger.model_parsing_ms = 0;
+            tmpEnv.experiment_logger.model_size = model.at(i).size();
+            tmpEnv.experiment_logger.model_filename = "Testing";
+            bool doPreliminaryFill = true;
+            bool ignoreActForAttributes = false;
+            bool creamOffSingleValues = true;
+            GroundingStrategyConf::pruning_strategy grounding_strategy = GroundingStrategyConf::NO_EXPANSION;
+            tmpEnv.set_grounding_parameters(doPreliminaryFill, ignoreActForAttributes, creamOffSingleValues, grounding_strategy);
+            tmpEnv.doGrounding();
+            std::string atomj{"p"};
+            AtomizationStrategy atom_strategy = AtomizeOnlyOnDataPredicates;
+            size_t n = 3;
+            tmpEnv.set_atomization_parameters(atomj, n , atom_strategy);
+            tmpEnv.init_atomize_tables();
+            tmpEnv.first_atomize_model();
+            size_t nThreads = 1;
+            auto& ref2 = tmpEnv.experiment_logger;
+            EnsembleMethods em = TraceMaximumSatisfiability;
+            OperatorQueryPlan op = FastOperator_v1;
+            tmpEnv.set_maxsat_parameters(nThreads, em, op);
+            MAXSatPipeline ref(plans, nThreads, BLOCK_STATIC_SCHEDULE, 3);
+            ref.final_ensemble = em;
+            ref.operators = op;
+            marked_event me;
+            me.id.parts.type =MARKED_EVENT_ACTIVATION;
+            ref.pipeline(&tmpEnv.grounding, tmpEnv.ap, tmpEnv.db);
+            for (size_t j = 0; j < ref.max_sat_per_trace.size(); j++) {
+                results[j][i] = ref.max_sat_per_trace.at(i);
+            }
+        }
+
+        for (size_t j = 0; j<nTestingTraces; j++) {
+            const auto& v = results.at(j);
+            pos.clear();
+            auto it = std::max_element(std::begin(v), std::end(v));
+            while (it != std::end(v))
+            {
+                size_t class_id = std::distance(std::begin(v), it);
+                matrices[class_id].actual_prediction[j] = 1;
+                it = std::find(std::next(it), std::end(v), *it);
+            }
+        }
+    }
+    double macro_average_precision = 0;
+    double macro_agerage_recall = 0;
+    double micro_average_precision = 0;
+    double micro_average_recall = 0;
+    double micro_prec_rec_tppc = 0;
+    double micro_precision_fppc = 0;
+    double micro_recall_fnpc = 0;
+    for (auto& M : matrices) {
+        M.compute();
+        micro_prec_rec_tppc += M.true_positive;
+        micro_precision_fppc += M.false_positive;
+        micro_recall_fnpc += M.false_negative;
+        macro_average_precision += M.precision();
+        macro_agerage_recall += M.recall();
+    }
+    macro_average_precision = macro_average_precision/((double)matrices.size());
+    macro_agerage_recall = macro_agerage_recall/((double)matrices.size());
+    micro_average_precision = micro_prec_rec_tppc / (micro_prec_rec_tppc+micro_precision_fppc);
+    macro_agerage_recall = micro_prec_rec_tppc / (micro_prec_rec_tppc+micro_recall_fnpc);
+
+    return 0;
 
 //    std::vector<Environment*> envs{};
 //
