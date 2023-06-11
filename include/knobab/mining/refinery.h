@@ -117,13 +117,14 @@ static inline DeclareDataAware actualClauseRefine(const DeclareDataAware &clause
             DataPredicate p;
             switch (what) {
                 case RefineOverMatch:{
-                    auto isA = dt_p.field.find("A.");
-                    if (isA == 0) {
+                    if (dt_p.field.find("A.") == 0) {
                         // Activation
+                        p.is_left_for_activation = true;
                         p.label = c.left_act;
                         p.var = dt_p.field.substr(2);
-                    } else if ((isA = dt_p.field.find("T.")) == 0) {
+                    } else if ((dt_p.field.find("T.")) == 0) {
                         // Target
+                        p.is_left_for_activation = false;
                         p.label = c.right_act;
                         p.var = dt_p.field.substr(2);
                     }
@@ -147,15 +148,18 @@ static inline DeclareDataAware actualClauseRefine(const DeclareDataAware &clause
                     p.casusu = GEQ;
                     break;
                 case dt_predicate::IN_SET:
-                    p.casusu = IN_SET;
+                    p.casusu = EQ;
+                    // TODO: express in-set predicates even in the atomisation pipeline
                     break;
                 case dt_predicate::NOT_IN_SET:
-                    p.casusu = NOT_IN_SET;
+                    p.casusu = NEQ;
+                    // TODO: express in-set predicates even in the atomisation pipeline
                     break;
             }
 
             if(dt_p.categoric_set.size()){
-                p.categoric_set = dt_p.categoric_set;
+                DEBUG_ASSERT(dt_p.categoric_set.size() == 1);
+                p.value = *dt_p.categoric_set.begin();
             }
             else{
                 p.value = dt_p.value;
@@ -165,8 +169,8 @@ static inline DeclareDataAware actualClauseRefine(const DeclareDataAware &clause
 
             if(found != current_conds.end()){
                 // Our path has two conditions on the same var, perform intersection
-                p.intersect_with(found->second);
-                found->second = p;
+//                p.intersect_with(found->second);
+                found->second.intersect_with(p);
             }
             else{
                 current_conds.insert({p.var, p});

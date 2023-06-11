@@ -88,26 +88,31 @@ using payload_data = env;
  * @return
  */
 inline bool test_decomposed_data_predicate(const env& e1, const env& e2, const std::string& lhs, const std::string& rhs, const numeric_atom_cases& casusu) {
+    union_minimal lhsV = 0.0, rhsV = 0.0;
     auto temp1 = e1.find(lhs), temp2 = e2.find(rhs);
-    if((temp1 == e1.end()) || (temp2 == e2.end())){
-        return false;
-    }
+    if (temp1 != e1.end()) lhsV = temp1->second;
+    if (temp2 != e2.end()) rhsV = temp2->second;
+//    if((temp1 == e1.end()) || (temp2 == e2.end())){
+//        return false;
+//    }
 
     switch (casusu) {
         case LT:
-            return temp1->second < temp2->second;
+            return lhsV < rhsV;
         case LEQ:
-            return temp1->second <= temp2->second;
+            return lhsV <= rhsV;
         case GT:
-            return temp1->second > temp2->second;
+            return lhsV > rhsV;
         case GEQ:
-            return temp1->second >= temp2->second;
+            return lhsV >= rhsV;
         case EQ:
-            return temp1->second == temp2->second;
+            return lhsV == rhsV;
         case NEQ:
-            return temp1->second != temp2->second;
+            return lhsV != rhsV;
         case TTRUE:
             return true;
+        case INTERVAL:
+            DEBUG_ASSERT(false);
         default:
             return false;
 
@@ -175,7 +180,6 @@ struct DeclareDataAware {
      */
     bool checkValidity(const env &e1, const env &e2) const;
     bool checkValidity(const env &e1, uint32_t t2, uint16_t e2) const;
-    bool checkValidity(uint32_t t1, uint16_t ea, const env &e2) const;
 
     /**
      * @author Samuel 'Sam' Appleby
