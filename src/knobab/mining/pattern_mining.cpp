@@ -37,9 +37,9 @@ void bolt_algorithm(const std::string& logger_file,
 //    }
 //
     for (const pattern_mining_result<DeclareDataAware>& result : list.first) {
-#ifdef DEBUG
+//#ifdef DEBUG
         std::cout << result << std::endl;
-#endif
+//#endif
 //        if(result.clause.right_act != "") {
 //            std::cout << "BOLT" << ","
 //                 << result.clause.casusu + "(" + result.clause.left_act + "+" + result.clause.right_act <<  + ")" << ","
@@ -325,9 +325,9 @@ getAware(const KnowledgeBase &kb, bool special_temporal_patterns, bool only_prec
 //            std::fill(isTraceVisitedU.begin(), isTraceVisitedU.end(), false);
         }
 
-        bool hasChainPrecedence = (alles_prev && (alles_not_prev <= alles_not_next) && (alles_not_prev <= tolerated_errors)) && ((alles_not_prev < alles_not_nexte) && (alles_not_nexte<= tolerated_errors));
-        bool hasChainResponse = alles_next && (alles_not_prev >= alles_not_next) && (alles_not_next <= tolerated_errors) && ((alles_not_next < alles_not_nexte) && (alles_not_nexte<= tolerated_errors));
-        bool hasChainSuccession = (!hasChainPrecedence) && (!hasChainResponse) && (alles_not_nexte<= tolerated_errors);
+        bool hasChainSuccession = (alles_not_nexte<= tolerated_errors) && (alles_not_nexte <=alles_not_prev) && (alles_not_nexte<=alles_not_next);
+        bool hasChainPrecedence = (!hasChainSuccession) && (alles_prev && (alles_not_prev <= alles_not_next) && (alles_not_prev <= tolerated_errors)) && ((alles_not_prev <= alles_not_nexte));
+        bool hasChainResponse = (!hasChainSuccession) && alles_next && (alles_not_prev >= alles_not_next) && (alles_not_next <= tolerated_errors) && ((alles_not_next <= alles_not_nexte));
 
         if (hasChainPrecedence) {
             hasClausesMined = true;
@@ -444,7 +444,62 @@ getAware(const KnowledgeBase &kb, bool special_temporal_patterns, bool only_prec
 #include <unordered_map>
 #include <yaucl/hashing/pair_hash.h>
 #include <yaucl/hashing/uset_hash.h>
+#include <roaring.hh>
 
+struct retain_choice {
+    roaring::Roaring map;
+    std::map<double, std::vector<pattern_mining_result<DeclareDataAware>>> maps;
+};
+
+
+void static inline choice_exclchoice(act_t a, act_t b,
+                                     size_t log_size,
+                                     uint64_t minimum_support_threshold,
+                                     std::pair<act_t, act_t>& curr_pair,
+                                     std::pair<act_t, act_t>& inv_pair,
+                                     const KnowledgeBase& kb,
+                                     std::unordered_set<std::pair<act_t, act_t>>& visited_pairs,
+                                     std::vector<std::vector<trace_t>>& inv_map,
+                                     std::unordered_map<act_t, retain_choice>& map_for_retain,
+                                     std::unordered_map<std::unordered_set<act_t>, uint64_t>& mapper) {
+    const std::unordered_set<act_t> lS{a,b};
+    curr_pair.second = inv_pair.first = b;
+    if ((!visited_pairs.emplace(curr_pair).second) ||
+        (!visited_pairs.emplace(inv_pair).second)) return;
+    const auto& aSet = inv_map.at(a);
+    const auto& bSet = inv_map.at(b);
+    std::pair<size_t, size_t> ratio = yaucl::iterators::ratio(aSet.begin(), aSet.end(), bSet.begin(), bSet.end());
+    double local_support = ((double)(ratio.first)) / ((double)log_size);
+    DeclareDataAware clause;
+    clause.left_act = kb.event_label_mapper.get(a);
+    clause.right_act = kb.event_label_mapper.get(b);
+    if (a>b)
+        std::swap(clause.left_act,clause.right_act);
+    clause.n = 1;
+    if (ratio.first >= minimum_support_threshold) {
+        // I can consider this pattern, again, only if it is within the expected
+        // support rate which, in this case, is given by the amount of traces
+        // globally setting up this pattern
+        auto it = mapper.find(lS);
+        if (ratio.second == 0) {
+            // If there is no intersection, I can also be more strict if I want,
+            // and provide an exclusive choice pattern if I am confident that
+            // the two events will never appear in the same trace (according to
+            // the "training" data
+            clause.casusu = "ExclChoice";
+        } else {
+            clause.casusu = "Choice";
+        }
+        auto& refA = map_for_retain[a];
+        auto& refB = map_for_retain[b];
+        refA.map.add(b);
+        refB.map.add(a);
+        pattern_mining_result<DeclareDataAware> c(clause, (it != mapper.end()) ? ((double)it->second)/((double)log_size) : 0.0, local_support, -1);
+        refA.maps[local_support].emplace_back(c);
+        refB.maps[local_support].emplace_back(c);
+    }
+
+}
 
 /** Pattern mining **/
 std::pair<std::vector<pattern_mining_result<DeclareDataAware>>, double> pattern_mining(const KnowledgeBase& kb,
@@ -582,7 +637,7 @@ std::pair<std::vector<pattern_mining_result<DeclareDataAware>>, double> pattern_
     if (doInitA) {
         map.insert(map.begin(), (log_size), std::vector<act_t>{});
         inv_map.insert(inv_map.begin(), max_act_id, std::vector<trace_t>{});
-        for (const act_t& act_id : unary_patterns_for_non_exact_support) {
+        for (act_t act_id = 0; act_id<max_act_id; act_id++) {
             for (size_t trace_id = 0; trace_id < log_size; trace_id++) {
                 event_t count = count_table.resolve_length(act_id, trace_id);
                 if (count > 0) {
@@ -592,7 +647,8 @@ std::pair<std::vector<pattern_mining_result<DeclareDataAware>>, double> pattern_
             }
         }
     }
-    unary_patterns_for_non_exact_support.clear();
+//    unary_patterns_for_non_exact_support.clear();
+    std::unordered_map<act_t, retain_choice> map_for_retain;
 
     for (auto& v : map) {
         std::sort(v.begin(), v.end());
@@ -612,35 +668,52 @@ std::pair<std::vector<pattern_mining_result<DeclareDataAware>>, double> pattern_
                     curr_pair.first = inv_pair.second = a;
                     for (const auto& b : y) {
                         if (b == a) continue;
-                        std::unordered_set<act_t> lS{a,b};
-                        curr_pair.second = inv_pair.first = b;
-                        if ((!visited_pairs.emplace(curr_pair).second) ||
-                            (!visited_pairs.emplace(inv_pair).second)) continue;
-                        const auto& aSet = inv_map.at(a);
-                        const auto& bSet = inv_map.at(b);
-                        std::pair<size_t, size_t> ratio = yaucl::iterators::ratio(aSet.begin(), aSet.end(), bSet.begin(), bSet.end());
-                        double local_support = ((double)(ratio.first)) / ((double)log_size);
-                        DeclareDataAware clause;
-                        clause.left_act = kb.event_label_mapper.get(a);
-                        clause.right_act = kb.event_label_mapper.get(b);
-                        if (a>b) std::swap(clause.left_act,clause.right_act);
-                        clause.n = 1;
-                        if (ratio.first >= minimum_support_threshold) {
-                            // I can consider this pattern, again, only if it is within the expected
-                            // support rate which, in this case, is given by the amount of traces
-                            // globally setting up this pattern
-                            auto it = mapper.find(lS);
-                            if (ratio.second == 0) {
-                                // If there is no intersection, I can also be more strict if I want,
-                                // and provide an exclusive choice pattern if I am confident that
-                                // the two events will never appear in the same trace (according to
-                                // the "training" data
-                                clause.casusu = "ExclChoice";
-                            } else {
-                                clause.casusu = "Choice";
-                            }
-                            declarative_clauses.emplace_back(clause, (it != mapper.end()) ? ((double)it->second)/((double)log_size) : 0.0, local_support, -1);
-                        }
+//                        std::unordered_set<act_t> lS{a,b};
+                        choice_exclchoice( a,  b,
+                                 log_size,
+                                 minimum_support_threshold,
+                                 curr_pair,
+                                 inv_pair,
+                                 kb,
+                                 visited_pairs,
+                                 inv_map,
+                                 map_for_retain,
+                                 mapper);
+//                        curr_pair.second = inv_pair.first = b;
+//                        if ((!visited_pairs.emplace(curr_pair).second) ||
+//                            (!visited_pairs.emplace(inv_pair).second)) continue;
+//                        const auto& aSet = inv_map.at(a);
+//                        const auto& bSet = inv_map.at(b);
+//                        std::pair<size_t, size_t> ratio = yaucl::iterators::ratio(aSet.begin(), aSet.end(), bSet.begin(), bSet.end());
+//                        double local_support = ((double)(ratio.first)) / ((double)log_size);
+//                        DeclareDataAware clause;
+//                        clause.left_act = kb.event_label_mapper.get(a);
+//                        clause.right_act = kb.event_label_mapper.get(b);
+//                        if (a>b)
+//                            std::swap(clause.left_act,clause.right_act);
+//                        clause.n = 1;
+//                        if (ratio.first >= minimum_support_threshold) {
+//                            // I can consider this pattern, again, only if it is within the expected
+//                            // support rate which, in this case, is given by the amount of traces
+//                            // globally setting up this pattern
+//                            auto it = mapper.find(lS);
+//                            if (ratio.second == 0) {
+//                                // If there is no intersection, I can also be more strict if I want,
+//                                // and provide an exclusive choice pattern if I am confident that
+//                                // the two events will never appear in the same trace (according to
+//                                // the "training" data
+//                                clause.casusu = "ExclChoice";
+//                            } else {
+//                                clause.casusu = "Choice";
+//                            }
+//                            auto& refA = map_for_retain[a];
+//                            auto& refB = map_for_retain[b];
+//                            refA.map.add(b);
+//                            refB.map.add(a);
+//                            pattern_mining_result<DeclareDataAware> c(clause, (it != mapper.end()) ? ((double)it->second)/((double)log_size) : 0.0, local_support, -1);
+//                            refA.maps[((double)it->second)/((double)log_size)].emplace_back(c);
+//                            refB.maps[((double)it->second)/((double)log_size)].emplace_back(c);
+//                        }
 
                     }
                 }
@@ -649,6 +722,27 @@ std::pair<std::vector<pattern_mining_result<DeclareDataAware>>, double> pattern_
     }
     map.clear();
     inv_map.clear();
+    for (auto& [act_id, ref_act] : map_for_retain) {
+        auto it = ref_act.maps.find(1.0);
+        if (it == ref_act.maps.end()) {
+            for (auto i = 0; i<max_act_id; i++) {
+                if ((act_id != i) && !unary_patterns_for_non_exact_support.contains(i)) {
+                    // Inserting the new patterns only if the support is 100%
+                    choice_exclchoice( act_id,  i,
+                                       log_size,
+                                       log_size,
+                                       curr_pair,
+                                       inv_pair,
+                                       kb,
+                                       visited_pairs,
+                                       inv_map,
+                                       map_for_retain,
+                                       mapper);
+                }
+            }
+        }
+    }
+//    map_for_retain.clear();
 
     DataMiningMetrics counter{count_table};
 //    std::cout << "Pattern generation: " << std::endl;
@@ -664,9 +758,9 @@ std::pair<std::vector<pattern_mining_result<DeclareDataAware>>, double> pattern_
         auto cp = it;
         SSSS.insert(kb.event_label_mapper.get(*it));
         SSSS.insert(kb.event_label_mapper.get(*(++cp)));
-//        if (SSSS.contains("g") && SSSS.contains("f")) {
-//            std::cout <<"HERE"<< std::endl;
-//        }
+        if (SSSS.contains("g") && SSSS.contains("f")) {
+            std::cout <<"HERE"<< std::endl;
+        }
 #endif
 //        std::cout << " - Pattern: " << kb.event_label_mapper.get(*it) << ",";
         it++;
@@ -917,6 +1011,45 @@ std::pair<std::vector<pattern_mining_result<DeclareDataAware>>, double> pattern_
         }
 
     }
+
+    std::unordered_set<std::pair<std::string,std::string>> considered;
+    for (const auto& ref : declarative_clauses) {
+        if (!ref.clause.left_act.empty()) {
+            const auto& a = ref.clause.left_act;
+            const auto& b = ref.clause.right_act;
+            considered.emplace(a,b);
+            considered.emplace(b,a);
+        }
+    }
+    std::pair<std::string,std::string> cp;
+    for (auto& [act_id, ref_act] : map_for_retain) {
+        auto it = ref_act.maps.find(1.0);
+        if (it != ref_act.maps.end()) {
+            for (const auto& clause : it->second) {
+                cp.first = clause.clause.left_act;
+                cp.second = clause.clause.right_act;
+                if (!considered.contains(cp)) {
+                    declarative_clauses.emplace_back(clause);
+                }
+            }
+//            declarative_clauses.insert(declarative_clauses.end(), make_move_iterator(it->second.begin()), make_move_iterator(it->second.end()));
+        } else {
+            for (auto& [k, v]: ref_act.maps) {
+                for (const auto& clause : v) {
+                    cp.first = clause.clause.left_act;
+                    cp.second = clause.clause.right_act;
+                    if (!considered.contains(cp)) {
+                        declarative_clauses.emplace_back(clause);
+                    }
+                }
+//                declarative_clauses.insert(declarative_clauses.end(), make_move_iterator(v.begin()), make_move_iterator(v.end()));
+            }
+        }
+    }
+
+
+
+
     std::sort(declarative_clauses.begin(), declarative_clauses.end(), [](const pattern_mining_result<DeclareDataAware>& l, const pattern_mining_result<DeclareDataAware>& r) {
         return std::tie(l.clause.casusu, l.clause.left_act, l.clause.right_act, l.clause.n, l.confidence_declarative_pattern, l.support_declarative_pattern) > std::tie(r.clause.casusu, r.clause.left_act, r.clause.right_act, r.clause.n, r.confidence_declarative_pattern, r.support_declarative_pattern);
     });
@@ -1071,41 +1204,7 @@ std::tuple<std::vector<std::vector<DeclareDataAware>>,double,double> classifier_
             curr_VVV_insersection.clear();
         }
     }
-
-    std::string query_plan = "queryplan \"nfmcp23\" {\n"
-                             "     template \"Init\"                   := INIT  activation\n"
-                             "     template \"End\"                    := END activation\n"
-                             "     template \"Exists\"                := (EXISTS $ activation)\n"
-                             "     template \"Exists1\"                := (EXISTS 1 activation)\n"
-                             "     template \"Absence\"               := ABSENCE $ activation\n"
-                             "     template \"Absence1\"               := ABSENCE 1 activation\n"
-                             "     template \"Absence2\"               := ABSENCE 2 activation\n"
-                             "     template \"Precedence\" args 2      := ((EXISTS  ~ 1 t #2) U (EXISTS 1 t #1 activation)) OR (ABSENCE 1 #2)\n"
-                             "     template \"ChainPrecedence\" args 2 := G(((LAST OR t (NEXT EXISTS ~ 1 t #1))) OR t ((NEXT EXISTS 1 t #1 activation) AND t THETA INV (EXISTS 1 t #2 target) ))\n"
-                             "     template \"Choice\" args 2          := (EXISTS 1 t #1 activation) OR THETA (EXISTS 1 t #2 activation)\n"
-                             "     template \"Response\" args 2        := G ( ((EXISTS ~ 1 t #1)) OR t ((EXISTS 1 t #1 activation) &Ft THETA (EXISTS 1 t #2 target)) )\n"
-                             "     template \"ChainResponse\" args 2   := G ( ((EXISTS ~ 1 t #1)) OR t ((EXISTS 1 t #1 activation) AND t THETA (NEXT EXISTS 1 t #2 target)))\n"
-                             "     template \"RespExistence\" args 2   := ( ((ABSENCE 1 #1)) OR ((EXISTS 1 #1 activation) AND THETA (EXISTS 1 #2 target)))\n"
-                             "     template \"ExlChoice\" args 2       := ((EXISTS 1 t #1 activation) OR THETA (EXISTS 1 t #2 activation)) AND ((ABSENCE 1 #1) OR (ABSENCE 1 #2))\n"
-                             "     template \"CoExistence\" args 2     := ( ((ABSENCE 1 #1)) OR ((EXISTS 1 #1 activation) AND THETA (EXISTS 1 #2 target))) AND ( ((ABSENCE 1 #2)) OR ((EXISTS 1 #2 activation) AND THETA INV (EXISTS 1 #1 target)))\n"
-                             "     template \"NotCoExistence\" args 2  := ~ ((EXISTS 1 t #1 activation) AND THETA (EXISTS 1 t #2 target)) PRESERVE\n"
-                             "\n"
-                             "     template \"Succession\" args 2      := (G ( ((EXISTS ~ 1 t #1)) OR t ((EXISTS 1 t #1 activation) &Ft THETA (EXISTS 1 t #2 target)) )) AND (((EXISTS  ~ 1 t #2) U (EXISTS 1 t #1 target)) OR (ABSENCE 1 #2))\n"
-                             "     template \"NegSuccession\" args 2   := (G ( ((EXISTS ~ 1 t #1)) OR t ((EXISTS 1 t #1 activation) &Gt  (EXISTS ~ 1 t #2)) ))\n"
-                             "     template \"ChainSuccession\" args 2 := G( (((LAST OR t (NEXT EXISTS ~ 1 t #2))) OR t ((NEXT EXISTS 1 t #2 activation) AND t THETA INV (EXISTS 1 t #1 target))) AND t\n"
-                             "                                             ( ((EXISTS ~ 1 t #1)) OR t ((EXISTS 1 t #1 activation) AND t THETA (NEXT EXISTS 1 t #2 target)))\n"
-                             "                                           )\n"
-                             "     template \"AltResponse\" args 2     := G ( (EXISTS ~ 1 t #1) OR t ((EXISTS 1 t #1 activation) AND t THETA (NEXT ((EXISTS ~ 1 t #1) U t (EXISTS 1 t #2 target)) )))\n"
-                             "     template \"AltPrecedence\" args 2   := (((EXISTS  ~ 1 t #2) U (EXISTS 1 t #1 activation)) OR (ABSENCE 1 #2)) AND\n"
-                             "                                           (G(((EXISTS ~ 1 t #1)) OR t (((EXISTS 1 t #1 activation)) AND t THETA (NEXT (((EXISTS  ~ 1 t #1) U t (EXISTS 1 t #2 target)) OR t (G t (EXISTS  ~ 1 t #1))))  )))\n"
-                             "}";
-
-
-
-    sqm.runQuery(query_plan);
     auto it2 = sqm.planname_to_declare_to_ltlf.find("nfmcp23");
-
-
 
     ////////////////////////////////////////////////////////////////////////////
     /// Removing the clauses having neither activation nor target conditions ///
