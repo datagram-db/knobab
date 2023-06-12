@@ -1194,6 +1194,7 @@ std::tuple<std::vector<std::vector<DeclareDataAware>>,double,double> classifier_
             WWW.emplace_back(std::move(ref2.clause));
         }
         remove_duplicates(WWW);
+        std::cout << WWW << std::endl;
         if (i == 0)
              last_VVV_intersection = WWW;
         else {
@@ -1292,11 +1293,14 @@ std::tuple<std::vector<std::vector<DeclareDataAware>>,double,double> classifier_
         }
         extractPayloads(it2, last_VVV_intersection, sqm.multiple_logs[ref], hasActivations, hasTargets, per_clause_AV, per_clause_TV, per_clause_CV, i);
     }
+    numeric_keys.erase("__time");
+    categorical_keys.erase("__time");
 
     worlds_activations w_activations;
 //    std::unordered_map<int, Environment*> tree_to_env;
     std::unordered_map<int, std::vector<std::vector<dt_predicate>>> world_to_paths;
     for (size_t i = 0, M = per_clause_AV.size(); i<M; i++) {
+        std::cerr << i << std::endl;
         auto& clause = last_VVV_intersection.at(i);
         bool doNegate = it2->second.at(clause.casusu).t == LTLfQuery::ABSENCE_QP;
         // Refining over the activations first

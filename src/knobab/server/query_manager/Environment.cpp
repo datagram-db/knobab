@@ -5,25 +5,26 @@
 #include <knobab/server/query_manager/Environment.h>
 
 semantic_atom_set Environment::getSigmaAll() const {
-    semantic_atom_set S = ap.act_atoms;
-    for (const auto& ref : ap.interval_map) {
-        std::pair<std::string, size_t> cp;
-        cp.first = ref.first;
-        for (size_t i = 0, N = ap.max_ctam_iteration.at(cp.first); i<N; i++) {
-            cp.second = i;
-            S.insert(ap.clause_to_atomization_map.at(cp));
-        }
-    }
-    for (auto & ref : db.act_table_by_act_id.secondary_index) {
-        auto ptr = ref.first;
-        while (ptr) {
-            auto lx = db.event_label_mapper.get(ptr->entry.id.parts.act);
-            if (!ap.interval_map.contains(lx))
-                S.insert(lx);
-            ptr = ptr->next;
-        };
-    }
-    return S;
+//    semantic_atom_set S = ap.act_atoms;
+//    for (const auto& ref : ap.interval_map) {
+//        std::pair<std::string, size_t> cp;
+//        cp.first = ref.first;
+//        for (size_t i = 0, N = ap.max_ctam_iteration.at(cp.first); i<N; i++) {
+//            cp.second = i;
+//            S.insert(ap.clause_to_atomization_map.at(cp));
+//        }
+//    }
+//    for (auto & ref : db.act_table_by_act_id.secondary_index) {
+//        auto ptr = ref.first;
+//        while (ptr) {
+//            auto lx = db.event_label_mapper.get(ptr->entry.id.parts.act);
+//            if (!ap.interval_map.contains(lx))
+//                S.insert(lx);
+//            ptr = ptr->next;
+//        };
+//    }
+//    return S;
+    return ap.atom_universe;
 }
 
 void Environment::clear() {

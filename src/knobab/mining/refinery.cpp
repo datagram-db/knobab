@@ -350,6 +350,17 @@ int main(int argc, char **argv) {
     auto model = std::get<0>(model_and_times);
     double dataless_mining = std::get<1>(model_and_times);
     double refinery_time = std::get<2>(model_and_times);
+    std::cout << "dataless_mining=" << dataless_mining << std::endl;
+    std::cout << "refinery_time=" << dataless_mining << std::endl;
+
+    exit(1);
+
+    for (const auto& ref : model) {
+        std::cout <<"~~~ model ~~~" << std::endl;
+        for (const auto& clause : ref) {
+            std::cout << clause << std::endl;
+        }
+    }
 
     // Running the MaxSat per model
     {
