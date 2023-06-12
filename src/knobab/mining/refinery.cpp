@@ -351,7 +351,7 @@ int main(int argc, char **argv) {
     double dataless_mining = std::get<1>(model_and_times);
     double refinery_time = std::get<2>(model_and_times);
     std::cout << "dataless_mining=" << dataless_mining << std::endl;
-    std::cout << "refinery_time=" << dataless_mining << std::endl;
+    std::cout << "refinery_time=" << refinery_time << std::endl;
 
     exit(1);
 

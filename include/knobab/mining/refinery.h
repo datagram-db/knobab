@@ -35,8 +35,18 @@ enum RefineOver {
     RefineOverMatch
 };
 
+struct ForResultReference {
+    RefineOver  type_for_single;
+    std::string world;
+    std::vector<std::pair<trace_t,event_t>> result;
+    DEFAULT_CONSTRUCTORS(ForResultReference)
+};
+
 using worlds_activations = std::unordered_map<Environment*, std::vector<payload_data>>;
 using refining_extraction = std::unordered_map<std::vector<Environment*>, std::vector<DeclareDataAware>>;
+
+
+
 
 
 // @author: Samuel Appleby and Giacomo Bergami
@@ -182,21 +192,22 @@ static inline DeclareDataAware actualClauseRefine(const DeclareDataAware &clause
         }
         if (hasAFalse) {
             current_conds.clear();
-        }
-        switch (what) {
-            case RefineOverMatch:{
-                c.conjunctive_map.push_back(current_conds);
-            } break;
-            case RefineOverActivation:
-            {
-                // Activation conditions
-                c.dnf_left_map.push_back(current_conds);
-            } break;
-            case RefineOverTarget:
-            {
-                // Activation conditions
-                c.dnf_right_map.push_back(current_conds);
-            } break;
+        } else {
+            switch (what) {
+                case RefineOverMatch:{
+                    c.conjunctive_map.push_back(current_conds);
+                } break;
+                case RefineOverActivation:
+                {
+                    // Activation conditions
+                    c.dnf_left_map.push_back(current_conds);
+                } break;
+                case RefineOverTarget:
+                {
+                    // Activation conditions
+                    c.dnf_right_map.push_back(current_conds);
+                } break;
+            }
         }
     }
     return c;
