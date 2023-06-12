@@ -67,7 +67,9 @@ struct AtomizingPipeline {
      * @return  Fresh atom
      */
     std::string generate_fresh_atom();
-
+    void finalise() {
+        act_atoms = unordered_intersection(act_atoms, atom_universe);
+    }
     /**
      * Decomposition of a formula atom associated to a single element
      * @param act           Act/Event label that might appear in the log

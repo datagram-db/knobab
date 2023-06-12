@@ -112,6 +112,7 @@ static inline DeclareDataAware actualClauseRefine(const DeclareDataAware &clause
 
     for(const std::vector<dt_predicate>& cond : pair.second){
         std::unordered_map<std::string, DataPredicate> current_conds;
+        bool hasAFalse = false;
 
         for(const dt_predicate& dt_p : cond){
             DataPredicate p;
@@ -157,11 +158,10 @@ static inline DeclareDataAware actualClauseRefine(const DeclareDataAware &clause
                     break;
             }
 
-            if(dt_p.categoric_set.size()){
+            if(!dt_p.categoric_set.empty()){
                 DEBUG_ASSERT(dt_p.categoric_set.size() == 1);
                 p.value = *dt_p.categoric_set.begin();
-            }
-            else{
+            } else{
                 p.value = dt_p.value;
             }
 
@@ -170,13 +170,19 @@ static inline DeclareDataAware actualClauseRefine(const DeclareDataAware &clause
             if(found != current_conds.end()){
                 // Our path has two conditions on the same var, perform intersection
 //                p.intersect_with(found->second);
-                found->second.intersect_with(p);
+                if (!found->second.intersect_with(p)) {
+                    found->second.casusu = FFALSE;
+                    hasAFalse = true;
+                    break;
+                }
             }
             else{
                 current_conds.insert({p.var, p});
             }
         }
-
+        if (hasAFalse) {
+            current_conds.clear();
+        }
         switch (what) {
             case RefineOverMatch:{
                 c.conjunctive_map.push_back(current_conds);

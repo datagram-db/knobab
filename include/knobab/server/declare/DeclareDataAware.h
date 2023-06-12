@@ -24,6 +24,8 @@
 #ifndef BPM21_DECLAREDATAAWARE_H
 #define BPM21_DECLAREDATAAWARE_H
 
+#include <yaucl/functional/assert.h>
+
 /**
  * Definition of all the types of Declare statements
 

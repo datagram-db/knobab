@@ -165,8 +165,9 @@ void AtomizingPipeline::serialise_event_in_trace(std::ostream &xes,
             const std::string& var = dp.var;
             DEBUG_ASSERT(dp.casusu == INTERVAL);
             if (std::holds_alternative<double>(dp.value)) {
-                std::uniform_real_distribution<double>    distr(std::get<double>(dp.value), std::get<double>(dp.value_upper_bound));
-                serialize_event_attribute(xes, var, distr(eng));
+                std::uniform_int_distribution<size_t> distrI((size_t)std::get<double>(dp.value), (size_t)std::get<double>(dp.value_upper_bound));
+//                std::uniform_real_distribution<double>    distr(std::get<double>(dp.value), std::get<double>(dp.value_upper_bound));
+                serialize_event_attribute(xes, var, std::clamp((double)distrI(eng),std::get<double>(dp.value),std::get<double>(dp.value_upper_bound)) );
             } else {
                 std::vector<std::string> values;
                 values.reserve(100);

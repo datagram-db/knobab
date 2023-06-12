@@ -2,6 +2,7 @@
 // Created by giacomo on 11/02/23.
 //
 
+
 #include "knobab/server/query_manager/Environment.h"
 #include "yaucl/graphs/flloat/ParseFFLOATDot.h"
 #include "knobab/server/query_manager/ServerQueryManager.h"
@@ -247,6 +248,7 @@ struct graph_holder {
         if (atomised_clause.right_act.empty())
             full_name = full_name+"_"+std::to_string(atomised_clause.n);
         auto& patternGraphToInstantiate = graph_cache.at(full_name);
+//        patternGraphToInstantiate.dot(std::cout); std::cout;
         std::unordered_map<std::string, semantic_atom_set> bogus_act_to_set;
         bogus_act_to_set["a"] = atomised_clause.left_decomposed_atoms;
         if (!atomised_clause.right_act.empty())
@@ -274,7 +276,9 @@ struct graph_holder {
 //        result.makeDFAAsInTheory(sigma);
     }
 
-    void generateFromEnvironment(FlexibleFA<size_t, std::string>& result, Environment* env, const std::vector<std::string>& other_atoms) {
+    void generateFromEnvironment(FlexibleFA<size_t, std::string>& result,
+                                 Environment* env,
+                                 const std::vector<std::string>& other_atoms) {
         std::unordered_set<std::string> sigma = env->getSigmaAll();
         sigma.insert(other_atoms.begin(), other_atoms.end());
         size_t result_count = 0;
@@ -283,7 +287,12 @@ struct graph_holder {
         for (const auto& ref : env->grounding.singleElementOfConjunction) {
             for (const auto& clause : ref.elementsInDisjunction) {
                 FlexibleFA<size_t, std::string> curr;
+                if (env->grounding.singleElementOfConjunction.size() == 1) {
+                    generateGraphFromPattern(clause,  sigma, result);
+                    return;
+                }
                 generateGraphFromPattern(clause,  sigma, curr);
+//                curr.dot(std::cout); std::cout << std::endl;
                 if (result_count == 0) {
                     resultG = curr.shiftLabelsToNodes();
                     result_count++;
@@ -298,8 +307,9 @@ struct graph_holder {
 //    result[0].dot(std::cout); std::cout << std::endl;
         for (size_t i = 0; i<resultV.size(); i++) {
 //        std::cout << "join" << i << std::endl;
-//        result[i].dot(std::cout); std::cout << std::endl;
-            resultG = FlexibleFA<std::string,size_t>::crossProductWithNodeLabels(resultG, resultV[i], true);
+//        resultV[i].dot(std::cout); std::cout << std::endl;
+//            resultG.dot(std::cout); std::cout << std::endl;
+            resultG = FlexibleFA<std::string,size_t>::crossProductWithNodeLabels(resultG, resultV[i], false);
         }
         result = resultG.shiftLabelsToEdges();
 //        return result[0];
@@ -401,7 +411,7 @@ void for_each_test(status& env,
                                      grounding_strategy);
     env.sqm.tmpEnv->doGrounding();
     std::string atomj{"p"};
-    AtomizationStrategy atom_strategy = AtomizationStrategy::AtomizeOnlyOnDataPredicates;
+    AtomizationStrategy atom_strategy = AtomizationStrategy::AtomizeEverythingIfAnyDataPredicate;
     size_t n = 3;
     env.sqm.tmpEnv->set_atomization_parameters(atomj, n, atom_strategy);
     env.sqm.tmpEnv->init_atomize_tables();
@@ -410,12 +420,15 @@ void for_each_test(status& env,
     while (std::getline(infile, line)) {
         env.sqm.tmpEnv->ap.atom_decomposition(line, false, such_sigma);
     }
+    env.sqm.tmpEnv->ap.finalise();
+//    env.sqm.tmpEnv->print_grounding_tables(std::cout);
     remove_duplicates(such_sigma);
     size_t atom_size = such_sigma.size();
     std::cout << "Atom size: " << atom_size << "; " << such_sigma << std::endl;
     auto t1 = std::chrono::high_resolution_clock::now();
     FlexibleFA<size_t, std::string> graph;
     env.holder.generateFromEnvironment(graph, env.sqm.tmpEnv, such_sigma);
+//    graph.dot(std::cout); std::cout << std::endl;
     size_t v_size = graph.vSize();
     size_t e_size = graph.eSize();
     // preparing the one-sink node for running the all single paths when this will be required
@@ -955,18 +968,18 @@ void for_each_test(status& env,
         else {
             // Printing the log in its expanded representation, by randomly generating some data!
             std::ofstream xes{dest_name};
-            begin_log(xes);
-            std::mt19937_64 eng{0};
+            std::vector<std::vector<std::string>> log_collected;
+
+//            std::ofstream file{dest_name};
             if (all > 0) {
                 // First, getting this from the ending traces for all of the tries out there
-                trie_storage.reconstructor(finals.begin(), finals.end(), [&all,&xes,&eng,&env,&graph](const std::vector<size_t>& ref, size_t len) {
+                trie_storage.reconstructor(finals.begin(), finals.end(), [&all,&log_collected,&graph](const std::vector<size_t>& ref, size_t len) {
                     if (all<=0) return false;
-                    begin_trace_serialize(xes, std::to_string(all));
+                    auto& trace = log_collected.emplace_back();
                     for (size_t i = 0; i<len; i++) {
-                        env.env.ap.serialise_event_in_trace(xes, eng, graph.getEdgeLabel(ref.at(i)));
+                        trace.emplace_back(graph.getEdgeLabel(ref.at(i)));
                     }
                     all--;
-                    end_trace_serialize(xes);
                     return (all>0);
                 });
             }
@@ -974,44 +987,115 @@ void for_each_test(status& env,
             if (all > 0) {
                 // If I still need to visit something, then go for the join between BFS and DFS paths
                 for (const auto& cp : extensions_to_final_node) {
+//                std::cout << "for Candidate: " << cp.first << std::endl;
                     auto& bfs_paths = final_node_to_trie_offset[cp.first];
                     DEBUG_ASSERT(!bfs_paths.empty());
                     for (const size_t& final_trie_node_id : bfs_paths) {
-                        trie_storage.reconstructor(final_trie_node_id, [&xes,&all,&cp,&graph,&ac,&eng,&env](const std::vector<size_t>& bfs_path, size_t max_len) {
+                        trie_storage.reconstructor(final_trie_node_id, [&log_collected,&all,&cp,&graph,&ac](const std::vector<size_t>& bfs_path, size_t max_len) {
                             std::vector<std::string> tmp_bfs;
                             for (size_t i = 0; i<max_len; i++) {
+                                DEBUG_ASSERT(bfs_path.at(i) < graph.g.E_size);
                                 tmp_bfs.emplace_back(graph.getEdgeLabel(bfs_path.at(i)));
                             }
                             DEBUG_ASSERT(tmp_bfs.size() == max_len);
+                            std::vector<std::string> trace;
                             for (const auto& extending_path : cp.second) { //
-                                begin_trace_serialize(xes, std::to_string(all));
                                 // Reconstruction of the BFS prefix path
                                 for (const auto& label : tmp_bfs) {
-                                    env.env.ap.serialise_event_in_trace(xes, eng, label);
+                                    trace.emplace_back(label);
+//                                    file << label << "\t";
                                 }
+
+#ifdef DEBUG
+                                //                            std::cout << "BFS:" << std::endl;
+//                            for (size_t i = 0; i <max_len; i++) {
+//                                std::cout << graph.g.edge_ids.at(bfs_path.at(i)) << std::endl;
+//                            }
+//                            std::cout << "DFS:" << std::endl;
+//                            for (size_t i = 0, N = extending_path.depth_path.size(); i <N; i++) {
+//                                std::cout << graph.g.edge_ids.at(extending_path.depth_path.at(i)) << std::endl;
+//                            }
+//                            std::cout << "~~~" << std::endl;
+                                auto dst_bfs = graph.g.edge_ids.at(bfs_path.at(max_len-1)).second;
+                                auto src_dfs = graph.g.edge_ids.at(extending_path.depth_path.at(0)).first;
+                                DEBUG_ASSERT(dst_bfs == src_dfs);
+#endif
+
                                 // Reconstruction of the DFS suffix path with loops
-                                for (size_t i = 0, N = extending_path.depth_path.size(); i<N; i++) {
+                                size_t MMM = extending_path.depth_path.size();
+                                for (size_t i = 0, N = MMM; i<N; i++) {
                                     auto it = extending_path.loop_extension.find(i);
+#ifdef DEBUG
+                                    size_t prev = -1;
+#endif
+
                                     // The information that needs to the provided before the edge
                                     if (it != extending_path.loop_extension.end()) {
                                         for (auto& loop_ref : it->second) {
                                             const auto& loop_cycle_ref = ac.cycles_of_edges.at(loop_ref.cycle_id);
+#ifdef DEBUG
+                                            auto expected = graph.g.edge_ids.at(extending_path.depth_path.at(i)).first;
+                                            auto cycle_point = graph.g.edge_ids.at(ac.cycles_of_edges.at(loop_ref.cycle_id).at(loop_ref.cycle_id_offset_start)).first;
+                                            auto cycle_b = graph.g.edge_ids.at(loop_cycle_ref.at(0)).first;
+                                            auto cycle_e = graph.g.edge_ids.at(loop_cycle_ref.at(loop_cycle_ref.size()-1)).second;
+                                            DEBUG_ASSERT(cycle_b == cycle_e);
+                                            DEBUG_ASSERT(expected == cycle_point);
+                                            if (prev != -1)
+                                                DEBUG_ASSERT(expected == prev);
+                                            prev = cycle_point;
+#endif
+
                                             std::vector<std::string> tmp_loop;
                                             for (size_t j_element = 0, L = loop_cycle_ref.size(); j_element < L; j_element++) {
                                                 tmp_loop.emplace_back(graph.getEdgeLabel(loop_cycle_ref.at((j_element + loop_ref.cycle_id_offset_start) % L)));
                                             }
                                             for (size_t n_times = 0; n_times < loop_ref.n_times_replace; n_times++) {
                                                 for (const auto& label : tmp_loop)
-                                                    env.env.ap.serialise_event_in_trace(xes, eng, label);
+                                                    trace.emplace_back(label);
+//                                                    file << label << "\t";
                                             }
                                         }
                                     }
 
+#ifdef DEBUG
+                                    if (prev != -1)
+                                        DEBUG_ASSERT(graph.g.edge_ids.at(extending_path.depth_path.at(i)).first == prev);
+#endif
 
                                     // Visiting the edge
-                                    env.env.ap.serialise_event_in_trace(xes, eng, graph.getEdgeLabel(extending_path.depth_path.at(i)));
+                                    trace.emplace_back(graph.getEdgeLabel(extending_path.depth_path.at(i)));
+//                                    file << graph.getEdgeLabel(extending_path.depth_path.at(i)) << "\t";
                                 }
-                                end_trace_serialize(xes);
+
+                                auto it = extending_path.loop_extension.find(MMM);
+                                if (it != extending_path.loop_extension.end()) {
+                                    for (auto& loop_ref : it->second) {
+                                        const auto& loop_cycle_ref = ac.cycles_of_edges.at(loop_ref.cycle_id);
+#ifdef DEBUG
+                                        auto expected = graph.g.edge_ids.at(extending_path.depth_path.at(MMM-1)).second;
+                                        auto cycle_point = graph.g.edge_ids.at(ac.cycles_of_edges.at(loop_ref.cycle_id).at(loop_ref.cycle_id_offset_start)).first;
+                                        auto cycle_b = graph.g.edge_ids.at(loop_cycle_ref.at(0)).first;
+                                        auto cycle_e = graph.g.edge_ids.at(loop_cycle_ref.at(loop_cycle_ref.size()-1)).second;
+                                        DEBUG_ASSERT(cycle_b == cycle_e);
+                                        DEBUG_ASSERT(expected == cycle_point);
+#endif
+
+                                        std::vector<std::string> tmp_loop;
+                                        for (size_t j_element = 0, L = loop_cycle_ref.size(); j_element < L; j_element++) {
+                                            tmp_loop.emplace_back(graph.getEdgeLabel(loop_cycle_ref.at((j_element + loop_ref.cycle_id_offset_start) % L)));
+                                        }
+                                        for (size_t n_times = 0; n_times < loop_ref.n_times_replace; n_times++) {
+                                            for (const auto& label : tmp_loop)
+                                                trace.emplace_back(label);
+//                                                file << label << "\t";
+                                        }
+                                    }
+                                }
+
+                                log_collected.emplace_back(trace);
+                                trace.clear();
+//                                file << std::endl;
+                                all--;
                                 if (all == 0) break;
                             }
                             return all>0; // Returning true only if I need to visit some more.
@@ -1021,6 +1105,84 @@ void for_each_test(status& env,
                     if (all == 0) break;
                 }
             }
+//            file.close();
+
+            begin_log(xes);
+            std::mt19937_64 eng{0};
+            for (size_t trace_id = 0, LOGS = log_collected.size(); trace_id < LOGS; trace_id++) {
+                const auto& trace = log_collected.at(trace_id);
+                begin_trace_serialize(xes, std::to_string(all));
+                for (size_t i = 0, ts = trace.size(); i<ts; i++) {
+                    env.env.ap.serialise_event_in_trace(xes, eng, trace.at(i));
+                }
+                end_trace_serialize(xes);
+            }
+//            if (all > 0) {
+//                // First, getting this from the ending traces for all of the tries out there
+//                trie_storage.reconstructor(finals.begin(), finals.end(), [&all,&xes,&eng,&env,&graph](const std::vector<size_t>& ref, size_t len) {
+//                    if (all<=0) return false;
+//                    begin_trace_serialize(xes, std::to_string(all));
+//                    for (size_t i = 0; i<len; i++) {
+//                        env.env.ap.serialise_event_in_trace(xes, eng, graph.getEdgeLabel(ref.at(i)));
+//                    }
+//                    all--;
+//                    end_trace_serialize(xes);
+//                    return (all>0);
+//                });
+//            }
+//            trie_storage.single_reconstructor_init();
+//            if (all > 0) {
+//                // If I still need to visit something, then go for the join between BFS and DFS paths
+//                for (const auto& cp : extensions_to_final_node) {
+//                    auto& bfs_paths = final_node_to_trie_offset[cp.first];
+//                    DEBUG_ASSERT(!bfs_paths.empty());
+//                    for (const size_t& final_trie_node_id : bfs_paths) {
+//                        trie_storage.reconstructor(final_trie_node_id, [&xes,&all,&cp,&graph,&ac,&eng,&env](const std::vector<size_t>& bfs_path, size_t max_len) {
+//                            std::vector<std::string> tmp_bfs;
+//                            for (size_t i = 0; i<max_len; i++) {
+//                                tmp_bfs.emplace_back(graph.getEdgeLabel(bfs_path.at(i)));
+//                            }
+//                            DEBUG_ASSERT(tmp_bfs.size() == max_len);
+//                            for (const auto& extending_path : cp.second) { //
+//                                begin_trace_serialize(xes, std::to_string(all));
+//                                // Reconstruction of the BFS prefix path
+//                                for (const auto& label : tmp_bfs) {
+//                                    env.env.ap.serialise_event_in_trace(xes, eng, label);
+//                                }
+//                                // Reconstruction of the DFS suffix path with loops
+//                                for (size_t i = 0, N = extending_path.depth_path.size(); i<N; i++) {
+//                                    auto it = extending_path.loop_extension.find(i);
+//                                    // The information that needs to the provided before the edge
+//                                    if (it != extending_path.loop_extension.end()) {
+//                                        for (auto& loop_ref : it->second) {
+//                                            const auto& loop_cycle_ref = ac.cycles_of_edges.at(loop_ref.cycle_id);
+//                                            std::vector<std::string> tmp_loop;
+//                                            for (size_t j_element = 0, L = loop_cycle_ref.size(); j_element < L; j_element++) {
+//                                                tmp_loop.emplace_back(graph.getEdgeLabel(loop_cycle_ref.at((j_element + loop_ref.cycle_id_offset_start) % L)));
+//                                            }
+//                                            for (size_t n_times = 0; n_times < loop_ref.n_times_replace; n_times++) {
+//                                                for (const auto& label : tmp_loop)
+//                                                    env.env.ap.serialise_event_in_trace(xes, eng, label);
+//                                            }
+//                                        }
+//                                    }
+//
+//
+//                                    // Visiting the edge
+//                                    env.env.ap.serialise_event_in_trace(xes, eng, graph.getEdgeLabel(extending_path.depth_path.at(i)));
+//                                }
+//                                end_trace_serialize(xes);
+//                                all--;
+//                                if (all == 0) break;
+//                            }
+//                            return all>0; // Returning true only if I need to visit some more.
+//                        });
+//                        if (all == 0)
+//                            break;
+//                    }
+//                    if (all == 0) break;
+//                }
+//            }
             end_log(xes);
 //        env.env.ap.serialize_atom_list_to_xes(atom_lists, file);
             xes.close();
