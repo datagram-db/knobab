@@ -1336,6 +1336,10 @@ std::tuple<std::vector<std::vector<DeclareDataAware>>,double,double> classifier_
     }
     numeric_keys.erase("__time");
     categorical_keys.erase("__time");
+    corr_numeric_keys.erase("A.__time");
+    corr_numeric_keys.erase("T.__time");
+    corr_categorical_keys.erase("A.__time");
+    corr_categorical_keys.erase("T.__time");
 
     worlds_activations w_activations;
 //    std::unordered_map<int, Environment*> tree_to_env;
@@ -1403,7 +1407,7 @@ std::tuple<std::vector<std::vector<DeclareDataAware>>,double,double> classifier_
         if (hasFound) continue;
 
         if (hasActivations.at(i) && hasTargets.at(i)) {
-            auto& C = per_clause_TV[i];
+            auto& C = per_clause_CV[i];
             if (!C.empty()) {
 
                 auto itC = C.begin(), enC = C.end();
