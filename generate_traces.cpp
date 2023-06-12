@@ -535,7 +535,7 @@ void for_each_test(status& env,
                     Q.pop();
                     trie::node *ptr = trie_storage.resolve_node_ptr(addr);
                     if (ptr->len > len) {
-//                        std::cout << ptr->len << std::endl;
+                        std::cout << ptr->len << std::endl;
                         len = ptr->len;
                         layerAddrSetL.clear();
                         layerIdSetL.clear();

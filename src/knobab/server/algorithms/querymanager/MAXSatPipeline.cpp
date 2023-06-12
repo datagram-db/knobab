@@ -1843,8 +1843,10 @@ void MAXSatPipeline::pipeline(CNFDeclareDataAware* model,
                         Result localActivations;
                         local_logic_union(qm.activations.at(i), localActivations, false);
                         if (localActivations.empty()) {
-                            DEBUG_ASSERT(declare->result.empty());
+                            if(declare->result.empty())
                             support_per_declare.emplace_back(0);
+                            else
+                            support_per_declare.emplace_back(1);
                         }
 //                        else if ((!declare->fields.id.parts.is_timed) && ((declare->t == LTLfQuery::INIT_QP) || (declare->t == LTLfQuery::END_QP))) {
 //                            auto it2 = visited.emplace(declare, declare->result.size() / (((double)kb.noTraces)));

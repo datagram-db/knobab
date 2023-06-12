@@ -355,6 +355,55 @@ int main(int argc, char **argv) {
 
 //    exit(1);
 
+
+
+    // Discarding the resulting clauses not having optimal support
+    {
+
+
+        for (size_t i = 0, N = model.size(); i < N; i++) {
+            auto &tmpEnv = sqm.multiple_logs[std::to_string(i)];
+            tmpEnv.clearModel(); // initializing the model pipeline
+            std::unordered_map<std::string, LTLfQuery> *plans = &it2->second;
+            tmpEnv.conjunctive_model = model.at(i);
+            tmpEnv.experiment_logger.model_parsing_ms = 0;
+            tmpEnv.experiment_logger.model_size = model.at(i).size();
+            tmpEnv.experiment_logger.model_filename = "Testing";
+            bool doPreliminaryFill = true;
+            bool ignoreActForAttributes = false;
+            bool creamOffSingleValues = true;
+            GroundingStrategyConf::pruning_strategy grounding_strategy = GroundingStrategyConf::NO_EXPANSION;
+            tmpEnv.set_grounding_parameters(doPreliminaryFill, ignoreActForAttributes, creamOffSingleValues,
+                                            grounding_strategy);
+            tmpEnv.doGrounding();
+            std::string atomj{"p"};
+            AtomizationStrategy atom_strategy = AtomizeOnlyOnDataPredicates;
+            size_t n = 3;
+            tmpEnv.set_atomization_parameters(atomj, n, atom_strategy);
+            tmpEnv.init_atomize_tables();
+            tmpEnv.first_atomize_model();
+            size_t nThreads = 1;
+            auto &ref2 = tmpEnv.experiment_logger;
+            EnsembleMethods em = PerDeclareSupport;
+            OperatorQueryPlan op = FastOperator_v1;
+            tmpEnv.set_maxsat_parameters(nThreads, em, op);
+            MAXSatPipeline ref(plans, nThreads, BLOCK_STATIC_SCHEDULE, 3);
+            ref.final_ensemble = em;
+            ref.operators = op;
+            marked_event me;
+            me.id.parts.type = MARKED_EVENT_ACTIVATION;
+            ref.pipeline(&tmpEnv.grounding, tmpEnv.ap, tmpEnv.db);
+            std::vector<size_t> indices_to_remove;
+            for (size_t j = 0; j < ref.support_per_declare.size(); j++) {
+                if (ref.support_per_declare.at(j) < supp) {
+                    indices_to_remove.emplace_back(j);
+                }
+            }
+            if (!indices_to_remove.empty())
+                remove_index(model[i], indices_to_remove);
+        }
+    }
+
     for (const auto& ref : model) {
         std::cout <<"~~~ model ~~~" << std::endl;
         for (const auto& clause : ref) {
@@ -362,12 +411,12 @@ int main(int argc, char **argv) {
         }
     }
 
-    // Running the MaxSat per model
+    // Testing of the classifier part.
     {
         std::vector<std::vector<double>> results(nTestingTraces, std::vector<double>(model.size(), 0));
         std::vector<size_t> pos;
-        auto& tmpEnv = sqm.multiple_logs["testing"];
         for (size_t i = 0, N = model.size(); i<N; i++) {
+            auto& tmpEnv = sqm.multiple_logs["testing"];
             tmpEnv.clearModel(); // initializing the model pipeline
             std::unordered_map<std::string, LTLfQuery>* plans = &it2->second;
             tmpEnv.conjunctive_model = model.at(i);
@@ -398,7 +447,7 @@ int main(int argc, char **argv) {
             me.id.parts.type =MARKED_EVENT_ACTIVATION;
             ref.pipeline(&tmpEnv.grounding, tmpEnv.ap, tmpEnv.db);
             for (size_t j = 0; j < ref.max_sat_per_trace.size(); j++) {
-                results[j][i] = ref.max_sat_per_trace.at(i);
+                results[j][i] = ref.max_sat_per_trace.at(j);
             }
         }
 
