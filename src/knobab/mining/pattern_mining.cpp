@@ -998,12 +998,12 @@ std::pair<std::vector<pattern_mining_result<DeclareDataAware>>, double> pattern_
             DeclareDataAware clause;
             clause.n = 1;
             auto first_occ = first.at(act_id), last_occ = last.at(act_id);
-            if (first_occ > minimum_support_threshold) {
+            if (first_occ == log_size) {
                 clause.casusu = "Init";
                 clause.left_act = kb.event_label_mapper.get(act_id);
                 declarative_clauses.emplace_back(((double)(first_occ)) / ((double)log_size), clause);
             }
-            if (last_occ > minimum_support_threshold) {
+            if (last_occ == log_size) {
                 clause.casusu = "End";
                 clause.left_act = kb.event_label_mapper.get(act_id);
                 declarative_clauses.emplace_back(((double)(last_occ)) / ((double)log_size), clause);
@@ -1189,12 +1189,12 @@ std::tuple<std::vector<std::vector<DeclareDataAware>>,double,double> classifier_
         const auto &ref = model_entry_names.at(i);
         auto tmp = pattern_mining(sqm.multiple_logs[ref].db, support, naif, init_end, special_temporal_patterns, only_precise_temporal_patterns, negative_ones);
         overall_dataless_mining_time += tmp.second;
-        auto WWW = VVV.emplace_back();
+        auto& WWW = VVV.emplace_back();
         for (auto& ref2 : tmp.first) {
             WWW.emplace_back(std::move(ref2.clause));
         }
         remove_duplicates(WWW);
-        std::cout << WWW << std::endl;
+//        std::cout << WWW << std::endl;
         if (i == 0)
              last_VVV_intersection = WWW;
         else {
@@ -1300,7 +1300,7 @@ std::tuple<std::vector<std::vector<DeclareDataAware>>,double,double> classifier_
 //    std::unordered_map<int, Environment*> tree_to_env;
     std::unordered_map<int, std::vector<std::vector<dt_predicate>>> world_to_paths;
     for (size_t i = 0, M = per_clause_AV.size(); i<M; i++) {
-        std::cerr << i << std::endl;
+//        std::cerr << i << std::endl;
         auto& clause = last_VVV_intersection.at(i);
         bool doNegate = it2->second.at(clause.casusu).t == LTLfQuery::ABSENCE_QP;
         // Refining over the activations first

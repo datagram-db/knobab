@@ -421,7 +421,7 @@ void for_each_test(status& env,
         env.sqm.tmpEnv->ap.atom_decomposition(line, false, such_sigma);
     }
     env.sqm.tmpEnv->ap.finalise();
-//    env.sqm.tmpEnv->print_grounding_tables(std::cout);
+    env.sqm.tmpEnv->print_grounding_tables(std::cout);
     remove_duplicates(such_sigma);
     size_t atom_size = such_sigma.size();
     std::cout << "Atom size: " << atom_size << "; " << such_sigma << std::endl;
