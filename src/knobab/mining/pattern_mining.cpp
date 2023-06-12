@@ -1073,12 +1073,13 @@ std::pair<std::vector<pattern_mining_result<DeclareDataAware>>, double> pattern_
 static inline
 void extractPayloads(std::unordered_map<std::string, std::unordered_map<std::string, LTLfQuery>>::iterator it2,
                         std::vector<DeclareDataAware> &v_intersection,
+                     const std::string& envName,
                         Environment &tmpEnv,
                         std::vector<bool>& activations,
                         std::vector<bool>& targets,
-                        std::vector<std::vector<std::pair<payload_data, int>>> &a,
-                        std::vector<std::vector<std::pair<payload_data, int>>> &t,
-                        std::vector<std::vector<std::pair<payload_data, int>>> &corr,
+                        std::vector<std::vector<std::pair<ForResultReference, int>>> &a,
+                        std::vector<std::vector<std::pair<ForResultReference, int>>> &t,
+                        std::vector<std::vector<std::pair<ForResultReference, int>>> &corr,
                         size_t clazz) {
     tmpEnv.clearModel(); // initializing the model pipeline
     std::unordered_map<std::string, LTLfQuery>* plans = &it2->second;
@@ -1129,9 +1130,9 @@ void extractPayloads(std::unordered_map<std::string, std::unordered_map<std::str
                     it.first++;
                 }
             }
-            extractPayload(leftAct, rightAct, &tmpEnv,activations.at(i), targets.at(i), a[i],t[i],corr[i],cpy,clazz);
+            extractPayload(leftAct, rightAct, &tmpEnv, envName, activations.at(i), targets.at(i), a[i],t[i],corr[i],cpy,clazz);
         } else {
-            extractPayload(leftAct, rightAct, &tmpEnv,activations.at(i), targets.at(i), a[i],t[i],corr[i],x->result,clazz);
+            extractPayload(leftAct, rightAct, &tmpEnv, envName, activations.at(i), targets.at(i), a[i],t[i],corr[i],x->result,clazz);
         }
 #ifdef DEBUG
         std::cerr << *x << std::endl;
@@ -1141,10 +1142,11 @@ void extractPayloads(std::unordered_map<std::string, std::unordered_map<std::str
 
 #include <cmath>
 
+template <typename T>
 void collectRefinedClause(std::vector<std::vector<DeclareDataAware>> &VVV,
 //                          std::unordered_map<int, Environment *> &tree_to_env,
                           std::unordered_map<int, std::vector<std::vector<dt_predicate>>> &world_to_paths,
-                          DeclareDataAware &clause, const DecisionTree<payload_data> &dtA,
+                          DeclareDataAware &clause, const DecisionTree<T> &dtA,
                           const RefineOver &what,
                           bool doNegate) {
     world_to_paths.clear();
@@ -1163,6 +1165,8 @@ void collectRefinedClause(std::vector<std::vector<DeclareDataAware>> &VVV,
 #endif
 }
 
+#include <functional>
+
 std::tuple<std::vector<std::vector<DeclareDataAware>>,double,double> classifier_mining(ServerQueryManager& sqm,
                                                                        const std::vector<std::string>& model_entry_names,
                                                                        double support,
@@ -1175,6 +1179,32 @@ std::tuple<std::vector<std::vector<DeclareDataAware>>,double,double> classifier_
                                                                        bool special_temporal_patterns,
                                                                        bool only_precise_temporal_patterns,
                                                                        bool negative_ones) {
+
+    std::function<union_minimal(const ForResultReference&, const std::string&)> elementi = [&sqm](const ForResultReference& x, const std::string& key) -> union_minimal {
+        auto& kb = sqm.multiple_logs[x.world].db;
+        bool isTarget = key.starts_with("T.");
+        auto it = kb.attribute_name_to_table.find((key.starts_with("A.")||isTarget ? key.substr(2) : key));
+        if (it != kb.attribute_name_to_table.end()) {
+            size_t offsetO = 0;
+            if (isTarget) offsetO = 1;
+            size_t offset = kb.act_table_by_act_id.getBuilder().trace_id_to_event_id_to_offset.at(x.result.at(offsetO).first).at(x.result.at(offsetO).second);
+            std::optional<union_minimal> data = it->second.resolve_record_if_exists2(offset);
+            if(data.has_value()) {
+                return data.value();
+            } else {
+                switch (it->second.type) {
+                    case DoubleAtt:
+                    case LongAtt:
+                    case SizeTAtt:
+                    case BoolAtt:
+                        return 0.0;
+                    case StringAtt:
+                        return "";
+                }
+            }
+        } else
+            return 0.0;
+    };
 
     std::vector<std::vector<DeclareDataAware>> VVV;
     std::vector<DeclareDataAware> last_VVV_intersection, curr_VVV_insersection;
@@ -1190,8 +1220,12 @@ std::tuple<std::vector<std::vector<DeclareDataAware>>,double,double> classifier_
         auto tmp = pattern_mining(sqm.multiple_logs[ref].db, support, naif, init_end, special_temporal_patterns, only_precise_temporal_patterns, negative_ones);
         overall_dataless_mining_time += tmp.second;
         auto& WWW = VVV.emplace_back();
+        std::vector<size_t> low_d_supp;
+        size_t j = 0;
         for (auto& ref2 : tmp.first) {
-            WWW.emplace_back(std::move(ref2.clause));
+            WWW.emplace_back(ref2.clause);
+            if (ref2.support_declarative_pattern < 1.0) low_d_supp.emplace_back(j);
+            j++;
         }
         remove_duplicates(WWW);
 //        std::cout << WWW << std::endl;
@@ -1204,6 +1238,7 @@ std::tuple<std::vector<std::vector<DeclareDataAware>>,double,double> classifier_
             std::swap(last_VVV_intersection, curr_VVV_insersection);
             curr_VVV_insersection.clear();
         }
+        remove_index(WWW, low_d_supp);
     }
     auto it2 = sqm.planname_to_declare_to_ltlf.find("nfmcp23");
 
@@ -1211,7 +1246,7 @@ std::tuple<std::vector<std::vector<DeclareDataAware>>,double,double> classifier_
     /// Removing the clauses having neither activation nor target conditions ///
     ////////////////////////////////////////////////////////////////////////////
     std::vector<size_t> index;
-    std::unordered_set<std::string> toExclude{"Absence", "CoExistence"}; // TODO: dealing correctly with Absence!
+    std::unordered_set<std::string> toExclude{"Absence", "CoExistence", "Choice"}; // TODO: dealing correctly with Absence!
     std::vector<bool> hasActivations(last_VVV_intersection.size(), false), hasTargets(last_VVV_intersection.size(), false);
     for (size_t i = 0, M = last_VVV_intersection.size(); i<M; i++) {
         const auto& ref = last_VVV_intersection.at(i);
@@ -1279,19 +1314,25 @@ std::tuple<std::vector<std::vector<DeclareDataAware>>,double,double> classifier_
 
 
     // Attempting at classifying per activation
-    std::vector<std::vector<std::pair<payload_data, int>>> per_clause_AV(last_VVV_intersection.size()),
+    std::vector<std::vector<std::pair<ForResultReference, int>>> per_clause_AV(last_VVV_intersection.size()),
                                                            per_clause_TV(last_VVV_intersection.size()),
                                                            per_clause_CV(last_VVV_intersection.size());
     std::unordered_set<std::string> numeric_keys, categorical_keys;
+    std::unordered_set<std::string> corr_numeric_keys, corr_categorical_keys;
     for (size_t i = 0, M = model_entry_names.size(); i<M; i++) {
         const auto& ref = model_entry_names.at(i);
         for (const auto& [k,v] : sqm.multiple_logs[ref].db.attribute_name_to_table) {
-            if (v.type == StringAtt)
+            if (v.type == StringAtt) {
+                corr_categorical_keys.insert("A."+k);
+                corr_categorical_keys.insert("T."+k);
                 categorical_keys.insert(k);
-            else
+            } else {
+                corr_numeric_keys.insert("A."+k);
+                corr_numeric_keys.insert("T."+k);
                 numeric_keys.insert(k);
+            }
         }
-        extractPayloads(it2, last_VVV_intersection, sqm.multiple_logs[ref], hasActivations, hasTargets, per_clause_AV, per_clause_TV, per_clause_CV, i);
+        extractPayloads(it2, last_VVV_intersection, ref, sqm.multiple_logs[ref], hasActivations, hasTargets, per_clause_AV, per_clause_TV, per_clause_CV, i);
     }
     numeric_keys.erase("__time");
     categorical_keys.erase("__time");
@@ -1309,10 +1350,10 @@ std::tuple<std::vector<std::vector<DeclareDataAware>>,double,double> classifier_
             auto& V = per_clause_AV[i];
             if (!V.empty()) {
                 auto it = V.begin(), en = V.end();
-                DecisionTree<payload_data> dtA(it,
+                DecisionTree<ForResultReference> dtA(it,
                                                en,
                                                1,
-                                               selector,
+                                               elementi,
                                                numeric_keys,
                                                categorical_keys,
                                                ForTheWin::gain_measures::Gini,
@@ -1338,10 +1379,10 @@ std::tuple<std::vector<std::vector<DeclareDataAware>>,double,double> classifier_
             auto& W = per_clause_TV[i];
             if (!W.empty()) {
                 auto itT = W.begin(), enT = W.end();
-                DecisionTree<payload_data> dtT(itT,
+                DecisionTree<ForResultReference> dtT(itT,
                                                enT,
                                                1,
-                                               selector,
+                                               elementi,
                                                numeric_keys,
                                                categorical_keys,
                                                ForTheWin::gain_measures::Gini,
@@ -1364,13 +1405,14 @@ std::tuple<std::vector<std::vector<DeclareDataAware>>,double,double> classifier_
         if (hasActivations.at(i) && hasTargets.at(i)) {
             auto& C = per_clause_TV[i];
             if (!C.empty()) {
+
                 auto itC = C.begin(), enC = C.end();
-                DecisionTree<payload_data> dtC(itC,
+                DecisionTree<ForResultReference> dtC(itC,
                                                enC,
                                                1,
-                                               selector,
-                                               numeric_keys,
-                                               categorical_keys,
+                                                     elementi,
+                                               corr_numeric_keys,
+                                               corr_categorical_keys,
                                                ForTheWin::gain_measures::Gini,
                                                purity,
                                                maxL,
@@ -1389,11 +1431,11 @@ std::tuple<std::vector<std::vector<DeclareDataAware>>,double,double> classifier_
     auto t2 = high_resolution_clock::now();
     /* Getting number of milliseconds as a double. */
     duration<double, std::milli> ms_double = t2 - t1;
-#ifdef DEBUG
+//#ifdef DEBUG
     std::cout << overall_dataless_mining_time << "+" << ms_double.count() << "=" << overall_dataless_mining_time+ms_double.count() << "ms\n";
     for (const auto& ref : VVV) {
         std::cout << ref << std::endl;
     }
-#endif
+//#endif
     return std::make_tuple(VVV,overall_dataless_mining_time, ms_double.count());
 }

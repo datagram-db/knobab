@@ -353,7 +353,7 @@ int main(int argc, char **argv) {
     std::cout << "dataless_mining=" << dataless_mining << std::endl;
     std::cout << "refinery_time=" << refinery_time << std::endl;
 
-    exit(1);
+//    exit(1);
 
     for (const auto& ref : model) {
         std::cout <<"~~~ model ~~~" << std::endl;
