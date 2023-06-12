@@ -40,6 +40,14 @@ struct ForResultReference {
     std::string world;
     std::vector<std::pair<trace_t,event_t>> result;
     DEFAULT_CONSTRUCTORS(ForResultReference)
+
+    ForResultReference(bool isActivation, const std::string& db, trace_t t, event_t e) : type_for_single{isActivation ? RefineOverActivation : RefineOverTarget}, world{db} {
+        result.emplace_back(t, e);
+    }
+    ForResultReference(const std::string& db, trace_t tA, event_t eA, trace_t tT, event_t eT) : type_for_single{RefineOverMatch}, world{db} {
+        result.emplace_back(tA, eA);
+        result.emplace_back(tT, eT);
+    }
 };
 
 using worlds_activations = std::unordered_map<Environment*, std::vector<payload_data>>;
@@ -48,22 +56,25 @@ using refining_extraction = std::unordered_map<std::vector<Environment*>, std::v
 
 
 
-
 // @author: Samuel Appleby and Giacomo Bergami
 static inline void extractPayload(size_t leftAct, size_t rightAct,
                                   const Environment *e,
+const std::string& envName,
                                   bool hasActivations,
                                   bool hasTargets,
-                                  std::vector<std::pair<payload_data, int>> &activations,
-                                  std::vector<std::pair<payload_data, int>> &targets,
-                                  std::vector<std::pair<payload_data, int>> &correlations,
+                                  std::vector<std::pair<ForResultReference, int>> &activations,
+                                  std::vector<std::pair<ForResultReference, int>> &targets,
+                                  std::vector<std::pair<ForResultReference, int>> &correlations,
+//                                  std::vector<std::pair<payload_data, int>> &activations,
+//                                  std::vector<std::pair<payload_data, int>> &targets,
+//                                  std::vector<std::pair<payload_data, int>> &correlations,
                                   const Result &result,
                                   int clazz) {
-    env envM;
+    ForResultReference ref(envName, 0,0,0,0);
     static std::unordered_set<std::string> toIgnore{"__time"};
     for (const ResultRecord &rec: result) {      // Every trace
         ResultIndex match;
-        match.first = rec.first.first;
+        ref.result[0].first = ref.result[1].first = match.first = rec.first.first;
         const auto& thisRef =
                 e->db.act_table_by_act_id.getBuilder().trace_id_to_event_id_to_offset.at(match.first);
         std::vector<std::vector<event_t>> act_targ(2, std::vector<event_t>{});
@@ -72,12 +83,13 @@ static inline void extractPayload(size_t leftAct, size_t rightAct,
             if ((IS_MARKED_EVENT_ACTIVATION(ev) && hasActivations) || isMatch) {
                 match.second = GET_ACTIVATION_EVENT(ev);
                 if (e->db.act_table_by_act_id.table.at(thisRef.at(match.second)).entry.id.parts.act == leftAct) {
-                    auto tmp = e->GetPayloadDataFromEvent(match, toIgnore);
-                    activations.emplace_back(tmp, clazz);
+//                    auto tmp = e->GetPayloadDataFromEvent(match, toIgnore);
+                    activations.emplace_back(/*tmp, clazz*/ ForResultReference{true, envName, match.first, match.second}, clazz);
                     if (isMatch) {
-                        envM.clear();
-                        for (const auto&[k,v] : tmp)
-                            envM["A."+k] = v;
+                        ref.result[0] = match;
+//                        envM.clear();
+//                        for (const auto&[k,v] : tmp)
+//                            envM["A."+k] = v;
                     } else
                         act_targ[0].emplace_back( GET_ACTIVATION_EVENT(ev));
                 }
@@ -85,25 +97,28 @@ static inline void extractPayload(size_t leftAct, size_t rightAct,
             if ((IS_MARKED_EVENT_TARGET(ev) && hasTargets) || isMatch) {
                 match.second = GET_TARGET_EVENT(ev);
                 if (e->db.act_table_by_act_id.table.at(thisRef.at(match.second)).entry.id.parts.act == rightAct) {
-                    auto tmp = e->GetPayloadDataFromEvent(match, toIgnore);
-                    targets.emplace_back(tmp, clazz);
+//                    auto tmp = e->GetPayloadDataFromEvent(match, toIgnore);
+                    targets.emplace_back(/*tmp, clazz*/ ForResultReference{true, envName, match.first, match.second}, clazz);
                     if (isMatch) {
-                        for (const auto&[k,v] : tmp)
-                            envM["T."+k] = v;
-                        correlations.emplace_back(envM, clazz);
+                        ref.result[1] = match;
+//                        for (const auto&[k,v] : tmp)
+//                            envM["T."+k] = v;
+                        correlations.emplace_back(/*envM*/ ref, clazz);
                     } else
                         act_targ[1].emplace_back( GET_TARGET_EVENT(ev));
                 }
             }
         }
         if ((!act_targ.at(0).empty()) && (!act_targ.at(1).empty())) {
-            std::function<void(const std::vector<event_t>&)> f = [&match, &e,&correlations,clazz](const std::vector<event_t>& act_arg) {
-                match.second = act_arg.at(0);
-                auto envL = e->GetPayloadDataFromEvent(match, toIgnore, "A.");
-                match.second = act_arg.at(1);
-                auto envR = e->GetPayloadDataFromEvent(match, toIgnore, "T.");
-                envL.insert(envR.begin(), envR.end());
-                correlations.emplace_back(envL, clazz);
+            std::function<void(const std::vector<event_t>&)> f = [&match, &e,&ref,&correlations,clazz](const std::vector<event_t>& act_arg) {
+//                match.second = act_arg.at(0);
+//                auto envL = e->GetPayloadDataFromEvent(match, toIgnore, "A.");
+//                match.second = act_arg.at(1);
+//                auto envR = e->GetPayloadDataFromEvent(match, toIgnore, "T.");
+//                envL.insert(envR.begin(), envR.end());
+                ref.result[0].second = act_arg.at(0);
+                ref.result[1].second =act_arg.at(1);
+                        correlations.emplace_back(/*envL*/ ref, clazz);
             };
             cartesian_product<event_t>(act_targ, f);
         }
