@@ -1121,14 +1121,17 @@ void extractPayloads(std::unordered_map<std::string, std::unordered_map<std::str
             auto cpy = x->result;
             // If the clause is untimed, then I have to get as results all the events appearing in the trace of interest
             for (auto& ref2 : cpy) {
-                auto it = tmpEnv.db.act_table_by_act_id.secondary_index.at(x->declare_arg);
-                while (it.first != it.second) {
-                    if (ref2.first.first == it.first->entry.id.parts.trace_id) {
-                        me.id.parts.left = it.first->entry.id.parts.event_id;
+                ref2.second.second.clear();     // Sam.A. Let's extract all redundant marked events
+                auto it = tmpEnv.db.act_table_by_act_id.resolve_index(x->declare_arg);
+                while (it.first != (it.second + 1)) {
+                    const auto& event_ref = tmpEnv.db.act_table_by_act_id.table.at(it.first);
+                    if (ref2.first.first == event_ref.entry.id.parts.trace_id) {
+                        me.id.parts.left = event_ref.entry.id.parts.event_id;
                         ref2.second.second.emplace_back(me);
                     }
                     it.first++;
                 }
+                DEBUG_ASSERT(!ref2.second.second.empty());      // Sam.A. We should never have a case where exists returned a non-yielding result
             }
             extractPayload(leftAct, rightAct, &tmpEnv, envName, activations.at(i), targets.at(i), a[i],t[i],corr[i],cpy,clazz);
         } else {
