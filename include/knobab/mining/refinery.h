@@ -170,6 +170,9 @@ static inline DeclareDataAware actualClauseRefine(const DeclareDataAware &clause
                 case dt_predicate::LEQ_THAN:
                     p.casusu = LEQ;
                     break;
+                case dt_predicate::G_THAN:
+                    p.casusu = GT;
+                    break;
                 case dt_predicate::GEQ_THAN:
                     p.casusu = GEQ;
                     break;
