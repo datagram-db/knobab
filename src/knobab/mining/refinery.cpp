@@ -218,7 +218,7 @@ int main(int argc, char **argv) {
     std::vector<std::string>     worlds_file_to_load = args::get(files);
     ForTheWin::gain_measures measure = ForTheWin::Entropy;
     double tau = 0.75;
-    double supp = 0.75;
+    double supp = 0.2;
     double purity = 1.0;
     size_t max_set_size = 1;
     size_t min_leaf_size = 1;
