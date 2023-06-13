@@ -359,8 +359,6 @@ int main(int argc, char **argv) {
 
     // Discarding the resulting clauses not having optimal support
     {
-
-
         for (size_t i = 0, N = model.size(); i < N; i++) {
             auto &tmpEnv = sqm.multiple_logs[std::to_string(i)];
             tmpEnv.clearModel(); // initializing the model pipeline

@@ -132,7 +132,7 @@ void ActTable::indexing2() { // todo: rename as indexing, and remove expectedOrd
 //    }
 //}
 
-std::pair<const uint32_t, const uint32_t> ActTable::resolve_index(act_t id) const {
+std::pair<uint32_t, uint32_t> ActTable::resolve_index(act_t id) const {
     if (primary_index.size() < id)
         return {-1, -1};
     else {
