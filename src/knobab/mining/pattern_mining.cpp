@@ -1119,10 +1119,13 @@ void extractPayloads(std::unordered_map<std::string, std::unordered_map<std::str
         auto& x = ref.declare_to_query.at(i);
         if ((x->t == LTLfQuery::EXISTS_QP || x->t == LTLfQuery::ABSENCE_QP) && (!x->fields.id.parts.is_timed)) {
             auto cpy = x->result;
+            const uint16_t act_id = tmpEnv.db.getMappedValueFromAction(ref.data_accessing.at(x->table_query.at(0)).first.label);
+            DEBUG_ASSERT(act_id != -1);      // Sam.A. We should never have a case where exists returned a non-yielding result
+
             // If the clause is untimed, then I have to get as results all the events appearing in the trace of interest
             for (auto& ref2 : cpy) {
                 ref2.second.second.clear();     // Sam.A. Let's extract all redundant marked events
-                auto it = tmpEnv.db.act_table_by_act_id.resolve_index(x->declare_arg);
+                auto it = tmpEnv.db.act_table_by_act_id.resolve_index(act_id);
                 while (it.first != (it.second + 1)) {
                     const auto& event_ref = tmpEnv.db.act_table_by_act_id.table.at(it.first);
                     if (ref2.first.first == event_ref.entry.id.parts.trace_id) {
