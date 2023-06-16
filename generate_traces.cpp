@@ -287,10 +287,10 @@ struct graph_holder {
         for (const auto& ref : env->grounding.singleElementOfConjunction) {
             for (const auto& clause : ref.elementsInDisjunction) {
                 FlexibleFA<size_t, std::string> curr;
-                if (env->grounding.singleElementOfConjunction.size() == 1) {
-                    generateGraphFromPattern(clause,  sigma, result);
-                    return;
-                }
+//                if (env->grounding.singleElementOfConjunction.size() == 1) {
+//                    generateGraphFromPattern(clause,  sigma, result);
+//                    return;
+//                }
                 generateGraphFromPattern(clause,  sigma, curr);
 //                curr.dot(std::cout); std::cout << std::endl;
                 if (result_count == 0) {
@@ -305,13 +305,16 @@ struct graph_holder {
             }
         }
 //    result[0].dot(std::cout); std::cout << std::endl;
+        auto N = resultV.size();
         for (size_t i = 0; i<resultV.size(); i++) {
 //        std::cout << "join" << i << std::endl;
 //        resultV[i].dot(std::cout); std::cout << std::endl;
 //            resultG.dot(std::cout); std::cout << std::endl;
-            resultG = FlexibleFA<std::string,size_t>::crossProductWithNodeLabels(resultG, resultV[i], false);
+            resultG = FlexibleFA<std::string,size_t>::crossProductWithNodeLabels(resultG, resultV[i], i != (N-1));
         }
         result = resultG.shiftLabelsToEdges();
+        result.pruneUnreachableNodes();
+        result.dot(std::cout); std::cout << std::endl;
 //        return result[0];
         {
 //            auto g = result[0].shiftLabelsToEdges();
@@ -535,7 +538,7 @@ void for_each_test(status& env,
                     Q.pop();
                     trie::node *ptr = trie_storage.resolve_node_ptr(addr);
                     if (ptr->len > len) {
-                        std::cout << ptr->len << std::endl;
+//                        std::cout << ptr->len << std::endl;
                         len = ptr->len;
                         layerAddrSetL.clear();
                         layerIdSetL.clear();
@@ -989,7 +992,7 @@ void for_each_test(status& env,
                 for (const auto& cp : extensions_to_final_node) {
 //                std::cout << "for Candidate: " << cp.first << std::endl;
                     auto& bfs_paths = final_node_to_trie_offset[cp.first];
-                    DEBUG_ASSERT(!bfs_paths.empty());
+                    if( bfs_paths.empty()) continue;
                     for (const size_t& final_trie_node_id : bfs_paths) {
                         trie_storage.reconstructor(final_trie_node_id, [&log_collected,&all,&cp,&graph,&ac](const std::vector<size_t>& bfs_path, size_t max_len) {
                             std::vector<std::string> tmp_bfs;
@@ -1105,6 +1108,7 @@ void for_each_test(status& env,
                     if (all == 0) break;
                 }
             }
+            std::cout << all << std::endl;
 //            file.close();
 
             begin_log(xes);

@@ -258,30 +258,33 @@ int main(int argc, char **argv) {
         std::stringstream ss;
         std::string model_name = std::to_string(i);
         bogus_model_name.emplace_back(model_name);
-
+        auto t2 = (size_t)worlds_format_to_load.at(i);
         ss << "load "
            << log_parse_format_type.at((size_t)worlds_format_to_load.at(i))
            << " "
            << std::quoted(worlds_file_to_load.at(i))
            <<  " with data as "
            << std::quoted(model_name);
+//        std::cout << ss.str() << std::endl;
         auto tmp = sqm.runQuery(ss.str());
         std::cerr << tmp.first << " && " << tmp.second << std::endl;
         loading_and_indexing += sqm.multiple_logs[model_name].experiment_logger.log_indexing_ms+sqm.multiple_logs[model_name].experiment_logger.log_loading_and_parsing_ms;
     }
 
     // Loading the testing log
-    {
-        std::stringstream ss;
-        ss << "load "
-           << log_parse_format_type.at(testing_format)
-           << " "
-           << std::quoted(testing_file)
-           <<  " with data as "
-           << std::quoted("testing");
-        auto tmp = sqm.runQuery(ss.str());
-        loading_and_indexing_test += sqm.multiple_logs["testing"].experiment_logger.log_indexing_ms+sqm.multiple_logs["testing"].experiment_logger.log_loading_and_parsing_ms;
-    }
+//    {
+//        std::stringstream ss;
+//        ss << "load "
+//           << log_parse_format_type.at(testing_format)
+//           << " "
+//           << std::quoted(testing_file)
+//           <<  " with data as "
+//           << std::quoted("testing");
+//        auto tmp = sqm.runQuery(ss.str());
+//        loading_and_indexing_test += sqm.multiple_logs["testing"].experiment_logger.log_indexing_ms+sqm.multiple_logs["testing"].experiment_logger.log_loading_and_parsing_ms;
+//    }
+
+
     // Setting up the confusion matrices from the models
     size_t nTestingTraces = 0;
     {

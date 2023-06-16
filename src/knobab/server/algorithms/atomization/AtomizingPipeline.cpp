@@ -311,6 +311,7 @@ double collect_data_from_declare_disjunctive_model(const yaucl::structures::any_
             for (size_t i = 0, N = W.size(); i<N; i++) {
                 std::string FA = pipeline_data.generate_fresh_atom();
                 pipeline_data.atom_universe.insert(FA);
+                pipeline_data.data_query_atoms.insert(FA);// Missing! Imported from KnoBABv1.0
                 pipeline_data.clause_to_atomization_map[std::make_pair(ref.first, i)] = FA;
                 for (const DataPredicate& pred : W.at(i)) {
                     pipeline_data.Mcal[pred].emplace_back(FA);

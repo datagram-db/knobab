@@ -5,8 +5,9 @@ digraph {
 	2
 	fake -> 0 [style=bold]
 	2 -> 2 [label="~b"]
+	0 -> 1 [label=b]
 	0 -> 2 [label="a"]
-	0 -> 0 [label="~a"]
+	0 -> 0 [label="~a & ~b"]
 	2 -> 1 [label=b]
 	1 -> 1 [label=True]
 }
