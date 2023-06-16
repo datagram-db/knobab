@@ -533,9 +533,9 @@ std::pair<std::vector<pattern_mining_result<DeclareDataAware>>, double> pattern_
     std::unordered_map<std::unordered_set<act_t>, uint64_t> mapper;
     std::unordered_set<act_t> unary_patterns_for_non_exact_support;
     for (const auto& x : fpt_result) {
+        for (const auto& y : x.second) absent_acts.erase(y);
         if (x.second.size() == 1) {
             auto it = *x.second.begin();
-            absent_acts.erase(it);
 //            std::cout <<
 //                      kb.event_label_mapper.get(it)  <<"=" << it << "!" << x.second << std::endl;
             if (x.first == kb.nTraces()) {
@@ -585,7 +585,6 @@ std::pair<std::vector<pattern_mining_result<DeclareDataAware>>, double> pattern_
                 // as this will maximise the score, precision-wise.
                 // We are postponing such discussion into point A)
 
-                absent_acts.erase(it);
                 unary_patterns_for_non_exact_support.insert(it);
                 doInitA = true;
             }
@@ -594,7 +593,6 @@ std::pair<std::vector<pattern_mining_result<DeclareDataAware>>, double> pattern_
 #ifdef DEBUG
             std::cout <<  kb.event_label_mapper.get(*x.second.begin()) << "." << kb.event_label_mapper.get(*(++x.second.begin())) << std::endl;
 #endif
-            for (const auto& y : x.second) absent_acts.erase(y);
 //            std::set<act_t> S{x.second.begin(), x.second.end()};
             binary_patterns.emplace(x.second, x.first);
             mapper[x.second] = x.first;
