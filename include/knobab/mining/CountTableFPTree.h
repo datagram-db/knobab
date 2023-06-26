@@ -277,12 +277,14 @@ void fpgrowth_expand(struct fpgrowth_node* tree,
                                    size_t min_length = 2) ;
 
 
+#include <limits>
+
 static inline std::vector<std::pair<size_t, std::unordered_set<act_t>>> fpgrowth(const CountTemplate& transactions,
                                                                                     uint64_t max_act_id,
                                                                                     std::vector<std::pair<act_t, size_t>>& final_element_for_scan,
                                                                                     size_t minsupport = 1,
                                                                                     size_t min_length = 2) {
-    struct fpgrowth_node tree{0};
+    struct fpgrowth_node tree{std::numeric_limits<act_t>::max()};
     final_element_for_scan.clear();
 
     std::unordered_set<struct fpgrowth_node*> in_tree;
@@ -353,7 +355,7 @@ static inline std::vector<std::pair<size_t, std::unordered_set<act_t>>> fpgrowth
     // setting up a view with the allowed nodes will be more efficient (as it will save the extra allocation cost for
     // the nodes, and the only memory overhead is just the pointer to the nodes in the FPGrowth tree)
     for (auto rit = final_element_for_scan.rbegin(), ren = final_element_for_scan.rend(); rit != ren; rit++) {
-        fpgrowth_expand(ptr, rit->first, rit->second, std::unordered_set<act_t>{}, in_tree, firstpointer, results,
+        fpgrowth_expand(&tree, rit->first, rit->second, std::unordered_set<act_t>{}, in_tree, firstpointer, results,
                 minsupport, min_length);
     }
     size_t N = transactions.nAct();
