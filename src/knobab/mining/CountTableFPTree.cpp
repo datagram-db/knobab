@@ -4,6 +4,7 @@
 //
 
 #include "knobab/mining/CountTableFPTree.h"
+#include "yaucl/structures/setoids/basics.h"
 //
 //static inline bool contains_single_path(const FPTree& fptree) {
 //    return fptree.empty() || contains_single_path( fptree.root );
@@ -194,15 +195,23 @@ void fpgrowth_expand(struct fpgrowth_node* tree,
     std::vector<struct fpgrowth_node*> new_firsttraverse(traverse.size(), nullptr); // Updating the first_to_traverse table depending on the nodes being available
     std::vector<size_t> toTraverseNext(traverse.size(), 0);                      // Updating the support table while keeping the support of the previous nodes
     std::vector<struct fpgrowth_node*> visitedChild;                       // For each non-leaf node, keeping all the childs that were visited within the view
+    std::unordered_set<struct fpgrowth_node*> nView;
     if (it != nullptr) {
         {
+            std::unordered_set<struct fpgrowth_node*> visitedFromLeaves;
             struct fpgrowth_node* ptr = it;
             while (ptr) {
                 if (view.contains(ptr)) { // If the current element in the linked list is actually part of the view
                     dq.emplace(ptr);
                 }
+                auto toVisit = ptr;
+                while (toVisit != tree) {
+                    visitedFromLeaves.insert(toVisit);
+                    toVisit = toVisit->parent;
+                }
                 ptr = ptr->list; // Scanning all the elements in the list
             }
+            nView = unordered_intersection(view, visitedFromLeaves);
         }
 
         while (!dq.empty()) {
@@ -220,9 +229,10 @@ void fpgrowth_expand(struct fpgrowth_node* tree,
                     goodToTest = true; // Yes, I can proceed with the visit
                 } else {
                     size_t totalChild = 0; // Counting the number of allowed children to be visited within the view as in (A)
+
                     visitedChild.clear(); // Clearing the set of the previous children
                     for (const auto& [k,v] : dq_ptr->children) {
-                        if (view.contains(v)) {
+                        if (nView.contains(v)) {
                             totalChild++; // (A)
                             if (visitable.contains(v)) {
                                 visitedChild.emplace_back(v); // Yes, this child has been visited in a previous iteration
@@ -247,7 +257,7 @@ void fpgrowth_expand(struct fpgrowth_node* tree,
                         if (current != dq_ptr->value) new_firsttraverse[dq_ptr->value]= dq_ptr; // If this was not met before, then setting the current node as first step in the list to be visited
                         in_tree.insert(dq_ptr); // Definitively, if the support is good, this should be part of the next iteration
                     }
-                    if (view.contains(dq_ptr->parent)) // If the parent is an allowed node (still, it should be)
+                    if (nView.contains(dq_ptr->parent)) // If the parent is an allowed node (still, it should be)
                         dq.push(dq_ptr->parent); // C: putting the parent as the next step to visit
                 }
 
