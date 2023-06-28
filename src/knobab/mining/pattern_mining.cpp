@@ -109,53 +109,51 @@ struct forNegation {
                                                                                          witnesses(witnesses) {}
 };
 
-static inline DeclareDataAware &
-getAware(const KnowledgeBase &kb, bool special_temporal_patterns, bool only_precise_temporal_patterns,
+static inline void
+getAware(const KnowledgeBase &kb, bool only_precise_temporal_patterns,
          const CountTemplate &count_table, uint64_t minimum_support_threshold,
          std::vector<pattern_mining_result<DeclareDataAware>> &declarative_clauses,
-         const pattern_mining_result<Rule<act_t>> &result, act_t A, act_t B, DeclareDataAware &clause) {
+         const double& decl_sup, const act_t A, const act_t B, DeclareDataAware &clause) {
     auto ntraces = kb.nTraces();
 //    auto nacts = kb.nAct();
 
     std::vector<trace_t> allTraces;
     for (trace_t sigma = 0; sigma<ntraces; sigma++) allTraces.emplace_back(sigma);
-    if (special_temporal_patterns) {
-        size_t expected_support = only_precise_temporal_patterns ?
-                                  ntraces :
-                                  minimum_support_threshold;
-        size_t tolerated_errors = ntraces - expected_support;
+
+    size_t expected_support = only_precise_temporal_patterns ?
+                              ntraces :
+                              minimum_support_threshold;
+    size_t tolerated_errors = ntraces - expected_support;
 
 
-        size_t alles_not_nexte = 0;
-        bool alles_nexte = true;
-        bool hasClausesMined = false;
-        size_t alles_not_prev = 0,
-                alles_not_next = 0;
-        bool alles_prev = true, alles_next = true;
-        std::vector<trace_t> removed_traces_from_response;
-        auto alles_precedence = true;
-        size_t alles_not_precedence = 0;
-        auto alles_response = true;
-        size_t alles_not_response = 0;
-        auto alles_altresponse = true;
-        size_t alles_not_altresponse = 0;
-        std::vector<bool> isTraceVisitedU(ntraces, false);
+    size_t alles_not_nexte = 0;
+    bool alles_nexte = true;
+    size_t alles_not_prev = 0,
+            alles_not_next = 0;
+    bool alles_prev = true, alles_next = true;
+    std::vector<trace_t> removed_traces_from_response;
+    auto alles_precedence = true;
+    size_t alles_not_precedence = 0;
+    auto alles_response = true;
+    size_t alles_not_response = 0;
+    auto alles_altresponse = true;
+    size_t alles_not_altresponse = 0;
+    std::vector<bool> isTraceVisitedU(ntraces, false);
 
 // 1) First kind of specialized patterns:
 // events happening immediately previously and next:
 // This might leverage the prev/next pointers!
-        for (auto sigma = 0; sigma < ntraces; sigma++) {
-            auto lA = count_table.resolve_length(A, sigma);
-            if (lA > 0) {
-                if (lA != count_table.resolve_length(B, sigma)) {
-                    alles_not_nexte++;
-                    if ((ntraces - alles_not_nexte) < expected_support) {
-                        alles_nexte = false;
-                        break; // skipping if this is going out of hand
-                    }
-                }
+    for (auto sigma = 0; sigma < ntraces; sigma++) {
+        auto lA = count_table.resolve_length(A, sigma);
+        auto lB = count_table.resolve_length(B, sigma);
+        if (lA != lB) {
+            alles_not_nexte++;
+            if ((ntraces - alles_not_nexte) < expected_support) {
+                alles_nexte = false;
+                break; // skipping if this is going out of hand
             }
         }
+    }
 // Only if the heuristic was activated (for next-based conditions
 // to happen I need to have As and Bs in the same number. Otherwise,
 // this is unlikely to happen, and I do not ever start performing the
@@ -166,19 +164,19 @@ getAware(const KnowledgeBase &kb, bool special_temporal_patterns, bool only_prec
 // 2) Second kind of patters, always starting scanning from the
 // activation condition (that is also the premise of the rule).
 // This is still computed, as it is required for both 1) and 2)
-        auto a_beginend = kb.timed_dataless_exists(A);
-        DEBUG_ASSERT(a_beginend.first != a_beginend.second);
+    auto a_beginend = kb.timed_dataless_exists(A);
+    DEBUG_ASSERT(a_beginend.first != a_beginend.second);
 
-        auto b_beginend = kb.timed_dataless_exists(B);
+    auto b_beginend = kb.timed_dataless_exists(B);
 // As I obtained the rule, there should be some data pertaining to it!
-        DEBUG_ASSERT(b_beginend.first != b_beginend.second);
+    DEBUG_ASSERT(b_beginend.first != b_beginend.second);
 
 
 
-        while (a_beginend.first < a_beginend.second) {
-            if ((!alles_precedence) && (!alles_response) && (!alles_altresponse))
-                break;
-            auto trace_id = a_beginend.first->entry.id.parts.trace_id;
+    while (a_beginend.first < a_beginend.second) {
+        if ((!alles_precedence) && (!alles_response) && (!alles_altresponse))
+            break;
+        auto trace_id = a_beginend.first->entry.id.parts.trace_id;
 //            if ((clause.left_act == "c") && (clause.right_act == "b") && (trace_id == 7)) {
 //                auto cp = kb.act_table_by_act_id.secondary_index.at(8);
 //                std::cout << kb.act_table_by_act_id << std::endl;
@@ -191,40 +189,40 @@ getAware(const KnowledgeBase &kb, bool special_temporal_patterns, bool only_prec
 //                std::cout << std::endl;
 //                std::cout << ": HERE" << std::endl;
 //            }
-            DEBUG_ASSERT(!isTraceVisitedU.at(trace_id));
-            auto trace_id_visited = isTraceVisitedU.at(trace_id);
+        DEBUG_ASSERT(!isTraceVisitedU.at(trace_id));
+        auto trace_id_visited = isTraceVisitedU.at(trace_id);
 
-            if (b_beginend.first == b_beginend.second) {
+        if (b_beginend.first == b_beginend.second) {
 // Problem 1)
 // This might be a valid precedence, as nothing is stated
 // to what should happen after the A, but I cannot exploit
 // for a response: therefore, I'm counting it
+            decrease_support_X(kb, expected_support, alles_response, alles_not_response);
+
+// Now, skipping to the next trace, as there is no more information for as
+            fast_forward_equals(trace_id, a_beginend.first, a_beginend.second);
+            isTraceVisitedU[trace_id] = true;
+            continue;
+        } else {
+// Otherwise, I have something to check related to B!
+            if (a_beginend.first->entry.id.parts.trace_id >
+                b_beginend.first->entry.id.parts.trace_id) {
+
+// Moving b until I find something related to b. A is kept fixed and not incremented
+                fast_forward_lower(trace_id, b_beginend.first, b_beginend.second);
+// Not setting the current trace to be visited, as we need to fast-forward B first
+                continue;
+            } else if (a_beginend.first->entry.id.parts.trace_id <
+                       b_beginend.first->entry.id.parts.trace_id) {
+
+// If I am not able to find a B, then this is detrimental to A's response
+// (Problem 1)
                 decrease_support_X(kb, expected_support, alles_response, alles_not_response);
 
 // Now, skipping to the next trace, as there is no more information for as
                 fast_forward_equals(trace_id, a_beginend.first, a_beginend.second);
-                isTraceVisitedU[trace_id] = true;
                 continue;
             } else {
-// Otherwise, I have something to check related to B!
-                if (a_beginend.first->entry.id.parts.trace_id >
-                    b_beginend.first->entry.id.parts.trace_id) {
-
-// Moving b until I find something related to b. A is kept fixed and not incremented
-                    fast_forward_lower(trace_id, b_beginend.first, b_beginend.second);
-// Not setting the current trace to be visited, as we need to fast-forward B first
-                    continue;
-                } else if (a_beginend.first->entry.id.parts.trace_id <
-                           b_beginend.first->entry.id.parts.trace_id) {
-
-// If I am not able to find a B, then this is detrimental to A's response
-// (Problem 1)
-                    decrease_support_X(kb, expected_support, alles_response, alles_not_response);
-
-// Now, skipping to the next trace, as there is no more information for as
-                    fast_forward_equals(trace_id, a_beginend.first, a_beginend.second);
-                    continue;
-                } else {
 // Please remember, we are not visiting traces, rather than
 // events associated to traces. Therefore, it is of the
 // uttermost importance to remember conditions related to
@@ -236,38 +234,38 @@ getAware(const KnowledgeBase &kb, bool special_temporal_patterns, bool only_prec
 // to the precedence, and therefore this should be decreased
 // Still, this consideration should be performed only up until
 // the first event is visited
-                    if (b_beginend.first->entry.id.parts.event_id <
-                        a_beginend.first->entry.id.parts.event_id) {
-                        decrease_support_X(kb, expected_support, alles_precedence, alles_not_precedence);
-                    }
+                if (b_beginend.first->entry.id.parts.event_id <
+                    a_beginend.first->entry.id.parts.event_id) {
+                    decrease_support_X(kb, expected_support, alles_precedence, alles_not_precedence);
+                }
 
 // While I'm scanning the A events within the same trace
-                    bool all_response_in_trace = true;
+                bool all_response_in_trace = true;
 //                            all_altresponse_in_trace = true;
 
-                    while ((a_beginend.first != a_beginend.second) &&
-                           (a_beginend.first->entry.id.parts.trace_id == trace_id)) {
+                while ((a_beginend.first != a_beginend.second) &&
+                       (a_beginend.first->entry.id.parts.trace_id == trace_id)) {
 // ignoring all of the B events that are not relevant for the task!
-                        while ((b_beginend.first != b_beginend.second) &&
-                               (b_beginend.first->entry.id.parts.trace_id == trace_id) &&
-                               (b_beginend.first->entry.id.parts.event_id <
-                                a_beginend.first->entry.id.parts.event_id)) {
-                            b_beginend.first++;
-                        }
-                        if ((b_beginend.first != b_beginend.second) &&
-                            (b_beginend.first->entry.id.parts.trace_id == trace_id) &&
-                            (b_beginend.first->entry.id.parts.event_id >=
-                             a_beginend.first->entry.id.parts.event_id)) {
+                    while ((b_beginend.first != b_beginend.second) &&
+                           (b_beginend.first->entry.id.parts.trace_id == trace_id) &&
+                           (b_beginend.first->entry.id.parts.event_id <
+                            a_beginend.first->entry.id.parts.event_id)) {
+                        b_beginend.first++;
+                    }
+                    if ((b_beginend.first != b_beginend.second) &&
+                        (b_beginend.first->entry.id.parts.trace_id == trace_id) &&
+                        (b_beginend.first->entry.id.parts.event_id >=
+                         a_beginend.first->entry.id.parts.event_id)) {
 // Ok, I have a match!
-                        } else {
+                    } else {
 // If there is no match for the B event, then I'm setting this to false
 // and quitting the iteration
-                            all_response_in_trace = false;
-                            break;
-                        }
+                        all_response_in_trace = false;
+                        break;
+                    }
 
 //                        {
-                            auto tmp = a_beginend.first++;
+                        auto tmp = a_beginend.first++;
 //                            if ((tmp != a_beginend.second) &&
 //                                (tmp->entry.id.parts.event_id <
 //                                 b_beginend.first->entry.id.parts.event_id)) {
@@ -276,102 +274,100 @@ getAware(const KnowledgeBase &kb, bool special_temporal_patterns, bool only_prec
 //                        }
 
 //                                a_beginend.first++;
-                    }
-                    if (!all_response_in_trace) {
-                        removed_traces_from_response.emplace_back(trace_id);
-                        decrease_support_X(kb, expected_support, alles_response, alles_not_response);
-                    }
+                }
+                if (!all_response_in_trace) {
+                    removed_traces_from_response.emplace_back(trace_id);
+                    decrease_support_X(kb, expected_support, alles_response, alles_not_response);
+                }
 //                    if (!all_altresponse_in_trace) {
 //                        decrease_support_X(kb, expected_support, alles_altresponse, alles_not_altresponse);
 //                    }
-                    fast_forward_equals(trace_id, a_beginend.first, a_beginend.second);
-                }
+                fast_forward_equals(trace_id, a_beginend.first, a_beginend.second);
             }
-
-            isTraceVisitedU[trace_id] = true;
         }
 
-        if  (((!alles_nexte) || (alles_not_nexte > 0))) {
+        isTraceVisitedU[trace_id] = true;
+    }
+
+    if  (((!alles_nexte) || (alles_not_nexte > 0))) {
 // This is still computed, as it is required for both 1) and 2)
-            auto a_beginend = kb.timed_dataless_exists(A);
-            DEBUG_ASSERT(a_beginend.first != a_beginend.second);
-            while (a_beginend.first != a_beginend.second) {
+        auto a_beginend = kb.timed_dataless_exists(A);
+        DEBUG_ASSERT(a_beginend.first != a_beginend.second);
+        while (a_beginend.first != a_beginend.second) {
 //                if (!isTraceVisitedU.at(a_beginend.first->entry.id.parts.trace_id))
-                {
-                    if (alles_prev && (a_beginend.first->prev == nullptr ||
-                                       (a_beginend.first->prev->entry.id.parts.act != B))) {
-                        alles_not_prev++;
-                        if ((ntraces - alles_not_prev) < expected_support) {
-                            alles_prev = false;
-                        }
+            {
+                if (alles_prev && (a_beginend.first->prev == nullptr ||
+                                   (a_beginend.first->prev->entry.id.parts.act != B))) {
+                    alles_not_prev++;
+                    if ((ntraces - alles_not_prev) < expected_support) {
+                        alles_prev = false;
                     }
-                    if (alles_next && (a_beginend.first->next == nullptr ||
-                                       (a_beginend.first->next->entry.id.parts.act != B))) {
-                        alles_not_next++;
-                        if ((ntraces - alles_not_next) < expected_support) {
-                            alles_next = false;
-                        }
+                }
+                if (alles_next && (a_beginend.first->next == nullptr ||
+                                   (a_beginend.first->next->entry.id.parts.act != B))) {
+                    alles_not_next++;
+                    if ((ntraces - alles_not_next) < expected_support) {
+                        alles_next = false;
                     }
+                }
 //                    isTraceVisitedU[a_beginend.first->entry.id.parts.trace_id] = true;
-                }
-                if ((!alles_next) && (!alles_prev)) {
-                    break; // Breaking only if both conditions are never met
-                }
-                a_beginend.first++;
             }
+            if ((!alles_next) && (!alles_prev)) {
+                break; // Breaking only if both conditions are never met
+            }
+            a_beginend.first++;
+        }
 
 
 // re-setting the vector to all falses!
 //            std::fill(isTraceVisitedU.begin(), isTraceVisitedU.end(), false);
-        }
+    }
 
-        bool hasChainSuccession = (alles_not_nexte<= tolerated_errors) && (alles_not_nexte <=alles_not_prev) && (alles_not_nexte<=alles_not_next);
-        bool hasChainPrecedence = (!hasChainSuccession) && (alles_prev && (alles_not_prev <= alles_not_next) && (alles_not_prev <= tolerated_errors)) && ((alles_not_prev <= alles_not_nexte));
-        bool hasChainResponse = (!hasChainSuccession) && alles_next && (alles_not_prev >= alles_not_next) && (alles_not_next <= tolerated_errors) && ((alles_not_next <= alles_not_nexte));
+    bool hasChainSuccession = (alles_not_nexte<= tolerated_errors) && (alles_not_nexte <=alles_not_prev) && (alles_not_nexte<=alles_not_next);
+    bool hasChainPrecedence = (!hasChainSuccession) && (alles_prev && (alles_not_prev <= alles_not_next) && (alles_not_prev <= tolerated_errors)) && ((alles_not_prev <= alles_not_nexte));
+    bool hasChainResponse = (!hasChainSuccession) && alles_next && (alles_not_prev >= alles_not_next) && (alles_not_next <= tolerated_errors) && ((alles_not_next <= alles_not_nexte));
 
-        if (hasChainPrecedence) {
-            hasClausesMined = true;
-            clause.casusu = "ChainPrecedence";
-            declarative_clauses.emplace_back(clause,
-                                             result.support_generating_original_pattern,
-                                             (((double) (ntraces - alles_not_prev)) /
-                                              ((double) ntraces)),
-                                             -1);
-        }
-        if (hasChainResponse) {
-            hasClausesMined = true;
-            clause.casusu = "ChainResponse";
-            declarative_clauses.emplace_back(clause,
-                                             result.support_generating_original_pattern,
-                                             (((double) (ntraces - alles_not_next)) /
-                                              ((double) ntraces)),
-                                             -1);
-        }
-        if (hasChainSuccession) {
-            clause.casusu = "ChainSuccession";
-            auto it = declarative_clauses.emplace_back(clause,
-                                             result.support_generating_original_pattern,
-                                             (((double) (ntraces - alles_not_nexte)) /
-                                              ((double) ntraces)),
-                                             -1);
-            if (A > B)
-                std::swap(declarative_clauses.back().clause.left_act, declarative_clauses.back().clause.right_act);
-        }
-        if (alles_precedence && (alles_not_precedence<= tolerated_errors) && (!hasChainSuccession)) {
-            clause.casusu = "Precedence";
-            declarative_clauses.emplace_back(clause,
-                                             result.support_generating_original_pattern,
-                                             (((double) (ntraces - alles_not_precedence)) /
-                                              ((double) ntraces)),
-                                             -1);
-        }
-        if (alles_response && (alles_not_response<= tolerated_errors) && (!(hasChainSuccession || hasChainResponse))) {
-            clause.casusu = "Response";
-            declarative_clauses.emplace_back(clause,
-                                             result.support_generating_original_pattern,
-                                             (((double) (ntraces - alles_not_response)) /
-                                              ((double) ntraces)),
-                                             -1);
+    if (hasChainPrecedence) {
+        clause.casusu = "ChainPrecedence";
+        declarative_clauses.emplace_back(clause,
+                                         decl_sup,
+                                         (((double) (ntraces - alles_not_prev)) /
+                                          ((double) ntraces)),
+                                         -1);
+    }
+    if (hasChainResponse) {
+        clause.casusu = "ChainResponse";
+        declarative_clauses.emplace_back(clause,
+                                         decl_sup,
+                                         (((double) (ntraces - alles_not_next)) /
+                                          ((double) ntraces)),
+                                         -1);
+    }
+    if (hasChainSuccession) {
+        clause.casusu = "ChainSuccession";
+        auto it = declarative_clauses.emplace_back(clause,
+                                                   decl_sup,
+                                         (((double) (ntraces - alles_not_nexte)) /
+                                          ((double) ntraces)),
+                                         -1);
+        if (A > B)
+            std::swap(declarative_clauses.back().clause.left_act, declarative_clauses.back().clause.right_act);
+    }
+    if (alles_precedence && (alles_not_precedence<= tolerated_errors) && (!hasChainSuccession)) {
+        clause.casusu = "Precedence";
+        declarative_clauses.emplace_back(clause,
+                                         decl_sup,
+                                         (((double) (ntraces - alles_not_precedence)) /
+                                          ((double) ntraces)),
+                                         -1);
+    }
+    if (alles_response && (alles_not_response<= tolerated_errors) && (!(hasChainSuccession || hasChainResponse))) {
+        clause.casusu = "Response";
+        declarative_clauses.emplace_back(clause,
+                                         decl_sup,
+                                         (((double) (ntraces - alles_not_response)) /
+                                          ((double) ntraces)),
+                                         -1);
 //            if (ptn) {
 //                std::vector<trace_t> responseSupp;
 //                std::set_difference(allTraces.begin(), allTraces.end(),
@@ -388,9 +384,7 @@ getAware(const KnowledgeBase &kb, bool special_temporal_patterns, bool only_prec
 //                it_2->second.emplace_back(B, responseSupp, (((double) (ntraces - alles_not_response)) /
 //                                                            ((double) ntraces)));
 //            }
-        }
     }
-    return clause;
 }
 
 
@@ -786,7 +780,6 @@ std::pair<std::vector<pattern_mining_result<DeclareDataAware>>, double> pattern_
             act_t B;
             DeclareDataAware clause;
             clause.n = 1;
-            bool alsoFlip = false;
             double dss = result.support_declarative_pattern;
             size_t countOk = std::ceil(dss * kb.nTraces());
             if (result.clause.tail.empty()) {
@@ -795,7 +788,6 @@ std::pair<std::vector<pattern_mining_result<DeclareDataAware>>, double> pattern_
                 B = result.clause.head.at(1);
                 if (A>B) std::swap(A,B);
                 clause.casusu = "CoExistence";
-                alsoFlip = true;
                 auto cpA = kb.getCountTable().resolve_primary_index2(A);
                 auto cpB = kb.getCountTable().resolve_primary_index2(B);
                 countOk = 0;
@@ -823,16 +815,21 @@ std::pair<std::vector<pattern_mining_result<DeclareDataAware>>, double> pattern_
 //                std::cout << "DEBUG" << std::endl;
 //
 //            }
-            getAware(kb, special_temporal_patterns, only_precise_temporal_patterns, count_table,
-                     std::max(countOk, minimum_support_threshold),
-                     declarative_clauses, result, A, B, clause);
-            if (alsoFlip) {
-                clause.right_act = kb.event_label_mapper.get(A);
-                clause.left_act = kb.event_label_mapper.get(B);
-                getAware(kb, special_temporal_patterns, only_precise_temporal_patterns, count_table,
+
+            if(special_temporal_patterns) {
+                getAware(kb, only_precise_temporal_patterns, count_table,
                          std::max(countOk, minimum_support_threshold),
-                         declarative_clauses, result, B, A, clause);
+                         declarative_clauses, result.support_generating_original_pattern, A, B, clause);
+
+                if (result.clause.tail.empty()) {
+                    clause.right_act = kb.event_label_mapper.get(A);
+                    clause.left_act = kb.event_label_mapper.get(B);
+                    getAware(kb, only_precise_temporal_patterns, count_table,
+                             std::max(countOk, minimum_support_threshold),
+                             declarative_clauses, result.support_generating_original_pattern, B, A, clause);
+                }
             }
+
             if (declarative_clauses.size() == prev) {
                 declarative_clauses.emplace_back(clause,
                                                  result.support_generating_original_pattern,
@@ -1149,11 +1146,10 @@ void extractPayloads(std::unordered_map<std::string, std::unordered_map<std::str
 template <typename T>
 void collectRefinedClause(std::vector<std::vector<DeclareDataAware>> &VVV,
 //                          std::unordered_map<int, Environment *> &tree_to_env,
-                          std::unordered_map<int, std::vector<std::vector<dt_predicate>>> &world_to_paths,
                           DeclareDataAware &clause, const DecisionTree<T> &dtA,
                           const RefineOver &what,
                           bool doNegate) {
-    world_to_paths.clear();
+    std::unordered_map<int, std::vector<std::vector<dt_predicate>>> world_to_paths;
     dtA.populate_children_predicates(world_to_paths, nullptr, doNegate);
     for(auto& pair : world_to_paths){
 //        auto ref = tree_to_env.find(pair.first);
@@ -1219,7 +1215,7 @@ std::tuple<std::vector<std::vector<DeclareDataAware>>,double,double> classifier_
     using std::chrono::duration;
     using std::chrono::milliseconds;
     auto t1 = high_resolution_clock::now();
-    for (size_t i = 0, M = model_entry_names.size(); i<M; i++) {
+    for (size_t i = 0; i < model_entry_names.size(); i++) {
         const auto &ref = model_entry_names.at(i);
         auto tmp = pattern_mining(sqm.multiple_logs[ref].db, support, naif, init_end, special_temporal_patterns, only_precise_temporal_patterns, negative_ones);
         overall_dataless_mining_time += tmp.second;
@@ -1244,6 +1240,15 @@ std::tuple<std::vector<std::vector<DeclareDataAware>>,double,double> classifier_
         }
         remove_index(WWW, low_d_supp);
     }
+
+    std::cout <<"-------- BEFORE REFINING --------" << std::endl;
+    for (size_t i = 0; i < VVV.size(); i++) {
+        std::cout <<"~~~ " << model_entry_names.at(i) << " ~~~" << std::endl;
+        for (const auto& clause : VVV.at(i)) {
+            std::cout << clause << std::endl;
+        }
+    }
+
     auto it2 = sqm.planname_to_declare_to_ltlf.find("nfmcp23");
 
     ////////////////////////////////////////////////////////////////////////////
@@ -1323,7 +1328,7 @@ std::tuple<std::vector<std::vector<DeclareDataAware>>,double,double> classifier_
                                                            per_clause_CV(last_VVV_intersection.size());
     std::unordered_set<std::string> numeric_keys, categorical_keys;
     std::unordered_set<std::string> corr_numeric_keys, corr_categorical_keys;
-    for (size_t i = 0, M = model_entry_names.size(); i<M; i++) {
+    for (size_t i = 0; i < model_entry_names.size(); i++) {
         const auto& ref = model_entry_names.at(i);
         for (const auto& [k,v] : sqm.multiple_logs[ref].db.attribute_name_to_table) {
             if (v.type == StringAtt) {
@@ -1345,15 +1350,10 @@ std::tuple<std::vector<std::vector<DeclareDataAware>>,double,double> classifier_
     corr_categorical_keys.erase("A.__time");
     corr_categorical_keys.erase("T.__time");
 
-    worlds_activations w_activations;
-//    std::unordered_map<int, Environment*> tree_to_env;
-    std::unordered_map<int, std::vector<std::vector<dt_predicate>>> world_to_paths;
-    for (size_t i = 0, M = per_clause_AV.size(); i<M; i++) {
-//        std::cerr << i << std::endl;
+    for (size_t i = 0; i < per_clause_AV.size(); i++) {
         auto& clause = last_VVV_intersection.at(i);
         bool doNegate = it2->second.at(clause.casusu).t == LTLfQuery::ABSENCE_QP;
         // Refining over the activations first
-        bool hasFound = false;
         if (hasActivations.at(i)) {
             auto& V = per_clause_AV[i];
             if (!V.empty()) {
@@ -1371,8 +1371,8 @@ std::tuple<std::vector<std::vector<DeclareDataAware>>,double,double> classifier_
                                                minL);
                 if (dtA.goodness >= tau) {
                     if ((!dtA.isLeafNode())) {
-                        collectRefinedClause(VVV, world_to_paths, clause, dtA, RefineOverActivation, doNegate);
-                        hasFound = true;
+                        collectRefinedClause(VVV, clause, dtA, RefineOverActivation, doNegate);
+                        continue;
                     } else {
                         VVV[dtA.getMajorityClass()].emplace_back(clause);
                     }
@@ -1380,7 +1380,6 @@ std::tuple<std::vector<std::vector<DeclareDataAware>>,double,double> classifier_
 
             }
         }
-        if (hasFound) continue;
 
         if (hasTargets.at(i)) {
             // Refining by target
@@ -1400,15 +1399,14 @@ std::tuple<std::vector<std::vector<DeclareDataAware>>,double,double> classifier_
                                                minL);
                 if (dtT.goodness >= tau) {
                     if ((!dtT.isLeafNode())) {
-                        collectRefinedClause(VVV, world_to_paths, clause, dtT, RefineOverTarget, doNegate);
-                        hasFound = true;
+                        collectRefinedClause(VVV, clause, dtT, RefineOverTarget, doNegate);
+                        continue;
                     } else  {
                         VVV[dtT.getMajorityClass()].emplace_back(clause);
                     }
                 }
             }
         }
-        if (hasFound) continue;
 
         if (hasActivations.at(i) && hasTargets.at(i)) {
             auto& C = per_clause_CV[i];
@@ -1428,7 +1426,7 @@ std::tuple<std::vector<std::vector<DeclareDataAware>>,double,double> classifier_
                                                minL);
                 if (dtC.goodness >= tau) {
                     if ((!dtC.isLeafNode())) {
-                        collectRefinedClause(VVV, world_to_paths, clause, dtC, RefineOverMatch, doNegate);
+                        collectRefinedClause(VVV, clause, dtC, RefineOverMatch, doNegate);
                     } else {
                         VVV[dtC.getMajorityClass()].emplace_back(clause);
                     }
@@ -1441,9 +1439,6 @@ std::tuple<std::vector<std::vector<DeclareDataAware>>,double,double> classifier_
     duration<double, std::milli> ms_double = t2 - t1;
 //#ifdef DEBUG
     std::cout << overall_dataless_mining_time << "+" << ms_double.count() << "=" << overall_dataless_mining_time+ms_double.count() << "ms\n";
-    for (const auto& ref : VVV) {
-        std::cout << ref << std::endl;
-    }
 //#endif
     return std::make_tuple(VVV,overall_dataless_mining_time, ms_double.count());
 }
