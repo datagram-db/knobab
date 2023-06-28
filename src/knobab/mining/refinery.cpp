@@ -256,7 +256,7 @@ int main(int argc, char **argv) {
     std::vector<ConfusionMatrix> matrices(worlds_format_to_load.size());
     for (size_t i = 0, N = std::min(worlds_format_to_load.size(), worlds_file_to_load.size()); i<N; i++) {
         std::stringstream ss;
-        std::string model_name = std::to_string(i);
+        std::string model_name = worlds_file_to_load.at(i);
         bogus_model_name.emplace_back(model_name);
 
         ss << "load "
@@ -360,12 +360,12 @@ int main(int argc, char **argv) {
     // Discarding the resulting clauses not having optimal support
     {
         for (size_t i = 0, N = model.size(); i < N; i++) {
-            auto &tmpEnv = sqm.multiple_logs[std::to_string(i)];
+            auto &tmpEnv = sqm.multiple_logs[bogus_model_name.at(i)];
             tmpEnv.clearModel(); // initializing the model pipeline
             std::unordered_map<std::string, LTLfQuery> *plans = &it2->second;
             tmpEnv.conjunctive_model = model.at(i);
             tmpEnv.experiment_logger.model_parsing_ms = 0;
-            tmpEnv.experiment_logger.model_size = model.at(i).size();
+            tmpEnv.experiment_logger.model_size = tmpEnv.conjunctive_model.size();
             tmpEnv.experiment_logger.model_filename = "Testing";
             bool doPreliminaryFill = true;
             bool ignoreActForAttributes = false;
@@ -402,9 +402,10 @@ int main(int argc, char **argv) {
         }
     }
 
-    for (const auto& ref : model) {
-        std::cout <<"~~~ model ~~~" << std::endl;
-        for (const auto& clause : ref) {
+    std::cout <<"-------- AFTER REFINING --------" << std::endl;
+    for (size_t i = 0; i < model.size(); i++) {
+        std::cout <<"~~~ " << bogus_model_name.at(i) << " ~~~" << std::endl;
+        for (const auto& clause : model.at(i)) {
             std::cout << clause << std::endl;
         }
     }
