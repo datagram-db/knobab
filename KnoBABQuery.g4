@@ -72,19 +72,19 @@ ltlf : INIT TIMED?                      declare_arguments? declare_act_target?  
       | FIRST                                               declare_act_target?        #first
       | EXISTS NEGATED? (INTNUMBER|JOLLY) TIMED? declare_arguments? declare_act_target?        #exists
       | ABSENCE (INTNUMBER|JOLLY) TIMED?         declare_arguments? declare_act_target?        #absence
-      | NEXT ltlf                                                                     #next
-      |<assoc=right> ltlf OR TIMED? THETA? INV? ltlf                                      #or
-      |<assoc=right> ltlf AND TIMED? THETA? INV? ltlf                                     #and
-      |<assoc=right> ltlf '=>' TIMED? THETA? INV? ltlf                                    #implication
-      |<assoc=right> IF TIMED? ltlf THEN ltlf THETA? INV? ELSE ltlf                      #ifte
-      |<assoc=right> ltlf UNTIL TIMED? THETA? INV? ltlf                                  #until
-      | BOX TIMED?  ltlf                                                              #box
-      | DIAMOND TIMED?   ltlf                                                         #diamond
-      | NEGATED TIMED? ltlf PRESERVE?                                                 #not
+      | NEXT ltlf        declare_act_target?                                                              #next
+      |<assoc=right> ltlf OR TIMED? THETA? INV? ltlf   declare_act_target?                                    #or
+      |<assoc=right> ltlf AND TIMED? THETA? INV? ltlf     declare_act_target?                                 #and
+      |<assoc=right> ltlf '=>' TIMED? THETA? INV? ltlf      declare_act_target?                               #implication
+      |<assoc=right> IF TIMED? ltlf THEN ltlf THETA? INV? ELSE ltlf    declare_act_target?                   #ifte
+      |<assoc=right> ltlf UNTIL TIMED? THETA? INV? ltlf      declare_act_target?                             #until
+      | BOX TIMED?  ltlf                              declare_act_target?                                #box
+      | DIAMOND TIMED?   ltlf                declare_act_target?                                         #diamond
+      | NEGATED TIMED? ltlf PRESERVE?        declare_act_target?                                          #not
       | '(' ltlf ')'                                                                  #paren
-      |<assoc=right> ltlf '&Ft' THETA? INV? ltlf                                          #and_future
-      |<assoc=right> ltlf '&XGt' THETA? INV? ltlf                                         #and_next_globally
-      |<assoc=right> ltlf '&Gt' THETA? INV? ltlf                                          #and_globally
+      |<assoc=right> ltlf '&Ft' THETA? INV? ltlf     declare_act_target?                                      #and_future
+      |<assoc=right> ltlf '&XGt' THETA? INV? ltlf     declare_act_target?                                     #and_next_globally
+      |<assoc=right> ltlf '&Gt' THETA? INV? ltlf   declare_act_target?                                       #and_globally
       ;
 
 data_aware_declare: (declare)*;

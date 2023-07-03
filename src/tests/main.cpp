@@ -4,12 +4,12 @@
 
 #include "knobab/server/ndp/KnowledgeBaseNDPLoader.h"
 #include "knobab/server/ndp/NDPAttributeTable.h"
-#include <yaucl/data/MemoryMappingFile.h>
-#include <knobab/server/ndp/count_table_rcx.h>
-#include <yaucl/data/VariadicSizeArrayElements.h>
-#include <knobab/server/ndp/act_table_rcx.h>
-#include <knobab/server/ndp/KnowledgeBaseNDPReader.h>
-#include <yaucl/data/VarSizeNDPSorter.h>
+#include "yaucl/data/MemoryMappingFile.h"
+#include "knobab/server/ndp/count_table_rcx.h"
+#include "yaucl/data/VariadicSizeArrayElements.h"
+#include "knobab/server/ndp/act_table_rcx.h"
+#include "knobab/server/ndp/KnowledgeBaseNDPReader.h"
+#include "yaucl/data/VarSizeNDPSorter.h"
 
 void external_var_sorter() {
     {
@@ -135,8 +135,8 @@ void loader() {
     }
 }
 
-#include <yaucl/data/FixedSizeNDPSorter.h>
-#include <knobab/server/query_manager/NDPFuzzyStringMatching.h>
+#include "yaucl/data/FixedSizeNDPSorter.h"
+#include "knobab/server/query_manager/NDPFuzzyStringMatching.h"
 
 void array_updater() {
     yaucl::data::VariadicSizeArrayElementsReaderWriter updater{"/home/giacomo/updatable.bin"};
