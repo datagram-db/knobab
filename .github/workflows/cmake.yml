@@ -19,7 +19,7 @@ jobs:
 
     steps:
       - name: Config Checkout
-        run: git config --global submodule.recurse true
+        run: git clone --recurse-submodules -j8 --branch v2.0 git@github.com:datagram-db/knobab.git knobab && cd knobab
     
       - uses: actions/checkout@v2
         with:
