@@ -75,10 +75,10 @@ struct pattern_mining_result {
     DEFAULT_CONSTRUCTORS(pattern_mining_result);
     friend std::ostream &operator<<(std::ostream &os, const pattern_mining_result &result){
         os << "Clause: " << result.clause << std::endl
-           << "\t - Pattern Maching Support: " << result.support_generating_original_pattern << std::endl;
-        if (result.support_declarative_pattern >= 0.0)
+           << "\t - Pattern Matching Support: " << result.support_generating_original_pattern << std::endl;
+//        if (result.support_declarative_pattern >= 0.0)
             os << "\t - Declarative Pattern's Support: " << result.support_declarative_pattern << std::endl;
-        if (result.confidence_declarative_pattern >= 0.0)
+//        if (result.confidence_declarative_pattern >= 0.0)
             os << "\t - Declarative Pattern's Confidence: " << result.confidence_declarative_pattern << std::endl;
         return os << std::endl;
     }
@@ -164,7 +164,7 @@ public:
 
     uint32_t nTraces() const { return count_table.nTraces(); }
     uint16_t nAct() const { return count_table.nAct(); }
-    CountTemplate getCountTable() const { return count_table; }
+    const CountTemplate& getCountTable() const { return count_table; }
 
 
     /***************************
