@@ -344,6 +344,15 @@ getAware(const KnowledgeBase &kb, bool only_precise_temporal_patterns,
     size_t alles_not_next = 0, alles_not_prev = 0, alles_not_cs_ab = cr_lb_violations.size(), alles_not_cs_ba = cp_lb_violations.size(), alles_not_surround = 0;
     size_t conf_prev_counting = 0, conf_next_counting = 0;
 
+    if(rb) {
+        if (alles_cs_ab && ((kb.nTraces() - alles_not_cs_ab) < expected_support)) {
+            alles_cs_ab = false;
+        }
+        if (alles_cs_ba && ((kb.nTraces() - alles_not_cs_ba) < expected_support)) {
+            alles_cs_ba = false;
+        }
+    }
+
     a_beginend = kb.timed_dataless_exists(A);
     auto start = a_beginend.first;
     size_t prev_trace_id = -1;
@@ -405,9 +414,6 @@ getAware(const KnowledgeBase &kb, bool only_precise_temporal_patterns,
         }
     }
 
-    //TODO Would conf_next_counting would ever be different from conf_counting? Potentially can remove!
-    DEBUG_ASSERT(conf_counting == conf_next_counting);
-
     std::pair<std::pair<bool, pattern_mining_result<DeclareDataAware>>, std::pair<bool, pattern_mining_result<DeclareDataAware>>> cr_cp {
             {false, {}},
             {false, {}}
@@ -450,7 +456,7 @@ getAware(const KnowledgeBase &kb, bool only_precise_temporal_patterns,
                         std::swap(clause.left_act, clause.right_act);
                     }
                 }
-                if (!(flags & CHAIN_SUCCESSION_BA_ID) && cr_sup >= r_sup) {
+                if (!(flags == CHAIN_SUCCESSION_BA_ID) && cr_sup >= r_sup) {
                     const double cr_conf = ((double) cr_satisfied) / ((double) conf_next_counting);
                     flags |= rb ? CHAIN_RESPONSE_BA_ID : CHAIN_RESPONSE_AB_ID;
                     if (rb) {
@@ -1092,7 +1098,8 @@ std::pair<std::vector<pattern_mining_result<DeclareDataAware>>, double> pattern_
 
                 /* We need to check lA is greater than 0 because it is the activation we are interested in */
                 if(lA) {
-                    if (lA != lB) {
+                    size_t coarsening = kb.act_table_by_act_id.secondary_index.at(sigma).first->entry.id.parts.act != B ? 0 :1;
+                    if (!(lB <= lA <= (lB+coarsening))) {
                         decrease_support_X(kb, expected_support, alles_chain_succession_ab, alles_not_chain_succession_ab);
 
                         if (!alles_chain_succession_ab && !alles_surround_ab) {
@@ -1109,7 +1116,8 @@ std::pair<std::vector<pattern_mining_result<DeclareDataAware>>, double> pattern_
                 }
 
                 if(lB) {
-                    if (lB != lA) {
+                    size_t coarsening = kb.act_table_by_act_id.secondary_index.at(sigma).first->entry.id.parts.act != A ? 0 :1;
+                    if (!(lA <= lB <= (lA+coarsening))) {
                         decrease_support_X(kb, expected_support, alles_chain_succession_ba, alles_not_chain_succession_ba);
 
                         if (!alles_chain_succession_ba && !alles_surround_ba) {
