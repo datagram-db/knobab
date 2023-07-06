@@ -253,6 +253,19 @@ int main(int argc, char **argv) {
     double loading_and_indexing_test = 0;
     std::vector<std::string> bogus_model_name;
     std::vector<ConfusionMatrix> matrices(worlds_format_to_load.size());
+
+    /* Testing */
+    worlds_format_to_load = {
+            XES1
+    };
+    worlds_file_to_load = {
+            "/home/sam/Documents/Repositories/Codebases/knobab/data/testing/mining/1000_10_10.xes"
+    };
+    testing_format = XES1;
+    testing_file = "/home/sam/Documents/Repositories/Codebases/knobab/data/testing/mining/1000_10_10.xes";
+    expected_File = "/home/sam/Documents/Repositories/Codebases/knobab/data/testing/mining/expected.txt";
+    supp = 0.1;
+
     for (size_t i = 0, N = std::min(worlds_format_to_load.size(), worlds_file_to_load.size()); i<N; i++) {
         std::stringstream ss;
         std::string model_name = worlds_file_to_load.at(i);
@@ -270,37 +283,37 @@ int main(int argc, char **argv) {
     }
 
     // Loading the testing log
-//    {
-//        std::stringstream ss;
-//        ss << "load "
-//           << log_parse_format_type.at(testing_format)
-//           << " "
-//           << std::quoted(testing_file)
-//           <<  " with data as "
-//           << std::quoted("testing");
-//        auto tmp = sqm.runQuery(ss.str());
-//        loading_and_indexing_test += sqm.multiple_logs["testing"].experiment_logger.log_indexing_ms+sqm.multiple_logs["testing"].experiment_logger.log_loading_and_parsing_ms;
-//    }
-//    // Setting up the confusion matrices from the models
+    {
+        std::stringstream ss;
+        ss << "load "
+           << log_parse_format_type.at(testing_format)
+           << " "
+           << std::quoted(testing_file)
+           <<  " with data as "
+           << std::quoted("testing");
+        auto tmp = sqm.runQuery(ss.str());
+        loading_and_indexing_test += sqm.multiple_logs["testing"].experiment_logger.log_indexing_ms+sqm.multiple_logs["testing"].experiment_logger.log_loading_and_parsing_ms;
+    }
+    // Setting up the confusion matrices from the models
     size_t nTestingTraces = 0;
-//    {
-//        std::fstream myfile(expected_File, std::ios_base::in);
-//        size_t expected_class;
-//        while (myfile >> expected_class)
-//        {
-//            for (size_t i = 0, N = matrices.size(); i<N; i++) {
-//                if (i==expected_class) {
-//                    matrices[i].expected_prediction.emplace_back(1);
-//                } else {
-//                    matrices[i].expected_prediction.emplace_back(0);
-//                }
-//            }
-//            nTestingTraces++;
-//        }
-//        for (auto& M : matrices) {
-//            M.actual_prediction = std::vector<size_t>(nTestingTraces, 0);
-//        }
-//    }
+    {
+        std::fstream myfile(expected_File, std::ios_base::in);
+        size_t expected_class;
+        while (myfile >> expected_class)
+        {
+            for (size_t i = 0, N = matrices.size(); i<N; i++) {
+                if (i==expected_class) {
+                    matrices[i].expected_prediction.emplace_back(1);
+                } else {
+                    matrices[i].expected_prediction.emplace_back(0);
+                }
+            }
+            nTestingTraces++;
+        }
+        for (auto& M : matrices) {
+            M.actual_prediction = std::vector<size_t>(nTestingTraces, 0);
+        }
+    }
 
     // Setting up the xtLTLf semantics for the Declare clauses
     {
@@ -348,6 +361,7 @@ int main(int argc, char **argv) {
     auto model = std::get<0>(model_and_times);
     double dataless_mining = std::get<1>(model_and_times);
     double refinery_time = std::get<2>(model_and_times);
+    std::cout << "clauses=" << model.at(0).size() << std::endl;
     std::cout << "dataless_mining=" << dataless_mining << std::endl;
     std::cout << "refinery_time=" << refinery_time << std::endl;
 

@@ -482,6 +482,10 @@ getAware(const KnowledgeBase &kb, bool only_precise_temporal_patterns,
             }
             if (!((lb && (flags == CHAIN_RESPONSE_AB_ID)) || (rb && (flags == CHAIN_RESPONSE_BA_ID)))) {
                 flags |= rb ? RESPONSE_BA_ID : RESPONSE_AB_ID;
+
+                //TODO: Okay, if we have a low enough support these will be triggered, so maybe comment
+                // Also, we need to try to test the problem of adding a surround and then a chainsuccession fails, adding another chainresponse
+                // Also output the timings and clause amounts after sup > 0.99
                 if (rb) {
                     DEBUG_ASSERT(!((flags & RESPONSE_AB_ID) && (flags & RESPONSE_BA_ID)));
                 }
@@ -1092,45 +1096,93 @@ std::pair<std::vector<pattern_mining_result<DeclareDataAware>>, double> pattern_
             // 1) First kind of specialized patterns:
             // events happening immediately previously and next:
             // This might leverage the prev/next pointers!
+            /* ChainSuccession Heuristic: remove a b for every triplet sharing a b, and remove a b if the first act is a */
             for (auto sigma = 0; sigma < kb.nTraces(); sigma++) {
                 auto lA = count_table.resolve_length(A, sigma);
                 auto lB = count_table.resolve_length(B, sigma);
 
                 /* We need to check lA is greater than 0 because it is the activation we are interested in */
                 if(lA) {
-                    size_t coarsening = kb.act_table_by_act_id.secondary_index.at(sigma).first->entry.id.parts.act != B ? 0 :1;
-                    if (!(lB <= lA <= (lB+coarsening))) {
-                        decrease_support_X(kb, expected_support, alles_chain_succession_ab, alles_not_chain_succession_ab);
-
-                        if (!alles_chain_succession_ab && !alles_surround_ab) {
-                            break; // skipping if this is going out of hand
-                        }
+                    if (!alles_chain_succession_ab && !alles_surround_ab) {
+                        break; // skipping if this is going out of hand
                     }
-                    if (lB < lA) {
-                        decrease_support_X(kb, expected_support, alles_surround_ab, alles_not_surround_ab);
+                    size_t cs_coarsening = kb.act_table_by_act_id.secondary_index.at(sigma).first->entry.id.parts.act == B ? 1 : 0;
+                    if (!(lB <= lA <= (lB + cs_coarsening))) {
+                        decrease_support_X(kb, expected_support, alles_chain_succession_ab, alles_not_chain_succession_ab);}
 
-                        if (!alles_chain_succession_ab && !alles_surround_ab) {
-                            break; // skipping if this is going out of hand
-                        }
-                    }
                 }
 
                 if(lB) {
+                    if (!alles_chain_succession_ba && !alles_surround_ba) {
+                        break; // skipping if this is going out of hand
+                    }
                     size_t coarsening = kb.act_table_by_act_id.secondary_index.at(sigma).first->entry.id.parts.act != A ? 0 :1;
-                    if (!(lA <= lB <= (lA+coarsening))) {
+                    if (!(lA <= lB <= (lA + coarsening))) {
                         decrease_support_X(kb, expected_support, alles_chain_succession_ba, alles_not_chain_succession_ba);
-
-                        if (!alles_chain_succession_ba && !alles_surround_ba) {
-                            break; // skipping if this is going out of hand
-                        }
                     }
-                    if (lA < lB) {
-                        decrease_support_X(kb, expected_support, alles_surround_ba, alles_not_surround_ba);
+                }
+            }
 
-                        if (!alles_chain_succession_ba && !alles_surround_ba) {
-                            break; // skipping if this is going out of hand
-                        }
+            /* Surround Heuristic: remove a b for every triplet sharing a b, and remove a b if the first act is a */
+            {
+                auto a_beginend = kb.timed_dataless_exists(A);
+                uint32_t b_share_count = 0;
+                size_t sr_a_coarsening = 0;
+
+                while ((a_beginend.first + 1) != a_beginend.second) {
+                    if (a_beginend.first->entry.id.parts.event_id == 0) {
+                        sr_a_coarsening = 1;
                     }
+
+                    if ((a_beginend.first + 1)->entry.id.parts.trace_id != a_beginend.first->entry.id.parts.trace_id) {
+                        auto lA = count_table.resolve_length(A, a_beginend.first->entry.id.parts.trace_id);
+                        auto lB = count_table.resolve_length(B, a_beginend.first->entry.id.parts.trace_id);
+
+                        if (lB < ((2 * lA) - b_share_count - sr_a_coarsening)) {
+                            decrease_support_X(kb, expected_support, alles_surround_ab, alles_not_surround_ab);
+                        }
+
+                        a_beginend.first++;
+                        continue;
+                    }
+
+                    if (a_beginend.first->next != nullptr && a_beginend.first->next->entry.id.parts.act == B &&
+                        ((a_beginend.first + 1)->prev == a_beginend.first->next)) {
+                        b_share_count++;
+                    }
+
+                    a_beginend.first++;
+                }
+            }
+
+            {
+                auto b_beginend = kb.timed_dataless_exists(B);
+                uint32_t a_share_count = 0;
+                size_t sr_b_coarsening = 0;
+
+                while ((b_beginend.first + 1) != b_beginend.second) {
+                    if (b_beginend.first->entry.id.parts.event_id == 0) {
+                        sr_b_coarsening = 1;
+                    }
+
+                    if ((b_beginend.first + 1)->entry.id.parts.trace_id != b_beginend.first->entry.id.parts.trace_id) {
+                        auto lA = count_table.resolve_length(A, b_beginend.first->entry.id.parts.trace_id);
+                        auto lB = count_table.resolve_length(B, b_beginend.first->entry.id.parts.trace_id);
+
+                        if (lA < ((2 * lB) - a_share_count - sr_b_coarsening)) {
+                            decrease_support_X(kb, expected_support, alles_surround_ab, alles_not_surround_ab);
+                        }
+
+                        b_beginend.first++;
+                        continue;
+                    }
+
+                    if (b_beginend.first->next != nullptr && b_beginend.first->next->entry.id.parts.act == B &&
+                        ((b_beginend.first + 1)->prev == b_beginend.first->next)) {
+                        a_share_count++;
+                    }
+
+                    b_beginend.first++;
                 }
             }
 
@@ -1542,7 +1594,6 @@ std::tuple<std::vector<std::vector<DeclareDataAware>>,double,double> classifier_
             std::cout << clause;
         }
 
-        return {};
         auto& WWW = VVV.emplace_back();
         std::vector<size_t> low_d_supp;
         size_t j = 0;
@@ -1551,6 +1602,9 @@ std::tuple<std::vector<std::vector<DeclareDataAware>>,double,double> classifier_
             if (ref2.support_declarative_pattern < 1.0) low_d_supp.emplace_back(j);
             j++;
         }
+
+        return std::make_tuple(VVV, overall_dataless_mining_time, 0);
+
         remove_duplicates(WWW);
 //        std::cout << WWW << std::endl;
         if (i == 0)
