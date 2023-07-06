@@ -247,7 +247,6 @@ int main(int argc, char **argv) {
         }
     }
 
-
     // Loading the different classes
     ServerQueryManager sqm;
     double loading_and_indexing = 0;
@@ -271,37 +270,37 @@ int main(int argc, char **argv) {
     }
 
     // Loading the testing log
-    {
-        std::stringstream ss;
-        ss << "load "
-           << log_parse_format_type.at(testing_format)
-           << " "
-           << std::quoted(testing_file)
-           <<  " with data as "
-           << std::quoted("testing");
-        auto tmp = sqm.runQuery(ss.str());
-        loading_and_indexing_test += sqm.multiple_logs["testing"].experiment_logger.log_indexing_ms+sqm.multiple_logs["testing"].experiment_logger.log_loading_and_parsing_ms;
-    }
-    // Setting up the confusion matrices from the models
+//    {
+//        std::stringstream ss;
+//        ss << "load "
+//           << log_parse_format_type.at(testing_format)
+//           << " "
+//           << std::quoted(testing_file)
+//           <<  " with data as "
+//           << std::quoted("testing");
+//        auto tmp = sqm.runQuery(ss.str());
+//        loading_and_indexing_test += sqm.multiple_logs["testing"].experiment_logger.log_indexing_ms+sqm.multiple_logs["testing"].experiment_logger.log_loading_and_parsing_ms;
+//    }
+//    // Setting up the confusion matrices from the models
     size_t nTestingTraces = 0;
-    {
-        std::fstream myfile(expected_File, std::ios_base::in);
-        size_t expected_class;
-        while (myfile >> expected_class)
-        {
-            for (size_t i = 0, N = matrices.size(); i<N; i++) {
-                if (i==expected_class) {
-                    matrices[i].expected_prediction.emplace_back(1);
-                } else {
-                    matrices[i].expected_prediction.emplace_back(0);
-                }
-            }
-            nTestingTraces++;
-        }
-        for (auto& M : matrices) {
-            M.actual_prediction = std::vector<size_t>(nTestingTraces, 0);
-        }
-    }
+//    {
+//        std::fstream myfile(expected_File, std::ios_base::in);
+//        size_t expected_class;
+//        while (myfile >> expected_class)
+//        {
+//            for (size_t i = 0, N = matrices.size(); i<N; i++) {
+//                if (i==expected_class) {
+//                    matrices[i].expected_prediction.emplace_back(1);
+//                } else {
+//                    matrices[i].expected_prediction.emplace_back(0);
+//                }
+//            }
+//            nTestingTraces++;
+//        }
+//        for (auto& M : matrices) {
+//            M.actual_prediction = std::vector<size_t>(nTestingTraces, 0);
+//        }
+//    }
 
     // Setting up the xtLTLf semantics for the Declare clauses
     {
@@ -336,7 +335,6 @@ int main(int argc, char **argv) {
     }
     auto it2 = sqm.planname_to_declare_to_ltlf.find("nfmcp23");
 
-
     std::cout << "loading+indexing=" << loading_and_indexing << std::endl;
 
     // "Training" the models
@@ -355,6 +353,7 @@ int main(int argc, char **argv) {
 
 //    exit(1);
 
+    return 0;
 
 
     // Discarding the resulting clauses not having optimal support
