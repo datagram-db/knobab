@@ -414,10 +414,8 @@ getAware(const KnowledgeBase &kb, bool only_precise_temporal_patterns,
         }
     }
 
-    std::pair<std::pair<bool, pattern_mining_result<DeclareDataAware>>, std::pair<bool, pattern_mining_result<DeclareDataAware>>> cr_cp {
-            {false, {}},
-            {false, {}}
-    };
+    /* Declaring outside for now, need global for the surround */
+    double cr_sup = -1;
 
     if (alles_response || alles_precedence) {
         const uint32_t p_satisfied = (ntraces - alles_not_precedence);
@@ -427,73 +425,68 @@ getAware(const KnowledgeBase &kb, bool only_precise_temporal_patterns,
         if (alles_response) {
             const uint32_t r_satisfied = (ntraces - alles_not_response);
             const double r_sup = ((double) r_satisfied) / ((double) ntraces);
+            const uint32_t cr_satisfied = (ntraces - alles_not_next);
+            cr_sup = ((double) cr_satisfied) / ((double) ntraces);
+            if (alles_next && cr_sup >= r_sup) {
+                const double cr_conf = ((double) cr_satisfied) / ((double) conf_next_counting);
+                flags |= rb ? CHAIN_RESPONSE_BA_ID : CHAIN_RESPONSE_AB_ID;
+                clause.casusu = "ChainResponse";
 
-            if (alles_next) {
-                const uint32_t cr_satisfied = (ntraces - alles_not_next);
-                const double cr_sup = ((double) cr_satisfied) / ((double) ntraces);
-
-                if (rb && alles_cs_ba) {
+                if(!rb && !lb) {
+                    clauses.emplace_back(clause,
+                                         decl_sup,
+                                         cr_sup,
+                                         cr_conf);
+                }
+                else if (lb) {
+                    /* If we are on the left branch, there may be a ChainSucession only detectable on the other
+                     * so cache the confidence for now */
+                    cr_lb_sup_conf.first = cr_sup;
+                    cr_lb_sup_conf.second = cr_conf;
+                }
+                else {
                     /* We know that in the first branch ChainResponse(A,B) was added and here have ChainPrecedence(B,A) */
                     const uint32_t cs_ba_satisfied = (ntraces - alles_not_cs_ba);
                     const double cs_ba_sup = ((double) cs_ba_satisfied) / ((double) ntraces);
 
-                    if((cs_ba_sup >= cr_sup) && (cs_ba_sup >= cp_lb_sup_conf.first)) {
-                        flags |= CHAIN_RESPONSE_BA_ID;
-                        DEBUG_ASSERT(!((flags & CHAIN_RESPONSE_AB_ID) && (flags & CHAIN_RESPONSE_BA_ID)));
+                    if (alles_cs_ba && (cs_ba_sup >= cr_sup) && (cs_ba_sup >= cp_lb_sup_conf.first)) {
                         clause.casusu = "ChainSuccession";
                         clauses.emplace_back(clause,
                                              decl_sup,
                                              ((double) cs_ba_satisfied) / ((double) conf_counting),
                                              cs_ba_sup);
+
                     }
+                    /* If ChainPrecedence(A,B) and ChainResponse(A,B) from left branch were enough to form a Surround, then don't re-add */
                     else {
-                        clause.casusu = "ChainPrecedence";
-                        std::swap(clause.left_act, clause.right_act);
+                        /* ChainSuccession(A,B) not good enough, add the current ChainPrecedence(B,A) and ChainResponse(A,B) from the left branch */
                         clauses.emplace_back(clause,
                                              decl_sup,
-                                             cp_lb_sup_conf.first,
-                                             cp_lb_sup_conf.second);
-                        std::swap(clause.left_act, clause.right_act);
-                    }
-                }
-                if (!(flags == CHAIN_SUCCESSION_BA_ID) && cr_sup >= r_sup) {
-                    const double cr_conf = ((double) cr_satisfied) / ((double) conf_next_counting);
-                    flags |= rb ? CHAIN_RESPONSE_BA_ID : CHAIN_RESPONSE_AB_ID;
-                    if (rb) {
-                        DEBUG_ASSERT(!((flags & CHAIN_RESPONSE_AB_ID) && (flags & CHAIN_RESPONSE_BA_ID)));
-                    }
-                    DEBUG_ASSERT(!((flags & CHAIN_RESPONSE_AB_ID) && (flags & RESPONSE_AB_ID)));
+                                             cr_sup,
+                                             cr_conf);
 
-                    if (lb) {
-                        /* If we are on the left branch, there may be a ChainSucession only detectable on the other
-                         * so cache the confidence for now */
-                        cr_lb_sup_conf.first = cr_sup;
-                        cr_lb_sup_conf.second = cr_conf;
-                    }
-                    clause.casusu = "ChainResponse";
-                    cr_cp.first = { true, {
-                            clause,
-                            decl_sup,
-                            cr_sup,
-                            cr_conf
+                        /* ChainPrecedence(A,B) has already been consumed by Surround(A,B), so don't add */
+                        if (!(flags & SURROUND_AB_ID)) {
+                            clause.casusu = "ChainPrecedence";
+                            std::swap(clause.left_act, clause.right_act);
+                            clauses.emplace_back(clause,
+                                                 decl_sup,
+                                                 cp_lb_sup_conf.first,
+                                                 cp_lb_sup_conf.second);
+                            std::swap(clause.left_act, clause.right_act);
                         }
-                    };
+                    }
                 }
+                DEBUG_ASSERT(!((flags & CHAIN_RESPONSE_AB_ID) && (flags & RESPONSE_AB_ID)));
             }
-            if (!((lb && (flags == CHAIN_RESPONSE_AB_ID)) || (rb && (flags == CHAIN_RESPONSE_BA_ID)))) {
+            else {
+                clause.casusu = "Response";
                 flags |= rb ? RESPONSE_BA_ID : RESPONSE_AB_ID;
 
-                //TODO: Okay, if we have a low enough support these will be triggered, so maybe comment
-                // Also, we need to try to test the problem of adding a surround and then a chainsuccession fails, adding another chainresponse
-                // Also output the timings and clause amounts after sup > 0.99
-                if (rb) {
-                    DEBUG_ASSERT(!((flags & RESPONSE_AB_ID) && (flags & RESPONSE_BA_ID)));
-                }
-
+                /* Consume those further up the lattice */
                 DEBUG_ASSERT(!((flags & RESPONSE_AB_ID) && (flags & CHAIN_RESPONSE_AB_ID)));
                 DEBUG_ASSERT(!((flags & RESPONSE_BA_ID) && (flags & CHAIN_RESPONSE_BA_ID)));
 
-                /* We only want to add a chain response if, need to test for chain succession */
                 if (alles_precedence) {
                     /* We now need to test if Succession has just as good support */
                     const uint32_t s_satisfied = (ntraces - alles_not_succession);
@@ -501,9 +494,6 @@ getAware(const KnowledgeBase &kb, bool only_precise_temporal_patterns,
                     const double s_conf = ((double) s_satisfied) / ((double) conf_counting);
                     if((s_sup >= p_sup) && (s_sup >= r_sup)) {
                         flags |= rb ? PRECEDENCE_BA_ID : PRECEDENCE_AB_ID;
-                        if (rb) {
-                            DEBUG_ASSERT(!((flags & PRECEDENCE_AB_ID) && (flags & PRECEDENCE_BA_ID)));
-                        }
                         clause.casusu = "Succession";
                         clauses.emplace_back(clause,
                                              decl_sup,
@@ -522,9 +512,6 @@ getAware(const KnowledgeBase &kb, bool only_precise_temporal_patterns,
         }
         if (alles_precedence && !((lb && (flags == SUCCESSION_AB_ID)) || (rb && (flags == SUCCESSION_BA_ID)))) {
             flags |= rb ? PRECEDENCE_BA_ID : PRECEDENCE_AB_ID;
-            if (rb) {
-                DEBUG_ASSERT(!((flags & PRECEDENCE_AB_ID) && (flags & PRECEDENCE_BA_ID)));
-            }
             clause.casusu = "Precedence";
             const double p_conf = ((double) p_satisfied) / ((double) conf_counting);
             clauses.emplace_back(clause,
@@ -544,16 +531,42 @@ getAware(const KnowledgeBase &kb, bool only_precise_temporal_patterns,
      *
      * Therefore, it is entirely possible to have a model with ChainSuccession(A,B), Surround(A,B) and Precedence(A,B) */
     if (alles_prev) {
+        flags |= rb ? CHAIN_PRECEDENCE_BA_ID : CHAIN_PRECEDENCE_AB_ID;
         const uint32_t cp_satisfied = (ntraces - alles_not_prev);
         const double cp_sup = ((double) cp_satisfied) / ((double) ntraces);
+        const double cp_conf = ((double) cp_satisfied) / ((double) conf_prev_counting);
+        clause.casusu = "ChainPrecedence";
 
-        if (rb && alles_cs_ab) {
+        if (alles_surround) {
+            const uint32_t sr_satisfied = (ntraces - alles_not_surround);
+            const uint32_t sr_sup = ((double) sr_satisfied) / ((double) ntraces);
+
+            if((sr_sup >= cr_sup) && (sr_sup >= cp_sup)) {
+                clause.casusu = "Surround";
+                clauses.emplace_back(clause,
+                                     decl_sup,
+                                     sr_sup,
+                                     ((double) sr_satisfied) / ((double) conf_counting));
+            }
+        }
+        if(!rb && !lb) {
+            clauses.emplace_back(clause,
+                                 decl_sup,
+                                 cp_sup,
+                                 cp_conf);
+        }
+        else if (lb) {
+                /* If we are on the left branch, there may be a ChainSuccession only detectable on the other
+                    * so cache the confidence for now */
+                cp_lb_sup_conf.first = cp_sup;
+                cp_lb_sup_conf.second = cp_conf;
+        }
+        else {
             /* We know that in the first branch ChainResponse(A,B) was added and here have ChainPrecedence(B,A) */
             const uint32_t cs_ab_satisfied = (ntraces - alles_not_cs_ab);
             const uint32_t cs_ab_sup = ((double) cs_ab_satisfied) / ((double) ntraces);
 
-            if((cs_ab_sup >= cr_lb_sup_conf.first) && (cs_ab_sup >= cp_sup)) {
-                flags |= CHAIN_PRECEDENCE_BA_ID;
+            if (alles_cs_ab && (cs_ab_sup >= cr_lb_sup_conf.first) && (cs_ab_sup >= cp_sup)) {
                 clause.casusu = "ChainSuccession";
                 std::swap(clause.left_act, clause.right_act);
                 clauses.emplace_back(clause,
@@ -561,58 +574,26 @@ getAware(const KnowledgeBase &kb, bool only_precise_temporal_patterns,
                                      ((double) cs_ab_satisfied) / ((double) conf_counting),
                                      cs_ab_sup);
                 std::swap(clause.left_act, clause.right_act);
+
             }
             else {
-                clause.casusu = "ChainResponse";
-                std::swap(clause.left_act, clause.right_act);
+                /* ChainSuccession(A,B) not good enough, add the current ChainPrecedence(B,A) and ChainResponse(A,B) from the left branch */
                 clauses.emplace_back(clause,
                                      decl_sup,
-                                     cr_lb_sup_conf.first,
-                                     cr_lb_sup_conf.second);
-                std::swap(clause.left_act, clause.right_act);
-            }
-        }
-        if (!(flags == CHAIN_SUCCESSION_AB_ID)) {
-            const double cp_conf = ((double) cp_satisfied) / ((double) conf_prev_counting);
-            flags |= rb ? CHAIN_PRECEDENCE_BA_ID : CHAIN_PRECEDENCE_AB_ID;
-            if (lb) {
-                /* If we are on the left branch, there may be a ChainSuccession only detectable on the other
-                 * so cache the confidence for now */
-                cp_lb_sup_conf.first = cp_sup;
-                cp_lb_sup_conf.second = cp_conf;
-            }
+                                     cp_sup,
+                                     cp_conf);
 
-            clause.casusu = "ChainPrecedence";
-            cr_cp.second = { true, {
-                    clause,
-                    decl_sup,
-                    cp_sup,
-                    cp_conf
+                /* ChainResponse(A,B) has already been consumed by Surround(A,B), so don't add */
+                if (!(flags & SURROUND_AB_ID)) {
+                    clause.casusu = "ChainResponse";
+                    std::swap(clause.left_act, clause.right_act);
+                    clauses.emplace_back(clause,
+                                         decl_sup,
+                                         cr_lb_sup_conf.first,
+                                         cr_lb_sup_conf.second);
+                    std::swap(clause.left_act, clause.right_act);
                 }
-            };
-        }
-    }
-
-    if (alles_surround) {
-        DEBUG_ASSERT(cr_cp.first.first && cr_cp.second.first);
-        const uint32_t sr_satisfied = (ntraces - alles_not_surround);
-        const uint32_t sr_sup = ((double) sr_satisfied) / ((double) ntraces);
-        if((sr_sup >= cr_cp.first.second.support_declarative_pattern) && (sr_sup >= cr_cp.second.second.support_declarative_pattern)) {
-            clause.casusu = "Surround";
-            clauses.emplace_back(clause,
-                                 decl_sup,
-                                 sr_sup,
-                                 ((double) sr_satisfied) / ((double) conf_counting));
-            cr_cp.first.first = false;
-            cr_cp.second.first = false;
-        }
-    }
-    if(!lb) {
-        if(cr_cp.first.first) {
-            clauses.emplace_back(cr_cp.first.second);
-        }
-        if(cr_cp.second.first) {
-            clauses.emplace_back(cr_cp.second.second);
+            }
         }
     }
 
@@ -1170,7 +1151,7 @@ std::pair<std::vector<pattern_mining_result<DeclareDataAware>>, double> pattern_
                         auto lB = count_table.resolve_length(B, b_beginend.first->entry.id.parts.trace_id);
 
                         if (lA < ((2 * lB) - a_share_count - sr_b_coarsening)) {
-                            decrease_support_X(kb, expected_support, alles_surround_ab, alles_not_surround_ab);
+                            decrease_support_X(kb, expected_support, alles_surround_ba, alles_not_surround_ba);
                         }
 
                         b_beginend.first++;
@@ -1588,7 +1569,6 @@ std::tuple<std::vector<std::vector<DeclareDataAware>>,double,double> classifier_
         const auto &ref = model_entry_names.at(i);
         auto tmp = pattern_mining(sqm.multiple_logs[ref].db, support, naif, init_end, special_temporal_patterns, only_precise_temporal_patterns, negative_ones);
         overall_dataless_mining_time += tmp.second;
-        //TODO Benchmark, return here tmp.first is clauses
         std::cout <<"-------- AFTER MINING --------" << std::endl;
         for (const pattern_mining_result<DeclareDataAware> clause : tmp.first) {
             std::cout << clause;
@@ -1606,7 +1586,7 @@ std::tuple<std::vector<std::vector<DeclareDataAware>>,double,double> classifier_
         return std::make_tuple(VVV, overall_dataless_mining_time, 0);
 
         remove_duplicates(WWW);
-//        std::cout << WWW << std::endl;
+
         if (i == 0)
              last_VVV_intersection = WWW;
         else {
