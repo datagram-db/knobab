@@ -215,7 +215,7 @@ getAware(const KnowledgeBase &kb, bool only_precise_temporal_patterns,
         not_activated += trace_id;
     }
 
-    while ((a_beginend.first != a_beginend.second) /*|| (b_beginend.first != b_beginend.second) */) {
+    while (a_beginend.first != a_beginend.second) {
         if ((!alles_precedence) && (!alles_response) && (!alles_altresponse) && (!alles_succession_ab) && (!alles_succession_ba)) {
             break;
         }
@@ -281,6 +281,7 @@ getAware(const KnowledgeBase &kb, bool only_precise_temporal_patterns,
         /* We have B's on their own */
         if ((a_beginend.first == a_beginend.second) || a_beginend.first->entry.id.parts.trace_id >
             b_beginend.first->entry.id.parts.trace_id) {
+            //TODO THIS CODE IS IDENTICAL TO THE SAME CONDITION BELOW, FUNCTION IF THIS WORKS
             //TODO Check if below actually ever has any effect
             if(lb) {
                 data.r_activation_traces.second.add(trace_id);
@@ -321,8 +322,8 @@ getAware(const KnowledgeBase &kb, bool only_precise_temporal_patterns,
             data.p_activation_traces.second.add(trace_id);
         }
 
-        if (b_beginend.first->entry.id.parts.event_id >
-            a_beginend.first->entry.id.parts.event_id) {
+        if ((b_beginend.first != b_beginend.second) && (a_beginend.first != a_beginend.second)  && (b_beginend.first->entry.id.parts.event_id >
+            a_beginend.first->entry.id.parts.event_id)) {
             //TODO Refactor below (left branch for precedence is the same as alles_not_precedence)
             decrease_support_X(kb, expected_support, alles_precedence, alles_not_precedence);
 #ifdef FUTURE
@@ -415,6 +416,32 @@ getAware(const KnowledgeBase &kb, bool only_precise_temporal_patterns,
         fast_forward_equals(trace_id, a_beginend.first, a_beginend.second);
         fast_forward_equals(trace_id, b_beginend.first, b_beginend.second);
     }
+
+    /* If we scanned all the As but there are Bs still remaining on their own */
+    //TODO THIS CODE IS IDENTICAL TO THE SAME CONDITION ABOVE, FUNCTION IF THIS WORKS
+//    while ((b_beginend.first != b_beginend.second)) {
+//        trace_id = b_beginend.first->entry.id.parts.trace_id;
+
+//        //TODO Check if below actually ever has any effect
+//        if(lb) {
+//            data.r_activation_traces.second.add(trace_id);
+//            data.p_activation_traces.first.add(trace_id);
+//        }
+//        else if (rb) {
+//            /* For either Succesion(A,B)/Succesion(B,A) we can't have Bs on their own (the checks below are purely for sanity) */
+//            if (!data.r_lb_violations.contains(b_beginend.first->entry.id.parts.trace_id)) {
+//                decrease_support_X(kb, expected_support, alles_succession_ab, alles_not_succession_ab);
+//            }
+//            if (!data.p_lb_violations.contains(b_beginend.first->entry.id.parts.trace_id)) {
+//                decrease_support_X(kb, expected_support, alles_succession_ba, alles_not_succession_ba);
+//            }
+//        }
+
+//        // Moving b until I find something related to b. A is kept fixed and not incremented
+//        fast_forward_lower(trace_id, b_beginend.first, b_beginend.second);
+//        // Not setting the current trace to be visited, as we need to fast-forward B first
+//    }
+
 
     if((ntraces - 1) != prev_trace_id) {
         not_activated += ((ntraces - 1) - prev_trace_id);
