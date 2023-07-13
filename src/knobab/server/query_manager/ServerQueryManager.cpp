@@ -1000,7 +1000,9 @@ std::any ServerQueryManager::visitModel_query(KnoBABQueryParser::Model_queryCont
 
 std::any ServerQueryManager::visitFile_model(KnoBABQueryParser::File_modelContext *ctx) {
     std::filesystem::path declare_file{UNESCAPE(ctx->STRING()->getText())};
-    tmpEnv->load_model(declare_file);
+    std::ifstream file{declare_file};
+    loadModel(file);
+//    tmpEnv->load_model(declare_file);
     return {};
 }
 

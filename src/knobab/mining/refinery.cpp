@@ -8,6 +8,7 @@
 #include "args.hxx"
 #include "knobab/server/query_manager/ServerQueryManager.h"
 
+
 ////using result = std::variant<std::monostate, std::pair<DeclareDataAware, DeclareDataAware>>;
 ////result refine_clause(const DeclareDataAware& dec_temp, const DecisionTree<DeclareDataAware>& tree){
 ////
@@ -175,8 +176,8 @@ struct ConfusionMatrix {
 int main(int argc, char **argv) {
     std::vector<std::string> log_parse_format_type{"HRF", "XES", "TAB"};
     log_data_format world_format_to_load = TAB_SEPARATED_EVENTS;
-    std::string worlds_file_to_load = "/home/sam/Documents/Repositories/Codebases/knobab/data/testing/mining/surround_not_chain_succession.tab";
-    double supp = 0.5;
+    std::string worlds_file_to_load = "/home/sam/Documents/Repositories/Codebases/knobab/data/testing/mining/confidence_test_chain_succession.tab";
+    double supp = 0.1;
 
     // Loading the different classes
     ServerQueryManager sqm;
@@ -225,6 +226,7 @@ int main(int argc, char **argv) {
                              "     template \"AltPrecedence\" args 2   := (((EXISTS  ~ 1 t #2) U (EXISTS 1 t #1 activation)) OR (ABSENCE 1 #2)) AND\n"
                              "                                           (G(((EXISTS ~ 1 t #1)) OR t (((EXISTS 1 t #1 activation)) AND t THETA (NEXT (((EXISTS  ~ 1 t #1) U t (EXISTS 1 t #2 target)) OR t (G t (EXISTS  ~ 1 t #1))))  )))\n"
                              "}";
+
     sqm.runQuery(query_plan);
 
     auto it2 = sqm.planname_to_declare_to_ltlf.find("nfmcp23");
@@ -245,6 +247,32 @@ int main(int argc, char **argv) {
     std::cout << "clauses=" << model.at(0).size() << std::endl;
     std::cout << "dataless_mining=" << dataless_mining << std::endl;
     std::cout << "refinery_time=" << refinery_time << std::endl;
+
+//    for(uint16_t i = 0; i < 5; ++i){
+//        auto model_and_times = classifier_mining(sqm,
+//                                                 bogus_model_name,
+//                                                 supp,
+//                                                 0,
+//                                                 0,
+//                                                 0,
+//                                                 0);
+//        auto model = std::get<0>(model_and_times);
+//        double dataless_mining = std::get<1>(model_and_times);
+//        double refinery_time = std::get<2>(model_and_times);
+//        std::cout << "clauses=" << model.at(0).size() << std::endl;
+//        std::cout << "dataless_mining=" << dataless_mining << std::endl;
+//        std::cout << "refinery_time=" << refinery_time << std::endl;
+//    }
+
+//TODO AFTER DEBEUGGING
+//    std::stringstream sSTR;
+//    sSTR << "file " << std::quoted();
+//    sqm.runQuery(sSTR.str());
+//
+//
+//    while ( file >> supp>> conf) {
+//
+//    }
 
     return 0;
 }
