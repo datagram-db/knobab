@@ -8,7 +8,7 @@
 #include <vector>
 #include "knobab/server/tables/KnowledgeBase.h"
 
-std::vector<pattern_mining_result<DeclareDataAware>> pattern_mining(const KnowledgeBase& kb,
+std::pair<std::vector<pattern_mining_result<DeclareDataAware>>, double> pattern_mining(const KnowledgeBase& kb,
                                                                     double support,
                                                                     bool naif,
                                                                     bool init_end,

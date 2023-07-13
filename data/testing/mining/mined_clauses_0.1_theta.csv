@@ -1,0 +1,13 @@
+algorithm,clause,support
+DBoltk,Succession(b+a),0.571429
+DBoltk,Precedence(a+b),0.857143
+DBoltk,ExclChoice(d+e),0.285714
+DBoltk,ExclChoice(c+e),0.285714
+DBoltk,ExclChoice(c+d),0.285714
+DBoltk,ExclChoice(b+e),0.714286
+DBoltk,ExclChoice(b+d),0.714286
+DBoltk,ExclChoice(b+c),0.714286
+DBoltk,ExclChoice(a+e),0.714286
+DBoltk,ExclChoice(a+d),0.714286
+DBoltk,ExclChoice(a+c),0.714286
+DBoltk,ChainSuccession(a+b),0.857143
