@@ -18,12 +18,13 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Config Checkout
-        run: git clone --recurse-submodules -j8 --branch loggen https://github.com/datagram-db/knobab.git knobab && cd knobab
+      #- name: Config Checkout
+      #  run: git clone --recurse-submodules -j8 --branch loggen https://github.com/datagram-db/knobab.git knobab && cd knobab
 
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           submodules: 'true'
+          token: ${{ secrets.GIT_AUTH_TOKEN }}
 
       - name: Configure CMake
         # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
