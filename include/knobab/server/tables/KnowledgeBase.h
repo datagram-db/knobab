@@ -51,6 +51,11 @@ struct pattern_mining_result {
     double           support_declarative_pattern;
     double           confidence_declarative_pattern;
 
+    bool operator==(const pattern_mining_result<T> &rhs) const {
+        return clause == rhs.clause && support_generating_original_pattern == rhs.support_generating_original_pattern &&
+        support_declarative_pattern == rhs.support_declarative_pattern && confidence_declarative_pattern == rhs.confidence_declarative_pattern;
+    }
+
     pattern_mining_result(const pattern_mining_result& orig, const T& clause) :clause(clause),
                                                                                support_generating_original_pattern(
                                                                                        orig.support_generating_original_pattern),

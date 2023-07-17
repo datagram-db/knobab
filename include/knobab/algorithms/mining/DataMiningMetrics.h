@@ -93,6 +93,16 @@ struct DataMiningMetrics {
         return ((double)support(unione)) / sumAll;
     }
 
+    double decl_support(const Rule<act_t>& r) const {
+        std::vector<act_t> unione;
+        for (const auto& x: r.head) unione.emplace_back(x);
+        for (const auto& x: r.tail) unione.emplace_back(x);
+        std::sort(unione.begin(), unione.end());
+        unione.erase(std::unique(unione.begin(), unione.end()), unione.end());
+        return ((double)and_(unione)+(sumAll-and_(r.head))) / sumAll;
+    }
+
+
     /**
      * Rule confidence
      * @param r

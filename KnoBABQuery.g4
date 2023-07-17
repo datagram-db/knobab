@@ -7,6 +7,7 @@ queries : load_data_query
         | set_benchmarking_file
         | dump_log
         | with_model
+        | model
         ;
 
 //

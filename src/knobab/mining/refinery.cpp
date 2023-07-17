@@ -175,8 +175,8 @@ struct ConfusionMatrix {
 
 int main(int argc, char **argv) {
     std::vector<std::string> log_parse_format_type{"HRF", "XES", "TAB"};
-    log_data_format world_format_to_load = TAB_SEPARATED_EVENTS;
-    std::string worlds_file_to_load = "/home/sam/Documents/Repositories/Codebases/knobab/data/testing/mining/confidence_test_chain_succession.tab";
+    log_data_format world_format_to_load = XES1;
+    std::string worlds_file_to_load = "/home/sam/Documents/Repositories/Codebases/knobab/data/testing/mining/1000_10_10.xes";
     double supp = 0.1;
 
     // Loading the different classes
@@ -264,15 +264,29 @@ int main(int argc, char **argv) {
 //        std::cout << "refinery_time=" << refinery_time << std::endl;
 //    }
 
-//TODO AFTER DEBEUGGING
-//    std::stringstream sSTR;
-//    sSTR << "file " << std::quoted();
-//    sqm.runQuery(sSTR.str());
-//
-//
-//    while ( file >> supp>> conf) {
-//
-//    }
+    std::vector<pattern_mining_result<DeclareDataAware>> new_vec;
+
+    std::stringstream sSTR;
+    sSTR << "file "
+    << std::quoted("/home/sam/Documents/Repositories/Codebases/knobab/data/testing/mining/models/model.powerdecl");
+
+    auto actual_model = sqm.loadModelFromFile(sSTR.str());
+
+    std::ifstream file("/home/sam/Documents/Repositories/Codebases/knobab/data/testing/mining/models/sup_conf.tab");
+    std::string line;
+    uint32_t idx = 0;
+    std::string delimiter = "\t";
+    while (getline (file, line)) {
+        pattern_mining_result<DeclareDataAware>& ref = new_vec.emplace_back();
+        ref.clause = actual_model.at(idx);
+        std::istringstream iss(line);
+        std::string token;
+        std::getline(iss, token, '\t');
+        ref.support_declarative_pattern = stod(token);
+        std::getline(iss, token, '\t');
+        ref.confidence_declarative_pattern = stod(token);
+        idx++;
+    }
 
     return 0;
 }

@@ -53,15 +53,15 @@ inline void print_dnf(std::ostream &os, const std::vector<std::unordered_map<std
 
 
 std::ostream &operator<<(std::ostream &os, const DeclareDataAware &aware) {
-    os << /*magic_enum::enum_name*/(aware.casusu);
-    os << '(' << aware.left_act << ", ";
+    os << /*magic_enum::enum_name*/std::quoted(aware.casusu);
+    os << '(' << std::quoted(aware.left_act) << ", ";
     if (aware.dnf_left_map.empty())
         os << "true";
     else
         print_dnf(os, aware.dnf_left_map);
     os << ", ";
     if (!aware.right_act.empty()) {
-        os << aware.right_act << ", ";
+        os << std::quoted(aware.right_act) << ", ";
         if (aware.dnf_right_map.empty())
             os << "true";
         else
@@ -69,7 +69,7 @@ std::ostream &operator<<(std::ostream &os, const DeclareDataAware &aware) {
     } else {
         os << aware.n;
     }
-    os << " )";
+    os << ")";
     if (!aware.conjunctive_map.empty()) {
         os << " where ";
         print_dnf(os, aware.conjunctive_map);
@@ -176,7 +176,9 @@ bool DeclareDataAware::operator==(const DeclareDataAware &rhs) const {
     bool tmp = casusu == rhs.casusu &&
            n == rhs.n &&
            left_act == rhs.left_act &&
+           left_act_id == rhs.left_act_id &&
            right_act == rhs.right_act &&
+           right_act_id == rhs.right_act_id &&
            left_decomposed_atoms == rhs.left_decomposed_atoms &&
            right_decomposed_atoms == rhs.right_decomposed_atoms &&
            conjunctive_map == rhs.conjunctive_map;

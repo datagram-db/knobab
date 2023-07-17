@@ -43,7 +43,7 @@ const std::string query_plan = "queryplan \"nfmcp23\" {\n"
                                  "                                           (G(((EXISTS ~ 1 t #1)) OR t (((EXISTS 1 t #1 activation)) AND t THETA (NEXT (((EXISTS  ~ 1 t #1) U t (EXISTS 1 t #2 target)) OR t (G t (EXISTS  ~ 1 t #1))))  )))\n"
                                  "}";
 
-static inline std::vector<DeclareDataAware> load_and_return(const std::string& world_file_to_load) {
+static inline std::pair<std::vector<pattern_mining_result<DeclareDataAware>>,std::vector<pattern_mining_result<DeclareDataAware>>> load_and_return(const std::string& world_file_to_load) {
     ServerQueryManager sqm;
     std::stringstream ss;
 
@@ -60,160 +60,382 @@ static inline std::vector<DeclareDataAware> load_and_return(const std::string& w
     std::vector<DeclareDataAware> VVV;
     std::pair<std::vector<pattern_mining_result<DeclareDataAware>>, double> result = pattern_mining(sqm.multiple_logs[world_file_to_load].db, supp, false, true, true, false, false);
 
-    std::vector<DeclareDataAware> abs_supp;
+    std::pair<std::vector<pattern_mining_result<DeclareDataAware>>, std::vector<pattern_mining_result<DeclareDataAware>>> values;
     for (const pattern_mining_result<DeclareDataAware>& ref2 : result.first) {
-        const DeclareDataAware& ret = VVV.emplace_back(ref2.clause);
         if (ref2.support_declarative_pattern == 1.0) {
-            abs_supp.emplace_back(ret);
+            values.first.emplace_back(ref2);
+        }
+        else {
+            values.second.emplace_back(ref2);
         }
     }
 
-    return abs_supp;
+    return values;
 }
 
-TEST(mining_tests, surround_not_chain_succession) {
-    std::vector<DeclareDataAware> abs_supp = load_and_return("/home/sam/Documents/Repositories/Codebases/knobab/data/testing/mining/surround_not_chain_succession.tab");
+TEST(mining_tests, exists_absence) {
+    std::pair<std::vector<pattern_mining_result<DeclareDataAware>>,std::vector<pattern_mining_result<DeclareDataAware>>> values =
+            load_and_return("/home/sam/Documents/Repositories/Codebases/knobab/data/testing/mining/exists_absence.tab");
 
-    DeclareDataAware to_find;
-    to_find.casusu = "Surround";
-    to_find.left_act = "a";
-    to_find.right_act = "b";
-    to_find.n = 1;
+    pattern_mining_result<DeclareDataAware> to_find;
+    to_find.clause.casusu = "Exists";
+    to_find.clause.left_act = "a";
+    to_find.clause.left_act_id = 0;
+    to_find.clause.right_act_id = -1;
+    to_find.clause.n = 3;
+    to_find.support_generating_original_pattern = 1.0;
+    to_find.support_declarative_pattern = 1.0;
+    to_find.confidence_declarative_pattern = 1.0;
 
-    DeclareDataAware to_find_1;
-    to_find_1.casusu = "ChainSuccession";
-    to_find_1.left_act = "a";
-    to_find_1.right_act = "b";
-    to_find_1.n = 1;
+    pattern_mining_result<DeclareDataAware> to_find_1;
+    to_find_1.clause.casusu = "Absence";
+    to_find_1.clause.left_act = "a";
+    to_find_1.clause.left_act_id = 0;
+    to_find_1.clause.right_act_id = -1;
+    to_find_1.clause.n = 4;
+    to_find_1.support_generating_original_pattern = 1.0;
+    to_find_1.support_declarative_pattern = 1.0;
+    to_find_1.confidence_declarative_pattern = 1.0;
 
-    ASSERT_TRUE(std::find(abs_supp.begin(), abs_supp.end(), to_find) != abs_supp.end());
-    ASSERT_TRUE(std::find(abs_supp.begin(), abs_supp.end(), to_find_1) == abs_supp.end());
+    ASSERT_TRUE(std::find(values.first.begin(), values.first.end(), to_find) != values.first.end());
 }
 
-TEST(mining_tests, surround_chain_succession) {
-    std::vector<DeclareDataAware> abs_supp = load_and_return("/home/sam/Documents/Repositories/Codebases/knobab/data/testing/mining/surround_chain_succession.tab");
+TEST(mining_tests, init) {
+    std::pair<std::vector<pattern_mining_result<DeclareDataAware>>,std::vector<pattern_mining_result<DeclareDataAware>>> values =
+            load_and_return("/home/sam/Documents/Repositories/Codebases/knobab/data/testing/mining/init.tab");
 
-    DeclareDataAware to_find;
-    to_find.casusu = "Surround";
-    to_find.left_act = "a";
-    to_find.right_act = "b";
-    to_find.n = 1;
+    pattern_mining_result<DeclareDataAware> to_find;
+    to_find.clause.casusu = "Init";
+    to_find.clause.left_act = "a";
+    to_find.clause.left_act_id = 0;
+    to_find.clause.right_act_id = -1;
+    to_find.clause.n = 1;
+    to_find.support_generating_original_pattern = 1.0;
+    to_find.support_declarative_pattern = 1.0;
+    to_find.confidence_declarative_pattern = 1.0;
 
-    DeclareDataAware to_find_1;
-    to_find_1.casusu = "ChainSuccession";
-    to_find_1.left_act = "a";
-    to_find_1.right_act = "b";
-    to_find_1.n = 1;
-
-    ASSERT_TRUE(std::find(abs_supp.begin(), abs_supp.end(), to_find) != abs_supp.end());
-    ASSERT_TRUE(std::find(abs_supp.begin(), abs_supp.end(), to_find_1) != abs_supp.end());
+    ASSERT_TRUE(std::find(values.first.begin(), values.first.end(), to_find) != values.first.end());
 }
 
-TEST(mining_tests, surround) {
-    std::vector<DeclareDataAware> abs_supp = load_and_return("/home/sam/Documents/Repositories/Codebases/knobab/data/testing/mining/surround.tab");
+TEST(mining_tests, end) {
+    std::pair<std::vector<pattern_mining_result<DeclareDataAware>>,std::vector<pattern_mining_result<DeclareDataAware>>> values =
+            load_and_return("/home/sam/Documents/Repositories/Codebases/knobab/data/testing/mining/end.tab");
 
-    DeclareDataAware to_find;
-    to_find.casusu = "Surround";
-    to_find.left_act = "a";
-    to_find.right_act = "b";
-    to_find.n = 1;
+    pattern_mining_result<DeclareDataAware> to_find;
+    to_find.clause.casusu = "End";
+    to_find.clause.left_act = "a";
+    to_find.clause.left_act_id = 2;
+    to_find.clause.right_act_id = -1;
+    to_find.clause.n = 1;
+    to_find.support_generating_original_pattern = 1.0;
+    to_find.support_declarative_pattern = 1.0;
+    to_find.confidence_declarative_pattern = 1.0;
 
-    ASSERT_TRUE(std::find(abs_supp.begin(), abs_supp.end(), to_find) != abs_supp.end());
-}
-
-TEST(mining_tests, response) {
-    std::vector<DeclareDataAware> abs_supp = load_and_return("/home/sam/Documents/Repositories/Codebases/knobab/data/testing/mining/response.tab");
-
-    DeclareDataAware to_find;
-    to_find.casusu = "Response";
-    to_find.left_act = "a";
-    to_find.right_act = "b";
-    to_find.n = 1;
-
-    ASSERT_TRUE(std::find(abs_supp.begin(), abs_supp.end(), to_find) != abs_supp.end());
-}
-
-TEST(mining_tests, precedence_resp_existence) {
-    std::vector<DeclareDataAware> abs_supp = load_and_return("/home/sam/Documents/Repositories/Codebases/knobab/data/testing/mining/precedence_resp_existence.tab");
-
-    DeclareDataAware to_find;
-    to_find.casusu = "Precedence";
-    to_find.left_act = "a";
-    to_find.right_act = "b";
-    to_find.n = 1;
-
-    ASSERT_TRUE(std::find(abs_supp.begin(), abs_supp.end(), to_find) != abs_supp.end());
+    ASSERT_TRUE(std::find(values.first.begin(), values.first.end(), to_find) != values.first.end());
 }
 
 TEST(mining_tests, precedence) {
-    std::vector<DeclareDataAware> abs_supp = load_and_return("/home/sam/Documents/Repositories/Codebases/knobab/data/testing/mining/precedence.tab");
+    std::pair<std::vector<pattern_mining_result<DeclareDataAware>>,std::vector<pattern_mining_result<DeclareDataAware>>> values =
+            load_and_return("/home/sam/Documents/Repositories/Codebases/knobab/data/testing/mining/precedence.tab");
 
-    DeclareDataAware to_find;
-    to_find.casusu = "Precedence";
-    to_find.left_act = "a";
-    to_find.right_act = "b";
-    to_find.n = 1;
+    pattern_mining_result<DeclareDataAware> to_find;
+    to_find.clause.casusu = "Precedence";
+    to_find.clause.left_act = "a";
+    to_find.clause.left_act_id = 0;
+    to_find.clause.right_act = "b";
+    to_find.clause.right_act_id = 2;
+    to_find.clause.n = 1;
+    to_find.support_generating_original_pattern = 0.5;
+    to_find.support_declarative_pattern = 1.0;
+    to_find.confidence_declarative_pattern = 1.0;
 
-    ASSERT_TRUE(std::find(abs_supp.begin(), abs_supp.end(), to_find) != abs_supp.end());
+    ASSERT_TRUE(std::find(values.first.begin(), values.first.end(), to_find) != values.first.end());
 }
 
-TEST(mining_tests, not_chain_succession) {
-    std::vector<DeclareDataAware> abs_supp = load_and_return("/home/sam/Documents/Repositories/Codebases/knobab/data/testing/mining/not_chain_succession.tab");
+TEST(mining_tests, chain_precedence) {
+    std::pair<std::vector<pattern_mining_result<DeclareDataAware>>,std::vector<pattern_mining_result<DeclareDataAware>>> values =
+            load_and_return("/home/sam/Documents/Repositories/Codebases/knobab/data/testing/mining/chain_precedence.tab");
 
-    DeclareDataAware to_find;
-    to_find.casusu = "ChainSuccession";
-    to_find.left_act = "a";
-    to_find.right_act = "b";
-    to_find.n = 1;
+    pattern_mining_result<DeclareDataAware> to_find;
+    to_find.clause.casusu = "ChainPrecedence";
+    to_find.clause.left_act = "a";
+    to_find.clause.left_act_id = 1;
+    to_find.clause.right_act = "b";
+    to_find.clause.right_act_id = 0;
+    to_find.clause.n = 1;
+    to_find.support_generating_original_pattern = 0.75;
+    to_find.support_declarative_pattern = 1.0;
+    to_find.confidence_declarative_pattern = 1.0;
 
-    ASSERT_TRUE(std::find(abs_supp.begin(), abs_supp.end(), to_find) == abs_supp.end());
+    ASSERT_TRUE(std::find(values.first.begin(), values.first.end(), to_find) != values.first.end());
+}
+
+TEST(mining_tests, chain_precedence_force_right_branch) {
+    std::pair<std::vector<pattern_mining_result<DeclareDataAware>>,std::vector<pattern_mining_result<DeclareDataAware>>> values =
+            load_and_return("/home/sam/Documents/Repositories/Codebases/knobab/data/testing/mining/chain_precedence_force_right_branch.tab");
+
+    pattern_mining_result<DeclareDataAware> to_find;
+    to_find.clause.casusu = "ChainPrecedence";
+    to_find.clause.left_act = "a";
+    to_find.clause.left_act_id = 1;
+    to_find.clause.right_act = "b";
+    to_find.clause.right_act_id = 0;
+    to_find.clause.n = 1;
+    to_find.support_generating_original_pattern = 0.8;
+    to_find.support_declarative_pattern = 1.0;
+    to_find.confidence_declarative_pattern = 1.0;
+
+    ASSERT_TRUE(std::find(values.first.begin(), values.first.end(), to_find) != values.first.end());
 }
 
 TEST(mining_tests, choice) {
-    std::vector<DeclareDataAware> abs_supp = load_and_return("/home/sam/Documents/Repositories/Codebases/knobab/data/testing/mining/choice.tab");
+    std::pair<std::vector<pattern_mining_result<DeclareDataAware>>,std::vector<pattern_mining_result<DeclareDataAware>>> values =
+            load_and_return("/home/sam/Documents/Repositories/Codebases/knobab/data/testing/mining/choice.tab");
 
-    DeclareDataAware to_find;
-    to_find.casusu = "Choice";
-    to_find.left_act = "a";
-    to_find.right_act = "b";
-    to_find.n = 1;
+    pattern_mining_result<DeclareDataAware> to_find;
+    to_find.clause.casusu = "Choice";
+    to_find.clause.left_act = "a";
+    to_find.clause.left_act_id = 0;
+    to_find.clause.right_act = "b";
+    to_find.clause.right_act_id = 3;
+    to_find.clause.n = 1;
+    to_find.support_generating_original_pattern = 0.25;
+    to_find.support_declarative_pattern = 1.0;
+    to_find.confidence_declarative_pattern = 1.0;
 
-    ASSERT_TRUE(std::find(abs_supp.begin(), abs_supp.end(), to_find) != abs_supp.end());
+    ASSERT_TRUE(std::find(values.first.begin(), values.first.end(), to_find) != values.first.end());
 }
 
+////TODO Below is a case where a Choice(A,B) would be better than any more refined clauses, but we aren't sure we want to add it
+////TEST(mining_tests, choice_edge_case) {
+////    std::vector<DeclareDataAware> abs_supp = load_and_return("/home/sam/Documents/Repositories/Codebases/knobab/data/testing/mining/choice_2.tab");
+////
+////    DeclareDataAware to_find;
+////    to_find.casusu = "Choice";
+////    to_find.left_act = "a";
+////    to_find.right_act = "b";
+////    to_find.n = 1;
+////
+////    ASSERT_TRUE(std::find(abs_supp.begin(), abs_supp.end(), to_find) != abs_supp.end());
 
-TEST(mining_tests, chain_precedence) {
-    std::vector<DeclareDataAware> abs_supp = load_and_return("/home/sam/Documents/Repositories/Codebases/knobab/data/testing/mining/chain_precedence.tab");
+TEST(mining_tests, response) {
+    std::pair<std::vector<pattern_mining_result<DeclareDataAware>>,std::vector<pattern_mining_result<DeclareDataAware>>> values =
+            load_and_return("/home/sam/Documents/Repositories/Codebases/knobab/data/testing/mining/response.tab");
 
-    DeclareDataAware to_find;
-    to_find.casusu = "ChainPrecedence";
-    to_find.left_act = "a";
-    to_find.right_act = "b";
-    to_find.n = 1;
+    pattern_mining_result<DeclareDataAware> to_find;
+    to_find.clause.casusu = "Response";
+    to_find.clause.left_act = "a";
+    to_find.clause.left_act_id = 0;
+    to_find.clause.right_act = "b";
+    to_find.clause.right_act_id = 2;
+    to_find.clause.n = 1;
+    to_find.support_generating_original_pattern = 0.75;
+    to_find.support_declarative_pattern = 1.0;
+    to_find.confidence_declarative_pattern = 1.0;
 
-    ASSERT_TRUE(std::find(abs_supp.begin(), abs_supp.end(), to_find) != abs_supp.end());
+    ASSERT_TRUE(std::find(values.first.begin(), values.first.end(), to_find) != values.first.end());
 }
 
 TEST(mining_tests, chain_response) {
-    std::vector<DeclareDataAware> abs_supp = load_and_return("/home/sam/Documents/Repositories/Codebases/knobab/data/testing/mining/chain_response.tab");
+    std::pair<std::vector<pattern_mining_result<DeclareDataAware>>,std::vector<pattern_mining_result<DeclareDataAware>>> values =
+            load_and_return("/home/sam/Documents/Repositories/Codebases/knobab/data/testing/mining/chain_response.tab");
 
-    DeclareDataAware to_find;
-    to_find.casusu = "ChainResponse";
-    to_find.left_act = "a";
-    to_find.right_act = "b";
-    to_find.n = 1;
+    pattern_mining_result<DeclareDataAware> to_find;
+    to_find.clause.casusu = "ChainResponse";
+    to_find.clause.left_act = "a";
+    to_find.clause.left_act_id = 0;
+    to_find.clause.right_act = "b";
+    to_find.clause.right_act_id = 1;
+    to_find.clause.n = 1;
+    to_find.support_generating_original_pattern = 0.8;
+    to_find.support_declarative_pattern = 1.0;
+    to_find.confidence_declarative_pattern = 1.0;
 
-    ASSERT_TRUE(std::find(abs_supp.begin(), abs_supp.end(), to_find) != abs_supp.end());
+    ASSERT_TRUE(std::find(values.first.begin(), values.first.end(), to_find) != values.first.end());
 }
 
-//TODO Below is a case where a Choice(A,B) would be better than any more refined clauses, but we aren't sure we want to add it
-//TEST(mining_tests, choice_edge_case) {
-//    std::vector<DeclareDataAware> abs_supp = load_and_return("/home/sam/Documents/Repositories/Codebases/knobab/data/testing/mining/choice_2.tab");
+TEST(mining_tests, responded_existence) {
+    std::pair<std::vector<pattern_mining_result<DeclareDataAware>>,std::vector<pattern_mining_result<DeclareDataAware>>> values =
+            load_and_return("/home/sam/Documents/Repositories/Codebases/knobab/data/testing/mining/responded_existence.tab");
+
+    pattern_mining_result<DeclareDataAware> to_find;
+    to_find.clause.casusu = "RespExistence";
+    to_find.clause.left_act = "a";
+    to_find.clause.left_act_id = 2;
+    to_find.clause.right_act = "b";
+    to_find.clause.right_act_id = 1;
+    to_find.clause.n = 1;
+    to_find.support_generating_original_pattern = 0.4;
+    to_find.support_declarative_pattern = 1.0;
+    to_find.confidence_declarative_pattern = 1.0;
+
+    ASSERT_TRUE(std::find(values.first.begin(), values.first.end(), to_find) != values.first.end());
+}
+
+TEST(mining_tests, excl_choice) {
+    std::pair<std::vector<pattern_mining_result<DeclareDataAware>>,std::vector<pattern_mining_result<DeclareDataAware>>> values =
+            load_and_return("/home/sam/Documents/Repositories/Codebases/knobab/data/testing/mining/excl_choice.tab");
+
+    pattern_mining_result<DeclareDataAware> to_find;
+    to_find.clause.casusu = "ExclChoice";
+    to_find.clause.left_act = "a";
+    to_find.clause.left_act_id = 0;
+    to_find.clause.right_act = "b";
+    to_find.clause.right_act_id = 3;
+    to_find.clause.n = 1;
+    to_find.support_generating_original_pattern = 0;
+    to_find.support_declarative_pattern = 1.0;
+    to_find.confidence_declarative_pattern = 1.0;
+
+    ASSERT_TRUE(std::find(values.first.begin(), values.first.end(), to_find) != values.first.end());
+}
+
+TEST(mining_tests, coexistence) {
+    std::pair<std::vector<pattern_mining_result<DeclareDataAware>>,std::vector<pattern_mining_result<DeclareDataAware>>> values =
+            load_and_return("/home/sam/Documents/Repositories/Codebases/knobab/data/testing/mining/coexistence.tab");
+
+    pattern_mining_result<DeclareDataAware> to_find;
+    to_find.clause.casusu = "CoExistence";
+    to_find.clause.left_act = "a";
+    to_find.clause.left_act_id = 2;
+    to_find.clause.right_act = "b";
+    to_find.clause.right_act_id = 1;
+    to_find.clause.n = 1;
+    to_find.support_generating_original_pattern = 0.4;
+    to_find.support_declarative_pattern = 1.0;
+    to_find.confidence_declarative_pattern = 1.0;
+
+    pattern_mining_result<DeclareDataAware> to_find_mirror = to_find;
+    std::swap(to_find_mirror.clause.left_act, to_find_mirror.clause.right_act);
+    std::swap(to_find_mirror.clause.left_act_id, to_find_mirror.clause.right_act_id);
+
+    ASSERT_TRUE(std::find(values.first.begin(), values.first.end(), to_find) != values.first.end() || std::find(values.first.begin(), values.first.end(), to_find_mirror) != values.first.end() );
+}
+
+TEST(mining_tests, surround) {
+    std::pair<std::vector<pattern_mining_result<DeclareDataAware>>,std::vector<pattern_mining_result<DeclareDataAware>>> values =
+            load_and_return("/home/sam/Documents/Repositories/Codebases/knobab/data/testing/mining/surround.tab");
+
+    pattern_mining_result<DeclareDataAware> to_find;
+    to_find.clause.casusu = "Surround";
+    to_find.clause.left_act = "a";
+    to_find.clause.left_act_id = 2;
+    to_find.clause.right_act = "b";
+    to_find.clause.right_act_id = 1;
+    to_find.clause.n = 1;
+    to_find.support_generating_original_pattern = 1.0;
+    to_find.support_declarative_pattern = 1.0;
+    to_find.confidence_declarative_pattern = 1.0;
+
+    ASSERT_TRUE(std::find(values.first.begin(), values.first.end(), to_find) != values.first.end());
+}
+
+TEST(mining_tests, surround_not_chain_succession) {
+    std::pair<std::vector<pattern_mining_result<DeclareDataAware>>,std::vector<pattern_mining_result<DeclareDataAware>>> values =
+            load_and_return("/home/sam/Documents/Repositories/Codebases/knobab/data/testing/mining/surround_not_chain_succession.tab");
+
+    pattern_mining_result<DeclareDataAware> to_find;
+    to_find.clause.casusu = "Surround";
+    to_find.clause.left_act = "a";
+    to_find.clause.left_act_id = 0;
+    to_find.clause.right_act = "b";
+    to_find.clause.right_act_id = 1;
+    to_find.clause.n = 1;
+    to_find.support_generating_original_pattern = 1.0;
+    to_find.support_declarative_pattern = 1.0;
+    to_find.confidence_declarative_pattern = 1.0;
+
+    pattern_mining_result<DeclareDataAware> to_find_1;
+    to_find_1.clause.casusu = "ChainSuccession";
+    to_find_1.clause.left_act = "a";
+    to_find_1.clause.left_act_id = 0;
+    to_find_1.clause.right_act = "b";
+    to_find_1.clause.right_act_id = 1;
+    to_find_1.clause.n = 1;
+    to_find_1.support_generating_original_pattern = 1.0;
+    to_find_1.support_declarative_pattern = 1.0;
+    to_find_1.confidence_declarative_pattern = 1.0;
+
+    ASSERT_TRUE((std::find(values.first.begin(), values.first.end(), to_find) != values.first.end()) && (std::find(values.first.begin(), values.first.end(), to_find_1) == values.first.end()));
+}
+
+TEST(mining_tests, surround_chain_succession) {
+    std::pair<std::vector<pattern_mining_result<DeclareDataAware>>,std::vector<pattern_mining_result<DeclareDataAware>>> values =
+            load_and_return("/home/sam/Documents/Repositories/Codebases/knobab/data/testing/mining/surround_chain_succession.tab");
+
+    pattern_mining_result<DeclareDataAware> to_find;
+    to_find.clause.casusu = "Surround";
+    to_find.clause.left_act = "a";
+    to_find.clause.left_act_id = 0;
+    to_find.clause.right_act = "b";
+    to_find.clause.right_act_id = 1;
+    to_find.clause.n = 1;
+    to_find.support_generating_original_pattern = 1.0;
+    to_find.support_declarative_pattern = 1.0;
+    to_find.confidence_declarative_pattern = 1.0;
+
+    pattern_mining_result<DeclareDataAware> to_find_1;
+    to_find_1.clause.casusu = "ChainSuccession";
+    to_find_1.clause.left_act = "a";
+    to_find_1.clause.left_act_id = 0;
+    to_find_1.clause.right_act = "b";
+    to_find_1.clause.right_act_id = 1;
+    to_find_1.clause.n = 1;
+    to_find_1.support_generating_original_pattern = 1.0;
+    to_find_1.support_declarative_pattern = 1.0;
+    to_find_1.confidence_declarative_pattern = 1.0;
+
+    ASSERT_TRUE((std::find(values.first.begin(), values.first.end(), to_find) != values.first.end()) && (std::find(values.first.begin(), values.first.end(), to_find_1) != values.first.end()));
+}
+
+TEST(mining_tests, not_chain_succession) {
+    std::pair<std::vector<pattern_mining_result<DeclareDataAware>>,std::vector<pattern_mining_result<DeclareDataAware>>> values =
+            load_and_return("/home/sam/Documents/Repositories/Codebases/knobab/data/testing/mining/not_chain_succession.tab");
+
+    pattern_mining_result<DeclareDataAware> to_find;
+    to_find.clause.casusu = "ChainSuccession";
+    to_find.clause.left_act = "a";
+    to_find.clause.left_act_id = 0;
+    to_find.clause.right_act = "b";
+    to_find.clause.right_act_id = 1;
+    to_find.clause.n = 1;
+    to_find.support_generating_original_pattern = (3.0/7.0);
+    to_find.support_declarative_pattern = 1.0;
+    to_find.confidence_declarative_pattern = 0.6;
+
+    ASSERT_TRUE(std::find(values.first.begin(), values.first.end(), to_find) == values.first.end());
+}
+
+TEST(mining_tests, succession) {
+    std::pair<std::vector<pattern_mining_result<DeclareDataAware>>,std::vector<pattern_mining_result<DeclareDataAware>>> values =
+            load_and_return("/home/sam/Documents/Repositories/Codebases/knobab/data/testing/mining/succession.tab");
+
+    pattern_mining_result<DeclareDataAware> to_find;
+    to_find.clause.casusu = "Succession";
+    to_find.clause.left_act = "a";
+    to_find.clause.left_act_id = 0;
+    to_find.clause.right_act = "b";
+    to_find.clause.right_act_id = 1;
+    to_find.clause.n = 1;
+    to_find.support_generating_original_pattern = 1.0;
+    to_find.support_declarative_pattern = 1.0;
+    to_find.confidence_declarative_pattern = 1.0;
+
+    ASSERT_TRUE(std::find(values.first.begin(), values.first.end(), to_find) != values.first.end());
+}
+
+//TEST(mining_tests, succession_confidence) {
+//    std::pair<std::vector<pattern_mining_result<DeclareDataAware>>,std::vector<pattern_mining_result<DeclareDataAware>>> values =
+//            load_and_return("/home/sam/Documents/Repositories/Codebases/knobab/data/testing/mining/succession_confidence.tab");
 //
-//    DeclareDataAware to_find;
-//    to_find.casusu = "Choice";
-//    to_find.left_act = "a";
-//    to_find.right_act = "b";
-//    to_find.n = 1;
+//    pattern_mining_result<DeclareDataAware> to_find;
+//    to_find.clause.casusu = "Succession";
+//    to_find.clause.left_act = "a";
+//    to_find.clause.right_act = "b";
+//    to_find.clause.n = 1;
+//    to_find.support_generating_original_pattern = 0.75;
+//    to_find.support_declarative_pattern = 0.75;
+//    to_find.confidence_declarative_pattern = (2.0/3.0);
 //
-//    ASSERT_TRUE(std::find(abs_supp.begin(), abs_supp.end(), to_find) != abs_supp.end());
+//    ASSERT_TRUE(std::find(values.second.begin(), values.second.end(), to_find) != values.second.end());
+//}
