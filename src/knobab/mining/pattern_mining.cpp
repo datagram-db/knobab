@@ -28,7 +28,7 @@ void bolt_algorithm(const std::string& logger_file,
         env.load_log(conf.format, conf.with_data, file.string(), true, if_);
     }
     std::filesystem::path declare_file_path, maxsat;
-    std::cout << "Starting from now!" << std::endl;
+//    std::cout << "Starting from now!" << std::endl;
     std::pair<std::vector<pattern_mining_result<DeclareDataAware>>, double> list = pattern_mining(env.db, support, false, true, true, false, false);
 
 //    bool filePreexists1 = std::filesystem::exists("/home/sam/Documents/Repositories/CodeBases/knobab/data/benchmarking/mining/mined_clauses.csv");
@@ -41,7 +41,7 @@ void bolt_algorithm(const std::string& logger_file,
 //
     for (const pattern_mining_result<DeclareDataAware>& result : list.first) {
 //#ifdef DEBUG
-        std::cout << result << std::endl;
+//        std::cout << result << std::endl;
 //#endif
 //        if(result.clause.right_act != "") {
 //            std::cout << "BOLT" << ","
@@ -167,7 +167,7 @@ struct GetAwareData {
 static inline void
 getAware(const KnowledgeBase &kb, bool only_precise_temporal_patterns,
          const CountTemplate &count_table, uint64_t minimum_support_threshold,
-         const double& decl_sup, const act_t A, const act_t B, DeclareDataAware &clause,
+         const pattern_mining_result<Rule<act_t>>& candidate, const act_t A, const act_t B, DeclareDataAware &clause,
          std::vector<pattern_mining_result<DeclareDataAware>>& clauses,
          const bool &heur_cs_ab, const bool &heur_cs_ba, const bool &heur_s,
          GetAwareData& data,
@@ -180,15 +180,7 @@ getAware(const KnowledgeBase &kb, bool only_precise_temporal_patterns,
                               ntraces :
                               minimum_support_threshold;
 
-#ifdef FUTURE
-    bool alles_response = true, alles_precedence = true, alles_altresponse = true, alles_delayed_surround =true, alles_initialised_chain_response = true;
-#endif
-
     bool alles_response = true, alles_precedence = true, alles_altresponse = true, alles_succession_ab = true, alles_succession_ba = true;
-
-#ifdef FUTURE
-    size_t alles_not_precedence = 0, alles_not_response = 0, alles_not_altresponse = 0, alles_not_delayed_surround = 0, alles_not_initialised_chain_response = 0;
-#endif
     size_t alles_not_precedence = 0, alles_not_response = 0, alles_not_altresponse = 0, alles_not_succession_ab = data.r_lb_violations.cardinality(), alles_not_succession_ba = data.p_lb_violations.cardinality();
 //    std::vector<trace_t> removed_traces_from_response;
 
@@ -207,25 +199,25 @@ getAware(const KnowledgeBase &kb, bool only_precise_temporal_patterns,
     auto b_beginend = kb.timed_dataless_exists(B);
 // As I obtained the rule, there should be some data pertaining to it!
     DEBUG_ASSERT(b_beginend.first != b_beginend.second);
-    size_t conf_counting = 0;
-    double not_activated = 0;
-    uint32_t trace_id = a_beginend.first->entry.id.parts.trace_id, prev_trace_id = a_beginend.first->entry.id.parts.trace_id;
+    uint32_t activation_count = 0, not_activated = 0, a_trace_id = a_beginend.first->entry.id.parts.trace_id, a_prev_trace_id = a_trace_id,
+    b_trace_id = b_beginend.first->entry.id.parts.trace_id;
 
-    if(trace_id != 0) {
-        not_activated += trace_id;
+    if(a_trace_id != 0) {
+        not_activated += a_trace_id;
     }
 
     while (a_beginend.first != a_beginend.second) {
         if ((!alles_precedence) && (!alles_response) && (!alles_altresponse) && (!alles_succession_ab) && (!alles_succession_ba)) {
             break;
         }
-        conf_counting++;
-        trace_id = a_beginend.first->entry.id.parts.trace_id;
 
-        bool alreadyVisited = (trace_id == prev_trace_id);
+        a_trace_id = a_beginend.first->entry.id.parts.trace_id;
+        b_trace_id = b_beginend.first->entry.id.parts.trace_id;
+
+        bool alreadyVisited = (a_trace_id == a_prev_trace_id);
         if (!alreadyVisited) {
-            not_activated += (trace_id - prev_trace_id - 1);
-            prev_trace_id = trace_id;
+            not_activated += (a_trace_id - a_prev_trace_id - 1);
+            a_prev_trace_id = a_trace_id;
         }
 
 //            if ((clause.left_act == "c") && (clause.right_act == "b") && (trace_id == 7)) {
@@ -242,63 +234,52 @@ getAware(const KnowledgeBase &kb, bool only_precise_temporal_patterns,
 //            }
 
         /* We have As on their own */
-        if ((b_beginend.first == b_beginend.second) || (a_beginend.first->entry.id.parts.trace_id <
-                                                      b_beginend.first->entry.id.parts.trace_id)) {
+        if ((b_beginend.first == b_beginend.second) || (a_trace_id < b_trace_id)) {
+            activation_count++;
             // Problem 1)
             // This might be a valid precedence, as nothing is stated
             // to what should happen after the A, but I cannot exploit
             // for a response: therefore, I'm counting it
-            if (!alreadyVisited) {
-                conf_counting++;
-                decrease_support_X(kb, expected_support, alles_precedence, alles_not_precedence);
-                decrease_support_X(kb, expected_support, alles_response, alles_not_response);
+            decrease_support_X(kb, expected_support, alles_precedence, alles_not_precedence);
+            decrease_support_X(kb, expected_support, alles_response, alles_not_response);
 
-                if (lb) {
-                    data.r_activation_traces.first.add(trace_id);
-                    data.p_activation_traces.second.add(trace_id);
+            if (lb) {
+                data.r_activation_traces.first.add(a_trace_id);
+                data.p_activation_traces.second.add(a_trace_id);
 
-                    data.r_lb_violations.add(trace_id);
-                    data.p_lb_violations.add(trace_id);
-                }
-                else if (rb) {
-                    /* For either Succesion(A,B)/Succesion(B,A) we can't have As on their own (the checks below are purely for sanity) */
-                    if (!data.r_lb_violations.contains(trace_id)) {
-                        decrease_support_X(kb, expected_support, alles_succession_ab, alles_not_succession_ab);
-                    }
-                    if (!data.p_lb_violations.contains(trace_id)) {
-                        decrease_support_X(kb, expected_support, alles_succession_ba, alles_not_succession_ba);
-                    }
-                }
-            }
-#ifdef FUTURE
-            decrease_support_X(kb, expected_support, alles_delayed_surround, alles_not_delayed_surround);
-#endif
-            // Now, skipping to the next trace, as there is no more information for as
-            fast_forward_equals(trace_id, a_beginend.first, a_beginend.second);
-            continue;
-        }
-        // Otherwise, I have something to check related to B!
-        /* We have B's on their own */
-        if ((a_beginend.first == a_beginend.second) || a_beginend.first->entry.id.parts.trace_id >
-            b_beginend.first->entry.id.parts.trace_id) {
-            //TODO THIS CODE IS IDENTICAL TO THE SAME CONDITION BELOW, FUNCTION IF THIS WORKS
-            //TODO Check if below actually ever has any effect
-            if(lb) {
-                data.r_activation_traces.second.add(trace_id);
-                data.p_activation_traces.first.add(trace_id);
+                data.r_lb_violations.add(a_trace_id);
+                data.p_lb_violations.add(a_trace_id);
             }
             else if (rb) {
-                /* For either Succesion(A,B)/Succesion(B,A) we can't have Bs on their own (the checks below are purely for sanity) */
-                if (!data.r_lb_violations.contains(b_beginend.first->entry.id.parts.trace_id)) {
-                    decrease_support_X(kb, expected_support, alles_succession_ab, alles_not_succession_ab);
-                }
-                if (!data.p_lb_violations.contains(b_beginend.first->entry.id.parts.trace_id)) {
+                data.r_activation_traces.second.add(a_trace_id);
+                data.p_activation_traces.first.add(a_trace_id);
+
+                if (!data.p_lb_violations.contains(a_trace_id)) {
                     decrease_support_X(kb, expected_support, alles_succession_ba, alles_not_succession_ba);
                 }
             }
 
+            // Now, skipping to the next trace, as there is no more information for as
+            fast_forward_equals(a_trace_id, a_beginend.first, a_beginend.second);
+            continue;
+        }
+        /* We have B's on their own */
+        if ((a_beginend.first == a_beginend.second) || a_trace_id > b_trace_id) {
+            if(lb) {
+                data.r_activation_traces.second.add(a_trace_id);
+                data.p_activation_traces.first.add(a_trace_id);
+            }
+            else if (rb) {
+                data.r_activation_traces.first.add(a_trace_id);
+                data.p_activation_traces.second.add(a_trace_id);
+
+                if (!data.r_lb_violations.contains(a_trace_id)) {
+                    decrease_support_X(kb, expected_support, alles_succession_ab, alles_not_succession_ab);
+                }
+            }
+
             // Moving b until I find something related to b. A is kept fixed and not incremented
-            fast_forward_lower(trace_id, b_beginend.first, b_beginend.second);
+            fast_forward_lower(a_trace_id, b_beginend.first, b_beginend.second);
             // Not setting the current trace to be visited, as we need to fast-forward B first
             continue;
         }
@@ -313,65 +294,47 @@ getAware(const KnowledgeBase &kb, bool only_precise_temporal_patterns,
         // to the precedence, and therefore this should be decreased
         // Still, this consideration should be performed only up until
         // the first event is visited
-#ifdef FUTURE
-        bool intialised_chain_response_checked = false;
-#endif
+
+        activation_count++;
 
         if (lb) {
-            data.r_activation_traces.first.add(trace_id);
-            data.p_activation_traces.second.add(trace_id);
+            data.r_activation_traces.first.add(a_trace_id);
+            data.r_activation_traces.second.add(a_trace_id);
+            data.p_activation_traces.first.add(a_trace_id);
+            data.p_activation_traces.second.add(a_trace_id);
         }
 
-        if ((b_beginend.first != b_beginend.second) && (a_beginend.first != a_beginend.second)  && (b_beginend.first->entry.id.parts.event_id >
+        if ((b_beginend.first != b_beginend.second) && (a_beginend.first != a_beginend.second) && (b_beginend.first->entry.id.parts.event_id >
             a_beginend.first->entry.id.parts.event_id)) {
-            //TODO Refactor below (left branch for precedence is the same as alles_not_precedence)
             decrease_support_X(kb, expected_support, alles_precedence, alles_not_precedence);
-#ifdef FUTURE
-            decrease_support_X(kb, expected_support, alles_initialised_chain_response, alles_not_initialised_chain_response);
-            intialised_chain_response_checked = true;
-#endif
 
             if (lb) {
-                data.p_lb_violations.add(trace_id);
+                data.p_lb_violations.add(a_trace_id);
             }
-            //TODO Does below ever do anything?
-//            if (rb && !data.p_lb_violations.contains(trace_id)) {
-//                /* In this case having some a...b harms ChainSuccession(B,A) as Precedence(B,A) is harmed */
-//                decrease_support_X(kb, expected_support, alles_succession_ba, alles_not_succession_ba);
-//            }
+            if (rb) {
+                /* Found a case for Succession(B,A) where Precedence(B,A) is violated (e.g. B) */
+                if (!data.r_lb_violations.contains(a_trace_id)) {
+                    decrease_support_X(kb, expected_support, alles_succession_ba, alles_not_succession_ba);
+                }
+            }
         }
 
-// While I'm scanning the A events within the same trace
-//                            all_altresponse_in_trace = true;
-#ifdef FUTURE
-        bool delayed_surround_checked = false;
-#endif
+        // While I'm scanning the A events within the same trace
+//        all_altresponse_in_trace = true;
         while ((a_beginend.first != a_beginend.second) &&
-               (a_beginend.first->entry.id.parts.trace_id == trace_id)) {
-#ifdef FUTURE
-            if(a_beginend.first->prev->entry.id.parts.act != B && !delayed_surround_checked) {
-                decrease_support_X(kb, expected_support, alles_delayed_surround, alles_not_delayed_surround);
-                delayed_surround_checked = true;
-            }
-#endif
+               (a_beginend.first->entry.id.parts.trace_id == a_trace_id)) {
             // ignoring all of the B events that are not relevant for the task!
             while ((b_beginend.first != b_beginend.second) &&
-                   (b_beginend.first->entry.id.parts.trace_id == trace_id) &&
+                   (b_beginend.first->entry.id.parts.trace_id == a_trace_id) &&
                    (b_beginend.first->entry.id.parts.event_id <
                     a_beginend.first->entry.id.parts.event_id)) {
                 b_beginend.first++;
             }
             if ((b_beginend.first != b_beginend.second) &&
-                (b_beginend.first->entry.id.parts.trace_id == trace_id) &&
+                (b_beginend.first->entry.id.parts.trace_id == a_trace_id) &&
                 (b_beginend.first->entry.id.parts.event_id >
                  a_beginend.first->entry.id.parts.event_id)) {
                 // Ok, I have a match!
-#ifdef FUTURE
-                if(a_beginend.first->next != b_beginend.first && !intialised_chain_response_checked) {
-                    decrease_support_X(kb, expected_support, alles_initialised_chain_response, alles_not_initialised_chain_response);
-                    intialised_chain_response_checked = true;
-                }
-#endif
             }
             else {
                 // If there is no match for the B event, then I'm setting this to false
@@ -380,22 +343,13 @@ getAware(const KnowledgeBase &kb, bool only_precise_temporal_patterns,
                 decrease_support_X(kb, expected_support, alles_response, alles_not_response);
 
                 if (lb) {
-                    data.r_lb_violations.add(trace_id);
+                    data.r_lb_violations.add(a_trace_id);
                 }
-                if (rb && !data.p_lb_violations.contains(trace_id)) {
-                    /* We found b...a, so harms ChainSuccession(A,B) as Response(A,B) is harmed */
+                if (rb && !data.p_lb_violations.contains(a_trace_id)) {
+                    /* Found a case for Succession(B,A) where Response(B,A) is violated (e.g. B) */
                     decrease_support_X(kb, expected_support, alles_succession_ba, alles_not_succession_ba);
                 }
 
-#ifdef FUTURE
-                if(!delayed_surround_checked) {
-                    decrease_support_X(kb, expected_support, alles_delayed_surround, alles_not_delayed_surround);
-                }
-                if(a_beginend.first->next->entry.id.parts.act != B && !intialised_chain_response_checked) {
-                    decrease_support_X(kb, expected_support, alles_initialised_chain_response, alles_not_initialised_chain_response);
-                    intialised_chain_response_checked = true;
-                }
-#endif
                 break;
             }
 //                        {
@@ -413,38 +367,12 @@ getAware(const KnowledgeBase &kb, bool only_precise_temporal_patterns,
 //                        decrease_support_X(kb, expected_support, alles_altresponse, alles_not_altresponse);
 //                    }
 
-        fast_forward_equals(trace_id, a_beginend.first, a_beginend.second);
-        fast_forward_equals(trace_id, b_beginend.first, b_beginend.second);
+        fast_forward_equals(a_trace_id, a_beginend.first, a_beginend.second);
+        fast_forward_equals(a_trace_id, b_beginend.first, b_beginend.second);
     }
 
-    /* If we scanned all the As but there are Bs still remaining on their own */
-    //TODO THIS CODE IS IDENTICAL TO THE SAME CONDITION ABOVE, FUNCTION IF THIS WORKS
-//    while ((b_beginend.first != b_beginend.second)) {
-//        trace_id = b_beginend.first->entry.id.parts.trace_id;
-
-//        //TODO Check if below actually ever has any effect
-//        if(lb) {
-//            data.r_activation_traces.second.add(trace_id);
-//            data.p_activation_traces.first.add(trace_id);
-//        }
-//        else if (rb) {
-//            /* For either Succesion(A,B)/Succesion(B,A) we can't have Bs on their own (the checks below are purely for sanity) */
-//            if (!data.r_lb_violations.contains(b_beginend.first->entry.id.parts.trace_id)) {
-//                decrease_support_X(kb, expected_support, alles_succession_ab, alles_not_succession_ab);
-//            }
-//            if (!data.p_lb_violations.contains(b_beginend.first->entry.id.parts.trace_id)) {
-//                decrease_support_X(kb, expected_support, alles_succession_ba, alles_not_succession_ba);
-//            }
-//        }
-
-//        // Moving b until I find something related to b. A is kept fixed and not incremented
-//        fast_forward_lower(trace_id, b_beginend.first, b_beginend.second);
-//        // Not setting the current trace to be visited, as we need to fast-forward B first
-//    }
-
-
-    if((ntraces - 1) != prev_trace_id) {
-        not_activated += ((ntraces - 1) - prev_trace_id);
+    if((ntraces - 1) != a_prev_trace_id) {
+        not_activated += ((ntraces - 1) - a_prev_trace_id);
     }
 
     // This is still computed, as it is required for both 1) and 2)
@@ -464,7 +392,7 @@ getAware(const KnowledgeBase &kb, bool only_precise_temporal_patterns,
 
     a_beginend = kb.timed_dataless_exists(A);
     auto start = a_beginend.first;
-    prev_trace_id = a_beginend.first != a_beginend.second ? a_beginend.first->entry.id.parts.trace_id : -1;
+    a_prev_trace_id = a_beginend.first != a_beginend.second ? a_beginend.first->entry.id.parts.trace_id : -1;
     bool forward_prec = false, forward_resp = false;
     double conf_prev_not_counting = 0;
 
@@ -474,9 +402,9 @@ getAware(const KnowledgeBase &kb, bool only_precise_temporal_patterns,
         }
 
         auto trace_id = a_beginend.first->entry.id.parts.trace_id;
-        if (trace_id != prev_trace_id) {
+        if (trace_id != a_prev_trace_id) {
             forward_prec = forward_resp = false;
-            prev_trace_id = trace_id;
+            a_prev_trace_id = trace_id;
         }
 
         if (!forward_prec && ((a_beginend.first->next == nullptr) || (a_beginend.first->next->entry.id.parts.act != B))) {
@@ -485,7 +413,8 @@ getAware(const KnowledgeBase &kb, bool only_precise_temporal_patterns,
                 data.cr_lb_violations.add(a_beginend.first->entry.id.parts.trace_id);
             }
             if (rb && !data.cp_lb_violations.contains(a_beginend.first->entry.id.parts.trace_id)) {
-                /* We've found a case where ChainPrecedence(A,B) wasn't violated but ChainResponse(B,A) is (e.g. {B,B}), so reduce support of ChainSuccession(B,A) */
+                /* We've found a case where ChainPrecedence(A,B) wasn't violated but ChainResponse(B,A) is (e.g. {B,B}),
+                 * so reduce support of ChainSuccession(B,A) */
                 decrease_support_X(kb, expected_support, alles_cs_ba, alles_not_cs_ba);
             }
             if (alles_surround) {
@@ -500,7 +429,8 @@ getAware(const KnowledgeBase &kb, bool only_precise_temporal_patterns,
                 data.cp_lb_violations.add(a_beginend.first->entry.id.parts.trace_id);
             }
             if (rb && !data.cr_lb_violations.contains(a_beginend.first->entry.id.parts.trace_id)) {
-                /* We've found a case where ChainResponse(A,B) wasn't violated but ChainPrecedence(B,A) is (e.g. {B,B}), so reduce support of ChainSuccession(A,B) */
+                /* We've found a case where ChainResponse(A,B) wasn't violated but ChainPrecedence(B,A) is (e.g. {B,B}),
+                 * so reduce support of ChainSuccession(A,B) */
                 decrease_support_X(kb, expected_support, alles_cs_ab, alles_not_cs_ab);
             }
             if (alles_surround) {
@@ -529,11 +459,48 @@ getAware(const KnowledgeBase &kb, bool only_precise_temporal_patterns,
         }
     }
 
+    /* We may be on the right branch but there are no suitable patterns here, so just add the cached ones */
+    if (rb && !alles_response && !alles_precedence && !alles_next && !alles_prev) {
+        std::swap(clause.left_act, clause.right_act);
+        std::swap(clause.left_act_id, clause.right_act_id);
+        if(data.p_lb_sup_conf.second != -1) {
+            clause.casusu = "Precedence";
+            clauses.emplace_back(clause,
+                                 candidate.support_generating_original_pattern,
+                                 data.p_lb_sup_conf.first,
+                                 data.p_lb_sup_conf.second);
+        }
+        if(data.r_lb_sup_conf.second != -1) {
+            clause.casusu = "Response";
+            clauses.emplace_back(clause,
+                                 candidate.support_generating_original_pattern,
+                                 data.r_lb_sup_conf.first,
+                                 data.r_lb_sup_conf.second);
+        }
+        if(data.cp_lb_sup_conf.second != -1) {
+            clause.casusu = "ChainPrecedence";
+            clauses.emplace_back(clause,
+                                 candidate.support_generating_original_pattern,
+                                 data.cp_lb_sup_conf.first,
+                                 data.cp_lb_sup_conf.second);
+        }
+        if(data.cr_lb_sup_conf.second != -1) {
+            clause.casusu = "ChainResponse";
+            clauses.emplace_back(clause,
+                                 candidate.support_generating_original_pattern,
+                                 data.cr_lb_sup_conf.first,
+                                 data.cr_lb_sup_conf.second);
+        }
+
+        return;
+    }
+
     /* Declaring outside for now, need global for the surround */
     double cr_sup = -1;
 
     if (alles_response || alles_precedence) {
-        const uint32_t p_satisfied = (ntraces - alles_not_precedence);
+        const uint32_t p_satisfied = ntraces - alles_not_precedence;
+        const uint32_t p_satisfied_not_vacuous = p_satisfied - not_activated;
         const double p_sup = ((double) p_satisfied) / ((double) ntraces);
 
         DEBUG_ASSERT(!(alles_next && !alles_response));
@@ -546,14 +513,13 @@ getAware(const KnowledgeBase &kb, bool only_precise_temporal_patterns,
             const uint32_t cr_satisfied_not_vacuous = cr_satisfied - not_activated;
             cr_sup = ((double) cr_satisfied) / ((double) ntraces);
 
-            if (alles_next && cr_sup >= r_sup && conf_next_counting > 0) {
-                const double cr_conf = ((double) cr_satisfied_not_vacuous) / ((double) conf_next_counting);
+            if (alles_next && (cr_sup >= r_sup) && (cr_satisfied_not_vacuous > 0) && (conf_next_counting > 0)) {
                 data.flags |= rb ? CHAIN_RESPONSE_BA_ID : CHAIN_RESPONSE_AB_ID;
                 clause.casusu = "ChainResponse";
-
+                const double cr_conf = ((double) cr_satisfied_not_vacuous) / ((double) conf_next_counting);
                 if(!rb && !lb) {
                     clauses.emplace_back(clause,
-                                         decl_sup,
+                                         candidate.support_generating_original_pattern,
                                          cr_sup,
                                          cr_conf);
                 }
@@ -565,78 +531,146 @@ getAware(const KnowledgeBase &kb, bool only_precise_temporal_patterns,
                 }
                 else {
                     /* We know that in the first branch ChainResponse(A,B) was added and here have ChainPrecedence(B,A) */
-                    const uint32_t cs_ba_satisfied = (ntraces - alles_not_cs_ba);
-                    const double cs_ba_sup = ((double) cs_ba_satisfied) / ((double) ntraces);
                     const uint32_t cs_ba_activated = (data.cr_activation_traces.second | data.cp_activation_traces.first).cardinality();
+                    const uint32_t cs_ba_satisfied = (ntraces - alles_not_cs_ba);
+                    const uint32_t cs_ba_satisfied_not_vacuous = cs_ba_satisfied - (ntraces - cs_ba_activated);
+                    const double cs_ba_sup = ((double) cs_ba_satisfied) / ((double) ntraces);
 
-                    if (alles_cs_ba && (cs_ba_sup >= cr_sup) && (cs_ba_sup >= data.cp_lb_sup_conf.first) && cs_ba_activated > 0) {
+                    if (alles_cs_ba && (cs_ba_sup >= cr_sup) && (cs_ba_sup >= data.cp_lb_sup_conf.first) && (cs_ba_satisfied_not_vacuous > 0) && (cs_ba_activated > 0)) {
                         clause.casusu = "ChainSuccession";
-                        const uint32_t cs_ba_satisfied_not_vacuous = cs_ba_satisfied - (ntraces - cs_ba_activated);
+                        const double cs_ba_conf = ((double) cs_ba_satisfied_not_vacuous) / ((double) cs_ba_activated);
                         clauses.emplace_back(clause,
-                                             decl_sup,
+                                             candidate.support_generating_original_pattern,
                                              cs_ba_sup,
-                                             ((double) cs_ba_satisfied_not_vacuous) / ((double) cs_ba_activated));
+                                             cs_ba_conf);
                     }
                     /* If ChainPrecedence(A,B) and ChainResponse(A,B) from left branch were enough to form a Surround, then don't re-add */
                     else {
                         /* ChainSuccession(A,B) not good enough, add the current ChainResponse(B,A) and ChainPrecedence(A,B) from the left branch */
                         clauses.emplace_back(clause,
-                                             decl_sup,
+                                             candidate.support_generating_original_pattern,
                                              cr_sup,
                                              cr_conf);
 
                         /* ChainPrecedence(A,B) has already been consumed by Surround(A,B), so don't add */
-                        if (((data.flags & SURROUND_AB_ID) != SURROUND_AB_ID) && ((data.flags & CHAIN_PRECEDENCE_AB_ID) == CHAIN_PRECEDENCE_AB_ID)) {
+                        if (((data.flags & SURROUND_AB_ID) != SURROUND_AB_ID) && ((data.flags & CHAIN_PRECEDENCE_AB_ID) == CHAIN_PRECEDENCE_AB_ID) && (data.cp_lb_sup_conf.second != -1)) {
                             clause.casusu = "ChainPrecedence";
                             pattern_mining_result<DeclareDataAware>& ref = clauses.emplace_back(clause,
-                                                 decl_sup,
-                                                 data.cp_lb_sup_conf.first,
-                                                 data.cp_lb_sup_conf.second);
+                                                                                                candidate.support_generating_original_pattern,
+                                                                                                data.cp_lb_sup_conf.first,
+                                                                                                data.cp_lb_sup_conf.second);
                             std::swap(ref.clause.left_act, ref.clause.right_act);
+                            std::swap(ref.clause.left_act_id, ref.clause.right_act_id);
                         }
                     }
                 }
                 DEBUG_ASSERT(!((data.flags & CHAIN_RESPONSE_AB_ID) && (data.flags & RESPONSE_AB_ID)));
             }
-            else if (conf_counting > 0) {
+            else if ((r_satisfied_not_vacuous > 0) && (activation_count > 0)) {
                 clause.casusu = "Response";
                 data.flags |= rb ? RESPONSE_BA_ID : RESPONSE_AB_ID;
 
                 DEBUG_ASSERT(!((data.flags & RESPONSE_AB_ID) && (data.flags & CHAIN_RESPONSE_AB_ID)));
                 DEBUG_ASSERT(!((data.flags & RESPONSE_BA_ID) && (data.flags & CHAIN_RESPONSE_BA_ID)));
 
-                if (alles_precedence) {
-                    /* We now need to test if Succession has just as good support */
-//                    const uint32_t s_satisfied = (ntraces - alles_not_succession);
-//                    const uint32_t s_satisfied_not_vacuous = s_satisfied - not_activated;
-//                    const double s_sup = ((double) s_satisfied) / ((double) ntraces);
-//                    if((s_sup >= p_sup) && (s_sup >= r_sup)) {
-//                        data.flags |= rb ? PRECEDENCE_BA_ID : PRECEDENCE_AB_ID;
-//                        const double s_conf = ((double) s_satisfied_not_vacuous) / ((double) conf_counting);
-//                        clause.casusu = "Succession";
-//                        clauses.emplace_back(clause,
-//                                             decl_sup,
-//                                             s_sup,
-//                                             s_conf);
-//                    }
-                }
-                if ((!lb || ((data.flags & SUCCESSION_AB_ID) != SUCCESSION_AB_ID)) && (!rb || ((data.flags & SUCCESSION_BA_ID) != SUCCESSION_BA_ID))) {
+                double r_conf = ((double) r_satisfied_not_vacuous) / ((double) activation_count);
+                if(!rb && !lb) {
                     clauses.emplace_back(clause,
-                                         decl_sup,
+                                         candidate.support_generating_original_pattern,
                                          r_sup,
-                                         ((double) r_satisfied_not_vacuous) / ((double) conf_counting));
+                                         r_conf);
+                }
+                else if (lb) {
+                    /* If we are on the left branch, there may be a Succession only detectable on the other
+                        * so cache the confidence for now */
+                    data.r_lb_sup_conf.first = r_sup;
+                    data.r_lb_sup_conf.second = r_conf;
+                }
+                else {
+                    const uint32_t s_ba_activated = (data.p_activation_traces.first | data.r_activation_traces.second).cardinality();
+                    const uint32_t s_ba_satisfied = (ntraces - alles_not_succession_ba);
+                    const uint32_t s_ba_satisfied_not_vacuous = s_ba_satisfied - (ntraces - s_ba_activated);
+                    const double s_ba_sup = ((double) s_ba_satisfied) / ((double) ntraces);
+
+                    if (alles_succession_ba && (s_ba_sup >= data.p_lb_sup_conf.first) && (s_ba_sup >= r_sup) && (s_ba_satisfied_not_vacuous > 0) && (s_ba_activated > 0)) {
+                        clause.casusu = "Succession";
+                        const double s_ba_conf =  ((double) s_ba_satisfied_not_vacuous) / ((double) s_ba_activated);
+                        clauses.emplace_back(clause,
+                                             candidate.support_generating_original_pattern,
+                                             s_ba_sup,
+                                             s_ba_conf);
+                    }
+                    else {
+                        /* Succession(B,A) not good enough, add the current Response(B,A) and Precedence(B,A) from the left branch */
+                        clauses.emplace_back(clause,
+                                             candidate.support_generating_original_pattern,
+                                             r_sup,
+                                             r_conf);
+
+                        if(data.p_lb_sup_conf.second != -1) {
+                            clause.casusu = "Precedence";
+                            clauses.emplace_back(clause,
+                                                 candidate.support_generating_original_pattern,
+                                                 data.p_lb_sup_conf.first,
+                                                 data.p_lb_sup_conf.second);
+                        }
+                    }
                 }
             }
         }
-        if (alles_precedence && (!lb || ((data.flags & SUCCESSION_AB_ID) != SUCCESSION_AB_ID) || (!rb || ((data.flags & SUCCESSION_BA_ID) != SUCCESSION_BA_ID))) && conf_counting > 0) {
-            data.flags |= rb ? PRECEDENCE_AB_ID : PRECEDENCE_BA_ID;
+        if (alles_precedence && (!rb || ((data.flags & SUCCESSION_BA_ID) != SUCCESSION_BA_ID)) && (p_satisfied_not_vacuous > 0) && (activation_count > 0)) {
             clause.casusu = "Precedence";
-            const double p_conf = ((double) p_satisfied - not_activated) / ((double) conf_counting);
-            pattern_mining_result<DeclareDataAware>& ref = clauses.emplace_back(clause,
-                                 decl_sup,
-                                 p_sup,
-                                 p_conf);
-            std::swap(ref.clause.left_act, ref.clause.right_act);
+            std::swap(clause.left_act, clause.right_act);
+            std::swap(clause.left_act_id, clause.right_act_id);
+            data.flags |= rb ? PRECEDENCE_AB_ID : PRECEDENCE_BA_ID;
+            const double p_conf = ((double) p_satisfied_not_vacuous) / ((double) activation_count);
+
+            if(!rb && !lb) {
+                clauses.emplace_back(clause,
+                                     candidate.support_generating_original_pattern,
+                                     p_sup,
+                                     p_conf);
+            }
+            else if (lb) {
+                /* If we are on the left branch, there may be a Succession only detectable on the other
+                    * so cache the confidence for now */
+                data.p_lb_sup_conf.first = p_sup;
+                data.p_lb_sup_conf.second = p_conf;
+            }
+            else {
+                const uint32_t s_ab_activated = (data.r_activation_traces.first | data.p_activation_traces.second).cardinality();
+                const uint32_t s_ab_satisfied = (ntraces - alles_not_succession_ab);
+                const uint32_t s_ab_satisfied_not_vacuous = s_ab_satisfied - (ntraces - s_ab_activated);
+                const double s_ab_sup = ((double) s_ab_satisfied) / ((double) ntraces);
+
+
+                if (alles_succession_ab && (s_ab_sup >= data.r_lb_sup_conf.first) && (s_ab_sup >= p_sup) && (s_ab_satisfied_not_vacuous > 0) && (s_ab_activated > 0)) {
+                    clause.casusu = "Succession";
+                    const double s_ab_conf =  ((double) s_ab_satisfied_not_vacuous) / ((double) s_ab_activated);
+                    clauses.emplace_back(clause,
+                                         candidate.support_generating_original_pattern,
+                                         s_ab_sup,
+                                         s_ab_conf);
+                }
+                else {
+                    /* Succession(A,B) not good enough, add the current Precedence(A,B) and Response(A,B) from the left branch */
+                    clauses.emplace_back(clause,
+                                         candidate.support_generating_original_pattern,
+                                         p_sup,
+                                         p_conf);
+
+                    if (data.r_lb_sup_conf.second != -1) {
+                        clause.casusu = "Response";
+                        clauses.emplace_back(clause,
+                                             candidate.support_generating_original_pattern,
+                                             data.r_lb_sup_conf.first,
+                                             data.r_lb_sup_conf.second);
+                    }
+                }
+            }
+
+            std::swap(clause.left_act_id, clause.right_act_id);
+            std::swap(clause.left_act, clause.right_act);
         }
     }
 
@@ -649,10 +683,11 @@ getAware(const KnowledgeBase &kb, bool only_precise_temporal_patterns,
      * ChainPrecedence(A,B) + ChainPrecedence(B,A) -> VALID e.g. {A}
      *
      * Therefore, it is entirely possible to have a model with ChainSuccession(A,B), Surround(A,B) and Precedence(A,B) */
-    if (alles_prev && conf_prev_counting > 0) {
+    const uint32_t cp_satisfied = (ntraces - alles_not_prev);
+    const uint32_t cp_satisfied_not_vacuous = cp_satisfied - (not_activated + conf_prev_not_counting);
+
+    if (alles_prev && (cp_satisfied_not_vacuous > 0) && (conf_prev_counting > 0)) {
         data.flags |= rb ? CHAIN_PRECEDENCE_BA_ID : CHAIN_PRECEDENCE_AB_ID;
-        const uint32_t cp_satisfied = (ntraces - alles_not_prev);
-        const uint32_t cp_satisfied_not_vacuous = cp_satisfied - (not_activated + conf_prev_not_counting);
         const double cp_sup = ((double) cp_satisfied) / ((double) ntraces);
         const double cp_conf = ((double) cp_satisfied_not_vacuous) / ((double) conf_prev_counting);
         clause.casusu = "ChainPrecedence";
@@ -662,19 +697,20 @@ getAware(const KnowledgeBase &kb, bool only_precise_temporal_patterns,
             const double sr_sup = ((double) sr_satisfied) / ((double) ntraces);
 
             const uint32_t sr_activated = !rb ? (data.cr_activation_traces.first | data.cp_activation_traces.second).cardinality() : (data.cr_activation_traces.second | data.cp_activation_traces.first).cardinality();
+            const uint32_t sr_satisfied_not_vacuous = sr_satisfied - (ntraces - sr_activated);
 
-            if((sr_sup >= cr_sup) && (sr_sup >= cp_sup) && sr_activated > 0) {
+            if((sr_sup >= cr_sup) && (sr_sup >= cp_sup) && (sr_satisfied_not_vacuous > 0) && (sr_activated > 0)) {
                 clause.casusu = "Surround";
-                const uint32_t sr_satisfied_not_vacuous = sr_satisfied - (ntraces - sr_activated);
+                const double sr_conf =  ((double) sr_satisfied_not_vacuous) / ((double) sr_activated);
                 clauses.emplace_back(clause,
-                                     decl_sup,
+                                     candidate.support_generating_original_pattern,
                                      sr_sup,
-                                     ((double) sr_satisfied_not_vacuous) / ((double) sr_activated));
+                                     sr_conf);
             }
         }
         if(!rb && !lb) {
             clauses.emplace_back(clause,
-                                 decl_sup,
+                                 candidate.support_generating_original_pattern,
                                  cp_sup,
                                  cp_conf);
         }
@@ -690,30 +726,33 @@ getAware(const KnowledgeBase &kb, bool only_precise_temporal_patterns,
             const double cs_ab_sup = ((double) cs_ab_satisfied) / ((double) ntraces);
 
             const uint32_t cs_ab_activated = (data.cr_activation_traces.first | data.cp_activation_traces.second).cardinality();
-            if (alles_cs_ab && (cs_ab_sup >= data.cr_lb_sup_conf.first) && (cs_ab_sup >= cp_sup) && cs_ab_activated > 0) {
+            const uint32_t cs_ab_satisfied_not_vacuous = cs_ab_satisfied - (ntraces - cs_ab_activated);
+            if (alles_cs_ab && (cs_ab_sup >= data.cr_lb_sup_conf.first) && (cs_ab_sup >= cp_sup) && (cs_ab_satisfied_not_vacuous > 0) && (cs_ab_activated > 0)) {
                 clause.casusu = "ChainSuccession";
-                const uint32_t cs_ab_satisfied_not_vacuous = cs_ab_satisfied - (ntraces - cs_ab_activated);
+                const double cs_ab_conf = ((double) cs_ab_satisfied_not_vacuous) / ((double) cs_ab_activated);
                 pattern_mining_result<DeclareDataAware>& ref = clauses.emplace_back(clause,
-                                     decl_sup,
-                                     cs_ab_sup,
-                                     ((double) cs_ab_satisfied_not_vacuous) / ((double) cs_ab_activated));
+                                                                                    candidate.support_generating_original_pattern,
+                                                                                    cs_ab_sup,
+                                                                                    cs_ab_conf);
                 std::swap(ref.clause.left_act, ref.clause.right_act);
+                std::swap(ref.clause.left_act_id, ref.clause.right_act_id);
             }
             else {
                 /* ChainSuccession(A,B) not good enough, add the current ChainPrecedence(B,A) and ChainResponse(A,B) from the left branch */
                 clauses.emplace_back(clause,
-                                     decl_sup,
+                                     candidate.support_generating_original_pattern,
                                      cp_sup,
                                      cp_conf);
 
                 /* ChainResponse(A,B) has already been consumed by Surround(A,B), so don't add */
-                if (((data.flags & SURROUND_AB_ID) != SURROUND_AB_ID) && ((data.flags & CHAIN_RESPONSE_AB_ID) == CHAIN_RESPONSE_AB_ID)) {
+                if (((data.flags & SURROUND_AB_ID) != SURROUND_AB_ID) && ((data.flags & CHAIN_RESPONSE_AB_ID) == CHAIN_RESPONSE_AB_ID) && (data.cr_lb_sup_conf.second != -1)) {
                     clause.casusu = "ChainResponse";
                     pattern_mining_result<DeclareDataAware>& ref = clauses.emplace_back(clause,
-                                         decl_sup,
+                                                                                        candidate.support_generating_original_pattern,
                                          data.cr_lb_sup_conf.first,
                                          data.cr_lb_sup_conf.second);
                     std::swap(ref.clause.left_act, ref.clause.right_act);
+                    std::swap(ref.clause.left_act_id, ref.clause.right_act_id);
                 }
             }
         }
@@ -721,28 +760,6 @@ getAware(const KnowledgeBase &kb, bool only_precise_temporal_patterns,
 
     return;
 
-#ifdef FUTURE
-    /* CBAFGBH */
-    else if(flags["Response"] && flags["ChainPrecedence"]) { // TODO
-        clauses.empty();
-        const uint32_t ds_satisfied = (ntraces - alles_not_delayed_surround);
-        clause.casusu = "DelayedSurround";
-        clauses.emplace_back(clause,
-                             decl_sup,
-                             ((double) ds_satisfied) / ((double) ntraces),
-                             ((double) ds_satisfied) / ((double) conf_counting));
-    }
-    /* CNABFD (B cannot happen on its own) */
-    else if(flags["ChainResponse"] && flags["Precedence"]) {  // TODO
-        clauses.empty();
-        const uint32_t icr_satisfied = (ntraces - alles_not_initialised_chain_response);
-        clause.casusu = "InitialisedChainResponse";
-        clauses.emplace_back(clause,
-                             decl_sup,
-                             ((double) icr_satisfied) / ((double) ntraces),
-                             ((double) icr_satisfied) / ((double) conf_counting));
-    }
-#endif
 //            if (ptn) {
 //                std::vector<trace_t> responseSupp;
 //                std::set_difference(allTraces.begin(), allTraces.end(),
@@ -842,9 +859,13 @@ choice_exclchoice(act_t a, act_t b,
     double local_support = ((double)(ratio.first)) / ((double)log_size);
     DeclareDataAware clause;
     clause.left_act = kb.event_label_mapper.get(a);
+    clause.left_act_id = a;
     clause.right_act = kb.event_label_mapper.get(b);
-    if (a>b)
+    clause.right_act_id = b;
+    if (a>b) {
         std::swap(clause.left_act,clause.right_act);
+        std::swap(clause.left_act_id, clause.right_act_id);
+    }
     clause.n = 1;
     if (ratio.first >= minimum_support_threshold) {
         // I can consider this pattern, again, only if it is within the expected
@@ -864,7 +885,7 @@ choice_exclchoice(act_t a, act_t b,
         auto& refB = map_for_retain[b];
         refA.map.add(b);
         refB.map.add(a);
-        pattern_mining_result<DeclareDataAware> c(clause, (it != mapper.end()) ? ((double)it->second)/((double)log_size) : 0.0, local_support, -1);
+        pattern_mining_result<DeclareDataAware> c(clause, (it != mapper.end()) ? ((double)it->second)/((double)log_size) : 0.0, local_support, local_support);
         refA.maps[local_support].emplace_back(c);
         refB.maps[local_support].emplace_back(c);
         return true;
@@ -881,6 +902,8 @@ std::pair<std::vector<pattern_mining_result<DeclareDataAware>>, double> pattern_
                                                                     bool special_temporal_patterns,
                                                                     bool only_precise_temporal_patterns,
                                                                     bool negative_patterns) {
+
+
     using std::chrono::high_resolution_clock;
     using std::chrono::duration_cast;
     using std::chrono::duration;
@@ -893,6 +916,14 @@ std::pair<std::vector<pattern_mining_result<DeclareDataAware>>, double> pattern_
     const auto& count_table = kb.getCountTable();
     uint64_t minimum_support_threshold = std::min((uint64_t)std::ceil((double)log_size * support), log_size);
     uint64_t max_act_id = kb.nAct();
+    std::vector<size_t> count_beginnings(max_act_id, 0);
+    size_t curr_trace_id = 0;
+    for (const auto& cp : kb.act_table_by_act_id.secondary_index) {
+        if (kb.getCountTable().resolve_length(cp.first->entry.id.parts.act, curr_trace_id) == 1) {
+            count_beginnings[cp.first->entry.id.parts.act]++;
+        }
+        curr_trace_id++;
+    }
     for (auto i = 0; i<max_act_id; i++) absent_acts.insert(i);
 //    FPTree t{count_table, minimum_support_threshold, max_act_id};
     std::vector<std::pair<act_t, size_t>> final_element_for_scan;
@@ -929,6 +960,8 @@ std::pair<std::vector<pattern_mining_result<DeclareDataAware>>, double> pattern_
                     // for mining the absence pattern
                     DeclareDataAware clause;
                     clause.left_act = kb.event_label_mapper.get(it);
+                    clause.left_act_id = it;
+                    clause.right_act_id = -1;
                     event_t n = std::numeric_limits<event_t>::max(),
                             N = 0;
                     auto cp = count_table.resolve_primary_index2(it);
@@ -945,10 +978,16 @@ std::pair<std::vector<pattern_mining_result<DeclareDataAware>>, double> pattern_
                     }
                     clause.n = n;
                     clause.casusu = "Exists";
-                    declarative_clauses.emplace_back(((double)x.first)/((double)kb.nTraces()), clause);
+                    declarative_clauses.emplace_back(clause,
+                                                     ((double)x.first)/((double)kb.nTraces()),
+                                                     ((double)x.first)/((double)kb.nTraces()),
+                                                     ((double)x.first)/((double)kb.nTraces()));
                     clause.n = N+1;
                     clause.casusu = "Absence";
-                    declarative_clauses.emplace_back(((double)x.first)/((double)kb.nTraces()), clause);
+                    declarative_clauses.emplace_back(clause,
+                                                     ((double)x.first)/((double)kb.nTraces()),
+                                                     ((double)x.first)/((double)kb.nTraces()),
+                                                     ((double)x.first)/((double)kb.nTraces()));
                 }
             } else {
                 // If the support is less than one, then we cannot state that
@@ -1147,13 +1186,14 @@ std::pair<std::vector<pattern_mining_result<DeclareDataAware>>, double> pattern_
 
         if ((lr_conf == rl_conf) && (lr_conf >= support)) {
             candidate_rule = pattern_mining_result(Rule<act_t>{pattern.first},
-                                                   ((double) pattern.second) / ((double) log_size), -1, -1);
+                                                   ((double) pattern.second) / ((double) log_size), counter.decl_support(lr), lr_conf
+                                                   );
         } else if (lr_conf >= rl_conf && lr_conf >= support) {
             candidate_rule = pattern_mining_result(lr, ((double) pattern.second) / ((double) log_size),
-                                                   counter.support(lr), lr_conf);
+                                                   counter.decl_support(lr), lr_conf);
         } else if (rl_conf >= support) {
             candidate_rule = pattern_mining_result(rl, ((double) pattern.second) / ((double) log_size),
-                                                   counter.support(rl), rl_conf);
+                                                   counter.decl_support(rl), rl_conf);
         }
 
         // Generate the hypotheses containing a lift greater than one
@@ -1185,7 +1225,10 @@ std::pair<std::vector<pattern_mining_result<DeclareDataAware>>, double> pattern_
             clause.casusu = "RespExistence";
         };
         clause.left_act = kb.event_label_mapper.get(A);
+        clause.left_act_id = A;
         clause.right_act = kb.event_label_mapper.get(B);
+        clause.right_act_id = B;
+
         size_t prev = declarative_clauses.size();
 //            if (alsoFlip && ((clause.left_act == "i" || clause.left_act == "h"))
 //                         && ((clause.right_act == "i" || clause.right_act == "h"))) {
@@ -1241,18 +1284,23 @@ std::pair<std::vector<pattern_mining_result<DeclareDataAware>>, double> pattern_
             }
 
             GetAwareData data;
+            size_t min_int_supp_patt = std::ceil(((double)log_size) * (candidate_rule.support_declarative_pattern));
 
-            bool branch = candidate_rule.clause.tail.empty();
+            /* We want to force a branch if the Bs ever occur at the start of the trace and occur only once.
+             * This is due to ChainPrecedence, which has an activation of X(A), and we want to mine a potential ChainPrecedence(A,B) */
+            bool branch = candidate_rule.clause.tail.empty() || (count_beginnings.at(B) > 0);
             getAware(kb, only_precise_temporal_patterns,
-                     count_table, min_sup, candidate_rule.support_generating_original_pattern,
+                     count_table, min_int_supp_patt, candidate_rule,
                      A, B, clause, declarative_clauses, alles_chain_succession_ab, alles_chain_succession_ba,
                      alles_surround_ab, data, branch);
 
             if (branch) {
                 clause.right_act = kb.event_label_mapper.get(A);
+                clause.right_act_id = A;
                 clause.left_act = kb.event_label_mapper.get(B);
+                clause.left_act_id = B;
                 getAware(kb, only_precise_temporal_patterns,
-                         count_table, min_sup, candidate_rule.support_generating_original_pattern,
+                         count_table, min_int_supp_patt, candidate_rule,
                          B, A, clause, declarative_clauses, alles_chain_succession_ba, alles_chain_succession_ab,
                          alles_surround_ba, data, false, true);
             }
@@ -1261,13 +1309,17 @@ std::pair<std::vector<pattern_mining_result<DeclareDataAware>>, double> pattern_
         /* Okay, so we found no candidate further down the lattice with better support, add RespExistence/CoExistence */
         if (declarative_clauses.size() == prev) {
             // If the choice/ExclChoice is not better than Co/Resp-Existence
-            if (!choice_exclchoice(A, B, log_size, candidate_rule.support_generating_original_pattern,
-                                   curr_pair, inv_pair, kb, visited_pairs, inv_map, map_for_retain, mapper, false)) {
-                declarative_clauses.emplace_back(clause,
-                                                 candidate_rule.support_generating_original_pattern,
-                                                 dss,
-                                                 candidate_rule.confidence_declarative_pattern);
+            size_t min_int_supp_patt = std::ceil(((double)log_size) * std::nextafter(candidate_rule.support_declarative_pattern, INFINITY));
+            if ((min_int_supp_patt > log_size) || (!choice_exclchoice(A, B, log_size, min_int_supp_patt,
+                                                                       curr_pair, inv_pair, kb, visited_pairs, inv_map, map_for_retain, mapper, false))) {
+                {
+                    declarative_clauses.emplace_back(clause,
+                                                     candidate_rule.support_generating_original_pattern,
+                                                     candidate_rule.support_declarative_pattern,
+                                                     candidate_rule.confidence_declarative_pattern);
+                }
             }
+
         }
     }
 
@@ -1427,13 +1479,20 @@ std::pair<std::vector<pattern_mining_result<DeclareDataAware>>, double> pattern_
             if (first_occ == log_size) {
                 clause.casusu = "Init";
                 clause.left_act = kb.event_label_mapper.get(act_id);
-                declarative_clauses.emplace_back(((double)(first_occ)) / ((double)log_size), clause);
+                clause.left_act_id = act_id;
+                clause.right_act_id = -1;
+                declarative_clauses.emplace_back(clause, ((double)(first_occ)) / ((double)log_size),
+                                                 ((double)(first_occ)) / ((double)log_size),
+                                                 ((double)(first_occ)) / ((double)log_size));
             }
             if (last_occ == log_size) {
                 clause.casusu = "End";
                 clause.left_act = kb.event_label_mapper.get(act_id);
-                declarative_clauses.emplace_back(((double)(last_occ)) / ((double)log_size), clause);
-            }
+                clause.left_act_id = act_id;
+                clause.right_act_id = -1;
+                declarative_clauses.emplace_back(clause, ((double)(last_occ)) / ((double)log_size),
+                                                 ((double)(last_occ)) / ((double)log_size),
+                                                 ((double)(last_occ)) / ((double)log_size));            }
         }
     }
 
@@ -1639,10 +1698,14 @@ std::tuple<std::vector<std::vector<DeclareDataAware>>,double,double> classifier_
         auto tmp = pattern_mining(sqm.multiple_logs[ref].db, support, naif, init_end, special_temporal_patterns, only_precise_temporal_patterns, negative_ones);
         overall_dataless_mining_time += tmp.second;
 
-        std::string logger_file = "/home/sam/Documents/Repositories/Codebases/knobab/data/testing/mining/mined_clauses_0.1_theta.csv";
-        std::ofstream log(logger_file, std::ios_base::trunc);
-        log << "algorithm,clause,support";
+        std::ofstream benchmark_file( "/home/sam/Documents/Repositories/Codebases/knobab/data/testing/mining/mined_clauses_0.1_theta.csv", std::ios_base::trunc);
+        benchmark_file << "algorithm,clause,support";
 
+        std::ofstream model_file( "/home/sam/Documents/Repositories/Codebases/knobab/data/testing/mining/models/model.powerdecl", std::ios_base::trunc);
+        model_file << "declare\n";
+        std::ofstream sup_conf_file( "/home/sam/Documents/Repositories/Codebases/knobab/data/testing/mining/models/sup_conf.tab", std::ios_base::trunc);
+
+        bool first = true;
         for (const pattern_mining_result<DeclareDataAware> clause : tmp.first) {
             std::cout << clause;
             std::string name = clause.clause.casusu + "(" + clause.clause.left_act;
@@ -1655,10 +1718,16 @@ std::tuple<std::vector<std::vector<DeclareDataAware>>,double,double> classifier_
             else {
                 name += ")";
             }
-            log << std::endl << "DBoltk," << name << "," << clause.support_declarative_pattern;
+            benchmark_file << std::endl << "DBoltk," << name << "," << clause.support_declarative_pattern;
+            model_file << (!first ? "\n" : "") << clause.clause;
+            sup_conf_file << (!first ? "\n" : "") << clause.support_declarative_pattern << "\t" << clause.confidence_declarative_pattern;
+
+            first = false;
         }
 
-        log.close();
+        benchmark_file.close();
+        model_file.close();
+        sup_conf_file.close();
 
         auto& WWW = VVV.emplace_back();
         std::vector<size_t> low_d_supp;
@@ -1669,6 +1738,7 @@ std::tuple<std::vector<std::vector<DeclareDataAware>>,double,double> classifier_
             j++;
         }
 
+        //TODO JUST FOR THE JOURNAL, DONT REFINE
         return std::make_tuple(VVV, overall_dataless_mining_time, 0);
 
         remove_duplicates(WWW);

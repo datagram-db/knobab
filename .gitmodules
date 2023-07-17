@@ -19,3 +19,6 @@
 [submodule "submodules/args"]
 	path = submodules/args
 	url = https://github.com/Taywee/args
+[submodule "submodules/eigen"]
+	path = submodules/eigen
+	url = https://gitlab.com/libeigen/eigen.git

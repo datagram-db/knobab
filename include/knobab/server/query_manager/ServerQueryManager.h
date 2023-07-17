@@ -77,7 +77,7 @@ public:
     /// Server entry point
     void run(const std::string& host, int port);
 
-    void loadModel(std::istream& stream);
+    std::vector<DeclareDataAware> loadModel(std::istream& stream);
 
     std::pair<std::string,std::string> runQuery(const std::string& query);
     std::any visitLoad_data_query(KnoBABQueryParser::Load_data_queryContext *context) override;
@@ -85,6 +85,9 @@ public:
     std::any visitSet_benchmarking_file(KnoBABQueryParser::Set_benchmarking_fileContext *ctx) override;
     std::any visitModel_query(KnoBABQueryParser::Model_queryContext *ctx) override;
     std::any visitDroplog(KnoBABQueryParser::DroplogContext *ctx) override;
+
+    std::vector<DeclareDataAware> loadModelFromFile(const std::string &query);
+
 
     /// Plan Visitor
     bool fromNowOnTimed = false;

@@ -1,13 +1,43 @@
 algorithm,clause,support
-DBoltk,Succession(b+a),0.571429
-DBoltk,Precedence(a+b),0.857143
-DBoltk,ExclChoice(d+e),0.285714
-DBoltk,ExclChoice(c+e),0.285714
-DBoltk,ExclChoice(c+d),0.285714
-DBoltk,ExclChoice(b+e),0.714286
-DBoltk,ExclChoice(b+d),0.714286
-DBoltk,ExclChoice(b+c),0.714286
-DBoltk,ExclChoice(a+e),0.714286
-DBoltk,ExclChoice(a+d),0.714286
-DBoltk,ExclChoice(a+c),0.714286
-DBoltk,ChainSuccession(a+b),0.857143
+DBoltk,Succession(e+f),1
+DBoltk,Response(d+f),1
+DBoltk,RespExistence(i+f),1
+DBoltk,RespExistence(i+c),1
+DBoltk,RespExistence(i+b),1
+DBoltk,RespExistence(h+f),1
+DBoltk,RespExistence(h+c),1
+DBoltk,RespExistence(h+b),1
+DBoltk,RespExistence(g+f),1
+DBoltk,RespExistence(g+c),1
+DBoltk,RespExistence(g+b),1
+DBoltk,RespExistence(d+g),0.892
+DBoltk,RespExistence(d+c),1
+DBoltk,RespExistence(d+b),1
+DBoltk,RespExistence(a+g),0.873
+DBoltk,RespExistence(a+f),1
+DBoltk,RespExistence(a+c),1
+DBoltk,RespExistence(a+b),1
+DBoltk,Precedence(i+e),1
+DBoltk,Precedence(h+e),1
+DBoltk,Precedence(g+e),1
+DBoltk,Precedence(e+c),1
+DBoltk,Precedence(e+b),1
+DBoltk,Precedence(d+e),1
+DBoltk,Precedence(c+b),1
+DBoltk,Precedence(a+e),1
+DBoltk,Init(e),1
+DBoltk,Exists(f 1),1
+DBoltk,Exists(e 1),1
+DBoltk,Exists(c 1),1
+DBoltk,Exists(b 1),1
+DBoltk,ExclChoice(a+i),1
+DBoltk,ExclChoice(a+h),1
+DBoltk,CoExistence(i+h),1
+DBoltk,CoExistence(f+c),1
+DBoltk,CoExistence(f+b),1
+DBoltk,ChainResponse(d+e),1
+DBoltk,ChainPrecedence(b+c),1
+DBoltk,Absence(f 6),1
+DBoltk,Absence(e 6),1
+DBoltk,Absence(c 7),1
+DBoltk,Absence(b 3),1

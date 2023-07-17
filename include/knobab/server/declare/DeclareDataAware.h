@@ -132,6 +132,7 @@ struct DeclareDataAware {
     declare_templates casusu;
     size_t n;
     std::string left_act, right_act;
+    uint16_t left_act_id = 0, right_act_id = 0;
     const KnowledgeBase* kb = nullptr;
     bool isFlippedComputed = false;
     bool isOriginal = true;
@@ -145,7 +146,9 @@ struct DeclareDataAware {
         if (ptr == nullptr) return false;
         return n == ptr->n
                 && left_act == ptr->left_act
+                && left_act_id == ptr->left_act_id
                 && right_act == ptr->right_act
+                && right_act_id == ptr->right_act_id
                 && conjunctive_map == ptr->conjunctive_map;
     }
 
@@ -276,7 +279,7 @@ struct DeclareDataAware {
 
     friend bool operator<(const DeclareDataAware& l, const DeclareDataAware& r)
     {
-        return std::tie(l.casusu, l.left_act, l.right_act, l.n) < std::tie(r.casusu, r.left_act, r.right_act, r.n); // keep the same order
+        return std::tie(l.casusu, l.left_act, l.left_act_id, l.right_act, l.right_act_id, l.n) < std::tie(r.casusu, r.left_act, r.left_act_id, r.right_act, r.right_act_id, r.n); // keep the same order
     }
 };
 
@@ -291,8 +294,10 @@ namespace std {
             seed = hash_combine(seed, k.casusu);
             seed = hash_combine(seed, k.n);
             seed = hash_combine(seed, k.left_act);
+            seed = hash_combine(seed, k.left_act_id);
             //seed = hash_combine(seed, k.dnf_left_map); --> TODO
             seed = hash_combine(seed, k.right_act);
+            seed = hash_combine(seed, k.right_act_id);
             //seed = hash_combine(seed, k.dnf_right_map); --> TODO
             return seed;
         }

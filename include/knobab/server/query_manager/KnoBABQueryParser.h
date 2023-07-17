@@ -112,6 +112,7 @@ public:
     Set_benchmarking_fileContext *set_benchmarking_file();
     Dump_logContext *dump_log();
     With_modelContext *with_model();
+    ModelContext *model();
 
     virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
     virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;

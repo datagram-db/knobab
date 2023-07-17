@@ -754,14 +754,25 @@ void ServerQueryManager::run(const std::string& host, int port) {
 #include <knobab/server/query_manager/KnoBABQueryLexer.h>
 #include <magic_enum.hpp>
 
-void ServerQueryManager::loadModel(std::istream& stream) {
+std::vector<DeclareDataAware>  ServerQueryManager::loadModel(std::istream& stream) {
     antlr4::ANTLRInputStream input(stream);
     KnoBABQueryLexer lexer(&input);
     antlr4::CommonTokenStream tokens(&lexer);
     KnoBABQueryParser parser(&tokens);
-    visit(parser.model());
+    return std::any_cast<std::vector<DeclareDataAware>>(visit(parser.model()));
 //    parser.queries()->children[0]->accept(this);
 //    return {content.str(), format};
+}
+
+std::vector<DeclareDataAware> ServerQueryManager::loadModelFromFile(const std::string &query) {
+    antlr4::ANTLRInputStream input(query);
+    KnoBABQueryLexer lexer(&input);
+    antlr4::CommonTokenStream tokens(&lexer);
+    KnoBABQueryParser parser(&tokens);
+    format.clear();
+    content.str(std::string());
+    auto v = parser.queries()->children[0]->accept(this);
+    return std::any_cast<std::vector<DeclareDataAware>>(v);
 }
 
 std::pair<std::string,std::string> ServerQueryManager::runQuery(const std::string &query) {
@@ -1001,15 +1012,16 @@ std::any ServerQueryManager::visitModel_query(KnoBABQueryParser::Model_queryCont
 std::any ServerQueryManager::visitFile_model(KnoBABQueryParser::File_modelContext *ctx) {
     std::filesystem::path declare_file{UNESCAPE(ctx->STRING()->getText())};
     std::ifstream file{declare_file};
-    loadModel(file);
+
 //    tmpEnv->load_model(declare_file);
-    return {};
+    return {loadModel(file)};
 }
 
 std::any ServerQueryManager::visitDeclares(KnoBABQueryParser::DeclaresContext *ctx) {
     if (ctx) {
         auto v = std::any_cast<std::vector<DeclareDataAware>>(visitData_aware_declare(ctx->data_aware_declare()));
-        tmpEnv->load_model(v.begin(), v.end());
+        if (tmpEnv) tmpEnv->load_model(v.begin(), v.end());
+        return {v};
     }
     return {};
 }
