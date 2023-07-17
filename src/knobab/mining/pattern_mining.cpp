@@ -1001,9 +1001,9 @@ std::pair<std::vector<pattern_mining_result<DeclareDataAware>>, double> pattern_
             }
         } else {
             DEBUG_ASSERT(x.second.size() == 2);
-#ifdef DEBUG
-            std::cout <<  kb.event_label_mapper.get(*x.second.begin()) << "." << kb.event_label_mapper.get(*(++x.second.begin())) << std::endl;
-#endif
+//#ifdef DEBUG
+//            std::cout <<  kb.event_label_mapper.get(*x.second.begin()) << "." << kb.event_label_mapper.get(*(++x.second.begin())) << std::endl;
+//#endif
 //            std::set<act_t> S{x.second.begin(), x.second.end()};
             binary_patterns.emplace(x.second, x.first);
             mapper[x.second] = x.first;
@@ -1323,145 +1323,6 @@ std::pair<std::vector<pattern_mining_result<DeclareDataAware>>, double> pattern_
         }
     }
 
-    // TODO: debug (might get stuck in a loop!)
-//    if (negative_patterns) {
-//        std::vector<bool> isTraceVisitedU(log_size, false);
-//        std::vector<pattern_mining_result<DeclareDataAware>> negative_to_test;
-//        DeclareDataAware clause;
-//        clause.n = 1;
-//        clause.casusu = "NotSuccession";
-//        auto it = patterns_to_negate.find("Response");
-//        if (it != patterns_to_negate.end()) {
-//            for (const auto& cp : it->second) {
-//                act_t A = cp.first;
-//                clause.left_act = kb.event_label_mapper.get(A);
-//                std::vector<bool> contributingToNegation(max_act_id, false);
-//                std::unordered_set<trace_t> tracesForNegation;
-//                double prod = 1.0;
-//                for (const auto& cp2 : cp.second) {
-//                    contributingToNegation[cp2.act] = true;
-//                    tracesForNegation.insert(cp2.witnesses.begin(), cp2.witnesses.end());
-//                    prod *= cp2.local_support;
-//                }
-//                size_t support = tracesForNegation.size();
-//                for (act_t BNeg = 0; BNeg < max_act_id; BNeg++) {
-//                    if (contributingToNegation.at(BNeg) || (BNeg == A)) continue;
-//                    if (support >= minimum_support_threshold) {
-//                        std::fill(isTraceVisitedU.begin(), isTraceVisitedU.end(), false);
-//                        clause.right_act = kb.event_label_mapper.get(BNeg);
-//
-//                        auto alles_response = true;
-//                        size_t alles_not_response = 0;
-//                        auto a_beginend = kb.timed_dataless_exists(A);
-//                        auto b_beginend = kb.timed_dataless_exists(BNeg);
-//
-//                        while (a_beginend.first < a_beginend.second) {
-//                            if (!alles_response) break;
-//                            auto trace_id = a_beginend.first->entry.id.parts.trace_id;
-//                            DEBUG_ASSERT(!isTraceVisitedU.at(trace_id));
-//                            auto trace_id_visited = isTraceVisitedU.at(trace_id);
-//
-//                            if (b_beginend.first == b_beginend.second) {
-//                                // Problem 1)
-//                                // This might be a valid precedence, as nothing is stated
-//                                // to what should happen after the A, but I cannot exploit
-//                                // for a response: therefore, I'm counting it
-////                                decrease_support_X(kb, minimum_support_threshold, alles_response, alles_not_response);
-//
-//                                // Now, skipping to the next trace, as there is no more information for as
-//                                fast_forward_equals(trace_id, a_beginend.first, a_beginend.second);
-//                                isTraceVisitedU[trace_id] = true;
-//                                continue;
-//                            } else {
-//                                // Otherwise, I have something to check related to B!
-//                                if (a_beginend.first->entry.id.parts.trace_id >
-//                                    b_beginend.first->entry.id.parts.trace_id) {
-//
-//                                    // Moving b until I find something related to b. A is kept fixed and not incremented
-//                                    fast_forward_lower(trace_id, b_beginend.first, b_beginend.second);
-//                                    // Not setting the current trace to be visited, as we need to fast-forward B first
-//                                    continue;
-//                                } else if (a_beginend.first->entry.id.parts.trace_id <
-//                                           b_beginend.first->entry.id.parts.trace_id) {
-//
-//                                    // If I am not able to find a B, then this is detrimental to A's response
-//                                    // (Problem 1)
-////                                    decrease_support_X(kb, minimum_support_threshold, alles_response, alles_not_response);
-//
-//                                    // Now, skipping to the next trace, as there is no more information for as
-//                                    fast_forward_equals(trace_id, a_beginend.first, a_beginend.second);
-//                                    continue;
-//                                } else {
-//                                    // Please remember, we are not visiting traces, rather than
-//                                    // events associated to traces. Therefore, it is of the
-//                                    // uttermost importance to remember conditions related to
-//                                    // the trace level, and to remember whether this was the
-//                                    // first time the trace was visited or not.
-//
-//                                    // Problem 2)
-//                                    // If B happens before the event A, this cannot be referred
-//                                    // to the precedence, and therefore this should be decreased
-//                                    // Still, this consideration should be performed only up until
-//                                    // the first event is visited
-////                                    if (b_beginend.first->entry.id.parts.event_id <
-////                                        a_beginend.first->entry.id.parts.event_id) {
-////                                        decrease_support_X(kb, expected_support, alles_precedence, alles_not_precedence);
-////                                    }
-//
-//                                    // While I'm scanning the A events within the same trace
-//                                    bool all_response_in_trace = true;
-//
-//                                    while ((a_beginend.first != a_beginend.second) &&
-//                                           (a_beginend.first->entry.id.parts.trace_id == trace_id)) {
-//                                        // ignoring all of the B events that are not relevant for the task!
-//                                        while ((b_beginend.first != b_beginend.second) &&
-//                                               (b_beginend.first->entry.id.parts.trace_id == trace_id) &&
-//                                               (b_beginend.first->entry.id.parts.event_id <
-//                                                a_beginend.first->entry.id.parts.event_id)) {
-//                                            b_beginend.first++;
-//                                        }
-//                                        if ((b_beginend.first != b_beginend.second) &&
-//                                            (b_beginend.first->entry.id.parts.trace_id == trace_id) &&
-//                                            (b_beginend.first->entry.id.parts.event_id >=
-//                                             a_beginend.first->entry.id.parts.event_id)) {
-//                                            // Problematic, I have a match!
-//                                            all_response_in_trace = false;
-//                                            break;
-//                                        } else {
-//                                            // If there is no match for the B event, then I'm setting this to false
-//                                            // and quitting the iteration
-//                                        }
-//                                        a_beginend.first++;
-//                                    }
-//                                    if (!all_response_in_trace) {
-//                                        decrease_support_X(kb, minimum_support_threshold, alles_response, alles_not_response);
-//                                    }
-//                                    fast_forward_equals(trace_id, a_beginend.first, a_beginend.second);
-//                                }
-//                            }
-//
-//                            isTraceVisitedU[trace_id] = true;
-//                        }
-//
-//                        if (alles_response) {
-//                            clause.casusu = "NotSuccession";
-//                            declarative_clauses.emplace_back(clause,
-//                                                             ((double)support) / ((double)log_size),
-//                                                             (((double) (log_size - alles_not_response)) /
-//                                                              ((double) log_size)),
-//                                                             -1);
-//                        }
-//                    }
-//                }
-//            }
-//
-//
-//        }
-//
-//
-//
-//    }
-
     if (init_end) {
         // This is not directly mined via the frequent mining algorithm but,
         // still, if needed, this can be obtained via an easy linear scan of the
@@ -1633,14 +1494,14 @@ void collectRefinedClause(std::vector<std::vector<DeclareDataAware>> &VVV,
 //        auto ref = tree_to_env.find(pair.first);
 //        DEBUG_ASSERT(ref != tree_to_env.end());
         DeclareDataAware c = actualClauseRefine(clause, what, pair);
-#ifdef DEBUG
-        std::cout << pair.first  << " -- " << c << std::endl;
-#endif
+//#ifdef DEBUG
+//        std::cout << pair.first  << " -- " << c << std::endl;
+//#endif
         VVV[pair.first].emplace_back(c);
     }
-#ifdef DEBUG
-    std::cout <<"~~~~~~~" <<  std::endl;
-#endif
+//#ifdef DEBUG
+//    std::cout <<"~~~~~~~" <<  std::endl;
+//#endif
 }
 
 #include <functional>
