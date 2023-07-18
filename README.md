@@ -1,8 +1,16 @@
-# KnoBAB v2.0
+
+![KnoBAB: Making Logic Fast](knobab.png)
+
+# KNOwledge Base for Alignments and Business process modelling
+
+## Authors
+
+*  Giacomo Bergami (2020-)
+*  Samuel "Sam" Appleby (2022-)
 
 ## Log Generator
 
-See loggen2 branch 
+See the following branch: [loggen2](https://github.com/datagram-db/knobab/tree/loggen2)
 
 ## Mining+Inference Algorithm
 
