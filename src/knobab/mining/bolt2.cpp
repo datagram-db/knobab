@@ -1107,10 +1107,10 @@ std::pair<std::vector<pattern_mining_result<DeclareDataAware>>, double> bolt2(co
 #endif
 
     for (const Pattern& pattern : binary_patterns) {
-#ifdef DEBUG
-        std::cout << " - Pattern: " << kb.event_label_mapper.get(*it) << ",";
-        std::cout <<kb.event_label_mapper.get(*it) << std::endl << std::endl;
-#endif
+//#ifdef DEBUG
+//        std::cout << " - Pattern: " << kb.event_label_mapper.get(*it) << ",";
+//        std::cout <<kb.event_label_mapper.get(*it) << std::endl << std::endl;
+//#endif
 
         DEBUG_ASSERT(pattern.first.size() == 2);
         auto it = pattern.first.begin();
@@ -1170,7 +1170,9 @@ std::pair<std::vector<pattern_mining_result<DeclareDataAware>>, double> bolt2(co
         clause.left_act_id = A;
         clause.right_act = kb.event_label_mapper.get(B);
         clause.right_act_id = B;
-
+#ifdef DEBUG
+        std::cout << clause.left_act << "--" << clause.right_act << std::endl;
+#endif
         size_t prev = declarative_clauses.size();
         alles_chain_succession_ab = alles_chain_succession_ba = alles_surround_ab = alles_surround_ba = true;
         alles_not_chain_succession_ab = alles_not_chain_succession_ba = alles_not_surround_ab = alles_not_surround_ba = 0;
