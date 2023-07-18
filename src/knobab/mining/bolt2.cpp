@@ -1007,9 +1007,9 @@ std::pair<std::vector<pattern_mining_result<DeclareDataAware>>, double> bolt2(co
             }
         } else {
             DEBUG_ASSERT(x.second.size() == 2);
-//#ifdef DEBUG
-//            std::cout <<  kb.event_label_mapper.get(*x.second.begin()) << "." << kb.event_label_mapper.get(*(++x.second.begin())) << std::endl;
-//#endif
+#ifdef DEBUG
+            std::cout <<  kb.event_label_mapper.get(*x.second.begin()) << "." << kb.event_label_mapper.get(*(++x.second.begin())) << std::endl;
+#endif
 //            std::set<act_t> S{x.second.begin(), x.second.end()};
             binary_patterns.emplace(x.second, x.first);
             mapper[x.second] = x.first;
