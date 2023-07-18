@@ -449,35 +449,45 @@ getAware(const KnowledgeBase &kb, bool only_precise_temporal_patterns,
 
     /* We may be on the right branch but there are no suitable patterns here, so just add the cached ones */
     if (rb && !alles_response && !alles_precedence && !alles_next && !alles_prev) {
-        std::swap(clause.left_act, clause.right_act);
-        std::swap(clause.left_act_id, clause.right_act_id);
         if(data.p_lb_sup_conf.second != -1) {
             clause.casusu = "Precedence";
-            clauses.emplace_back(clause,
-                                 candidate.support_generating_original_pattern,
-                                 data.p_lb_sup_conf.first,
-                                 data.p_lb_sup_conf.second);
+            pattern_mining_result<DeclareDataAware>& ref = clauses.emplace_back(clause,
+                                                                                candidate.support_generating_original_pattern,
+                                                                                data.p_lb_sup_conf.first,
+                                                                                data.p_lb_sup_conf.second);
+
+            std::swap(ref.clause.left_act, ref.clause.right_act);
+            std::swap(ref.clause.left_act_id, ref.clause.right_act_id);
         }
         if(data.r_lb_sup_conf.second != -1) {
             clause.casusu = "Response";
-            clauses.emplace_back(clause,
-                                 candidate.support_generating_original_pattern,
-                                 data.r_lb_sup_conf.first,
-                                 data.r_lb_sup_conf.second);
+            pattern_mining_result<DeclareDataAware>& ref = clauses.emplace_back(clause,
+                                                                                candidate.support_generating_original_pattern,
+                                                                                data.r_lb_sup_conf.first,
+                                                                                data.r_lb_sup_conf.second);
+
+            std::swap(ref.clause.left_act, ref.clause.right_act);
+            std::swap(ref.clause.left_act_id, ref.clause.right_act_id);
         }
         if(data.cp_lb_sup_conf.second != -1) {
             clause.casusu = "ChainPrecedence";
-            clauses.emplace_back(clause,
-                                 candidate.support_generating_original_pattern,
-                                 data.cp_lb_sup_conf.first,
-                                 data.cp_lb_sup_conf.second);
+            pattern_mining_result<DeclareDataAware>& ref = clauses.emplace_back(clause,
+                                                                                candidate.support_generating_original_pattern,
+                                                                                data.cp_lb_sup_conf.first,
+                                                                                data.cp_lb_sup_conf.second);
+
+            std::swap(ref.clause.left_act, ref.clause.right_act);
+            std::swap(ref.clause.left_act_id, ref.clause.right_act_id);
         }
         if(data.cr_lb_sup_conf.second != -1) {
             clause.casusu = "ChainResponse";
-            clauses.emplace_back(clause,
-                                 candidate.support_generating_original_pattern,
-                                 data.cr_lb_sup_conf.first,
-                                 data.cr_lb_sup_conf.second);
+            pattern_mining_result<DeclareDataAware>& ref = clauses.emplace_back(clause,
+                                                                                candidate.support_generating_original_pattern,
+                                                                                data.cr_lb_sup_conf.first,
+                                                                                data.cr_lb_sup_conf.second);
+
+            std::swap(ref.clause.left_act, ref.clause.right_act);
+            std::swap(ref.clause.left_act_id, ref.clause.right_act_id);
         }
 
         return;
