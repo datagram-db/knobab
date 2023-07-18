@@ -452,6 +452,7 @@ Bolt2Branching(const KnowledgeBase &kb, bool only_precise_temporal_patterns,
     /* We may be on the right branch but there are no suitable patterns here, so just add the cached ones */
     if (rb && !alles_response && !alles_precedence && !alles_next && !alles_prev) {
         if(data.p_lb_sup_conf.second != -1) {
+//<<<<<<< HEAD
             auto& ref = clauses.emplace_back(clause,
                                  candidate.support_generating_original_pattern,
                                  data.p_lb_sup_conf.first,
@@ -464,24 +465,60 @@ Bolt2Branching(const KnowledgeBase &kb, bool only_precise_temporal_patterns,
                                  data.r_lb_sup_conf.first,
                                  data.r_lb_sup_conf.second);
             ref.clause.casusu = "Response";
+//=======
+//            clause.casusu = "Precedence";
+//            pattern_mining_result<DeclareDataAware>& ref = clauses.emplace_back(clause,
+//                                                                                candidate.support_generating_original_pattern,
+//                                                                                data.p_lb_sup_conf.first,
+//                                                                                data.p_lb_sup_conf.second);
+//
+//            std::swap(ref.clause.left_act, ref.clause.right_act);
+//            std::swap(ref.clause.left_act_id, ref.clause.right_act_id);
+//        }
+//        if(data.r_lb_sup_conf.second != -1) {
+//            clause.casusu = "Response";
+//            pattern_mining_result<DeclareDataAware>& ref = clauses.emplace_back(clause,
+//                                                                                candidate.support_generating_original_pattern,
+//                                                                                data.r_lb_sup_conf.first,
+//                                                                                data.r_lb_sup_conf.second);
+//
+//>>>>>>> 197c60e16648db7028402ddd4d8ee12fabe85259
             std::swap(ref.clause.left_act, ref.clause.right_act);
             std::swap(ref.clause.left_act_id, ref.clause.right_act_id);
         }
         if(data.cp_lb_sup_conf.second != -1) {
+//<<<<<<< HEAD
             auto& ref = clauses.emplace_back(clause,
                                  candidate.support_generating_original_pattern,
                                  data.cp_lb_sup_conf.first,
                                  data.cp_lb_sup_conf.second);
             ref.clause.casusu = "ChainPrecedence";
+//=======
+//            clause.casusu = "ChainPrecedence";
+//            pattern_mining_result<DeclareDataAware>& ref = clauses.emplace_back(clause,
+//                                                                                candidate.support_generating_original_pattern,
+//                                                                                data.cp_lb_sup_conf.first,
+//                                                                                data.cp_lb_sup_conf.second);
+//
+//>>>>>>> 197c60e16648db7028402ddd4d8ee12fabe85259
             std::swap(ref.clause.left_act, ref.clause.right_act);
             std::swap(ref.clause.left_act_id, ref.clause.right_act_id);
         }
         if(data.cr_lb_sup_conf.second != -1) {
+//<<<<<<< HEAD
             auto& ref = clauses.emplace_back(clause,
                                  candidate.support_generating_original_pattern,
                                  data.cr_lb_sup_conf.first,
                                  data.cr_lb_sup_conf.second);
             ref.clause.casusu = "ChainResponse";
+//=======
+//            clause.casusu = "ChainResponse";
+//            pattern_mining_result<DeclareDataAware>& ref = clauses.emplace_back(clause,
+//                                                                                candidate.support_generating_original_pattern,
+//                                                                                data.cr_lb_sup_conf.first,
+//                                                                                data.cr_lb_sup_conf.second);
+//
+//>>>>>>> 197c60e16648db7028402ddd4d8ee12fabe85259
             std::swap(ref.clause.left_act, ref.clause.right_act);
             std::swap(ref.clause.left_act_id, ref.clause.right_act_id);
         }
