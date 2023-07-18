@@ -25,7 +25,7 @@ struct CountTemplate {
     std::pair<const oid*, const oid*> resolve_primary_index(const uint16_t actId, uint32_t& start, uint32_t& send) const;
 
     std::pair<const uint32_t, const uint32_t> resolve_primary_index(const uint16_t actId) const;
-    uint16_t resolve_length(const uint16_t actId, const uint32_t traceId) const {
+    inline uint16_t resolve_length(const uint16_t actId, const uint32_t traceId) const {
         return (actId < maxAct) && (traceId <= maxTraceId) ? table.at(
                 (maxTraceId + 1) * actId + traceId).id.parts.event_id : 0;
     }
