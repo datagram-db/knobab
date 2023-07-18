@@ -131,7 +131,7 @@
 //}
 
 #include <magic_enum.hpp>
-#include <knobab/mining/pattern_mining.h>
+#include <knobab/mining/bolt2.h>
 
 struct ConfusionMatrix {
     std::vector<size_t> expected_prediction;
@@ -173,7 +173,37 @@ struct ConfusionMatrix {
     ConfusionMatrix& operator=(ConfusionMatrix&&) = default;
 };
 
+/**
+ * @author: Samuel 'Buzz' Appleby
+ * @param sqm
+ */
+void loading_model_from_file(ServerQueryManager& sqm) {
+    std::vector<pattern_mining_result<DeclareDataAware>> new_vec;
+    std::stringstream sSTR;
+    sSTR << "file "
+         << std::quoted("data/testing/mining/models/model.powerdecl");
+
+    auto actual_model = sqm.loadModelFromFile(sSTR.str());
+
+    std::ifstream file("data/testing/mining/models/sup_conf.tab");
+    std::string line;
+    uint32_t idx = 0;
+    std::string delimiter = "\t";
+    while (getline (file, line)) {
+        pattern_mining_result<DeclareDataAware>& ref = new_vec.emplace_back();
+        ref.clause = actual_model.at(idx);
+        std::istringstream iss(line);
+        std::string token;
+        std::getline(iss, token, '\t');
+        ref.support_declarative_pattern = stod(token);
+        std::getline(iss, token, '\t');
+        ref.confidence_declarative_pattern = stod(token);
+        idx++;
+    }
+}
+
 int main(int argc, char **argv) {
+#if 0
     std::vector<std::string> log_parse_format_type{"HRF", "XES", "TAB"};
     log_data_format world_format_to_load = XES1;
     std::string worlds_file_to_load = "data/testing/mining/1000_10_10.xes";
@@ -247,6 +277,176 @@ int main(int argc, char **argv) {
     std::cout << "clauses=" << model.at(0).size() << std::endl;
     std::cout << "dataless_mining=" << dataless_mining << std::endl;
     std::cout << "refinery_time=" << refinery_time << std::endl;
+#endif
+
+    args::ArgumentParser parser("Boltk", "This extension provides the data-aware declarative mining algorithm presented");
+    args::HelpFlag help(parser, "help", "Display this help menu", {'h', "help"});
+    std::unordered_map<std::string, log_data_format> map{
+            {"hrf", log_data_format::HUMAN_READABLE_YAUCL},
+            {"xes", log_data_format::XES1},
+            {"tab", log_data_format::TAB_SEPARATED_EVENTS}};
+    args::Group group(parser, "You can use the following parameters", args::Group::Validators::DontCare, args::Options::Global);
+    args::ValueFlag<std::string>  testing_log(group, "Testing log", "The log against which conduct the prediction", {'e', "testing"});
+    args::ValueFlag<std::string>  expected_tab(group, "Expected Classes", "The expected prediction classes for the testing log", {'x', "expected"});
+    args::ValueFlag<std::string>  testing_f(group, "Testing log format", "The format of the testing log", {'f', "format"});
+    args::MapFlagList<std::string, log_data_format> log(parser, "w", "allocates the n-th world associated to a given file to be read in a given format", {'w', "world"}, map);
+    args::ValueFlag<double>  tau_val(group, "Tau Value", "If present, specifies the tau value", {'t', "tau"});
+    args::ValueFlag<double>  supp_val(group, "Support Value", "If present, specifies the support value", {'s', "supp"});
+    args::ValueFlag<std::string> dt_measure(group, "DT Measure", "If present, specifies the quality measure for the decision tree", {'q', "quality"});
+    args::ValueFlag<double> dt_purity(group, "DT Minimum Purity", "If present, specifies the minimum purity condition (def=1.)", {'p', "minpure"});
+    args::ValueFlag<size_t> dt_max_l(group, "DT Maximum Categoric Set Size", "If present, specifies the maximum size of a categorical set (def=1)", {'l', "maxlen"});
+    args::ValueFlag<size_t> dt_min_l(group, "DT Maximum Categoric Set Size", "If present, specifies the minimum leaf size (def=1)", {'m', "minleaf"});
+    args::PositionalList<std::string> files(parser, "files", "Files associated to the specific worlds");
+
+    try {
+        parser.ParseCLI(argc, argv);
+    } catch (args::Help) {
+        std::cout << parser;
+        return 0;
+    } catch (args::ParseError e) {
+        std::cerr << e.what() << std::endl;
+        std::cerr << parser;
+        return 1;
+    } catch (args::ValidationError e) {
+        std::cerr << e.what() << std::endl;
+        std::cerr << parser;
+        return 1;
+    }
+
+    std::vector<std::string> log_parse_format_type{"HRF", "XES", "TAB"};
+    std::string testing_file = args::get(testing_log);
+    std::string expected_File = args::get(expected_tab);
+    log_data_format testing_format = log_data_format::XES1;
+    if (testing_f) {
+        testing_format = magic_enum::enum_cast<log_data_format>(args::get(testing_f)).value();
+    }
+    std::vector<log_data_format> worlds_format_to_load = args::get(log);
+    std::vector<std::string>     worlds_file_to_load = args::get(files);
+    ForTheWin::gain_measures measure = ForTheWin::Entropy;
+    double tau = 0.75;
+    double supp = 0.75;
+    double purity = 1.0;
+    size_t max_set_size = 1;
+    size_t min_leaf_size = 1;
+    if(tau_val) {
+        tau = std::clamp(args::get(tau_val), 0.5, 1.);
+    }
+    if(supp_val) {
+        supp = std::clamp(args::get(supp_val), 0.0, 1.);
+    }
+    if(tau_val) {
+        tau = std::clamp(args::get(tau_val), 0.5, 1.);
+    }
+    if(dt_purity) {
+        purity = std::clamp(args::get(tau_val), 0., 1.);
+    }
+    if(dt_max_l) {
+        max_set_size = std::max(args::get(dt_max_l), 1UL);
+    }
+    if(dt_min_l) {
+        min_leaf_size = std::max(args::get(dt_min_l), 1UL);
+    }
+    if (dt_measure) {
+        auto tmp = magic_enum::enum_cast<ForTheWin::gain_measures>(args::get(dt_measure));
+        if (tmp) {
+            measure = tmp.value();
+        }
+    }
+
+    // Loading the different classes
+    ServerQueryManager sqm;
+    double loading_and_indexing = 0;
+    std::vector<std::string> bogus_model_name;
+    std::vector<ConfusionMatrix> matrices(worlds_format_to_load.size());
+    for (size_t i = 0, N = std::min(worlds_format_to_load.size(), worlds_file_to_load.size()); i<N; i++) {
+        std::stringstream ss;
+        std::string model_name = std::to_string(i);
+        bogus_model_name.emplace_back(model_name);
+        auto t2 = (size_t)worlds_format_to_load.at(i);
+        ss << "load "
+           << log_parse_format_type.at((size_t)worlds_format_to_load.at(i))
+           << " "
+           << std::quoted(worlds_file_to_load.at(i))
+           <<  " no stats as " // no stats with data as
+           << std::quoted(model_name);
+        std::cout << ss.str() << std::endl;
+        auto tmp = sqm.runQuery(ss.str());
+        std::cerr << tmp.first << " && " << tmp.second << std::endl;
+        loading_and_indexing += sqm.multiple_logs[model_name].experiment_logger.log_indexing_ms+sqm.multiple_logs[model_name].experiment_logger.log_loading_and_parsing_ms;
+    }
+    std::cout << "loading+indexing=" << loading_and_indexing << std::endl;
+
+    // Setting up the confusion matrices from the models
+    size_t nTestingTraces = 0;
+    {
+        std::fstream myfile(expected_File, std::ios_base::in);
+        size_t expected_class;
+        while (myfile >> expected_class)
+        {
+            for (size_t i = 0, N = matrices.size(); i<N; i++) {
+                if (i==expected_class) {
+                    matrices[i].expected_prediction.emplace_back(1);
+                } else {
+                    matrices[i].expected_prediction.emplace_back(0);
+                }
+            }
+            nTestingTraces++;
+        }
+        for (auto& M : matrices) {
+            M.actual_prediction = std::vector<size_t>(nTestingTraces, 0);
+        }
+    }
+
+    // Setting up the xtLTLf semantics for the Declare clauses
+    {
+        std::string query_plan = "queryplan \"nfmcp23\" {\n"
+                                 "     template \"Init\"                   := INIT  activation\n"
+                                 "     template \"End\"                    := END activation\n"
+                                 "     template \"Exists\"                := (EXISTS $ activation)\n"
+                                 "     template \"Exists1\"                := (EXISTS 1 activation)\n"
+                                 "     template \"Absence\"               := ABSENCE $ activation\n"
+                                 "     template \"Absence1\"               := ABSENCE 1 activation\n"
+                                 "     template \"Absence2\"               := ABSENCE 2 activation\n"
+                                 "     template \"Precedence\" args 2      := ((EXISTS  ~ 1 t #2) U (EXISTS 1 t #1 activation)) OR (ABSENCE 1 #2)\n"
+                                 "     template \"ChainPrecedence\" args 2 := G(((LAST OR t (NEXT EXISTS ~ 1 t #1))) OR t ((NEXT EXISTS 1 t #1 activation) AND t THETA INV (EXISTS 1 t #2 target) ))\n"
+                                 "     template \"Choice\" args 2          := (EXISTS 1 t #1 activation) OR THETA (EXISTS 1 t #2 activation)\n"
+                                 "     template \"Response\" args 2        := G ( ((EXISTS ~ 1 t #1)) OR t ((EXISTS 1 t #1 activation) &Ft THETA (EXISTS 1 t #2 target)) )\n"
+                                 "     template \"ChainResponse\" args 2   := G ( ((EXISTS ~ 1 t #1)) OR t ((EXISTS 1 t #1 activation) AND t THETA (NEXT EXISTS 1 t #2 target)))\n"
+                                 "     template \"RespExistence\" args 2   := ( ((ABSENCE 1 #1)) OR ((EXISTS 1 #1 activation) AND THETA (EXISTS 1 #2 target)))\n"
+                                 "     template \"ExlChoice\" args 2       := ((EXISTS 1 t #1 activation) OR THETA (EXISTS 1 t #2 activation)) AND ((ABSENCE 1 #1) OR (ABSENCE 1 #2))\n"
+                                 "     template \"CoExistence\" args 2     := ( ((ABSENCE 1 #1)) OR ((EXISTS 1 #1 activation) AND THETA (EXISTS 1 #2 target))) AND ( ((ABSENCE 1 #2)) OR ((EXISTS 1 #2 activation) AND THETA INV (EXISTS 1 #1 target)))\n"
+                                 "     template \"NotCoExistence\" args 2  := ~ ((EXISTS 1 t #1 activation) AND THETA (EXISTS 1 t #2 target)) PRESERVE\n"
+                                 "\n"
+                                 "     template \"Succession\" args 2      := (G ( ((EXISTS ~ 1 t #1)) OR t ((EXISTS 1 t #1 activation) &Ft THETA (EXISTS 1 t #2 target)) )) AND (((EXISTS  ~ 1 t #2) U (EXISTS 1 t #1 target)) OR (ABSENCE 1 #2))\n"
+                                 "     template \"NegSuccession\" args 2   := (G ( ((EXISTS ~ 1 t #1)) OR t ((EXISTS 1 t #1 activation) &Gt  (EXISTS ~ 1 t #2)) ))\n"
+                                 "     template \"ChainSuccession\" args 2 := G( (((LAST OR t (NEXT EXISTS ~ 1 t #2))) OR t ((NEXT EXISTS 1 t #2 activation) AND t THETA INV (EXISTS 1 t #1 target))) AND t\n"
+                                 "                                             ( ((EXISTS ~ 1 t #1)) OR t ((EXISTS 1 t #1 activation) AND t THETA (NEXT EXISTS 1 t #2 target)))\n"
+                                 "                                           )\n"
+                                 "     template \"AltResponse\" args 2     := G ( (EXISTS ~ 1 t #1) OR t ((EXISTS 1 t #1 activation) AND t THETA (NEXT ((EXISTS ~ 1 t #1) U t (EXISTS 1 t #2 target)) )))\n"
+                                 "     template \"AltPrecedence\" args 2   := (((EXISTS  ~ 1 t #2) U (EXISTS 1 t #1 activation)) OR (ABSENCE 1 #2)) AND\n"
+                                 "                                           (G(((EXISTS ~ 1 t #1)) OR t (((EXISTS 1 t #1 activation)) AND t THETA (NEXT (((EXISTS  ~ 1 t #1) U t (EXISTS 1 t #2 target)) OR t (G t (EXISTS  ~ 1 t #1))))  )))\n"
+                                 "}";
+        sqm.runQuery(query_plan);
+    }
+    auto it2 = sqm.planname_to_declare_to_ltlf.find("nfmcp23");
+
+    auto model_and_times = bolt2_multilog(sqm,
+                                 bogus_model_name,
+                                 supp,
+                                 tau,
+                                 purity,
+                                 max_set_size,
+                                 min_leaf_size);
+    auto model = std::get<0>(model_and_times);
+    double dataless_mining = std::get<1>(model_and_times);
+    std::cout << "dataless_mining=" << dataless_mining << std::endl;
+
+    std::filesystem::path output_models = std::filesystem::path("data")/"benchmarking"/"mining"/"cyber";
+
+    for (const auto& [model_name,model] : model) {
+        serialize_bolt2_outcome(model, model_name, output_models);
+    }
+
 
 //    for(uint16_t i = 0; i < 5; ++i){
 //        auto model_and_times = classifier_mining(sqm,
@@ -264,29 +464,7 @@ int main(int argc, char **argv) {
 //        std::cout << "refinery_time=" << refinery_time << std::endl;
 //    }
 
-    std::vector<pattern_mining_result<DeclareDataAware>> new_vec;
 
-    std::stringstream sSTR;
-    sSTR << "file "
-    << std::quoted("data/testing/mining/models/model.powerdecl");
-
-    auto actual_model = sqm.loadModelFromFile(sSTR.str());
-
-    std::ifstream file("data/testing/mining/models/sup_conf.tab");
-    std::string line;
-    uint32_t idx = 0;
-    std::string delimiter = "\t";
-    while (getline (file, line)) {
-        pattern_mining_result<DeclareDataAware>& ref = new_vec.emplace_back();
-        ref.clause = actual_model.at(idx);
-        std::istringstream iss(line);
-        std::string token;
-        std::getline(iss, token, '\t');
-        ref.support_declarative_pattern = stod(token);
-        std::getline(iss, token, '\t');
-        ref.confidence_declarative_pattern = stod(token);
-        idx++;
-    }
 
     return 0;
 }

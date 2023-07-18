@@ -28,32 +28,8 @@ void bolt_algorithm(const std::string& logger_file,
         env.load_log(conf.format, conf.with_data, file.string(), true, if_);
     }
     std::filesystem::path declare_file_path, maxsat;
-//    std::cout << "Starting from now!" << std::endl;
-    std::pair<std::vector<pattern_mining_result<DeclareDataAware>>, double> list = pattern_mining(env.db, support, false, true, true, false, false);
-
-//    bool filePreexists1 = std::filesystem::exists("/home/sam/Documents/Repositories/CodeBases/knobab/data/benchmarking/mining/mined_clauses.csv");
-//    std::ofstream log1("/home/sam/Documents/Repositories/CodeBases/knobab/data/benchmarking/mining/mined_clauses.csv", std::ios_base::app | std::ios_base::out);
-//    if (!filePreexists1) {
-//        log1 << "algorithm" << ","
-//                << "clause" << ","
-//                << "support" << std::endl;
-//    }
-//
-    for (const pattern_mining_result<DeclareDataAware>& result : list.first) {
-//#ifdef DEBUG
-//        std::cout << result << std::endl;
-//#endif
-//        if(result.clause.right_act != "") {
-//            std::cout << "BOLT" << ","
-//                 << result.clause.casusu + "(" + result.clause.left_act + "+" + result.clause.right_act <<  + ")" << ","
-//                 << result.support_declarative_pattern << std::endl;
-//        }
-//        else {
-//            std::cout << "BOLT" << ","
-//                 << result.clause.casusu + "(" + result.clause.left_act <<  + ")" << ","
-//                 << result.support_declarative_pattern << std::endl;
-//        }
-    }
+    std::pair<std::vector<pattern_mining_result<DeclareDataAware>>, double> list = bolt2(env.db, support, false, true,
+                                                                                         true, false, false);
 
     if(!no_stats){
         bool filePreexists = std::filesystem::exists(logger_file);
@@ -196,6 +172,7 @@ getAware(const KnowledgeBase &kb, bool only_precise_temporal_patterns,
          const bool &heur_cs_ab, const bool &heur_cs_ba, const bool &heur_s,
          GetAwareData& data,
          bool lb = false, bool rb = false) {
+
     auto ntraces = kb.nTraces();
     std::vector<trace_t> allTraces;
     for (trace_t sigma = 0; sigma<ntraces; sigma++) allTraces.emplace_back(sigma);
@@ -907,15 +884,17 @@ choice_exclchoice(act_t a, act_t b,
 }
 
 /** Pattern mining **/
-std::pair<std::vector<pattern_mining_result<DeclareDataAware>>, double> pattern_mining(const KnowledgeBase& kb,
-                                                                    double support,
-                                                                    bool naif,
-                                                                    bool init_end,
-                                                                    bool special_temporal_patterns,
-                                                                    bool only_precise_temporal_patterns,
-                                                                    bool negative_patterns) {
+std::pair<std::vector<pattern_mining_result<DeclareDataAware>>, double> bolt2(const KnowledgeBase& kb,
+                                                                              double support,
+                                                                              bool naif,
+                                                                              bool init_end,
+                                                                              bool special_temporal_patterns,
+                                                                              bool only_precise_temporal_patterns,
+                                                                              bool negative_patterns) {
 
-
+#ifndef ORIGINAL
+    GetAwareData data;
+#endif
     using std::chrono::high_resolution_clock;
     using std::chrono::duration_cast;
     using std::chrono::duration;
@@ -1119,6 +1098,11 @@ std::pair<std::vector<pattern_mining_result<DeclareDataAware>>, double> pattern_
     }
 
     DataMiningMetrics counter{count_table};
+    Rule<act_t> lr, rl;     // A -> B, B -> A
+    lr.head.reserve(2);
+    lr.tail.reserve(2);
+    rl.head.reserve(2);
+    rl.tail.reserve(2);
     bool alles_chain_succession_ab = true, alles_chain_succession_ba = true, alles_surround_ab = true, alles_surround_ba = true;
     size_t alles_not_chain_succession_ab = 0, alles_not_chain_succession_ba = 0, alles_not_surround_ab = 0, alles_not_surround_ba = 0;
 
@@ -1137,8 +1121,11 @@ std::pair<std::vector<pattern_mining_result<DeclareDataAware>>, double> pattern_
 //        std::cout <<kb.event_label_mapper.get(*it) << std::endl << std::endl;
 
         DEBUG_ASSERT(pattern.first.size() == 2);
-        Rule<act_t> lr, rl;     // A -> B, B -> A
         auto it = pattern.first.begin();
+        lr.head.clear();
+        lr.tail.clear();
+        rl.head.clear();
+        rl.tail.clear();
         lr.head.emplace_back(*it);
         rl.tail.emplace_back(*it);
         it++;
@@ -1195,7 +1182,7 @@ std::pair<std::vector<pattern_mining_result<DeclareDataAware>>, double> pattern_
         alles_chain_succession_ab = alles_chain_succession_ba = alles_surround_ab = alles_surround_ba = true;
         alles_not_chain_succession_ab = alles_not_chain_succession_ba = alles_not_surround_ab = alles_not_surround_ba = 0;
 
-        if (special_temporal_patterns) {
+        {
             uint64_t min_sup = std::max(countOk, minimum_support_threshold);
             size_t expected_support = only_precise_temporal_patterns ?
                                       kb.nTraces() :
@@ -1239,7 +1226,11 @@ std::pair<std::vector<pattern_mining_result<DeclareDataAware>>, double> pattern_
                 }
             }
 
+#ifdef ORIGINAL
             GetAwareData data;
+#else
+            data.clear();
+#endif
             size_t min_int_supp_patt = std::ceil(((double)log_size) * (candidate_rule.support_declarative_pattern));
 
             /* We want to force a branch if the Bs ever occur at the start of the trace and occur only once.
@@ -1453,18 +1444,42 @@ void collectRefinedClause(std::vector<std::vector<DeclareDataAware>> &VVV,
 
 #include <functional>
 
-std::tuple<std::vector<std::vector<DeclareDataAware>>,double,double> classifier_mining(ServerQueryManager& sqm,
-                                                                       const std::vector<std::string>& model_entry_names,
-                                                                       double support,
-                                                                       double tau,
-                                                                       double purity,
-                                                                       size_t maxL,
-                                                                       size_t minL,
-                                                                       bool naif,
-                                                                       bool init_end,
-                                                                       bool special_temporal_patterns,
-                                                                       bool only_precise_temporal_patterns,
-                                                                       bool negative_ones) {
+std::tuple<std::unordered_map<std::string, std::vector<pattern_mining_result<DeclareDataAware>>>,double> bolt2_multilog(ServerQueryManager& sqm,
+                                                                           const std::vector<std::string>& model_entry_names,
+                                                                           double support,
+                                                                           double tau,
+                                                                           double purity,
+                                                                           size_t maxL,
+                                                                           size_t minL,
+                                                                           bool naif,
+                                                                           bool init_end,
+                                                                           bool special_temporal_patterns,
+                                                                           bool only_precise_temporal_patterns,
+                                                                           bool negative_ones) {
+    double overall_dataless_mining_time = 0;
+    std::unordered_map<std::string, std::vector<pattern_mining_result<DeclareDataAware>>> VVV;
+    for (size_t i = 0; i < model_entry_names.size(); i++) {
+        const auto &ref = model_entry_names.at(i);
+        auto tmp = bolt2(sqm.multiple_logs[ref].db, support, naif, init_end, special_temporal_patterns,
+                         only_precise_temporal_patterns, negative_ones);
+        overall_dataless_mining_time += tmp.second;
+        VVV.emplace(ref, std::move(tmp.first));
+    }
+    return {VVV, overall_dataless_mining_time};
+}
+
+std::tuple<std::vector<std::vector<DeclareDataAware>>,double,double> boltk(ServerQueryManager& sqm,
+                                                                           const std::vector<std::string>& model_entry_names,
+                                                                           double support,
+                                                                           double tau,
+                                                                           double purity,
+                                                                           size_t maxL,
+                                                                           size_t minL,
+                                                                           bool naif,
+                                                                           bool init_end,
+                                                                           bool special_temporal_patterns,
+                                                                           bool only_precise_temporal_patterns,
+                                                                           bool negative_ones) {
     std::function<union_minimal(const ForResultReference&, const std::string&)> elementi = [&sqm](const ForResultReference& x, const std::string& key) -> union_minimal {
         auto& kb = sqm.multiple_logs[x.world].db;
         bool isTarget = key.starts_with("T.");
@@ -1503,39 +1518,33 @@ std::tuple<std::vector<std::vector<DeclareDataAware>>,double,double> classifier_
     auto t1 = high_resolution_clock::now();
     for (size_t i = 0; i < model_entry_names.size(); i++) {
         const auto &ref = model_entry_names.at(i);
-        auto tmp = pattern_mining(sqm.multiple_logs[ref].db, support, naif, init_end, special_temporal_patterns, only_precise_temporal_patterns, negative_ones);
+        auto tmp = bolt2(sqm.multiple_logs[ref].db, support, naif, init_end, special_temporal_patterns,
+                         only_precise_temporal_patterns, negative_ones);
         overall_dataless_mining_time += tmp.second;
 
-        std::ofstream benchmark_file( "/home/sam/Documents/Repositories/Codebases/knobab/data/testing/mining/mined_clauses_0.1_theta.csv", std::ios_base::trunc);
-        benchmark_file << "algorithm,clause,support";
-
-        std::ofstream model_file( "/home/sam/Documents/Repositories/Codebases/knobab/data/testing/mining/models/model.powerdecl", std::ios_base::trunc);
-        model_file << "declare\n";
-        std::ofstream sup_conf_file( "/home/sam/Documents/Repositories/Codebases/knobab/data/testing/mining/models/sup_conf.tab", std::ios_base::trunc);
-
-        bool first = true;
-        for (const pattern_mining_result<DeclareDataAware> clause : tmp.first) {
-            std::cout << clause;
-            std::string name = clause.clause.casusu + "(" + clause.clause.left_act;
-            if(clause.clause.right_act != "") {
-                name += "+" + clause.clause.right_act + ")";
-            }
-            else if (clause.clause.casusu == "Exists" || clause.clause.casusu == "Absence") {
-                name += " " + std::to_string(clause.clause.n) + ")";
-            }
-            else {
-                name += ")";
-            }
-            benchmark_file << std::endl << "DBoltk," << name << "," << clause.support_declarative_pattern;
-            model_file << (!first ? "\n" : "") << clause.clause;
-            sup_conf_file << (!first ? "\n" : "") << clause.support_declarative_pattern << "\t" << clause.confidence_declarative_pattern;
-
-            first = false;
-        }
-
-        benchmark_file.close();
-        model_file.close();
-        sup_conf_file.close();
+//        bool first = true;
+//        for (const pattern_mining_result<DeclareDataAware> clause : tmp.first) {
+//            std::cout << clause;
+////            std::string name = clause.clause.casusu + "(" + clause.clause.left_act;
+////            if(clause.clause.right_act != "") {
+////                name += "+" + clause.clause.right_act + ")";
+////            }
+////            else if (clause.clause.casusu == "Exists" || clause.clause.casusu == "Absence") {
+////                name += " " + std::to_string(clause.clause.n) + ")";
+////            }
+////            else {
+////                name += ")";
+////            }
+//
+///*            model_file << (!first ? "\n" : "") << clause.clause;
+//            sup_conf_file << (!first ? "\n" : "") << clause.support_declarative_pattern << "\t" << clause.confidence_declarative_pattern;
+//
+//            first = false;*/
+//        }
+//
+//        benchmark_file.close();
+//        model_file.close();
+//        sup_conf_file.close();
 
         auto& WWW = VVV.emplace_back();
         std::vector<size_t> low_d_supp;

@@ -98,7 +98,8 @@ std::ostream &operator<<(std::ostream &os, const DeclareDataAware &aware) {
 }
 
 bool isUnaryPredicate(const declare_templates& type) {
-    return type == "Exists1" || type == "Absence1" || type == "Absence2" || type == "End" || type == "Init";
+    return type == "Exists1" || type == "Absence1" || type == "Absence2" || type == "End" || type == "Init" ||
+            type == "Exists" || type == "Absence" || type == "Absence";
 }
 
 bool isPredicateNegative(const declare_templates& type) {

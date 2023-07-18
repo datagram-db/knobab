@@ -83,9 +83,9 @@ add_library(knobab_ndp
 
 
 add_library(knobab_mining
-        src/knobab/mining/pattern_mining.cpp
-        include/knobab/mining/pattern_mining.h
-        include/knobab/mining/pattern_mining.h
+        src/knobab/mining/bolt2.cpp
+        include/knobab/mining/bolt2.h
+        include/knobab/mining/bolt2.h
         src/knobab/mining/CountTableFPTree.cpp
         src/knobab/mining/apriori.cpp
         include/knobab/mining/apriori.h

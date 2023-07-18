@@ -350,13 +350,13 @@ inline void globallyA_And_FutureB(const std::pair<ActTable::record*, ActTable::r
 
 
 /** Pattern mining **/
-std::vector<pattern_mining_result<DeclareDataAware>> pattern_mining(const KnowledgeBase& kb,
-                                                                    double support,
-                                                                    bool naif,
-                                                                    bool init_end,
-                                                                    bool special_temporal_patterns,
-                                                                    bool only_precise_temporal_patterns,
-                                                                    bool negative_patterns) {
+std::vector<pattern_mining_result<DeclareDataAware>> bolt2(const KnowledgeBase& kb,
+                                                           double support,
+                                                           bool naif,
+                                                           bool init_end,
+                                                           bool special_temporal_patterns,
+                                                           bool only_precise_temporal_patterns,
+                                                           bool negative_patterns) {
     using std::chrono::high_resolution_clock;
     using std::chrono::duration_cast;
     using std::chrono::duration;

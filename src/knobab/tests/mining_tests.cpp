@@ -11,7 +11,7 @@
 #include "yaucl/bpm/structures/commons/DeclareDataAware.h"
 #include "knobab/server/query_manager/Environment.h"
 #include "args.hxx"
-#include "knobab/mining/pattern_mining.h"
+#include "knobab/mining/bolt2.h"
 #include <catch2/catch_test_macros.hpp>
 
 #define STRING(s) #s
@@ -68,7 +68,8 @@ static inline std::pair<std::vector<pattern_mining_result<DeclareDataAware>>,std
     sqm.runQuery(query_plan);
 
     std::vector<DeclareDataAware> VVV;
-    std::pair<std::vector<pattern_mining_result<DeclareDataAware>>, double> result = pattern_mining(sqm.multiple_logs[world_file_to_load].db, supp, false, true, true, false, false);
+    std::pair<std::vector<pattern_mining_result<DeclareDataAware>>, double> result = bolt2(
+            sqm.multiple_logs[world_file_to_load].db, supp, false, true, true, false, false);
 
     std::pair<std::vector<pattern_mining_result<DeclareDataAware>>, std::vector<pattern_mining_result<DeclareDataAware>>> values;
     for (const pattern_mining_result<DeclareDataAware>& ref2 : result.first) {
