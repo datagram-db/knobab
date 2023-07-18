@@ -89,6 +89,15 @@ struct pattern_mining_result {
     }
 };
 
+namespace std {
+    template <typename T> struct hash<pattern_mining_result<T>> {
+        size_t operator()(const pattern_mining_result<T>& x) const {
+            static std::hash<T> hx;
+            return hx(x.clause) ^ *((size_t*)((double*)&(x.support_generating_original_pattern)));
+        }
+    };
+}
+
 class KnowledgeBase : public trace_visitor {
     CountTemplate                                   count_table;
     SimplifiedFuzzyStringMatching                   string_values;

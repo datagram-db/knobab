@@ -15,7 +15,7 @@
 #include "knobab/mining/CountTableFPTree.h"
 
 
-using VTLexic = LexicographicalOrder<std::vector<std::string>, std::string>;
+//using VTLexic = LexicographicalOrder<std::vector<std::string>, std::string>;
 
 /**
  * This struct stores the association itemset/number_of_occurrences returned from the FPGrowth algorithm and returns
@@ -61,22 +61,25 @@ struct DataMiningMetrics {
         }
     }
 
-    size_t and_(const std::vector<act_t>& i) const {
+    std::unordered_map<std::vector<act_t>, size_t> compute_and;
+    size_t and_(const std::vector<act_t>& i)  {
         if (i.empty())
             return sumAll;
         else if (i.size() == 1)
             return act_to_traces.at(i.at(0)).size();
-        else {
+        auto it = compute_and.emplace(i, 0.0); //memoizing
+        if (it.second) {
             std::vector<trace_t> orig = act_to_traces[i.at(0)];
             std::vector<trace_t> res;
             for (size_t j = 1; j<i.size(); j++) {
                 const auto& ref = act_to_traces.at(i.at(j));
                 std::set_intersection(orig.begin(), orig.end(), ref.begin(), ref.end(),
-                               std::back_inserter(res));
+                                      std::back_inserter(res));
                 std::swap(res, orig);
             }
-            return orig.size();
+            it.first->second =  orig.size();
         }
+        return it.first->second;
     }
 
     /**
@@ -93,28 +96,39 @@ struct DataMiningMetrics {
         return ((double)support(unione)) / sumAll;
     }
 
-    double decl_support(const Rule<act_t>& r) const {
-        std::vector<act_t> unione;
-        for (const auto& x: r.head) unione.emplace_back(x);
-        for (const auto& x: r.tail) unione.emplace_back(x);
-        std::sort(unione.begin(), unione.end());
-        unione.erase(std::unique(unione.begin(), unione.end()), unione.end());
-        return ((double)and_(unione)+(sumAll-and_(r.head))) / sumAll;
+    std::unordered_map<Rule<act_t>, double> score_decl_support;
+
+    double decl_support(const Rule<act_t>& r) {
+//        auto it = score_decl_support.emplace(r, 0.0); //memoizing
+//        if (it.second) {
+            std::vector<act_t> unione;
+            for (const auto& x: r.head) unione.emplace_back(x);
+            for (const auto& x: r.tail) unione.emplace_back(x);
+            std::sort(unione.begin(), unione.end());
+            unione.erase(std::unique(unione.begin(), unione.end()), unione.end());
+            return ((double)and_(unione)+(sumAll-and_(r.head))) / sumAll;
+//        }
+//        return it.first->second;
     }
 
+    std::unordered_map<Rule<act_t>, double> score_conf;
 
     /**
      * Rule confidence
      * @param r
      * @return
      */
-    double confidence(const Rule<act_t>& r) const {
-        std::vector<act_t> unione;
-        for (const auto& x: r.head) unione.emplace_back(x);
-        for (const auto& x: r.tail) unione.emplace_back(x);
-        std::sort(unione.begin(), unione.end());
-        unione.erase(std::unique(unione.begin(), unione.end()), unione.end());
-        return ((double)and_(unione)) / ((double) support(r.head));
+    double confidence(const Rule<act_t>& r) {
+//        auto it = score_conf.emplace(r, 0.0); //memoizing
+//        if (it.second) {
+            std::vector<act_t> unione;
+            for (const auto& x: r.head) unione.emplace_back(x);
+            for (const auto& x: r.tail) unione.emplace_back(x);
+            std::sort(unione.begin(), unione.end());
+            unione.erase(std::unique(unione.begin(), unione.end()), unione.end());
+            return ((double)and_(unione)) / ((double) support(r.head));
+//        }
+//        return it.first->second;
     }
 
     double lift(const Rule<act_t>& r) const {
