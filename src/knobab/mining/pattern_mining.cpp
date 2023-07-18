@@ -244,19 +244,6 @@ getAware(const KnowledgeBase &kb, bool only_precise_temporal_patterns,
             a_prev_trace_id = a_trace_id;
         }
 
-//            if ((clause.left_act == "c") && (clause.right_act == "b") && (trace_id == 7)) {
-//                auto cp = kb.act_table_by_act_id.secondary_index.at(8);
-//                std::cout << kb.act_table_by_act_id << std::endl;
-//                while (cp.first) {
-//                    std::cout <<
-//                              kb.event_label_mapper.get(
-//                                      cp.first->entry.id.parts.act) << " ";
-//                    cp.first = cp.first->next;
-//                }
-//                std::cout << std::endl;
-//                std::cout << ": HERE" << std::endl;
-//            }
-
         /* We have As on their own */
         if ((b_beginend.first == b_beginend.second) || (a_trace_id < b_trace_id)) {
             activation_count++;
@@ -1000,18 +987,6 @@ std::pair<std::vector<pattern_mining_result<DeclareDataAware>>, double> pattern_
         if (x.second.size() == 1) {
             auto it = *x.second.begin();
             if (x.first == kb.nTraces()) {
-                // If the support is actually one, then we can infer that if an event
-                // exists in all of the events, that should always happen
-//                if (naif) {
-//                    // The naif algorithm will just state that, if the pattern exists,
-//                    // then it exists at least once
-//                    DeclareDataAware clause;
-//                    clause.left_act = kb.event_label_mapper.get(it);
-//                    clause.n = 1;
-//                    clause.casusu = "Exists1";
-//                    declarative_clauses.emplace_back(((double)x.first)/((double)kb.nTraces()), clause);
-//                } else
-                {
                     // The non-naif version is exploiting the couting information from
                     // the counting table, and also providing an expected number of times
                     // the event should happen. You can also apply the same reasoning
@@ -1047,7 +1022,6 @@ std::pair<std::vector<pattern_mining_result<DeclareDataAware>>, double> pattern_
                                                      1.0,
                                                      1.0,
                                                      1.0);
-                }
             } else {
                 // If the support is less than one, then we cannot state that
                 // all of these events actually exist in all of the possible traces, and
@@ -1068,32 +1042,7 @@ std::pair<std::vector<pattern_mining_result<DeclareDataAware>>, double> pattern_
             mapper[x.second] = x.first;
         }
     }
-//    if (negative_patterns) {
-//        DeclareDataAware clause;
-//        clause.casusu = "Absence";
-//        for (const auto& y : absent_acts) {
-//            clause.left_act = kb.event_label_mapper.get(y);
-//            auto cp = count_table.resolve_primary_index2(y);
-//            size_t absence1_not_supp = 0;
-//            event_t N = 0;
-//            while (cp.first != cp.second) {
-//                if (cp.first->id.parts.event_id > 0) absence1_not_supp++;
-//                if (cp.first->id.parts.event_id > N) {
-//                    N = cp.first->id.parts.event_id;
-//                }
-//                cp.first++;
-//            }
-//            if ((log_size-absence1_not_supp) > minimum_support_threshold) {
-//                clause.n = 1;
-//                declarative_clauses.emplace_back(((double)(log_size-absence1_not_supp))/((double)kb.nTraces()), clause);
-//            }
-//            clause.n = N+1;
-//            declarative_clauses.emplace_back(1.0, clause);
-//        }
-//        // NotCoexistence
-//
-//    }
-    fpt_result.clear();
+//    fpt_result.clear();
 
     // Point A): initialisation.
     // Please observe that, given the support definition for traditional
@@ -1147,7 +1096,7 @@ std::pair<std::vector<pattern_mining_result<DeclareDataAware>>, double> pattern_
             }
         }
     }
-    map.clear();
+//    map.clear();
     for (const auto& [act_id, ref_act] : map_for_retain) {
         auto it = ref_act.maps.find(1.0);
         if (it == ref_act.maps.end()) {
