@@ -451,31 +451,39 @@ Bolt2Branching(const KnowledgeBase &kb, bool only_precise_temporal_patterns,
 
     /* We may be on the right branch but there are no suitable patterns here, so just add the cached ones */
     if (rb && !alles_response && !alles_precedence && !alles_next && !alles_prev) {
-        std::swap(clause.left_act, clause.right_act);
-        std::swap(clause.left_act_id, clause.right_act_id);
         if(data.p_lb_sup_conf.second != -1) {
-            clauses.emplace_back(clause,
+            auto& ref = clauses.emplace_back(clause,
                                  candidate.support_generating_original_pattern,
                                  data.p_lb_sup_conf.first,
-                                 data.p_lb_sup_conf.second).clause.casusu = "Precedence";
+                                 data.p_lb_sup_conf.second);
+            ref.clause.casusu = "Precedence";
         }
         if(data.r_lb_sup_conf.second != -1) {
-            clauses.emplace_back(clause,
+            auto& ref = clauses.emplace_back(clause,
                                  candidate.support_generating_original_pattern,
                                  data.r_lb_sup_conf.first,
-                                 data.r_lb_sup_conf.second).clause.casusu = "Response";
+                                 data.r_lb_sup_conf.second);
+            ref.clause.casusu = "Response";
+            std::swap(ref.clause.left_act, ref.clause.right_act);
+            std::swap(ref.clause.left_act_id, ref.clause.right_act_id);
         }
         if(data.cp_lb_sup_conf.second != -1) {
-            clauses.emplace_back(clause,
+            auto& ref = clauses.emplace_back(clause,
                                  candidate.support_generating_original_pattern,
                                  data.cp_lb_sup_conf.first,
-                                 data.cp_lb_sup_conf.second).clause.casusu = "ChainPrecedence";
+                                 data.cp_lb_sup_conf.second);
+            ref.clause.casusu = "ChainPrecedence";
+            std::swap(ref.clause.left_act, ref.clause.right_act);
+            std::swap(ref.clause.left_act_id, ref.clause.right_act_id);
         }
         if(data.cr_lb_sup_conf.second != -1) {
-            clauses.emplace_back(clause,
+            auto& ref = clauses.emplace_back(clause,
                                  candidate.support_generating_original_pattern,
                                  data.cr_lb_sup_conf.first,
-                                 data.cr_lb_sup_conf.second).clause.casusu = "ChainResponse";
+                                 data.cr_lb_sup_conf.second);
+            ref.clause.casusu = "ChainResponse";
+            std::swap(ref.clause.left_act, ref.clause.right_act);
+            std::swap(ref.clause.left_act_id, ref.clause.right_act_id);
         }
 
         return;
@@ -1243,6 +1251,10 @@ std::pair<std::vector<pattern_mining_result<DeclareDataAware>>, double> bolt2(co
                                count_table, min_int_supp_patt, candidate_rule,
                                B, A, clause, declarative_clauses, alles_chain_succession_ba, alles_chain_succession_ab,
                                alles_surround_ba, data, false, true);
+                if (clause.casusu != "Precedence") {
+                    std::swap(clause.left_act, clause.right_act);
+                    std::swap(clause.left_act_id, clause.right_act_id);
+                }
             }
         }
 
