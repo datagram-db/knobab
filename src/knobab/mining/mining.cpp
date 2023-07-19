@@ -9,10 +9,10 @@
 #include "knobab/server/query_manager/ServerQueryManager.h"
 
 enum Algorithm {
-    BOLT,
+    BOLT1,
     BOLT2,
     APRIORI,
-    PREVIOUS_MINING
+    TOP_K_MINING
 };
 
 int main(int argc, char **argv) {
@@ -23,7 +23,7 @@ int main(int argc, char **argv) {
     std::string logger_file = "/home/sam/Documents/Repositories/CodeBases/knobab/data/benchmarking/mining/results.csv";
 
     double support = 0.1;
-    Algorithm algorithm = BOLT;
+    Algorithm algorithm = BOLT1;
     uint16_t iters = 1;
     bool no_stats = false;
 
@@ -80,13 +80,13 @@ int main(int argc, char **argv) {
     }
 
     if (boltAlgorithm) {
-        algorithm = BOLT;
+        algorithm = BOLT1;
     }
     if (aprioriAlgorithm) {
         algorithm = APRIORI;
     }
     if (previousAlgorithm) {
-        algorithm = PREVIOUS_MINING;
+        algorithm = TOP_K_MINING;
     }
 
     if(supportVal){
@@ -133,7 +133,7 @@ int main(int argc, char **argv) {
 
     for(uint16_t i = 0; i < iters; ++i){
         switch (algorithm) {
-            case BOLT:
+            case BOLT1:
                 bolt_algorithm(logger_file, log, support, i, no_stats);       // Using directly the relational database representation without querying
                 break;
             case BOLT2:
@@ -142,7 +142,7 @@ int main(int argc, char **argv) {
             case APRIORI:
                 apriori(logger_file, log, support, unary_templates, binary_templates, i, no_stats);   // Using A-Priori + Querying for checking satisfiability
                 break;
-            case PREVIOUS_MINING:
+            case TOP_K_MINING:
                 binary_templates.insert(binary_templates.end(), unary_templates.begin(), unary_templates.end());
                 previous_mining(logger_file, log, support, binary_templates, i, no_stats);   // Using A-Priori + Querying for checking satisfiability
                 break;
