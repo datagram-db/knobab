@@ -47,6 +47,7 @@ add_library(knobab OBJECT
         src/knobab/server/algorithms/grounding/grounding.cpp
         src/knobab/server/tables/CountTable.cpp
         src/knobab/server/tables/ActTable.cpp
+        src/knobab/server/dataStructures/data_loader.cpp
         src/knobab/server/tables/AttributeTable.cpp
         src/knobab/server/declare/DisjunctiveDeclareDataAware.cpp
         src/knobab/server/dataStructures/oid.cpp
@@ -84,8 +85,9 @@ add_library(knobab_ndp
 
 add_library(knobab_mining
         src/knobab/mining/bolt2.cpp
+        src/knobab/mining/bolt1.cpp
         include/knobab/mining/bolt2.h
-        include/knobab/mining/bolt2.h
+        include/knobab/mining/bolt1.h
         src/knobab/mining/CountTableFPTree.cpp
         src/knobab/mining/apriori.cpp
         include/knobab/mining/apriori.h

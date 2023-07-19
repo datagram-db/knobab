@@ -6,7 +6,7 @@
 #define KNOBAB_SERVER_APRIORI_H
 
 #include <ostream>
-#include "yaucl/bpm/structures/log/data_loader.h"
+#include <knobab/server/dataStructures/data_loader.h>
 
 struct FeedQueryLoadFromFile {
     log_data_format format = TAB_SEPARATED_EVENTS;
