@@ -2,13 +2,15 @@
 // Created by giacomo on 05/10/22.
 //
 #include <args.hxx>
-#include <knobab/algorithms/mining/pattern_mining.h>
+#include <knobab/mining/bolt1.h>
 #include <knobab/mining/apriori.h>
+#include <knobab/mining/bolt2.h>
 #include <fstream>
 #include "knobab/server/query_manager/ServerQueryManager.h"
 
 enum Algorithm {
     BOLT,
+    BOLT2,
     APRIORI,
     PREVIOUS_MINING
 };
@@ -133,6 +135,9 @@ int main(int argc, char **argv) {
         switch (algorithm) {
             case BOLT:
                 bolt_algorithm(logger_file, log, support, i, no_stats);       // Using directly the relational database representation without querying
+                break;
+            case BOLT2:
+                bolt_algorithm2(logger_file, log, support, i, no_stats);       // Using directly the relational database representation without querying
                 break;
             case APRIORI:
                 apriori(logger_file, log, support, unary_templates, binary_templates, i, no_stats);   // Using A-Priori + Querying for checking satisfiability

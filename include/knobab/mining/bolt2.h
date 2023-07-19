@@ -2,11 +2,16 @@
 // Created by giacomo on 17/09/22.
 //
 
-#ifndef KNOBAB_PATTERN_MINING_H
-#define KNOBAB_PATTERN_MINING_H
+#ifndef KNOBAB_PATTERN_MINING2_H
+#define KNOBAB_PATTERN_MINING2_H
 // [DEPRECATED FILE! REMOVE ME]
-#include <vector>
-#include "knobab/server/tables/KnowledgeBase.h"
+#include <knobab/mining/bolt_commons.h>
+
+void bolt_algorithm2(const std::string& logger_file,
+                    const FeedQueryLoadFromFile& conf,
+                    double support,
+                    uint16_t iter_num,
+                    bool no_stats);
 
 std::pair<std::vector<pattern_mining_result<DeclareDataAware>>, double> bolt2(const KnowledgeBase& kb,
                                                                               double support,

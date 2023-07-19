@@ -2,7 +2,7 @@
 // Created by giacomo on 17/09/22.
 //
 
-#include "knobab/algorithms/mining/pattern_mining.h"
+#include "knobab/mining/bolt2.h"
 #include "yaucl/learning/dt_predicate.h"
 #include "yaucl/learning/DecisionTree.h"
 #include <chrono>
@@ -11,8 +11,9 @@
 #include "knobab/mining/refinery.h"
 #include "knobab/server/dataStructures/marked_event.h"
 #include <roaring/roaring_array.h>
+#include <knobab/mining/bolt_commons.h>
 
-void bolt_algorithm(const std::string& logger_file,
+void bolt_algorithm2(const std::string& logger_file,
                     const FeedQueryLoadFromFile& conf,
                     double support,
                     uint16_t iter_num,
@@ -48,46 +49,18 @@ void bolt_algorithm(const std::string& logger_file,
     }
 }
 
-static inline void decrease_support_X(const KnowledgeBase &kb,
-                                      size_t expected_support,
-                                      bool& alles_X,
-                                      size_t& alles_not_X) {
-    if (alles_X) {
-        alles_not_X++;
-        if ((kb.nTraces() - alles_not_X) < expected_support) {
-            alles_X = false;
-        }
-    }
-}
 
-static inline void fast_forward_equals(trace_t trace_id,
-                                       ActTable::record*& to_increment,
-                                       ActTable::record *&end) {
-    while ((to_increment != end) &&
-           (to_increment->entry.id.parts.trace_id == trace_id)) {
-        to_increment++;
-    }
-}
 
-static inline void fast_forward_lower(trace_t trace_id,
-                                      ActTable::record*& to_increment,
-                                      ActTable::record *&end) {
-    while ((to_increment != end) &&
-           (to_increment->entry.id.parts.trace_id < trace_id)) {
-        to_increment++;
-    }
-}
-
-struct forNegation {
-    act_t act;
-    std::vector<trace_t> witnesses;
-    double local_support;
-
-    DEFAULT_CONSTRUCTORS(forNegation)
-    forNegation(act_t act, const std::vector<trace_t> &witnesses, double localSupport) : act(act),
-                                                                                         local_support(localSupport),
-                                                                                         witnesses(witnesses) {}
-};
+//struct forNegation {
+//    act_t act;
+//    std::vector<trace_t> witnesses;
+//    double local_support;
+//
+//    DEFAULT_CONSTRUCTORS(forNegation)
+//    forNegation(act_t act, const std::vector<trace_t> &witnesses, double localSupport) : act(act),
+//                                                                                         local_support(localSupport),
+//                                                                                         witnesses(witnesses) {}
+//};
 
 #define RESPONSE_AB_ID  (0b00000001)
 #define PRECEDENCE_AB_ID  (0b00000010)
@@ -452,7 +425,6 @@ Bolt2Branching(const KnowledgeBase &kb, bool only_precise_temporal_patterns,
     /* We may be on the right branch but there are no suitable patterns here, so just add the cached ones */
     if (rb && !alles_response && !alles_precedence && !alles_next && !alles_prev) {
         if(data.p_lb_sup_conf.second != -1) {
-//<<<<<<< HEAD
             auto& ref = clauses.emplace_back(clause,
                                  candidate.support_generating_original_pattern,
                                  data.p_lb_sup_conf.first,
@@ -465,60 +437,24 @@ Bolt2Branching(const KnowledgeBase &kb, bool only_precise_temporal_patterns,
                                  data.r_lb_sup_conf.first,
                                  data.r_lb_sup_conf.second);
             ref.clause.casusu = "Response";
-//=======
-//            clause.casusu = "Precedence";
-//            pattern_mining_result<DeclareDataAware>& ref = clauses.emplace_back(clause,
-//                                                                                candidate.support_generating_original_pattern,
-//                                                                                data.p_lb_sup_conf.first,
-//                                                                                data.p_lb_sup_conf.second);
-//
-//            std::swap(ref.clause.left_act, ref.clause.right_act);
-//            std::swap(ref.clause.left_act_id, ref.clause.right_act_id);
-//        }
-//        if(data.r_lb_sup_conf.second != -1) {
-//            clause.casusu = "Response";
-//            pattern_mining_result<DeclareDataAware>& ref = clauses.emplace_back(clause,
-//                                                                                candidate.support_generating_original_pattern,
-//                                                                                data.r_lb_sup_conf.first,
-//                                                                                data.r_lb_sup_conf.second);
-//
-//>>>>>>> 197c60e16648db7028402ddd4d8ee12fabe85259
             std::swap(ref.clause.left_act, ref.clause.right_act);
             std::swap(ref.clause.left_act_id, ref.clause.right_act_id);
         }
         if(data.cp_lb_sup_conf.second != -1) {
-//<<<<<<< HEAD
             auto& ref = clauses.emplace_back(clause,
                                  candidate.support_generating_original_pattern,
                                  data.cp_lb_sup_conf.first,
                                  data.cp_lb_sup_conf.second);
             ref.clause.casusu = "ChainPrecedence";
-//=======
-//            clause.casusu = "ChainPrecedence";
-//            pattern_mining_result<DeclareDataAware>& ref = clauses.emplace_back(clause,
-//                                                                                candidate.support_generating_original_pattern,
-//                                                                                data.cp_lb_sup_conf.first,
-//                                                                                data.cp_lb_sup_conf.second);
-//
-//>>>>>>> 197c60e16648db7028402ddd4d8ee12fabe85259
             std::swap(ref.clause.left_act, ref.clause.right_act);
             std::swap(ref.clause.left_act_id, ref.clause.right_act_id);
         }
         if(data.cr_lb_sup_conf.second != -1) {
-//<<<<<<< HEAD
             auto& ref = clauses.emplace_back(clause,
                                  candidate.support_generating_original_pattern,
                                  data.cr_lb_sup_conf.first,
                                  data.cr_lb_sup_conf.second);
             ref.clause.casusu = "ChainResponse";
-//=======
-//            clause.casusu = "ChainResponse";
-//            pattern_mining_result<DeclareDataAware>& ref = clauses.emplace_back(clause,
-//                                                                                candidate.support_generating_original_pattern,
-//                                                                                data.cr_lb_sup_conf.first,
-//                                                                                data.cr_lb_sup_conf.second);
-//
-//>>>>>>> 197c60e16648db7028402ddd4d8ee12fabe85259
             std::swap(ref.clause.left_act, ref.clause.right_act);
             std::swap(ref.clause.left_act_id, ref.clause.right_act_id);
         }
@@ -942,7 +878,7 @@ std::pair<std::vector<pattern_mining_result<DeclareDataAware>>, double> bolt2(co
     using std::chrono::duration;
     using std::chrono::milliseconds;
     auto t1 = high_resolution_clock::now();
-    std::unordered_map<std::string, std::unordered_map<act_t, std::vector<forNegation>>> patterns_to_negate;
+//    std::unordered_map<std::string, std::unordered_map<act_t, std::vector<forNegation>>> patterns_to_negate;
     support = std::max(std::min(support, 1.0), 0.0); // forcing the value to be between 0 and 1.
     size_t log_size = kb.nTraces();
     std::unordered_set<act_t> absent_acts;
