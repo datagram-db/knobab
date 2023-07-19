@@ -19,6 +19,8 @@ struct FeedQueryLoadFromFile {
     friend std::ostream &operator<<(std::ostream &os, const FeedQueryLoadFromFile &file);
 };
 
+// TODO: return std::pair<std::vector<pattern_mining_result<DeclareDataAware>>, double>
+
 void apriori(const std::string& benchmarking_logger,
              const FeedQueryLoadFromFile& log,
              double support,

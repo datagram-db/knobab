@@ -7,7 +7,7 @@
 // [DEPRECATED FILE! REMOVE ME]
 #include <knobab/mining/bolt_commons.h>
 
-void bolt_algorithm2(const std::string& logger_file,
+std::pair<std::vector<pattern_mining_result<DeclareDataAware>>, double> bolt_algorithm2(const std::string& logger_file,
                     const FeedQueryLoadFromFile& conf,
                     double support,
                     uint16_t iter_num,
