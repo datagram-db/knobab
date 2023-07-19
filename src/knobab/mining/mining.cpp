@@ -144,7 +144,7 @@ int main(int argc, char **argv) {
                 break;
             case TOP_K_MINING:
                 binary_templates.insert(binary_templates.end(), unary_templates.begin(), unary_templates.end());
-                previous_mining(logger_file, log, support, binary_templates, i, no_stats);   // Using A-Priori + Querying for checking satisfiability
+                top_k_mining(logger_file, log, support, binary_templates, i, no_stats);   // Using A-Priori + Querying for checking satisfiability
                 break;
         }
     }

@@ -177,9 +177,9 @@ bool DeclareDataAware::operator==(const DeclareDataAware &rhs) const {
     bool tmp = casusu == rhs.casusu &&
            n == rhs.n &&
            left_act == rhs.left_act &&
-           left_act_id == rhs.left_act_id &&
+//           left_act_id == rhs.left_act_id &&
            right_act == rhs.right_act &&
-           right_act_id == rhs.right_act_id &&
+//           right_act_id == rhs.right_act_id &&
            left_decomposed_atoms == rhs.left_decomposed_atoms &&
            right_decomposed_atoms == rhs.right_decomposed_atoms &&
            conjunctive_map == rhs.conjunctive_map;
