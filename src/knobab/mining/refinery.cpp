@@ -174,32 +174,53 @@ struct ConfusionMatrix {
 };
 
 /**
- * @author: Samuel 'Buzz' Appleby
+ * Loading the models from the dumped files
+ * @author: Samuel 'Buzz' Appleby, Giacomo
  * @param sqm
  */
-void loading_model_from_file(ServerQueryManager& sqm) {
-    std::vector<pattern_mining_result<DeclareDataAware>> new_vec;
-    std::stringstream sSTR;
-    sSTR << "file "
-         << std::quoted("data/testing/mining/models/model.powerdecl");
+void loading_model_from_file(ServerQueryManager& sqm, const std::filesystem::path& path, std::tuple<std::unordered_map<std::string, std::vector<pattern_mining_result<DeclareDataAware>>>,double>& result) {
+    std::get<1>(result) = 0.0;
+    auto& refRoot = std::get<0>(result);
+    for(auto& p : std::filesystem::recursive_directory_iterator(path)) {
+        if (p.is_directory()) {
+            std::string model_name = p.path().filename();
+            std::cout << "Loading model: " << model_name << std::endl;
+            auto model_file = p.path() / "model.powerdecl";
+            auto sup_conf_file = p.path() / "sup_conf.tab";
+            if ((!exists(model_file)) || (!exists(sup_conf_file))) {
+                std::cout << "Skipping" << std::endl;
+            }
 
-    auto actual_model = sqm.loadModelFromFile(sSTR.str());
+            std::vector<pattern_mining_result<DeclareDataAware>>&  new_vec = refRoot[model_name];
+            std::stringstream sSTR;
+            sSTR << "file "
+                 << std::quoted((model_file).string());
 
-    std::ifstream file("data/testing/mining/models/sup_conf.tab");
-    std::string line;
-    uint32_t idx = 0;
-    std::string delimiter = "\t";
-    while (getline (file, line)) {
-        pattern_mining_result<DeclareDataAware>& ref = new_vec.emplace_back();
-        ref.clause = actual_model.at(idx);
-        std::istringstream iss(line);
-        std::string token;
-        std::getline(iss, token, '\t');
-        ref.support_declarative_pattern = stod(token);
-        std::getline(iss, token, '\t');
-        ref.confidence_declarative_pattern = stod(token);
-        idx++;
+            auto actual_model = sqm.loadModelFromFile(sSTR.str());
+
+            std::ifstream file(sup_conf_file);
+            std::string line;
+            uint32_t idx = 0;
+            std::string delimiter = "\t";
+            while (getline (file, line)) {
+                pattern_mining_result<DeclareDataAware>& ref = new_vec.emplace_back();
+                ref.clause = actual_model.at(idx);
+                std::istringstream iss(line);
+                std::string token;
+                std::getline(iss, token, '\t');
+                ref.support_declarative_pattern = stod(token);
+                std::getline(iss, token, '\t');
+                ref.confidence_declarative_pattern = stod(token);
+                idx++;
+            }
+        }
     }
+
+
+
+
+
+
 }
 
 int main(int argc, char **argv) {
@@ -286,6 +307,8 @@ int main(int argc, char **argv) {
             {"xes", log_data_format::XES1},
             {"tab", log_data_format::TAB_SEPARATED_EVENTS}};
     args::Group group(parser, "You can use the following parameters", args::Group::Validators::DontCare, args::Options::Global);
+    args::Flag read_dumped_models(group, "Read dumped models", "If set, does not perform any mining, but merely reads the models as dumped", {'r', "read1"});
+    args::ValueFlag<std::string>  dump_folder(group, "Testing log", "The location where the models are going to be dumped", {'o', "output_models"});
     args::ValueFlag<std::string>  testing_log(group, "Testing log", "The log against which conduct the prediction", {'e', "testing"});
     args::ValueFlag<std::string>  expected_tab(group, "Expected Classes", "The expected prediction classes for the testing log", {'x', "expected"});
     args::ValueFlag<std::string>  testing_f(group, "Testing log format", "The format of the testing log", {'f', "format"});
@@ -352,31 +375,39 @@ int main(int argc, char **argv) {
             measure = tmp.value();
         }
     }
-
-    // Loading the different classes
-    ServerQueryManager sqm;
-    double loading_and_indexing = 0;
-    std::vector<std::string> bogus_model_name;
-    std::vector<ConfusionMatrix> matrices(worlds_format_to_load.size());
-    for (size_t i = 0, N = std::min(worlds_format_to_load.size(), worlds_file_to_load.size()); i<N; i++) {
-        std::stringstream ss;
-        std::string model_name = std::to_string(i);
-        bogus_model_name.emplace_back(model_name);
-        auto t2 = (size_t)worlds_format_to_load.at(i);
-        ss << "load "
-           << log_parse_format_type.at((size_t)worlds_format_to_load.at(i))
-           << " "
-           << std::quoted(worlds_file_to_load.at(i))
-           <<  " no stats as " // no stats with data as
-           << std::quoted(model_name);
-        std::cout << ss.str() << std::endl;
-        auto tmp = sqm.runQuery(ss.str());
-        std::cerr << tmp.first << " && " << tmp.second << std::endl;
-        loading_and_indexing += sqm.multiple_logs[model_name].experiment_logger.log_indexing_ms+sqm.multiple_logs[model_name].experiment_logger.log_loading_and_parsing_ms;
+    std::filesystem::path output_models = std::filesystem::path("data")/"benchmarking"/"mining"/"cyber";
+    if (dump_folder) {
+        output_models = args::get(dump_folder);
     }
-    std::cout << "loading+indexing=" << loading_and_indexing << std::endl;
 
-    // Setting up the confusion matrices from the models
+    ServerQueryManager sqm;
+    std::tuple<std::unordered_map<std::string, std::vector<pattern_mining_result<DeclareDataAware>>>,double> model_and_times;
+
+    if (!read_dumped_models) {
+        // Loading the different classes
+        double loading_and_indexing = 0;
+        std::vector<std::string> bogus_model_name;
+        std::vector<ConfusionMatrix> matrices(worlds_format_to_load.size());
+        for (size_t i = 0, N = std::min(worlds_format_to_load.size(), worlds_file_to_load.size()); i<N; i++) {
+            std::stringstream ss;
+            std::string model_name = std::filesystem::path(worlds_file_to_load.at(i)).stem().generic_string();
+            bogus_model_name.emplace_back(model_name);
+            auto t2 = (size_t)worlds_format_to_load.at(i);
+            ss << "load "
+               << log_parse_format_type.at((size_t)worlds_format_to_load.at(i))
+               << " "
+               << std::quoted(worlds_file_to_load.at(i))
+               <<  " no stats as " // no stats with data as
+               << std::quoted(model_name);
+            std::cout << ss.str() << std::endl;
+            auto tmp = sqm.runQuery(ss.str());
+            std::cerr << tmp.first << " && " << tmp.second << std::endl;
+            loading_and_indexing += sqm.multiple_logs[model_name].experiment_logger.log_indexing_ms+sqm.multiple_logs[model_name].experiment_logger.log_loading_and_parsing_ms;
+        }
+        std::cout << "loading+indexing=" << loading_and_indexing << std::endl;
+
+#ifdef FUTURE
+        // Setting up the confusion matrices from the models
     size_t nTestingTraces = 0;
     {
         std::fstream myfile(expected_File, std::ios_base::in);
@@ -429,24 +460,27 @@ int main(int argc, char **argv) {
         sqm.runQuery(query_plan);
     }
     auto it2 = sqm.planname_to_declare_to_ltlf.find("nfmcp23");
+#endif
 
-    auto model_and_times = bolt2_multilog(sqm,
-                                 bogus_model_name,
-                                 supp,
-                                 tau,
-                                 purity,
-                                 max_set_size,
-                                 min_leaf_size);
-    auto model = std::get<0>(model_and_times);
-    double dataless_mining = std::get<1>(model_and_times);
-    std::cout << "dataless_mining=" << dataless_mining << std::endl;
+        // TODO: many other algorithms, as in the mining pipeline!
+        model_and_times = bolt2_multilog(sqm,
+                                              bogus_model_name,
+                                              supp,
+                                              tau,
+                                              purity,
+                                              max_set_size,
+                                              min_leaf_size);
+        auto model = std::get<0>(model_and_times);
+        double dataless_mining = std::get<1>(model_and_times);
+        std::cout << "dataless_mining=" << dataless_mining << std::endl;
 
-    std::filesystem::path output_models = std::filesystem::path("data")/"benchmarking"/"mining"/"cyber";
-
-    for (const auto& [model_name,model] : model) {
-        serialize_bolt2_outcome(model, model_name, output_models);
+        /// Serialising the model from disk
+        for (const auto& [model_name,modelx] : model) {
+            serialize_bolt2_outcome(modelx, model_name, output_models);
+        }
+    } else {
+        loading_model_from_file(sqm, output_models, model_and_times);
     }
-
 
 //    for(uint16_t i = 0; i < 5; ++i){
 //        auto model_and_times = classifier_mining(sqm,

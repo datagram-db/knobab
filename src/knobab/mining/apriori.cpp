@@ -197,7 +197,7 @@ void apriori(const std::string& logger_file,
 }
 
 
-void previous_mining(const std::string& logger_file,
+void top_k_mining(const std::string& logger_file,
              const FeedQueryLoadFromFile& log,
              double support,
              std::vector<std::string>& templates,

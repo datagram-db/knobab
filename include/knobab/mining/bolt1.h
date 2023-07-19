@@ -10,7 +10,7 @@
 #include "knobab/server/declare/DeclareDataAware.h"
 #include "apriori.h"
 
-void bolt_algorithm(const std::string& logger_file,
+std::pair<std::vector<pattern_mining_result<DeclareDataAware>>, double> bolt_algorithm(const std::string& logger_file,
                     const FeedQueryLoadFromFile& conf,
                     double support,
                     uint16_t iter_num,
