@@ -29,7 +29,7 @@ void apriori(const std::string& benchmarking_logger,
              uint16_t iteration_num = 0,
              bool no_stats = false);
 
-void previous_mining(const std::string& benchmarking_logger,
+void top_k_mining(const std::string& benchmarking_logger,
              const FeedQueryLoadFromFile& log,
              double support,
              std::vector<std::string>& templates,

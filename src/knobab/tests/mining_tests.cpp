@@ -91,8 +91,8 @@ TEST_CASE("mining_tests: exists_absence") {
     pattern_mining_result<DeclareDataAware> to_find;
     to_find.clause.casusu = "Exists";
     to_find.clause.left_act = "a";
-    to_find.clause.left_act_id = 0;
-    to_find.clause.right_act_id = -1;
+//    to_find.clause.left_act_id = 0;
+//    to_find.clause.right_act_id = -1;
     to_find.clause.n = 3;
     to_find.support_generating_original_pattern = 1.0;
     to_find.support_declarative_pattern = 1.0;
@@ -101,8 +101,8 @@ TEST_CASE("mining_tests: exists_absence") {
     pattern_mining_result<DeclareDataAware> to_find_1;
     to_find_1.clause.casusu = "Absence";
     to_find_1.clause.left_act = "a";
-    to_find_1.clause.left_act_id = 0;
-    to_find_1.clause.right_act_id = -1;
+//    to_find_1.clause.left_act_id = 0;
+//    to_find_1.clause.right_act_id = -1;
     to_find_1.clause.n = 4;
     to_find_1.support_generating_original_pattern = 1.0;
     to_find_1.support_declarative_pattern = 1.0;
@@ -118,8 +118,8 @@ TEST_CASE("mining_tests: init") {
     pattern_mining_result<DeclareDataAware> to_find;
     to_find.clause.casusu = "Init";
     to_find.clause.left_act = "a";
-    to_find.clause.left_act_id = 0;
-    to_find.clause.right_act_id = -1;
+//    to_find.clause.left_act_id = 0;
+//    to_find.clause.right_act_id = -1;
     to_find.clause.n = 1;
     to_find.support_generating_original_pattern = 1.0;
     to_find.support_declarative_pattern = 1.0;
@@ -135,8 +135,8 @@ TEST_CASE("mining_tests: end") {
     pattern_mining_result<DeclareDataAware> to_find;
     to_find.clause.casusu = "End";
     to_find.clause.left_act = "a";
-    to_find.clause.left_act_id = 2;
-    to_find.clause.right_act_id = -1;
+//    to_find.clause.left_act_id = 2;
+//    to_find.clause.right_act_id = -1;
     to_find.clause.n = 1;
     to_find.support_generating_original_pattern = 1.0;
     to_find.support_declarative_pattern = 1.0;
@@ -152,9 +152,9 @@ TEST_CASE("mining_tests: precedence") {
     pattern_mining_result<DeclareDataAware> to_find;
     to_find.clause.casusu = "Precedence";
     to_find.clause.left_act = "a";
-    to_find.clause.left_act_id = 0;
+//    to_find.clause.left_act_id = 0;
     to_find.clause.right_act = "b";
-    to_find.clause.right_act_id = 2;
+//    to_find.clause.right_act_id = 2;
     to_find.clause.n = 1;
     to_find.support_generating_original_pattern = 0.5;
     to_find.support_declarative_pattern = 1.0;
@@ -170,9 +170,9 @@ TEST_CASE("mining_tests: chain_precedence") {
     pattern_mining_result<DeclareDataAware> to_find;
     to_find.clause.casusu = "ChainPrecedence";
     to_find.clause.left_act = "a";
-    to_find.clause.left_act_id = 1;
+//    to_find.clause.left_act_id = 1;
     to_find.clause.right_act = "b";
-    to_find.clause.right_act_id = 0;
+//    to_find.clause.right_act_id = 0;
     to_find.clause.n = 1;
     to_find.support_generating_original_pattern = 0.75;
     to_find.support_declarative_pattern = 1.0;
@@ -188,9 +188,9 @@ TEST_CASE("mining_tests: chain_precedence_force_right_branch") {
     pattern_mining_result<DeclareDataAware> to_find;
     to_find.clause.casusu = "ChainPrecedence";
     to_find.clause.left_act = "a";
-    to_find.clause.left_act_id = 1;
+//    to_find.clause.left_act_id = 1;
     to_find.clause.right_act = "b";
-    to_find.clause.right_act_id = 0;
+//    to_find.clause.right_act_id = 0;
     to_find.clause.n = 1;
     to_find.support_generating_original_pattern = 0.8;
     to_find.support_declarative_pattern = 1.0;
@@ -206,9 +206,9 @@ TEST_CASE("mining_tests: choice") {
     pattern_mining_result<DeclareDataAware> to_find;
     to_find.clause.casusu = "Choice";
     to_find.clause.left_act = "a";
-    to_find.clause.left_act_id = 0;
+//    to_find.clause.left_act_id = 0;
     to_find.clause.right_act = "b";
-    to_find.clause.right_act_id = 3;
+//    to_find.clause.right_act_id = 3;
     to_find.clause.n = 1;
     to_find.support_generating_original_pattern = 0.25;
     to_find.support_declarative_pattern = 1.0;
@@ -236,9 +236,9 @@ TEST_CASE("mining_tests: response") {
     pattern_mining_result<DeclareDataAware> to_find;
     to_find.clause.casusu = "Response";
     to_find.clause.left_act = "a";
-    to_find.clause.left_act_id = 0;
+//    to_find.clause.left_act_id = 0;
     to_find.clause.right_act = "b";
-    to_find.clause.right_act_id = 2;
+//    to_find.clause.right_act_id = 2;
     to_find.clause.n = 1;
     to_find.support_generating_original_pattern = 0.75;
     to_find.support_declarative_pattern = 1.0;
@@ -254,9 +254,9 @@ TEST_CASE("mining_tests: chain_response") {
     pattern_mining_result<DeclareDataAware> to_find;
     to_find.clause.casusu = "ChainResponse";
     to_find.clause.left_act = "a";
-    to_find.clause.left_act_id = 0;
+//    to_find.clause.left_act_id = 0;
     to_find.clause.right_act = "b";
-    to_find.clause.right_act_id = 1;
+//    to_find.clause.right_act_id = 1;
     to_find.clause.n = 1;
     to_find.support_generating_original_pattern = 0.8;
     to_find.support_declarative_pattern = 1.0;
@@ -272,9 +272,9 @@ TEST_CASE("mining_tests: responded_existence") {
     pattern_mining_result<DeclareDataAware> to_find;
     to_find.clause.casusu = "RespExistence";
     to_find.clause.left_act = "a";
-    to_find.clause.left_act_id = 2;
+//    to_find.clause.left_act_id = 2;
     to_find.clause.right_act = "b";
-    to_find.clause.right_act_id = 1;
+//    to_find.clause.right_act_id = 1;
     to_find.clause.n = 1;
     to_find.support_generating_original_pattern = 0.4;
     to_find.support_declarative_pattern = 1.0;
@@ -290,9 +290,9 @@ TEST_CASE("mining_tests: excl_choice") {
     pattern_mining_result<DeclareDataAware> to_find;
     to_find.clause.casusu = "ExclChoice";
     to_find.clause.left_act = "a";
-    to_find.clause.left_act_id = 0;
+//    to_find.clause.left_act_id = 0;
     to_find.clause.right_act = "b";
-    to_find.clause.right_act_id = 3;
+//    to_find.clause.right_act_id = 3;
     to_find.clause.n = 1;
     to_find.support_generating_original_pattern = 0;
     to_find.support_declarative_pattern = 1.0;
@@ -308,9 +308,9 @@ TEST_CASE("mining_tests: coexistence") {
     pattern_mining_result<DeclareDataAware> to_find;
     to_find.clause.casusu = "CoExistence";
     to_find.clause.left_act = "a";
-    to_find.clause.left_act_id = 2;
+//    to_find.clause.left_act_id = 2;
     to_find.clause.right_act = "b";
-    to_find.clause.right_act_id = 1;
+//    to_find.clause.right_act_id = 1;
     to_find.clause.n = 1;
     to_find.support_generating_original_pattern = 0.4;
     to_find.support_declarative_pattern = 1.0;
@@ -318,7 +318,7 @@ TEST_CASE("mining_tests: coexistence") {
 
     pattern_mining_result<DeclareDataAware> to_find_mirror = to_find;
     std::swap(to_find_mirror.clause.left_act, to_find_mirror.clause.right_act);
-    std::swap(to_find_mirror.clause.left_act_id, to_find_mirror.clause.right_act_id);
+//    std::swap(to_find_mirror.clause.left_act_id, to_find_mirror.clause.right_act_id);
 
     ASSERT_TRUE(((std::find(values.first.begin(), values.first.end(), to_find) != values.first.end()) || (std::find(values.first.begin(), values.first.end(), to_find_mirror) != values.first.end())) );
 }
@@ -330,9 +330,9 @@ TEST_CASE("mining_tests: surround") {
     pattern_mining_result<DeclareDataAware> to_find;
     to_find.clause.casusu = "Surround";
     to_find.clause.left_act = "a";
-    to_find.clause.left_act_id = 2;
+//    to_find.clause.left_act_id = 2;
     to_find.clause.right_act = "b";
-    to_find.clause.right_act_id = 1;
+//    to_find.clause.right_act_id = 1;
     to_find.clause.n = 1;
     to_find.support_generating_original_pattern = 1.0;
     to_find.support_declarative_pattern = 1.0;
@@ -348,9 +348,9 @@ TEST_CASE("mining_tests: surround_not_chain_succession") {
     pattern_mining_result<DeclareDataAware> to_find;
     to_find.clause.casusu = "Surround";
     to_find.clause.left_act = "a";
-    to_find.clause.left_act_id = 0;
+//    to_find.clause.left_act_id = 0;
     to_find.clause.right_act = "b";
-    to_find.clause.right_act_id = 1;
+//    to_find.clause.right_act_id = 1;
     to_find.clause.n = 1;
     to_find.support_generating_original_pattern = 1.0;
     to_find.support_declarative_pattern = 1.0;
@@ -359,9 +359,9 @@ TEST_CASE("mining_tests: surround_not_chain_succession") {
     pattern_mining_result<DeclareDataAware> to_find_1;
     to_find_1.clause.casusu = "ChainSuccession";
     to_find_1.clause.left_act = "a";
-    to_find_1.clause.left_act_id = 0;
+//    to_find_1.clause.left_act_id = 0;
     to_find_1.clause.right_act = "b";
-    to_find_1.clause.right_act_id = 1;
+//    to_find_1.clause.right_act_id = 1;
     to_find_1.clause.n = 1;
     to_find_1.support_generating_original_pattern = 1.0;
     to_find_1.support_declarative_pattern = 1.0;
@@ -377,9 +377,9 @@ TEST_CASE("mining_tests: surround_chain_succession") {
     pattern_mining_result<DeclareDataAware> to_find;
     to_find.clause.casusu = "Surround";
     to_find.clause.left_act = "a";
-    to_find.clause.left_act_id = 0;
+//    to_find.clause.left_act_id = 0;
     to_find.clause.right_act = "b";
-    to_find.clause.right_act_id = 1;
+//    to_find.clause.right_act_id = 1;
     to_find.clause.n = 1;
     to_find.support_generating_original_pattern = 1.0;
     to_find.support_declarative_pattern = 1.0;
@@ -388,9 +388,9 @@ TEST_CASE("mining_tests: surround_chain_succession") {
     pattern_mining_result<DeclareDataAware> to_find_1;
     to_find_1.clause.casusu = "ChainSuccession";
     to_find_1.clause.left_act = "a";
-    to_find_1.clause.left_act_id = 0;
+//    to_find_1.clause.left_act_id = 0;
     to_find_1.clause.right_act = "b";
-    to_find_1.clause.right_act_id = 1;
+//    to_find_1.clause.right_act_id = 1;
     to_find_1.clause.n = 1;
     to_find_1.support_generating_original_pattern = 1.0;
     to_find_1.support_declarative_pattern = 1.0;
@@ -406,9 +406,9 @@ TEST_CASE("mining_tests: not_chain_succession") {
     pattern_mining_result<DeclareDataAware> to_find;
     to_find.clause.casusu = "ChainSuccession";
     to_find.clause.left_act = "a";
-    to_find.clause.left_act_id = 0;
+//    to_find.clause.left_act_id = 0;
     to_find.clause.right_act = "b";
-    to_find.clause.right_act_id = 1;
+//    to_find.clause.right_act_id = 1;
     to_find.clause.n = 1;
     to_find.support_generating_original_pattern = (3.0/7.0);
     to_find.support_declarative_pattern = 1.0;
@@ -424,9 +424,9 @@ TEST_CASE("mining_tests: succession") {
     pattern_mining_result<DeclareDataAware> to_find;
     to_find.clause.casusu = "Succession";
     to_find.clause.left_act = "a";
-    to_find.clause.left_act_id = 0;
+//    to_find.clause.left_act_id = 0;
     to_find.clause.right_act = "b";
-    to_find.clause.right_act_id = 1;
+//    to_find.clause.right_act_id = 1;
     to_find.clause.n = 1;
     to_find.support_generating_original_pattern = 1.0;
     to_find.support_declarative_pattern = 1.0;

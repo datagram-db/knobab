@@ -439,7 +439,7 @@ Bolt2Branching(const KnowledgeBase &kb, bool only_precise_temporal_patterns,
                                  data.r_lb_sup_conf.second);
             ref.clause.casusu = "Response";
             std::swap(ref.clause.left_act, ref.clause.right_act);
-            std::swap(ref.clause.left_act_id, ref.clause.right_act_id);
+//            std::swap(ref.clause.left_act_id, ref.clause.right_act_id);
         }
         if(data.cp_lb_sup_conf.second != -1) {
             auto& ref = clauses.emplace_back(clause,
@@ -448,7 +448,7 @@ Bolt2Branching(const KnowledgeBase &kb, bool only_precise_temporal_patterns,
                                  data.cp_lb_sup_conf.second);
             ref.clause.casusu = "ChainPrecedence";
             std::swap(ref.clause.left_act, ref.clause.right_act);
-            std::swap(ref.clause.left_act_id, ref.clause.right_act_id);
+//            std::swap(ref.clause.left_act_id, ref.clause.right_act_id);
         }
         if(data.cr_lb_sup_conf.second != -1) {
             auto& ref = clauses.emplace_back(clause,
@@ -457,7 +457,7 @@ Bolt2Branching(const KnowledgeBase &kb, bool only_precise_temporal_patterns,
                                  data.cr_lb_sup_conf.second);
             ref.clause.casusu = "ChainResponse";
             std::swap(ref.clause.left_act, ref.clause.right_act);
-            std::swap(ref.clause.left_act_id, ref.clause.right_act_id);
+//            std::swap(ref.clause.left_act_id, ref.clause.right_act_id);
         }
 
         return;
@@ -527,7 +527,7 @@ Bolt2Branching(const KnowledgeBase &kb, bool only_precise_temporal_patterns,
                                                                                                 data.cp_lb_sup_conf.first,
                                                                                                 data.cp_lb_sup_conf.second);
                             std::swap(ref.clause.left_act, ref.clause.right_act);
-                            std::swap(ref.clause.left_act_id, ref.clause.right_act_id);
+//                            std::swap(ref.clause.left_act_id, ref.clause.right_act_id);
                         }
                     }
                 }
@@ -588,7 +588,7 @@ Bolt2Branching(const KnowledgeBase &kb, bool only_precise_temporal_patterns,
         if (alles_precedence && (!rb || ((data.flags & SUCCESSION_BA_ID) != SUCCESSION_BA_ID)) && (p_satisfied_not_vacuous > 0) && (activation_count > 0)) {
             clause.casusu = "Precedence";
             std::swap(clause.left_act, clause.right_act);
-            std::swap(clause.left_act_id, clause.right_act_id);
+//            std::swap(clause.left_act_id, clause.right_act_id);
             data.flags |= rb ? PRECEDENCE_AB_ID : PRECEDENCE_BA_ID;
             const double p_conf = ((double) p_satisfied_not_vacuous) / ((double) activation_count);
 
@@ -636,7 +636,7 @@ Bolt2Branching(const KnowledgeBase &kb, bool only_precise_temporal_patterns,
                 }
             }
 
-            std::swap(clause.left_act_id, clause.right_act_id);
+//            std::swap(clause.left_act_id, clause.right_act_id);
             std::swap(clause.left_act, clause.right_act);
         }
     }
@@ -702,7 +702,7 @@ Bolt2Branching(const KnowledgeBase &kb, bool only_precise_temporal_patterns,
                                                                                     cs_ab_sup,
                                                                                     cs_ab_conf);
                 std::swap(ref.clause.left_act, ref.clause.right_act);
-                std::swap(ref.clause.left_act_id, ref.clause.right_act_id);
+//                std::swap(ref.clause.left_act_id, ref.clause.right_act_id);
             }
             else {
                 /* ChainSuccession(A,B) not good enough, add the current ChainPrecedence(B,A) and ChainResponse(A,B) from the left branch */
@@ -720,13 +720,13 @@ Bolt2Branching(const KnowledgeBase &kb, bool only_precise_temporal_patterns,
                                          data.cr_lb_sup_conf.first,
                                          data.cr_lb_sup_conf.second);
                     std::swap(ref.clause.left_act, ref.clause.right_act);
-                    std::swap(ref.clause.left_act_id, ref.clause.right_act_id);
+//                    std::swap(ref.clause.left_act_id, ref.clause.right_act_id);
                 }
             }
         }
     }
 
-    return;
+//    return;
 
 //            if (ptn) {
 //                std::vector<trace_t> responseSupp;
@@ -827,12 +827,12 @@ choice_exclchoice(act_t a, act_t b,
     double local_support = ((double)(ratio.first)) / ((double)log_size);
     DeclareDataAware clause;
     clause.left_act = kb.event_label_mapper.get(a);
-    clause.left_act_id = a;
+//    clause.left_act_id = a;
     clause.right_act = kb.event_label_mapper.get(b);
-    clause.right_act_id = b;
+//    clause.right_act_id = b;
     if (a>b) {
         std::swap(clause.left_act,clause.right_act);
-        std::swap(clause.left_act_id, clause.right_act_id);
+//        std::swap(clause.left_act_id, clause.right_act_id);
     }
     clause.n = 1;
     if (ratio.first >= minimum_support_threshold) {
@@ -906,7 +906,7 @@ std::pair<std::vector<pattern_mining_result<DeclareDataAware>>, double> bolt2(co
     std::vector<pattern_mining_result<DeclareDataAware>> declarative_clauses;
     DeclareDataAware clause;
     clause.n = 1;
-    clause.right_act_id = -1;
+//    clause.right_act_id = -1;
     for (auto act_id = 0; act_id<max_act_id; act_id++) {
         absent_acts.insert(act_id);
         for (size_t trace_id = 0; trace_id < log_size; trace_id++) {
@@ -921,13 +921,13 @@ std::pair<std::vector<pattern_mining_result<DeclareDataAware>>, double> bolt2(co
         if (first_occ == log_size) {
             clause.casusu = "Init";
             clause.left_act = kb.event_label_mapper.get(act_id);
-            clause.left_act_id = act_id;
+//            clause.left_act_id = act_id;
             declarative_clauses.emplace_back(clause, 1.0, 1.0, 1.0); // 1.0 == ((double)(first_occ)) / ((double)log_size)
         }
         if (last_occ == log_size) {
             clause.casusu = "End";
             clause.left_act = kb.event_label_mapper.get(act_id);
-            clause.left_act_id = act_id;
+//            clause.left_act_id = act_id;
             declarative_clauses.emplace_back(clause,1.0,1.0,1.0); // 1.0 == ((double)(last_occ)) / ((double)log_size)
         }
     }
@@ -949,7 +949,7 @@ std::pair<std::vector<pattern_mining_result<DeclareDataAware>>, double> bolt2(co
                     // for mining the absence pattern
 //                    DeclareDataAware clause;
                     clause.left_act = kb.event_label_mapper.get(it);
-                    clause.left_act_id = it;
+//                    clause.left_act_id = it;
                     event_t n = std::numeric_limits<event_t>::max(),
                             N = 0;
                     auto cp = count_table.resolve_primary_index2(it);
@@ -1149,9 +1149,9 @@ std::pair<std::vector<pattern_mining_result<DeclareDataAware>>, double> bolt2(co
             clause.casusu = "RespExistence";
         };
         clause.left_act = kb.event_label_mapper.get(A);
-        clause.left_act_id = A;
+//        clause.left_act_id = A;
         clause.right_act = kb.event_label_mapper.get(B);
-        clause.right_act_id = B;
+//        clause.right_act_id = B;
 #ifdef DEBUG
         std::cout << clause.left_act << "--" << clause.right_act << std::endl;
 #endif
@@ -1220,14 +1220,14 @@ std::pair<std::vector<pattern_mining_result<DeclareDataAware>>, double> bolt2(co
 
             if (branch) {
                 std::swap(clause.left_act, clause.right_act);
-                std::swap(clause.left_act_id, clause.right_act_id);
+//                std::swap(clause.left_act_id, clause.right_act_id);
                 Bolt2Branching(kb, only_precise_temporal_patterns,
                                count_table, min_int_supp_patt, candidate_rule,
                                B, A, clause, declarative_clauses, alles_chain_succession_ba, alles_chain_succession_ab,
                                alles_surround_ba, data, false, true);
                 if (clause.casusu != "Precedence") {
                     std::swap(clause.left_act, clause.right_act);
-                    std::swap(clause.left_act_id, clause.right_act_id);
+//                    std::swap(clause.left_act_id, clause.right_act_id);
                 }
             }
         }
@@ -1258,8 +1258,8 @@ std::pair<std::vector<pattern_mining_result<DeclareDataAware>>, double> bolt2(co
             considered.emplace(b,a);
         }
     }
-    std::unordered_set<std::pair<act_t, act_t>> ecs;
-    std::unordered_set<std::pair<act_t, act_t>> cs;
+    std::unordered_set<std::pair<std::string, std::string>> ecs;
+    std::unordered_set<std::pair<std::string, std::string>> cs;
     std::pair<std::string,std::string> cp;
     for (auto& [act_id, ref_act] : map_for_retain) {
         auto it_1 = ref_act.maps.begin();
@@ -1282,8 +1282,8 @@ std::pair<std::vector<pattern_mining_result<DeclareDataAware>>, double> bolt2(co
                     DEBUG_ASSERT(clause.clause.casusu == "Choice");
 #endif
                 if ((!considered.contains(cp)) &&
-                    ((!clauseExcl) || (ecs.emplace(clause.clause.left_act_id, clause.clause.right_act_id).second)) &&
-                    ((clauseExcl) || (cs.emplace(clause.clause.left_act_id, clause.clause.right_act_id).second))
+                    ((!clauseExcl) || (ecs.emplace(clause.clause.left_act, clause.clause.right_act).second)) &&
+                    ((clauseExcl) || (cs.emplace(clause.clause.left_act, clause.clause.right_act).second))
                     ) {
                     declarative_clauses.emplace_back(clause);
                 }
