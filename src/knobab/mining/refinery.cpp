@@ -227,6 +227,13 @@ void loading_model_from_file(ServerQueryManager& sqm, const std::filesystem::pat
 
 }
 
+
+enum MetricCases {
+    ConfMetric,
+    SuppMetric,
+    RestrSuppMetric
+};
+
 int main(int argc, char **argv) {
 #if 0
     std::vector<std::string> log_parse_format_type{"HRF", "XES", "TAB"};
@@ -310,9 +317,13 @@ int main(int argc, char **argv) {
             {"hrf", log_data_format::HUMAN_READABLE_YAUCL},
             {"xes", log_data_format::XES1},
             {"tab", log_data_format::TAB_SEPARATED_EVENTS}};
+    std::unordered_map<std::string, MetricCases> metric_map{
+            {"conf", ConfMetric},
+            {"supp", SuppMetric},
+            {"restr", RestrSuppMetric}};
     args::Group group(parser, "You can use the following parameters", args::Group::Validators::DontCare, args::Options::Global);
     args::Flag read_dumped_models(group, "Read dumped models", "If set, does not perform any mining, but merely reads the models as dumped", {'r', "read1"});
-    args::Flag use_confidence_for_clustering(group, "Read dumped models", "Use confidence values for markov clustering", {'c', "use_confidence"});
+    args::MapFlag<std::string, MetricCases> use_confidence_for_clustering(parser, "c", "Sets up the metric case to be adopted in the ", {'c', "usemetric"}, metric_map);
     args::ValueFlag<std::string>  dump_folder(group, "Testing log", "The location where the models are going to be dumped", {'o', "output_models"});
     args::ValueFlag<std::string>  testing_log(group, "Testing log", "The log against which conduct the prediction", {'e', "testing"});
     args::ValueFlag<std::string>  expected_tab(group, "Expected Classes", "The expected prediction classes for the testing log", {'x', "expected"});
@@ -354,7 +365,10 @@ int main(int argc, char **argv) {
     double tau = 0.75;
     double supp = 0.75;
     double purity = 1.0;
-    bool useConfidence = (bool)(use_confidence_for_clustering);
+    MetricCases useConfidence = RestrSuppMetric;
+    if (use_confidence_for_clustering) {
+        useConfidence = args::get(use_confidence_for_clustering);
+    }
     size_t max_set_size = 1;
     size_t min_leaf_size = 1;
     if(tau_val) {
@@ -493,7 +507,7 @@ int main(int argc, char **argv) {
     // model name -> clause name -> [left -> right|n -> conf|supp]
     std::unordered_map<std::string, std::unordered_map<std::string, Eigen::SparseMatrix<double>>> model_confsupp_accessor;
     // Hardcorded configurations, that should have been generalised as configuration files
-    std::unordered_set<std::string> allowed_clauses{"ChainResponse", "ChainPrecedence", "Precedence", "Response", "Succession", "RespExistence"};
+//    std::unordered_set<std::string> allowed_clauses{"ChainResponse", "ChainPrecedence", "Precedence", "Response", "RespExistence"};
     std::unordered_map<std::string, std::vector<std::pair<std::string, bool>>> clauseExpansionWithNotInversion
     {
         {"ChainSuccession", {std::make_pair("ChainResponse", false), std::make_pair("ChainPrecedence", true)}},
@@ -511,9 +525,20 @@ int main(int argc, char **argv) {
         size_t max_val = 0;
         for (const auto& [model_name, actual_model] : std::get<0>(model_and_times)) {
             for (size_t model_pos = 0, N = actual_model.size(); model_pos < N; model_pos++) {
+                double selectedScore = 0.0;
                 const auto& clause = actual_model.at(model_pos);
-                auto& cp = tripletList_accessor[model_name][clause.clause.casusu];
-                left_act = mapper.put(clause.clause.left_act).first;
+                switch (useConfidence) {
+                    case ConfMetric:
+                        selectedScore = clause.confidence_declarative_pattern;
+                        break;
+                    case SuppMetric:
+                        selectedScore = clause.support_generating_original_pattern;
+                        break;
+                    case RestrSuppMetric:
+                        selectedScore = clause.restrictive_support_declarative_pattern;
+                        break;
+                }
+                    left_act = mapper.put(clause.clause.left_act).first;
                 if ((!isUnaryPredicate(clause.clause.casusu)) && (!clause.clause.right_act.empty())) {
                     right_act = mapper.put(clause.clause.right_act).first;
                 } else {
@@ -521,20 +546,23 @@ int main(int argc, char **argv) {
                     if (right_act > max_val)
                         max_val = right_act;
                 }
-                if (allowed_clauses.contains(clause.clause.casusu)) {
-                    tripletList_confsupp_accessor[model_name][clause.clause.casusu].emplace_back(left_act, right_act, useConfidence ? clause.confidence_declarative_pattern : clause.support_generating_original_pattern);
-                }
-                auto it = clauseExpansionWithNotInversion.find(clause.clause.casusu);
-                if (it != clauseExpansionWithNotInversion.end()) {
-                    for (const auto& rewritings : it->second) {
-                        if (rewritings.second) {
-                            tripletList_confsupp_accessor[model_name][rewritings.first].emplace_back(right_act, left_act, useConfidence ? clause.confidence_declarative_pattern : clause.support_generating_original_pattern);
-                        } else {
-                            tripletList_confsupp_accessor[model_name][rewritings.first].emplace_back(left_act, right_act, useConfidence ? clause.confidence_declarative_pattern : clause.support_generating_original_pattern);
+                    auto it = clauseExpansionWithNotInversion.find(clause.clause.casusu);
+                    if (it != clauseExpansionWithNotInversion.end()) {
+                        for (const auto& rewritings : it->second) {
+                            auto& cp = tripletList_accessor[model_name][rewritings.first];
+                            if (rewritings.second) {
+                                tripletList_confsupp_accessor[model_name][rewritings.first].emplace_back(right_act, left_act, selectedScore);
+                                cp.emplace_back(right_act, left_act, model_pos);
+                            } else {
+                                tripletList_confsupp_accessor[model_name][rewritings.first].emplace_back(left_act, right_act, selectedScore);
+                                cp.emplace_back(left_act, right_act, model_pos);
+                            }
                         }
+                    } else {
+                        auto& cp = tripletList_accessor[model_name][clause.clause.casusu];
+                        cp.emplace_back(left_act, right_act, model_pos);
+                        tripletList_confsupp_accessor[model_name][clause.clause.casusu].emplace_back(left_act, right_act, selectedScore);
                     }
-                }
-                cp.emplace_back(left_act, right_act, model_pos);
             }
         }
         max_val = std::max(max_val, mapper.size()+1);
@@ -564,7 +592,17 @@ int main(int argc, char **argv) {
 
     // TODO: avoiding chains, so to reduce any potential input model with absences or exists
     //       We can use MCL to alleviate the problem of finding all the possible cycles in the graph.
-    // Now hardcoded: getting all the clauses that are associated to the 
+    // Now hardcoded: getting all the clauses that are associated to the cycles
+    // TODO: parallelize for each clause in the model
+    std::unordered_set<std::string> to_absence_clauses_if_cluster{"ChainResponse", "ChainPrecedence", "Precedence", "Response"};
+    for (const auto& [model_name, actual_model] : model_confsupp_accessor) {
+        for (const auto& clause_name : to_absence_clauses_if_cluster) {
+            auto it = actual_model.find(clause_name);
+            if (it != actual_model.end()) {
+                it->second
+            }
+        }
+    }
 
     // TODO: parallelize for each clause in the model
     for (const auto& [model_name, actual_model] : std::get<0>(model_and_times)) {

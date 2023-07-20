@@ -185,29 +185,39 @@ Bolt2Branching(const KnowledgeBase &kb, bool only_precise_temporal_patterns,
     auto b_beginend = kb.timed_dataless_exists(B);
 // As I obtained the rule, there should be some data pertaining to it!
     DEBUG_ASSERT(b_beginend.first != b_beginend.second);
-    uint32_t activation_count = 0, not_activated = 0, a_trace_id = a_beginend.first->entry.id.parts.trace_id, a_prev_trace_id = a_trace_id,
+    uint32_t a_activation_count = 0, not_a_activated = 0, not_b_activated = 0, a_trace_id = a_beginend.first->entry.id.parts.trace_id, a_prev_trace_id = a_trace_id,
     b_trace_id = b_beginend.first->entry.id.parts.trace_id;
-
+    bool doRetain = false;
+    size_t last_a_for_retain = -1;
     if(a_trace_id != 0) {
-        not_activated += a_trace_id;
+        not_a_activated += a_trace_id;
     }
-    while (a_beginend.first != a_beginend.second) {
+    if(b_trace_id != 0) {
+        not_b_activated += b_trace_id;
+    }
+    while (a_beginend.first != a_beginend.second) { // (B)
         if ((!alles_precedence) && (!alles_response) && (!alles_altresponse) && (!alles_succession_ab) && (!alles_succession_ba)) {
             break;
         }
 
         a_trace_id = a_beginend.first->entry.id.parts.trace_id;
-        b_trace_id = b_beginend.first->entry.id.parts.trace_id;
+        if (b_beginend.first != b_beginend.second)
+            b_trace_id = b_beginend.first->entry.id.parts.trace_id;
+
+        if (!doRetain || ((b_beginend.first == b_beginend.second) || (b_trace_id >= last_a_for_retain))) {
+            doRetain = false;
+            last_a_for_retain = -1; // Redundant
+        }
 
         bool alreadyVisited = (a_trace_id == a_prev_trace_id);
         if (!alreadyVisited) {
-            not_activated += (a_trace_id - a_prev_trace_id - 1);
+            not_a_activated += (a_trace_id - a_prev_trace_id - 1);
             a_prev_trace_id = a_trace_id;
         }
 
         /* We have As on their own */
         if ((b_beginend.first == b_beginend.second) || (a_trace_id < b_trace_id)) {
-            activation_count++;
+            a_activation_count++;
             // Problem 1)
             // This might be a valid precedence, as nothing is stated
             // to what should happen after the A, but I cannot exploit
@@ -231,6 +241,14 @@ Bolt2Branching(const KnowledgeBase &kb, bool only_precise_temporal_patterns,
             }
 
             // Now, skipping to the next trace, as there is no more information for as
+            if (!doRetain) {
+                last_a_for_retain = a_trace_id;
+                if (b_beginend.first == b_beginend.second)
+                    not_b_activated += (ntraces-a_trace_id);
+                else
+                    not_b_activated += (b_trace_id-a_trace_id);
+                doRetain = true;
+            }
             fast_forward_equals(a_trace_id, a_beginend.first, a_beginend.second);
             continue;
         }
@@ -250,7 +268,19 @@ Bolt2Branching(const KnowledgeBase &kb, bool only_precise_temporal_patterns,
             }
 
             // Moving b until I find something related to b. A is kept fixed and not incremented
+            if (a_beginend.first == a_beginend.second) {
+                for (size_t trddmn = b_trace_id; trddmn<ntraces; trddmn++) {
+                    if (count_table.resolve_length(B, trddmn) == 0)
+                        not_b_activated++;
+                }
+            } else {
+                for (size_t trddmn = b_trace_id; trddmn<a_trace_id; trddmn++) {
+                    if (count_table.resolve_length(B, trddmn) == 0)
+                        not_b_activated++;
+                }
+            }
             fast_forward_lower(a_trace_id, b_beginend.first, b_beginend.second);
+
             // Not setting the current trace to be visited, as we need to fast-forward B first
             continue;
         }
@@ -266,7 +296,7 @@ Bolt2Branching(const KnowledgeBase &kb, bool only_precise_temporal_patterns,
         // Still, this consideration should be performed only up until
         // the first event is visited
 
-        activation_count++;
+        a_activation_count++;
 
         if (lb) {
             data.r_activation_traces.first.add(a_trace_id);
@@ -343,7 +373,7 @@ Bolt2Branching(const KnowledgeBase &kb, bool only_precise_temporal_patterns,
     }
 
     if((ntraces - 1) != a_prev_trace_id) {
-        not_activated += ((ntraces - 1) - a_prev_trace_id);
+        not_a_activated += ((ntraces - 1) - a_prev_trace_id);
     }
 
     // This is still computed, as it is required for both 1) and 2)
@@ -471,17 +501,18 @@ Bolt2Branching(const KnowledgeBase &kb, bool only_precise_temporal_patterns,
 
     if (alles_response || alles_precedence) {
         const uint32_t p_satisfied = ntraces - alles_not_precedence;
-        const uint32_t p_satisfied_not_vacuous = p_satisfied - not_activated;
+        DEBUG_ASSERT(not_b_activated<=p_satisfied);
+        const uint32_t p_satisfied_not_vacuous = p_satisfied - not_b_activated;
         const double p_sup = ((double) p_satisfied) / ((double) ntraces);
 
         DEBUG_ASSERT(!(alles_next && !alles_response));
         if (alles_response) {
             const uint32_t r_satisfied = (ntraces - alles_not_response);
-            const uint32_t r_satisfied_not_vacuous = r_satisfied - not_activated;
+            const uint32_t r_satisfied_not_vacuous = r_satisfied - not_a_activated;
             const double r_sup = ((double) r_satisfied) / ((double) ntraces);
 
             const uint32_t cr_satisfied = (ntraces - alles_not_next);
-            const uint32_t cr_satisfied_not_vacuous = cr_satisfied - not_activated;
+            const uint32_t cr_satisfied_not_vacuous = cr_satisfied - not_a_activated;
             cr_sup = ((double) cr_satisfied) / ((double) ntraces);
 
             if (alles_next && (cr_sup >= r_sup) && (cr_satisfied_not_vacuous > 0) && (conf_next_counting > 0)) {
@@ -539,14 +570,14 @@ Bolt2Branching(const KnowledgeBase &kb, bool only_precise_temporal_patterns,
                 }
                 DEBUG_ASSERT(!((data.flags & CHAIN_RESPONSE_AB_ID) && (data.flags & RESPONSE_AB_ID)));
             }
-            else if ((r_satisfied_not_vacuous > 0) && (activation_count > 0)) {
+            else if ((r_satisfied_not_vacuous > 0) && (a_activation_count > 0)) {
                 clause.casusu = "Response";
                 data.flags |= rb ? RESPONSE_BA_ID : RESPONSE_AB_ID;
 
                 DEBUG_ASSERT(!((data.flags & RESPONSE_AB_ID) && (data.flags & CHAIN_RESPONSE_AB_ID)));
                 DEBUG_ASSERT(!((data.flags & RESPONSE_BA_ID) && (data.flags & CHAIN_RESPONSE_BA_ID)));
 
-                double r_conf = ((double) r_satisfied_not_vacuous) / ((double) activation_count);
+                double r_conf = ((double) r_satisfied_not_vacuous) / ((double) a_activation_count);
                 double r_restr = ((double) r_satisfied_not_vacuous) / ((double) ntraces);
                 if(!rb && !lb) {
                     clauses.emplace_back(clause,
@@ -594,12 +625,12 @@ Bolt2Branching(const KnowledgeBase &kb, bool only_precise_temporal_patterns,
                 }
             }
         }
-        if (alles_precedence && (!rb || ((data.flags & SUCCESSION_BA_ID) != SUCCESSION_BA_ID)) && (p_satisfied_not_vacuous > 0) && (activation_count > 0)) {
+        if (alles_precedence && (!rb || ((data.flags & SUCCESSION_BA_ID) != SUCCESSION_BA_ID)) && (p_satisfied_not_vacuous > 0) && (a_activation_count > 0)) {
             clause.casusu = "Precedence";
             std::swap(clause.left_act, clause.right_act);
 //            std::swap(clause.left_act_id, clause.right_act_id);
             data.flags |= rb ? PRECEDENCE_AB_ID : PRECEDENCE_BA_ID;
-            const double p_conf = ((double) p_satisfied_not_vacuous) / ((double) activation_count);
+            const double p_conf = ((double) p_satisfied_not_vacuous) / ((double) a_activation_count);
             const double p_restr = ((double) p_satisfied_not_vacuous) / ((double) ntraces);
 
             if(!rb && !lb) {
@@ -663,7 +694,7 @@ Bolt2Branching(const KnowledgeBase &kb, bool only_precise_temporal_patterns,
      *
      * Therefore, it is entirely possible to have a model with ChainSuccession(A,B), Surround(A,B) and Precedence(A,B) */
     const uint32_t cp_satisfied = (ntraces - alles_not_prev);
-    const uint32_t cp_satisfied_not_vacuous = cp_satisfied - (not_activated + conf_prev_not_counting);
+    const uint32_t cp_satisfied_not_vacuous = cp_satisfied - (not_a_activated + conf_prev_not_counting);
 
     if (alles_prev && (cp_satisfied_not_vacuous > 0) && (conf_prev_counting > 0)) {
         data.flags |= rb ? CHAIN_PRECEDENCE_BA_ID : CHAIN_PRECEDENCE_AB_ID;
