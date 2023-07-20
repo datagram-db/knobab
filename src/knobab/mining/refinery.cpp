@@ -312,6 +312,7 @@ int main(int argc, char **argv) {
             {"tab", log_data_format::TAB_SEPARATED_EVENTS}};
     args::Group group(parser, "You can use the following parameters", args::Group::Validators::DontCare, args::Options::Global);
     args::Flag read_dumped_models(group, "Read dumped models", "If set, does not perform any mining, but merely reads the models as dumped", {'r', "read1"});
+    args::Flag use_confidence_for_clustering(group, "Read dumped models", "Use confidence values for markov clustering", {'c', "use_confidence"});
     args::ValueFlag<std::string>  dump_folder(group, "Testing log", "The location where the models are going to be dumped", {'o', "output_models"});
     args::ValueFlag<std::string>  testing_log(group, "Testing log", "The log against which conduct the prediction", {'e', "testing"});
     args::ValueFlag<std::string>  expected_tab(group, "Expected Classes", "The expected prediction classes for the testing log", {'x', "expected"});
@@ -353,6 +354,7 @@ int main(int argc, char **argv) {
     double tau = 0.75;
     double supp = 0.75;
     double purity = 1.0;
+    bool useConfidence = (bool)(use_confidence_for_clustering);
     size_t max_set_size = 1;
     size_t min_leaf_size = 1;
     if(tau_val) {
@@ -488,13 +490,26 @@ int main(int argc, char **argv) {
 
     // model name -> clause name -> [left -> right|n -> clauseN]
     std::unordered_map<std::string, std::unordered_map<std::string, Eigen::SparseMatrix<size_t>>> model_accessor;
+    // model name -> clause name -> [left -> right|n -> conf|supp]
+    std::unordered_map<std::string, std::unordered_map<std::string, Eigen::SparseMatrix<double>>> model_confsupp_accessor;
+    // Hardcorded configurations, that should have been generalised as configuration files
+    std::unordered_set<std::string> allowed_clauses{"ChainResponse", "ChainPrecedence", "Precedence", "Response", "Succession", "RespExistence"};
+    std::unordered_map<std::string, std::vector<std::pair<std::string, bool>>> clauseExpansionWithNotInversion
+    {
+        {"ChainSuccession", {std::make_pair("ChainResponse", false), std::make_pair("ChainPrecedence", true)}},
+        {"Surround", {std::make_pair("ChainResponse", false), std::make_pair("ChainResponse", false)}},
+        {"Succession", {std::make_pair("Response", false), std::make_pair("Precedence", false)}},
+        {"CoExistence", {std::make_pair("RespExistence", false), std::make_pair("RespExistence", true)}},
+    };
+
+    // string <-> uid
     yaucl::structures::any_to_uint_bimap<std::string> mapper;
     {
         std::unordered_map<std::string, std::unordered_map<std::string, std::vector<Eigen::Triplet<size_t>>>> tripletList_accessor;
+        std::unordered_map<std::string, std::unordered_map<std::string, std::vector<Eigen::Triplet<double>>>> tripletList_confsupp_accessor;
         size_t left_act, right_act;
         size_t max_val = 0;
         for (const auto& [model_name, actual_model] : std::get<0>(model_and_times)) {
-
             for (size_t model_pos = 0, N = actual_model.size(); model_pos < N; model_pos++) {
                 const auto& clause = actual_model.at(model_pos);
                 auto& cp = tripletList_accessor[model_name][clause.clause.casusu];
@@ -506,6 +521,19 @@ int main(int argc, char **argv) {
                     if (right_act > max_val)
                         max_val = right_act;
                 }
+                if (allowed_clauses.contains(clause.clause.casusu)) {
+                    tripletList_confsupp_accessor[model_name][clause.clause.casusu].emplace_back(left_act, right_act, useConfidence ? clause.confidence_declarative_pattern : clause.support_generating_original_pattern);
+                }
+                auto it = clauseExpansionWithNotInversion.find(clause.clause.casusu);
+                if (it != clauseExpansionWithNotInversion.end()) {
+                    for (const auto& rewritings : it->second) {
+                        if (rewritings.second) {
+                            tripletList_confsupp_accessor[model_name][rewritings.first].emplace_back(right_act, left_act, useConfidence ? clause.confidence_declarative_pattern : clause.support_generating_original_pattern);
+                        } else {
+                            tripletList_confsupp_accessor[model_name][rewritings.first].emplace_back(left_act, right_act, useConfidence ? clause.confidence_declarative_pattern : clause.support_generating_original_pattern);
+                        }
+                    }
+                }
                 cp.emplace_back(left_act, right_act, model_pos);
             }
         }
@@ -514,11 +542,47 @@ int main(int argc, char **argv) {
             auto& matrixmap_accessor = model_accessor[model_name];
             for (auto& [clause_name, triple] : triple_map) {
                 matrixmap_accessor[clause_name] = Eigen::SparseMatrix<size_t>(max_val+1,max_val+1);
-                matrixmap_accessor[clause_name].reserve(triple.size());
-                matrixmap_accessor[clause_name].setFromTriplets(triple.begin(), triple.end());
+                auto& ref = matrixmap_accessor[clause_name];
+                ref.reserve(triple.size());
+                ref.setFromTriplets(triple.begin(), triple.end());
                 triple.clear();
             }
             triple_map.clear();
+        }
+        for (auto& [model_name, triple_map] : tripletList_confsupp_accessor) {
+            auto& matrixmap_accessor = model_confsupp_accessor[model_name];
+            for (auto& [clause_name, triple] : triple_map) {
+                matrixmap_accessor[clause_name] = Eigen::SparseMatrix<double>(max_val+1,max_val+1);
+                auto& ref = matrixmap_accessor[clause_name];
+                ref.reserve(triple.size());
+                ref.setFromTriplets(triple.begin(), triple.end());
+                triple.clear();
+            }
+            triple_map.clear();
+        }
+    }
+
+    // TODO: avoiding chains, so to reduce any potential input model with absences or exists
+    //       We can use MCL to alleviate the problem of finding all the possible cycles in the graph.
+    // Now hardcoded: getting all the clauses that are associated to the 
+
+    // TODO: parallelize for each clause in the model
+    for (const auto& [model_name, actual_model] : std::get<0>(model_and_times)) {
+        size_t clause_count = 0;
+        const auto& matrixmap_accessor = model_accessor[model_name];
+        for (const auto& clause : actual_model) {
+            auto& src_confidence = clause.confidence_declarative_pattern;
+            auto& src_support = clause.confidence_declarative_pattern;
+            auto& src_clause_name = clause.clause.casusu;
+            auto src_left = mapper.get(clause.clause.left_act);
+            auto src_right_or_n = clause.clause.right_act.empty() ? clause.clause.n : mapper.get(clause.clause.right_act);
+            DEBUG_ASSERT(matrixmap_accessor.contains(src_clause_name));
+            auto& ref = matrixmap_accessor.at(src_clause_name);
+            DEBUG_ASSERT(ref.coeff(src_left, src_right_or_n) == clause_count);
+            clause_count++;
+
+
+            // TODO: inference model
         }
     }
 

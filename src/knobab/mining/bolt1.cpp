@@ -168,6 +168,7 @@ static inline DeclareDataAware &getAware(const KnowledgeBase &kb,
                                                  result.support_generating_original_pattern,
                                                  (((double) (ntraces - alles_not_prev)) /
                                                   ((double) ntraces)),
+                                                 -1,
                                                  -1);
             }
             if (alles_next) {
@@ -176,6 +177,7 @@ static inline DeclareDataAware &getAware(const KnowledgeBase &kb,
                                                  result.support_generating_original_pattern,
                                                  (((double) (ntraces - alles_not_next)) /
                                                   ((double) ntraces)),
+                                                 -1,
                                                  -1);
             }
 
@@ -324,6 +326,7 @@ static inline DeclareDataAware &getAware(const KnowledgeBase &kb,
                                              result.support_generating_original_pattern,
                                              (((double) (ntraces - alles_not_precedence)) /
                                               ((double) ntraces)),
+                                             -1,
                                              -1);
         }
         if (alles_response) {
@@ -332,6 +335,7 @@ static inline DeclareDataAware &getAware(const KnowledgeBase &kb,
                                              result.support_generating_original_pattern,
                                              (((double) (ntraces - alles_not_response)) /
                                               ((double) ntraces)),
+                                             -1,
                                              -1);
             if (ptn) {
                 std::vector<trace_t> responseSupp;
@@ -581,14 +585,14 @@ std::pair<std::vector<pattern_mining_result<DeclareDataAware>>, double> pattern_
                             clause.casusu = "Choice";
 
                             auto it = mapper.find(lS);
-                            declarative_clauses.emplace_back(clause, (it != mapper.end()) ? ((double)it->second)/((double)log_size) : 0.0, local_support, -1);
+                            declarative_clauses.emplace_back(clause, (it != mapper.end()) ? ((double)it->second)/((double)log_size) : 0.0, local_support, -1,-1);
                             if ((!naif) && ratio.second == 0) {
                                 // If there is no intersection, I can also be more strict if I want,
                                 // and provide an exclusive choice pattern if I am confident that
                                 // the two events will never appear in the same trace (according to
                                 // the "training" data
                                 clause.casusu = "ExclChoice";
-                                declarative_clauses.emplace_back(clause,  (it != mapper.end()) ? ((double)it->second)/((double)log_size) : 0.0, local_support, -1);
+                                declarative_clauses.emplace_back(clause,  (it != mapper.end()) ? ((double)it->second)/((double)log_size) : 0.0, local_support, -1,-1);
                             }
                         }
                     }
@@ -618,14 +622,14 @@ std::pair<std::vector<pattern_mining_result<DeclareDataAware>>, double> pattern_
 //        std::cout << "   lift: " << counter.lift(lr) << " lift: " << counter.lift(rl) << std::endl;
         if ((lr_conf == rl_conf) && (rl_conf >= support)) {
             Rule<act_t> lrBoth;
-            candidate_rule.emplace_back(Rule<act_t>{pattern.first}, ((double)pattern.second)/((double)log_size), -1, -1);
+            candidate_rule.emplace_back(Rule<act_t>{pattern.first}, ((double)pattern.second)/((double)log_size), -1, -1,-1);
         } else {
             if (lr_conf >= rl_conf) {
                 if (lr_conf >= support)
-                    candidate_rule.emplace_back(lr, ((double)pattern.second)/((double)log_size), counter.support(lr), lr_conf);
+                    candidate_rule.emplace_back(lr, ((double)pattern.second)/((double)log_size), counter.support(lr), lr_conf,-1);
             } else if (rl_conf >= support) {
                 if (rl_conf >= support)
-                    candidate_rule.emplace_back(rl, ((double)pattern.second)/((double)log_size), counter.support(lr), rl_conf);
+                    candidate_rule.emplace_back(rl, ((double)pattern.second)/((double)log_size), counter.support(lr), rl_conf,-1);
             }
         }
 
@@ -671,7 +675,7 @@ std::pair<std::vector<pattern_mining_result<DeclareDataAware>>, double> pattern_
             declarative_clauses.emplace_back(clause,
                                              result.support_generating_original_pattern,
                                              dss,
-                                             result.confidence_declarative_pattern);
+                                             result.confidence_declarative_pattern,-1);
 
             getAware(kb, special_temporal_patterns, only_precise_temporal_patterns, count_table,
                      minimum_support_threshold,
@@ -815,6 +819,7 @@ std::pair<std::vector<pattern_mining_result<DeclareDataAware>>, double> pattern_
                                                              ((double)support) / ((double)log_size),
                                                              (((double) (log_size - alles_not_response)) /
                                                               ((double) log_size)),
+                                                             -1,
                                                              -1);
                         }
                     }
