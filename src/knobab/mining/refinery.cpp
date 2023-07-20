@@ -1,3 +1,6 @@
+#include <Eigen/Sparse>
+#include <Eigen/Dense>
+
 #include <iostream>
 #include <functional>
 //#include "submodules/yaucl/submodules/csv.h"
@@ -7,6 +10,7 @@
 #include "knobab/mining/refinery.h"
 #include "args.hxx"
 #include "knobab/server/query_manager/ServerQueryManager.h"
+
 
 
 ////using result = std::variant<std::monostate, std::pair<DeclareDataAware, DeclareDataAware>>;
@@ -481,6 +485,44 @@ int main(int argc, char **argv) {
     } else {
         loading_model_from_file(sqm, output_models, model_and_times);
     }
+
+    // model name -> clause name -> [left -> right|n -> clauseN]
+    std::unordered_map<std::string, std::unordered_map<std::string, Eigen::SparseMatrix<size_t>>> model_accessor;
+    yaucl::structures::any_to_uint_bimap<std::string> mapper;
+    {
+        std::unordered_map<std::string, std::unordered_map<std::string, std::vector<Eigen::Triplet<size_t>>>> tripletList_accessor;
+        size_t left_act, right_act;
+        size_t max_val = 0;
+        for (const auto& [model_name, actual_model] : std::get<0>(model_and_times)) {
+
+            for (size_t model_pos = 0, N = actual_model.size(); model_pos < N; model_pos++) {
+                const auto& clause = actual_model.at(model_pos);
+                auto& cp = tripletList_accessor[model_name][clause.clause.casusu];
+                left_act = mapper.put(clause.clause.left_act).first;
+                if ((!isUnaryPredicate(clause.clause.casusu)) && (!clause.clause.right_act.empty())) {
+                    right_act = mapper.put(clause.clause.right_act).first;
+                } else {
+                    right_act = clause.clause.n;
+                    if (right_act > max_val)
+                        max_val = right_act;
+                }
+                cp.emplace_back(left_act, right_act, model_pos);
+            }
+        }
+        max_val = std::max(max_val, mapper.size()+1);
+        for (auto& [model_name, triple_map] : tripletList_accessor) {
+            auto& matrixmap_accessor = model_accessor[model_name];
+            for (auto& [clause_name, triple] : triple_map) {
+                matrixmap_accessor[clause_name] = Eigen::SparseMatrix<size_t>(max_val+1,max_val+1);
+                matrixmap_accessor[clause_name].reserve(triple.size());
+                matrixmap_accessor[clause_name].setFromTriplets(triple.begin(), triple.end());
+                triple.clear();
+            }
+            triple_map.clear();
+        }
+    }
+
+
 
 //    for(uint16_t i = 0; i < 5; ++i){
 //        auto model_and_times = classifier_mining(sqm,
