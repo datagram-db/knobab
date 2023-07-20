@@ -49,7 +49,9 @@ struct pattern_mining_result {
     T clause;
     double           support_generating_original_pattern;
     double           support_declarative_pattern;
+    double           restrictive_support_declarative_pattern;
     double           confidence_declarative_pattern;
+
 
     bool operator==(const pattern_mining_result<T> &rhs) const {
         return clause == rhs.clause && support_generating_original_pattern == rhs.support_generating_original_pattern &&
@@ -61,20 +63,32 @@ struct pattern_mining_result {
                                                                                        orig.support_generating_original_pattern),
                                                                                support_declarative_pattern(
                                                                                        orig.support_declarative_pattern),
-                                                                               confidence_declarative_pattern(orig.confidence_declarative_pattern) {
+                                                                               confidence_declarative_pattern(orig.confidence_declarative_pattern),
+                                                                               restrictive_support_declarative_pattern(orig.restrictive_support_declarative_pattern) {
 
     }
     pattern_mining_result(double support,
-                          const T &clause) : pattern_mining_result(clause, support, support, -1.0) {}
+                          const T &clause) : pattern_mining_result(clause, support, support, -1.0,-1.0) {}
     pattern_mining_result(const T &clause,
                           double supportGeneratingOriginalPattern,
                           double supportDeclarativePattern,
-                          double confidenceDeclarativePattern) : clause(clause),
+                          double confidenceDeclarativePattern,
+                          double restrictiveSupportDeclarative) : clause(clause),
                                                                  support_generating_original_pattern(
                                                                          supportGeneratingOriginalPattern),
                                                                  support_declarative_pattern(
                                                                          supportDeclarativePattern),
-                                                                 confidence_declarative_pattern(confidenceDeclarativePattern) {}
+                                                                 confidence_declarative_pattern(confidenceDeclarativePattern),
+                                                                  restrictive_support_declarative_pattern(restrictiveSupportDeclarative) {}
+    pattern_mining_result(const T &clause,
+                          double supportGeneratingOriginalPattern,
+                          const std::tuple<double,double,double>& triplet) : clause(clause),
+                                                                  support_generating_original_pattern(
+                                                                          supportGeneratingOriginalPattern),
+                                                                  support_declarative_pattern(
+                                                                          std::get<0>(triplet)),
+                                                                  confidence_declarative_pattern(std::get<1>(triplet)),
+                                                                  restrictive_support_declarative_pattern(std::get<2>(triplet)) {}
 
 
     DEFAULT_CONSTRUCTORS(pattern_mining_result);

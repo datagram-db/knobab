@@ -13,6 +13,11 @@
 #include <roaring/roaring_array.h>
 #include <knobab/mining/bolt_commons.h>
 
+#define MACRO_TRIPLE_SET(x,a,b,c) do { \
+                    std::get<0>(x) =  a;\
+                    std::get<1>(x) =  b;\
+                    std::get<2>(x) =  c;} while (false)
+
 std::pair<std::vector<pattern_mining_result<DeclareDataAware>>, double> bolt_algorithm2(const std::string& logger_file,
                     const FeedQueryLoadFromFile& conf,
                     double support,
@@ -92,23 +97,25 @@ struct GetAwareData {
         flags = 0;
         r_lb_violations = {};
         p_lb_violations = {};
-        r_lb_sup_conf = { -1, -1 };
-        p_lb_sup_conf = { -1, -1 };
+        r_lb_sup_conf = { -1, -1, -1 };
+        p_lb_sup_conf = { -1, -1, -1 };
         r_activation_traces = { {}, {} };
         p_activation_traces = { {}, {} };
 
         cr_lb_violations = {};
         cp_lb_violations = {};
-        cr_lb_sup_conf = { -1, -1 };
-        cp_lb_sup_conf = { -1, -1 };
+        cr_lb_sup_conf = { -1, -1, -1 };
+        cp_lb_sup_conf = { -1, -1, -1 };
         cr_activation_traces = { {}, {} };
         cp_activation_traces = { {}, {} };
     };
 
     void clear(size_t max_size) {
         flags = 0;
-        r_lb_sup_conf.first = r_lb_sup_conf.second = p_lb_sup_conf.first = p_lb_sup_conf.second =
-                cr_lb_sup_conf.first = cr_lb_sup_conf.second = cp_lb_sup_conf.first = cp_lb_sup_conf.second = -1;
+        std::get<0>(r_lb_sup_conf) = std::get<1>(r_lb_sup_conf) = std::get<2>(r_lb_sup_conf) =
+                std::get<0>(p_lb_sup_conf) = std::get<1>(p_lb_sup_conf) = std::get<2>(p_lb_sup_conf) =
+                std::get<0>(cr_lb_sup_conf) = std::get<1>(cr_lb_sup_conf) = std::get<2>(cr_lb_sup_conf) =
+                        std::get<0>(cp_lb_sup_conf) = std::get<1>(cp_lb_sup_conf) = std::get<2>(cp_lb_sup_conf) = -1;
         clear_map(cr_lb_violations, max_size);
         clear_map(cp_lb_violations, max_size);
         clear_map(r_lb_violations, max_size);
@@ -129,15 +136,15 @@ struct GetAwareData {
 
     roaring::Roaring r_lb_violations;
     roaring::Roaring p_lb_violations;
-    std::pair<double,double> r_lb_sup_conf;
-    std::pair<double,double> p_lb_sup_conf;
+    std::tuple<double,double,double> r_lb_sup_conf;
+    std::tuple<double,double,double> p_lb_sup_conf;
     std::pair<roaring::Roaring, roaring::Roaring> r_activation_traces;
     std::pair<roaring::Roaring, roaring::Roaring> p_activation_traces;
 
     roaring::Roaring cr_lb_violations;
     roaring::Roaring cp_lb_violations;
-    std::pair<double,double> cr_lb_sup_conf;
-    std::pair<double,double> cp_lb_sup_conf;
+    std::tuple<double,double,double> cr_lb_sup_conf;
+    std::tuple<double,double,double> cp_lb_sup_conf;
     std::pair<roaring::Roaring, roaring::Roaring> cr_activation_traces;
     std::pair<roaring::Roaring, roaring::Roaring> cp_activation_traces;
 };
@@ -425,36 +432,32 @@ Bolt2Branching(const KnowledgeBase &kb, bool only_precise_temporal_patterns,
 
     /* We may be on the right branch but there are no suitable patterns here, so just add the cached ones */
     if (rb && !alles_response && !alles_precedence && !alles_next && !alles_prev) {
-        if(data.p_lb_sup_conf.second != -1) {
+        if(std::get<1>(data.p_lb_sup_conf) != -1) {
             auto& ref = clauses.emplace_back(clause,
                                  candidate.support_generating_original_pattern,
-                                 data.p_lb_sup_conf.first,
-                                 data.p_lb_sup_conf.second);
+                                 data.p_lb_sup_conf);
             ref.clause.casusu = "Precedence";
         }
-        if(data.r_lb_sup_conf.second != -1) {
+        if(std::get<1>(data.r_lb_sup_conf) != -1) {
             auto& ref = clauses.emplace_back(clause,
                                  candidate.support_generating_original_pattern,
-                                 data.r_lb_sup_conf.first,
-                                 data.r_lb_sup_conf.second);
+                                 data.r_lb_sup_conf);
             ref.clause.casusu = "Response";
             std::swap(ref.clause.left_act, ref.clause.right_act);
 //            std::swap(ref.clause.left_act_id, ref.clause.right_act_id);
         }
-        if(data.cp_lb_sup_conf.second != -1) {
+        if(std::get<1>(data.cp_lb_sup_conf) != -1) {
             auto& ref = clauses.emplace_back(clause,
                                  candidate.support_generating_original_pattern,
-                                 data.cp_lb_sup_conf.first,
-                                 data.cp_lb_sup_conf.second);
+                                 data.cp_lb_sup_conf);
             ref.clause.casusu = "ChainPrecedence";
             std::swap(ref.clause.left_act, ref.clause.right_act);
 //            std::swap(ref.clause.left_act_id, ref.clause.right_act_id);
         }
-        if(data.cr_lb_sup_conf.second != -1) {
+        if(std::get<1>(data.cr_lb_sup_conf) != -1) {
             auto& ref = clauses.emplace_back(clause,
                                  candidate.support_generating_original_pattern,
-                                 data.cr_lb_sup_conf.first,
-                                 data.cr_lb_sup_conf.second);
+                                 data.cr_lb_sup_conf);
             ref.clause.casusu = "ChainResponse";
             std::swap(ref.clause.left_act, ref.clause.right_act);
 //            std::swap(ref.clause.left_act_id, ref.clause.right_act_id);
@@ -484,17 +487,18 @@ Bolt2Branching(const KnowledgeBase &kb, bool only_precise_temporal_patterns,
             if (alles_next && (cr_sup >= r_sup) && (cr_satisfied_not_vacuous > 0) && (conf_next_counting > 0)) {
                 data.flags |= rb ? CHAIN_RESPONSE_BA_ID : CHAIN_RESPONSE_AB_ID;
                 const double cr_conf = ((double) cr_satisfied_not_vacuous) / ((double) conf_next_counting);
+                const double cr_restr = ((double) cr_satisfied_not_vacuous) / ((double) ntraces);
                 if(!rb && !lb) {
                     clauses.emplace_back(clause,
                                          candidate.support_generating_original_pattern,
                                          cr_sup,
-                                         cr_conf).clause.casusu = "ChainResponse";
+                                         cr_conf,
+                                         cr_restr).clause.casusu = "ChainResponse";
                 }
                 else if (lb) {
                     /* If we are on the left branch, there may be a ChainSucession only detectable on the other
                      * so cache the confidence for now */
-                    data.cr_lb_sup_conf.first = cr_sup;
-                    data.cr_lb_sup_conf.second = cr_conf;
+                    MACRO_TRIPLE_SET(data.cr_lb_sup_conf, cr_sup, cr_conf, cr_restr);
                 }
                 else {
                     /* We know that in the first branch ChainResponse(A,B) was added and here have ChainPrecedence(B,A) */
@@ -503,13 +507,15 @@ Bolt2Branching(const KnowledgeBase &kb, bool only_precise_temporal_patterns,
                     const uint32_t cs_ba_satisfied_not_vacuous = cs_ba_satisfied - (ntraces - cs_ba_activated);
                     const double cs_ba_sup = ((double) cs_ba_satisfied) / ((double) ntraces);
 
-                    if (alles_cs_ba && (cs_ba_sup >= cr_sup) && (cs_ba_sup >= data.cp_lb_sup_conf.first) && (cs_ba_satisfied_not_vacuous > 0) && (cs_ba_activated > 0)) {
+                    if (alles_cs_ba && (cs_ba_sup >= cr_sup) && (cs_ba_sup >= std::get<0>(data.cp_lb_sup_conf)) && (cs_ba_satisfied_not_vacuous > 0) && (cs_ba_activated > 0)) {
                         clause.casusu = "ChainSuccession";
                         const double cs_ba_conf = ((double) cs_ba_satisfied_not_vacuous) / ((double) cs_ba_activated);
+                        const double cs_ba_restr = ((double) cs_ba_satisfied_not_vacuous) / ((double) ntraces);
                         clauses.emplace_back(clause,
                                              candidate.support_generating_original_pattern,
                                              cs_ba_sup,
-                                             cs_ba_conf);
+                                             cs_ba_conf,
+                                             cs_ba_restr);
                     }
                     /* If ChainPrecedence(A,B) and ChainResponse(A,B) from left branch were enough to form a Surround, then don't re-add */
                     else {
@@ -517,15 +523,15 @@ Bolt2Branching(const KnowledgeBase &kb, bool only_precise_temporal_patterns,
                         clauses.emplace_back(clause,
                                              candidate.support_generating_original_pattern,
                                              cr_sup,
-                                             cr_conf);
+                                             cr_conf,
+                                             cr_restr);
 
                         /* ChainPrecedence(A,B) has already been consumed by Surround(A,B), so don't add */
-                        if (((data.flags & SURROUND_AB_ID) != SURROUND_AB_ID) && ((data.flags & CHAIN_PRECEDENCE_AB_ID) == CHAIN_PRECEDENCE_AB_ID) && (data.cp_lb_sup_conf.second != -1)) {
+                        if (((data.flags & SURROUND_AB_ID) != SURROUND_AB_ID) && ((data.flags & CHAIN_PRECEDENCE_AB_ID) == CHAIN_PRECEDENCE_AB_ID) && (std::get<1>(data.cp_lb_sup_conf) != -1)) {
                             clause.casusu = "ChainPrecedence";
                             pattern_mining_result<DeclareDataAware>& ref = clauses.emplace_back(clause,
                                                                                                 candidate.support_generating_original_pattern,
-                                                                                                data.cp_lb_sup_conf.first,
-                                                                                                data.cp_lb_sup_conf.second);
+                                                                                                data.cp_lb_sup_conf);
                             std::swap(ref.clause.left_act, ref.clause.right_act);
 //                            std::swap(ref.clause.left_act_id, ref.clause.right_act_id);
                         }
@@ -541,17 +547,18 @@ Bolt2Branching(const KnowledgeBase &kb, bool only_precise_temporal_patterns,
                 DEBUG_ASSERT(!((data.flags & RESPONSE_BA_ID) && (data.flags & CHAIN_RESPONSE_BA_ID)));
 
                 double r_conf = ((double) r_satisfied_not_vacuous) / ((double) activation_count);
+                double r_restr = ((double) r_satisfied_not_vacuous) / ((double) ntraces);
                 if(!rb && !lb) {
                     clauses.emplace_back(clause,
                                          candidate.support_generating_original_pattern,
                                          r_sup,
-                                         r_conf);
+                                         r_conf,
+                                         r_restr);
                 }
                 else if (lb) {
                     /* If we are on the left branch, there may be a Succession only detectable on the other
                         * so cache the confidence for now */
-                    data.r_lb_sup_conf.first = r_sup;
-                    data.r_lb_sup_conf.second = r_conf;
+                    MACRO_TRIPLE_SET(data.r_lb_sup_conf, r_sup, r_sup, r_restr);
                 }
                 else {
                     const uint32_t s_ba_activated = (data.p_activation_traces.first | data.r_activation_traces.second).cardinality();
@@ -559,27 +566,29 @@ Bolt2Branching(const KnowledgeBase &kb, bool only_precise_temporal_patterns,
                     const uint32_t s_ba_satisfied_not_vacuous = s_ba_satisfied - (ntraces - s_ba_activated);
                     const double s_ba_sup = ((double) s_ba_satisfied) / ((double) ntraces);
 
-                    if (alles_succession_ba && (s_ba_sup >= data.p_lb_sup_conf.first) && (s_ba_sup >= r_sup) && (s_ba_satisfied_not_vacuous > 0) && (s_ba_activated > 0)) {
+                    if (alles_succession_ba && (s_ba_sup >= std::get<0>(data.p_lb_sup_conf)) && (s_ba_sup >= r_sup) && (s_ba_satisfied_not_vacuous > 0) && (s_ba_activated > 0)) {
                         clause.casusu = "Succession";
                         const double s_ba_conf =  ((double) s_ba_satisfied_not_vacuous) / ((double) s_ba_activated);
+                        const double s_ba_restr =  ((double) s_ba_satisfied_not_vacuous) / ((double) ntraces);
                         clauses.emplace_back(clause,
                                              candidate.support_generating_original_pattern,
                                              s_ba_sup,
-                                             s_ba_conf);
+                                             s_ba_conf,
+                                             s_ba_restr);
                     }
                     else {
                         /* Succession(B,A) not good enough, add the current Response(B,A) and Precedence(B,A) from the left branch */
                         clauses.emplace_back(clause,
                                              candidate.support_generating_original_pattern,
                                              r_sup,
-                                             r_conf);
+                                             r_conf,
+                                             r_restr);
 
-                        if(data.p_lb_sup_conf.second != -1) {
+                        if(std::get<1>(data.p_lb_sup_conf) != -1) {
                             clause.casusu = "Precedence";
                             clauses.emplace_back(clause,
                                                  candidate.support_generating_original_pattern,
-                                                 data.p_lb_sup_conf.first,
-                                                 data.p_lb_sup_conf.second);
+                                                 data.p_lb_sup_conf);
                         }
                     }
                 }
@@ -591,18 +600,19 @@ Bolt2Branching(const KnowledgeBase &kb, bool only_precise_temporal_patterns,
 //            std::swap(clause.left_act_id, clause.right_act_id);
             data.flags |= rb ? PRECEDENCE_AB_ID : PRECEDENCE_BA_ID;
             const double p_conf = ((double) p_satisfied_not_vacuous) / ((double) activation_count);
+            const double p_restr = ((double) p_satisfied_not_vacuous) / ((double) ntraces);
 
             if(!rb && !lb) {
                 clauses.emplace_back(clause,
                                      candidate.support_generating_original_pattern,
                                      p_sup,
-                                     p_conf);
+                                     p_conf,
+                                     p_restr);
             }
             else if (lb) {
                 /* If we are on the left branch, there may be a Succession only detectable on the other
                     * so cache the confidence for now */
-                data.p_lb_sup_conf.first = p_sup;
-                data.p_lb_sup_conf.second = p_conf;
+                MACRO_TRIPLE_SET(data.p_lb_sup_conf, p_sup, p_conf, p_restr);
             }
             else {
                 const uint32_t s_ab_activated = (data.r_activation_traces.first | data.p_activation_traces.second).cardinality();
@@ -611,27 +621,29 @@ Bolt2Branching(const KnowledgeBase &kb, bool only_precise_temporal_patterns,
                 const double s_ab_sup = ((double) s_ab_satisfied) / ((double) ntraces);
 
 
-                if (alles_succession_ab && (s_ab_sup >= data.r_lb_sup_conf.first) && (s_ab_sup >= p_sup) && (s_ab_satisfied_not_vacuous > 0) && (s_ab_activated > 0)) {
+                if (alles_succession_ab && (s_ab_sup >= std::get<0>(data.r_lb_sup_conf)) && (s_ab_sup >= p_sup) && (s_ab_satisfied_not_vacuous > 0) && (s_ab_activated > 0)) {
                     clause.casusu = "Succession";
                     const double s_ab_conf =  ((double) s_ab_satisfied_not_vacuous) / ((double) s_ab_activated);
+                    const double s_ab_restr =  ((double) s_ab_satisfied_not_vacuous) / ((double) ntraces);
                     clauses.emplace_back(clause,
                                          candidate.support_generating_original_pattern,
                                          s_ab_sup,
-                                         s_ab_conf);
+                                         s_ab_conf,
+                                         s_ab_restr);
                 }
                 else {
                     /* Succession(A,B) not good enough, add the current Precedence(A,B) and Response(A,B) from the left branch */
                     clauses.emplace_back(clause,
                                          candidate.support_generating_original_pattern,
                                          p_sup,
-                                         p_conf);
+                                         p_conf,
+                                         p_restr);
 
-                    if (data.r_lb_sup_conf.second != -1) {
+                    if (std::get<1>(data.r_lb_sup_conf) != -1) {
                         clause.casusu = "Response";
                         clauses.emplace_back(clause,
                                              candidate.support_generating_original_pattern,
-                                             data.r_lb_sup_conf.first,
-                                             data.r_lb_sup_conf.second);
+                                             data.r_lb_sup_conf);
                     }
                 }
             }
@@ -657,6 +669,7 @@ Bolt2Branching(const KnowledgeBase &kb, bool only_precise_temporal_patterns,
         data.flags |= rb ? CHAIN_PRECEDENCE_BA_ID : CHAIN_PRECEDENCE_AB_ID;
         const double cp_sup = ((double) cp_satisfied) / ((double) ntraces);
         const double cp_conf = ((double) cp_satisfied_not_vacuous) / ((double) conf_prev_counting);
+        const double cp_restr = ((double) cp_satisfied_not_vacuous) / ((double) ntraces);
         clause.casusu = "ChainPrecedence";
 
         if (alles_surround) {
@@ -669,23 +682,26 @@ Bolt2Branching(const KnowledgeBase &kb, bool only_precise_temporal_patterns,
             if((sr_sup >= cr_sup) && (sr_sup >= cp_sup) && (sr_satisfied_not_vacuous > 0) && (sr_activated > 0)) {
                 clause.casusu = "Surround";
                 const double sr_conf =  ((double) sr_satisfied_not_vacuous) / ((double) sr_activated);
+                const double sr_restr =  ((double) sr_satisfied_not_vacuous) / ((double) ntraces);
                 clauses.emplace_back(clause,
                                      candidate.support_generating_original_pattern,
                                      sr_sup,
-                                     sr_conf);
+                                     sr_conf,
+                                     sr_restr);
             }
         }
         if(!rb && !lb) {
             clauses.emplace_back(clause,
                                  candidate.support_generating_original_pattern,
                                  cp_sup,
-                                 cp_conf);
+                                 cp_conf,
+                                 cp_restr);
         }
         else if (lb) {
                 /* If we are on the left branch, there may be a ChainSuccession only detectable on the other
                     * so cache the confidence for now */
-                data.cp_lb_sup_conf.first = cp_sup;
-                data.cp_lb_sup_conf.second = cp_conf;
+
+            MACRO_TRIPLE_SET(data.cp_lb_sup_conf, cp_sup, cp_conf, cp_restr);
         }
         else {
             /* We know that in the first branch ChainResponse(A,B) was added and here have ChainPrecedence(B,A) */
@@ -694,13 +710,15 @@ Bolt2Branching(const KnowledgeBase &kb, bool only_precise_temporal_patterns,
 
             const uint32_t cs_ab_activated = (data.cr_activation_traces.first | data.cp_activation_traces.second).cardinality();
             const uint32_t cs_ab_satisfied_not_vacuous = cs_ab_satisfied - (ntraces - cs_ab_activated);
-            if (alles_cs_ab && (cs_ab_sup >= data.cr_lb_sup_conf.first) && (cs_ab_sup >= cp_sup) && (cs_ab_satisfied_not_vacuous > 0) && (cs_ab_activated > 0)) {
+            if (alles_cs_ab && (cs_ab_sup >= std::get<0>(data.cr_lb_sup_conf)) && (cs_ab_sup >= cp_sup) && (cs_ab_satisfied_not_vacuous > 0) && (cs_ab_activated > 0)) {
                 clause.casusu = "ChainSuccession";
                 const double cs_ab_conf = ((double) cs_ab_satisfied_not_vacuous) / ((double) cs_ab_activated);
+                const double cs_ab_restr = ((double) cs_ab_satisfied_not_vacuous) / ((double) ntraces);
                 pattern_mining_result<DeclareDataAware>& ref = clauses.emplace_back(clause,
                                                                                     candidate.support_generating_original_pattern,
                                                                                     cs_ab_sup,
-                                                                                    cs_ab_conf);
+                                                                                    cs_ab_conf,
+                                                                                    cs_ab_restr);
                 std::swap(ref.clause.left_act, ref.clause.right_act);
 //                std::swap(ref.clause.left_act_id, ref.clause.right_act_id);
             }
@@ -710,15 +728,15 @@ Bolt2Branching(const KnowledgeBase &kb, bool only_precise_temporal_patterns,
                     clauses.emplace_back(clause,
                                          candidate.support_generating_original_pattern,
                                          cp_sup,
-                                         cp_conf);
+                                         cp_conf,
+                                         cp_restr);
 
                 /* ChainResponse(A,B) has already been consumed by Surround(A,B), so don't add */
-                if (((data.flags & SURROUND_AB_ID) != SURROUND_AB_ID) && ((data.flags & CHAIN_RESPONSE_AB_ID) == CHAIN_RESPONSE_AB_ID) && (data.cr_lb_sup_conf.second != -1)) {
+                if (((data.flags & SURROUND_AB_ID) != SURROUND_AB_ID) && ((data.flags & CHAIN_RESPONSE_AB_ID) == CHAIN_RESPONSE_AB_ID) && (std::get<1>(data.cr_lb_sup_conf) != -1)) {
                     clause.casusu = "ChainResponse";
                     pattern_mining_result<DeclareDataAware>& ref = clauses.emplace_back(clause,
                                                                                         candidate.support_generating_original_pattern,
-                                         data.cr_lb_sup_conf.first,
-                                         data.cr_lb_sup_conf.second);
+                                         data.cr_lb_sup_conf);
                     std::swap(ref.clause.left_act, ref.clause.right_act);
 //                    std::swap(ref.clause.left_act_id, ref.clause.right_act_id);
                 }
@@ -853,7 +871,7 @@ choice_exclchoice(act_t a, act_t b,
         auto& refB = map_for_retain[b];
         refA.map.add(b);
         refB.map.add(a);
-        pattern_mining_result<DeclareDataAware> c(clause, (it != mapper.end()) ? ((double)it->second)/((double)log_size) : 0.0, local_support, local_support);
+        pattern_mining_result<DeclareDataAware> c(clause, (it != mapper.end()) ? ((double)it->second)/((double)log_size) : 0.0, local_support, local_support, local_support);
         refA.maps[local_support].emplace(c);
         refB.maps[local_support].emplace(c);
         return true;
@@ -922,13 +940,13 @@ std::pair<std::vector<pattern_mining_result<DeclareDataAware>>, double> bolt2(co
             clause.casusu = "Init";
             clause.left_act = kb.event_label_mapper.get(act_id);
 //            clause.left_act_id = act_id;
-            declarative_clauses.emplace_back(clause, 1.0, 1.0, 1.0); // 1.0 == ((double)(first_occ)) / ((double)log_size)
+            declarative_clauses.emplace_back(clause, 1.0, 1.0, 1.0, 1.0); // 1.0 == ((double)(first_occ)) / ((double)log_size)
         }
         if (last_occ == log_size) {
             clause.casusu = "End";
             clause.left_act = kb.event_label_mapper.get(act_id);
 //            clause.left_act_id = act_id;
-            declarative_clauses.emplace_back(clause,1.0,1.0,1.0); // 1.0 == ((double)(last_occ)) / ((double)log_size)
+            declarative_clauses.emplace_back(clause,1.0,1.0,1.0, 1.0); // 1.0 == ((double)(last_occ)) / ((double)log_size)
         }
     }
 //    FPTree t{count_table, minimum_support_threshold, max_act_id};
@@ -970,10 +988,12 @@ std::pair<std::vector<pattern_mining_result<DeclareDataAware>>, double> bolt2(co
                     declarative_clauses.emplace_back(clause,
                                                      1.0,
                                                      1.0,
+                                                     1.0,
                                                      1.0);
                     clause.n = N+1;
                     clause.casusu = "Absence";
                     declarative_clauses.emplace_back(clause,
+                                                     1.0,
                                                      1.0,
                                                      1.0,
                                                      1.0);
@@ -1242,7 +1262,8 @@ std::pair<std::vector<pattern_mining_result<DeclareDataAware>>, double> bolt2(co
                     declarative_clauses.emplace_back(clause,
                                                      candidate_rule.support_generating_original_pattern,
                                                      candidate_rule.support_declarative_pattern,
-                                                     candidate_rule.confidence_declarative_pattern);
+                                                     candidate_rule.confidence_declarative_pattern,
+                    candidate_rule.restrictive_support_declarative_pattern);
                 }
             }
 
