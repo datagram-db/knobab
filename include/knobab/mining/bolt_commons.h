@@ -61,4 +61,29 @@ static inline void fast_forward_lower(trace_t trace_id,
            (to_increment->entry.id.parts.trace_id < trace_id)) {
         to_increment++;
     }
+    /*    size_t skip_counter = 0;
+    size_t prev_trace_id = -1;
+    bool first = true;
+    while ((to_increment != end) &&
+           (to_increment->entry.id.parts.trace_id < trace_id)) {
+        if (first) {
+            prev_trace_id = to_increment->entry.id.parts.trace_id;
+            first = false;
+        } else {
+            size_t diff = to_increment->entry.id.parts.trace_id-prev_trace_id;
+            if (diff) {
+                prev_trace_id = to_increment->entry.id.parts.trace_id;
+                if ((diff)>1) {
+                    skip_counter+=(diff-1);
+                }
+            }
+        }
+        to_increment++;
+    }
+    size_t diff = trace_id-prev_trace_id;
+    if (diff) {
+        if ((diff)>1) {
+            skip_counter+=(diff-1);
+        }
+    }*/
 }
