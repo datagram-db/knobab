@@ -599,7 +599,7 @@ int main(int argc, char **argv) {
         for (const auto& clause_name : to_absence_clauses_if_cluster) {
             auto it = actual_model.find(clause_name);
             if (it != actual_model.end()) {
-                it->second
+                it->second;
             }
         }
     }

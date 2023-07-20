@@ -193,10 +193,10 @@ Bolt2Branching(const KnowledgeBase &kb, bool only_precise_temporal_patterns,
     if(a_trace_id != 0) {
         not_a_activated += a_trace_id;
     }
-    std::cout << "NEW_SCAN" << std::endl;
-    if ((A==2) && (B==0)) {
-        std::cout << "ERROR CASE" << std::endl;
-    }
+//    std::cout << "NEW_SCAN" << std::endl;
+//    if ((A==2) && (B==0)) {
+//        std::cout << "ERROR CASE" << std::endl;
+//    }
 //    if(b_trace_id != 0) {
 //        not_b_activated += b_trace_id;
 //    }
