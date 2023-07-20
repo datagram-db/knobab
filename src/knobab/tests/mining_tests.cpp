@@ -18,7 +18,7 @@
 #define TEST(a,b)       TEST_CASE(a ## b)
 #define ASSERT_TRUE(c)  REQUIRE(c)
 
-double supp = 0.1;
+double supp = 0.05;
 const std::vector<std::string> log_parse_format_type{"HRF", "XES", "TAB"};
 const std::string query_plan = "queryplan \"nfmcp23\" {\n"
                                  "     template \"Init\"                   := INIT  activation\n"
@@ -163,6 +163,33 @@ TEST_CASE("mining_tests: precedence") {
     ASSERT_TRUE(std::find(values.first.begin(), values.first.end(), to_find) != values.first.end());
 }
 
+TEST_CASE("mining_tests: precedence restrictive") {
+    std::pair<std::vector<pattern_mining_result<DeclareDataAware>>,std::vector<pattern_mining_result<DeclareDataAware>>> values =
+            load_and_return(folder / "precedence_restrict_supp.tab");
+
+    pattern_mining_result<DeclareDataAware> to_find;
+    to_find.clause.casusu = "Precedence";
+    to_find.clause.left_act = "A";
+//    to_find.clause.left_act_id = 0;
+    to_find.clause.right_act = "B";
+//    to_find.clause.right_act_id = 2;
+    to_find.clause.n = 1;
+    to_find.support_generating_original_pattern = 4.0/18.0;
+    to_find.support_declarative_pattern = 16.0/18.0;
+    to_find.confidence_declarative_pattern = 9.0/11.0;
+
+    std::cout << values.second << std::endl;
+    auto it = std::find(values.second.begin(), values.second.end(), to_find);
+    ASSERT_TRUE(it != values.second.end());
+    ASSERT_TRUE(it->restrictive_support_declarative_pattern == (0.5));
+}
+
+TEST_CASE("mining_tests: precedence count_OK") {
+    std::pair<std::vector<pattern_mining_result<DeclareDataAware>>,std::vector<pattern_mining_result<DeclareDataAware>>> values =
+            load_and_return(folder / "precedence_restrict_supp_countok.tab");
+// Basically, this should not throw the assertion in the Bolt2Branch
+}
+
 TEST_CASE("mining_tests: chain_precedence") {
     std::pair<std::vector<pattern_mining_result<DeclareDataAware>>,std::vector<pattern_mining_result<DeclareDataAware>>> values =
             load_and_return(folder / "chain_precedence.tab");
@@ -254,7 +281,7 @@ TEST_CASE("mining_tests: chain_response") {
     pattern_mining_result<DeclareDataAware> to_find;
     to_find.clause.casusu = "ChainResponse";
     to_find.clause.left_act = "a";
-//    to_find.clause.left_act_id = 0;
+//    to_find.clause.left_act_id = 0;kb.event_label_mapper.get(B)
     to_find.clause.right_act = "b";
 //    to_find.clause.right_act_id = 1;
     to_find.clause.n = 1;
