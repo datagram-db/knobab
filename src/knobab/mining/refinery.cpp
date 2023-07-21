@@ -1,6 +1,4 @@
-#include <Eigen/Sparse>
-#include <Eigen/Dense>
-
+#include <yaucl/learning/MCL.h>
 #include <iostream>
 #include <functional>
 //#include "submodules/yaucl/submodules/csv.h"
@@ -233,6 +231,18 @@ enum MetricCases {
     SuppMetric,
     RestrSuppMetric
 };
+
+//void recompute_triplets_for_matrix(const MetricCases &useConfidence,
+//                                   const std::tuple<std::unordered_map<std::string, std::vector<pattern_mining_result<DeclareDataAware>>>, double> &model_and_times,
+//                                   const std::unordered_set<std::string> &clauses_names_to_consider,
+//                                   std::unordered_map<std::string, std::unordered_map<std::string, std::unordered_map<size_t, std::unordered_map<size_t, std::vector<size_t>>>>> &tripletList_accessor,
+//                                   std::unordered_map<std::string, std::unordered_map<std::string, std::vector<Eigen::Triplet<double>>>> &tripletList_confsupp_accessor,
+//                                   std::unordered_map<std::string, std::unordered_map<std::string, yaucl::learning::MCL::SparseMatrix<double>>>& model_confsupp_accessor,
+//                                   size_t max_val,
+//                                   const std::unordered_map<std::string, roaring::Roaring64Map>& model_to_removed_clauses
+//                                   ) {
+//
+//}
 
 int main(int argc, char **argv) {
 #if 0
@@ -503,9 +513,9 @@ int main(int argc, char **argv) {
     }
 
     // model name -> clause name -> [left -> right|n -> clauseN]
-    std::unordered_map<std::string, std::unordered_map<std::string, Eigen::SparseMatrix<size_t>>> model_accessor;
+//    std::unordered_map<std::string, std::unordered_map<std::string, yaucl::learning::MCL::SparseMatrix<size_t>>> model_accessor;
     // model name -> clause name -> [left -> right|n -> conf|supp]
-    std::unordered_map<std::string, std::unordered_map<std::string, Eigen::SparseMatrix<double>>> model_confsupp_accessor;
+    std::unordered_map<std::string, std::unordered_map<std::string, yaucl::learning::MCL::SparseMatrix<double>>> model_confsupp_accessor;
     // Hardcorded configurations, that should have been generalised as configuration files
 //    std::unordered_set<std::string> allowed_clauses{"ChainResponse", "ChainPrecedence", "Precedence", "Response", "RespExistence"};
     std::unordered_map<std::string, std::vector<std::pair<std::string, bool>>> clauseExpansionWithNotInversion
@@ -517,27 +527,27 @@ int main(int argc, char **argv) {
     };
 
     // string <-> uid
+    std::unordered_set<std::string> clauses_names_to_consider;
+    for (const auto&  [model_name, actual_model] : std::get<0>(model_and_times))
+        for (const auto& clause : actual_model)
+            clauses_names_to_consider.insert(clause.clause.casusu);
     yaucl::structures::any_to_uint_bimap<std::string> mapper;
+    size_t max_val = 0;
+    std::unordered_map<std::string, roaring::Roaring64Map> model_to_removed_clauses;
+    std::unordered_map<std::string, std::unordered_map<std::string, std::unordered_map<size_t, std::unordered_map<size_t, std::vector<size_t>>>>> tripletList_accessor;
+    std::unordered_map<std::string, std::unordered_map<std::string, std::vector<Eigen::Triplet<double>>>> tripletList_confsupp_accessor;
+    // TODO: solve issue when multiple clauses might be associated to the same element
     {
-        std::unordered_map<std::string, std::unordered_map<std::string, std::vector<Eigen::Triplet<size_t>>>> tripletList_accessor;
-        std::unordered_map<std::string, std::unordered_map<std::string, std::vector<Eigen::Triplet<double>>>> tripletList_confsupp_accessor;
+//        std::unordered_map<std::string, std::unordered_map<std::string, std::vector<Eigen::Triplet<size_t>>>> tripletList_accessor;
         size_t left_act, right_act;
-        size_t max_val = 0;
+
         for (const auto& [model_name, actual_model] : std::get<0>(model_and_times)) {
+            auto it = model_to_removed_clauses.find(model_name);
             for (size_t model_pos = 0, N = actual_model.size(); model_pos < N; model_pos++) {
-                double selectedScore = 0.0;
+//                double selectedScore = 0.0;
                 const auto& clause = actual_model.at(model_pos);
-                switch (useConfidence) {
-                    case ConfMetric:
-                        selectedScore = clause.confidence_declarative_pattern;
-                        break;
-                    case SuppMetric:
-                        selectedScore = clause.support_generating_original_pattern;
-                        break;
-                    case RestrSuppMetric:
-                        selectedScore = clause.restrictive_support_declarative_pattern;
-                        break;
-                }
+                if ((it != model_to_removed_clauses.end()) && it->second.contains(model_pos)) continue;
+                if (!clauses_names_to_consider.contains(clause.clause.casusu)) continue;
                     left_act = mapper.put(clause.clause.left_act).first;
                 if ((!isUnaryPredicate(clause.clause.casusu)) && (!clause.clause.right_act.empty())) {
                     right_act = mapper.put(clause.clause.right_act).first;
@@ -551,35 +561,62 @@ int main(int argc, char **argv) {
                         for (const auto& rewritings : it->second) {
                             auto& cp = tripletList_accessor[model_name][rewritings.first];
                             if (rewritings.second) {
-                                tripletList_confsupp_accessor[model_name][rewritings.first].emplace_back(right_act, left_act, selectedScore);
-                                cp.emplace_back(right_act, left_act, model_pos);
+//                                tripletList_confsupp_accessor[model_name][rewritings.first].emplace_back(right_act, left_act, selectedScore);
+                                cp[right_act][left_act].emplace_back(model_pos);
                             } else {
-                                tripletList_confsupp_accessor[model_name][rewritings.first].emplace_back(left_act, right_act, selectedScore);
-                                cp.emplace_back(left_act, right_act, model_pos);
+//                                tripletList_confsupp_accessor[model_name][rewritings.first].emplace_back(left_act, right_act, selectedScore);
+//                                cp.emplace_back(left_act, right_act, model_pos+1);
+                                cp[left_act][right_act].emplace_back(model_pos);
                             }
                         }
                     } else {
                         auto& cp = tripletList_accessor[model_name][clause.clause.casusu];
-                        cp.emplace_back(left_act, right_act, model_pos);
-                        tripletList_confsupp_accessor[model_name][clause.clause.casusu].emplace_back(left_act, right_act, selectedScore);
+                        cp[left_act][right_act].emplace_back(model_pos);
+//                        tripletList_confsupp_accessor[model_name][clause.clause.casusu].emplace_back(left_act, right_act, selectedScore);
                     }
             }
         }
         max_val = std::max(max_val, mapper.size()+1);
-        for (auto& [model_name, triple_map] : tripletList_accessor) {
-            auto& matrixmap_accessor = model_accessor[model_name];
-            for (auto& [clause_name, triple] : triple_map) {
-                matrixmap_accessor[clause_name] = Eigen::SparseMatrix<size_t>(max_val+1,max_val+1);
-                auto& ref = matrixmap_accessor[clause_name];
-                ref.reserve(triple.size());
-                ref.setFromTriplets(triple.begin(), triple.end());
-                triple.clear();
+        tripletList_confsupp_accessor.clear();
+
+        double selectedScore;
+        for (const auto& [model_name, clauses_casusu_maps] : tripletList_accessor) {
+            const auto &model = std::get<0>(model_and_times).at(model_name);
+            const auto elements = model_to_removed_clauses.find(model_name);
+            for (const auto &[clause_name, clauses]: clauses_casusu_maps) {
+                if (!clauses_names_to_consider.contains(clause_name)) continue;
+                auto &ref = tripletList_confsupp_accessor[model_name][clause_name];
+                ref.clear();
+                for (const auto &[left_act_id, right_map]: clauses) {
+                    for (const auto &[right_act_id, ids]: right_map) {
+                        double total = 1.0;
+                        for (const size_t id: ids) {
+                            if ((elements != model_to_removed_clauses.end()) && (elements->second.contains(id)))
+                                continue;
+                            switch (useConfidence) {
+                                case ConfMetric:
+                                    selectedScore = model.at(id).confidence_declarative_pattern;
+                                    break;
+                                case SuppMetric:
+                                    selectedScore = model.at(id).support_generating_original_pattern;
+                                    break;
+                                case RestrSuppMetric:
+                                    selectedScore = model.at(id).restrictive_support_declarative_pattern;
+                                    break;
+
+                            }
+                            total *= (1.0 - selectedScore);
+                        }
+                        if (total != 1.0)
+                            ref.emplace_back(left_act_id, right_act_id, 1.0 - selectedScore);
+                    }
+                }
             }
-            triple_map.clear();
         }
         for (auto& [model_name, triple_map] : tripletList_confsupp_accessor) {
             auto& matrixmap_accessor = model_confsupp_accessor[model_name];
             for (auto& [clause_name, triple] : triple_map) {
+                if (!clauses_names_to_consider.contains(clause_name)) continue;
                 matrixmap_accessor[clause_name] = Eigen::SparseMatrix<double>(max_val+1,max_val+1);
                 auto& ref = matrixmap_accessor[clause_name];
                 ref.reserve(triple.size());
@@ -588,41 +625,125 @@ int main(int argc, char **argv) {
             }
             triple_map.clear();
         }
+
     }
+
+
 
     // TODO: avoiding chains, so to reduce any potential input model with absences or exists
     //       We can use MCL to alleviate the problem of finding all the possible cycles in the graph.
     // Now hardcoded: getting all the clauses that are associated to the cycles
     // TODO: parallelize for each clause in the model
-    std::unordered_set<std::string> to_absence_clauses_if_cluster{"ChainResponse", "ChainPrecedence", "Precedence", "Response"};
-    for (const auto& [model_name, actual_model] : model_confsupp_accessor) {
+    double inflate = 2;
+    size_t steps = 100;
+    yaucl::learning::MCL::normalizations type = yaucl::learning::MCL::SYM_NORMALIZED_LAPLACIAN;
+    double consideration_threshold = 0.000001;
+    DeclareDataAware absence;
+    absence.casusu = "Absence";
+    absence.n = 1;
+    std::unordered_map<std::string, DeclareDataAware> to_absence_clauses_if_cluster{{"ChainResponse", absence},
+                                                                               {"ChainPrecedence", absence},
+                                                                               {"Precedence",absence},
+                                                                               {"Response",absence}};
+
+    // Initialisation
+    std::unordered_set<std::string>to_absence_clauses_if_cluster_set;
+    for (const auto& [k,v] : to_absence_clauses_if_cluster) to_absence_clauses_if_cluster_set.emplace(k);
+    for (auto& [model_name, actual_model] : model_confsupp_accessor) {
+        roaring::Roaring64Map& offsets_candidate_removals = model_to_removed_clauses[model_name];
         for (const auto& clause_name : to_absence_clauses_if_cluster) {
-            auto it = actual_model.find(clause_name);
+            auto it = actual_model.find(clause_name.first);
             if (it != actual_model.end()) {
-                it->second;
+                auto clusters = yaucl::learning::MCL::perform_MCL_clustering(it->second, type, inflate, steps, true, consideration_threshold);
+                const auto& model_offsets = tripletList_accessor.at(model_name).at(clause_name.first);
+                for (const auto& cluster : clusters) {
+                    for (size_t idI : cluster) {
+                        for (size_t idJ : cluster) {
+                            auto it2 = model_offsets.find(idI);
+                            if (it2 != model_offsets.end()) {
+                                auto it3 = it2->second.find(idJ);
+                                if (it3 != it2->second.end()) {
+                                    for (const auto& ref : it3->second) {
+                                        tripletList_accessor[model_name][clause_name.second.casusu][idI][clause_name.second.n].emplace_back(ref);
+                                        offsets_candidate_removals.add(ref);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    // Now, considering the clauses being clastered for removal
+    for (const auto& [k,v] : to_absence_clauses_if_cluster) to_absence_clauses_if_cluster_set.emplace(v.casusu);
+    double selectedScore;
+    for (const auto& [model_name, clauses_casusu_maps] : tripletList_accessor) {
+        auto& matrixmap_accessor = model_confsupp_accessor[model_name];
+        const auto &model = std::get<0>(model_and_times).at(model_name);
+        const auto elements = model_to_removed_clauses.find(model_name);
+        for (const auto &[clause_name, clauses]: clauses_casusu_maps) {
+            if (!clauses_names_to_consider.contains(clause_name)) continue;
+            auto &ref = tripletList_confsupp_accessor[model_name][clause_name];
+            ref.clear();
+            for (const auto &[left_act_id, right_map]: clauses) {
+                for (const auto &[right_act_id, ids]: right_map) {
+                    double total = 1.0;
+                    bool found = false;
+                    for (const size_t id: ids) {
+                        if ((elements != model_to_removed_clauses.end()) && (elements->second.contains(id)))
+                            continue;
+                        else
+                            found = true;
+                        switch (useConfidence) {
+                            case ConfMetric:
+                                selectedScore = model.at(id).confidence_declarative_pattern;
+                                break;
+                            case SuppMetric:
+                                selectedScore = model.at(id).support_generating_original_pattern;
+                                break;
+                            case RestrSuppMetric:
+                                selectedScore = model.at(id).restrictive_support_declarative_pattern;
+                                break;
+
+                        }
+                        total *= (selectedScore);
+                    }
+                    if (found) {
+                        auto& ref = matrixmap_accessor[clause_name];
+                        auto& coeff = ref.coeffRef(left_act_id, right_act_id);
+                        if (coeff == 0) {
+                            coeff = total;
+                        } else {
+                            coeff = std::max(coeff, total);
+                        }
+                    }
+                }
             }
         }
     }
 
-    // TODO: parallelize for each clause in the model
-    for (const auto& [model_name, actual_model] : std::get<0>(model_and_times)) {
-        size_t clause_count = 0;
-        const auto& matrixmap_accessor = model_accessor[model_name];
-        for (const auto& clause : actual_model) {
-            auto& src_confidence = clause.confidence_declarative_pattern;
-            auto& src_support = clause.confidence_declarative_pattern;
-            auto& src_clause_name = clause.clause.casusu;
-            auto src_left = mapper.get(clause.clause.left_act);
-            auto src_right_or_n = clause.clause.right_act.empty() ? clause.clause.n : mapper.get(clause.clause.right_act);
-            DEBUG_ASSERT(matrixmap_accessor.contains(src_clause_name));
-            auto& ref = matrixmap_accessor.at(src_clause_name);
-            DEBUG_ASSERT(ref.coeff(src_left, src_right_or_n) == clause_count);
-            clause_count++;
-
-
-            // TODO: inference model
-        }
-    }
+    // TODO: parallelize for each clause in the model:
+    //       For this, do this over the reduced clauses in the matrix already
+//    for (const auto& [model_name, actual_model] : std::get<0>(model_and_times)) {
+//        size_t clause_count = 0;
+//        const auto& matrixmap_accessor = model_accessor[model_name];
+//        for (const auto& clause : actual_model) {
+//            auto& src_confidence = clause.confidence_declarative_pattern;
+//            auto& src_support = clause.support_declarative_pattern;
+//            auto& src_restrictive = clause.restrictive_support_declarative_pattern;
+//            auto& src_clause_name = clause.clause.casusu;
+//            auto src_left = mapper.get(clause.clause.left_act);
+//            auto src_right_or_n = clause.clause.right_act.empty() ? clause.clause.n : mapper.get(clause.clause.right_act);
+//            DEBUG_ASSERT(matrixmap_accessor.contains(src_clause_name));
+//            auto& ref = matrixmap_accessor.at(src_clause_name);
+//            DEBUG_ASSERT(ref.coeff(src_left, src_right_or_n)-1 == clause_count);
+//            clause_count++;
+//
+//
+//            // TODO: inference model
+//        }
+//    }
 
 
 
