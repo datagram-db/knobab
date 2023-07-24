@@ -39,9 +39,12 @@ int main(int argc, char **argv) {
     args::ValueFlag<std::string> tabFile(file_format, "TAB", "The Log in a tab separated format, with no event payload, to load into the knowledgebase", {'t', "tab"});
 
     args::Group algorithm_group(parser, "This group is all exclusive:", args::Group::Validators::AtMostOne);
-    args::Flag boltAlgorithm(algorithm_group, "Bolt Algorithm", "Bolt algorithm for the mining", {'b', "bolt"});
-    args::Flag aprioriAlgorithm(algorithm_group, "Apriori Algorithm", "Apriori algorithm for the mining", {'a', "apriori"});
-    args::Flag previousAlgorithm(algorithm_group, "Previous Algorithm", "Previous algorithm for the mining", {'p', "previous"});
+    std::unordered_map<std::string, Algorithm> metric_map{
+            {"bolt1", BOLT1},
+            {"bolt2", BOLT2},
+            {"apriori", APRIORI},
+            {"topk", TOP_K_MINING}};
+    args::MapFlag<std::string, Algorithm> use_confidence_for_clustering(parser, "a", "Setting up the mining algorithm of choice", {'a', "algorithm"}, metric_map);
 
     args::Group group(parser, "You can use the following parameters", args::Group::Validators::DontCare, args::Options::Global);
     args::ValueFlag<double>  supportVal(group, "Support Value", "If present, specifies the support value", {'s', "support"});
@@ -78,15 +81,8 @@ int main(int argc, char **argv) {
         log_file = args::get(tabFile);
         format = TAB_SEPARATED_EVENTS;
     }
-
-    if (boltAlgorithm) {
-        algorithm = BOLT1;
-    }
-    if (aprioriAlgorithm) {
-        algorithm = APRIORI;
-    }
-    if (previousAlgorithm) {
-        algorithm = TOP_K_MINING;
+    if (use_confidence_for_clustering) {
+        algorithm = args::get(use_confidence_for_clustering);
     }
 
     if(supportVal){
