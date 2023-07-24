@@ -1276,11 +1276,11 @@ std::pair<std::vector<pattern_mining_result<DeclareDataAware>>, double> bolt2(co
                 if (lA && (alles_chain_succession_ab || alles_surround_ab)) {
                     size_t cs_coarsening =
                             kb.act_table_by_act_id.secondary_index.at(sigma).first->entry.id.parts.act == B ? 1 : 0;
-                    if (!(lB <= lA <= (lB + cs_coarsening))) {
+                    if (!(((lB-cs_coarsening) <= lA) && (lA <= (lB)))) {
                         decrease_support_X(kb, expected_support, alles_chain_succession_ab,
                                            alles_not_chain_succession_ab);
                     }
-                    if (!(lA <= lB <= (2 * lA))) {
+                    if (!((lA <= lB) && (lB <= (2 * lA)))) {
                         decrease_support_X(kb, expected_support, alles_surround_ab, alles_not_surround_ab);
                     }
                 }
@@ -1288,11 +1288,11 @@ std::pair<std::vector<pattern_mining_result<DeclareDataAware>>, double> bolt2(co
                 if (lB && (alles_chain_succession_ba || alles_surround_ba)) {
                     size_t coarsening =
                             kb.act_table_by_act_id.secondary_index.at(sigma).first->entry.id.parts.act != A ? 0 : 1;
-                    if (!(lA <= lB <= (lA + coarsening))) {
+                    if (!(((lA-coarsening) <= lB) && (lB <= (lA)))) {
                         decrease_support_X(kb, expected_support, alles_chain_succession_ba,
                                            alles_not_chain_succession_ba);
                     }
-                    if (!(lB <= lA <= (2 * lB))) {
+                    if (!((lB <= lA) && (lA <= (2 * lB)))) {
                         decrease_support_X(kb, expected_support, alles_surround_ba, alles_not_surround_ba);
                     }
                 }
