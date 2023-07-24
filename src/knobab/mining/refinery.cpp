@@ -327,12 +327,13 @@ int main(int argc, char **argv) {
             {"hrf", log_data_format::HUMAN_READABLE_YAUCL},
             {"xes", log_data_format::XES1},
             {"tab", log_data_format::TAB_SEPARATED_EVENTS}};
+
+    args::Group group(parser, "You can use the following parameters", args::Group::Validators::DontCare, args::Options::Global);
+    args::Flag read_dumped_models(group, "Read dumped models", "If set, does not perform any mining, but merely reads the models as dumped", {'r', "read1"});
     std::unordered_map<std::string, MetricCases> metric_map{
             {"conf", ConfMetric},
             {"supp", SuppMetric},
             {"restr", RestrSuppMetric}};
-    args::Group group(parser, "You can use the following parameters", args::Group::Validators::DontCare, args::Options::Global);
-    args::Flag read_dumped_models(group, "Read dumped models", "If set, does not perform any mining, but merely reads the models as dumped", {'r', "read1"});
     args::MapFlag<std::string, MetricCases> use_confidence_for_clustering(parser, "c", "Sets up the metric case to be adopted in the ", {'c', "usemetric"}, metric_map);
     args::ValueFlag<std::string>  dump_folder(group, "Testing log", "The location where the models are going to be dumped", {'o', "output_models"});
     args::ValueFlag<std::string>  testing_log(group, "Testing log", "The log against which conduct the prediction", {'e', "testing"});
