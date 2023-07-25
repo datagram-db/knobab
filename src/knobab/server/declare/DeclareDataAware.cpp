@@ -429,3 +429,30 @@ DeclareDataAware *DeclareDataAware::flipLocal() {
     }
     return flipped_equivalent;
 }
+
+bool FastDatalessClause::operator==(const FastDatalessClause &rhs) const {
+    bool tmp = casusu == rhs.casusu &&
+               n == rhs.n &&
+               left == rhs.left &&
+               right == rhs.right;
+    return tmp;
+}
+
+bool FastDatalessClause::operator!=(const FastDatalessClause &rhs) const {
+    return !(rhs == *this);
+}
+
+std::ostream &operator<<(std::ostream &os, const FastDatalessClause &aware) {
+    os << /*magic_enum::enum_name*/std::quoted(aware.casusu);
+    os << '(' << std::quoted(aware.left) << ", ";
+    os << "true";
+    os << ", ";
+    if (!aware.right.empty()) {
+        os << std::quoted(aware.right) << ", ";
+        os << "true";
+    } else {
+        os << aware.n;
+    }
+    os << ")";
+    return os;
+}

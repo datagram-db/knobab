@@ -57,6 +57,7 @@ void MAXSatPipeline::clear() {
     atomicPartIntersectionResult.clear();
     result.clear();
     support_per_declare.clear();
+    result_per_traces.clear();
 }
 
 static inline void partialResultIntersection(const PartialResult& lhs,
@@ -1836,6 +1837,16 @@ void MAXSatPipeline::pipeline(CNFDeclareDataAware* model,
 
         if (!qm.Q.empty()) {
             switch (final_ensemble) {
+                case ReturnTraces: {
+                    for (size_t i = 0, N = declare_to_query.size(); i<N; i++) {
+                        auto& toInsertResults = result_per_traces.emplace_back();
+                        const auto &declare = declare_to_query.at(i);
+                        for (const auto& ref : declare->result) {
+                            toInsertResults.emplace_back(ref.first.first);
+                        }
+                    }
+                } break;
+
                 case PerDeclareSupport: {
                     std::unordered_map<LTLfQuery*, double> visited;
                     for (size_t i = 0, N = declare_to_query.size(); i<N; i++) { // each declare i

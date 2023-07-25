@@ -57,7 +57,8 @@ enum EnsembleMethods {
     PerDeclareConfidence,
     TraceMaximumSatisfiability,
     TraceIntersection,
-    Nothing
+    Nothing,
+    ReturnTraces
 };
 
 enum OperatorQueryPlan {
@@ -83,6 +84,7 @@ struct MAXSatPipeline {
     //DeclareQueryLanguageParser dqlp;
     std::unordered_map<std::string, LTLfQuery>* xtLTLfTemplates = nullptr;
     std::vector<LTLfQuery*> declare_to_query;
+    std::vector<std::vector<trace_t>> result_per_traces;
 
     CNFDeclareDataAware* declare_model = nullptr;
 

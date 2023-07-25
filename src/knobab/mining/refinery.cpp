@@ -412,7 +412,7 @@ int main(int argc, char **argv) {
     }
 
     ServerQueryManager sqm;
-    std::tuple<std::unordered_map<std::string, std::vector<pattern_mining_result<DeclareDataAware>>>,double> model_and_times;
+    std::tuple<std::unordered_map<std::string, std::vector<pattern_mining_result<FastDatalessClause>>>,double> model_and_times;
 
     if (!read_dumped_models) {
         // Loading the different classes
@@ -549,9 +549,9 @@ int main(int argc, char **argv) {
                 const auto& clause = actual_model.at(model_pos);
                 if ((it != model_to_removed_clauses.end()) && it->second.contains(model_pos)) continue;
                 if (!clauses_names_to_consider.contains(clause.clause.casusu)) continue;
-                    left_act = mapper.put(clause.clause.left_act).first;
-                if ((!isUnaryPredicate(clause.clause.casusu)) && (!clause.clause.right_act.empty())) {
-                    right_act = mapper.put(clause.clause.right_act).first;
+                    left_act = mapper.put(clause.clause.left).first;
+                if ((!isUnaryPredicate(clause.clause.casusu)) && (!clause.clause.right.empty())) {
+                    right_act = mapper.put(clause.clause.right).first;
                 } else {
                     right_act = clause.clause.n;
                     if (right_act > max_val)

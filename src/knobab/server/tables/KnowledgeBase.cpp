@@ -1002,8 +1002,9 @@ KnowledgeBase::untimed_dataless_absence(const std::pair<const uint32_t, const ui
     for (auto it = count_table.table.begin() + indexes.first; it != count_table.table.begin() + indexes.second + 1; ++it) {
         //uint16_t approxConstant = act_table_by_act_id.getTraceLength(it->id.parts.trace_id) / 2;
         //double satisfiability = getSatisifiabilityBetweenValues(amount, it->id.parts.event_id, approxConstant);
-        if (it->id.parts.event_id < amount)
+        if (it->id.parts.event_id < amount) {
             foundElems.emplace_back(std::pair<trace_t, event_t>{it->id.parts.trace_id, 0}, 1.0);
+        }
     }
 
     return foundElems;
