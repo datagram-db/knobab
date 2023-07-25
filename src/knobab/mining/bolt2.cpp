@@ -929,6 +929,7 @@ choice_exclchoice(act_t a, act_t b,
             std::swap(c.clause.left,c.clause.right);
 //        std::swap(clause.left_act_id, clause.right_act_id);
         }
+        c.confidence_declarative_pattern = c.support_declarative_pattern = c.restrictive_support_declarative_pattern = local_support;
         c.clause.n = 1;
         c.clause.left = kb.event_label_mapper.get(a);
 //    clause.left_act_id = a;
