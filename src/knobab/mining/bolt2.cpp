@@ -1281,11 +1281,17 @@ std::pair<std::vector<pattern_mining_result<FastDatalessClause>>, double> bolt2(
             if ((min_int_supp_patt > log_size) || (!choice_exclchoice(A, B, log_size, min_int_supp_patt,
                                                                       kb, inv_map, map_for_retain, map_for_itemset_support_score, false))) {
                 {
-                    declarative_clauses.emplace_back(clause.clause,
-                                                     candidate_rule.support_generating_original_pattern,
-                                                     candidate_rule.support_declarative_pattern,
-                                                     candidate_rule.confidence_declarative_pattern,
-                                                     candidate_rule.restrictive_support_declarative_pattern);
+                    if ((clause.clause.casusu == "RespExistence") || (clause.clause.casusu == "CoExistence"))
+                        // All the branching alternatives are discarded, so providing this as an output
+                        declarative_clauses.emplace_back(clause.clause,
+                                                         candidate_rule.support_generating_original_pattern,
+                                                         candidate_rule.support_declarative_pattern,
+                                                         candidate_rule.confidence_declarative_pattern,
+                                                         candidate_rule.restrictive_support_declarative_pattern);
+                    else
+                        // Otherwise, this is something that was cached in one of the undergoing calls
+                        declarative_clauses.emplace_back(clause);
+
                 }
             }
 
