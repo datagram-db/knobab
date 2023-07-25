@@ -128,6 +128,26 @@ void print_dnf(std::ostream &os, const std::vector<std::unordered_map<std::strin
 //ltlf map_disj(const std::vector<std::unordered_map<std::string, DataPredicate>> &map);
 class KnowledgeBase;
 
+struct FastDatalessClause {
+    std::string casusu, left, right;
+    size_t n = 1;
+
+    DEFAULT_CONSTRUCTORS(FastDatalessClause)
+    FastDatalessClause(const std::string& cas, const std::string& L, const std::string& R, size_t n) : casusu{cas}, left{L}, right{R}, n{n} {};
+    friend std::ostream &operator<<(std::ostream &os, const FastDatalessClause &aware);
+    bool operator==(const FastDatalessClause &rhs) const;
+    bool operator!=(const FastDatalessClause &rhs) const;
+    friend bool operator<(const FastDatalessClause& l, const FastDatalessClause& r) {
+        if (l.casusu < r.casusu) return true;
+        if (l.casusu > r.casusu) return false;
+        if (l.left < r.left) return true;
+        if (l.left > r.left) return false;
+        if (l.right < r.right) return true;
+        if (l.right > r.right) return false;
+        return l.n < r.n;
+    }
+};
+
 struct DeclareDataAware {
     declare_templates casusu;
     size_t n;
@@ -153,6 +173,7 @@ struct DeclareDataAware {
     }
 
     DEFAULT_CONSTRUCTORS(DeclareDataAware)
+    DeclareDataAware(FastDatalessClause& clause) : n{clause.n}, casusu{clause.casusu}, left_act(clause.left), right_act(clause.right) {}
     DeclareDataAware(const std::vector<std::vector<DataPredicate>>& predicate, const KnowledgeBase* kb);
     ~DeclareDataAware() {
         if (isOriginal && isFlippedComputed && flipped_equivalent) {
@@ -299,6 +320,22 @@ namespace std {
             seed = hash_combine(seed, k.right_act);
 //            seed = hash_combine(seed, k.right_act_id);
             //seed = hash_combine(seed, k.dnf_right_map); --> TODO
+            return seed;
+        }
+    };
+
+}
+
+namespace std {
+    template <>
+    struct hash<FastDatalessClause> {
+        std::size_t operator()(const FastDatalessClause& k) const {
+            using yaucl::hashing::hash_combine;
+            size_t seed = 31;
+            seed = hash_combine(seed, k.casusu);
+            seed = hash_combine(seed, k.n);
+            seed = hash_combine(seed, k.left);
+            seed = hash_combine(seed, k.right);
             return seed;
         }
     };

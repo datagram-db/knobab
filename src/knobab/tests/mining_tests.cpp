@@ -51,7 +51,7 @@ const std::string query_plan = "queryplan \"nfmcp23\" {\n"
 #include <filesystem>
 auto folder = std::filesystem::current_path().parent_path() / "data" / "testing" / "mining";
 
-static inline std::pair<std::vector<pattern_mining_result<DeclareDataAware>>,std::vector<pattern_mining_result<DeclareDataAware>>> load_and_return(const std::filesystem::path& path) {
+static inline std::pair<std::vector<pattern_mining_result<FastDatalessClause>>,std::vector<pattern_mining_result<FastDatalessClause>>> load_and_return(const std::filesystem::path& path) {
     auto world_file_to_load = path.string();
     ServerQueryManager sqm;
     std::stringstream ss;
@@ -68,11 +68,11 @@ static inline std::pair<std::vector<pattern_mining_result<DeclareDataAware>>,std
     sqm.runQuery(query_plan);
 
     std::vector<DeclareDataAware> VVV;
-    std::pair<std::vector<pattern_mining_result<DeclareDataAware>>, double> result = bolt2(
+    auto result = bolt2(
             sqm.multiple_logs[world_file_to_load].db, supp, false, true, true, false, false);
 
-    std::pair<std::vector<pattern_mining_result<DeclareDataAware>>, std::vector<pattern_mining_result<DeclareDataAware>>> values;
-    for (const pattern_mining_result<DeclareDataAware>& ref2 : result.first) {
+    std::pair<std::vector<pattern_mining_result<FastDatalessClause>>, std::vector<pattern_mining_result<FastDatalessClause>>> values;
+    for (const auto& ref2 : result.first) {
         if (ref2.support_declarative_pattern == 1.0) {
             values.first.emplace_back(ref2);
         }
@@ -84,25 +84,76 @@ static inline std::pair<std::vector<pattern_mining_result<DeclareDataAware>>,std
     return values;
 }
 
+TEST_CASE("correct_mining") {
+    auto path =  std::filesystem::current_path().parent_path() / "data"/"benchmarking"/"completed"/"1000_10_10(1).xes";
+    auto world_file_to_load = path.string();
+    ServerQueryManager sqm;
+    std::stringstream ss;
+    std::stringstream ss2;
+
+    ss << "load "
+       << log_parse_format_type.at((size_t)XES1)
+       << " "
+       << std::quoted(world_file_to_load)
+       <<  " with data as "
+       << std::quoted(world_file_to_load);
+    auto tmp = sqm.runQuery(ss.str());
+    ss.str(std::string());
+    ss.clear();
+
+    sqm.runQuery(query_plan);
+
+    std::vector<DeclareDataAware> VVV;
+    auto result = bolt2(
+            sqm.multiple_logs[world_file_to_load].db, 0.1, false, true, true, false, false);
+
+    ss << "model-check declare " << std::endl;
+    std::vector<pattern_mining_result<FastDatalessClause>> values;
+//    for (const auto& ref2 : result.first) {
+//        if (ref2.support_declarative_pattern == 1.0) {
+//            values.emplace_back(ref2);
+    ss << "\"Absence\"( \"f\", true, 6) " << std::endl;
+//            ss << "\t" << ref2.clause << std::endl;
+//        }
+//    }
+//    ss2 << values.at(11) << std::endl;
+//    ss2 << values.at(14) << std::endl;
+//    ss2 << values.at(36) << std::endl;
+//    ss2 << values.at(38) << std::endl;
+//    ss2 << values.at(39) << std::endl;
+//    auto sstr = ss2.str();
+//    exit(1);
+
+    ss << " using \"PerDeclareSupport\" over " << std::quoted(world_file_to_load) << std::endl;
+//    ss << " using \"TraceMaximumSatisfiability\" over " << std::quoted(world_file_to_load) << std::endl;
+    ss << " plan \"nfmcp23\" "  << std::endl;
+    ss << " with operators \"Hybrid\" ";
+
+    std::string a,b;
+    std::tie(a,b) = sqm.runQuery(ss.str());
+    ss.str(std::string());
+    ss.clear();
+}
+
 TEST_CASE("mining_tests: exists_absence") {
-    std::pair<std::vector<pattern_mining_result<DeclareDataAware>>,std::vector<pattern_mining_result<DeclareDataAware>>> values =
+    std::pair<std::vector<pattern_mining_result<FastDatalessClause>>,std::vector<pattern_mining_result<FastDatalessClause>>> values =
             load_and_return(folder / "exists_absence.tab");
 
-    pattern_mining_result<DeclareDataAware> to_find;
+    pattern_mining_result<FastDatalessClause> to_find;
     to_find.clause.casusu = "Exists";
-    to_find.clause.left_act = "a";
-//    to_find.clause.left_act_id = 0;
-//    to_find.clause.right_act_id = -1;
+    to_find.clause.left = "a";
+//    to_find.clause.left_id = 0;
+//    to_find.clause.right_id = -1;
     to_find.clause.n = 3;
     to_find.support_generating_original_pattern = 1.0;
     to_find.support_declarative_pattern = 1.0;
     to_find.confidence_declarative_pattern = 1.0;
 
-    pattern_mining_result<DeclareDataAware> to_find_1;
+    pattern_mining_result<FastDatalessClause> to_find_1;
     to_find_1.clause.casusu = "Absence";
-    to_find_1.clause.left_act = "a";
-//    to_find_1.clause.left_act_id = 0;
-//    to_find_1.clause.right_act_id = -1;
+    to_find_1.clause.left = "a";
+//    to_find_1.clause.left_id = 0;
+//    to_find_1.clause.right_id = -1;
     to_find_1.clause.n = 4;
     to_find_1.support_generating_original_pattern = 1.0;
     to_find_1.support_declarative_pattern = 1.0;
@@ -112,14 +163,14 @@ TEST_CASE("mining_tests: exists_absence") {
 }
 
 TEST_CASE("mining_tests: init") {
-    std::pair<std::vector<pattern_mining_result<DeclareDataAware>>,std::vector<pattern_mining_result<DeclareDataAware>>> values =
+    std::pair<std::vector<pattern_mining_result<FastDatalessClause>>,std::vector<pattern_mining_result<FastDatalessClause>>> values =
             load_and_return(folder / "init.tab");
 
-    pattern_mining_result<DeclareDataAware> to_find;
+    pattern_mining_result<FastDatalessClause> to_find;
     to_find.clause.casusu = "Init";
-    to_find.clause.left_act = "a";
-//    to_find.clause.left_act_id = 0;
-//    to_find.clause.right_act_id = -1;
+    to_find.clause.left = "a";
+//    to_find.clause.left_id = 0;
+//    to_find.clause.right_id = -1;
     to_find.clause.n = 1;
     to_find.support_generating_original_pattern = 1.0;
     to_find.support_declarative_pattern = 1.0;
@@ -129,14 +180,14 @@ TEST_CASE("mining_tests: init") {
 }
 
 TEST_CASE("mining_tests: end") {
-    std::pair<std::vector<pattern_mining_result<DeclareDataAware>>,std::vector<pattern_mining_result<DeclareDataAware>>> values =
+    std::pair<std::vector<pattern_mining_result<FastDatalessClause>>,std::vector<pattern_mining_result<FastDatalessClause>>> values =
             load_and_return(folder / "end.tab");
 
-    pattern_mining_result<DeclareDataAware> to_find;
+    pattern_mining_result<FastDatalessClause> to_find;
     to_find.clause.casusu = "End";
-    to_find.clause.left_act = "a";
-//    to_find.clause.left_act_id = 2;
-//    to_find.clause.right_act_id = -1;
+    to_find.clause.left = "a";
+//    to_find.clause.left_id = 2;
+//    to_find.clause.right_id = -1;
     to_find.clause.n = 1;
     to_find.support_generating_original_pattern = 1.0;
     to_find.support_declarative_pattern = 1.0;
@@ -146,15 +197,15 @@ TEST_CASE("mining_tests: end") {
 }
 
 TEST_CASE("mining_tests: precedence") {
-    std::pair<std::vector<pattern_mining_result<DeclareDataAware>>,std::vector<pattern_mining_result<DeclareDataAware>>> values =
+    std::pair<std::vector<pattern_mining_result<FastDatalessClause>>,std::vector<pattern_mining_result<FastDatalessClause>>> values =
             load_and_return(folder / "precedence.tab");
 
-    pattern_mining_result<DeclareDataAware> to_find;
+    pattern_mining_result<FastDatalessClause> to_find;
     to_find.clause.casusu = "Precedence";
-    to_find.clause.left_act = "a";
-//    to_find.clause.left_act_id = 0;
-    to_find.clause.right_act = "b";
-//    to_find.clause.right_act_id = 2;
+    to_find.clause.left = "a";
+//    to_find.clause.left_id = 0;
+    to_find.clause.right = "b";
+//    to_find.clause.right_id = 2;
     to_find.clause.n = 1;
     to_find.support_generating_original_pattern = 0.5;
     to_find.support_declarative_pattern = 1.0;
@@ -164,15 +215,15 @@ TEST_CASE("mining_tests: precedence") {
 }
 
 TEST_CASE("mining_tests: precedence restrictive") {
-    std::pair<std::vector<pattern_mining_result<DeclareDataAware>>,std::vector<pattern_mining_result<DeclareDataAware>>> values =
+    std::pair<std::vector<pattern_mining_result<FastDatalessClause>>,std::vector<pattern_mining_result<FastDatalessClause>>> values =
             load_and_return(folder / "precedence_restrict_supp.tab");
 
-    pattern_mining_result<DeclareDataAware> to_find;
+    pattern_mining_result<FastDatalessClause> to_find;
     to_find.clause.casusu = "Precedence";
-    to_find.clause.left_act = "A";
-//    to_find.clause.left_act_id = 0;
-    to_find.clause.right_act = "B";
-//    to_find.clause.right_act_id = 2;
+    to_find.clause.left = "A";
+//    to_find.clause.left_id = 0;
+    to_find.clause.right = "B";
+//    to_find.clause.right_id = 2;
     to_find.clause.n = 1;
     to_find.support_generating_original_pattern = 4.0/18.0;
     to_find.support_declarative_pattern = 16.0/18.0;
@@ -185,21 +236,21 @@ TEST_CASE("mining_tests: precedence restrictive") {
 }
 
 TEST_CASE("mining_tests: precedence count_OK") {
-    std::pair<std::vector<pattern_mining_result<DeclareDataAware>>,std::vector<pattern_mining_result<DeclareDataAware>>> values =
+    std::pair<std::vector<pattern_mining_result<FastDatalessClause>>,std::vector<pattern_mining_result<FastDatalessClause>>> values =
             load_and_return(folder / "precedence_restrict_supp_countok.tab");
 // Basically, this should not throw the assertion in the Bolt2Branch
 }
 
 TEST_CASE("mining_tests: chain_precedence") {
-    std::pair<std::vector<pattern_mining_result<DeclareDataAware>>,std::vector<pattern_mining_result<DeclareDataAware>>> values =
+    std::pair<std::vector<pattern_mining_result<FastDatalessClause>>,std::vector<pattern_mining_result<FastDatalessClause>>> values =
             load_and_return(folder / "chain_precedence.tab");
 
-    pattern_mining_result<DeclareDataAware> to_find;
+    pattern_mining_result<FastDatalessClause> to_find;
     to_find.clause.casusu = "ChainPrecedence";
-    to_find.clause.left_act = "a";
-//    to_find.clause.left_act_id = 1;
-    to_find.clause.right_act = "b";
-//    to_find.clause.right_act_id = 0;
+    to_find.clause.left = "a";
+//    to_find.clause.left_id = 1;
+    to_find.clause.right = "b";
+//    to_find.clause.right_id = 0;
     to_find.clause.n = 1;
     to_find.support_generating_original_pattern = 0.75;
     to_find.support_declarative_pattern = 1.0;
@@ -209,15 +260,15 @@ TEST_CASE("mining_tests: chain_precedence") {
 }
 
 TEST_CASE("mining_tests: chain_precedence_force_right_branch") {
-    std::pair<std::vector<pattern_mining_result<DeclareDataAware>>,std::vector<pattern_mining_result<DeclareDataAware>>> values =
+    std::pair<std::vector<pattern_mining_result<FastDatalessClause>>,std::vector<pattern_mining_result<FastDatalessClause>>> values =
             load_and_return(folder / "chain_precedence_force_right_branch.tab");
 
-    pattern_mining_result<DeclareDataAware> to_find;
+    pattern_mining_result<FastDatalessClause> to_find;
     to_find.clause.casusu = "ChainPrecedence";
-    to_find.clause.left_act = "a";
-//    to_find.clause.left_act_id = 1;
-    to_find.clause.right_act = "b";
-//    to_find.clause.right_act_id = 0;
+    to_find.clause.left = "a";
+//    to_find.clause.left_id = 1;
+    to_find.clause.right = "b";
+//    to_find.clause.right_id = 0;
     to_find.clause.n = 1;
     to_find.support_generating_original_pattern = 0.8;
     to_find.support_declarative_pattern = 1.0;
@@ -227,15 +278,15 @@ TEST_CASE("mining_tests: chain_precedence_force_right_branch") {
 }
 
 TEST_CASE("mining_tests: choice") {
-    std::pair<std::vector<pattern_mining_result<DeclareDataAware>>,std::vector<pattern_mining_result<DeclareDataAware>>> values =
+    std::pair<std::vector<pattern_mining_result<FastDatalessClause>>,std::vector<pattern_mining_result<FastDatalessClause>>> values =
             load_and_return(folder / "choice.tab");
 
-    pattern_mining_result<DeclareDataAware> to_find;
+    pattern_mining_result<FastDatalessClause> to_find;
     to_find.clause.casusu = "Choice";
-    to_find.clause.left_act = "a";
-//    to_find.clause.left_act_id = 0;
-    to_find.clause.right_act = "b";
-//    to_find.clause.right_act_id = 3;
+    to_find.clause.left = "a";
+//    to_find.clause.left_id = 0;
+    to_find.clause.right = "b";
+//    to_find.clause.right_id = 3;
     to_find.clause.n = 1;
     to_find.support_generating_original_pattern = 0.25;
     to_find.support_declarative_pattern = 1.0;
@@ -250,22 +301,22 @@ TEST_CASE("mining_tests: choice") {
 ////
 ////    DeclareDataAware to_find;
 ////    to_find.casusu = "Choice";
-////    to_find.left_act = "a";
-////    to_find.right_act = "b";
+////    to_find.left = "a";
+////    to_find.right = "b";
 ////    to_find.n = 1;
 ////
 ////    ASSERT_TRUE(std::find(abs_supp.begin(), abs_supp.end(), to_find) != abs_supp.end());
 
 TEST_CASE("mining_tests: response") {
-    std::pair<std::vector<pattern_mining_result<DeclareDataAware>>,std::vector<pattern_mining_result<DeclareDataAware>>> values =
+    std::pair<std::vector<pattern_mining_result<FastDatalessClause>>,std::vector<pattern_mining_result<FastDatalessClause>>> values =
             load_and_return(folder / "response.tab");
 
-    pattern_mining_result<DeclareDataAware> to_find;
+    pattern_mining_result<FastDatalessClause> to_find;
     to_find.clause.casusu = "Response";
-    to_find.clause.left_act = "a";
-//    to_find.clause.left_act_id = 0;
-    to_find.clause.right_act = "b";
-//    to_find.clause.right_act_id = 2;
+    to_find.clause.left = "a";
+//    to_find.clause.left_id = 0;
+    to_find.clause.right = "b";
+//    to_find.clause.right_id = 2;
     to_find.clause.n = 1;
     to_find.support_generating_original_pattern = 0.75;
     to_find.support_declarative_pattern = 1.0;
@@ -275,15 +326,15 @@ TEST_CASE("mining_tests: response") {
 }
 
 TEST_CASE("mining_tests: chain_response") {
-    std::pair<std::vector<pattern_mining_result<DeclareDataAware>>,std::vector<pattern_mining_result<DeclareDataAware>>> values =
+    std::pair<std::vector<pattern_mining_result<FastDatalessClause>>,std::vector<pattern_mining_result<FastDatalessClause>>> values =
             load_and_return(folder / "chain_response.tab");
 
-    pattern_mining_result<DeclareDataAware> to_find;
+    pattern_mining_result<FastDatalessClause> to_find;
     to_find.clause.casusu = "ChainResponse";
-    to_find.clause.left_act = "a";
-//    to_find.clause.left_act_id = 0;kb.event_label_mapper.get(B)
-    to_find.clause.right_act = "b";
-//    to_find.clause.right_act_id = 1;
+    to_find.clause.left = "a";
+//    to_find.clause.left_id = 0;kb.event_label_mapper.get(B)
+    to_find.clause.right = "b";
+//    to_find.clause.right_id = 1;
     to_find.clause.n = 1;
     to_find.support_generating_original_pattern = 0.8;
     to_find.support_declarative_pattern = 1.0;
@@ -293,15 +344,15 @@ TEST_CASE("mining_tests: chain_response") {
 }
 
 TEST_CASE("mining_tests: responded_existence") {
-    std::pair<std::vector<pattern_mining_result<DeclareDataAware>>,std::vector<pattern_mining_result<DeclareDataAware>>> values =
+    std::pair<std::vector<pattern_mining_result<FastDatalessClause>>,std::vector<pattern_mining_result<FastDatalessClause>>> values =
             load_and_return(folder / "responded_existence.tab");
 
-    pattern_mining_result<DeclareDataAware> to_find;
+    pattern_mining_result<FastDatalessClause> to_find;
     to_find.clause.casusu = "RespExistence";
-    to_find.clause.left_act = "a";
-//    to_find.clause.left_act_id = 2;
-    to_find.clause.right_act = "b";
-//    to_find.clause.right_act_id = 1;
+    to_find.clause.left = "a";
+//    to_find.clause.left_id = 2;
+    to_find.clause.right = "b";
+//    to_find.clause.right_id = 1;
     to_find.clause.n = 1;
     to_find.support_generating_original_pattern = 0.4;
     to_find.support_declarative_pattern = 1.0;
@@ -311,55 +362,57 @@ TEST_CASE("mining_tests: responded_existence") {
 }
 
 TEST_CASE("mining_tests: excl_choice") {
-    std::pair<std::vector<pattern_mining_result<DeclareDataAware>>,std::vector<pattern_mining_result<DeclareDataAware>>> values =
+    std::pair<std::vector<pattern_mining_result<FastDatalessClause>>,std::vector<pattern_mining_result<FastDatalessClause>>> values =
             load_and_return(folder / "excl_choice.tab");
 
-    pattern_mining_result<DeclareDataAware> to_find;
+    pattern_mining_result<FastDatalessClause> to_find;
     to_find.clause.casusu = "ExclChoice";
-    to_find.clause.left_act = "a";
-//    to_find.clause.left_act_id = 0;
-    to_find.clause.right_act = "b";
-//    to_find.clause.right_act_id = 3;
+    to_find.clause.left = "a";
+//    to_find.clause.left_id = 0;
+    to_find.clause.right = "b";
+//    to_find.clause.right_id = 3;
     to_find.clause.n = 1;
-    to_find.support_generating_original_pattern = 0;
+    to_find.support_generating_original_pattern = 0.0;
     to_find.support_declarative_pattern = 1.0;
     to_find.confidence_declarative_pattern = 1.0;
+
+    std::cout << values.first << std::endl;
 
     ASSERT_TRUE(std::find(values.first.begin(), values.first.end(), to_find) != values.first.end());
 }
 
 TEST_CASE("mining_tests: coexistence") {
-    std::pair<std::vector<pattern_mining_result<DeclareDataAware>>,std::vector<pattern_mining_result<DeclareDataAware>>> values =
+    std::pair<std::vector<pattern_mining_result<FastDatalessClause>>,std::vector<pattern_mining_result<FastDatalessClause>>> values =
             load_and_return(folder / "coexistence.tab");
 
-    pattern_mining_result<DeclareDataAware> to_find;
+    pattern_mining_result<FastDatalessClause> to_find;
     to_find.clause.casusu = "CoExistence";
-    to_find.clause.left_act = "a";
-//    to_find.clause.left_act_id = 2;
-    to_find.clause.right_act = "b";
-//    to_find.clause.right_act_id = 1;
+    to_find.clause.left = "a";
+//    to_find.clause.left_id = 2;
+    to_find.clause.right = "b";
+//    to_find.clause.right_id = 1;
     to_find.clause.n = 1;
     to_find.support_generating_original_pattern = 0.4;
     to_find.support_declarative_pattern = 1.0;
     to_find.confidence_declarative_pattern = 1.0;
 
-    pattern_mining_result<DeclareDataAware> to_find_mirror = to_find;
-    std::swap(to_find_mirror.clause.left_act, to_find_mirror.clause.right_act);
-//    std::swap(to_find_mirror.clause.left_act_id, to_find_mirror.clause.right_act_id);
+    pattern_mining_result<FastDatalessClause> to_find_mirror = to_find;
+    std::swap(to_find_mirror.clause.left, to_find_mirror.clause.right);
+//    std::swap(to_find_mirror.clause.left_id, to_find_mirror.clause.right_id);
 
     ASSERT_TRUE(((std::find(values.first.begin(), values.first.end(), to_find) != values.first.end()) || (std::find(values.first.begin(), values.first.end(), to_find_mirror) != values.first.end())) );
 }
 
 TEST_CASE("mining_tests: surround") {
-    std::pair<std::vector<pattern_mining_result<DeclareDataAware>>,std::vector<pattern_mining_result<DeclareDataAware>>> values =
+    std::pair<std::vector<pattern_mining_result<FastDatalessClause>>,std::vector<pattern_mining_result<FastDatalessClause>>> values =
             load_and_return(folder / "surround.tab");
 
-    pattern_mining_result<DeclareDataAware> to_find;
+    pattern_mining_result<FastDatalessClause> to_find;
     to_find.clause.casusu = "Surround";
-    to_find.clause.left_act = "a";
-//    to_find.clause.left_act_id = 2;
-    to_find.clause.right_act = "b";
-//    to_find.clause.right_act_id = 1;
+    to_find.clause.left = "a";
+//    to_find.clause.left_id = 2;
+    to_find.clause.right = "b";
+//    to_find.clause.right_id = 1;
     to_find.clause.n = 1;
     to_find.support_generating_original_pattern = 1.0;
     to_find.support_declarative_pattern = 1.0;
@@ -369,26 +422,26 @@ TEST_CASE("mining_tests: surround") {
 }
 
 TEST_CASE("mining_tests: surround_not_chain_succession") {
-    std::pair<std::vector<pattern_mining_result<DeclareDataAware>>,std::vector<pattern_mining_result<DeclareDataAware>>> values =
+    std::pair<std::vector<pattern_mining_result<FastDatalessClause>>,std::vector<pattern_mining_result<FastDatalessClause>>> values =
             load_and_return(folder / "surround_not_chain_succession.tab");
 
-    pattern_mining_result<DeclareDataAware> to_find;
+    pattern_mining_result<FastDatalessClause> to_find;
     to_find.clause.casusu = "Surround";
-    to_find.clause.left_act = "a";
-//    to_find.clause.left_act_id = 0;
-    to_find.clause.right_act = "b";
-//    to_find.clause.right_act_id = 1;
+    to_find.clause.left = "a";
+//    to_find.clause.left_id = 0;
+    to_find.clause.right = "b";
+//    to_find.clause.right_id = 1;
     to_find.clause.n = 1;
     to_find.support_generating_original_pattern = 1.0;
     to_find.support_declarative_pattern = 1.0;
     to_find.confidence_declarative_pattern = 1.0;
 
-    pattern_mining_result<DeclareDataAware> to_find_1;
+    pattern_mining_result<FastDatalessClause> to_find_1;
     to_find_1.clause.casusu = "ChainSuccession";
-    to_find_1.clause.left_act = "a";
-//    to_find_1.clause.left_act_id = 0;
-    to_find_1.clause.right_act = "b";
-//    to_find_1.clause.right_act_id = 1;
+    to_find_1.clause.left = "a";
+//    to_find_1.clause.left_id = 0;
+    to_find_1.clause.right = "b";
+//    to_find_1.clause.right_id = 1;
     to_find_1.clause.n = 1;
     to_find_1.support_generating_original_pattern = 1.0;
     to_find_1.support_declarative_pattern = 1.0;
@@ -398,26 +451,26 @@ TEST_CASE("mining_tests: surround_not_chain_succession") {
 }
 
 TEST_CASE("mining_tests: surround_chain_succession") {
-    std::pair<std::vector<pattern_mining_result<DeclareDataAware>>,std::vector<pattern_mining_result<DeclareDataAware>>> values =
+    std::pair<std::vector<pattern_mining_result<FastDatalessClause>>,std::vector<pattern_mining_result<FastDatalessClause>>> values =
             load_and_return(folder / "surround_chain_succession.tab");
 
-    pattern_mining_result<DeclareDataAware> to_find;
+    pattern_mining_result<FastDatalessClause> to_find;
     to_find.clause.casusu = "Surround";
-    to_find.clause.left_act = "a";
-//    to_find.clause.left_act_id = 0;
-    to_find.clause.right_act = "b";
-//    to_find.clause.right_act_id = 1;
+    to_find.clause.left = "a";
+//    to_find.clause.left_id = 0;
+    to_find.clause.right = "b";
+//    to_find.clause.right_id = 1;
     to_find.clause.n = 1;
     to_find.support_generating_original_pattern = 1.0;
     to_find.support_declarative_pattern = 1.0;
     to_find.confidence_declarative_pattern = 1.0;
 
-    pattern_mining_result<DeclareDataAware> to_find_1;
+    pattern_mining_result<FastDatalessClause> to_find_1;
     to_find_1.clause.casusu = "ChainSuccession";
-    to_find_1.clause.left_act = "a";
-//    to_find_1.clause.left_act_id = 0;
-    to_find_1.clause.right_act = "b";
-//    to_find_1.clause.right_act_id = 1;
+    to_find_1.clause.left = "a";
+//    to_find_1.clause.left_id = 0;
+    to_find_1.clause.right = "b";
+//    to_find_1.clause.right_id = 1;
     to_find_1.clause.n = 1;
     to_find_1.support_generating_original_pattern = 1.0;
     to_find_1.support_declarative_pattern = 1.0;
@@ -427,15 +480,15 @@ TEST_CASE("mining_tests: surround_chain_succession") {
 }
 
 TEST_CASE("mining_tests: not_chain_succession") {
-    std::pair<std::vector<pattern_mining_result<DeclareDataAware>>,std::vector<pattern_mining_result<DeclareDataAware>>> values =
+    std::pair<std::vector<pattern_mining_result<FastDatalessClause>>,std::vector<pattern_mining_result<FastDatalessClause>>> values =
             load_and_return(folder / "not_chain_succession.tab");
 
-    pattern_mining_result<DeclareDataAware> to_find;
+    pattern_mining_result<FastDatalessClause> to_find;
     to_find.clause.casusu = "ChainSuccession";
-    to_find.clause.left_act = "a";
-//    to_find.clause.left_act_id = 0;
-    to_find.clause.right_act = "b";
-//    to_find.clause.right_act_id = 1;
+    to_find.clause.left = "a";
+//    to_find.clause.left_id = 0;
+    to_find.clause.right = "b";
+//    to_find.clause.right_id = 1;
     to_find.clause.n = 1;
     to_find.support_generating_original_pattern = (3.0/7.0);
     to_find.support_declarative_pattern = 1.0;
@@ -445,15 +498,15 @@ TEST_CASE("mining_tests: not_chain_succession") {
 }
 
 TEST_CASE("mining_tests: succession") {
-    std::pair<std::vector<pattern_mining_result<DeclareDataAware>>,std::vector<pattern_mining_result<DeclareDataAware>>> values =
+    std::pair<std::vector<pattern_mining_result<FastDatalessClause>>,std::vector<pattern_mining_result<FastDatalessClause>>> values =
             load_and_return(folder / "succession.tab");
 
-    pattern_mining_result<DeclareDataAware> to_find;
+    pattern_mining_result<FastDatalessClause> to_find;
     to_find.clause.casusu = "Succession";
-    to_find.clause.left_act = "a";
-//    to_find.clause.left_act_id = 0;
-    to_find.clause.right_act = "b";
-//    to_find.clause.right_act_id = 1;
+    to_find.clause.left = "a";
+//    to_find.clause.left_id = 0;
+    to_find.clause.right = "b";
+//    to_find.clause.right_id = 1;
     to_find.clause.n = 1;
     to_find.support_generating_original_pattern = 1.0;
     to_find.support_declarative_pattern = 1.0;
@@ -463,13 +516,13 @@ TEST_CASE("mining_tests: succession") {
 }
 
 //TEST("mining_tests: succession_confidence") {
-//    std::pair<std::vector<pattern_mining_result<DeclareDataAware>>,std::vector<pattern_mining_result<DeclareDataAware>>> values =
+//    std::pair<std::vector<pattern_mining_result<FastDatalessClause>>,std::vector<pattern_mining_result<FastDatalessClause>>> values =
 //            load_and_return("/home/sam/Documents/Repositories/Codebases/knobab/data/testing/mining/succession_confidence.tab");
 //
-//    pattern_mining_result<DeclareDataAware> to_find;
+//    pattern_mining_result<FastDatalessClause> to_find;
 //    to_find.clause.casusu = "Succession";
-//    to_find.clause.left_act = "a";
-//    to_find.clause.right_act = "b";
+//    to_find.clause.left = "a";
+//    to_find.clause.right = "b";
 //    to_find.clause.n = 1;
 //    to_find.support_generating_original_pattern = 0.75;
 //    to_find.support_declarative_pattern = 0.75;

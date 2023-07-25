@@ -783,7 +783,8 @@ std::pair<std::string,std::string> ServerQueryManager::runQuery(const std::strin
     format.clear();
     content.str(std::string());
     parser.queries()->children[0]->accept(this);
-    return {content.str(), format};
+    auto tmp = content.str();
+    return {tmp, format};
 }
 
 std::any ServerQueryManager::visitDisplay(KnoBABQueryParser::DisplayContext *ctx) {
@@ -963,6 +964,10 @@ std::any ServerQueryManager::visitModel_query(KnoBABQueryParser::Model_queryCont
                     result["query_plan"] = ref.generateJSONGraph();
                 it->second.experiment_logger.log_json_file(result["benchmark"]);
                 switch (ref.final_ensemble) {
+                    case ReturnTraces: {
+                        result["ReturnTraces"] = ref.result_per_traces;
+                    } break;
+
                     case PerDeclareSupport:
                         for (size_t i = 0; i < ref.support_per_declare.size(); i++) {
                             result["PerDeclareSupport"][i] = ref.support_per_declare.at(i);
