@@ -57,7 +57,6 @@ void MAXSatPipeline::clear() {
     atomicPartIntersectionResult.clear();
     result.clear();
     support_per_declare.clear();
-    result_per_traces.clear();
 }
 
 static inline void partialResultIntersection(const PartialResult& lhs,

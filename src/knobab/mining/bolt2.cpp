@@ -1180,21 +1180,21 @@ std::pair<std::vector<pattern_mining_result<FastDatalessClause>>, double> bolt2(
         clause.clause.left = kb.event_label_mapper.get(A);
 //        clause.left_act_id = A;
         clause.clause.right = kb.event_label_mapper.get(B);
-        if ((clause.clause.left == "d") && (clause.clause.right == "g")) {
-            if ((lr_conf == rl_conf) && (lr_conf >= support)) {
-                candidate_rule.clause.new_head(pattern.first);
-                candidate_rule.support_declarative_pattern = counter.decl_support(lr);
-                candidate_rule.confidence_declarative_pattern = lr_conf;
-            } else if (lr_conf >= rl_conf && lr_conf >= support) {
-                candidate_rule.support_declarative_pattern = counter.decl_support(lr);
-                candidate_rule.confidence_declarative_pattern = lr_conf;
-                candidate_rule.clause = lr;
-            } else if (rl_conf >= support) {
-                candidate_rule.support_declarative_pattern = counter.decl_support(rl);
-                candidate_rule.confidence_declarative_pattern = rl_conf;
-                candidate_rule.clause = rl;
-            }
-        }
+//        if ((clause.clause.left == "d") && (clause.clause.right == "g")) {
+//            if ((lr_conf == rl_conf) && (lr_conf >= support)) {
+//                candidate_rule.clause.new_head(pattern.first);
+//                candidate_rule.support_declarative_pattern = counter.decl_support(lr);
+//                candidate_rule.confidence_declarative_pattern = lr_conf;
+//            } else if (lr_conf >= rl_conf && lr_conf >= support) {
+//                candidate_rule.support_declarative_pattern = counter.decl_support(lr);
+//                candidate_rule.confidence_declarative_pattern = lr_conf;
+//                candidate_rule.clause = lr;
+//            } else if (rl_conf >= support) {
+//                candidate_rule.support_declarative_pattern = counter.decl_support(rl);
+//                candidate_rule.confidence_declarative_pattern = rl_conf;
+//                candidate_rule.clause = rl;
+//            }
+//        }
 //        clause.right_act_id = B;
 //#ifdef DEBUG
 //        std::cout << clause.clause.left_act << "--" << clause.clause.right_act << std::endl;
@@ -1281,6 +1281,7 @@ std::pair<std::vector<pattern_mining_result<FastDatalessClause>>, double> bolt2(
             if ((min_int_supp_patt > log_size) || (!choice_exclchoice(A, B, log_size, min_int_supp_patt,
                                                                       kb, inv_map, map_for_retain, map_for_itemset_support_score, false))) {
                 {
+#ifndef CORRECT_IMPLEMENTATION
                     if ((clause.clause.casusu == "RespExistence") || (clause.clause.casusu == "CoExistence"))
                         // All the branching alternatives are discarded, so providing this as an output
                         declarative_clauses.emplace_back(clause.clause,
@@ -1290,6 +1291,7 @@ std::pair<std::vector<pattern_mining_result<FastDatalessClause>>, double> bolt2(
                                                          candidate_rule.restrictive_support_declarative_pattern);
                     else
                         // Otherwise, this is something that was cached in one of the undergoing calls
+#endif
                         declarative_clauses.emplace_back(clause);
 
                 }

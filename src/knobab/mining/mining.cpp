@@ -85,7 +85,7 @@ void questo() {
 //    auto sstr = ss2.str();
 //    exit(1);
 
-    ss << " using \"ReturnTraces\" over " << std::quoted(world_file_to_load) << std::endl;
+    ss << " using \"PerDeclareSupport\" over " << std::quoted(world_file_to_load) << std::endl;
 //    ss << " using \"TraceMaximumSatisfiability\" over " << std::quoted(world_file_to_load) << std::endl;
     ss << " plan \"nfmcp23\" "  << std::endl;
     ss << " with operators \"Hybrid\" ";
