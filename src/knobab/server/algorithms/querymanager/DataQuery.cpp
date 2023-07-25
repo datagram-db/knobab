@@ -97,7 +97,8 @@ bool DataQuery::operator==(const DataQuery &rhs) const {
            label == rhs.label &&
            var == rhs.var &&
            lower_bound == rhs.lower_bound &&
-           upper_bound == rhs.upper_bound;
+           upper_bound == rhs.upper_bound &&
+           numeric_argument == rhs.numeric_argument;
 }
 
 bool DataQuery::operator!=(const DataQuery &rhs) const {

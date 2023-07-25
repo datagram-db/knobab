@@ -109,30 +109,25 @@ TEST_CASE("correct_mining") {
 
     ss << "model-check declare " << std::endl;
     std::vector<pattern_mining_result<FastDatalessClause>> values;
-//    for (const auto& ref2 : result.first) {
-//        if (ref2.support_declarative_pattern == 1.0) {
-//            values.emplace_back(ref2);
-    ss << "\"Absence\"( \"f\", true, 6) " << std::endl;
-//            ss << "\t" << ref2.clause << std::endl;
-//        }
-//    }
-//    ss2 << values.at(11) << std::endl;
-//    ss2 << values.at(14) << std::endl;
-//    ss2 << values.at(36) << std::endl;
-//    ss2 << values.at(38) << std::endl;
-//    ss2 << values.at(39) << std::endl;
-//    auto sstr = ss2.str();
-//    exit(1);
+    for (const auto& ref2 : result.first) {
+        if (ref2.support_declarative_pattern == 1.0) {
+            values.emplace_back(ref2);
+            ss << "\t" << ref2.clause << std::endl;
+        }
+    }
 
     ss << " using \"PerDeclareSupport\" over " << std::quoted(world_file_to_load) << std::endl;
-//    ss << " using \"TraceMaximumSatisfiability\" over " << std::quoted(world_file_to_load) << std::endl;
     ss << " plan \"nfmcp23\" "  << std::endl;
     ss << " with operators \"Hybrid\" ";
 
     std::string a,b;
     std::tie(a,b) = sqm.runQuery(ss.str());
+    auto declare_support = nlohmann::json::parse(a)["PerDeclareSupport"].get<std::vector<double>>();
     ss.str(std::string());
     ss.clear();
+    ASSERT_TRUE(declare_support.size() == values.size());
+    for (double val : declare_support)
+        ASSERT_TRUE((val-1.0)<= std::numeric_limits<double>::epsilon());
 }
 
 TEST_CASE("mining_tests: exists_absence") {
