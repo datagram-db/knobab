@@ -180,7 +180,7 @@ struct ConfusionMatrix {
  * @author: Samuel 'Buzz' Appleby, Giacomo
  * @param sqm
  */
-void loading_model_from_file(ServerQueryManager& sqm, const std::filesystem::path& path, std::tuple<std::unordered_map<std::string, std::vector<pattern_mining_result<DeclareDataAware>>>,double>& result) {
+void loading_model_from_file(ServerQueryManager& sqm, const std::filesystem::path& path, std::tuple<std::unordered_map<std::string, std::vector<pattern_mining_result<FastDatalessClause>>>,double>& result) {
     std::get<1>(result) = 0.0;
     auto& refRoot = std::get<0>(result);
     for(auto& p : std::filesystem::recursive_directory_iterator(path)) {
@@ -193,7 +193,7 @@ void loading_model_from_file(ServerQueryManager& sqm, const std::filesystem::pat
                 std::cout << "Skipping" << std::endl;
             }
 
-            std::vector<pattern_mining_result<DeclareDataAware>>&  new_vec = refRoot[model_name];
+            std::vector<pattern_mining_result<FastDatalessClause>>&  new_vec = refRoot[model_name];
             std::stringstream sSTR;
             sSTR << "file "
                  << std::quoted((model_file).string());
@@ -205,8 +205,12 @@ void loading_model_from_file(ServerQueryManager& sqm, const std::filesystem::pat
             uint32_t idx = 0;
             std::string delimiter = "\t";
             while (getline (file, line)) {
-                pattern_mining_result<DeclareDataAware>& ref = new_vec.emplace_back();
-                ref.clause = actual_model.at(idx);
+                pattern_mining_result<FastDatalessClause>& ref = new_vec.emplace_back();
+                const auto& am = actual_model.at(idx);
+                ref.clause.casusu = am.casusu;
+                ref.clause.left = am.left_act;
+                ref.clause.right = am.right_act;
+                ref.clause.n = am.n;
                 std::istringstream iss(line);
                 std::string token;
                 std::getline(iss, token, '\t');
