@@ -42,7 +42,7 @@ std::pair<std::vector<pattern_mining_result<FastDatalessClause>>, double> bolt_a
     std::filesystem::path declare_file_path, maxsat;
     std::pair<std::vector<pattern_mining_result<FastDatalessClause>>, double> list = bolt2(env.db, support, false, true,
                                                                                          true, false, false);
-//    std::cout << list.second << " L=" << list.first.size() << std::endl;
+    std::cout << list.second << " L=" << list.first.size() << std::endl;
 //    std::cout << list.first << std::endl;
     if(!no_stats){
         bool filePreexists = std::filesystem::exists(logger_file);
@@ -859,16 +859,18 @@ choice_exclchoice(act_t a, act_t b,
 //    clause.right_act_id = b;
 
     if (ratio.first >= minimum_support_threshold) {
-        static pattern_mining_result<FastDatalessClause> c(clause,  0.0, local_support, local_support, local_support);
+//        static pattern_mining_result<FastDatalessClause> c(clause,  0.0, local_support, local_support, local_support);
+
         if (a>b) {
-            std::swap(c.clause.left,c.clause.right);
+            std::swap(a,b);
 //        std::swap(clause.left_act_id, clause.right_act_id);
         }
-        c.confidence_declarative_pattern = c.support_declarative_pattern = c.restrictive_support_declarative_pattern = local_support;
-        c.clause.n = 1;
-        c.clause.left = kb.event_label_mapper.get(a);
+        clause.left = kb.event_label_mapper.get(a);
 //    clause.left_act_id = a;
-        c.clause.right = kb.event_label_mapper.get(b);
+        clause.right = kb.event_label_mapper.get(b);
+//        c.confidence_declarative_pattern = c.support_declarative_pattern = c.restrictive_support_declarative_pattern = local_support;
+        clause.n = 1;
+
         // I can consider this pattern, again, only if it is within the expected
         // support rate which, in this case, is given by the amount of traces
         // globally setting up this pattern
@@ -878,21 +880,21 @@ choice_exclchoice(act_t a, act_t b,
             // and provide an exclusive choice pattern if I am confident that
             // the two events will never appear in the same trace (according to
             // the "training" data
-            c.clause.casusu = "ExclChoice";
+            clause.casusu = "ExclChoice";
         } else {
-            c.clause.casusu = "Choice";
+            clause.casusu = "Choice";
         }
         auto& refA = map_for_retain[a];
-        auto& refB = map_for_retain[b];
+//        auto& refB = map_for_retain[b];
         refA.map.add(b);
-        refB.map.add(a);
-        if (it != mapper.end())
+//        refB.map.add(a);
+        /*if (it != mapper.end())
             c.support_generating_original_pattern =  ((double)it->second)/((double)log_size);
         else
-            c.support_generating_original_pattern = 0;
+            c.support_generating_original_pattern = 0;*/
 //        std::cout << c << std::endl;
-        refA.maps[local_support].emplace(c);
-        refB.maps[local_support].emplace(c);
+        refA.maps[local_support].emplace(clause, (it != mapper.end())?((double)it->second)/((double)log_size):0.0, local_support, local_support, local_support);
+//        refB.maps[local_support].emplace(c);
         return true;
     }
 
