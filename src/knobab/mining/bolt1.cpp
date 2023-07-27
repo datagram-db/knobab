@@ -34,12 +34,10 @@ std::pair<std::vector<pattern_mining_result<DeclareDataAware>>, double> bolt_alg
         if (!filePreexists) {
             LoggerInformation::log_csv_file_header(log);
         }
-
         env.experiment_logger.model_data_decomposition_time = 0;
         env.experiment_logger.model_atomization_time = 0;
         env.experiment_logger.model_declare_to_ltlf = 0;
         env.experiment_logger.model_ltlf_query_time = list.second;
-
         env.experiment_logger.log_csv_file(log);
     }
 
@@ -414,11 +412,11 @@ std::pair<std::vector<pattern_mining_result<DeclareDataAware>>, double> pattern_
                                                                     bool special_temporal_patterns,
                                                                     bool only_precise_temporal_patterns,
                                                                     bool negative_patterns) {
-    using std::chrono::high_resolution_clock;
+//    using std::chrono::high_resolution_clock;
     using std::chrono::duration_cast;
     using std::chrono::duration;
     using std::chrono::milliseconds;
-    auto t1 = high_resolution_clock::now();
+    auto t1 = std::chrono::system_clock::now();
     std::unordered_map<std::string, std::unordered_map<act_t, std::vector<forNegation>>> patterns_to_negate;
     support = std::max(std::min(support, 1.0), 0.0); // forcing the value to be between 0 and 1.
     size_t log_size = kb.nTraces();
@@ -860,7 +858,7 @@ std::pair<std::vector<pattern_mining_result<DeclareDataAware>>, double> pattern_
         }
 
     }
-    auto t2 = high_resolution_clock::now();
+    auto t2 = std::chrono::system_clock::now();
     /* Getting number of milliseconds as a double. */
     duration<double, std::milli> ms_double = t2 - t1;
     std::cout << ms_double.count() << "ms\n";

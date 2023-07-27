@@ -50,12 +50,10 @@ std::pair<std::vector<pattern_mining_result<FastDatalessClause>>, double> bolt_a
         if (!filePreexists) {
             LoggerInformation::log_csv_file_header(log);
         }
-
         env.experiment_logger.model_data_decomposition_time = 0;
         env.experiment_logger.model_atomization_time = 0;
         env.experiment_logger.model_declare_to_ltlf = 0;
         env.experiment_logger.model_ltlf_query_time = list.second;
-
         env.experiment_logger.log_csv_file(log);
     }
     return list;
@@ -911,11 +909,11 @@ std::pair<std::vector<pattern_mining_result<FastDatalessClause>>, double> bolt2(
                                                                               bool negative_patterns) {
 
 
-    using std::chrono::high_resolution_clock;
+//    using std::chrono::high_resolution_clock;
     using std::chrono::duration_cast;
     using std::chrono::duration;
     using std::chrono::milliseconds;
-    auto t1 = high_resolution_clock::now();
+    auto t1 = std::chrono::system_clock::now();
     support = std::max(std::min(support, 1.0), 0.0); // forcing the value to be between 0 and 1.
     size_t log_size = kb.nTraces();
 #ifndef ORIGINAL
@@ -1317,7 +1315,7 @@ std::pair<std::vector<pattern_mining_result<FastDatalessClause>>, double> bolt2(
     }), declarative_clauses.end());
     DEBUG_ASSERT(curr_size_Clauses == declarative_clauses.size());
 #endif
-    auto t2 = high_resolution_clock::now();
+    auto t2 = std::chrono::system_clock::now();
     /* Getting number of milliseconds as a double. */
     duration<double, std::milli> ms_double = t2 - t1;
     return {declarative_clauses, ms_double.count()};
@@ -1493,11 +1491,11 @@ std::tuple<std::vector<std::vector<DeclareDataAware>>,double,double> boltk(Serve
     std::vector<DeclareDataAware> last_VVV_intersection, curr_VVV_insersection;
     // TODO: would have been more efficient with a min-heap, but we don't have time.
     double overall_dataless_mining_time = 0;
-    using std::chrono::high_resolution_clock;
+//    using std::chrono::high_resolution_clock;
     using std::chrono::duration_cast;
     using std::chrono::duration;
     using std::chrono::milliseconds;
-    auto t1 = high_resolution_clock::now();
+    auto t1 = std::chrono::system_clock::now();
     for (size_t i = 0; i < model_entry_names.size(); i++) {
         const auto &ref = model_entry_names.at(i);
         auto tmp = bolt2(sqm.multiple_logs[ref].db, support, naif, init_end, special_temporal_patterns,
@@ -1583,7 +1581,7 @@ std::tuple<std::vector<std::vector<DeclareDataAware>>,double,double> boltk(Serve
     ////////////////////////////////////////////////////////////////////////////
 
     if (last_VVV_intersection.empty()) {
-        auto t2 = high_resolution_clock::now();
+        auto t2 = std::chrono::system_clock::now();
         /* Getting number of milliseconds as a double. */
         duration<double, std::milli> ms_double = t2 - t1;
 #ifdef DEBUG
@@ -1715,7 +1713,7 @@ std::tuple<std::vector<std::vector<DeclareDataAware>>,double,double> boltk(Serve
             }
         }
     }
-    auto t2 = high_resolution_clock::now();
+    auto t2 = std::chrono::system_clock::now();
     /* Getting number of milliseconds as a double. */
     duration<double, std::milli> ms_double = t2 - t1;
 //#ifdef DEBUG

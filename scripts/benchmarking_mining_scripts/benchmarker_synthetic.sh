@@ -1,5 +1,5 @@
 set -x #echo on
-algorithm=("bolt2" "apriori" "topk")
+algorithm=("bolt2" "apriori")
 logs=("data/benchmarking/mining/synthetic/logs/10_10_10.xes" "data/benchmarking/mining/synthetic/logs/10_15_10.xes"
       "data/benchmarking/mining/synthetic/logs/10_20_10.xes" "data/benchmarking/mining/synthetic/logs/10_25_10.xes"
       "data/benchmarking/mining/synthetic/logs/10_30_10.xes" "data/benchmarking/mining/synthetic/logs/100_10_10.xes"
