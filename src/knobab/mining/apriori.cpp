@@ -119,7 +119,7 @@ void apriori(const std::string& logger_file,
     sqm.runQuery(ss.str());
     ss.str(std::string());
     ss.clear();
-    std::cout << "Loading Outcome: " << sqm.getContent() << std::endl << std::endl;
+//    std::cout << "Loading Outcome: " << sqm.getContent() << std::endl << std::endl;
 
     // Setting up the operators
     std::string query_plan = "queryplan \"mdpi23\" {\n"
@@ -151,7 +151,7 @@ void apriori(const std::string& logger_file,
                              "                                           (G(((EXISTS ~ 1 t #1)) OR t (((EXISTS 1 t #1 activation)) AND t THETA (NEXT (((EXISTS  ~ 1 t #1) U t (EXISTS 1 t #2 target)) OR t (G t (EXISTS  ~ 1 t #1))))  )))\n"
                              "}";
     sqm.runQuery(query_plan);
-    std::cout << "Operators Setting: " << sqm.getContent() << std::endl << std::endl;
+//    std::cout << "Operators Setting: " << sqm.getContent() << std::endl << std::endl;
 
     // Obtaining the model
     Environment& env = sqm.multiple_logs[log.env_name];
@@ -159,6 +159,7 @@ void apriori(const std::string& logger_file,
     std::vector<DeclareDataAware> unary;
     size_t batch = 1;
     auto binary_clauses = actual(env, support, unary_templates, binary_templates, unary);
+//    std::cout << binary_clauses.size() << std::endl;
     for (const std::vector<DeclareDataAware>& x : chunker(binary_clauses, chunk_size)) {
         ss << "model-check declare " << std::endl;
         for (const auto& d : x) {
@@ -170,7 +171,7 @@ void apriori(const std::string& logger_file,
         sqm.runQuery(ss.str());
         ss.str(std::string());
         ss.clear();
-        std::cout << "Query Batch #" <<  batch << ": " << sqm.getContent() << std::endl << std::endl;
+//        std::cout << "Query Batch #" <<  batch << ": " << sqm.getContent() << std::endl << std::endl;
         batch++;
     }
 
@@ -185,7 +186,7 @@ void apriori(const std::string& logger_file,
         sqm.runQuery(ss.str());
         ss.str(std::string());
         ss.clear();
-        std::cout << "Unary Batch: " << sqm.getContent() << std::endl << std::endl;
+//        std::cout << "Unary Batch: " << sqm.getContent() << std::endl << std::endl;
     }
 
     if(!no_stats) {
@@ -196,7 +197,7 @@ void apriori(const std::string& logger_file,
         ss.clear();
     }
 
-    std::cout << "Dumper: "<< sqm.getContent() << std::endl << std::endl;
+//    std::cout << "Dumper: "<< sqm.getContent() << std::endl << std::endl;
 }
 
 
@@ -208,7 +209,7 @@ void top_k_mining(const std::string& logger_file,
              bool no_stats) {
     ServerQueryManager sqm;
     sqm.min_support = support;
-    sqm.mining_algorithm = "PREVIOUS_MINING";
+    sqm.mining_algorithm = "TOP_K_MINING";
     sqm.iteration_num = iteration_num;
 
     std::stringstream ss;
@@ -218,7 +219,7 @@ void top_k_mining(const std::string& logger_file,
     sqm.runQuery(ss.str());
     ss.str(std::string());
     ss.clear();
-    std::cout << "Loading Outcome: " << sqm.getContent() << std::endl << std::endl;
+//    std::cout << "Loading Outcome: " << sqm.getContent() << std::endl << std::endl;
 
     Environment& env = sqm.multiple_logs[log.env_name];
     size_t support_int = (size_t)std::ceil((1.0 - support) * (double)env.db.nAct());
@@ -255,14 +256,14 @@ void top_k_mining(const std::string& logger_file,
 
     sqm.runQuery(query_plan);
 
-    std::cout << "Operators Setting: " << sqm.getContent() << std::endl << std::endl;
+//    std::cout << "Operators Setting: " << sqm.getContent() << std::endl << std::endl;
 
     std::vector<DeclareDataAware> unary;
     size_t batch = 1;
     for (const std::string& x : templates) {
         ss << "model-check template " << std::quoted(x) << " logtop " << support_int << std::endl; //  ServerQueryManager::visitTopn
         ss << " using \"PerDeclareSupport\" over " << std::quoted(log.env_name) << std::endl;
-        ss << " plan \"mdpi23\" "  << std::endl;
+        ss << " plan \"nfmcp23\" "  << std::endl;
         ss << " with operators \"Hybrid\" ";
         sqm.runQuery(ss.str());
         ss.str(std::string());
@@ -292,5 +293,5 @@ void top_k_mining(const std::string& logger_file,
         ss.clear();
     }
 
-    std::cout << "Dumper: "<< sqm.getContent() << std::endl << std::endl;
+//    std::cout << "Dumper: "<< sqm.getContent() << std::endl << std::endl;
 }
