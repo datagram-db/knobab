@@ -1070,7 +1070,9 @@ std::pair<std::vector<pattern_mining_result<FastDatalessClause>>, double> bolt2(
         std::cout << "   conf: " << counter.lift(lr) << " conf: " << counter.lift(rl) << std::endl;
         std::cout << "   lift: " << counter.lift(lr) << " lift: " << counter.lift(rl) << std::endl;
 #endif
-        candidate_rule.support_generating_original_pattern = ((double) pattern.second) / ((double) log_size); //double supportGeneratingOriginalPattern,
+        candidate_rule.restrictive_support_declarative_pattern
+            = candidate_rule.support_generating_original_pattern
+            = ((double) pattern.second) / ((double) log_size); //double supportGeneratingOriginalPattern,
         if ((lr_conf == rl_conf) && (lr_conf >= support)) {
             candidate_rule.clause.new_head(pattern.first);
             candidate_rule.support_declarative_pattern = counter.decl_support(lr);

@@ -23,15 +23,16 @@ public:
     T__50 = 51, T__51 = 52, T__52 = 53, T__53 = 54, T__54 = 55, T__55 = 56, 
     T__56 = 57, T__57 = 58, T__58 = 59, T__59 = 60, T__60 = 61, T__61 = 62, 
     T__62 = 63, T__63 = 64, T__64 = 65, T__65 = 66, T__66 = 67, T__67 = 68, 
-    T__68 = 69, T__69 = 70, T__70 = 71, T__71 = 72, ACT_TABLE = 73, WITH_ALIGNMENT_STRATEGY = 74, 
-    CNT_TABLE = 75, ATT_TABLE = 76, ACTIVITYLABEL = 77, LOGS = 78, ATT = 79, 
-    ACTIVATION = 80, TARGET = 81, INIT = 82, END = 83, EXISTS = 84, ABSENCE = 85, 
-    NEXT = 86, OR = 87, AND = 88, FIRST = 89, LAST = 90, IF = 91, THEN = 92, 
-    ELSE = 93, UNTIL = 94, BOX = 95, DIAMOND = 96, AUTO_TIMED = 97, LPAREN = 98, 
-    RPAREN = 99, PRESERVE = 100, TIMED = 101, THETA = 102, LEFT = 103, INV = 104, 
-    RIGHT = 105, MIDDLE = 106, NEGATED = 107, JOLLY = 108, HRF = 109, TAB = 110, 
-    XES = 111, LABEL = 112, INTNUMBER = 113, NUMBER = 114, STRING = 115, 
-    SPACE = 116, COMMENT = 117, LINE_COMMENT = 118
+    T__68 = 69, T__69 = 70, T__70 = 71, T__71 = 72, VIOLATED = 73, VAC_SAT = 74, 
+    SAT = 75, ACT_TABLE = 76, WITH_ALIGNMENT_STRATEGY = 77, CNT_TABLE = 78, 
+    ATT_TABLE = 79, ACTIVITYLABEL = 80, LOGS = 81, ATT = 82, ACTIVATION = 83, 
+    TARGET = 84, INIT = 85, END = 86, EXISTS = 87, ABSENCE = 88, NEXT = 89, 
+    OR = 90, AND = 91, FIRST = 92, LAST = 93, IF = 94, THEN = 95, ELSE = 96, 
+    UNTIL = 97, BOX = 98, DIAMOND = 99, AUTO_TIMED = 100, LPAREN = 101, 
+    RPAREN = 102, PRESERVE = 103, TIMED = 104, THETA = 105, LEFT = 106, 
+    INV = 107, RIGHT = 108, MIDDLE = 109, NEGATED = 110, JOLLY = 111, HRF = 112, 
+    TAB = 113, XES = 114, LABEL = 115, INTNUMBER = 116, NUMBER = 117, STRING = 118, 
+    SPACE = 119, COMMENT = 120, LINE_COMMENT = 121
   };
 
   enum {
@@ -1214,6 +1215,9 @@ public:
     virtual size_t getRuleIndex() const override;
     DeclareContext *declare();
     antlr4::tree::TerminalNode *NUMBER();
+    antlr4::tree::TerminalNode *VIOLATED();
+    antlr4::tree::TerminalNode *VAC_SAT();
+    antlr4::tree::TerminalNode *SAT();
 
     virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
     virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
