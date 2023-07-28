@@ -877,6 +877,7 @@ tab
                 for (size_t i = 0, N = std::min(worlds_format_to_load.size(), worlds_file_to_load.size()); i<N; i++) {
                     const auto& model_name = bogus_model_name.at(i);
                     for (size_t j = 0, M = sqm.multiple_logs[model_name].db.nTraces(); j<M; j++) {
+                        DEBUG_ASSERT((i * maxTraceId + j)<traceIdUpperBound);
                         trace_to_class.emplace_back(i * maxTraceId + j, i);
                     }
                 }
@@ -886,7 +887,7 @@ tab
                 auto it = trace_to_class.begin(), en = trace_to_class.end();
                 DecisionTree<size_t> dt(it,
                                         en,
-                                        1,
+                                        std::min(worlds_format_to_load.size(), worlds_file_to_load.size())-1,
                                         selector,
                                         Attributes,
                                         std::unordered_set<std::string>{},
@@ -1097,12 +1098,12 @@ tab
                 if (std::get<2>(clause.second))
                     file << " sat ";
                 file << clause.first << " : " << std::get<3>(clause.second);
-                if (j<M-2) {
+                if (j<M-1) {
                     file << " && " << std::endl << "\t\t";
                 }
             }
             file << " ] : " << branch.second;
-            if (i<N-2) {
+            if (i<N-1) {
                 file << " || " << std::endl<< std::endl;
             }
         }
