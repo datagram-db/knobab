@@ -279,6 +279,22 @@ public:
     return visitChildren(ctx);
   }
 
+  virtual std::any visitRule_with_weight(KnoBABQueryParser::Rule_with_weightContext *ctx) override {
+    return visitChildren(ctx);
+  }
+
+  virtual std::any visitConjunctive_subrule(KnoBABQueryParser::Conjunctive_subruleContext *ctx) override {
+    return visitChildren(ctx);
+  }
+
+  virtual std::any visitClassification_rule(KnoBABQueryParser::Classification_ruleContext *ctx) override {
+    return visitChildren(ctx);
+  }
+
+  virtual std::any visitModel_classification(KnoBABQueryParser::Model_classificationContext *ctx) override {
+    return visitChildren(ctx);
+  }
+
   virtual std::any visitVar(KnoBABQueryParser::VarContext *ctx) override {
     return visitChildren(ctx);
   }

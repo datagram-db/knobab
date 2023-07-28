@@ -203,7 +203,7 @@ void loading_model_from_file(ServerQueryManager& sqm, const std::filesystem::pat
             std::ifstream file(sup_conf_file);
             std::string line;
             uint32_t idx = 0;
-            std::string delimiter = "\t";
+//            std::string delimiter = "\t";
             while (getline (file, line)) {
                 pattern_mining_result<FastDatalessClause>& ref = new_vec.emplace_back();
                 const auto& am = actual_model.at(idx);
@@ -216,7 +216,9 @@ void loading_model_from_file(ServerQueryManager& sqm, const std::filesystem::pat
                 std::getline(iss, token, '\t');
                 ref.support_declarative_pattern = stod(token);
                 std::getline(iss, token, '\t');
-                ref.confidence_declarative_pattern = stod(token);
+                ref.restrictive_confidence_plus_declarative_pattern = stod(token);
+                std::getline(iss, token, '\t');
+                ref.restrictive_support_declarative_pattern = stod(token);
                 idx++;
             }
         }
@@ -231,9 +233,15 @@ void loading_model_from_file(ServerQueryManager& sqm, const std::filesystem::pat
 
 
 enum MetricCases {
-    ConfMetric,
-    SuppMetric,
-    RestrSuppMetric
+    SuppMetric = 0,
+    RestrConfPlusMetric = 1,
+    RestrSuppMetric = 2
+};
+
+enum ModelExtractionFeatures {
+    ActivationClassificationTree = 0,
+    RevisedClassificationTree = 1,
+    ClusteringModelExtraction = 2
 };
 
 //void recompute_triplets_for_matrix(const MetricCases &useConfidence,
@@ -247,6 +255,55 @@ enum MetricCases {
 //                                   ) {
 //
 //}
+
+void
+initialiseModelsWithRewriting(yaucl::structures::any_to_uint_bimap<std::string> &activityLabel_to_globalId_bijection,
+                              const std::unordered_map<std::string, std::vector<std::pair<std::string, bool>>> &clauseExpansionWithNotInversion,
+                              std::unordered_set<FastDatalessClause> &all_clauses_set,
+                              std::unordered_map<std::string, std::unordered_map<FastDatalessClause, std::tuple<double, double, double>>> &model_actual_repr,
+                              std::unordered_set<std::string> &clauses_names_to_consider,
+                              FastDatalessClause &fdc,
+                              const std::string &model_name,
+                              const std::vector<pattern_mining_result<FastDatalessClause>>& modelx) {// (A)
+    for (const auto& c : modelx) {
+        // Generating for future reference the mapping between activity labels and ids
+        activityLabel_to_globalId_bijection.put(c.clause.left);
+        if ((!isUnaryPredicate(c.clause.casusu)) && (!c.clause.right.empty())) {
+            activityLabel_to_globalId_bijection.put(c.clause.right);
+        }
+        // All clauses names
+        auto it = clauseExpansionWithNotInversion.find(c.clause.casusu);
+        if (it != clauseExpansionWithNotInversion.end()) {
+            // If this has not to undergo a rewriting, then directly inserting the clause with its name
+            clauses_names_to_consider.insert(c.clause.casusu);
+            all_clauses_set.emplace(c.clause);
+            model_actual_repr[model_name][c.clause] = {std::make_tuple(c.support_declarative_pattern, c.restrictive_confidence_plus_declarative_pattern, c.restrictive_support_declarative_pattern)};
+        } else {
+            // Otherwise, I have to rewrite it into something else
+            // Setting up the original score associated to the original clause
+            model_actual_repr[model_name][c.clause] = {std::make_tuple(c.support_declarative_pattern, c.restrictive_confidence_plus_declarative_pattern, c.restrictive_support_declarative_pattern)};
+            for (const auto& rewritings : it->second) {
+                fdc.casusu = rewritings.first;
+                clauses_names_to_consider.insert(rewritings.first);
+                if (rewritings.second) {
+                    fdc.right = c.clause.left;
+                    fdc.left = c.clause.right;
+                } else {
+                    fdc.left = c.clause.left;
+                    fdc.right = c.clause.right;
+                }
+                all_clauses_set.emplace(fdc);
+                model_actual_repr[model_name][fdc] = {std::make_tuple(c.support_declarative_pattern, c.restrictive_confidence_plus_declarative_pattern, c.restrictive_support_declarative_pattern)};
+            }
+        }
+    }
+}
+
+using single_clause_confidence = std::pair<FastDatalessClause, double>;
+using single_conjunction_confidence = std::pair<std::vector<single_clause_confidence>,double>;
+using disjunctive_model = std::vector<single_conjunction_confidence >;
+
+#include <yaucl/learning/MCL.h>
 
 int main(int argc, char **argv) {
 #if 0
@@ -325,6 +382,27 @@ int main(int argc, char **argv) {
     std::cout << "refinery_time=" << refinery_time << std::endl;
 #endif
 
+
+    ModelExtractionFeatures classification_algorithm = ActivationClassificationTree;
+    yaucl::structures::any_to_uint_bimap<std::string> activityLabel_to_globalId_bijection;
+
+    // Hardcorded configurations, that should have been generalised as configuration files
+    std::unordered_map<std::string, std::vector<std::pair<std::string, bool>>> clauseExpansionWithNotInversion
+            {
+                    {"ChainSuccession", {std::make_pair("ChainResponse", false), std::make_pair("ChainPrecedence", true)}},
+                    {"Surround", {std::make_pair("ChainResponse", false), std::make_pair("ChainResponse", false)}},
+                    {"Succession", {std::make_pair("Response", false), std::make_pair("Precedence", false)}},
+                    {"CoExistence", {std::make_pair("RespExistence", false), std::make_pair("RespExistence", true)}},
+            };
+    // Clauses which, if they form a chain, should be rewritten into absences
+    DeclareDataAware absence;
+    absence.casusu = "Absence";
+    absence.n = 1;
+    std::unordered_map<std::string, DeclareDataAware> to_absence_clauses_if_cluster{{"ChainResponse", absence},
+                                                                                    {"ChainPrecedence", absence},
+                                                                                    {"Precedence",absence},
+                                                                                    {"Response",absence}};
+
     args::ArgumentParser parser("Boltk", "This extension provides the data-aware declarative mining algorithm presented");
     args::HelpFlag help(parser, "help", "Display this help menu", {'h', "help"});
     std::unordered_map<std::string, log_data_format> map{
@@ -335,9 +413,9 @@ int main(int argc, char **argv) {
     args::Group group(parser, "You can use the following parameters", args::Group::Validators::DontCare, args::Options::Global);
     args::Flag read_dumped_models(group, "Read dumped models", "If set, does not perform any mining, but merely reads the models as dumped", {'r', "read1"});
     std::unordered_map<std::string, MetricCases> metric_map{
-            {"conf", ConfMetric},
+            {"rconfp", RestrConfPlusMetric},
             {"supp", SuppMetric},
-            {"restr", RestrSuppMetric}};
+            {"rsupp", RestrSuppMetric}};
     args::MapFlag<std::string, MetricCases> use_confidence_for_clustering(parser, "c", "Sets up the metric case to be adopted in the ", {'c', "usemetric"}, metric_map);
     args::ValueFlag<std::string>  dump_folder(group, "Testing log", "The location where the models are going to be dumped", {'o', "output_models"});
     args::ValueFlag<std::string>  testing_log(group, "Testing log", "The log against which conduct the prediction", {'e', "testing"});
@@ -416,13 +494,52 @@ int main(int argc, char **argv) {
     }
 
     ServerQueryManager sqm;
+    std::string query_plan = "queryplan \"nfmcp23\" {\n"
+                             "     template \"Init\"                   := INIT  activation\n"
+                             "     template \"End\"                    := END activation\n"
+                             "     template \"Exists\"                := (EXISTS $ activation)\n"
+                             "     template \"Exists1\"                := (EXISTS 1 activation)\n"
+                             "     template \"Absence\"               := ABSENCE $ activation\n"
+                             "     template \"Absence1\"               := ABSENCE 1 activation\n"
+                             "     template \"Absence2\"               := ABSENCE 2 activation\n"
+                             "     template \"Precedence\" args 2      := ((EXISTS  ~ 1 t #2) U (EXISTS 1 t #1 activation)) OR (ABSENCE 1 #2)\n"
+                             "     template \"ChainPrecedence\" args 2 := G(((LAST OR t (NEXT EXISTS ~ 1 t #1))) OR t ((NEXT EXISTS 1 t #1 activation) AND t THETA INV (EXISTS 1 t #2 target) ))\n"
+                             "     template \"Choice\" args 2          := (EXISTS 1 t #1 activation) OR THETA (EXISTS 1 t #2 activation)\n"
+                             "     template \"Response\" args 2        := G ( ((EXISTS ~ 1 t #1)) OR t ((EXISTS 1 t #1 activation) &Ft THETA (EXISTS 1 t #2 target)) )\n"
+                             "     template \"ChainResponse\" args 2   := G ( ((EXISTS ~ 1 t #1)) OR t ((EXISTS 1 t #1 activation) AND t THETA (NEXT EXISTS 1 t #2 target)))\n"
+                             "     template \"RespExistence\" args 2   := ( ((ABSENCE 1 #1)) OR ((EXISTS 1 #1 activation) AND THETA (EXISTS 1 #2 target)))\n"
+                             "     template \"ExlChoice\" args 2       := ((EXISTS 1 t #1 activation) OR THETA (EXISTS 1 t #2 activation)) AND ((ABSENCE 1 #1) OR (ABSENCE 1 #2))\n"
+                             "     template \"CoExistence\" args 2     := ( ((ABSENCE 1 #1)) OR ((EXISTS 1 #1 activation) AND THETA (EXISTS 1 #2 target))) AND ( ((ABSENCE 1 #2)) OR ((EXISTS 1 #2 activation) AND THETA INV (EXISTS 1 #1 target)))\n"
+                             "     template \"NotCoExistence\" args 2  := ~ ((EXISTS 1 t #1 activation) AND THETA (EXISTS 1 t #2 target)) PRESERVE\n"
+                             "\n"
+                             "     template \"Succession\" args 2      := (G ( ((EXISTS ~ 1 t #1)) OR t ((EXISTS 1 t #1 activation) &Ft THETA (EXISTS 1 t #2 target)) )) AND (((EXISTS  ~ 1 t #2) U (EXISTS 1 t #1 target)) OR (ABSENCE 1 #2))\n"
+                             "     template \"NegSuccession\" args 2   := (G ( ((EXISTS ~ 1 t #1)) OR t ((EXISTS 1 t #1 activation) &Gt  (EXISTS ~ 1 t #2)) ))\n"
+                             "     template \"ChainSuccession\" args 2 := G( (((LAST OR t (NEXT EXISTS ~ 1 t #2))) OR t ((NEXT EXISTS 1 t #2 activation) AND t THETA INV (EXISTS 1 t #1 target))) AND t\n"
+                             "                                             ( ((EXISTS ~ 1 t #1)) OR t ((EXISTS 1 t #1 activation) AND t THETA (NEXT EXISTS 1 t #2 target)))\n"
+                             "                                           )\n"
+                             "     template \"Surround\" args 2 := G( (((LAST OR t (NEXT EXISTS ~ 1 t #1))) OR t ((NEXT EXISTS 1 t #1 activation) AND t THETA  (EXISTS 1 t #2 target))) AND t\n"
+                             "                                             ( ((EXISTS ~ 1 t #1)) OR t ((EXISTS 1 t #1 activation) AND t THETA (NEXT EXISTS 1 t #2 target)))\n"
+                             "                                           )\n"
+                             "     template \"AltResponse\" args 2     := G ( (EXISTS ~ 1 t #1) OR t ((EXISTS 1 t #1 activation) AND t THETA (NEXT ((EXISTS ~ 1 t #1) U t (EXISTS 1 t #2 target)) )))\n"
+                             "     template \"AltPrecedence\" args 2   := (((EXISTS  ~ 1 t #2) U (EXISTS 1 t #1 activation)) OR (ABSENCE 1 #2)) AND\n"
+                             "                                           (G(((EXISTS ~ 1 t #1)) OR t (((EXISTS 1 t #1 activation)) AND t THETA (NEXT (((EXISTS  ~ 1 t #1) U t (EXISTS 1 t #2 target)) OR t (G t (EXISTS  ~ 1 t #1))))  )))\n"
+                             "}";
+    sqm.runQuery(query_plan);
+
+    // Clauses being shared across all models
+    std::unordered_set<FastDatalessClause> all_clauses_set;
+    std::vector<FastDatalessClause> all_clauses;
+
+    // Model features
+    std::unordered_map<std::string, std::unordered_map<FastDatalessClause, std::tuple<double,double,double>>> model_actual_repr;
     std::tuple<std::unordered_map<std::string, std::vector<pattern_mining_result<FastDatalessClause>>>,double> model_and_times;
 
-    if (!read_dumped_models) {
+    size_t maxTraceId = 0;
+    std::vector<std::pair<size_t,int>> trace_to_class;
         // Loading the different classes
         double loading_and_indexing = 0;
         std::vector<std::string> bogus_model_name;
-        std::vector<ConfusionMatrix> matrices(worlds_format_to_load.size());
+//        std::vector<ConfusionMatrix> matrices(worlds_format_to_load.size());
         for (size_t i = 0, N = std::min(worlds_format_to_load.size(), worlds_file_to_load.size()); i<N; i++) {
             std::stringstream ss;
             std::string model_name = std::filesystem::path(worlds_file_to_load.at(i)).stem().generic_string();
@@ -436,11 +553,24 @@ int main(int argc, char **argv) {
                << std::quoted(model_name);
             std::cout << ss.str() << std::endl;
             auto tmp = sqm.runQuery(ss.str());
+            if (i == 0)
+                maxTraceId = (size_t)sqm.multiple_logs[model_name].db.nTraces();
+            else
+                maxTraceId = (size_t)std::max(maxTraceId, (size_t)sqm.multiple_logs[model_name].db.nTraces());
             std::cerr << tmp.first << " && " << tmp.second << std::endl;
             loading_and_indexing += sqm.multiple_logs[model_name].experiment_logger.log_indexing_ms+sqm.multiple_logs[model_name].experiment_logger.log_loading_and_parsing_ms;
         }
         std::cout << "loading+indexing=" << loading_and_indexing << std::endl;
+    maxTraceId++;
 
+
+    size_t traceIdUpperBound = worlds_format_to_load.size()*maxTraceId;
+
+    // string <-> uid
+    std::unordered_set<std::string> clauses_names_to_consider;
+    FastDatalessClause fdc;
+    fdc.n = 1;
+    if (!read_dumped_models) {
 #ifdef FUTURE
         // Setting up the confusion matrices from the models
     size_t nTestingTraces = 0;
@@ -497,6 +627,7 @@ int main(int argc, char **argv) {
     auto it2 = sqm.planname_to_declare_to_ltlf.find("nfmcp23");
 #endif
 
+
         // TODO: many other algorithms, as in the mining pipeline!
         model_and_times = bolt2_multilog(sqm,
                                               bogus_model_name,
@@ -512,33 +643,274 @@ int main(int argc, char **argv) {
         /// Serialising the model from disk
         for (const auto& [model_name,modelx] : model) {
             serialize_bolt2_outcome(modelx, model_name, output_models);
+            initialiseModelsWithRewriting(activityLabel_to_globalId_bijection,
+                                          clauseExpansionWithNotInversion, all_clauses_set,
+                                          model_actual_repr, clauses_names_to_consider, fdc,
+                                          model_name, modelx);
+
         }
     } else {
         loading_model_from_file(sqm, output_models, model_and_times);
+        for (auto& [model_name,modelx] : std::get<0>(model_and_times)) {
+            initialiseModelsWithRewriting(activityLabel_to_globalId_bijection,
+                                          clauseExpansionWithNotInversion, all_clauses_set,
+                                          model_actual_repr, clauses_names_to_consider, fdc,
+                                          model_name, modelx);
+        }
     }
 
+    /// TODO: future, also detect the chains as above that lead to absences
+
+    /// Loading the association between traces and clauses, for any further refinement
+    all_clauses.insert(all_clauses.begin(), all_clauses_set.begin(), all_clauses_set.end());
+    all_clauses_set.clear();
+
+    /// model_name to matrix[model_name TraceID, crossmodelClauseId, weight (for specific model)]
+    std::unordered_map<std::string, std::vector<Eigen::Triplet<double>>> bulk_matrices;
+    std::vector<Eigen::Triplet<size_t>> activations_matrices;
+    std::unordered_set<size_t, roaring::Roaring> trace_to_clauses;
+
+    size_t clauses_offset = 0;
+    auto allChunks = chunker(all_clauses, 40);
+    for (const auto& elements : allChunks) {
+        for (size_t i = 0, N = std::min(worlds_format_to_load.size(), worlds_file_to_load.size()); i<N; i++) {
+            std::stringstream ss;
+            std::string model_name = std::filesystem::path(worlds_file_to_load.at(i)).stem().generic_string();
+            ss << "model-check declare " << std::endl;
+            for (const auto& ref2 : elements) {
+                ss << "\t" << ref2 << std::endl;
+            }
+            ss << " using \"ReturnTraces\" over " << std::quoted(model_name) << std::endl;
+            ss << " plan \"nfmcp23\" "  << std::endl;
+            ss << " with operators \"Hybrid\" ";
+            std::string a,b;
+            std::tie(a,b) = sqm.runQuery(ss.str());
+            auto declare_support = nlohmann::json::parse(a)["ReturnTraces"].get<std::vector<std::unordered_map<trace_t, size_t>>>();
+            DEBUG_ASSERT(declare_support.size() == elements.size());
+            for (size_t clause_id = 0, n_clauses = declare_support.size(); clause_id<n_clauses; clause_id++) {
+                const auto& traces_associated_to_clause = declare_support.at(clause_id);
+                for (const auto& [trace_id_in_model,n_activations] : traces_associated_to_clause) {
+                    const auto& triplet = model_actual_repr[model_name][elements.at(clause_id)];
+                    switch (useConfidence) {
+                        case SuppMetric:
+                            bulk_matrices[model_name].emplace_back(trace_id_in_model,
+                                                                   clauses_offset+clause_id,
+                                                                   std::get<0>(triplet));
+                            break;
+                        case RestrConfPlusMetric:
+                            bulk_matrices[model_name].emplace_back(trace_id_in_model,
+                                                                   clauses_offset+clause_id,
+                                                                   std::get<1>(triplet));
+                            break;
+                        case RestrSuppMetric:
+                            bulk_matrices[model_name].emplace_back(trace_id_in_model,
+                                                                   clauses_offset+clause_id,
+                                                                   std::get<2>(triplet));
+                            break;
+                    }
+                    activations_matrices.emplace_back(i * maxTraceId + trace_id_in_model,
+                                                                  clauses_offset+clause_id,
+                                                                  n_activations);
+                }
+            }
+            ss.str(std::string());
+            ss.clear();
+        }
+        clauses_offset += elements.size();
+    }
+
+    std::unordered_map<std::string, disjunctive_model> result;
+    switch (classification_algorithm) {
+        case ActivationClassificationTree: {
+            std::unordered_map<int, std::vector<std::pair<double,std::vector<dt_predicate>>>>  resulting_dnf_model;
+            {
+                auto ref = Eigen::SparseMatrix<size_t, Eigen::RowMajor>(traceIdUpperBound,clauses_offset+1);
+                ref.reserve(activations_matrices.size());
+                ref.setFromTriplets(activations_matrices.begin(), activations_matrices.end());
+                activations_matrices.clear();
+                std::unordered_set<std::string> Attributes;
+                for (size_t i = 0; i<clauses_offset; i++) {
+                    Attributes.insert(std::to_string(i));
+                }
+                for (size_t i = 0, N = std::min(worlds_format_to_load.size(), worlds_file_to_load.size()); i<N; i++) {
+                    const auto& model_name = bogus_model_name.at(i);
+                    for (size_t j = 0, M = sqm.multiple_logs[model_name].db.nTraces(); j<M; j++) {
+                        trace_to_class.emplace_back(i * maxTraceId + j, i);
+                    }
+                }
+                auto selector = [&ref](size_t trace_id, const std::string& key) -> double {
+                    return ref.coeffRef(trace_id, std::stoull(key));
+                };
+                auto it = trace_to_class.begin(), en = trace_to_class.end();
+                DecisionTree<size_t> dt(it,
+                                        en,
+                                        1,
+                                        selector,
+                                        Attributes,
+                                        std::unordered_set<std::string>{},
+                                        ForTheWin::gain_measures::Gini,
+                                        0.9,
+                                        1,
+                                        trace_to_class.size(),
+                1);
+                dt.populate_children_predicates(resulting_dnf_model);
+            }
+            for (auto& [clazz, v_vector] : resulting_dnf_model) {
+                auto model_name = bogus_model_name.at(clazz);
+                disjunctive_model& model_result = result[model_name];
+                for (auto& vector : v_vector) {
+                    auto& local = model_result.emplace_back();
+                    local.second = vector.first;
+                    for (auto& item : vector.second) {
+                        const auto& triplet = model_actual_repr[model_name][all_clauses.at(std::stoull(item.field))];
+                        switch (useConfidence) {
+                            case SuppMetric:
+                                local.first.emplace_back(all_clauses.at(std::stoull(item.field)), std::get<0>(triplet));
+                                break;
+                            case RestrConfPlusMetric:
+                                local.first.emplace_back(all_clauses.at(std::stoull(item.field)), std::get<1>(triplet));
+                                break;
+                            case RestrSuppMetric:
+                                local.first.emplace_back(all_clauses.at(std::stoull(item.field)), std::get<2>(triplet));
+                                break;
+                        }
+                    }
+                }
+            }
+        } break;
+
+        case RevisedClassificationTree:
+            break;
+
+        case ClusteringModelExtraction: {
+            for (const auto& [model_name, triplets] : bulk_matrices) {
+                const auto& local_model = model_actual_repr.at(model_name);
+                // Defining the trace-similarity matrix
+                auto Matrix = Eigen::SparseMatrix<double, Eigen::RowMajor>(traceIdUpperBound,clauses_offset+1);
+
+                roaring::Roaring64Map toRemove;
+                single_conjunction_confidence certain_part;
+                certain_part.second = 1.0;
+                for (size_t clause_id = 0; clause_id<=clauses_offset; clause_id++) {
+                    const auto& clause = all_clauses.at(clause_id);
+                    auto it = local_model.find(clause);
+                    if (it == local_model.end()) {
+                        // Discarding from the matrix the correlation with the clauses that are not originally part of the model
+                        toRemove.add(clause_id);
+                    } else {
+                        double score;
+                        switch (useConfidence) {
+                            case SuppMetric:
+                                score = ( std::get<0>(it->second));
+                                break;
+                            case RestrConfPlusMetric:
+                                score = ( std::get<1>(it->second));
+                                break;
+                            case RestrSuppMetric:
+                                score = ( std::get<2>(it->second));
+                                break;
+                        }
+                        // Also discarding from the clustering the certain clauses, that are going to be part of a separate cluster
+                        if (std::abs(score-1.0) <= std::numeric_limits<double>::epsilon()) {
+                            toRemove.add(clause_id);
+                            certain_part.first.emplace_back(clause, 1.0);
+                        }
+                    }
+                }
+
+                std::vector<Eigen::Triplet<double>> copy;
+                std::copy_if(triplets.begin(), triplets.end(), std::back_inserter(copy), [&toRemove](const Eigen::Triplet<double>& t) {
+                    return !toRemove.contains((size_t)t.col());
+                });
+
+                Matrix.reserve(copy.size());
+                Matrix.setFromTriplets(copy.begin(), copy.end());
+                copy.clear();
+
+                // Defining the clause similarity matrix;
+                Matrix = Matrix.transpose() * Matrix;
+
+                double inflate = 2.0;
+                size_t iterate = 100;
+                auto clusters = yaucl::learning::MCL::perform_MCL_clustering(Matrix, yaucl::learning::MCL::RANDOM_WALK_NORMALIZED, inflate, iterate);
+                disjunctive_model& model_result = result[model_name];
+                model_result.emplace_back(certain_part);
+                for (const auto& cluster : clusters) {
+                    auto& local = model_result.emplace_back();
+                    double overall_metric = 1.0;
+                    for (size_t clause_id : cluster) {
+                        const auto& clause = all_clauses.at(clause_id);
+                        auto it = local_model.find(clause);
+                        if (it == local_model.end()) continue;
+                        const auto& triplet = it->second;
+                        switch (useConfidence) {
+                            case SuppMetric:
+                                local.first.emplace_back(clause, std::get<0>(triplet));
+                                overall_metric *= std::get<0>(triplet);
+                                break;
+                            case RestrConfPlusMetric:
+                                local.first.emplace_back(clause, std::get<1>(triplet));
+                                overall_metric *= std::get<1>(triplet);
+                                break;
+                            case RestrSuppMetric:
+                                local.first.emplace_back(clause, std::get<2>(triplet));
+                                overall_metric *= std::get<2>(triplet);
+                                break;
+                        }
+                    }
+                    local.second = overall_metric;
+                }
+            }
+        } break;
+    }
+
+    /// Serialising the model, so that it can be used later on for the testing evaluation
+    std::string model_name;
+    {
+        std::stringstream ss;
+        ss << "model_" << magic_enum::enum_name(classification_algorithm) << "_result.powerdecl";
+        model_name = ss.str();
+    }
+    auto model_result_file = (output_models / model_name).string();
+    std::ofstream file{model_result_file};
+
+    for (const auto& [k,v] : result) {
+        file << std::quoted(k) << " : ";
+        for (size_t i = 0, N = v.size(); i<N; i++) {
+            const auto& branch = v.at(i);
+            file << "\t[ ";
+            for (size_t j = 0, M = branch.first.size(); j<M; j++) {
+                const auto& clause = branch.first.at(j);
+                file << clause.first << " : " << clause.second;
+                if (j<M-2) {
+                    file << " && " << std::endl << "\t\t";
+                }
+            }
+            file << " ] : " << branch.second;
+            if (i<N-2) {
+                file << " || " << std::endl<< std::endl;
+            }
+        }
+        file << std::endl<< std::endl<< std::endl;
+    }
+
+    // TODO: using the result for classification on a test set, thus requiring to do conformance checking over the new dataset, too!
+
+    /// Part X: detecting chains and simplifying those
+
+#ifdef ENSURE_CHAIN_REPLACEMENT_WITH_ABSENCES
     // model name -> clause name -> [left -> right|n -> clauseN]
 //    std::unordered_map<std::string, std::unordered_map<std::string, yaucl::learning::MCL::SparseMatrix<size_t>>> model_accessor;
+
     // model name -> clause name -> [left -> right|n -> conf|supp]
     std::unordered_map<std::string, std::unordered_map<std::string, yaucl::learning::MCL::SparseMatrix<double>>> model_confsupp_accessor;
-    // Hardcorded configurations, that should have been generalised as configuration files
-//    std::unordered_set<std::string> allowed_clauses{"ChainResponse", "ChainPrecedence", "Precedence", "Response", "RespExistence"};
-    std::unordered_map<std::string, std::vector<std::pair<std::string, bool>>> clauseExpansionWithNotInversion
-    {
-        {"ChainSuccession", {std::make_pair("ChainResponse", false), std::make_pair("ChainPrecedence", true)}},
-        {"Surround", {std::make_pair("ChainResponse", false), std::make_pair("ChainResponse", false)}},
-        {"Succession", {std::make_pair("Response", false), std::make_pair("Precedence", false)}},
-        {"CoExistence", {std::make_pair("RespExistence", false), std::make_pair("RespExistence", true)}},
-    };
 
-    // string <-> uid
-    std::unordered_set<std::string> clauses_names_to_consider;
-    for (const auto&  [model_name, actual_model] : std::get<0>(model_and_times))
-        for (const auto& clause : actual_model)
-            clauses_names_to_consider.insert(clause.clause.casusu);
-    yaucl::structures::any_to_uint_bimap<std::string> mapper;
+
+
     size_t max_val = 0;
     std::unordered_map<std::string, roaring::Roaring64Map> model_to_removed_clauses;
+
+    // model_name -> clause_name -> act_id -> act_id -> model_offset
     std::unordered_map<std::string, std::unordered_map<std::string, std::unordered_map<size_t, std::unordered_map<size_t, std::vector<size_t>>>>> tripletList_accessor;
     std::unordered_map<std::string, std::unordered_map<std::string, std::vector<Eigen::Triplet<double>>>> tripletList_confsupp_accessor;
     // TODO: solve issue when multiple clauses might be associated to the same element
@@ -553,17 +925,17 @@ int main(int argc, char **argv) {
                 const auto& clause = actual_model.at(model_pos);
                 if ((it != model_to_removed_clauses.end()) && it->second.contains(model_pos)) continue;
                 if (!clauses_names_to_consider.contains(clause.clause.casusu)) continue;
-                    left_act = mapper.put(clause.clause.left).first;
+                    left_act = activityLabel_to_globalId_bijection.put(clause.clause.left).first;
                 if ((!isUnaryPredicate(clause.clause.casusu)) && (!clause.clause.right.empty())) {
-                    right_act = mapper.put(clause.clause.right).first;
+                    right_act = activityLabel_to_globalId_bijection.put(clause.clause.right).first;
                 } else {
                     right_act = clause.clause.n;
                     if (right_act > max_val)
                         max_val = right_act;
                 }
-                    auto it = clauseExpansionWithNotInversion.find(clause.clause.casusu);
-                    if (it != clauseExpansionWithNotInversion.end()) {
-                        for (const auto& rewritings : it->second) {
+                    auto it2 = clauseExpansionWithNotInversion.find(clause.clause.casusu);
+                    if (it2 != clauseExpansionWithNotInversion.end()) {
+                        for (const auto& rewritings : it2->second) {
                             auto& cp = tripletList_accessor[model_name][rewritings.first];
                             if (rewritings.second) {
 //                                tripletList_confsupp_accessor[model_name][rewritings.first].emplace_back(right_act, left_act, selectedScore);
@@ -581,7 +953,7 @@ int main(int argc, char **argv) {
                     }
             }
         }
-        max_val = std::max(max_val, mapper.size()+1);
+        max_val = std::max(max_val, activityLabel_to_globalId_bijection.size() + 1);
         tripletList_confsupp_accessor.clear();
 
         double selectedScore;
@@ -599,8 +971,8 @@ int main(int argc, char **argv) {
                             if ((elements != model_to_removed_clauses.end()) && (elements->second.contains(id)))
                                 continue;
                             switch (useConfidence) {
-                                case ConfMetric:
-                                    selectedScore = model.at(id).confidence_declarative_pattern;
+                                case RestrConfPlusMetric:
+                                    selectedScore = model.at(id).restrictive_confidence_plus_declarative_pattern;
                                     break;
                                 case SuppMetric:
                                     selectedScore = model.at(id).support_generating_original_pattern;
@@ -637,23 +1009,19 @@ int main(int argc, char **argv) {
 
     // TODO: avoiding chains, so to reduce any potential input model with absences or exists
     //       We can use MCL to alleviate the problem of finding all the possible cycles in the graph.
-    // Now hardcoded: getting all the clauses that are associated to the cycles
+    //       Now hardcoded: getting all the clauses that are associated to the cycles
     // TODO: parallelize for each clause in the model
     double inflate = 2;
     size_t steps = 100;
     yaucl::learning::MCL::normalizations type = yaucl::learning::MCL::SYM_NORMALIZED_LAPLACIAN;
     double consideration_threshold = 0.000001;
-    DeclareDataAware absence;
-    absence.casusu = "Absence";
-    absence.n = 1;
-    std::unordered_map<std::string, DeclareDataAware> to_absence_clauses_if_cluster{{"ChainResponse", absence},
-                                                                               {"ChainPrecedence", absence},
-                                                                               {"Precedence",absence},
-                                                                               {"Response",absence}};
+
+
 
     // Initialisation
-    std::unordered_set<std::string>to_absence_clauses_if_cluster_set;
-    for (const auto& [k,v] : to_absence_clauses_if_cluster) to_absence_clauses_if_cluster_set.emplace(k);
+    std::unordered_set<std::string> to_absence_clauses_if_cluster_set;
+    for (const auto& [k,v] : to_absence_clauses_if_cluster)
+        to_absence_clauses_if_cluster_set.emplace(k);
     for (auto& [model_name, actual_model] : model_confsupp_accessor) {
         roaring::Roaring64Map& offsets_candidate_removals = model_to_removed_clauses[model_name];
         for (const auto& clause_name : to_absence_clauses_if_cluster) {
@@ -680,8 +1048,9 @@ int main(int argc, char **argv) {
             }
         }
     }
-    // Now, considering the clauses being clastered for removal
-    for (const auto& [k,v] : to_absence_clauses_if_cluster) to_absence_clauses_if_cluster_set.emplace(v.casusu);
+    // Now, considering the clauses being clustered for removal
+    for (const auto& [k,v] : to_absence_clauses_if_cluster)
+        to_absence_clauses_if_cluster_set.emplace(v.casusu);
     double selectedScore;
     for (const auto& [model_name, clauses_casusu_maps] : tripletList_accessor) {
         auto& matrixmap_accessor = model_confsupp_accessor[model_name];
@@ -701,8 +1070,8 @@ int main(int argc, char **argv) {
                         else
                             found = true;
                         switch (useConfidence) {
-                            case ConfMetric:
-                                selectedScore = model.at(id).confidence_declarative_pattern;
+                            case RestrConfPlusMetric:
+                                selectedScore = model.at(id).restrictive_confidence_plus_declarative_pattern;
                                 break;
                             case SuppMetric:
                                 selectedScore = model.at(id).support_generating_original_pattern;
@@ -767,8 +1136,7 @@ int main(int argc, char **argv) {
 //        std::cout << "dataless_mining=" << dataless_mining << std::endl;
 //        std::cout << "refinery_time=" << refinery_time << std::endl;
 //    }
-
-
+#endif
 
     return 0;
 }

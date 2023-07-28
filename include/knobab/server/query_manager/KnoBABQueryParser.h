@@ -23,15 +23,15 @@ public:
     T__50 = 51, T__51 = 52, T__52 = 53, T__53 = 54, T__54 = 55, T__55 = 56, 
     T__56 = 57, T__57 = 58, T__58 = 59, T__59 = 60, T__60 = 61, T__61 = 62, 
     T__62 = 63, T__63 = 64, T__64 = 65, T__65 = 66, T__66 = 67, T__67 = 68, 
-    T__68 = 69, T__69 = 70, ACT_TABLE = 71, WITH_ALIGNMENT_STRATEGY = 72, 
-    CNT_TABLE = 73, ATT_TABLE = 74, ACTIVITYLABEL = 75, LOGS = 76, ATT = 77, 
-    ACTIVATION = 78, TARGET = 79, INIT = 80, END = 81, EXISTS = 82, ABSENCE = 83, 
-    NEXT = 84, OR = 85, AND = 86, FIRST = 87, LAST = 88, IF = 89, THEN = 90, 
-    ELSE = 91, UNTIL = 92, BOX = 93, DIAMOND = 94, AUTO_TIMED = 95, LPAREN = 96, 
-    RPAREN = 97, PRESERVE = 98, TIMED = 99, THETA = 100, LEFT = 101, INV = 102, 
-    RIGHT = 103, MIDDLE = 104, NEGATED = 105, JOLLY = 106, HRF = 107, TAB = 108, 
-    XES = 109, LABEL = 110, INTNUMBER = 111, NUMBER = 112, STRING = 113, 
-    SPACE = 114, COMMENT = 115, LINE_COMMENT = 116
+    T__68 = 69, T__69 = 70, T__70 = 71, T__71 = 72, ACT_TABLE = 73, WITH_ALIGNMENT_STRATEGY = 74, 
+    CNT_TABLE = 75, ATT_TABLE = 76, ACTIVITYLABEL = 77, LOGS = 78, ATT = 79, 
+    ACTIVATION = 80, TARGET = 81, INIT = 82, END = 83, EXISTS = 84, ABSENCE = 85, 
+    NEXT = 86, OR = 87, AND = 88, FIRST = 89, LAST = 90, IF = 91, THEN = 92, 
+    ELSE = 93, UNTIL = 94, BOX = 95, DIAMOND = 96, AUTO_TIMED = 97, LPAREN = 98, 
+    RPAREN = 99, PRESERVE = 100, TIMED = 101, THETA = 102, LEFT = 103, INV = 104, 
+    RIGHT = 105, MIDDLE = 106, NEGATED = 107, JOLLY = 108, HRF = 109, TAB = 110, 
+    XES = 111, LABEL = 112, INTNUMBER = 113, NUMBER = 114, STRING = 115, 
+    SPACE = 116, COMMENT = 117, LINE_COMMENT = 118
   };
 
   enum {
@@ -44,7 +44,9 @@ public:
     RuleProp = 23, RuleProp_within_dijunction = 24, RuleAtom = 25, RuleRel = 26, 
     RuleDeclare_arguments = 27, RuleDeclare_act_target = 28, RuleNo_preliminary_fill = 29, 
     RuleAct_for_attributes = 30, RuleNo_cream_off = 31, RuleWith_data = 32, 
-    RuleWith_missing = 33, RuleNo_stats = 34, RuleVar = 35
+    RuleWith_missing = 33, RuleNo_stats = 34, RuleRule_with_weight = 35, 
+    RuleConjunctive_subrule = 36, RuleClassification_rule = 37, RuleModel_classification = 38, 
+    RuleVar = 39
   };
 
   explicit KnoBABQueryParser(antlr4::TokenStream *input);
@@ -99,6 +101,10 @@ public:
   class With_dataContext;
   class With_missingContext;
   class No_statsContext;
+  class Rule_with_weightContext;
+  class Conjunctive_subruleContext;
+  class Classification_ruleContext;
+  class Model_classificationContext;
   class VarContext; 
 
   class  QueriesContext : public antlr4::ParserRuleContext {
@@ -1201,6 +1207,73 @@ public:
   };
 
   No_statsContext* no_stats();
+
+  class  Rule_with_weightContext : public antlr4::ParserRuleContext {
+  public:
+    Rule_with_weightContext(antlr4::ParserRuleContext *parent, size_t invokingState);
+    virtual size_t getRuleIndex() const override;
+    DeclareContext *declare();
+    antlr4::tree::TerminalNode *NUMBER();
+
+    virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
+    virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
+
+    virtual std::any accept(antlr4::tree::ParseTreeVisitor *visitor) override;
+   
+  };
+
+  Rule_with_weightContext* rule_with_weight();
+
+  class  Conjunctive_subruleContext : public antlr4::ParserRuleContext {
+  public:
+    Conjunctive_subruleContext(antlr4::ParserRuleContext *parent, size_t invokingState);
+    virtual size_t getRuleIndex() const override;
+    std::vector<Rule_with_weightContext *> rule_with_weight();
+    Rule_with_weightContext* rule_with_weight(size_t i);
+    antlr4::tree::TerminalNode *NUMBER();
+
+    virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
+    virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
+
+    virtual std::any accept(antlr4::tree::ParseTreeVisitor *visitor) override;
+   
+  };
+
+  Conjunctive_subruleContext* conjunctive_subrule();
+
+  class  Classification_ruleContext : public antlr4::ParserRuleContext {
+  public:
+    antlr4::Token *class_name = nullptr;
+    Classification_ruleContext(antlr4::ParserRuleContext *parent, size_t invokingState);
+    virtual size_t getRuleIndex() const override;
+    std::vector<Conjunctive_subruleContext *> conjunctive_subrule();
+    Conjunctive_subruleContext* conjunctive_subrule(size_t i);
+    antlr4::tree::TerminalNode *STRING();
+
+    virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
+    virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
+
+    virtual std::any accept(antlr4::tree::ParseTreeVisitor *visitor) override;
+   
+  };
+
+  Classification_ruleContext* classification_rule();
+
+  class  Model_classificationContext : public antlr4::ParserRuleContext {
+  public:
+    Model_classificationContext(antlr4::ParserRuleContext *parent, size_t invokingState);
+    virtual size_t getRuleIndex() const override;
+    std::vector<Classification_ruleContext *> classification_rule();
+    Classification_ruleContext* classification_rule(size_t i);
+
+    virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
+    virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
+
+    virtual std::any accept(antlr4::tree::ParseTreeVisitor *visitor) override;
+   
+  };
+
+  Model_classificationContext* model_classification();
 
   class  VarContext : public antlr4::ParserRuleContext {
   public:

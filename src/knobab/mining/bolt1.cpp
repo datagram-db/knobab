@@ -673,7 +673,7 @@ std::pair<std::vector<pattern_mining_result<DeclareDataAware>>, double> pattern_
             declarative_clauses.emplace_back(clause,
                                              result.support_generating_original_pattern,
                                              dss,
-                                             result.confidence_declarative_pattern,-1);
+                                             result.restrictive_confidence_plus_declarative_pattern, -1);
 
             getAware(kb, special_temporal_patterns, only_precise_temporal_patterns, count_table,
                      minimum_support_threshold,

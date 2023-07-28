@@ -142,7 +142,7 @@ TEST_CASE("mining_tests: exists_absence") {
     to_find.clause.n = 3;
     to_find.support_generating_original_pattern = 1.0;
     to_find.support_declarative_pattern = 1.0;
-    to_find.confidence_declarative_pattern = 1.0;
+    to_find.restrictive_confidence_plus_declarative_pattern = 1.0;
 
     pattern_mining_result<FastDatalessClause> to_find_1;
     to_find_1.clause.casusu = "Absence";
@@ -152,7 +152,7 @@ TEST_CASE("mining_tests: exists_absence") {
     to_find_1.clause.n = 4;
     to_find_1.support_generating_original_pattern = 1.0;
     to_find_1.support_declarative_pattern = 1.0;
-    to_find_1.confidence_declarative_pattern = 1.0;
+    to_find_1.restrictive_confidence_plus_declarative_pattern = 1.0;
 
     ASSERT_TRUE(std::find(values.first.begin(), values.first.end(), to_find) != values.first.end());
 }
@@ -169,7 +169,7 @@ TEST_CASE("mining_tests: init") {
     to_find.clause.n = 1;
     to_find.support_generating_original_pattern = 1.0;
     to_find.support_declarative_pattern = 1.0;
-    to_find.confidence_declarative_pattern = 1.0;
+    to_find.restrictive_confidence_plus_declarative_pattern = 1.0;
 
     ASSERT_TRUE(std::find(values.first.begin(), values.first.end(), to_find) != values.first.end());
 }
@@ -186,7 +186,7 @@ TEST_CASE("mining_tests: end") {
     to_find.clause.n = 1;
     to_find.support_generating_original_pattern = 1.0;
     to_find.support_declarative_pattern = 1.0;
-    to_find.confidence_declarative_pattern = 1.0;
+    to_find.restrictive_confidence_plus_declarative_pattern = 1.0;
 
     ASSERT_TRUE(std::find(values.first.begin(), values.first.end(), to_find) != values.first.end());
 }
@@ -204,7 +204,7 @@ TEST_CASE("mining_tests: precedence") {
     to_find.clause.n = 1;
     to_find.support_generating_original_pattern = 0.5;
     to_find.support_declarative_pattern = 1.0;
-    to_find.confidence_declarative_pattern = 1.0;
+    to_find.restrictive_confidence_plus_declarative_pattern = 1.0;
 
     ASSERT_TRUE(std::find(values.first.begin(), values.first.end(), to_find) != values.first.end());
 }
@@ -222,7 +222,7 @@ TEST_CASE("mining_tests: precedence restrictive") {
     to_find.clause.n = 1;
     to_find.support_generating_original_pattern = 4.0/18.0;
     to_find.support_declarative_pattern = 16.0/18.0;
-    to_find.confidence_declarative_pattern = 9.0/11.0;
+    to_find.restrictive_confidence_plus_declarative_pattern = 9.0 / 11.0;
 
     std::cout << values.second << std::endl;
     auto it = std::find(values.second.begin(), values.second.end(), to_find);
@@ -249,7 +249,7 @@ TEST_CASE("mining_tests: chain_precedence") {
     to_find.clause.n = 1;
     to_find.support_generating_original_pattern = 0.75;
     to_find.support_declarative_pattern = 1.0;
-    to_find.confidence_declarative_pattern = 1.0;
+    to_find.restrictive_confidence_plus_declarative_pattern = 1.0;
 
     ASSERT_TRUE(std::find(values.first.begin(), values.first.end(), to_find) != values.first.end());
 }
@@ -267,7 +267,7 @@ TEST_CASE("mining_tests: chain_precedence_force_right_branch") {
     to_find.clause.n = 1;
     to_find.support_generating_original_pattern = 0.8;
     to_find.support_declarative_pattern = 1.0;
-    to_find.confidence_declarative_pattern = 1.0;
+    to_find.restrictive_confidence_plus_declarative_pattern = 1.0;
 
     ASSERT_TRUE(std::find(values.first.begin(), values.first.end(), to_find) != values.first.end());
 }
@@ -285,7 +285,7 @@ TEST_CASE("mining_tests: choice") {
     to_find.clause.n = 1;
     to_find.support_generating_original_pattern = 0.25;
     to_find.support_declarative_pattern = 1.0;
-    to_find.confidence_declarative_pattern = 1.0;
+    to_find.restrictive_confidence_plus_declarative_pattern = 1.0;
 
     ASSERT_TRUE(std::find(values.first.begin(), values.first.end(), to_find) != values.first.end());
 }
@@ -315,7 +315,7 @@ TEST_CASE("mining_tests: response") {
     to_find.clause.n = 1;
     to_find.support_generating_original_pattern = 0.75;
     to_find.support_declarative_pattern = 1.0;
-    to_find.confidence_declarative_pattern = 1.0;
+    to_find.restrictive_confidence_plus_declarative_pattern = 1.0;
 
     ASSERT_TRUE(std::find(values.first.begin(), values.first.end(), to_find) != values.first.end());
 }
@@ -333,7 +333,7 @@ TEST_CASE("mining_tests: chain_response") {
     to_find.clause.n = 1;
     to_find.support_generating_original_pattern = 0.8;
     to_find.support_declarative_pattern = 1.0;
-    to_find.confidence_declarative_pattern = 1.0;
+    to_find.restrictive_confidence_plus_declarative_pattern = 1.0;
 
     ASSERT_TRUE(std::find(values.first.begin(), values.first.end(), to_find) != values.first.end());
 }
@@ -351,7 +351,7 @@ TEST_CASE("mining_tests: responded_existence") {
     to_find.clause.n = 1;
     to_find.support_generating_original_pattern = 0.4;
     to_find.support_declarative_pattern = 1.0;
-    to_find.confidence_declarative_pattern = 1.0;
+    to_find.restrictive_confidence_plus_declarative_pattern = 1.0;
 
     ASSERT_TRUE(std::find(values.first.begin(), values.first.end(), to_find) != values.first.end());
 }
@@ -369,7 +369,7 @@ TEST_CASE("mining_tests: excl_choice") {
     to_find.clause.n = 1;
     to_find.support_generating_original_pattern = 0.0;
     to_find.support_declarative_pattern = 1.0;
-    to_find.confidence_declarative_pattern = 1.0;
+    to_find.restrictive_confidence_plus_declarative_pattern = 1.0;
 
     std::cout << values.first << std::endl;
 
@@ -389,7 +389,7 @@ TEST_CASE("mining_tests: coexistence") {
     to_find.clause.n = 1;
     to_find.support_generating_original_pattern = 0.4;
     to_find.support_declarative_pattern = 1.0;
-    to_find.confidence_declarative_pattern = 1.0;
+    to_find.restrictive_confidence_plus_declarative_pattern = 1.0;
 
     pattern_mining_result<FastDatalessClause> to_find_mirror = to_find;
     std::swap(to_find_mirror.clause.left, to_find_mirror.clause.right);
@@ -411,7 +411,7 @@ TEST_CASE("mining_tests: surround") {
     to_find.clause.n = 1;
     to_find.support_generating_original_pattern = 1.0;
     to_find.support_declarative_pattern = 1.0;
-    to_find.confidence_declarative_pattern = 1.0;
+    to_find.restrictive_confidence_plus_declarative_pattern = 1.0;
 
     ASSERT_TRUE(std::find(values.first.begin(), values.first.end(), to_find) != values.first.end());
 }
@@ -429,7 +429,7 @@ TEST_CASE("mining_tests: surround_not_chain_succession") {
     to_find.clause.n = 1;
     to_find.support_generating_original_pattern = 1.0;
     to_find.support_declarative_pattern = 1.0;
-    to_find.confidence_declarative_pattern = 1.0;
+    to_find.restrictive_confidence_plus_declarative_pattern = 1.0;
 
     pattern_mining_result<FastDatalessClause> to_find_1;
     to_find_1.clause.casusu = "ChainSuccession";
@@ -440,7 +440,7 @@ TEST_CASE("mining_tests: surround_not_chain_succession") {
     to_find_1.clause.n = 1;
     to_find_1.support_generating_original_pattern = 1.0;
     to_find_1.support_declarative_pattern = 1.0;
-    to_find_1.confidence_declarative_pattern = 1.0;
+    to_find_1.restrictive_confidence_plus_declarative_pattern = 1.0;
 
     ASSERT_TRUE(((std::find(values.first.begin(), values.first.end(), to_find) != values.first.end()) && (std::find(values.first.begin(), values.first.end(), to_find_1) == values.first.end())));
 }
@@ -458,7 +458,7 @@ TEST_CASE("mining_tests: surround_chain_succession") {
     to_find.clause.n = 1;
     to_find.support_generating_original_pattern = 1.0;
     to_find.support_declarative_pattern = 1.0;
-    to_find.confidence_declarative_pattern = 1.0;
+    to_find.restrictive_confidence_plus_declarative_pattern = 1.0;
 
     pattern_mining_result<FastDatalessClause> to_find_1;
     to_find_1.clause.casusu = "ChainSuccession";
@@ -469,7 +469,7 @@ TEST_CASE("mining_tests: surround_chain_succession") {
     to_find_1.clause.n = 1;
     to_find_1.support_generating_original_pattern = 1.0;
     to_find_1.support_declarative_pattern = 1.0;
-    to_find_1.confidence_declarative_pattern = 1.0;
+    to_find_1.restrictive_confidence_plus_declarative_pattern = 1.0;
 
     ASSERT_TRUE(((std::find(values.first.begin(), values.first.end(), to_find) != values.first.end()) && (std::find(values.first.begin(), values.first.end(), to_find_1) != values.first.end())));
 }
@@ -487,7 +487,7 @@ TEST_CASE("mining_tests: not_chain_succession") {
     to_find.clause.n = 1;
     to_find.support_generating_original_pattern = (3.0/7.0);
     to_find.support_declarative_pattern = 1.0;
-    to_find.confidence_declarative_pattern = 0.6;
+    to_find.restrictive_confidence_plus_declarative_pattern = 0.6;
 
     ASSERT_TRUE(std::find(values.first.begin(), values.first.end(), to_find) == values.first.end());
 }
@@ -505,7 +505,7 @@ TEST_CASE("mining_tests: succession") {
     to_find.clause.n = 1;
     to_find.support_generating_original_pattern = 1.0;
     to_find.support_declarative_pattern = 1.0;
-    to_find.confidence_declarative_pattern = 1.0;
+    to_find.restrictive_confidence_plus_declarative_pattern = 1.0;
 
     ASSERT_TRUE(std::find(values.first.begin(), values.first.end(), to_find) != values.first.end());
 }

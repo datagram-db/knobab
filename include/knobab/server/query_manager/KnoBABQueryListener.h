@@ -212,6 +212,18 @@ public:
   virtual void enterNo_stats(KnoBABQueryParser::No_statsContext *ctx) = 0;
   virtual void exitNo_stats(KnoBABQueryParser::No_statsContext *ctx) = 0;
 
+  virtual void enterRule_with_weight(KnoBABQueryParser::Rule_with_weightContext *ctx) = 0;
+  virtual void exitRule_with_weight(KnoBABQueryParser::Rule_with_weightContext *ctx) = 0;
+
+  virtual void enterConjunctive_subrule(KnoBABQueryParser::Conjunctive_subruleContext *ctx) = 0;
+  virtual void exitConjunctive_subrule(KnoBABQueryParser::Conjunctive_subruleContext *ctx) = 0;
+
+  virtual void enterClassification_rule(KnoBABQueryParser::Classification_ruleContext *ctx) = 0;
+  virtual void exitClassification_rule(KnoBABQueryParser::Classification_ruleContext *ctx) = 0;
+
+  virtual void enterModel_classification(KnoBABQueryParser::Model_classificationContext *ctx) = 0;
+  virtual void exitModel_classification(KnoBABQueryParser::Model_classificationContext *ctx) = 0;
+
   virtual void enterVar(KnoBABQueryParser::VarContext *ctx) = 0;
   virtual void exitVar(KnoBABQueryParser::VarContext *ctx) = 0;
 

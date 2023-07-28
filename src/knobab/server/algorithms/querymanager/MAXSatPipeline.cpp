@@ -1841,7 +1841,13 @@ void MAXSatPipeline::pipeline(CNFDeclareDataAware* model,
                         auto& toInsertResults = result_per_traces.emplace_back();
                         const auto &declare = declare_to_query.at(i);
                         for (const auto& ref : declare->result) {
-                            toInsertResults.emplace_back(ref.first.first);
+                            size_t count_activations = 0;
+                            for (const auto& event_mark : ref.second.second) {
+                                if (IS_MARKED_EVENT_LEFT(event_mark) || IS_MARKED_EVENT_MATCH(event_mark)) {
+                                    count_activations++;
+                                }
+                            }
+                            toInsertResults.emplace(ref.first.first, count_activations);
                         }
                     }
                 } break;

@@ -151,6 +151,14 @@ public:
 
     virtual std::any visitNo_stats(KnoBABQueryParser::No_statsContext *context) = 0;
 
+    virtual std::any visitRule_with_weight(KnoBABQueryParser::Rule_with_weightContext *context) = 0;
+
+    virtual std::any visitConjunctive_subrule(KnoBABQueryParser::Conjunctive_subruleContext *context) = 0;
+
+    virtual std::any visitClassification_rule(KnoBABQueryParser::Classification_ruleContext *context) = 0;
+
+    virtual std::any visitModel_classification(KnoBABQueryParser::Model_classificationContext *context) = 0;
+
     virtual std::any visitVar(KnoBABQueryParser::VarContext *context) = 0;
 
 

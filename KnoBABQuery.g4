@@ -124,6 +124,13 @@ with_data: 'with' 'data';
 with_missing: 'with' 'missing';
 no_stats: 'no' 'stats';
 
+//
+
+rule_with_weight : declare ':' NUMBER;
+conjunctive_subrule : '[' (rule_with_weight '&&')* rule_with_weight ']' ':' NUMBER;
+classification_rule : class_name=STRING ':' (conjunctive_subrule* '||')* conjunctive_subrule;
+model_classification: classification_rule+;
+
 ACT_TABLE: 'ACTTABLE';
 WITH_ALIGNMENT_STRATEGY: 'with-alignment-strategy';
 CNT_TABLE: 'COUNTTABLE';
