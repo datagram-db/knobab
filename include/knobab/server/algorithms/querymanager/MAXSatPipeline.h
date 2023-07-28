@@ -84,7 +84,7 @@ struct MAXSatPipeline {
     //DeclareQueryLanguageParser dqlp;
     std::unordered_map<std::string, LTLfQuery>* xtLTLfTemplates = nullptr;
     std::vector<LTLfQuery*> declare_to_query;
-    std::vector<std::vector<trace_t>> result_per_traces;
+    std::vector<std::unordered_map<trace_t, size_t>> result_per_traces;
 
     CNFDeclareDataAware* declare_model = nullptr;
 

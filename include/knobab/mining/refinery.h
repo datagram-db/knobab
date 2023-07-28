@@ -132,14 +132,14 @@ static inline union_minimal selector(const payload_data &x, const std::string &k
 
 static inline DeclareDataAware actualClauseRefine(const DeclareDataAware &clause,
                                     const RefineOver &what,
-                                    const std::pair<int, std::vector<std::vector<dt_predicate>>> &pair) {
+                                    const std::pair<int, std::vector<std::pair<double,std::vector<dt_predicate>>>> &pair) {
     DeclareDataAware c = clause;
 
-    for(const std::vector<dt_predicate>& cond : pair.second){
+    for(const std::pair<double,std::vector<dt_predicate>>& cond : pair.second){
         std::unordered_map<std::string, DataPredicate> current_conds;
         bool hasAFalse = false;
 
-        for(const dt_predicate& dt_p : cond){
+        for(const dt_predicate& dt_p : cond.second){
             DataPredicate p;
             switch (what) {
                 case RefineOverMatch:{
