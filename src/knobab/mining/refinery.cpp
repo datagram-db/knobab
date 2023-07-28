@@ -241,7 +241,8 @@ enum MetricCases {
 enum ModelExtractionFeatures {
     ActivationClassificationTree = 0,
     RevisedClassificationTree = 1,
-    ClusteringModelExtraction = 2
+    ClusteringModelExtraction = 2,
+    None = 9
 };
 
 //void recompute_triplets_for_matrix(const MetricCases &useConfidence,
@@ -273,7 +274,7 @@ initialiseModelsWithRewriting(yaucl::structures::any_to_uint_bimap<std::string> 
         }
         // All clauses names
         auto it = clauseExpansionWithNotInversion.find(c.clause.casusu);
-        if (it != clauseExpansionWithNotInversion.end()) {
+        if (it == clauseExpansionWithNotInversion.end()) {
             // If this has not to undergo a rewriting, then directly inserting the clause with its name
             clauses_names_to_consider.insert(c.clause.casusu);
             all_clauses_set.emplace(c.clause);
@@ -281,7 +282,7 @@ initialiseModelsWithRewriting(yaucl::structures::any_to_uint_bimap<std::string> 
         } else {
             // Otherwise, I have to rewrite it into something else
             // Setting up the original score associated to the original clause
-            model_actual_repr[model_name][c.clause] = {std::make_tuple(c.support_declarative_pattern, c.restrictive_confidence_plus_declarative_pattern, c.restrictive_support_declarative_pattern)};
+//            model_actual_repr[model_name][c.clause] = {std::make_tuple(c.support_declarative_pattern, c.restrictive_confidence_plus_declarative_pattern, c.restrictive_support_declarative_pattern)};
             for (const auto& rewritings : it->second) {
                 fdc.casusu = rewritings.first;
                 clauses_names_to_consider.insert(rewritings.first);
@@ -299,13 +300,44 @@ initialiseModelsWithRewriting(yaucl::structures::any_to_uint_bimap<std::string> 
     }
 }
 
-using single_clause_confidence = std::pair<FastDatalessClause, double>;
+using violated_vacsat_sat_conf = std::tuple<bool,bool,bool,double>;
+using single_clause_confidence = std::pair<FastDatalessClause, violated_vacsat_sat_conf>;
 using single_conjunction_confidence = std::pair<std::vector<single_clause_confidence>,double>;
 using disjunctive_model = std::vector<single_conjunction_confidence >;
 
 #include <yaucl/learning/MCL.h>
 
 int main(int argc, char **argv) {
+
+    /*
+     * -w
+tab
+"/home/giacomo/Scaricati/data_preparer/mal-api-2019(2)/Adware100.tab"
+-w
+tab
+"/home/giacomo/Scaricati/data_preparer/mal-api-2019(2)/Backdoor100.tab"
+-w
+tab
+"/home/giacomo/Scaricati/data_preparer/mal-api-2019(2)/Downloader100.tab"
+-w
+tab
+"/home/giacomo/Scaricati/data_preparer/mal-api-2019(2)/Dropper100.tab"
+-w
+tab
+"/home/giacomo/Scaricati/data_preparer/mal-api-2019(2)/Spyware100.tab"
+-w
+tab
+"/home/giacomo/Scaricati/data_preparer/mal-api-2019(2)/Trojan100.tab"
+-w
+tab
+"/home/giacomo/Scaricati/data_preparer/mal-api-2019(2)/Virus100.tab"
+-w
+tab
+"/home/giacomo/Scaricati/data_preparer/mal-api-2019(2)/Worms100.tab"
+-s
+0.9
+-r
+     */
 #if 0
     std::vector<std::string> log_parse_format_type{"HRF", "XES", "TAB"};
     log_data_format world_format_to_load = XES1;
@@ -508,7 +540,7 @@ int main(int argc, char **argv) {
                              "     template \"Response\" args 2        := G ( ((EXISTS ~ 1 t #1)) OR t ((EXISTS 1 t #1 activation) &Ft THETA (EXISTS 1 t #2 target)) )\n"
                              "     template \"ChainResponse\" args 2   := G ( ((EXISTS ~ 1 t #1)) OR t ((EXISTS 1 t #1 activation) AND t THETA (NEXT EXISTS 1 t #2 target)))\n"
                              "     template \"RespExistence\" args 2   := ( ((ABSENCE 1 #1)) OR ((EXISTS 1 #1 activation) AND THETA (EXISTS 1 #2 target)))\n"
-                             "     template \"ExlChoice\" args 2       := ((EXISTS 1 t #1 activation) OR THETA (EXISTS 1 t #2 activation)) AND ((ABSENCE 1 #1) OR (ABSENCE 1 #2))\n"
+                             "     template \"ExclChoice\" args 2       := ((EXISTS 1 t #1 activation) OR THETA (EXISTS 1 t #2 activation)) AND ((ABSENCE 1 #1) OR (ABSENCE 1 #2))\n"
                              "     template \"CoExistence\" args 2     := ( ((ABSENCE 1 #1)) OR ((EXISTS 1 #1 activation) AND THETA (EXISTS 1 #2 target))) AND ( ((ABSENCE 1 #2)) OR ((EXISTS 1 #2 activation) AND THETA INV (EXISTS 1 #1 target)))\n"
                              "     template \"NotCoExistence\" args 2  := ~ ((EXISTS 1 t #1 activation) AND THETA (EXISTS 1 t #2 target)) PRESERVE\n"
                              "\n"
@@ -539,11 +571,26 @@ int main(int argc, char **argv) {
         // Loading the different classes
         double loading_and_indexing = 0;
         std::vector<std::string> bogus_model_name;
-//        std::vector<ConfusionMatrix> matrices(worlds_format_to_load.size());
+        bool fill_in_vector = true;
+
+    {
+        auto worlds_name_order = output_models / "worlds_name_order.txt";
+        bool file_exists = exists(worlds_name_order);
+        if (read_dumped_models && file_exists) {
+            fill_in_vector = false;
+            std::ifstream file(worlds_name_order);
+            std::string line;
+            uint32_t idx = 0;
+//            std::string delimiter = "\t";
+            while (getline (file, line)) {
+                bogus_model_name.emplace_back(line);
+            }
+        }
+        //        std::vector<ConfusionMatrix> matrices(worlds_format_to_load.size());
         for (size_t i = 0, N = std::min(worlds_format_to_load.size(), worlds_file_to_load.size()); i<N; i++) {
             std::stringstream ss;
             std::string model_name = std::filesystem::path(worlds_file_to_load.at(i)).stem().generic_string();
-            bogus_model_name.emplace_back(model_name);
+            if (fill_in_vector) bogus_model_name.emplace_back(model_name);
             auto t2 = (size_t)worlds_format_to_load.at(i);
             ss << "load "
                << log_parse_format_type.at((size_t)worlds_format_to_load.at(i))
@@ -560,6 +607,17 @@ int main(int argc, char **argv) {
             std::cerr << tmp.first << " && " << tmp.second << std::endl;
             loading_and_indexing += sqm.multiple_logs[model_name].experiment_logger.log_indexing_ms+sqm.multiple_logs[model_name].experiment_logger.log_loading_and_parsing_ms;
         }
+        if (!file_exists) {
+            std::ofstream file{worlds_name_order};
+            for (size_t i = 0, N = bogus_model_name.size(); i<N; i++) {
+                file << bogus_model_name.at(i);
+                if (i!=(N-1)) {
+                    file << std::endl;
+                }
+            }
+        }
+    }
+
         std::cout << "loading+indexing=" << loading_and_indexing << std::endl;
     maxTraceId++;
 
@@ -662,68 +720,152 @@ int main(int argc, char **argv) {
     /// TODO: future, also detect the chains as above that lead to absences
 
     /// Loading the association between traces and clauses, for any further refinement
-    all_clauses.insert(all_clauses.begin(), all_clauses_set.begin(), all_clauses_set.end());
-    all_clauses_set.clear();
+    size_t clauses_offset = 0;
+    {
+        auto model_result_file = output_models / "model_union.powerdecl";
+        if (read_dumped_models && exists(model_result_file)) {
+            std::stringstream sSTR;
+            sSTR << "file "
+                 << std::quoted((model_result_file).string());
+            for (const auto& complex : sqm.loadModelFromFile(sSTR.str()))
+                all_clauses.emplace_back(complex.casusu, complex.left_act, complex.right_act, complex.n);
+            clauses_offset = all_clauses.size();
+        } else {
+            all_clauses.insert(all_clauses.begin(), all_clauses_set.begin(), all_clauses_set.end());
+            all_clauses_set.clear();
+            std::ofstream file{model_result_file};
+            file << "declare" << std::endl;
+            for (const auto& clause : all_clauses)
+                file << "\t" << clause << std::endl;
+        }
+    }
+
+
 
     /// model_name to matrix[model_name TraceID, crossmodelClauseId, weight (for specific model)]
     std::unordered_map<std::string, std::vector<Eigen::Triplet<double>>> bulk_matrices;
     std::vector<Eigen::Triplet<size_t>> activations_matrices;
     std::unordered_set<size_t, roaring::Roaring> trace_to_clauses;
 
-    size_t clauses_offset = 0;
-    auto allChunks = chunker(all_clauses, 40);
-    for (const auto& elements : allChunks) {
-        for (size_t i = 0, N = std::min(worlds_format_to_load.size(), worlds_file_to_load.size()); i<N; i++) {
-            std::stringstream ss;
-            std::string model_name = std::filesystem::path(worlds_file_to_load.at(i)).stem().generic_string();
-            ss << "model-check declare " << std::endl;
-            for (const auto& ref2 : elements) {
-                ss << "\t" << ref2 << std::endl;
-            }
-            ss << " using \"ReturnTraces\" over " << std::quoted(model_name) << std::endl;
-            ss << " plan \"nfmcp23\" "  << std::endl;
-            ss << " with operators \"Hybrid\" ";
-            std::string a,b;
-            std::tie(a,b) = sqm.runQuery(ss.str());
-            auto declare_support = nlohmann::json::parse(a)["ReturnTraces"].get<std::vector<std::unordered_map<trace_t, size_t>>>();
-            DEBUG_ASSERT(declare_support.size() == elements.size());
-            for (size_t clause_id = 0, n_clauses = declare_support.size(); clause_id<n_clauses; clause_id++) {
-                const auto& traces_associated_to_clause = declare_support.at(clause_id);
-                for (const auto& [trace_id_in_model,n_activations] : traces_associated_to_clause) {
-                    const auto& triplet = model_actual_repr[model_name][elements.at(clause_id)];
-                    switch (useConfidence) {
-                        case SuppMetric:
-                            bulk_matrices[model_name].emplace_back(trace_id_in_model,
-                                                                   clauses_offset+clause_id,
-                                                                   std::get<0>(triplet));
-                            break;
-                        case RestrConfPlusMetric:
-                            bulk_matrices[model_name].emplace_back(trace_id_in_model,
-                                                                   clauses_offset+clause_id,
-                                                                   std::get<1>(triplet));
-                            break;
-                        case RestrSuppMetric:
-                            bulk_matrices[model_name].emplace_back(trace_id_in_model,
-                                                                   clauses_offset+clause_id,
-                                                                   std::get<2>(triplet));
-                            break;
-                    }
-                    activations_matrices.emplace_back(i * maxTraceId + trace_id_in_model,
-                                                                  clauses_offset+clause_id,
-                                                                  n_activations);
+    {
+        auto bulk_matrices_file = output_models / "bulk_matrices.txt";
+        auto activation_matrices_file = output_models / "activation_matrices.txt";
+        if (read_dumped_models && exists(bulk_matrices_file) && exists(activation_matrices_file)) {
+            {
+                std::ifstream file(bulk_matrices_file);
+                std::string line;
+                while (getline (file, line)) {
+                    if (line.empty()) break;
+                    std::istringstream iss(line);
+                    std::string token;
+                    std::getline(iss, token, '\t');
+                    std::string model_name_loc = token;
+                    std::getline(iss, token, '\t');
+                    size_t trace_id_in_model = stoull(token);
+                    std::getline(iss, token, '\t');
+                    size_t global_clause_id = stoull(token);
+                    std::getline(iss, token, '\t');
+                    double score = stod(token);
+                    bulk_matrices[model_name_loc].emplace_back(trace_id_in_model,
+                                                           global_clause_id,
+                                                           score);
                 }
             }
-            ss.str(std::string());
-            ss.clear();
+            {
+                std::ifstream file(activation_matrices_file);
+                std::string line;
+                while (getline (file, line)) {
+                    if (line.empty()) break;
+                    std::istringstream iss(line);
+                    std::string token;
+                    std::getline(iss, token, '\t');
+                    size_t global_trace_id = stoull(token);
+                    std::getline(iss, token, '\t');
+                    size_t global_clause_id = stoull(token);
+                    std::getline(iss, token, '\t');
+                    size_t n_activations = stoull(token);
+                    activations_matrices.emplace_back(global_trace_id,
+                                                      global_clause_id,
+                                                      n_activations);
+                }
+            }
+        } else {
+            std::ofstream bulk_matrices_f{bulk_matrices_file};
+            std::ofstream activation_matrices_f{activation_matrices_file};
+            clauses_offset = 0;
+            std::cout << "model checking..." << std::endl;
+            auto allChunks = chunker(all_clauses, 40);
+            for (const auto& elements : allChunks) {
+                for (size_t i = 0, N = std::min(worlds_format_to_load.size(), worlds_file_to_load.size()); i<N; i++) {
+                    std::cout << "\tbatch in [" << clauses_offset << "..." << (clauses_offset+(elements.size())-1) << "] world=" << i << std::endl;
+                    std::stringstream ss;
+                    std::string model_name = std::filesystem::path(worlds_file_to_load.at(i)).stem().generic_string();
+                    ss << "model-check declare " << std::endl;
+                    for (const auto& ref2 : elements) {
+                        ss << "\t" << ref2 << std::endl;
+                    }
+                    ss << " using \"ReturnTraces\" over " << std::quoted(model_name) << std::endl;
+                    ss << " plan \"nfmcp23\" "  << std::endl;
+                    ss << " with operators \"Hybrid\" ";
+                    std::string a,b;
+                    std::tie(a,b) = sqm.runQuery(ss.str());
+                    std::cout << "\t... Done. Parsing: "  << std::endl;
+                    auto declare_support = nlohmann::json::parse(a)["ReturnTraces"].get<std::vector<std::vector<int>>>();
+                    DEBUG_ASSERT(declare_support.size() == elements.size());
+                    std::cout << "\t... Registering values in matrices & files "  << std::endl;
+                    for (size_t clause_id = 0, n_clauses = declare_support.size(); clause_id<n_clauses; clause_id++) {
+                        const auto& traces_associated_to_clause = declare_support.at(clause_id);
+                        for (size_t trace_id_in_model = 0, M =traces_associated_to_clause.size(); trace_id_in_model<M; trace_id_in_model++ ) {
+                            const auto& triplet = model_actual_repr[model_name][elements.at(clause_id)];
+                            double score;
+                            switch (useConfidence) {
+                                case SuppMetric:
+                                    score = std::get<0>(triplet);
+                                    break;
+                                case RestrConfPlusMetric:
+                                    score = std::get<1>(triplet);
+                                    break;
+                                case RestrSuppMetric:
+                                    score = std::get<2>(triplet);
+
+                                    break;
+                            }
+                            // considering only the cases where
+                            if (score >= std::numeric_limits<double>::epsilon()) {
+                                bulk_matrices_f << model_name << "\t" << trace_id_in_model << "\t" << clauses_offset+clause_id << "\t" << score << std::endl;
+                                bulk_matrices[model_name].emplace_back(trace_id_in_model,
+                                                                       clauses_offset+clause_id,
+                                                                       score);
+                            }
+                            int n_activations = traces_associated_to_clause.at(trace_id_in_model);
+                            if (n_activations != 0) {
+                                activations_matrices.emplace_back(i * maxTraceId + trace_id_in_model,
+                                                                  clauses_offset+clause_id,
+                                                                  n_activations);
+                                activation_matrices_f << i * maxTraceId + trace_id_in_model << "\t" << clauses_offset+clause_id << "\t" << n_activations << std::endl;
+                            }
+                        }
+                    }
+                    ss.str(std::string());
+                    ss.clear();
+                }
+                clauses_offset += elements.size();
+            }
+
         }
-        clauses_offset += elements.size();
     }
+
+    std::cout << "Conformance checking done..." << std::endl;
 
     std::unordered_map<std::string, disjunctive_model> result;
     switch (classification_algorithm) {
+        case None:
+            break;
+
         case ActivationClassificationTree: {
             std::unordered_map<int, std::vector<std::pair<double,std::vector<dt_predicate>>>>  resulting_dnf_model;
             {
+                std::cout << "Classification tree" << std::endl;
                 auto ref = Eigen::SparseMatrix<size_t, Eigen::RowMajor>(traceIdUpperBound,clauses_offset+1);
                 ref.reserve(activations_matrices.size());
                 ref.setFromTriplets(activations_matrices.begin(), activations_matrices.end());
@@ -762,16 +904,81 @@ int main(int argc, char **argv) {
                     auto& local = model_result.emplace_back();
                     local.second = vector.first;
                     for (auto& item : vector.second) {
-                        const auto& triplet = model_actual_repr[model_name][all_clauses.at(std::stoull(item.field))];
+                        bool isVacuous = false;
+                        bool isSat = false;
+                        bool isViolated = false;
+
+                        double n_activations_vacuous_or_unsat = std::get<double>(item.value);
+                        switch (item.pred) {
+                            case dt_predicate::L_THAN:
+                                if (n_activations_vacuous_or_unsat > 1)
+                                    // ignore the classification: this remarks the number of activations, so, it
+                                    // means that both satisfied, unsatisfied, and vacous are fine. So, this clause
+                                    // is not determined
+                                    continue;
+                                else  /* <= 1 */ {
+                                    isViolated = true;
+                                    if ((0.0 < n_activations_vacuous_or_unsat) && (n_activations_vacuous_or_unsat <= 1.0)) {
+                                        // if this includes 0 as a value, this might be vacuous
+                                        isVacuous = true;
+                                    }
+                                } break;
+
+                            case dt_predicate::LEQ_THAN:
+                                if (n_activations_vacuous_or_unsat >= 1)
+                                    // ignore the classification: this remarks the number of activations, so, it
+                                    // means that both satisfied, unsatisfied, and vacous are fine. So, this clause
+                                    // is not determined
+                                    continue;
+                                else  /* < 1 */ {
+                                    isViolated = true;
+                                    if ((0.0 <= n_activations_vacuous_or_unsat) && (n_activations_vacuous_or_unsat < 1.0)) {
+                                        // if this includes 0 as a value, this might be vacuous
+                                        isVacuous = true;
+                                    }
+                                } break;
+
+                            case dt_predicate::GEQ_THAN:
+                                if (n_activations_vacuous_or_unsat <= -1)
+                                    // ignore the classification: this remarks to include violations, vacuous, and satisfied
+                                    continue;
+                                else  /* > 1 */ {
+                                    isSat = true;
+                                    if ((-1 < n_activations_vacuous_or_unsat) && (n_activations_vacuous_or_unsat <= 0.0)) {
+                                        // if this includes 0 as a value, this might be vacuous
+                                        isVacuous = true;
+                                    }
+                                } break;
+
+                            case dt_predicate::G_THAN:
+                                if (n_activations_vacuous_or_unsat < -1)
+                                    // ignore the classification: this remarks to include violations, vacuous, and satisfied
+                                    continue;
+                                else  /* >= 1.0 */ {
+                                    isSat = true;
+                                    if ((-1 <= n_activations_vacuous_or_unsat) && (n_activations_vacuous_or_unsat < 0.0)) {
+                                        // if this includes 0 as a value, this might be vacuous
+                                        isVacuous = true;
+                                    }
+                                } break;
+
+
+                            case dt_predicate::IN_SET:
+                            case dt_predicate::NOT_IN_SET:
+                                DEBUG_ASSERT(false); // ERROR: this shall not be interpreted as a categorical set!
+                        }
+                        size_t clause_idx = std::stoull(item.field);
+                        const auto& clause = all_clauses.at(clause_idx);
+                        const auto& triplet = model_actual_repr[model_name][clause];
                         switch (useConfidence) {
                             case SuppMetric:
-                                local.first.emplace_back(all_clauses.at(std::stoull(item.field)), std::get<0>(triplet));
+                                local.first.emplace_back(clause, std::make_tuple(isViolated,isVacuous,isSat,std::get<0>(triplet)));
                                 break;
                             case RestrConfPlusMetric:
-                                local.first.emplace_back(all_clauses.at(std::stoull(item.field)), std::get<1>(triplet));
+                                local.first.emplace_back(clause, std::make_tuple(isViolated,isVacuous,isSat,std::get<1>(triplet)));
                                 break;
                             case RestrSuppMetric:
-                                local.first.emplace_back(all_clauses.at(std::stoull(item.field)), std::get<2>(triplet));
+                                local.first.emplace_back(clause, std::make_tuple(isViolated,isVacuous,isSat,std::get<2>(triplet)));
                                 break;
                         }
                     }
@@ -798,6 +1005,7 @@ int main(int argc, char **argv) {
                         // Discarding from the matrix the correlation with the clauses that are not originally part of the model
                         toRemove.add(clause_id);
                     } else {
+                        bool isVacuous = !(( std::get<0>(it->second)) ==  ( std::get<2>(it->second)));
                         double score;
                         switch (useConfidence) {
                             case SuppMetric:
@@ -813,7 +1021,7 @@ int main(int argc, char **argv) {
                         // Also discarding from the clustering the certain clauses, that are going to be part of a separate cluster
                         if (std::abs(score-1.0) <= std::numeric_limits<double>::epsilon()) {
                             toRemove.add(clause_id);
-                            certain_part.first.emplace_back(clause, 1.0);
+                            certain_part.first.emplace_back(clause, std::make_tuple(false,isVacuous,true,1.0));
                         }
                     }
                 }
@@ -843,17 +1051,18 @@ int main(int argc, char **argv) {
                         auto it = local_model.find(clause);
                         if (it == local_model.end()) continue;
                         const auto& triplet = it->second;
+                        bool isVacuous = !(( std::get<0>(triplet)) ==  ( std::get<2>(triplet)));
                         switch (useConfidence) {
                             case SuppMetric:
-                                local.first.emplace_back(clause, std::get<0>(triplet));
+                                local.first.emplace_back(clause,  std::make_tuple(false,isVacuous,true,std::get<0>(triplet)));
                                 overall_metric *= std::get<0>(triplet);
                                 break;
                             case RestrConfPlusMetric:
-                                local.first.emplace_back(clause, std::get<1>(triplet));
+                                local.first.emplace_back(clause, std::make_tuple(false,isVacuous,true,std::get<1>(triplet)));
                                 overall_metric *= std::get<1>(triplet);
                                 break;
                             case RestrSuppMetric:
-                                local.first.emplace_back(clause, std::get<2>(triplet));
+                                local.first.emplace_back(clause, std::make_tuple(false,isVacuous,true,std::get<2>(triplet)));
                                 overall_metric *= std::get<2>(triplet);
                                 break;
                         }
@@ -881,7 +1090,13 @@ int main(int argc, char **argv) {
             file << "\t[ ";
             for (size_t j = 0, M = branch.first.size(); j<M; j++) {
                 const auto& clause = branch.first.at(j);
-                file << clause.first << " : " << clause.second;
+                if (std::get<0>(clause.second))
+                    file << " violated ";
+                if (std::get<1>(clause.second))
+                    file << " vac_sat ";
+                if (std::get<2>(clause.second))
+                    file << " sat ";
+                file << clause.first << " : " << std::get<3>(clause.second);
                 if (j<M-2) {
                     file << " && " << std::endl << "\t\t";
                 }

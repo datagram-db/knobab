@@ -1838,7 +1838,7 @@ void MAXSatPipeline::pipeline(CNFDeclareDataAware* model,
             switch (final_ensemble) {
                 case ReturnTraces: {
                     for (size_t i = 0, N = declare_to_query.size(); i<N; i++) {
-                        auto& toInsertResults = result_per_traces.emplace_back();
+                        auto& toInsertResults = result_per_traces.emplace_back(kb.nTraces(), -1);
                         const auto &declare = declare_to_query.at(i);
                         for (const auto& ref : declare->result) {
                             size_t count_activations = 0;
@@ -1847,7 +1847,7 @@ void MAXSatPipeline::pipeline(CNFDeclareDataAware* model,
                                     count_activations++;
                                 }
                             }
-                            toInsertResults.emplace(ref.first.first, count_activations);
+                            toInsertResults[ref.first.first] = (int)count_activations;
                         }
                     }
                 } break;

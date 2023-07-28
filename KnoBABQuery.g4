@@ -126,11 +126,14 @@ no_stats: 'no' 'stats';
 
 //
 
-rule_with_weight : declare ':' NUMBER;
+rule_with_weight : VIOLATED? VAC_SAT? SAT? declare ':' NUMBER;
 conjunctive_subrule : '[' (rule_with_weight '&&')* rule_with_weight ']' ':' NUMBER;
 classification_rule : class_name=STRING ':' (conjunctive_subrule* '||')* conjunctive_subrule;
 model_classification: classification_rule+;
 
+VIOLATED : 'violated';
+VAC_SAT  : 'vac_sat';
+SAT      : 'sat';
 ACT_TABLE: 'ACTTABLE';
 WITH_ALIGNMENT_STRATEGY: 'with-alignment-strategy';
 CNT_TABLE: 'COUNTTABLE';

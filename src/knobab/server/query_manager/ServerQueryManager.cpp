@@ -895,11 +895,14 @@ std::any ServerQueryManager::visitModel_query(KnoBABQueryParser::Model_queryCont
                 none = false;
 
                 /// GROUNDING
-                bool doPreliminaryFill = true;
+                bool doPreliminaryFill = false;
                 bool ignoreActForAttributes = false;
-                bool creamOffSingleValues = true;
+                bool creamOffSingleValues = false;
                 GroundingStrategyConf::pruning_strategy grounding_strategy = GroundingStrategyConf::NO_EXPANSION;
                 if (ctx->grounding()) {
+                    doPreliminaryFill = true;
+                    ignoreActForAttributes = false;
+                    creamOffSingleValues = true;
                     auto ground = ctx->grounding();
                     if (ground->no_preliminary_fill()) doPreliminaryFill = false;
                     if (ground->act_for_attributes()) ignoreActForAttributes = true;

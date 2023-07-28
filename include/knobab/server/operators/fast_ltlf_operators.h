@@ -154,6 +154,8 @@ inline void or_fast_untimed(const Result& lhs, const Result& rhs, Result& out, c
             localTrace = first1->first.first;
             idx.first.first = first1->first.first+1; // pointing towards the next trace
             auto endFirst1 = std::upper_bound(first1, last1, idx);
+            while ((endFirst1 != last1) && (endFirst1->first.first == localTrace))
+                endFirst1++;
             pair.first = pair1.first = localTrace;
             result.first = first1->first;
             result.second.first = std::min(first1->second.first, first2->second.first);
@@ -323,6 +325,8 @@ inline void and_fast_untimed(const Result& lhs, const Result& rhs, Result& out, 
             auto localTrace = first1->first.first;
             idx.first.first = first1->first.first+1; // pointing towards the next trace
             auto endFirst1 = std::upper_bound(first1, last1, idx);
+            while ((endFirst1 != last1) && (endFirst1->first.first == localTrace))
+                endFirst1++;
             decltype(endFirst1) endFirst2;
             pair.first = pair1.first = localTrace;
             result.first = first1->first;
@@ -425,6 +429,8 @@ inline void global_fast_timed(const Result &section, Result& result, const std::
         first.second = 0;
         lower = upper;
         upper = std::upper_bound(lower, section.end(), cp);
+        while ((upper != section.end()) && (upper->first.first == currentTraceId))
+            upper++;
         Result toBeReversed;
         auto it = (lower == upper) ? (lower-1) : (lower + std::distance(lower, upper) - 1);
         for (int64_t i = (upper - 1)->first.second; i >= 0; i--) {
@@ -471,6 +477,8 @@ inline void global_fast_untimed(const Result &section, Result& result, const std
 
         lower = upper;
         upper = std::upper_bound(lower, section.end(), cp);
+        while ((upper != end) && (upper->first.first == currentTraceId))
+            upper++;
 
         const uint32_t dist = std::distance(lower, upper - 1);
 
@@ -600,7 +608,11 @@ inline void aAndFutureB_timed_variant_2(const Result& a, const Result& b,Result&
             rcx_second_second.clear();
             auto bBeforeScan = bCurrent;
             bCurrent = std::upper_bound(bCurrent, bEnd, cp_ub_g);
+            while ((bCurrent != bEnd) && (bCurrent->first.first == current_trace))
+                bCurrent++;
             auto aMax = std::upper_bound(aCurrent, aEnd, cp_ub_g);
+            while ((aMax != aEnd) && (aMax->first.first == current_trace))
+                aMax++;
 
             if (((bCurrent-1)->first.first != current_trace)) {
                 aCurrent = aMax;
@@ -1025,7 +1037,11 @@ inline void aAndGloballyB_timed_variant_2(const Result& a, const Result& b,Resul
             cp_g.first.second = lengths.at(current_trace);
             auto bBeforeScan = bCurrent;
             bCurrent = std::upper_bound(bCurrent, bEnd, cp_g);
+            while ((bCurrent != bEnd) && (bCurrent->first.first == current_trace))
+                bCurrent++;
             auto aMax = std::upper_bound(aCurrent, aEnd, cp_g);
+            while ((aMax != aEnd) && (aMax->first.first == current_trace))
+                aMax++;
             auto aIter = aMax; aIter--;
 
             first_g.second = 0;
@@ -1223,6 +1239,8 @@ inline void until_fast_untimed(const Result &aSection, const Result &bSection, R
         cpAIt.first.second = 0;
 
         localBUpper = std::upper_bound(bCurrent, upper, cpLocalUpper);
+        while ((localBUpper != upper) && (localBUpper->first.first == currentTraceId))
+            localBUpper++;
         aIt = std::lower_bound(aIt, upperA, cpAIt);
         aEn = aIt;
 
@@ -1233,6 +1251,7 @@ inline void until_fast_untimed(const Result &aSection, const Result &bSection, R
                 cpResult.second.second.insert(cpResult.second.second.end(), bCurrent->second.second.begin(),
                                               bCurrent->second.second.end());
                 atLeastOneResult = true;
+                break;
             } else {
                 if (aIt >= upperA) break;
                 if (aIt->first.second > 0) break;
@@ -1279,13 +1298,17 @@ inline void until_fast_untimed(const Result &aSection, const Result &bSection, R
                             }
                         }
                         if (hasFail) break;
-                        else atLeastOneResult = true;
+                        else {
+                            atLeastOneResult = true;
+                            break;
+                        }
                     } else {
                         populateAndReturnEvents(aIt, ++aEn, cpResult.second.second);
                         cpResult.second.second.insert(cpResult.second.second.end(),
                                                       bCurrent->second.second.begin(),
                                                       bCurrent->second.second.end());
                         atLeastOneResult = true;
+                        break;
                     }
                 }
             }

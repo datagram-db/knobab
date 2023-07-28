@@ -788,6 +788,8 @@ inline void until_logic_untimed(const Result &aSection, const Result &bSection, 
         cpAIt.first.second = 0;
 
         localBUpper = std::upper_bound(bCurrent, upper, cpLocalUpper);
+        while ((localBUpper != upper) && (localBUpper->first.first == currentTraceId))
+            localBUpper++;
         aIt = std::lower_bound(aIt, upperA, cpAIt);
         aEn = aIt;
 

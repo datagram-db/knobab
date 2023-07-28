@@ -42,7 +42,7 @@ using act_set = std::bitset<sizeof(uint16_t)>;
 //union_minimal resolveUnionMinimal(const AttributeTable &table, const AttributeTable::record &x);
 const uint16_t MAX_UINT16 = std::pow(2, 16) - 1;
 const size_t HYBRID_QUERY_THRESHOLD = std::pow(10, 2) / 2;
-const size_t HYBRID_LOG_QUERY_THRESHOLD = std::pow(10, 3) / 2;
+const size_t HYBRID_LOG_QUERY_THRESHOLD = std::pow(10, 2) / 2;
 
 template <typename T>
 struct pattern_mining_result {
