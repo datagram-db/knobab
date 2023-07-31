@@ -25,7 +25,7 @@
 #include <vector>
 #include <yaucl/bpm/structures/commons/DeclareDataAware.h>
 #include <knobab/server/query_manager/Environment.h>
-#include <yaucl/learning/dt_predicate.h>
+#include "yaucl/learning/decision_tree/dt_predicate.h"
 #include <unordered_map>
 
 // @author: S Giacomo Bergami
