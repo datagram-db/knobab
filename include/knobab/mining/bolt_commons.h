@@ -24,7 +24,7 @@
 #include "knobab/server/declare/DeclareDataAware.h"
 #include <knobab/mining/apriori.h>
 //#include "knobab/algorithms/mining/pattern_mining.h"
-#include "yaucl/learning/dt_predicate.h"
+#include "yaucl/learning/decision_tree/dt_predicate.h"
 #include "yaucl/learning/DecisionTree.h"
 #include <chrono>
 #include <knobab/server/query_manager/Environment.h>
