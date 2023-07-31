@@ -5,7 +5,7 @@
 #define FOR_VECTORS
 
 #include "knobab/mining/bolt2.h"
-#include "yaucl/learning/dt_predicate.h"
+#include "yaucl/learning/decision_tree/dt_predicate.h"
 #include "yaucl/learning/DecisionTree.h"
 #include <chrono>
 #include <knobab/server/query_manager/Environment.h>
