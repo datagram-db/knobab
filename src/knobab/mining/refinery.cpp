@@ -305,6 +305,155 @@ using single_clause_confidence = std::pair<FastDatalessClause, violated_vacsat_s
 using single_conjunction_confidence = std::pair<std::vector<single_clause_confidence>,double>;
 using disjunctive_model = std::vector<single_conjunction_confidence >;
 
+/**
+ * Collecting the clauses depending on the activation and target conditions
+ *
+ * @param map_binary    Map of binary clauses
+ * @param map_unary     Map of unaryb clauses
+ * @param clause        Clause to be inserted
+ */
+static inline void fillin_declarative_map(std::unordered_map<std::string,std::unordered_map<std::string,std::unordered_set<FastDatalessClause>>>& map_binary,
+                                          std::unordered_map<std::string,std::unordered_set<FastDatalessClause>>& map_unary,
+                                          std::unordered_map<FastDatalessClause, std::pair<std::string,std::string>>& map,
+                                          std::unordered_set<std::pair<std::string,std::string>>& final_schema,
+                                          const FastDatalessClause& clause) {
+    if (clause.right.empty()) {
+        map_unary[clause.left].emplace(clause);
+        map[clause] = {clause.left, ""};
+    } else {
+        if (clause.casusu == "Precedence") {
+            map_binary[clause.right][clause.left].emplace(clause);
+            map[clause] = {clause.right, clause.left};
+        } else if ((clause.casusu == "Choice") || (clause.casusu=="ExclChoice")) {
+            if (clause.left<clause.right) {
+                map[clause] = {clause.left, clause.right};
+                map_binary[clause.left][clause.right].emplace(clause);
+            } else {
+                map[clause] = {clause.right, clause.left};
+                map_binary[clause.right][clause.left].emplace(clause);
+            }
+        } else if ((clause.casusu == "ChainSuccession") || (clause.casusu == "ChainPrecedence") || (clause.casusu == "ChainResponse") ||
+                   (clause.casusu == "Response") || (clause.casusu == "Succession") || (clause.casusu == "Surround") || (clause.casusu == "RespExistence")  || (clause.casusu == "CoExistence")) {
+            map[clause] = {clause.left, clause.right};
+            map_binary[clause.left][clause.right].emplace(clause);
+        }
+    }
+}
+
+/**
+ * Generates all the potential refinements, at any given depth, from the given clause that also appears in the
+ * candidate set.
+ *
+ * @param clause            Clause to be refined
+ * @param candidates        Candidates from which select the possible candidates
+ * @param result            Containing the result of all the possible refinements of the given clause
+ */
+static inline void specialise_clause_from_candidates(const FastDatalessClause& clause,
+                                                     const std::unordered_set<FastDatalessClause>& candidates,
+                                                     std::unordered_set<FastDatalessClause>& result) {
+    auto tmp = clause;
+    if (tmp.casusu == "CoExistence") {
+        tmp.casusu = "RespExistence";
+        specialise_clause_from_candidates(tmp, candidates, result);
+    } else if (tmp.casusu == "Choice") {
+        tmp.casusu = "RespExistence";
+        if (candidates.contains(tmp)) {
+            result.emplace(tmp);
+        } else {
+            specialise_clause_from_candidates(tmp, candidates, result);
+        }
+        std::swap(tmp.left, tmp.right);
+        if (candidates.contains(tmp)) {
+            result.emplace(tmp);
+        } else {
+            specialise_clause_from_candidates(tmp, candidates, result);
+        }
+    } else if (tmp.casusu == "RespExistence") {
+        tmp.casusu = "Response";
+        if (candidates.contains(tmp)) {
+            result.emplace(tmp);
+        } else {
+            specialise_clause_from_candidates(tmp, candidates, result);
+        }
+
+        tmp.casusu = "CoExistence";
+        if (candidates.contains(tmp)) {
+            result.emplace(tmp);
+        } else {
+            specialise_clause_from_candidates(tmp, candidates, result);
+        }
+
+        std::swap(tmp.left, tmp.right);
+        tmp.casusu = "Precedence";
+        if (candidates.contains(tmp)) {
+            result.emplace(tmp);
+        } else {
+            specialise_clause_from_candidates(tmp, candidates, result);
+        }
+
+        tmp.casusu = "ChainPrecedence";
+        if (candidates.contains(tmp)) {
+            result.emplace(tmp);
+        } else {
+            specialise_clause_from_candidates(tmp, candidates, result);
+        }
+    } else if (tmp.casusu == "Response") {
+        tmp.casusu = "ChainResponse";
+        if (candidates.contains(tmp)) {
+            result.emplace(tmp);
+        } else {
+            specialise_clause_from_candidates(tmp, candidates, result);
+        }
+
+        tmp.casusu = "Succession";
+        if (candidates.contains(tmp)) {
+            result.emplace(tmp);
+        } else {
+            specialise_clause_from_candidates(tmp, candidates, result);
+        }
+    } else if (tmp.casusu == "Precedence") {
+
+        std::swap(tmp.left, tmp.right);
+        tmp.casusu = "Succession";
+        if (candidates.contains(tmp)) {
+            result.emplace(tmp);
+        } else {
+            specialise_clause_from_candidates(tmp, candidates, result);
+        }
+    } else if (tmp.casusu == "ChainResponse") {
+        tmp.casusu = "ChainSuccession";
+        if (candidates.contains(tmp)) {
+            result.emplace(tmp);
+        } else {
+            specialise_clause_from_candidates(tmp, candidates, result);
+        }
+
+        tmp.casusu = "Surround";
+        if (candidates.contains(tmp)) {
+            result.emplace(tmp);
+        } else {
+            specialise_clause_from_candidates(tmp, candidates, result);
+        }
+    } else if (tmp.casusu == "ChainPrecedence") {
+
+        std::swap(tmp.left, tmp.right);
+        tmp.casusu = "ChainSuccession";
+        if (candidates.contains(tmp)) {
+            result.emplace(tmp);
+        } else {
+            specialise_clause_from_candidates(tmp, candidates, result);
+        }
+
+        tmp.casusu = "Surround";
+        if (candidates.contains(tmp)) {
+            result.emplace(tmp);
+        } else {
+            specialise_clause_from_candidates(tmp, candidates, result);
+        }
+    }
+}
+
+
 #include <yaucl/learning/MCL.h>
 
 int main(int argc, char **argv) {
@@ -415,7 +564,7 @@ tab
 #endif
 
 
-    ModelExtractionFeatures classification_algorithm = ActivationClassificationTree;
+    ModelExtractionFeatures classification_algorithm = None;
     yaucl::structures::any_to_uint_bimap<std::string> activityLabel_to_globalId_bijection;
 
     // Hardcorded configurations, that should have been generalised as configuration files
@@ -859,7 +1008,56 @@ tab
 
     std::unordered_map<std::string, disjunctive_model> result;
     switch (classification_algorithm) {
-        case None:
+        case None: {
+            std::unordered_map<std::string,std::unordered_map<std::string,std::unordered_set<FastDatalessClause>>> binary_map;
+            std::unordered_map<std::string,std::unordered_set<FastDatalessClause>> unary_map;
+            std::unordered_map<FastDatalessClause, std::pair<std::string,std::string>> conversion_map;
+            std::unordered_set<std::pair<std::string,std::string>> schema_set;
+            std::vector<std::pair<std::unordered_set<std::pair<std::string,std::string>>,int>> converted_worlds;
+
+            for (const auto& clause : all_clauses)
+                fillin_declarative_map(binary_map, unary_map, conversion_map, schema_set, clause);
+
+            for (int i = 0, N = bogus_model_name.size(); i<N; i++) {
+                const auto& model_name = bogus_model_name.at(i);
+                std::unordered_set<std::pair<std::string,std::string>> S;
+                for (const auto& [clause,scores] : model_actual_repr[model_name]) {
+                    S.emplace(conversion_map[clause]);
+                }
+                converted_worlds.emplace_back(std::move(S), i);
+            }
+
+            auto accessor = [](const std::unordered_set<std::pair<std::string,std::string>>& x, const std::string& field) {
+                size_t npos = field.find("§");
+                if (npos == std::string::npos) {
+                    return x.contains({field,""}) ? 1.0 : -1.0;
+                } else {
+                    std::string left = field.substr(0, npos);
+                    std::string right = field.substr(npos+std::strlen("§"));
+                    return x.contains({left,right}) ? 1.0 : -1.0;
+                }
+            };
+
+            // Now, using a decision tree exploiting accessor for accessing the data filled in converted_worlds, and
+            // using the accessor for converting this into values for presence/absence of a specific field.
+            // This might be used in a specific type of decision tree for discriminating first between activation
+            // labels, and then between clauses
+
+            for (const auto& [k1,kv] : binary_map) {
+                for (const auto& [k2,v] : kv) {
+                    std::cout << k1 << "," << k2 << ":" << std::endl;
+                    for (const auto& x : v) {
+                        std::cout << "\t * " << x << std::endl;
+                    }
+                }
+            }
+            for (const auto& [k2,v] : unary_map) {
+                std::cout <<  k2 << ":" << std::endl;
+                for (const auto& x : v) {
+                    std::cout << "\t * " << x << std::endl;
+                }
+            }
+        }
             break;
 
         case ActivationClassificationTree: {
@@ -1073,6 +1271,8 @@ tab
             }
         } break;
     }
+
+
 
     /// Serialising the model, so that it can be used later on for the testing evaluation
     std::string model_name;
