@@ -1172,7 +1172,7 @@ std::pair<std::vector<pattern_mining_result<FastDatalessClause>>, double> bolt2(
                         decrease_support_X(kb, expected_support, alles_chain_succession_ba,
                                            alles_not_chain_succession_ba);
                     }
-                    if (!((lB <= lA) && (lA <= (2 * lB)))) {
+                    if (!((2*lB-coarsening <= lA) && (lA <= (2 * lB)))) {
                         decrease_support_X(kb, expected_support, alles_surround_ba, alles_not_surround_ba);
                     }
                 }
