@@ -831,7 +831,7 @@ Bolt2Branching(const KnowledgeBase &kb, bool only_precise_temporal_patterns,
 #include <roaring.hh>
 
 struct retain_choice {
-    roaring::Roaring map;
+    //roaring::Roaring map;
     std::map<double, std::unordered_set<pattern_mining_result<FastDatalessClause>>> maps;
 };
 
@@ -884,7 +884,7 @@ choice_exclchoice(act_t a, act_t b,
         }
         auto& refA = map_for_retain[a];
 //        auto& refB = map_for_retain[b];
-        refA.map.add(b);
+//        refA.map.add(b);
 //        refB.map.add(a);
         /*if (it != mapper.end())
             c.support_generating_original_pattern =  ((double)it->second)/((double)log_size);
