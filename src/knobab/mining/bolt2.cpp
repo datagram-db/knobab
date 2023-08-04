@@ -571,6 +571,7 @@ Bolt2Branching(const KnowledgeBase &kb, bool only_precise_temporal_patterns,
             cr_sup = ((double) cr_satisfied) / ((double) ntraces);
 
             if (alles_next && (cr_sup >= r_sup) && (cr_satisfied_not_vacuous > 0) && (conf_next_counting > 0)) {
+                clause.clause.casusu = "ChainResponse";
                 data.flags |= right_branch ? CHAIN_RESPONSE_BA_ID : CHAIN_RESPONSE_AB_ID;
                 const double cr_conf = ((double) cr_satisfied_not_vacuous) / ((double) conf_next_counting);
                 const double cr_restr = ((double) cr_satisfied_not_vacuous) / ((double) ntraces);
@@ -579,7 +580,7 @@ Bolt2Branching(const KnowledgeBase &kb, bool only_precise_temporal_patterns,
                                          candidate.support_generating_original_pattern,
                                          cr_sup,
                                          cr_conf,
-                                         cr_restr).clause.casusu = "ChainResponse";
+                                         cr_restr);
                 } else if (left_branch) {
                     /* If we are on the left branch, there may be a ChainSucession only detectable on the other
                      * so cache the confidence for now */
@@ -693,7 +694,6 @@ Bolt2Branching(const KnowledgeBase &kb, bool only_precise_temporal_patterns,
                 const uint32_t s_ab_satisfied_not_vacuous = s_ab_satisfied - (ntraces - s_ab_activated);
                 const double s_ab_sup = ((double) s_ab_satisfied) / ((double) ntraces);
 
-
                 if (alles_succession_ab && (s_ab_sup >= std::get<0>(data.r_lb_sup_conf)) && (s_ab_sup >= p_sup) && (s_ab_satisfied_not_vacuous > 0) && (s_ab_activated > 0)) {
                     clause.clause.casusu = "Succession";
                     const double s_ab_conf =  ((double) s_ab_satisfied_not_vacuous) / ((double) s_ab_activated);
@@ -732,11 +732,11 @@ Bolt2Branching(const KnowledgeBase &kb, bool only_precise_temporal_patterns,
     const uint32_t cp_satisfied_not_vacuous = cp_satisfied - (not_a_activated + conf_prev_not_counting);
 
     if (alles_prev && (cp_satisfied_not_vacuous > 0) && (conf_prev_counting > 0)) {
+        clause.clause.casusu = "ChainPrecedence";
         data.flags |= right_branch ? CHAIN_PRECEDENCE_BA_ID : CHAIN_PRECEDENCE_AB_ID;
         const double cp_sup = ((double) cp_satisfied) / ((double) ntraces);
         const double cp_conf = ((double) cp_satisfied_not_vacuous) / ((double) conf_prev_counting);
         const double cp_restr = ((double) cp_satisfied_not_vacuous) / ((double) ntraces);
-        clause.clause.casusu = "ChainPrecedence";
         clause.support_declarative_pattern = cp_sup;
         clause.restrictive_confidence_plus_declarative_pattern = cp_conf;
         clause.restrictive_support_declarative_pattern = cp_restr;
