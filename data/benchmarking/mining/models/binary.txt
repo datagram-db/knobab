@@ -4,8 +4,5 @@ CoExistence
 RespExistence
 ChainPrecedence
 ChainResponse
-ChainSuccession
-Succession
-Surround
 Precedence
 Response
