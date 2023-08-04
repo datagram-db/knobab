@@ -137,8 +137,6 @@ TEST_CASE("mining_tests: exists_absence") {
     pattern_mining_result<FastDatalessClause> to_find;
     to_find.clause.casusu = "Exists";
     to_find.clause.left = "a";
-//    to_find.clause.left_id = 0;
-//    to_find.clause.right_id = -1;
     to_find.clause.n = 3;
     to_find.support_generating_original_pattern = 1.0;
     to_find.support_declarative_pattern = 1.0;
@@ -147,8 +145,6 @@ TEST_CASE("mining_tests: exists_absence") {
     pattern_mining_result<FastDatalessClause> to_find_1;
     to_find_1.clause.casusu = "Absence";
     to_find_1.clause.left = "a";
-//    to_find_1.clause.left_id = 0;
-//    to_find_1.clause.right_id = -1;
     to_find_1.clause.n = 4;
     to_find_1.support_generating_original_pattern = 1.0;
     to_find_1.support_declarative_pattern = 1.0;
@@ -164,8 +160,6 @@ TEST_CASE("mining_tests: init") {
     pattern_mining_result<FastDatalessClause> to_find;
     to_find.clause.casusu = "Init";
     to_find.clause.left = "a";
-//    to_find.clause.left_id = 0;
-//    to_find.clause.right_id = -1;
     to_find.clause.n = 1;
     to_find.support_generating_original_pattern = 1.0;
     to_find.support_declarative_pattern = 1.0;
@@ -181,8 +175,6 @@ TEST_CASE("mining_tests: end") {
     pattern_mining_result<FastDatalessClause> to_find;
     to_find.clause.casusu = "End";
     to_find.clause.left = "a";
-//    to_find.clause.left_id = 2;
-//    to_find.clause.right_id = -1;
     to_find.clause.n = 1;
     to_find.support_generating_original_pattern = 1.0;
     to_find.support_declarative_pattern = 1.0;
@@ -198,9 +190,7 @@ TEST_CASE("mining_tests: precedence") {
     pattern_mining_result<FastDatalessClause> to_find;
     to_find.clause.casusu = "Precedence";
     to_find.clause.left = "a";
-//    to_find.clause.left_id = 0;
     to_find.clause.right = "b";
-//    to_find.clause.right_id = 2;
     to_find.clause.n = 1;
     to_find.support_generating_original_pattern = 0.5;
     to_find.support_declarative_pattern = 1.0;
@@ -216,9 +206,7 @@ TEST_CASE("mining_tests: precedence restrictive") {
     pattern_mining_result<FastDatalessClause> to_find;
     to_find.clause.casusu = "Precedence";
     to_find.clause.left = "A";
-//    to_find.clause.left_id = 0;
     to_find.clause.right = "B";
-//    to_find.clause.right_id = 2;
     to_find.clause.n = 1;
     to_find.support_generating_original_pattern = 4.0/18.0;
     to_find.support_declarative_pattern = 16.0/18.0;
@@ -243,9 +231,7 @@ TEST_CASE("mining_tests: chain_precedence") {
     pattern_mining_result<FastDatalessClause> to_find;
     to_find.clause.casusu = "ChainPrecedence";
     to_find.clause.left = "a";
-//    to_find.clause.left_id = 1;
     to_find.clause.right = "b";
-//    to_find.clause.right_id = 0;
     to_find.clause.n = 1;
     to_find.support_generating_original_pattern = 0.75;
     to_find.support_declarative_pattern = 1.0;
@@ -261,9 +247,7 @@ TEST_CASE("mining_tests: chain_precedence_force_right_branch") {
     pattern_mining_result<FastDatalessClause> to_find;
     to_find.clause.casusu = "ChainPrecedence";
     to_find.clause.left = "a";
-//    to_find.clause.left_id = 1;
     to_find.clause.right = "b";
-//    to_find.clause.right_id = 0;
     to_find.clause.n = 1;
     to_find.support_generating_original_pattern = 0.8;
     to_find.support_declarative_pattern = 1.0;
@@ -279,9 +263,7 @@ TEST_CASE("mining_tests: choice") {
     pattern_mining_result<FastDatalessClause> to_find;
     to_find.clause.casusu = "Choice";
     to_find.clause.left = "a";
-//    to_find.clause.left_id = 0;
     to_find.clause.right = "b";
-//    to_find.clause.right_id = 3;
     to_find.clause.n = 1;
     to_find.support_generating_original_pattern = 0.25;
     to_find.support_declarative_pattern = 1.0;
@@ -309,9 +291,7 @@ TEST_CASE("mining_tests: response") {
     pattern_mining_result<FastDatalessClause> to_find;
     to_find.clause.casusu = "Response";
     to_find.clause.left = "a";
-//    to_find.clause.left_id = 0;
     to_find.clause.right = "b";
-//    to_find.clause.right_id = 2;
     to_find.clause.n = 1;
     to_find.support_generating_original_pattern = 0.75;
     to_find.support_declarative_pattern = 1.0;
@@ -327,9 +307,7 @@ TEST_CASE("mining_tests: chain_response") {
     pattern_mining_result<FastDatalessClause> to_find;
     to_find.clause.casusu = "ChainResponse";
     to_find.clause.left = "a";
-//    to_find.clause.left_id = 0;kb.event_label_mapper.get(B)
     to_find.clause.right = "b";
-//    to_find.clause.right_id = 1;
     to_find.clause.n = 1;
     to_find.support_generating_original_pattern = 0.8;
     to_find.support_declarative_pattern = 1.0;
@@ -345,9 +323,7 @@ TEST_CASE("mining_tests: responded_existence") {
     pattern_mining_result<FastDatalessClause> to_find;
     to_find.clause.casusu = "RespExistence";
     to_find.clause.left = "a";
-//    to_find.clause.left_id = 2;
     to_find.clause.right = "b";
-//    to_find.clause.right_id = 1;
     to_find.clause.n = 1;
     to_find.support_generating_original_pattern = 0.4;
     to_find.support_declarative_pattern = 1.0;
@@ -363,9 +339,7 @@ TEST_CASE("mining_tests: excl_choice") {
     pattern_mining_result<FastDatalessClause> to_find;
     to_find.clause.casusu = "ExclChoice";
     to_find.clause.left = "a";
-//    to_find.clause.left_id = 0;
     to_find.clause.right = "b";
-//    to_find.clause.right_id = 3;
     to_find.clause.n = 1;
     to_find.support_generating_original_pattern = 0.0;
     to_find.support_declarative_pattern = 1.0;
@@ -383,9 +357,7 @@ TEST_CASE("mining_tests: coexistence") {
     pattern_mining_result<FastDatalessClause> to_find;
     to_find.clause.casusu = "CoExistence";
     to_find.clause.left = "a";
-//    to_find.clause.left_id = 2;
     to_find.clause.right = "b";
-//    to_find.clause.right_id = 1;
     to_find.clause.n = 1;
     to_find.support_generating_original_pattern = 0.4;
     to_find.support_declarative_pattern = 1.0;
@@ -393,7 +365,6 @@ TEST_CASE("mining_tests: coexistence") {
 
     pattern_mining_result<FastDatalessClause> to_find_mirror = to_find;
     std::swap(to_find_mirror.clause.left, to_find_mirror.clause.right);
-//    std::swap(to_find_mirror.clause.left_id, to_find_mirror.clause.right_id);
 
     ASSERT_TRUE(((std::find(values.first.begin(), values.first.end(), to_find) != values.first.end()) || (std::find(values.first.begin(), values.first.end(), to_find_mirror) != values.first.end())) );
 }
@@ -405,9 +376,7 @@ TEST_CASE("mining_tests: surround") {
     pattern_mining_result<FastDatalessClause> to_find;
     to_find.clause.casusu = "Surround";
     to_find.clause.left = "a";
-//    to_find.clause.left_id = 2;
     to_find.clause.right = "b";
-//    to_find.clause.right_id = 1;
     to_find.clause.n = 1;
     to_find.support_generating_original_pattern = 1.0;
     to_find.support_declarative_pattern = 1.0;
@@ -423,26 +392,18 @@ TEST_CASE("mining_tests: surround_not_chain_succession") {
     pattern_mining_result<FastDatalessClause> to_find;
     to_find.clause.casusu = "Surround";
     to_find.clause.left = "a";
-//    to_find.clause.left_id = 0;
     to_find.clause.right = "b";
-//    to_find.clause.right_id = 1;
     to_find.clause.n = 1;
     to_find.support_generating_original_pattern = 1.0;
     to_find.support_declarative_pattern = 1.0;
     to_find.restrictive_confidence_plus_declarative_pattern = 1.0;
 
-    pattern_mining_result<FastDatalessClause> to_find_1;
-    to_find_1.clause.casusu = "ChainSuccession";
-    to_find_1.clause.left = "a";
-//    to_find_1.clause.left_id = 0;
-    to_find_1.clause.right = "b";
-//    to_find_1.clause.right_id = 1;
-    to_find_1.clause.n = 1;
-    to_find_1.support_generating_original_pattern = 1.0;
-    to_find_1.support_declarative_pattern = 1.0;
-    to_find_1.restrictive_confidence_plus_declarative_pattern = 1.0;
+    ASSERT_TRUE(std::find(values.first.begin(), values.first.end(), to_find) != values.first.end());
 
-    ASSERT_TRUE(((std::find(values.first.begin(), values.first.end(), to_find) != values.first.end()) && (std::find(values.first.begin(), values.first.end(), to_find_1) == values.first.end())));
+    pattern_mining_result<FastDatalessClause> to_find_1 = to_find;
+    to_find_1.clause.casusu = "ChainSuccession";
+
+    ASSERT_TRUE(std::find(values.first.begin(), values.first.end(), to_find_1) == values.first.end());
 }
 
 TEST_CASE("mining_tests: surround_chain_succession") {
@@ -452,26 +413,18 @@ TEST_CASE("mining_tests: surround_chain_succession") {
     pattern_mining_result<FastDatalessClause> to_find;
     to_find.clause.casusu = "Surround";
     to_find.clause.left = "a";
-//    to_find.clause.left_id = 0;
     to_find.clause.right = "b";
-//    to_find.clause.right_id = 1;
     to_find.clause.n = 1;
     to_find.support_generating_original_pattern = 1.0;
     to_find.support_declarative_pattern = 1.0;
     to_find.restrictive_confidence_plus_declarative_pattern = 1.0;
 
-    pattern_mining_result<FastDatalessClause> to_find_1;
-    to_find_1.clause.casusu = "ChainSuccession";
-    to_find_1.clause.left = "a";
-//    to_find_1.clause.left_id = 0;
-    to_find_1.clause.right = "b";
-//    to_find_1.clause.right_id = 1;
-    to_find_1.clause.n = 1;
-    to_find_1.support_generating_original_pattern = 1.0;
-    to_find_1.support_declarative_pattern = 1.0;
-    to_find_1.restrictive_confidence_plus_declarative_pattern = 1.0;
+    ASSERT_TRUE(std::find(values.first.begin(), values.first.end(), to_find) != values.first.end());
 
-    ASSERT_TRUE(((std::find(values.first.begin(), values.first.end(), to_find) != values.first.end()) && (std::find(values.first.begin(), values.first.end(), to_find_1) != values.first.end())));
+    pattern_mining_result<FastDatalessClause> to_find_1 = to_find;
+    to_find_1.clause.casusu = "ChainSuccession";
+
+    ASSERT_TRUE(std::find(values.first.begin(), values.first.end(), to_find_1) != values.first.end());
 }
 
 TEST_CASE("mining_tests: not_chain_succession") {
@@ -481,9 +434,7 @@ TEST_CASE("mining_tests: not_chain_succession") {
     pattern_mining_result<FastDatalessClause> to_find;
     to_find.clause.casusu = "ChainSuccession";
     to_find.clause.left = "a";
-//    to_find.clause.left_id = 0;
     to_find.clause.right = "b";
-//    to_find.clause.right_id = 1;
     to_find.clause.n = 1;
     to_find.support_generating_original_pattern = (3.0/7.0);
     to_find.support_declarative_pattern = 1.0;
@@ -499,9 +450,7 @@ TEST_CASE("mining_tests: succession") {
     pattern_mining_result<FastDatalessClause> to_find;
     to_find.clause.casusu = "Succession";
     to_find.clause.left = "a";
-//    to_find.clause.left_id = 0;
     to_find.clause.right = "b";
-//    to_find.clause.right_id = 1;
     to_find.clause.n = 1;
     to_find.support_generating_original_pattern = 1.0;
     to_find.support_declarative_pattern = 1.0;
@@ -510,18 +459,22 @@ TEST_CASE("mining_tests: succession") {
     ASSERT_TRUE(std::find(values.first.begin(), values.first.end(), to_find) != values.first.end());
 }
 
-//TEST("mining_tests: succession_confidence") {
-//    std::pair<std::vector<pattern_mining_result<FastDatalessClause>>,std::vector<pattern_mining_result<FastDatalessClause>>> values =
-//            load_and_return("/home/sam/Documents/Repositories/Codebases/knobab/data/testing/mining/succession_confidence.tab");
-//
-//    pattern_mining_result<FastDatalessClause> to_find;
-//    to_find.clause.casusu = "Succession";
-//    to_find.clause.left = "a";
-//    to_find.clause.right = "b";
-//    to_find.clause.n = 1;
-//    to_find.support_generating_original_pattern = 0.75;
-//    to_find.support_declarative_pattern = 0.75;
-//    to_find.confidence_declarative_pattern = (2.0/3.0);
-//
-//    ASSERT_TRUE(std::find(values.second.begin(), values.second.end(), to_find) != values.second.end());
-//}
+TEST_CASE("mining_tests: chain_precedence_mirror") {
+    std::pair<std::vector<pattern_mining_result<FastDatalessClause>>,std::vector<pattern_mining_result<FastDatalessClause>>> values =
+            load_and_return(folder / "chain_precedence_mirror.tab");
+
+    pattern_mining_result<FastDatalessClause> to_find;
+    to_find.clause.casusu = "ChainPrecedence";
+    to_find.clause.left = "a";
+    to_find.clause.right = "b";
+    to_find.clause.n = 1;
+    to_find.support_generating_original_pattern = 0.5;
+    to_find.support_declarative_pattern = 1.0;
+    to_find.restrictive_confidence_plus_declarative_pattern = 1.0;
+
+    ASSERT_TRUE(std::find(values.first.begin(), values.first.end(), to_find) != values.first.end());
+
+    std::swap(to_find.clause.left, to_find.clause.right);
+
+    ASSERT_TRUE(std::find(values.first.begin(), values.first.end(), to_find) != values.first.end());
+}
