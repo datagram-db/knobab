@@ -43,7 +43,7 @@ std::pair<std::vector<pattern_mining_result<FastDatalessClause>>, double> bolt_a
     std::pair<std::vector<pattern_mining_result<FastDatalessClause>>, double> list = bolt2(env.db, support, false, true,
                                                                                          true, false, false);
     std::cout << list.second << " L=" << list.first.size() << std::endl;
-//    std::cout << list.first << std::endl;
+    std::cout << list.first << std::endl;
     if(!no_stats){
         bool filePreexists = std::filesystem::exists(logger_file);
         std::ofstream log(logger_file, std::ios_base::app | std::ios_base::out);
@@ -1067,7 +1067,7 @@ std::pair<std::vector<pattern_mining_result<FastDatalessClause>>, double> bolt2(
         double lr_conf = counter.confidence(lr);
         double rl_conf = counter.confidence(rl);
 #ifdef DEBUG
-        std::cout << "   conf: " << counter.lift(lr) << " conf: " << counter.lift(rl) << std::endl;
+        std::cout << "   conf: " << lr_conf << " conf: " << rl_conf << std::endl;
         std::cout << "   lift: " << counter.lift(lr) << " lift: " << counter.lift(rl) << std::endl;
 #endif
         candidate_rule.restrictive_support_declarative_pattern
@@ -1127,9 +1127,9 @@ std::pair<std::vector<pattern_mining_result<FastDatalessClause>>, double> bolt2(
 //            }
 //        }
 //        clause.right_act_id = B;
-//#ifdef DEBUG
-//        std::cout << clause.clause.left_act << "--" << clause.clause.right_act << std::endl;
-//#endif
+#ifdef DEBUG
+        std::cout << clause.clause.left << "->" << clause.clause.right << ":" << clause << std::endl;
+#endif
         size_t prev = declarative_clauses.size();
         alles_chain_succession_ab = alles_chain_succession_ba = alles_surround_ab = alles_surround_ba = true;
         alles_not_chain_succession_ab = alles_not_chain_succession_ba = alles_not_surround_ab = alles_not_surround_ba = 0;

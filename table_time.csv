@@ -1,0 +1,16 @@
+log_filename,with_data,log_loading_and_parsing_ms,log_indexing_ms,n_traces,n_acts,log_trace_average_length,log_trace_variance,most_frequent_trace_length,trace_length_frequency,atomization_conf,model_filename,queries_plan,operators_version,model_parsing_ms,model_size,model_data_decomposition_time,model_atomization_time,model_declare_to_ltlf,model_ltlf_query_time,is_multithreaded,no_threads,scheduling_strategy,min_support,mining_algorithm,iteration_num
+/home/giacomo/Scaricati/1000_10_10(1).xes,F,6.71146,1.19217,1000,9,10,0,10,1000,,,,,-1,0,-1,-1,-1,-1,No,0,,0.1,APRIORI,0
+/home/giacomo/Scaricati/1000_10_10(1).xes,F,6.71146,1.19217,1000,9,10,0,10,1000,,Generated,,,0,40,0.005634,0.005018,0.559252,15.35,No,1,,0.1,APRIORI,0
+/home/giacomo/Scaricati/1000_10_10(1).xes,F,6.71146,1.19217,1000,9,10,0,10,1000,,Generated,,,0,40,0.006914,0.005784,0.31799,12.0474,No,1,,0.1,APRIORI,0
+/home/giacomo/Scaricati/1000_10_10(1).xes,F,6.71146,1.19217,1000,9,10,0,10,1000,,Generated,,,0,40,0.0072,0.00625,0.325004,9.97815,No,1,,0.1,APRIORI,0
+/home/giacomo/Scaricati/1000_10_10(1).xes,F,6.71146,1.19217,1000,9,10,0,10,1000,,Generated,,,0,40,0.021207,0.006982,0.584104,9.65398,No,1,,0.1,APRIORI,0
+/home/giacomo/Scaricati/1000_10_10(1).xes,F,6.71146,1.19217,1000,9,10,0,10,1000,,Generated,,,0,40,0.006967,0.005883,0.333687,10.1762,No,1,,0.1,APRIORI,0
+/home/giacomo/Scaricati/1000_10_10(1).xes,F,6.71146,1.19217,1000,9,10,0,10,1000,,Generated,,,0,40,0.006351,0.00546,0.266947,7.59875,No,1,,0.1,APRIORI,0
+/home/giacomo/Scaricati/1000_10_10(1).xes,F,6.71146,1.19217,1000,9,10,0,10,1000,,Generated,,,0,40,0.005811,0.005486,0.292222,7.80529,No,1,,0.1,APRIORI,0
+/home/giacomo/Scaricati/1000_10_10(1).xes,F,6.71146,1.19217,1000,9,10,0,10,1000,,Generated,,,0,40,0.005861,0.005696,0.286484,9.11735,No,1,,0.1,APRIORI,0
+/home/giacomo/Scaricati/1000_10_10(1).xes,F,6.71146,1.19217,1000,9,10,0,10,1000,,Generated,,,0,40,0.008177,0.005938,0.307686,8.97175,No,1,,0.1,APRIORI,0
+/home/giacomo/Scaricati/1000_10_10(1).xes,F,6.71146,1.19217,1000,9,10,0,10,1000,,Generated,,,0,40,0.005676,0.005481,0.291846,7.59597,No,1,,0.1,APRIORI,0
+/home/giacomo/Scaricati/1000_10_10(1).xes,F,6.71146,1.19217,1000,9,10,0,10,1000,,Generated,,,0,40,0.006481,0.005345,0.284395,7.6225,No,1,,0.1,APRIORI,0
+/home/giacomo/Scaricati/1000_10_10(1).xes,F,6.71146,1.19217,1000,9,10,0,10,1000,,Generated,,,0,40,0.005592,0.005551,0.277774,6.54299,No,1,,0.1,APRIORI,0
+/home/giacomo/Scaricati/1000_10_10(1).xes,F,6.71146,1.19217,1000,9,10,0,10,1000,,Generated,,,0,32,0.004829,0.004518,0.220613,4.5825,No,1,,0.1,APRIORI,0
+/home/giacomo/Scaricati/1000_10_10(1).xes,F,6.71146,1.19217,1000,9,10,0,10,1000,,Generated,,,0,36,0.003965,0.002691,0.057624,0.623004,No,1,,0.1,APRIORI,0
