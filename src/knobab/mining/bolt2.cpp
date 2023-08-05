@@ -42,8 +42,8 @@ std::pair<std::vector<pattern_mining_result<FastDatalessClause>>, double> bolt_a
     std::filesystem::path declare_file_path, maxsat;
     std::pair<std::vector<pattern_mining_result<FastDatalessClause>>, double> list = bolt2(env.db, support, false, true,
                                                                                          true, false, false);
-    std::cout << list.second << " L=" << list.first.size() << std::endl;
-    std::cout << list.first << std::endl;
+//    std::cout << list.second << " L=" << list.first.size() << std::endl;
+//    std::cout << list.first << std::endl;
     if(!no_stats){
         bool filePreexists = std::filesystem::exists(logger_file);
         std::ofstream log(logger_file, std::ios_base::app | std::ios_base::out);
@@ -921,7 +921,7 @@ std::pair<std::vector<pattern_mining_result<FastDatalessClause>>, double> bolt2(
 #endif
     std::unordered_set<act_t> absent_acts;
     const auto& count_table = kb.getCountTable();
-    std::cout << count_table << std::endl;
+//    std::cout << count_table << std::endl;
     uint64_t minimum_support_threshold = std::min((uint64_t)std::ceil((double)log_size * support), log_size);
     auto max_act_id = (act_t)kb.nAct();
     std::vector<size_t> count_beginnings(max_act_id, 0);
@@ -1208,10 +1208,6 @@ std::pair<std::vector<pattern_mining_result<FastDatalessClause>>, double> bolt2(
                     std::swap(clause.clause.left, clause.clause.right);
                 }
             }
-        }
-
-        if (clause.clause.casusu == "CoExistence") {
-            std::cout << "DEBUG" << std::endl;
         }
 
         /* Okay, so we found no candidate further down the lattice with better support, add RespExistence/CoExistence */
