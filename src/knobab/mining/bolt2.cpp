@@ -641,7 +641,7 @@ Bolt2Branching(const KnowledgeBase &kb, bool only_precise_temporal_patterns,
                 } else if (left_branch) {
                     /* If we are on the left branch, there may be a Succession only detectable on the other
                         * so cache the confidence for now */
-                    MACRO_TRIPLE_SET(data.r_lb_sup_conf, r_sup, r_sup, r_restr);
+                    MACRO_TRIPLE_SET(data.r_lb_sup_conf, r_sup, r_conf, r_restr);
                 } else {
                     const uint32_t s_ba_activated = TRACE_SET_UNION_CARDINALITY(data.p_activation_traces.first, data.r_activation_traces.second);
                     const uint32_t s_ba_satisfied = (ntraces - alles_not_succession_ba);
@@ -1076,6 +1076,7 @@ std::pair<std::vector<pattern_mining_result<FastDatalessClause>>, double> bolt2(
             = ((double) pattern.second) / ((double) log_size); //double supportGeneratingOriginalPattern,
         if ((lr_conf == rl_conf) && (lr_conf >= support)) {
             candidate_rule.clause.new_head(pattern.first);
+            // Observe! To engage with a correct search, I am doing this instead...
             candidate_rule.support_declarative_pattern = counter.decl_support(lr);
             candidate_rule.restrictive_confidence_plus_declarative_pattern = lr_conf;
         } else if (lr_conf >= rl_conf && lr_conf >= support) {
@@ -1100,9 +1101,11 @@ std::pair<std::vector<pattern_mining_result<FastDatalessClause>>, double> bolt2(
             A = candidate_rule.clause.head.at(0);
             B = candidate_rule.clause.head.at(1);
             if (A > B) std::swap(A, B);
+            auto g = counter.decl_coex_support(A, B, log_size);
+            auto h = counter.decl_coex_conf(A, B);
             clause.clause.casusu = "CoExistence";
-            countOk = pattern.second;
-            dss = ((double) countOk) / ((double) log_size);
+//            countOk = pattern.second;
+//            dss = ((double) countOk) / ((double) log_size);
         } else if (candidate_rule.clause.tail.size() == 1) {
             A = candidate_rule.clause.head.at(0);
             B = candidate_rule.clause.tail.at(0);
@@ -1207,6 +1210,10 @@ std::pair<std::vector<pattern_mining_result<FastDatalessClause>>, double> bolt2(
             }
         }
 
+        if (clause.clause.casusu == "CoExistence") {
+            std::cout << "DEBUG" << std::endl;
+        }
+
         /* Okay, so we found no candidate further down the lattice with better support, add RespExistence/CoExistence */
         if (declarative_clauses.size() == prev) {
             // If the choice/ExclChoice is not better than Co/Resp-Existence
@@ -1214,6 +1221,12 @@ std::pair<std::vector<pattern_mining_result<FastDatalessClause>>, double> bolt2(
             if ((min_int_supp_patt > log_size) || (!choice_exclchoice(A, B, log_size, min_int_supp_patt,
                                                                       kb, inv_map, map_for_retain, map_for_itemset_support_score))) {
                 {
+                    if (clause.clause.casusu == "CoExistence") {
+                        candidate_rule.support_declarative_pattern = counter.decl_coex_support(A, B, log_size);
+                        candidate_rule.restrictive_confidence_plus_declarative_pattern =
+                        candidate_rule.restrictive_support_declarative_pattern
+                                = counter.decl_coex_conf(A, B);
+                    }
 #ifndef CORRECT_IMPLEMENTATION
                     if ((clause.clause.casusu == "RespExistence") || (clause.clause.casusu == "CoExistence"))
                         // All the branching alternatives are discarded, so providing this as an output
@@ -1225,7 +1238,10 @@ std::pair<std::vector<pattern_mining_result<FastDatalessClause>>, double> bolt2(
                     else
                         // Otherwise, this is something that was cached in one of the undergoing calls
 #endif
+
+                    {
                         declarative_clauses.emplace_back(clause);
+                    }
 
                 }
             }

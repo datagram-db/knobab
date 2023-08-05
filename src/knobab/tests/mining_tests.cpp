@@ -369,6 +369,31 @@ TEST_CASE("mining_tests: coexistence") {
     ASSERT_TRUE(((std::find(values.first.begin(), values.first.end(), to_find) != values.first.end()) || (std::find(values.first.begin(), values.first.end(), to_find_mirror) != values.first.end())) );
 }
 
+TEST_CASE("mining_tests: not succession") {
+    std::pair<std::vector<pattern_mining_result<FastDatalessClause>>,std::vector<pattern_mining_result<FastDatalessClause>>> values =
+            load_and_return(folder / "not_coexistence.tab");
+
+    pattern_mining_result<FastDatalessClause> to_find;
+    to_find.clause.casusu = "Succession";
+    to_find.clause.left = "a";
+    to_find.clause.right = "b";
+    to_find.clause.n = 1;
+    to_find.support_generating_original_pattern = 3.0/5.0;
+    to_find.support_declarative_pattern = 3.0/5.0;
+    to_find.restrictive_confidence_plus_declarative_pattern = 3.0/5.0;
+    ASSERT_TRUE(((std::find(values.second.begin(), values.second.end(), to_find) == values.second.end())));
+
+    to_find.clause.casusu = "Precedence";
+    to_find.support_generating_original_pattern = 3.0/5.0;
+    to_find.support_declarative_pattern = 4.0/5.0;
+    to_find.restrictive_confidence_plus_declarative_pattern = 3.0/4.0;
+    ASSERT_TRUE(((std::find(values.second.begin(), values.second.end(), to_find) != values.second.end())));
+
+    to_find.clause.casusu = "Response";
+    ASSERT_TRUE(((std::find(values.second.begin(), values.second.end(), to_find) != values.second.end())));
+}
+
+
 TEST_CASE("mining_tests: surround") {
     std::pair<std::vector<pattern_mining_result<FastDatalessClause>>,std::vector<pattern_mining_result<FastDatalessClause>>> values =
             load_and_return(folder / "surround.tab");
