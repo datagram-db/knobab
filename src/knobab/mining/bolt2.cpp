@@ -921,6 +921,7 @@ std::pair<std::vector<pattern_mining_result<FastDatalessClause>>, double> bolt2(
 #endif
     std::unordered_set<act_t> absent_acts;
     const auto& count_table = kb.getCountTable();
+    std::cout << count_table << std::endl;
     uint64_t minimum_support_threshold = std::min((uint64_t)std::ceil((double)log_size * support), log_size);
     auto max_act_id = (act_t)kb.nAct();
     std::vector<size_t> count_beginnings(max_act_id, 0);
@@ -1172,7 +1173,7 @@ std::pair<std::vector<pattern_mining_result<FastDatalessClause>>, double> bolt2(
                         decrease_support_X(kb, expected_support, alles_chain_succession_ba,
                                            alles_not_chain_succession_ba);
                     }
-                    if (!((2*lB-coarsening <= lA) && (lA <= (2 * lB)))) {
+                    if (!((lB <= lA) && (lA <= (2 * lB)))) {
                         decrease_support_X(kb, expected_support, alles_surround_ba, alles_not_surround_ba);
                     }
                 }
