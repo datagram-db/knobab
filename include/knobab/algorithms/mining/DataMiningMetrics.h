@@ -13,7 +13,7 @@
 #include <knobab/algorithms/mining/Rule.h>
 #include <yaucl/functional/LexicographicalOrder.h>
 #include "knobab/mining/CountTableFPTree.h"
-
+#include <ranges>
 
 //using VTLexic = LexicographicalOrder<std::vector<std::string>, std::string>;
 
@@ -61,7 +61,17 @@ struct DataMiningMetrics {
         }
     }
 
+    std::vector<trace_t> negate_presence(act_t a, trace_t max_abs) {
+        auto range = std::views::iota((trace_t)0, max_abs);
+        const std::vector<trace_t>& orig = act_to_traces.at(a);
+        std::vector<trace_t> res;
+        std::set_difference(range.begin(), range.end(), orig.begin(), orig.end(),
+                              std::back_inserter(res));
+        return res;
+    }
+
     std::unordered_map<std::vector<act_t>, size_t> compute_and;
+    std::unordered_map<std::vector<act_t>, size_t> compute_or;
     size_t and_(const std::vector<act_t>& i)  {
         if (i.empty())
             return sumAll;
@@ -74,6 +84,26 @@ struct DataMiningMetrics {
             for (size_t j = 1; j<i.size(); j++) {
                 const auto& ref = act_to_traces.at(i.at(j));
                 std::set_intersection(orig.begin(), orig.end(), ref.begin(), ref.end(),
+                                      std::back_inserter(res));
+                std::swap(res, orig);
+            }
+            it.first->second =  orig.size();
+        }
+        return it.first->second;
+    }
+
+    size_t or_(const std::vector<act_t>& i)  {
+        if (i.empty())
+            return sumAll;
+        else if (i.size() == 1)
+            return act_to_traces.at(i.at(0)).size();
+        auto it = compute_or.emplace(i, 0.0); //memoizing
+        if (it.second) {
+            std::vector<trace_t> orig = act_to_traces[i.at(0)];
+            std::vector<trace_t> res;
+            for (size_t j = 1; j<i.size(); j++) {
+                const auto& ref = act_to_traces.at(i.at(j));
+                std::set_union(orig.begin(), orig.end(), ref.begin(), ref.end(),
                                       std::back_inserter(res));
                 std::swap(res, orig);
             }
@@ -97,18 +127,30 @@ struct DataMiningMetrics {
     }
 
     std::unordered_map<Rule<act_t>, double> score_decl_support;
-
     double decl_support(const Rule<act_t>& r) {
-//        auto it = score_decl_support.emplace(r, 0.0); //memoizing
-//        if (it.second) {
             std::vector<act_t> unione;
             for (const auto& x: r.head) unione.emplace_back(x);
             for (const auto& x: r.tail) unione.emplace_back(x);
             std::sort(unione.begin(), unione.end());
             unione.erase(std::unique(unione.begin(), unione.end()), unione.end());
             return ((double)and_(unione)+(sumAll-and_(r.head))) / sumAll;
-//        }
-//        return it.first->second;
+    }
+
+    double decl_coex_support(act_t a, act_t b, trace_t max_trace_id) {
+        std::vector<act_t> unione{{a,b}};
+        auto not_a = negate_presence(a, max_trace_id);
+        const std::vector<trace_t>& orig = act_to_traces.at(b);
+        std::vector<trace_t> res;
+        std::set_difference(not_a.begin(), not_a.end(), orig.begin(), orig.end(),
+                            std::back_inserter(res));
+        return ((double)and_(unione)+res.size())/ ((double)sumAll);
+    }
+
+    double decl_coex_conf(act_t a, act_t b) {
+        std::vector<act_t> unione{{a,b}};
+        double above = and_(unione);
+        double below = or_(unione);
+        return ((double)and_(unione))/ ((double)or_(unione));
     }
 
     std::unordered_map<Rule<act_t>, double> score_conf;
