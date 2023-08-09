@@ -778,7 +778,7 @@ Bolt2Branching(const KnowledgeBase &kb, bool only_precise_temporal_patterns,
             }
             else {
                 /* ChainSuccession(A,B) not good enough, add the current ChainPrecedence(B,A) and ChainResponse(A,B) from the left branch */
-                if ((clauses.empty()) || (clauses.back().clause != clause.clause)) {
+                if ((!isSurroundIn) && ((clauses.empty()) || (clauses.back().clause != clause.clause))) {
                     clause.clause.casusu = "ChainPrecedence";
                     // Enforcing this, as you might have changed the clause name to Surround!
                     clause.support_declarative_pattern = cp_sup;
