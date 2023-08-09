@@ -533,19 +533,114 @@ Bolt2Branching(const KnowledgeBase &kb, bool only_precise_temporal_patterns,
         return;
     }
 
+
+    /* [[[IMPORTANT]]] Precedence(A,B) vs ChainPrecedence(B,A) have different semantics, so we have to check separately,
+     * i.e. we can return Precedence(A,B) AND ChainPrecedence(B,A) as the latter DOES NOT consume the former
+     *
+     * Precedence(A,B) + Precedence(B,A) -> INVALID (with non-zero confidence)
+     * Precedence(A,B) + ChainPrecedence(A,B) ->  VALID e.g. {ABA} due to the X(A) on the first element
+     * Precedence(A,B) + ChainPrecedence(B,A) -> VALID but NOT consuming e.g. {B} satisfies the latter but not the former
+     * ChainPrecedence(A,B) + ChainPrecedence(B,A) -> VALID e.g. {A}
+     *
+     * Therefore, it is entirely possible to have a model with ChainSuccession(A,B), Surround(A,B) and Precedence(A,B) */
+    const uint32_t cp_satisfied = (ntraces - alles_not_prev);
+    const uint32_t cp_satisfied_not_vacuous = cp_satisfied - (not_a_activated + conf_prev_not_counting);
+                const uint32_t cr_satisfied = (ntraces - alles_not_next);
+            const uint32_t cr_satisfied_not_vacuous = cr_satisfied - not_a_activated;
+            const double cr_sup = ((double) cr_satisfied) / ((double) ntraces);
+        bool isSurroundIn = false;
+
+    if (alles_prev && (cp_satisfied_not_vacuous > 0) && (conf_prev_counting > 0)) {
+        clause.clause.casusu = "ChainPrecedence";
+        data.flags |= right_branch ? CHAIN_PRECEDENCE_BA_ID : CHAIN_PRECEDENCE_AB_ID;
+        const double cp_sup = ((double) cp_satisfied) / ((double) ntraces);
+        const double cp_conf = ((double) cp_satisfied_not_vacuous) / ((double) conf_prev_counting);
+        const double cp_restr = ((double) cp_satisfied_not_vacuous) / ((double) ntraces);
+        clause.support_declarative_pattern = cp_sup;
+        clause.restrictive_confidence_plus_declarative_pattern = cp_conf;
+        clause.restrictive_support_declarative_pattern = cp_restr;
+
+        if (alles_surround) {
+            const uint32_t sr_satisfied = (ntraces - alles_not_surround);
+            const double sr_sup = ((double) sr_satisfied) / ((double) ntraces);
+
+            const uint32_t sr_activated = !right_branch ? TRACE_SET_UNION_CARDINALITY(data.cr_activation_traces.first, data.cp_activation_traces.second) : TRACE_SET_UNION_CARDINALITY(data.cr_activation_traces.second, data.cp_activation_traces.first);
+            const uint32_t sr_satisfied_not_vacuous = sr_satisfied - (ntraces - sr_activated);
+
+            if((sr_sup >= cr_sup) && (sr_sup >= cp_sup) && (sr_satisfied_not_vacuous > 0) && (sr_activated > 0)) {
+                clause.clause.casusu = "Surround";
+                const double sr_conf =  ((double) sr_satisfied_not_vacuous) / ((double) sr_activated);
+                const double sr_restr =  ((double) sr_satisfied_not_vacuous) / ((double) ntraces);
+                clause.support_declarative_pattern = sr_sup;
+                clause.restrictive_confidence_plus_declarative_pattern = sr_conf;
+                clause.restrictive_support_declarative_pattern = sr_restr;
+                clauses.emplace_back(clause);
+                isSurroundIn = true;
+            }
+        }
+        if(!right_branch && !left_branch && !isSurroundIn) {
+            clause.support_declarative_pattern = cp_sup;
+            clause.restrictive_confidence_plus_declarative_pattern = cp_conf;
+            clause.restrictive_support_declarative_pattern = cp_restr;
+            clauses.emplace_back(clause);
+        } else if (left_branch) {
+                /* If we are on the left branch, there may be a ChainSuccession only detectable on the other
+                    * so cache the confidence for now */
+
+            MACRO_TRIPLE_SET(data.cp_lb_sup_conf, cp_sup, cp_conf, cp_restr);
+        } else {
+            /* We know that in the first branch ChainResponse(A,B) was added and here have ChainPrecedence(B,A) */
+            const uint32_t cs_ab_satisfied = (ntraces - alles_not_cs_ab);
+            const double cs_ab_sup = ((double) cs_ab_satisfied) / ((double) ntraces);
+
+            const uint32_t cs_ab_activated = TRACE_SET_UNION_CARDINALITY(data.cr_activation_traces.first, data.cp_activation_traces.second);
+            const uint32_t cs_ab_satisfied_not_vacuous = cs_ab_satisfied - (ntraces - cs_ab_activated);
+            if (alles_cs_ab && (cs_ab_sup >= std::get<0>(data.cr_lb_sup_conf)) && (cs_ab_sup >= cp_sup) && (cs_ab_satisfied_not_vacuous > 0) && (cs_ab_activated > 0)) {
+                clause.clause.casusu = "ChainSuccession";
+                const double cs_ab_conf = ((double) cs_ab_satisfied_not_vacuous) / ((double) cs_ab_activated);
+                const double cs_ab_restr = ((double) cs_ab_satisfied_not_vacuous) / ((double) ntraces);
+                clause.support_declarative_pattern = cs_ab_sup;
+                clause.restrictive_confidence_plus_declarative_pattern = cs_ab_conf;
+                clause.restrictive_support_declarative_pattern = cs_ab_restr;
+                auto& ref = clauses.emplace_back(clause);
+                std::swap(ref.clause.left, ref.clause.right);
+            }
+            else {
+                /* ChainSuccession(A,B) not good enough, add the current ChainPrecedence(B,A) and ChainResponse(A,B) from the left branch */
+                if ((!isSurroundIn) && ((clauses.empty()) || (clauses.back().clause != clause.clause))) {
+                    clause.clause.casusu = "ChainPrecedence";
+                    // Enforcing this, as you might have changed the clause name to Surround!
+                    clause.support_declarative_pattern = cp_sup;
+                    clause.restrictive_confidence_plus_declarative_pattern = cp_conf;
+                    clause.restrictive_support_declarative_pattern = cp_restr;
+                    clauses.emplace_back(clause);
+                }
+
+                /* ChainResponse(A,B) has already been consumed by Surround(A,B), so don't add */
+                if (((data.flags & SURROUND_AB_ID) != SURROUND_AB_ID) && ((data.flags & CHAIN_RESPONSE_AB_ID) == CHAIN_RESPONSE_AB_ID) && (std::get<1>(data.cr_lb_sup_conf) != -1)) {
+                    clause.clause.casusu = "ChainResponse";
+                    auto& ref = clauses.emplace_back(clause.clause,
+                                                                                        candidate.support_generating_original_pattern,
+                                         data.cr_lb_sup_conf);
+                    std::swap(ref.clause.left, ref.clause.right);
+                }
+            }
+        }
+    }
+
     /* Declaring outside for now, need global for the surround */
-    double cr_sup = -1;
+//    double cr_sup = -1;
 
     if (alles_response || alles_precedence) {
         const uint32_t p_satisfied = ntraces - alles_not_precedence;
-#ifdef DEBUG
-        if (!(vacuous_count_noanob <= p_satisfied)) {
-            auto a = kb.event_label_mapper.get(A);
-            auto b = kb.event_label_mapper.get(B);
-            std::cout << "CASE OF ERROR over a:=" << a << " and b:=" << b << std::endl << std::flush;
-            DEBUG_ASSERT(false);
-        }
-#endif
+//#ifdef DEBUG
+//        if (!(vacuous_count_noanob <= p_satisfied)) {
+//            auto a = kb.event_label_mapper.get(A);
+//            auto b = kb.event_label_mapper.get(B);
+//            std::cout << "CASE OF ERROR over a:=" << a << " and b:=" << b << std::endl << std::flush;
+//            DEBUG_ASSERT(false);
+//        }
+//#endif
         const uint32_t p_satisfied_not_vacuous = p_satisfied - vacuous_count_noanob;
         const double p_sup = ((double) p_satisfied) / ((double) ntraces);
 
@@ -555,9 +650,6 @@ Bolt2Branching(const KnowledgeBase &kb, bool only_precise_temporal_patterns,
             const uint32_t r_satisfied_not_vacuous = r_satisfied - not_a_activated;
             const double r_sup = ((double) r_satisfied) / ((double) ntraces);
 
-            const uint32_t cr_satisfied = (ntraces - alles_not_next);
-            const uint32_t cr_satisfied_not_vacuous = cr_satisfied - not_a_activated;
-            cr_sup = ((double) cr_satisfied) / ((double) ntraces);
 
             if (alles_next && (cr_sup >= r_sup) && (cr_satisfied_not_vacuous > 0) && (conf_next_counting > 0)) {
                 clause.clause.casusu = "ChainResponse";
@@ -598,6 +690,7 @@ Bolt2Branching(const KnowledgeBase &kb, bool only_precise_temporal_patterns,
                     /* If ChainPrecedence(A,B) and ChainResponse(A,B) from left branch were enough to form a Surround, then don't re-add */
                     else {
                         /* ChainSuccession(A,B) not good enough, add the current ChainResponse(B,A) and ChainPrecedence(A,B) from the left branch */
+                        if (!isSurroundIn)
                         clauses.emplace_back(clause.clause,
                                              candidate.support_generating_original_pattern,
                                              cr_sup,
@@ -709,95 +802,6 @@ Bolt2Branching(const KnowledgeBase &kb, bool only_precise_temporal_patterns,
         }
     }
 
-    /* [[[IMPORTANT]]] Precedence(A,B) vs ChainPrecedence(B,A) have different semantics, so we have to check separately,
-     * i.e. we can return Precedence(A,B) AND ChainPrecedence(B,A) as the latter DOES NOT consume the former
-     *
-     * Precedence(A,B) + Precedence(B,A) -> INVALID (with non-zero confidence)
-     * Precedence(A,B) + ChainPrecedence(A,B) ->  VALID e.g. {ABA} due to the X(A) on the first element
-     * Precedence(A,B) + ChainPrecedence(B,A) -> VALID but NOT consuming e.g. {B} satisfies the latter but not the former
-     * ChainPrecedence(A,B) + ChainPrecedence(B,A) -> VALID e.g. {A}
-     *
-     * Therefore, it is entirely possible to have a model with ChainSuccession(A,B), Surround(A,B) and Precedence(A,B) */
-    const uint32_t cp_satisfied = (ntraces - alles_not_prev);
-    const uint32_t cp_satisfied_not_vacuous = cp_satisfied - (not_a_activated + conf_prev_not_counting);
-
-    if (alles_prev && (cp_satisfied_not_vacuous > 0) && (conf_prev_counting > 0)) {
-        clause.clause.casusu = "ChainPrecedence";
-        data.flags |= right_branch ? CHAIN_PRECEDENCE_BA_ID : CHAIN_PRECEDENCE_AB_ID;
-        const double cp_sup = ((double) cp_satisfied) / ((double) ntraces);
-        const double cp_conf = ((double) cp_satisfied_not_vacuous) / ((double) conf_prev_counting);
-        const double cp_restr = ((double) cp_satisfied_not_vacuous) / ((double) ntraces);
-        clause.support_declarative_pattern = cp_sup;
-        clause.restrictive_confidence_plus_declarative_pattern = cp_conf;
-        clause.restrictive_support_declarative_pattern = cp_restr;
-        bool isSurroundIn = false;
-        if (alles_surround) {
-            const uint32_t sr_satisfied = (ntraces - alles_not_surround);
-            const double sr_sup = ((double) sr_satisfied) / ((double) ntraces);
-
-            const uint32_t sr_activated = !right_branch ? TRACE_SET_UNION_CARDINALITY(data.cr_activation_traces.first, data.cp_activation_traces.second) : TRACE_SET_UNION_CARDINALITY(data.cr_activation_traces.second, data.cp_activation_traces.first);
-            const uint32_t sr_satisfied_not_vacuous = sr_satisfied - (ntraces - sr_activated);
-
-            if((sr_sup >= cr_sup) && (sr_sup >= cp_sup) && (sr_satisfied_not_vacuous > 0) && (sr_activated > 0)) {
-                clause.clause.casusu = "Surround";
-                const double sr_conf =  ((double) sr_satisfied_not_vacuous) / ((double) sr_activated);
-                const double sr_restr =  ((double) sr_satisfied_not_vacuous) / ((double) ntraces);
-                clause.support_declarative_pattern = sr_sup;
-                clause.restrictive_confidence_plus_declarative_pattern = sr_conf;
-                clause.restrictive_support_declarative_pattern = sr_restr;
-                clauses.emplace_back(clause);
-                isSurroundIn = true;
-            }
-        }
-        if(!right_branch && !left_branch && !isSurroundIn) {
-            clause.support_declarative_pattern = cp_sup;
-            clause.restrictive_confidence_plus_declarative_pattern = cp_conf;
-            clause.restrictive_support_declarative_pattern = cp_restr;
-            clauses.emplace_back(clause);
-        } else if (left_branch) {
-                /* If we are on the left branch, there may be a ChainSuccession only detectable on the other
-                    * so cache the confidence for now */
-
-            MACRO_TRIPLE_SET(data.cp_lb_sup_conf, cp_sup, cp_conf, cp_restr);
-        } else {
-            /* We know that in the first branch ChainResponse(A,B) was added and here have ChainPrecedence(B,A) */
-            const uint32_t cs_ab_satisfied = (ntraces - alles_not_cs_ab);
-            const double cs_ab_sup = ((double) cs_ab_satisfied) / ((double) ntraces);
-
-            const uint32_t cs_ab_activated = TRACE_SET_UNION_CARDINALITY(data.cr_activation_traces.first, data.cp_activation_traces.second);
-            const uint32_t cs_ab_satisfied_not_vacuous = cs_ab_satisfied - (ntraces - cs_ab_activated);
-            if (alles_cs_ab && (cs_ab_sup >= std::get<0>(data.cr_lb_sup_conf)) && (cs_ab_sup >= cp_sup) && (cs_ab_satisfied_not_vacuous > 0) && (cs_ab_activated > 0)) {
-                clause.clause.casusu = "ChainSuccession";
-                const double cs_ab_conf = ((double) cs_ab_satisfied_not_vacuous) / ((double) cs_ab_activated);
-                const double cs_ab_restr = ((double) cs_ab_satisfied_not_vacuous) / ((double) ntraces);
-                clause.support_declarative_pattern = cs_ab_sup;
-                clause.restrictive_confidence_plus_declarative_pattern = cs_ab_conf;
-                clause.restrictive_support_declarative_pattern = cs_ab_restr;
-                auto& ref = clauses.emplace_back(clause);
-                std::swap(ref.clause.left, ref.clause.right);
-            }
-            else {
-                /* ChainSuccession(A,B) not good enough, add the current ChainPrecedence(B,A) and ChainResponse(A,B) from the left branch */
-                if ((!isSurroundIn) && ((clauses.empty()) || (clauses.back().clause != clause.clause))) {
-                    clause.clause.casusu = "ChainPrecedence";
-                    // Enforcing this, as you might have changed the clause name to Surround!
-                    clause.support_declarative_pattern = cp_sup;
-                    clause.restrictive_confidence_plus_declarative_pattern = cp_conf;
-                    clause.restrictive_support_declarative_pattern = cp_restr;
-                    clauses.emplace_back(clause);
-                }
-
-                /* ChainResponse(A,B) has already been consumed by Surround(A,B), so don't add */
-                if (((data.flags & SURROUND_AB_ID) != SURROUND_AB_ID) && ((data.flags & CHAIN_RESPONSE_AB_ID) == CHAIN_RESPONSE_AB_ID) && (std::get<1>(data.cr_lb_sup_conf) != -1)) {
-                    clause.clause.casusu = "ChainResponse";
-                    auto& ref = clauses.emplace_back(clause.clause,
-                                                                                        candidate.support_generating_original_pattern,
-                                         data.cr_lb_sup_conf);
-                    std::swap(ref.clause.left, ref.clause.right);
-                }
-            }
-        }
-    }
 }
 
 #include <yaucl/strings/serializers.h>
