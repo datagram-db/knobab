@@ -484,6 +484,23 @@ TEST_CASE("mining_tests: succession") {
     ASSERT_TRUE(std::find(values.first.begin(), values.first.end(), to_find) != values.first.end());
 }
 
+TEST_CASE("mining_tests: no duplicate surround") {
+    std::pair<std::vector<pattern_mining_result<FastDatalessClause>>,std::vector<pattern_mining_result<FastDatalessClause>>> values =
+            load_and_return(folder / "no_duplicate_surround.tab");
+
+    pattern_mining_result<FastDatalessClause> to_find;
+    to_find.clause.casusu = "Surround";
+    to_find.clause.left = "A";
+    to_find.clause.right = "B";
+    to_find.clause.n = 1;
+    to_find.support_generating_original_pattern = 1.0;
+    to_find.support_declarative_pattern = 1.0;
+    to_find.restrictive_confidence_plus_declarative_pattern = 1.0;
+    ASSERT_TRUE(std::find(values.first.begin(), values.first.end(), to_find) != values.first.end());
+    to_find.clause.casusu = "ChainPrecedence";
+    ASSERT_TRUE(std::find(values.first.begin(), values.first.end(), to_find) == values.first.end());
+}
+
 TEST_CASE("mining_tests: chain_precedence_mirror") {
     std::pair<std::vector<pattern_mining_result<FastDatalessClause>>,std::vector<pattern_mining_result<FastDatalessClause>>> values =
             load_and_return(folder / "chain_precedence_mirror.tab");
