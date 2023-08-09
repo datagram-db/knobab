@@ -42,8 +42,8 @@ std::pair<std::vector<pattern_mining_result<FastDatalessClause>>, double> bolt_a
     std::filesystem::path declare_file_path, maxsat;
     std::pair<std::vector<pattern_mining_result<FastDatalessClause>>, double> list = bolt2(env.db, support, false, true,
                                                                                          true, false, false);
-//    std::cout << list.second << " L=" << list.first.size() << std::endl;
-//    std::cout << list.first << std::endl;
+    std::cout << list.second << " L=" << list.first.size() << std::endl;
+    std::cout << list.first << std::endl;
     if(!no_stats){
         bool filePreexists = std::filesystem::exists(logger_file);
         std::ofstream log(logger_file, std::ios_base::app | std::ios_base::out);
@@ -224,6 +224,8 @@ Bolt2Branching(const KnowledgeBase &kb, bool only_precise_temporal_patterns,
     auto b_beginend = kb.timed_dataless_exists(B);
 // As I obtained the rule, there should be some data pertaining to it!
     DEBUG_ASSERT(b_beginend.first != b_beginend.second);
+
+
     uint32_t a_activation_count = 0, not_a_activated = 0, vacuous_count_noanob = 0, a_trace_id = a_beginend.first->entry.id.parts.trace_id, a_prev_trace_id = a_trace_id,
     b_trace_id = b_beginend.first->entry.id.parts.trace_id;
     bool doRetain = false;
@@ -380,7 +382,6 @@ Bolt2Branching(const KnowledgeBase &kb, bool only_precise_temporal_patterns,
             else {
                 // If there is no match for the B event, then I'm setting this to false
                 // and quitting the iteration
-//                    removed_traces_from_response.emplace_back(trace_id);
                 decrease_support_X(kb, expected_support, alles_response, alles_not_response);
 
                 if (left_branch) {
@@ -393,20 +394,8 @@ Bolt2Branching(const KnowledgeBase &kb, bool only_precise_temporal_patterns,
 
                 break;
             }
-//                        {
-//                            if ((tmp != a_beginend.second) &&
-//                                (tmp->entry.id.parts.event_id <
-//                                 b_beginend.first->entry.id.parts.event_id)) {
-//                                all_altresponse_in_trace = false;
-//                            }
-//                        }
-
-//                                a_beginend.first++;
             a_beginend.first++;
         }
-//                    if (!all_altresponse_in_trace) {
-//                        decrease_support_X(kb, expected_support, alles_altresponse, alles_not_altresponse);
-//                    }
 
         fast_forward_equals(a_trace_id, a_beginend.first, a_beginend.second);
         fast_forward_equals(a_trace_id, b_beginend.first, b_beginend.second);
@@ -437,7 +426,7 @@ Bolt2Branching(const KnowledgeBase &kb, bool only_precise_temporal_patterns,
     a_beginend = kb.timed_dataless_exists(A);
     auto start = a_beginend.first;
     a_prev_trace_id = a_beginend.first != a_beginend.second ? a_beginend.first->entry.id.parts.trace_id : -1;
-    bool forward_prec = false, forward_resp = false;
+    bool forward_response = false, forward_precedence = false;
     uint32_t conf_prev_not_counting = 0;
 
     while (a_beginend.first != a_beginend.second) {
@@ -447,11 +436,11 @@ Bolt2Branching(const KnowledgeBase &kb, bool only_precise_temporal_patterns,
 
         auto trace_id = a_beginend.first->entry.id.parts.trace_id;
         if (trace_id != a_prev_trace_id) {
-            forward_prec = forward_resp = false;
+            forward_response = forward_precedence = false;
             a_prev_trace_id = trace_id;
         }
 
-        if (!forward_prec && ((a_beginend.first->next == nullptr) || (a_beginend.first->next->entry.id.parts.act != B))) {
+        if (!forward_response && ((a_beginend.first->next == nullptr) || (a_beginend.first->next->entry.id.parts.act != B))) {
             decrease_support_X(kb, expected_support, alles_next, alles_not_next);
             if (left_branch) {
                 TRACE_SET_ADD(data.cr_lb_violations, ((trace_t)a_beginend.first->entry.id.parts.trace_id));
@@ -465,10 +454,10 @@ Bolt2Branching(const KnowledgeBase &kb, bool only_precise_temporal_patterns,
             if (alles_surround) {
                 decrease_support_X(kb, expected_support, alles_surround, alles_not_surround);
             }
-            forward_prec = true;
+            forward_response = true;
         }
 
-        if (!forward_resp && ((a_beginend.first->prev != nullptr) && (a_beginend.first->prev->entry.id.parts.act != B))) {
+        if (!forward_precedence && ((a_beginend.first->prev != nullptr) && (a_beginend.first->prev->entry.id.parts.act != B))) {
             decrease_support_X(kb, expected_support, alles_prev, alles_not_prev);
             if (left_branch) {
                 TRACE_SET_ADD(data.cp_lb_violations, (trace_t)(a_beginend.first->entry.id.parts.trace_id));
@@ -482,7 +471,7 @@ Bolt2Branching(const KnowledgeBase &kb, bool only_precise_temporal_patterns,
             if (alles_surround) {
                 decrease_support_X(kb, expected_support, alles_surround, alles_not_surround);
             }
-            forward_resp = true;
+            forward_precedence = true;
         }
 
         if ((a_beginend.first == start) || (a_beginend.first - 1)->entry.id.parts.trace_id != trace_id) {
@@ -503,7 +492,7 @@ Bolt2Branching(const KnowledgeBase &kb, bool only_precise_temporal_patterns,
             }
         }
 
-        if (forward_prec && forward_resp) {
+        if (forward_response && forward_precedence) {
             fast_forward_equals(trace_id, a_beginend.first, a_beginend.second);
         }
         else {
@@ -575,6 +564,7 @@ Bolt2Branching(const KnowledgeBase &kb, bool only_precise_temporal_patterns,
                 data.flags |= right_branch ? CHAIN_RESPONSE_BA_ID : CHAIN_RESPONSE_AB_ID;
                 const double cr_conf = ((double) cr_satisfied_not_vacuous) / ((double) conf_next_counting);
                 const double cr_restr = ((double) cr_satisfied_not_vacuous) / ((double) ntraces);
+
                 if(!right_branch && !left_branch) {
                     clauses.emplace_back(clause.clause,
                                          candidate.support_generating_original_pattern,
@@ -740,7 +730,7 @@ Bolt2Branching(const KnowledgeBase &kb, bool only_precise_temporal_patterns,
         clause.support_declarative_pattern = cp_sup;
         clause.restrictive_confidence_plus_declarative_pattern = cp_conf;
         clause.restrictive_support_declarative_pattern = cp_restr;
-
+        bool isSurroundIn = false;
         if (alles_surround) {
             const uint32_t sr_satisfied = (ntraces - alles_not_surround);
             const double sr_sup = ((double) sr_satisfied) / ((double) ntraces);
@@ -756,9 +746,10 @@ Bolt2Branching(const KnowledgeBase &kb, bool only_precise_temporal_patterns,
                 clause.restrictive_confidence_plus_declarative_pattern = sr_conf;
                 clause.restrictive_support_declarative_pattern = sr_restr;
                 clauses.emplace_back(clause);
+                isSurroundIn = true;
             }
         }
-        if(!right_branch && !left_branch) {
+        if(!right_branch && !left_branch && !isSurroundIn) {
             clause.support_declarative_pattern = cp_sup;
             clause.restrictive_confidence_plus_declarative_pattern = cp_conf;
             clause.restrictive_support_declarative_pattern = cp_restr;
@@ -805,23 +796,6 @@ Bolt2Branching(const KnowledgeBase &kb, bool only_precise_temporal_patterns,
             }
         }
     }
-
-//            if (ptn) {
-//                std::vector<trace_t> responseSupp;
-//                std::set_difference(allTraces.begin(), allTraces.end(),
-//                                    removed_traces_from_response.begin(), removed_traces_from_response.end(),
-//                                    std::back_inserter(responseSupp));
-//                auto it_1 = ptn->find("Response");
-//                if (it_1 == ptn->end()) {
-//                    it_1 = ptn->emplace("Response", std::unordered_map < act_t, std::vector<forNegation> > {}).first;
-//                }
-//                auto it_2 = it_1->second.find(A);
-//                if (it_2 == it_1->second.end()) {
-//                    it_2 = it_1->second.emplace(A, std::vector<forNegation>{}).first;
-//                }
-//                it_2->second.emplace_back(B, responseSupp, (((double) (ntraces - alles_not_response)) /
-//                                                            ((double) ntraces)));
-//            }
 }
 
 #include <yaucl/strings/serializers.h>
@@ -1077,7 +1051,7 @@ std::pair<std::vector<pattern_mining_result<FastDatalessClause>>, double> bolt2(
         if ((lr_conf == rl_conf) && (lr_conf >= support)) {
             candidate_rule.clause.new_head(pattern.first);
             // Observe! To engage with a correct search, I am doing this instead...
-            candidate_rule.support_declarative_pattern = counter.decl_support(lr);
+            candidate_rule.support_declarative_pattern = std::min(counter.decl_support(lr),counter.decl_support(rl));
             candidate_rule.restrictive_confidence_plus_declarative_pattern = lr_conf;
         } else if (lr_conf >= rl_conf && lr_conf >= support) {
             candidate_rule.support_declarative_pattern = counter.decl_support(lr);
