@@ -62,7 +62,6 @@ class ServerQueryManager : public KnoBABQueryBaseVisitor {
     bool load_also_data = true;
     std::stringstream content;
     std::string format;
-    std::vector<LoggerInformation> infos;
 public:
     Environment* tmpEnv = nullptr;
     double parsing_time_ms = -1.0;
@@ -158,6 +157,8 @@ public:
     std::any visitDump_log(KnoBABQueryParser::Dump_logContext *ctx) override;
 
     std::any visitWith_model(KnoBABQueryParser::With_modelContext *ctx) override;
+
+    std::vector<LoggerInformation> infos;
 };
 
 
