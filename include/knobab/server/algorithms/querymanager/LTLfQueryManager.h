@@ -41,6 +41,7 @@ struct MAXSatPipeline;
 #include "LTLfQuery.h"
 
 struct LTLfQueryManager {
+    std::unordered_set<LTLfQuery*> cleared;
     std::unordered_map<LTLfQuery, LTLfQuery*> conversion_map_for_subexpressions;
     std::map<size_t, std::vector<LTLfQuery*>> Q;
     std::unordered_map<LTLfQuery*, size_t> counter;

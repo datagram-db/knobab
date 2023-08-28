@@ -108,24 +108,32 @@ int main(int argc, char** argv) {
 
     sqm.runQuery(query_plan);
 
+    // Dumping the benchmark file
+    std::cout << "dumping csv..." << std::endl;
+    ss << "benchmarking-log " << std::quoted(bench_file);
+    sqm.runQuery(ss.str());
+    ss.str(std::string());
+    ss.clear();
+
     for (const auto& s : spec_file) {
         if (!std::filesystem::exists(s))
             throw std::runtime_error("ERROR: spec_file does not exists");
         std::cout << "loading model file..." << std::endl;
         std::vector<DeclareDataAware> binary_clauses;
         {
-            std::ifstream model{s};
-            binary_clauses = sqm.loadModel(model);
-
+            std::ifstream t(s);
+            std::stringstream buffer;
+            buffer << t.rdbuf();
+            auto sss = buffer.str();
+            if ((!sss.starts_with("ff")) && (!sss.starts_with("tt"))) {
+                std::ifstream model{s};
+                binary_clauses = sqm.loadModel(model);
+            }
         }
 
-
         std::cout << "model checking " << std::quoted(s) << ": " << std::endl;
-        for (const std::vector<DeclareDataAware>& x : chunker(binary_clauses, N)) {
+        if (binary_clauses.empty()) {
             ss << "model-check declare " << std::endl;
-            for (const auto& d : x) {
-                ss << "\t" << d << std::endl;
-            }
             ss << " using \"Nothing\" over \"log\" "  << std::endl;
             ss << " plan \"nfmcp23\" "  << std::endl;
             ss << " with operators \"Hybrid\" ";
@@ -134,14 +142,39 @@ int main(int argc, char** argv) {
             ss.str(std::string());
             ss.clear();
             sqm.infos.back().model_filename = s;
+
+            // Dumping the benchmark file
+            std::cout << "dumping csv(empty)..." << std::endl;
+            ss << "benchmarking-log " << std::quoted(bench_file);
+            sqm.runQuery(ss.str());
+            ss.str(std::string());
+            ss.clear();
+        } else {
+            for (const std::vector<DeclareDataAware>& x : chunker(binary_clauses, N)) {
+                ss << "model-check declare " << std::endl;
+                for (const auto& d : x) {
+                    ss << "\t" << d << std::endl;
+                }
+                ss << " using \"Nothing\" over \"log\" "  << std::endl;
+                ss << " plan \"nfmcp23\" "  << std::endl;
+                ss << " with operators \"Hybrid\" ";
+                std::string a,b;
+                std::tie(a,b) = sqm.runQuery(ss.str());
+                ss.str(std::string());
+                ss.clear();
+                sqm.infos.back().model_filename = s;
+
+                // Dumping the benchmark file
+                std::cout << "dumping csv..." << std::endl;
+                ss << "benchmarking-log " << std::quoted(bench_file);
+                sqm.runQuery(ss.str());
+                ss.str(std::string());
+                ss.clear();
+            }
         }
+
     }
 
 
-    // Dumping the benchmark file
-    std::cout << "dumping csv..." << std::endl;
-    ss << "benchmarking-log " << std::quoted(bench_file);
-    sqm.runQuery(ss.str());
-    ss.str(std::string());
-    ss.clear();
+
 }

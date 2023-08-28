@@ -94,11 +94,13 @@ std::string LTLfQueryManager::generateGraph() const {
 void LTLfQueryManager::clear() {
     current_query_id = 0;
     for (auto it = conversion_map_for_subexpressions.begin(); it != conversion_map_for_subexpressions.end(); it++) {
-        delete it->second;
-        it = conversion_map_for_subexpressions.erase(it);
+        if (cleared.insert(it->second).second)
+            delete it->second;
+//        it = conversion_map_for_subexpressions.erase(it);
     }
 //    atomsToDecomposeInUnion.clear();
     counter.clear();
+    conversion_map_for_subexpressions.clear();
 }
 
 void LTLfQueryManager::sort_query_plan_for_scheduling(const AtomizingPipeline& ap, std::vector<LTLfQuery*>& W, KnowledgeBase* ptr) {

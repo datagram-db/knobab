@@ -35,18 +35,26 @@ void MAXSatPipeline::clear() {
     /// TODO:
     /// If this worked for the current standard:
     /// for (auto & it : std::ranges::reverse_view(qm.Q))
+//    qm.clear();
     for(std::map<size_t, std::vector<LTLfQuery*>>::reverse_iterator it = qm.Q.rbegin(); it != qm.Q.rend(); ++it) {
         for(LTLfQuery* ptr : it->second) {
             if(visited.insert(ptr).second) {
                 for(LTLfQuery* arg : ptr->args){
                     if(visited.insert(arg).second){
-                        delete arg;
+                        if (qm.cleared.insert(arg).second) {
+                            delete arg;
+                        }
                     }
                 }
-                delete ptr;
+                if (qm.cleared.insert(ptr).second) {
+                    delete ptr;
+                }
             }
         }
     }
+    qm.Q.clear();
+    qm.clear();
+
 
     atomToFormulaId.clear();
     declare_to_query.clear();
@@ -57,6 +65,7 @@ void MAXSatPipeline::clear() {
     atomicPartIntersectionResult.clear();
     result.clear();
     support_per_declare.clear();
+    qm.cleared.clear();
 }
 
 static inline void partialResultIntersection(const PartialResult& lhs,
