@@ -868,6 +868,7 @@ std::any ServerQueryManager::visitSet_benchmarking_file(KnoBABQueryParser::Set_b
                 for (const auto& ref : infos) {
                     ref.log_csv_file(log);
                 }
+                infos.clear();
                 content << "File correctly dumped";
             } catch (...) {
                 content << "Error on opening the file";
@@ -1011,7 +1012,7 @@ std::any ServerQueryManager::visitModel_query(KnoBABQueryParser::Model_queryCont
                         break;
                 }
                 infos.emplace_back(it->second.experiment_logger);
-                ref.clear();
+//                ref.clear();
                 content << result.dump();
             }
         }
