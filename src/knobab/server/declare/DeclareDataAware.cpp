@@ -75,24 +75,24 @@ std::ostream &operator<<(std::ostream &os, const DeclareDataAware &aware) {
         print_dnf(os, aware.conjunctive_map);
     }
 
-    if (!aware.left_decomposed_atoms.empty()) {
-        os << " {leftAtoms = ";
-        for (auto it = aware.left_decomposed_atoms.begin(), en = aware.left_decomposed_atoms.end(); it != en; ) {
-            os << *it;
-            it++;
-            if (it != en) os << ", ";
-        }
-        os << " }";
-    }
-    if (!aware.right_decomposed_atoms.empty()) {
-        os << " {rightAtoms = ";
-        for (auto it = aware.right_decomposed_atoms.begin(), en = aware.right_decomposed_atoms.end(); it != en; ) {
-            os << *it;
-            it++;
-            if (it != en) os << ", ";
-        }
-        os << " }";
-    }
+//    if (!aware.left_decomposed_atoms.empty()) {
+//        os << " {leftAtoms = ";
+//        for (auto it = aware.left_decomposed_atoms.begin(), en = aware.left_decomposed_atoms.end(); it != en; ) {
+//            os << *it;
+//            it++;
+//            if (it != en) os << ", ";
+//        }
+//        os << " }";
+//    }
+//    if (!aware.right_decomposed_atoms.empty()) {
+//        os << " {rightAtoms = ";
+//        for (auto it = aware.right_decomposed_atoms.begin(), en = aware.right_decomposed_atoms.end(); it != en; ) {
+//            os << *it;
+//            it++;
+//            if (it != en) os << ", ";
+//        }
+//        os << " }";
+//    }
 
     return os;
 }

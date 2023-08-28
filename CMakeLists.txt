@@ -106,6 +106,7 @@ add_executable(mining
 
 add_executable(log_generator generate_traces.cpp)
 add_executable(multimodel_mining src/knobab/mining/refinery.cpp)
+add_executable(knobab2-benchmarking src/knobab/server/benchmarking_binary.cpp)
 
 
 if(MSVC OR MSYS OR MINGW)
@@ -119,7 +120,8 @@ if(MSVC OR MSYS OR MINGW)
             yaucl_stringutils yaucl_numeric  yaucl_data yaucl_bpm yaucl_graph yaucl_structures yaucl_data knobab_ndp yaucl_learning knobab_mining)
     target_link_libraries(multimodel_mining Threads::Threads knobab antlr4_shared yaucl_hashing
             yaucl_stringutils yaucl_numeric  yaucl_data yaucl_bpm yaucl_graph yaucl_structures yaucl_data knobab_ndp yaucl_learning knobab_mining)
-
+    target_link_libraries(knobab2-benchmarking Threads::Threads antlr4_shared yaucl_hashing yaucl_bpm yaucl_structures
+            yaucl_numeric yaucl_data yaucl_graph  yaucl_data yaucl_bpm knobab  knobab_ndp)
 else()
     target_link_libraries(knobab_server Threads::Threads antlr4_static yaucl_hashing yaucl_bpm yaucl_structures
             yaucl_numeric yaucl_data yaucl_graph  yaucl_data yaucl_bpm knobab  knobab_ndp)
@@ -133,6 +135,8 @@ else()
             yaucl_stringutils yaucl_numeric  yaucl_data yaucl_bpm yaucl_graph yaucl_structures)
     target_link_libraries(multimodel_mining Threads::Threads knobab antlr4_static yaucl_hashing
             yaucl_stringutils yaucl_numeric  yaucl_data yaucl_bpm yaucl_graph yaucl_structures yaucl_data knobab_ndp yaucl_learning knobab_mining)
+    target_link_libraries(knobab2-benchmarking Threads::Threads antlr4_shared yaucl_hashing yaucl_bpm yaucl_structures
+            yaucl_numeric yaucl_data yaucl_graph  yaucl_data yaucl_bpm knobab  knobab_ndp)
 endif()
 
 #add_executable(refinery refinery.cpp)

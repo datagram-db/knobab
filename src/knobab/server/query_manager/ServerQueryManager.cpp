@@ -969,24 +969,28 @@ std::any ServerQueryManager::visitModel_query(KnoBABQueryParser::Model_queryCont
                 switch (ref.final_ensemble) {
                     case ReturnTraces: {
                         result["ReturnTraces"] = ref.result_per_traces;
+                        ref.result_per_traces.clear();
                     } break;
 
                     case PerDeclareSupport:
                         for (size_t i = 0; i < ref.support_per_declare.size(); i++) {
                             result["PerDeclareSupport"][i] = ref.support_per_declare.at(i);
                         }
+                        ref.support_per_declare.clear();
                         break;
 
                     case PerDeclareConfidence:
                         for (size_t i = 0; i < ref.support_per_declare.size(); i++) {
                             result["PerDeclareConfidence"][i] = ref.support_per_declare.at(i);
                         }
+                        ref.support_per_declare.clear();
                         break;
 
                     case TraceMaximumSatisfiability:
                         for (size_t i = 0; i < ref.max_sat_per_trace.size(); i++) {
                             result["TraceMaximumSatisfiability"][i] = ref.max_sat_per_trace.at(i);
                         }
+                        ref.max_sat_per_trace.clear();
                         break;
 
                     case TraceIntersection:
@@ -1003,9 +1007,11 @@ std::any ServerQueryManager::visitModel_query(KnoBABQueryParser::Model_queryCont
                             }
                             result["TraceIntersection"][i]["conditions"] = ATC;
                         }
+                        ref.result.clear();
                         break;
                 }
                 infos.emplace_back(it->second.experiment_logger);
+                ref.clear();
                 content << result.dump();
             }
         }
