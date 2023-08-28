@@ -164,7 +164,7 @@ list(APPEND CMAKE_MODULE_PATH ${catch2_SOURCE_DIR}/extras)
 include(CTest)
 include(Catch)
 
-add_executable(mining_tests src/knobab/tests/mining_tests.cpp)
+add_executable(mining_tests src/knobab/tests/mining_tests.cpp )
 target_link_libraries(mining_tests Catch2::Catch2WithMain Threads::Threads knobab antlr4_static yaucl_hashing
         yaucl_stringutils yaucl_numeric  yaucl_data yaucl_bpm yaucl_graph yaucl_structures yaucl_data knobab_ndp yaucl_learning knobab_mining)
 
@@ -172,5 +172,11 @@ add_executable(until_tests src/knobab/tests/until_tests.cpp)
 target_link_libraries(until_tests Catch2::Catch2WithMain Threads::Threads knobab antlr4_static yaucl_hashing
         yaucl_stringutils yaucl_numeric  yaucl_data yaucl_bpm yaucl_graph yaucl_structures yaucl_data knobab_ndp yaucl_learning knobab_mining)
 
+add_executable(complete_response src/knobab/tests/complete_response.cpp)
+target_link_libraries(complete_response Catch2::Catch2WithMain Threads::Threads knobab antlr4_static yaucl_hashing
+        yaucl_stringutils yaucl_numeric  yaucl_data yaucl_bpm yaucl_graph yaucl_structures yaucl_data knobab_ndp yaucl_learning knobab_mining)
+
 
 catch_discover_tests(mining_tests)
+catch_discover_tests(until_tests)
+catch_discover_tests(complete_response)
