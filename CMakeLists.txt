@@ -176,7 +176,12 @@ add_executable(complete_response src/knobab/tests/complete_response.cpp)
 target_link_libraries(complete_response Catch2::Catch2WithMain Threads::Threads knobab antlr4_static yaucl_hashing
         yaucl_stringutils yaucl_numeric  yaucl_data yaucl_bpm yaucl_graph yaucl_structures yaucl_data knobab_ndp yaucl_learning knobab_mining)
 
+add_executable(basic_operators_testing src/knobab/tests/basic_operators_testing.cpp)
+target_link_libraries(basic_operators_testing Catch2::Catch2WithMain Threads::Threads knobab antlr4_static yaucl_hashing
+        yaucl_stringutils yaucl_numeric  yaucl_data yaucl_bpm yaucl_graph yaucl_structures yaucl_data knobab_ndp yaucl_learning knobab_mining)
+
 
 catch_discover_tests(mining_tests)
 catch_discover_tests(until_tests)
 catch_discover_tests(complete_response)
+catch_discover_tests(basic_operators_testing)

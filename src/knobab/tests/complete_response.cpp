@@ -7,8 +7,6 @@
 #include <iostream>
 #include <functional>
 #include "yaucl/learning/DecisionTree.h"
-#include "yaucl/bpm/structures/commons/DeclareDataAware.h"
-#include "knobab/server/query_manager/Environment.h"
 #include "args.hxx"
 #include <catch2/catch_test_macros.hpp>
 
@@ -16,47 +14,44 @@
 #define TEST(a,b)       TEST_CASE(a ## b)
 #define ASSERT_TRUE(c)  REQUIRE(c)
 
-
 #include <vector>
-#include <cassert>
-#include <yaucl/structures/set_operations.h>
-
 #include <fstream>
+
+const std::string query_plan = "queryplan \"nfmcp23\" {\n"
+                               "     template \"Init\"                   := INIT  activation\n"
+                               "     template \"End\"                    := END activation\n"
+                               "     template \"Exists\"                := (EXISTS $ activation)\n"
+                               "     template \"Exists1\"                := (EXISTS 1 activation)\n"
+                               "     template \"Absence\"               := ABSENCE $ activation\n"
+                               "     template \"Absence1\"               := ABSENCE 1 activation\n"
+                               "     template \"Absence2\"               := ABSENCE 2 activation\n"
+                               "     template \"Precedence\" args 2      := ((EXISTS  ~ 1 t #2) U (EXISTS 1 t #1 activation)) OR (ABSENCE 1 #2)\n"
+                               "     template \"ChainPrecedence\" args 2 := G(((LAST OR t (NEXT EXISTS ~ 1 t #1))) OR t ((NEXT EXISTS 1 t #1 activation) AND t THETA INV (EXISTS 1 t #2 target) ))\n"
+                               "     template \"Choice\" args 2          := (EXISTS 1 t #1 activation) OR THETA (EXISTS 1 t #2 activation)\n"
+                               "     template \"Response\" args 2        := G ( ((EXISTS ~ 1 t #1)) OR t ((EXISTS 1 t #1 activation) &Ft THETA (EXISTS 1 t #2 target)) )\n"
+                               "     template \"ChainResponse\" args 2   := G ( ((EXISTS ~ 1 t #1)) OR t ((EXISTS 1 t #1 activation) AND t THETA (NEXT EXISTS 1 t #2 target)))\n"
+                               "     template \"RespExistence\" args 2   := ( ((ABSENCE 1 #1)) OR ((EXISTS 1 #1 activation) AND THETA (EXISTS 1 #2 target)))\n"
+                               "     template \"ExclChoice\" args 2       := ((EXISTS 1 t #1 activation) OR THETA (EXISTS 1 t #2 activation)) AND ((ABSENCE 1 #1) OR (ABSENCE 1 #2))\n"
+                               "     template \"CoExistence\" args 2     := ( ((ABSENCE 1 #1)) OR ((EXISTS 1 #1 activation) AND THETA (EXISTS 1 #2 target))) AND ( ((ABSENCE 1 #2)) OR ((EXISTS 1 #2 activation) AND THETA INV (EXISTS 1 #1 target)))\n"
+                               "     template \"NotCoExistence\" args 2  := ~ ((EXISTS 1 t #1 activation) AND THETA (EXISTS 1 t #2 target)) PRESERVE\n"
+                               "\n"
+                               "     template \"Succession\" args 2      := (G ( ((EXISTS ~ 1 t #1)) OR t ((EXISTS 1 t #1 activation) &Ft THETA (EXISTS 1 t #2 target)) )) AND (((EXISTS  ~ 1 t #2) U (EXISTS 1 t #1 target)) OR (ABSENCE 1 #2))\n"
+                               "     template \"NegSuccession\" args 2   := (G ( ((EXISTS ~ 1 t #1)) OR t ((EXISTS 1 t #1 activation) &Gt  (EXISTS ~ 1 t #2)) ))\n"
+                               "     template \"ChainSuccession\" args 2 := G( (((LAST OR t (NEXT EXISTS ~ 1 t #2))) OR t ((NEXT EXISTS 1 t #2 activation) AND t THETA INV (EXISTS 1 t #1 target))) AND t\n"
+                               "                                             ( ((EXISTS ~ 1 t #1)) OR t ((EXISTS 1 t #1 activation) AND t THETA (NEXT EXISTS 1 t #2 target)))\n"
+                               "                                           )\n"
+                               "     template \"AltResponse\" args 2     := G ( (EXISTS ~ 1 t #1) OR t ((EXISTS 1 t #1 activation) AND t THETA (NEXT ((EXISTS ~ 1 t #1) U t (EXISTS 1 t #2 target)) )))\n"
+                               "     template \"AltPrecedence\" args 2   := (((EXISTS  ~ 1 t #2) U (EXISTS 1 t #1 activation)) OR (ABSENCE 1 #2)) AND\n"
+                               "                                           (G(((EXISTS ~ 1 t #1)) OR t (((EXISTS 1 t #1 activation)) AND t THETA (NEXT (((EXISTS  ~ 1 t #1) U t (EXISTS 1 t #2 target)) OR t (G t (EXISTS  ~ 1 t #1))))  )))\n"
+                               "}";
+
 TEST_CASE("complete_response_support"){
 //int main(){
     const std::vector<std::string> log_parse_format_type{"HRF", "XES", "TAB"};
-    const std::string query_plan = "queryplan \"nfmcp23\" {\n"
-                                   "     template \"Init\"                   := INIT  activation\n"
-                                   "     template \"End\"                    := END activation\n"
-                                   "     template \"Exists\"                := (EXISTS $ activation)\n"
-                                   "     template \"Exists1\"                := (EXISTS 1 activation)\n"
-                                   "     template \"Absence\"               := ABSENCE $ activation\n"
-                                   "     template \"Absence1\"               := ABSENCE 1 activation\n"
-                                   "     template \"Absence2\"               := ABSENCE 2 activation\n"
-                                   "     template \"Precedence\" args 2      := ((EXISTS  ~ 1 t #2) U (EXISTS 1 t #1 activation)) OR (ABSENCE 1 #2)\n"
-                                   "     template \"ChainPrecedence\" args 2 := G(((LAST OR t (NEXT EXISTS ~ 1 t #1))) OR t ((NEXT EXISTS 1 t #1 activation) AND t THETA INV (EXISTS 1 t #2 target) ))\n"
-                                   "     template \"Choice\" args 2          := (EXISTS 1 t #1 activation) OR THETA (EXISTS 1 t #2 activation)\n"
-                                   "     template \"Response\" args 2        := G ( ((EXISTS ~ 1 t #1)) OR t ((EXISTS 1 t #1 activation) &Ft THETA (EXISTS 1 t #2 target)) )\n"
-                                   "     template \"ChainResponse\" args 2   := G ( ((EXISTS ~ 1 t #1)) OR t ((EXISTS 1 t #1 activation) AND t THETA (NEXT EXISTS 1 t #2 target)))\n"
-                                   "     template \"RespExistence\" args 2   := ( ((ABSENCE 1 #1)) OR ((EXISTS 1 #1 activation) AND THETA (EXISTS 1 #2 target)))\n"
-                                   "     template \"ExclChoice\" args 2       := ((EXISTS 1 t #1 activation) OR THETA (EXISTS 1 t #2 activation)) AND ((ABSENCE 1 #1) OR (ABSENCE 1 #2))\n"
-                                   "     template \"CoExistence\" args 2     := ( ((ABSENCE 1 #1)) OR ((EXISTS 1 #1 activation) AND THETA (EXISTS 1 #2 target))) AND ( ((ABSENCE 1 #2)) OR ((EXISTS 1 #2 activation) AND THETA INV (EXISTS 1 #1 target)))\n"
-                                   "     template \"NotCoExistence\" args 2  := ~ ((EXISTS 1 t #1 activation) AND THETA (EXISTS 1 t #2 target)) PRESERVE\n"
-                                   "\n"
-                                   "     template \"Succession\" args 2      := (G ( ((EXISTS ~ 1 t #1)) OR t ((EXISTS 1 t #1 activation) &Ft THETA (EXISTS 1 t #2 target)) )) AND (((EXISTS  ~ 1 t #2) U (EXISTS 1 t #1 target)) OR (ABSENCE 1 #2))\n"
-                                   "     template \"NegSuccession\" args 2   := (G ( ((EXISTS ~ 1 t #1)) OR t ((EXISTS 1 t #1 activation) &Gt  (EXISTS ~ 1 t #2)) ))\n"
-                                   "     template \"ChainSuccession\" args 2 := G( (((LAST OR t (NEXT EXISTS ~ 1 t #2))) OR t ((NEXT EXISTS 1 t #2 activation) AND t THETA INV (EXISTS 1 t #1 target))) AND t\n"
-                                   "                                             ( ((EXISTS ~ 1 t #1)) OR t ((EXISTS 1 t #1 activation) AND t THETA (NEXT EXISTS 1 t #2 target)))\n"
-                                   "                                           )\n"
-                                   "     template \"AltResponse\" args 2     := G ( (EXISTS ~ 1 t #1) OR t ((EXISTS 1 t #1 activation) AND t THETA (NEXT ((EXISTS ~ 1 t #1) U t (EXISTS 1 t #2 target)) )))\n"
-                                   "     template \"AltPrecedence\" args 2   := (((EXISTS  ~ 1 t #2) U (EXISTS 1 t #1 activation)) OR (ABSENCE 1 #2)) AND\n"
-                                   "                                           (G(((EXISTS ~ 1 t #1)) OR t (((EXISTS 1 t #1 activation)) AND t THETA (NEXT (((EXISTS  ~ 1 t #1) U t (EXISTS 1 t #2 target)) OR t (G t (EXISTS  ~ 1 t #1))))  )))\n"
-                                   "}";
     auto path =  std::filesystem::current_path().parent_path() / "data"/"testing"/"complete_response"/"log_response.txt";
     auto world_file_to_load = path.string();
     ServerQueryManager sqm;
     std::stringstream ss;
-    std::stringstream ss2;
 
     ss << "load "
        << log_parse_format_type.at((size_t)HUMAN_READABLE_YAUCL)
@@ -91,3 +86,64 @@ TEST_CASE("complete_response_support"){
     ASSERT_TRUE(declare_support ==  (std::vector<double>{1.0,1.0,1.0/9.0,0.0,1.0,0.0,8.0/9.0,1.0,1.0}));
 }
 
+/*
+ * Turn A into a string literal without expanding macro definitions
+ * (however, if invoked from a macro, macro arguments are expanded).
+ */
+#define STRINGIZE_NX(A) #A
+
+#define TEST_CASE_PER_OPERATOR(name, op) TEST_CASE(STRINGIZE_NX(name ## op)) {\
+    size_t pos, neg;\
+    const std::vector<std::string> log_parse_format_type{"HRF", "XES", "TAB"};\
+\
+    auto root_folder =  std::filesystem::current_path().parent_path();\
+    std::string base{#name}; \
+    std::string operators{#op}; \
+    std::filesystem::path curr = root_folder / "data" / "testing" / "declare" / base;\
+    auto sizes = root_folder / "data" /"testing"/"declare" / (base+"_pos_neg.txt");\
+    ServerQueryManager sqm;\
+    std::stringstream ss;\
+    std::ifstream fs{sizes};\
+        fs >> pos >> neg;\
+    auto declare_file_path = (root_folder / "data" /"testing"/"declare" / (base+".powerdecl")).string();\
+    std::ifstream t(declare_file_path);\
+    std::stringstream buffer;\
+    buffer << t.rdbuf();\
+\
+    ss << "load "\
+       << log_parse_format_type.at((size_t)TAB_SEPARATED_EVENTS)\
+       << " "\
+       << std::quoted(curr.string())\
+       <<  " with data as "\
+       << std::quoted(base);\
+    auto tmp = sqm.runQuery(ss.str());\
+    ss.str(std::string());\
+    ss.clear();\
+\
+    sqm.runQuery(query_plan);\
+    ss << "model-check declare " << buffer.str() << std::endl;\
+    ss << " using \"TraceMaximumSatisfiability\" over " << std::quoted(base) << std::endl;\
+    ss << " plan \"nfmcp23\" "  << std::endl;\
+    ss << " with operators  " << std::quoted(operators);\
+    std::string a,b;\
+    std::tie(a,b) = sqm.runQuery(ss.str());\
+    std::vector<double> max_sat_per_trace = nlohmann::json::parse(a)["TraceMaximumSatisfiability"].get<std::vector<double>>();\
+    for (size_t i = 0; i<max_sat_per_trace.size(); i++) {\
+        if (i<pos)\
+            ASSERT_TRUE(max_sat_per_trace.at(i)== 1.0);\
+        else\
+            ASSERT_TRUE(max_sat_per_trace.at(i)== 0.0);\
+    }\
+};
+
+TEST_CASE_PER_OPERATOR(AltPrecedence, Hybrid)
+TEST_CASE_PER_OPERATOR(AltResponse, Hybrid)
+TEST_CASE_PER_OPERATOR(ChainPrecedence, Hybrid)
+TEST_CASE_PER_OPERATOR(ChainResponse, Hybrid)
+TEST_CASE_PER_OPERATOR(ChainSuccession, Hybrid)
+TEST_CASE_PER_OPERATOR(Choice, Hybrid)
+TEST_CASE_PER_OPERATOR(CoExistence, Hybrid)
+TEST_CASE_PER_OPERATOR(Precedence, Hybrid)
+TEST_CASE_PER_OPERATOR(RespExistence, Hybrid)
+TEST_CASE_PER_OPERATOR(Response, Hybrid)
+TEST_CASE_PER_OPERATOR(Succession, Hybrid)
