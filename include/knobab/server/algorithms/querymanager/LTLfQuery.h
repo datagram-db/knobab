@@ -50,7 +50,9 @@ struct LTLfQuery {
         AG_QPT = 15,
         FIRST_QP = 16,
         LAST_QP = 17,
-        FALSEHOOD_QP = 18
+        FALSEHOOD_QP = 18,
+        AFNXA_QPT = 19,
+        AFNWXA_QPT = 20
     };
     bool doInvTheta = false;
     type t;
@@ -110,6 +112,8 @@ struct LTLfQuery {
     static LTLfQuery qUNTIL(const LTLfQuery& lhs, const LTLfQuery& rhs, bool isTimed, bool hasTheta, bool isInv);
     static LTLfQuery qBOX(const LTLfQuery& lhs, bool isTimed);
     static LTLfQuery qDIAMOND(const LTLfQuery& lhs, bool isTimed);
+    static LTLfQuery qANDFUTURENOTNEXTA(const LTLfQuery& lhs, const LTLfQuery& rhs, bool isTimed, bool hasTheta, bool isInv);
+    static LTLfQuery qANDFUTURENOTWNEXTA(const LTLfQuery& lhs, const LTLfQuery& rhs, bool isTimed, bool hasTheta, bool isInv);
 };
 
 

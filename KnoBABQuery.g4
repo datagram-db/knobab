@@ -84,6 +84,8 @@ ltlf : INIT TIMED?                      declare_arguments? declare_act_target?  
       | NEGATED TIMED? ltlf PRESERVE?                                                 #not
       | '(' ltlf ')'                                                                  #paren
       |<assoc=right> ltlf '&Ft' THETA? INV? ltlf                                          #and_future
+      |<assoc=right> ltlf '&Ft!X' THETA? INV? ltlf                                          #and_future_not_next
+      |<assoc=right> ltlf '&Ft!WX' THETA? INV? ltlf                                          #and_wfuture_not_next
       |<assoc=right> ltlf '&XGt' THETA? INV? ltlf                                         #and_next_globally
       |<assoc=right> ltlf '&Gt' THETA? INV? ltlf                                          #and_globally
       ;

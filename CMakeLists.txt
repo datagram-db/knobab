@@ -109,6 +109,11 @@ add_executable(multimodel_mining src/knobab/mining/refinery.cpp)
 add_executable(knobab2-benchmarking src/knobab/server/benchmarking_binary.cpp)
 
 
+add_executable(old_log_generator src/knobab/old_log_generator.cpp)
+target_link_libraries(old_log_generator Threads::Threads antlr4_shared yaucl_hashing yaucl_bpm yaucl_structures
+        yaucl_numeric yaucl_data yaucl_graph  yaucl_data yaucl_bpm knobab  knobab_ndp)
+
+
 if(MSVC OR MSYS OR MINGW)
     target_link_libraries(knobab_server Threads::Threads antlr4_shared yaucl_hashing yaucl_bpm yaucl_structures
             yaucl_numeric yaucl_data yaucl_graph  yaucl_data yaucl_bpm knobab  knobab_ndp)

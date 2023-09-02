@@ -404,6 +404,46 @@ LTLfQuery LTLfQuery::qANDFUTURE(const LTLfQuery& lhs, const LTLfQuery& rhs, bool
     return q;
 }
 
+LTLfQuery LTLfQuery::qANDFUTURENOTNEXTA(const LTLfQuery& lhs, const LTLfQuery& rhs, bool isTimed, bool hasTheta, bool isInv) {
+    LTLfQuery q;
+    q.t = AFNXA_QPT;
+    q.n = 0;
+    q.isLeaf = NotALeaf;
+    q.declare_arg = DECLARE_TYPE_NONE;
+    q.fields.id.parts.has_theta = hasTheta;
+    q.fields.id.parts.preserve = false;
+    q.fields.id.parts.is_atom = false;
+    q.fields.id.parts.is_negated = false;
+    q.fields.id.parts.is_timed = isTimed;
+    q.fields.id.parts.is_numbered = false;
+    q.args_from_script.emplace_back(lhs);
+    q.args_from_script.emplace_back(rhs);
+    q.fields.id.parts.is_queryplan = false;
+    q.fields.id.parts.directly_from_cache = false;
+    q.doInvTheta = isInv;
+    return q;
+}
+
+LTLfQuery LTLfQuery::qANDFUTURENOTWNEXTA(const LTLfQuery& lhs, const LTLfQuery& rhs, bool isTimed, bool hasTheta, bool isInv) {
+    LTLfQuery q;
+    q.t = AFNWXA_QPT;
+    q.n = 0;
+    q.isLeaf = NotALeaf;
+    q.declare_arg = DECLARE_TYPE_NONE;
+    q.fields.id.parts.has_theta = hasTheta;
+    q.fields.id.parts.preserve = false;
+    q.fields.id.parts.is_atom = false;
+    q.fields.id.parts.is_negated = false;
+    q.fields.id.parts.is_timed = isTimed;
+    q.fields.id.parts.is_numbered = false;
+    q.args_from_script.emplace_back(lhs);
+    q.args_from_script.emplace_back(rhs);
+    q.fields.id.parts.is_queryplan = false;
+    q.fields.id.parts.directly_from_cache = false;
+    q.doInvTheta = isInv;
+    return q;
+}
+
 LTLfQuery LTLfQuery::qUNTIL(const LTLfQuery& lhs, const LTLfQuery& rhs, bool isTimed, bool hasTheta, bool isInv) {
     LTLfQuery q;
     q.t = U_QP;

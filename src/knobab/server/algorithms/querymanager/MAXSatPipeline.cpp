@@ -7,6 +7,7 @@
 #include <knobab/server/operators/simple_ltlf_operators.h>
 #include <yaucl/functional/assert.h>
 #include <knobab/server/operators/fast_ltlf_operators.h>
+#include <knobab/server/operators/novel_ltlf_operators.h>
 #include <knobab/server/algorithms/querymanager/MAXSatPipeline.h>
 
 MAXSatPipeline::MAXSatPipeline(std::unordered_map<std::string, LTLfQuery>* ptrx,
@@ -1214,6 +1215,28 @@ void MAXSatPipeline::abidinglogic_query_running(const std::vector<PartialResult>
                             }
                             break;
 
+                        case LTLfQuery::AFNXA_QPT: {
+                            throw std::runtime_error("ERROR: use the other semantics plan!");
+//                            Result local;
+//                            negated_fast_timed(formula->args.at(1)->result, local, kb.act_table_by_act_id.trace_length);
+//                            until_logic_timed(local, formula->args.at(0)->result, tmp_result, nullptr, kb.act_table_by_act_id.trace_length);
+//                            if (formula->fields.id.parts.is_timed) {
+//                                and_logic_timed(formula->args.at(0)->result, tmp_result, formula->result,
+//                                                formula->joinCondition, kb.act_table_by_act_id.trace_length);
+//                                tmp_result.clear();
+//                            } else {
+//                                and_logic_untimed(formula->args.at(0)->result, tmp_result, formula->result,
+//                                                  formula->joinCondition, kb.act_table_by_act_id.trace_length);
+//                                tmp_result.clear();
+//                            }
+                            break;
+                        }
+
+                        case LTLfQuery::AFNWXA_QPT: {
+                            throw std::runtime_error("ERROR: use the other semantics plan!");
+                            break;
+                        }
+
                         case LTLfQuery::AF_QPT:
                             if (formula->fields.id.parts.is_timed) {
                                 future_logic_timed(formula->args.at(1)->result, tmp_result, kb.act_table_by_act_id.trace_length);
@@ -1482,6 +1505,28 @@ void MAXSatPipeline::fast_v1_query_running(const std::vector<PartialResult>& res
                                 throw std::runtime_error("AndFuture is untimed: unexpected implementation!");
                             break;
 
+                        case LTLfQuery::AFNXA_QPT:
+                            if (formula->fields.id.parts.is_timed)
+                                aAlternateAndFutureB(formula->args.at(0)->result,
+                                                            formula->args.at(1)->result,
+                                                            formula->result,
+                                                            formula->joinCondition,
+                                                            kb.act_table_by_act_id.trace_length);
+                            else
+                                throw std::runtime_error("AndFuture is untimed: unexpected implementation!");
+                            break;
+
+                        case LTLfQuery::AFNWXA_QPT:
+                            if (formula->fields.id.parts.is_timed)
+                                aWeakAlternateAndFutureB(formula->args.at(0)->result,
+                                                     formula->args.at(1)->result,
+                                                     formula->result,
+                                                     formula->joinCondition,
+                                                     kb.act_table_by_act_id.trace_length);
+                            else
+                                throw std::runtime_error("AndFuture is untimed: unexpected implementation!");
+                            break;
+
                         case LTLfQuery::AXG_QPT:
                             if (formula->fields.id.parts.is_timed)
                                 aAndNextGloballyB_timed(formula->args.at(0)->result,
@@ -1743,6 +1788,30 @@ void MAXSatPipeline::hybrid_query_running(const std::vector<PartialResult>& resu
                                 throw std::runtime_error("AndFuture is untimed: unexpected implementation!");
                             break;
 
+                        case LTLfQuery::AFNXA_QPT:
+                            if (formula->fields.id.parts.is_timed){
+                                aAlternateAndFutureB(formula->args.at(0)->result,
+                                                                    formula->args.at(1)->result,
+                                                                    formula->result,
+                                                                    formula->joinCondition,
+                                                                    kb.act_table_by_act_id.trace_length);
+                            }
+                            else
+                                throw std::runtime_error("AndFutureBNotNextA is untimed: unexpected implementation!");
+                            break;
+
+                        case LTLfQuery::AFNWXA_QPT:
+                            if (formula->fields.id.parts.is_timed){
+                                aWeakAlternateAndFutureB(formula->args.at(0)->result,
+                                                     formula->args.at(1)->result,
+                                                     formula->result,
+                                                     formula->joinCondition,
+                                                     kb.act_table_by_act_id.trace_length);
+                            }
+                            else
+                                throw std::runtime_error("AndFutureBNotNextA is untimed: unexpected implementation!");
+                            break;
+
                         case LTLfQuery::AXG_QPT:
                             if (formula->fields.id.parts.is_timed)
                                 aAndNextGloballyB_timed(formula->args.at(0)->result,
@@ -1977,7 +2046,8 @@ void MAXSatPipeline::pipeline(CNFDeclareDataAware* model,
                         assert(ref <= declare_to_query.size());
                         ref = ref / ((double)declare_to_query.size());
                     }
-                } break;
+                }
+                break;
 
                 case TraceIntersection: {
                     LTLfQuery conjunction;

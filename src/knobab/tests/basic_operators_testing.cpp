@@ -8,6 +8,7 @@
 //#include <gtest/gtest.h>
 #include <knobab/server/operators/simple_ltlf_operators.h>
 #include <knobab/server/operators/fast_ltlf_operators.h>
+#include <knobab/server/operators/novel_ltlf_operators.h>
 
 #include <catch2/catch_test_macros.hpp>
 #define ASSERT_TRUE(c)  REQUIRE(c)
@@ -17,6 +18,7 @@
 #define DATA_EMPLACE_BACK(l,trace,event,...)     (l).emplace_back(std::make_pair((trace),(event)), std::make_pair((1.0), MarkedEventsVector{ __VA_ARGS__}))
 #define DATA_EMPLACE_ACTORNONE(l,trace,event,b)  if (b) DATA_EMPLACE_BACK(l,trace,event,marked_event::activation(event)); else DATA_EMPLACE_BACK(l,trace,event)
 #define DATA_DECREMENT_EMPLACE_BACK(l,trace,event,isMatch)    do { (l).emplace_back(std::make_pair((trace),(event)-1), std::make_pair((1.0),MarkedEventsVector{})); if (isMatch) (l).back().second.second.emplace_back(marked_event::activation(event));} while (false)
+#define DATA_DECREMENT_EMPLACE_CORRNEXTBACK(l,trace,event,isMatch)    do { (l).emplace_back(std::make_pair((trace),(event)), std::make_pair((1.0),MarkedEventsVector{})); if (isMatch) { (l).back().second.second.emplace_back(marked_event::activation(event)); (l).back().second.second.emplace_back(marked_event::target(event+1)); } }  while (false)
 
 
 TEST_CASE("basic_operators") {
@@ -152,6 +154,23 @@ TEST_CASE("basic_operators") {
                 EXPECT_EQ(resultA, A);
             }
         }
+    }
+    SECTION("ANDNEXT") {
+        auto As = env.db.timed_dataless_exists("A", ActivationLeaf);
+        Result out, expected;
+        and_next(As, out, env.db, env.db.event_label_mapper.get("B"), nullptr, nullptr);
+        DATA_DECREMENT_EMPLACE_CORRNEXTBACK(expected, 3, 0, true);
+        DATA_DECREMENT_EMPLACE_CORRNEXTBACK(expected, 5, 0, true);
+        DATA_DECREMENT_EMPLACE_CORRNEXTBACK(expected, 7, 0, true);
+        DATA_DECREMENT_EMPLACE_CORRNEXTBACK(expected, 9, 0, true);
+        DATA_DECREMENT_EMPLACE_CORRNEXTBACK(expected, 9, 3, true);
+        DATA_DECREMENT_EMPLACE_CORRNEXTBACK(expected, 10, 0, true);
+        DATA_DECREMENT_EMPLACE_CORRNEXTBACK(expected, 10, 2, true);
+        DATA_DECREMENT_EMPLACE_CORRNEXTBACK(expected, 11, 0, true);
+        DATA_DECREMENT_EMPLACE_CORRNEXTBACK(expected, 11, 3, true);
+        DATA_DECREMENT_EMPLACE_CORRNEXTBACK(expected, 12, 0, true);
+        DATA_DECREMENT_EMPLACE_CORRNEXTBACK(expected, 12, 2, true);
+        EXPECT_EQ(out, expected);
     }
     SECTION("NEXT") {
         for (int i = 0; i<2; i++) {

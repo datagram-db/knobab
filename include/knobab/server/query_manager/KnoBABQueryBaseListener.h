@@ -103,6 +103,12 @@ public:
   virtual void enterBox(KnoBABQueryParser::BoxContext * /*ctx*/) override { }
   virtual void exitBox(KnoBABQueryParser::BoxContext * /*ctx*/) override { }
 
+  virtual void enterAnd_future_not_next(KnoBABQueryParser::And_future_not_nextContext * /*ctx*/) override { }
+  virtual void exitAnd_future_not_next(KnoBABQueryParser::And_future_not_nextContext * /*ctx*/) override { }
+
+  virtual void enterAnd_wfuture_not_next(KnoBABQueryParser::And_wfuture_not_nextContext * /*ctx*/) override { }
+  virtual void exitAnd_wfuture_not_next(KnoBABQueryParser::And_wfuture_not_nextContext * /*ctx*/) override { }
+
   virtual void enterDiamond(KnoBABQueryParser::DiamondContext * /*ctx*/) override { }
   virtual void exitDiamond(KnoBABQueryParser::DiamondContext * /*ctx*/) override { }
 

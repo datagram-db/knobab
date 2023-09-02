@@ -23,16 +23,16 @@ public:
     T__50 = 51, T__51 = 52, T__52 = 53, T__53 = 54, T__54 = 55, T__55 = 56, 
     T__56 = 57, T__57 = 58, T__58 = 59, T__59 = 60, T__60 = 61, T__61 = 62, 
     T__62 = 63, T__63 = 64, T__64 = 65, T__65 = 66, T__66 = 67, T__67 = 68, 
-    T__68 = 69, T__69 = 70, T__70 = 71, T__71 = 72, VIOLATED = 73, VAC_SAT = 74, 
-    SAT = 75, ACT_TABLE = 76, WITH_ALIGNMENT_STRATEGY = 77, CNT_TABLE = 78, 
-    ATT_TABLE = 79, ACTIVITYLABEL = 80, LOGS = 81, ATT = 82, ACTIVATION = 83, 
-    TARGET = 84, INIT = 85, END = 86, EXISTS = 87, ABSENCE = 88, NEXT = 89, 
-    OR = 90, AND = 91, FIRST = 92, LAST = 93, IF = 94, THEN = 95, ELSE = 96, 
-    UNTIL = 97, BOX = 98, DIAMOND = 99, AUTO_TIMED = 100, LPAREN = 101, 
-    RPAREN = 102, PRESERVE = 103, TIMED = 104, THETA = 105, LEFT = 106, 
-    INV = 107, RIGHT = 108, MIDDLE = 109, NEGATED = 110, JOLLY = 111, HRF = 112, 
-    TAB = 113, XES = 114, LABEL = 115, INTNUMBER = 116, NUMBER = 117, STRING = 118, 
-    SPACE = 119, COMMENT = 120, LINE_COMMENT = 121
+    T__68 = 69, T__69 = 70, T__70 = 71, T__71 = 72, T__72 = 73, T__73 = 74, 
+    VIOLATED = 75, VAC_SAT = 76, SAT = 77, ACT_TABLE = 78, WITH_ALIGNMENT_STRATEGY = 79, 
+    CNT_TABLE = 80, ATT_TABLE = 81, ACTIVITYLABEL = 82, LOGS = 83, ATT = 84, 
+    ACTIVATION = 85, TARGET = 86, INIT = 87, END = 88, EXISTS = 89, ABSENCE = 90, 
+    NEXT = 91, OR = 92, AND = 93, FIRST = 94, LAST = 95, IF = 96, THEN = 97, 
+    ELSE = 98, UNTIL = 99, BOX = 100, DIAMOND = 101, AUTO_TIMED = 102, LPAREN = 103, 
+    RPAREN = 104, PRESERVE = 105, TIMED = 106, THETA = 107, LEFT = 108, 
+    INV = 109, RIGHT = 110, MIDDLE = 111, NEGATED = 112, JOLLY = 113, HRF = 114, 
+    TAB = 115, XES = 116, LABEL = 117, INTNUMBER = 118, NUMBER = 119, STRING = 120, 
+    SPACE = 121, COMMENT = 122, LINE_COMMENT = 123
   };
 
   enum {
@@ -638,6 +638,34 @@ public:
     antlr4::tree::TerminalNode *BOX();
     LtlfContext *ltlf();
     antlr4::tree::TerminalNode *TIMED();
+    virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
+    virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
+
+    virtual std::any accept(antlr4::tree::ParseTreeVisitor *visitor) override;
+  };
+
+  class  And_future_not_nextContext : public LtlfContext {
+  public:
+    And_future_not_nextContext(LtlfContext *ctx);
+
+    std::vector<LtlfContext *> ltlf();
+    LtlfContext* ltlf(size_t i);
+    antlr4::tree::TerminalNode *THETA();
+    antlr4::tree::TerminalNode *INV();
+    virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
+    virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
+
+    virtual std::any accept(antlr4::tree::ParseTreeVisitor *visitor) override;
+  };
+
+  class  And_wfuture_not_nextContext : public LtlfContext {
+  public:
+    And_wfuture_not_nextContext(LtlfContext *ctx);
+
+    std::vector<LtlfContext *> ltlf();
+    LtlfContext* ltlf(size_t i);
+    antlr4::tree::TerminalNode *THETA();
+    antlr4::tree::TerminalNode *INV();
     virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
     virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
 

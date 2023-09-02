@@ -106,7 +106,8 @@ int main(int argc, char **argv) {
     log.env_name = "env";
     log.file = log_file;
     log.format = format;
-    log.no_stats = false;
+    log.no_stats = true;
+    log.with_data = false;
 
     std::ifstream u_input_stream(unary_model_file);
 
@@ -130,23 +131,22 @@ int main(int argc, char **argv) {
 
 
 
-    for(uint16_t i = 0; i < iters; ++i){
+
         switch (algorithm) {
             case BOLT1:
-                bolt_algorithm(logger_file, log, support, i, no_stats);       // Using directly the relational database representation without querying
+                bolt_algorithm(logger_file, log, support, iters, no_stats);       // Using directly the relational database representation without querying
                 break;
             case BOLT2:
-                bolt_algorithm2(logger_file, log, support, i, no_stats);       // Using directly the relational database representation without querying
+                bolt_algorithm2(logger_file, log, support, iters, no_stats);       // Using directly the relational database representation without querying
                 break;
             case APRIORI:
-                apriori(logger_file, log, support, unary_templates, binary_templates, i, no_stats);   // Using A-Priori + Querying for checking satisfiability
+                apriori(logger_file, log, support, unary_templates, binary_templates, iters, no_stats);   // Using A-Priori + Querying for checking satisfiability
                 break;
             case TOP_K_MINING:
                 binary_templates.insert(binary_templates.end(), unary_templates.begin(), unary_templates.end());
-                top_k_mining(logger_file, log, support, binary_templates, i, no_stats);   // Using A-Priori + Querying for checking satisfiability
+                top_k_mining(logger_file, log, support, binary_templates, iters, no_stats);   // Using A-Priori + Querying for checking satisfiability
                 break;
         }
-    }
 
     /*-s
 0.1

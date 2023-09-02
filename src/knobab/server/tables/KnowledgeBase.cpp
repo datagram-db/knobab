@@ -1113,7 +1113,7 @@ void KnowledgeBase::dump_xes_format(std::ostream &xes) const {
             begin_event_serialize(xes);
             size_t offset = (((size_t)ptr) - ((size_t)act_table_by_act_id.table.data()));
             offset = offset / record_size;
-            std::string eventName = event_label_mapper.get(ptr->entry.id.parts.act);
+            const std::string& eventName = event_label_mapper.get(ptr->entry.id.parts.act);
             auto hasTime = attribute_name_to_table.find("__time");
             long long milliseconds = std::chrono::duration_cast< std::chrono::milliseconds >(
                     std::chrono::system_clock::now().time_since_epoch()

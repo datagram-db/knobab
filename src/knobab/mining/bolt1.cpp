@@ -25,10 +25,14 @@ std::pair<std::vector<pattern_mining_result<DeclareDataAware>>, double> bolt_alg
         env.load_log(conf.format, conf.with_data, file.string(), true, if_);
     }
     std::filesystem::path declare_file_path, maxsat;
-    std::cout << "Starting from now!" << std::endl;
-    std::pair<std::vector<pattern_mining_result<DeclareDataAware>>, double> list = pattern_mining(env.db, support, false, true, true, false, false);
 
-    if(!no_stats){
+//    std::filesystem::path declare_file_path, maxsat;
+    std::pair<std::vector<pattern_mining_result<DeclareDataAware>>, double> list;
+
+    for(uint16_t i = 0; i < iter_num; ++i) {
+        env.experiment_logger.iteration_num = i;
+        list = pattern_mining(env.db, support, false, true, true, false, false);
+        std::cout << list.second << " L=" << list.first.size() << std::endl;
         bool filePreexists = std::filesystem::exists(logger_file);
         std::ofstream log(logger_file, std::ios_base::app | std::ios_base::out);
         if (!filePreexists) {
@@ -38,8 +42,25 @@ std::pair<std::vector<pattern_mining_result<DeclareDataAware>>, double> bolt_alg
         env.experiment_logger.model_atomization_time = 0;
         env.experiment_logger.model_declare_to_ltlf = 0;
         env.experiment_logger.model_ltlf_query_time = list.second;
+        env.experiment_logger.model_size = list.first.size();
         env.experiment_logger.log_csv_file(log);
     }
+
+//    std::cout << "Starting from now!" << std::endl;
+//    std::pair<std::vector<pattern_mining_result<DeclareDataAware>>, double> list = pattern_mining(env.db, support, false, true, true, false, false);
+//
+//    if(!no_stats){
+//        bool filePreexists = std::filesystem::exists(logger_file);
+//        std::ofstream log(logger_file, std::ios_base::app | std::ios_base::out);
+//        if (!filePreexists) {
+//            LoggerInformation::log_csv_file_header(log);
+//        }
+//        env.experiment_logger.model_data_decomposition_time = 0;
+//        env.experiment_logger.model_atomization_time = 0;
+//        env.experiment_logger.model_declare_to_ltlf = 0;
+//        env.experiment_logger.model_ltlf_query_time = list.second;
+//        env.experiment_logger.log_csv_file(log);
+//    }
 
     return list;
 }

@@ -119,6 +119,8 @@ public:
     std::any visitIfte(KnoBABQueryParser::IfteContext *context) override;
     std::any visitAnd_globally(KnoBABQueryParser::And_globallyContext *context) override;
     std::any visitQuery_plan(KnoBABQueryParser::Query_planContext *context) override;
+    std::any visitAnd_future_not_next(KnoBABQueryParser::And_future_not_nextContext *ctx) override;
+    std::any visitAnd_wfuture_not_next(KnoBABQueryParser::And_wfuture_not_nextContext *ctx) override;
 
     trace_visitor* tv = nullptr;
     std::unordered_map<std::string, Environment> multiple_logs;
