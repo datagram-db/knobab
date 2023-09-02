@@ -101,6 +101,12 @@ public:
   virtual void enterBox(KnoBABQueryParser::BoxContext *ctx) = 0;
   virtual void exitBox(KnoBABQueryParser::BoxContext *ctx) = 0;
 
+  virtual void enterAnd_future_not_next(KnoBABQueryParser::And_future_not_nextContext *ctx) = 0;
+  virtual void exitAnd_future_not_next(KnoBABQueryParser::And_future_not_nextContext *ctx) = 0;
+
+  virtual void enterAnd_wfuture_not_next(KnoBABQueryParser::And_wfuture_not_nextContext *ctx) = 0;
+  virtual void exitAnd_wfuture_not_next(KnoBABQueryParser::And_wfuture_not_nextContext *ctx) = 0;
+
   virtual void enterDiamond(KnoBABQueryParser::DiamondContext *ctx) = 0;
   virtual void exitDiamond(KnoBABQueryParser::DiamondContext *ctx) = 0;
 

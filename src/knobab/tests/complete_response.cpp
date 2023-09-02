@@ -42,7 +42,36 @@ const std::string query_plan = "queryplan \"nfmcp23\" {\n"
                                "                                           )\n"
                                "     template \"AltResponse\" args 2     := G ( (EXISTS ~ 1 t #1) OR t ((EXISTS 1 t #1 activation) AND t THETA (NEXT ((EXISTS ~ 1 t #1) U t (EXISTS 1 t #2 target)) )))\n"
                                "     template \"AltPrecedence\" args 2   := (((EXISTS  ~ 1 t #2) U (EXISTS 1 t #1 activation)) OR (ABSENCE 1 #2)) AND\n"
-                               "                                           (G(((EXISTS ~ 1 t #1)) OR t (((EXISTS 1 t #1 activation)) AND t THETA (NEXT (((EXISTS  ~ 1 t #1) U t (EXISTS 1 t #2 target)) OR t (G t (EXISTS  ~ 1 t #1))))  )))\n"
+                               "                                           (G(((EXISTS ~ 1 t #2)) OR t (((EXISTS 1 t #2 target)) AND t THETA INV (NEXT (((EXISTS  ~ 1 t #2) U t (EXISTS 1 t #1 activation)) OR t (G t (EXISTS  ~ 1 t #2))))  )))\n"
+                               "}";
+
+
+const std::string query_plan_novel = "queryplan \"edbt24\" {\n"
+                               "     template \"Init\"                   := INIT  activation\n"
+                               "     template \"End\"                    := END activation\n"
+                               "     template \"Exists\"                := (EXISTS $ activation)\n"
+                               "     template \"Exists1\"                := (EXISTS 1 activation)\n"
+                               "     template \"Absence\"               := ABSENCE $ activation\n"
+                               "     template \"Absence1\"               := ABSENCE 1 activation\n"
+                               "     template \"Absence2\"               := ABSENCE 2 activation\n"
+                               "     template \"Precedence\" args 2      := ((EXISTS  ~ 1 t #2) U (EXISTS 1 t #1 activation)) OR (ABSENCE 1 #2)\n"
+                               "     template \"ChainPrecedence\" args 2 := G(((LAST OR t (NEXT EXISTS ~ 1 t #1))) OR t ((NEXT EXISTS 1 t #1 activation) AND t THETA INV (EXISTS 1 t #2 target) ))\n"
+                               "     template \"Choice\" args 2          := (EXISTS 1 t #1 activation) OR THETA (EXISTS 1 t #2 activation)\n"
+                               "     template \"Response\" args 2        := G ( ((EXISTS ~ 1 t #1)) OR t ((EXISTS 1 t #1 activation) &Ft THETA (EXISTS 1 t #2 target)) )\n"
+                               "     template \"ChainResponse\" args 2   := G ( ((EXISTS ~ 1 t #1)) OR t ((EXISTS 1 t #1 activation) AND t THETA (NEXT EXISTS 1 t #2 target)))\n"
+                               "     template \"RespExistence\" args 2   := ( ((ABSENCE 1 #1)) OR ((EXISTS 1 #1 activation) AND THETA (EXISTS 1 #2 target)))\n"
+                               "     template \"ExclChoice\" args 2       := ((EXISTS 1 t #1 activation) OR THETA (EXISTS 1 t #2 activation)) AND ((ABSENCE 1 #1) OR (ABSENCE 1 #2))\n"
+                               "     template \"CoExistence\" args 2     := ( ((ABSENCE 1 #1)) OR ((EXISTS 1 #1 activation) AND THETA (EXISTS 1 #2 target))) AND ( ((ABSENCE 1 #2)) OR ((EXISTS 1 #2 activation) AND THETA INV (EXISTS 1 #1 target)))\n"
+                               "     template \"NotCoExistence\" args 2  := ~ ((EXISTS 1 t #1 activation) AND THETA (EXISTS 1 t #2 target)) PRESERVE\n"
+                               "\n"
+                               "     template \"Succession\" args 2      := (G ( ((EXISTS ~ 1 t #1)) OR t ((EXISTS 1 t #1 activation) &Ft THETA (EXISTS 1 t #2 target)) )) AND (((EXISTS  ~ 1 t #2) U (EXISTS 1 t #1 target)) OR (ABSENCE 1 #2))\n"
+                               "     template \"NegSuccession\" args 2   := (G ( ((EXISTS ~ 1 t #1)) OR t ((EXISTS 1 t #1 activation) &Gt  (EXISTS ~ 1 t #2)) ))\n"
+                               "     template \"ChainSuccession\" args 2 := G( (((LAST OR t (NEXT EXISTS ~ 1 t #2))) OR t ((NEXT EXISTS 1 t #2 activation) AND t THETA INV (EXISTS 1 t #1 target))) AND t\n"
+                               "                                             ( ((EXISTS ~ 1 t #1)) OR t ((EXISTS 1 t #1 activation) AND t THETA (NEXT EXISTS 1 t #2 target)))\n"
+                               "                                           )\n"
+                               "     template \"AltResponse\" args 2     := G ( (EXISTS ~ 1 t #1) OR t ((EXISTS 1 t #1 activation) &Ft!X THETA (((EXISTS 1 t #2 target)))))\n"
+                               "     template \"AltPrecedence\" args 2   := (((EXISTS  ~ 1 t #2) U (EXISTS 1 t #1 activation)) OR (ABSENCE 1 #2)) AND\n"
+                               "                                           (G(((EXISTS ~ 1 t #2)) OR t ((EXISTS 1 t #2 target) &Ft!WX THETA INV (((EXISTS 1 t #1 activation))))))\n"
                                "}";
 
 TEST_CASE("complete_response_support"){
@@ -92,7 +121,7 @@ TEST_CASE("complete_response_support"){
  */
 #define STRINGIZE_NX(A) #A
 
-#define TEST_CASE_PER_OPERATOR(name, op) TEST_CASE(STRINGIZE_NX(name ## op)) {\
+#define TEST_CASE_PER_OPERATOR(name, op) TEST_CASE(STRINGIZE_NX(base ## name ## op)) {\
     size_t pos, neg;\
     const std::vector<std::string> log_parse_format_type{"HRF", "XES", "TAB"};\
 \
@@ -114,7 +143,7 @@ TEST_CASE("complete_response_support"){
        << log_parse_format_type.at((size_t)TAB_SEPARATED_EVENTS)\
        << " "\
        << std::quoted(curr.string())\
-       <<  " with data as "\
+       <<  " no stats as "\
        << std::quoted(base);\
     auto tmp = sqm.runQuery(ss.str());\
     ss.str(std::string());\
@@ -127,6 +156,52 @@ TEST_CASE("complete_response_support"){
     ss << " with operators  " << std::quoted(operators);\
     std::string a,b;\
     std::tie(a,b) = sqm.runQuery(ss.str());\
+    auto js = nlohmann::json::parse(a);\
+    std::vector<double> max_sat_per_trace = js["TraceMaximumSatisfiability"].get<std::vector<double>>();\
+    for (size_t i = 0; i<max_sat_per_trace.size(); i++) {\
+        if (i<pos)\
+            ASSERT_TRUE(max_sat_per_trace.at(i)== 1.0);\
+        else\
+            ASSERT_TRUE(max_sat_per_trace.at(i)== 0.0);\
+    }\
+};
+
+#define TEST_CASE_PER_NOVEL_OPERATOR(name, op) TEST_CASE(STRINGIZE_NX(novel ## name ## op)) {\
+    size_t pos, neg;\
+    const std::vector<std::string> log_parse_format_type{"HRF", "XES", "TAB"};\
+    auto root_folder =  std::filesystem::current_path().parent_path();\
+    std::string base{#name}; \
+    std::string operators{#op}; \
+    std::filesystem::path curr = root_folder / "data" / "testing" / "declare" / base;\
+    auto sizes = root_folder / "data" /"testing"/"declare" / (base+"_pos_neg.txt");\
+    ServerQueryManager sqm;\
+    std::stringstream ss;\
+    std::ifstream fs{sizes};\
+        fs >> pos >> neg;\
+    auto declare_file_path = (root_folder / "data" /"testing"/"declare" / (base+".powerdecl")).string();\
+    std::ifstream t(declare_file_path);\
+    std::stringstream buffer;\
+    buffer << t.rdbuf();\
+\
+    ss << "load "\
+       << log_parse_format_type.at((size_t)TAB_SEPARATED_EVENTS)\
+       << " "\
+       << std::quoted(curr.string())\
+       <<  " as "\
+       << std::quoted(base);\
+    auto tmp = sqm.runQuery(ss.str());\
+    ss.str(std::string());\
+    ss.clear();\
+\
+    sqm.runQuery(query_plan_novel);\
+    ss << "model-check declare " << buffer.str() << std::endl;\
+    ss << " using \"TraceMaximumSatisfiability\" over " << std::quoted(base) << std::endl;\
+    ss << " plan \"edbt24\" "  << std::endl;\
+    ss << " with operators  " << std::quoted(operators);\
+    std::string a,b;\
+    std::tie(a,b) = sqm.runQuery(ss.str());                                                  \
+    auto js = nlohmann::json::parse(a);\
+    std::vector<double> max_sat_per_trace = js["TraceMaximumSatisfiability"].get<std::vector<double>>();\                                                                                    \
     std::vector<double> max_sat_per_trace = nlohmann::json::parse(a)["TraceMaximumSatisfiability"].get<std::vector<double>>();\
     for (size_t i = 0; i<max_sat_per_trace.size(); i++) {\
         if (i<pos)\
@@ -138,6 +213,102 @@ TEST_CASE("complete_response_support"){
 
 TEST_CASE_PER_OPERATOR(AltPrecedence, Hybrid)
 TEST_CASE_PER_OPERATOR(AltResponse, Hybrid)
+//TEST_CASE_PER_NOVEL_OPERATOR(AltResponse, Hybrid)
+TEST_CASE("novelAltResponseHybrid") {
+    size_t pos, neg;
+    const std::vector<std::string> log_parse_format_type{"HRF", "XES", "TAB"};
+//    std::ofstream f{"/home/giacomo/b.txt", std::ios_base::app};
+
+    auto root_folder =  std::filesystem::current_path().parent_path();
+    std::string base{"AltResponse"};
+    std::string operators{"Hybrid"};
+    std::filesystem::path curr = root_folder / "data" / "testing" / "declare" / base;
+    auto sizes = root_folder / "data" /"testing"/"declare" / (base+"_pos_neg.txt");
+
+    ServerQueryManager sqm;
+    std::stringstream ss;
+    std::ifstream fs{sizes};
+        fs >> pos >> neg;
+    auto declare_file_path = (root_folder / "data" /"testing"/"declare" / (base+".powerdecl")).string();
+    std::ifstream t(declare_file_path);
+    std::stringstream buffer;
+    buffer << t.rdbuf();
+
+    ss << "load "
+       << log_parse_format_type.at((size_t)TAB_SEPARATED_EVENTS)
+       << " "
+       << std::quoted(curr.string())
+       <<  " no stats as "
+       << std::quoted(base);
+    auto tmp = sqm.runQuery(ss.str());
+    ss.str(std::string());
+    ss.clear();
+
+    sqm.runQuery(query_plan_novel);
+    ss << "model-check declare " << buffer.str() << std::endl;
+    ss << " using \"TraceMaximumSatisfiability\" over " << std::quoted(base) << std::endl;
+    ss << " plan \"edbt24\" "  << std::endl;
+    ss << " with operators  " << std::quoted(operators);
+    std::string a,b;
+    std::tie(a,b) = sqm.runQuery(ss.str());
+    auto js = nlohmann::json::parse(a);
+    std::vector<double> max_sat_per_trace = js["TraceMaximumSatisfiability"].get<std::vector<double>>();
+    for (size_t i = 0; i<max_sat_per_trace.size(); i++) {
+//        std::cout << i << " for "<< max_sat_per_trace.size() << std::endl;
+        if (i<pos)
+            ASSERT_TRUE(max_sat_per_trace.at(i)== 1.0);
+        else
+            ASSERT_TRUE(max_sat_per_trace.at(i)== 0.0);
+    }
+}
+
+TEST_CASE("novelAltPrecedenceHybrid") {
+    size_t pos, neg;
+    const std::vector<std::string> log_parse_format_type{"HRF", "XES", "TAB"};
+//    std::ofstream f{"/home/giacomo/b.txt", std::ios_base::app};
+
+    auto root_folder =  std::filesystem::current_path().parent_path();
+    std::string base{"AltPrecedence"};
+    std::string operators{"Hybrid"};
+    std::filesystem::path curr = root_folder / "data" / "testing" / "declare" / base;
+    auto sizes = root_folder / "data" /"testing"/"declare" / (base+"_pos_neg.txt");
+
+    ServerQueryManager sqm;
+    std::stringstream ss;
+    std::ifstream fs{sizes};
+    fs >> pos >> neg;
+    auto declare_file_path = (root_folder / "data" /"testing"/"declare" / (base+".powerdecl")).string();
+    std::ifstream t(declare_file_path);
+    std::stringstream buffer;
+    buffer << t.rdbuf();
+
+    ss << "load "
+       << log_parse_format_type.at((size_t)TAB_SEPARATED_EVENTS)
+       << " "
+       << std::quoted(curr.string())
+       <<  " no stats as "
+       << std::quoted(base);
+    auto tmp = sqm.runQuery(ss.str());
+    ss.str(std::string());
+    ss.clear();
+
+    sqm.runQuery(query_plan_novel);
+    ss << "model-check declare " << buffer.str() << std::endl;
+    ss << " using \"TraceMaximumSatisfiability\" over " << std::quoted(base) << std::endl;
+    ss << " plan \"edbt24\" "  << std::endl;
+    ss << " with operators  " << std::quoted(operators);
+    std::string a,b;
+    std::tie(a,b) = sqm.runQuery(ss.str());
+    auto js = nlohmann::json::parse(a);
+    std::vector<double> max_sat_per_trace = js["TraceMaximumSatisfiability"].get<std::vector<double>>();
+    for (size_t i = 0; i<max_sat_per_trace.size(); i++) {
+//        std::cout << i << " for "<< max_sat_per_trace.size() << std::endl;
+        if (i<pos)
+            ASSERT_TRUE(max_sat_per_trace.at(i)== 1.0);
+        else
+            ASSERT_TRUE(max_sat_per_trace.at(i)== 0.0);
+    }
+}
 TEST_CASE_PER_OPERATOR(ChainPrecedence, Hybrid)
 TEST_CASE_PER_OPERATOR(ChainResponse, Hybrid)
 TEST_CASE_PER_OPERATOR(ChainSuccession, Hybrid)

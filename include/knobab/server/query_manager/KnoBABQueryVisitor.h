@@ -77,6 +77,10 @@ public:
 
     virtual std::any visitBox(KnoBABQueryParser::BoxContext *context) = 0;
 
+    virtual std::any visitAnd_future_not_next(KnoBABQueryParser::And_future_not_nextContext *context) = 0;
+
+    virtual std::any visitAnd_wfuture_not_next(KnoBABQueryParser::And_wfuture_not_nextContext *context) = 0;
+
     virtual std::any visitDiamond(KnoBABQueryParser::DiamondContext *context) = 0;
 
     virtual std::any visitNot(KnoBABQueryParser::NotContext *context) = 0;

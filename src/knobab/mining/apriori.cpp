@@ -131,64 +131,65 @@ void apriori(const std::string& logger_file,
     // Obtaining the model
     Environment& env = sqm.multiple_logs[log.env_name];
 
-    std::vector<DeclareDataAware> unary;
-    size_t batch = 1;
-    size_t count_099_clauses = 0;
-    auto binary_clauses = actual(env, support, unary_templates, binary_templates, unary);
+
+    for(uint16_t i = 0; i < iteration_num; ++i) {
+        std::vector<DeclareDataAware> unary;
+        size_t batch = 1;
+        size_t count_099_clauses = 0;
+        auto binary_clauses = actual(env, support, unary_templates, binary_templates, unary);
 //    std::cout << binary_clauses.size() << std::endl;
-    for (const std::vector<DeclareDataAware>& x : chunker(binary_clauses, chunk_size)) {
-        ss << "model-check declare " << std::endl;
-        for (const auto& d : x) {
-            ss << "\t" << std::quoted(d.casusu) << "(" << std::quoted(d.left_act) << " , true , " << std::quoted(d.right_act) << " , true ) " << std::endl;
-        }
-        ss << " using \"PerDeclareSupport\" over " << std::quoted(log.env_name) << std::endl;
-        ss << " plan \"mdpi23\" "  << std::endl;
-        ss << " with operators \"Hybrid\" ";
-        std::string a,b;
-        std::tie(a,b) = sqm.runQuery(ss.str());
-        auto declare_support = nlohmann::json::parse(a)["PerDeclareSupport"].get<std::vector<double>>();
-        for (double x : declare_support) {
-            if (std::abs(x-1.0)<=std::numeric_limits<double>::epsilon()) {
-                count_099_clauses++;
+        for (const std::vector<DeclareDataAware>& x : chunker(binary_clauses, chunk_size)) {
+            ss << "model-check declare " << std::endl;
+            for (const auto& d : x) {
+                ss << "\t" << std::quoted(d.casusu) << "(" << std::quoted(d.left_act) << " , true , " << std::quoted(d.right_act) << " , true ) " << std::endl;
             }
-        }
-        ss.str(std::string());
-        ss.clear();
+            ss << " using \"PerDeclareSupport\" over " << std::quoted(log.env_name) << std::endl;
+            ss << " plan \"mdpi23\" "  << std::endl;
+            ss << " with operators \"Hybrid\" ";
+            std::string a,b;
+            std::tie(a,b) = sqm.runQuery(ss.str());
+            auto declare_support = nlohmann::json::parse(a)["PerDeclareSupport"].get<std::vector<double>>();
+            for (double x : declare_support) {
+                if (std::abs(x-1.0)<=std::numeric_limits<double>::epsilon()) {
+                    count_099_clauses++;
+                }
+            }
+            ss.str(std::string());
+            ss.clear();
 //        std::cout << "Query Batch #" <<  batch << ": " << sqm.getContent() << std::endl << std::endl;
-        batch++;
-    }
-
-    for (const std::vector<DeclareDataAware>& x : chunker(unary, chunk_size)) {
-        ss << "model-check declare " << std::endl;
-        for (const auto& d : x) {
-            ss << "\t" << std::quoted(d.casusu) << "( " << std::quoted(d.left_act) << ", true, 1 ) " << std::endl;
+            batch++;
         }
-        ss << " using \"PerDeclareSupport\" over " << std::quoted(log.env_name) << std::endl;
-        ss << " plan \"mdpi23\" "  << std::endl;
-        ss << " with operators \"Hybrid\" ";
-        std::string a,b;
-        std::tie(a,b) = sqm.runQuery(ss.str());
-        auto declare_support = nlohmann::json::parse(a)["PerDeclareSupport"].get<std::vector<double>>();
-        for (double x : declare_support) {
-            if (std::abs(x-1.0)<=std::numeric_limits<double>::epsilon()) {
-                count_099_clauses++;
+
+        for (const std::vector<DeclareDataAware>& x : chunker(unary, chunk_size)) {
+            ss << "model-check declare " << std::endl;
+            for (const auto& d : x) {
+                ss << "\t" << std::quoted(d.casusu) << "( " << std::quoted(d.left_act) << ", true, 1 ) " << std::endl;
             }
-        }
-        ss.str(std::string());
-        ss.clear();
+            ss << " using \"PerDeclareSupport\" over " << std::quoted(log.env_name) << std::endl;
+            ss << " plan \"mdpi23\" "  << std::endl;
+            ss << " with operators \"Hybrid\" ";
+            std::string a,b;
+            std::tie(a,b) = sqm.runQuery(ss.str());
+            auto declare_support = nlohmann::json::parse(a)["PerDeclareSupport"].get<std::vector<double>>();
+            for (double x : declare_support) {
+                if (std::abs(x-1.0)<=std::numeric_limits<double>::epsilon()) {
+                    count_099_clauses++;
+                }
+            }
+            ss.str(std::string());
+            ss.clear();
 //        std::cout << "Unary Batch: " << sqm.getContent() << std::endl << std::endl;
-    }
+        }
 
-    std::cout << "==1.0 clauses: " << count_099_clauses << std::endl;
-    std::cout << "total clauses: " << binary_clauses.size() << std::endl;
-    if(!no_stats) {
+        std::cout << "==1.0 clauses: " << count_099_clauses << std::endl;
+        std::cout << "total clauses: " << binary_clauses.size() << std::endl;
+
         //Dumping to the logger file
         ss << "benchmarking-log " << std::quoted(logger_file);
         sqm.runQuery(ss.str());
         ss.str(std::string());
         ss.clear();
     }
-
 //    std::cout << "Dumper: "<< sqm.getContent() << std::endl << std::endl;
 }
 
@@ -250,31 +251,33 @@ void top_k_mining(const std::string& logger_file,
 
 //    std::cout << "Operators Setting: " << sqm.getContent() << std::endl << std::endl;
 
-    std::vector<DeclareDataAware> unary;
-    size_t count_099_clauses = 0;
-    size_t overall_size = 0;
-    size_t batch = 1;
-    for (const std::string& x : templates) {
-        ss << "model-check template " << std::quoted(x) << " logtop " << support_int << std::endl; //  ServerQueryManager::visitTopn
-        ss << " using \"PerDeclareSupport\" over " << std::quoted(log.env_name) << std::endl;
-        ss << " plan \"nfmcp23\" "  << std::endl;
-        ss << " with operators \"Hybrid\" ";
-        std::string a,b;
-        std::tie(a,b) = sqm.runQuery(ss.str());
-        auto declare_support = nlohmann::json::parse(a)["PerDeclareSupport"].get<std::vector<double>>();
-        for (double x : declare_support) {
-            if (std::abs(x-1.0)<=std::numeric_limits<double>::epsilon()) {
-                count_099_clauses++;
-            }
-        }
-        overall_size += declare_support.size();
-        ss.str(std::string());
-        ss.clear();
-//        std::cout << "Query Batch #" <<  batch << ": " << sqm.getContent() << std::endl << std::endl;
-        batch++;
-    }
 
-    // TODO: the current function by Samuel only supports binary clauses
+    for(uint16_t i = 0; i < iteration_num; ++i) {
+        std::vector<DeclareDataAware> unary;
+        size_t count_099_clauses = 0;
+        size_t overall_size = 0;
+        size_t batch = 1;
+        for (const std::string& x : templates) {
+            ss << "model-check template " << std::quoted(x) << " logtop " << support_int << std::endl; //  ServerQueryManager::visitTopn
+            ss << " using \"PerDeclareSupport\" over " << std::quoted(log.env_name) << std::endl;
+            ss << " plan \"nfmcp23\" "  << std::endl;
+            ss << " with operators \"Hybrid\" ";
+            std::string a,b;
+            std::tie(a,b) = sqm.runQuery(ss.str());
+            auto declare_support = nlohmann::json::parse(a)["PerDeclareSupport"].get<std::vector<double>>();
+            for (double x : declare_support) {
+                if (std::abs(x-1.0)<=std::numeric_limits<double>::epsilon()) {
+                    count_099_clauses++;
+                }
+            }
+            overall_size += declare_support.size();
+            ss.str(std::string());
+            ss.clear();
+//        std::cout << "Query Batch #" <<  batch << ": " << sqm.getContent() << std::endl << std::endl;
+            batch++;
+        }
+
+        // TODO: the current function by Samuel only supports binary clauses
 //    for (const auto& x : {"Init", "End", "Absence1", "Exists1"}) {
 //        ss << "model-check template " << std::quoted(x) << " logtop " << support_int << std::endl;
 //        ss << " using \"PerDeclareSupport\" over " << std::quoted(log.env_name) << std::endl;
@@ -286,15 +289,15 @@ void top_k_mining(const std::string& logger_file,
 //        std::cout << "Query Batch #" <<  batch << ": " << sqm.getContent() << std::endl << std::endl;
 //        batch++;
 //    }
-    std::cout << "==1.0 clauses: " << count_099_clauses << std::endl;
-    std::cout << "total clauses: " << overall_size << std::endl;
+        std::cout << "==1.0 clauses: " << count_099_clauses << std::endl;
+        std::cout << "total clauses: " << overall_size << std::endl;
 
-    if(!no_stats) {
         //Dumping to the logger file
         ss << "benchmarking-log " << std::quoted(logger_file);
         sqm.runQuery(ss.str());
         ss.str(std::string());
         ss.clear();
+
     }
 
 //    std::cout << "Dumper: "<< sqm.getContent() << std::endl << std::endl;

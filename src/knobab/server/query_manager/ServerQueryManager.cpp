@@ -1349,3 +1349,39 @@ std::any ServerQueryManager::visitWith_model(KnoBABQueryParser::With_modelContex
     }
     return {};
 }
+
+std::any ServerQueryManager::visitAnd_future_not_next(KnoBABQueryParser::And_future_not_nextContext *context) {
+    ASSERT_ON_GIVEN_TIMING(true);
+
+    fromNowOnTimedStack.push(fromNowOnTimed);
+    auto lhs = std::any_cast<LTLfQuery>(visit(context->ltlf(0)));
+    fromNowOnTimed = fromNowOnTimedStack.top();
+    fromNowOnTimedStack.pop();
+
+    fromNowOnTimedStack.push(fromNowOnTimed);
+    fromNowOnTimed = true;
+    auto rhs = std::any_cast<LTLfQuery>(visit(context->ltlf(1)));
+    fromNowOnTimed = fromNowOnTimedStack.top();
+    fromNowOnTimedStack.pop();
+
+    return {LTLfQuery::qANDFUTURENOTNEXTA(lhs, rhs, true, context->THETA() != nullptr,
+                                  context->INV() != nullptr)};
+}
+
+std::any ServerQueryManager::visitAnd_wfuture_not_next(KnoBABQueryParser::And_wfuture_not_nextContext *context) {
+    ASSERT_ON_GIVEN_TIMING(true);
+
+    fromNowOnTimedStack.push(fromNowOnTimed);
+    auto lhs = std::any_cast<LTLfQuery>(visit(context->ltlf(0)));
+    fromNowOnTimed = fromNowOnTimedStack.top();
+    fromNowOnTimedStack.pop();
+
+    fromNowOnTimedStack.push(fromNowOnTimed);
+    fromNowOnTimed = true;
+    auto rhs = std::any_cast<LTLfQuery>(visit(context->ltlf(1)));
+    fromNowOnTimed = fromNowOnTimedStack.top();
+    fromNowOnTimedStack.pop();
+
+    return {LTLfQuery::qANDFUTURENOTWNEXTA(lhs, rhs, true, context->THETA() != nullptr,
+                                          context->INV() != nullptr)};
+}

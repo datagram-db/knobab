@@ -349,6 +349,38 @@ env DeclareDataAware::GetPayloadDataFromEvent(const std::pair<uint32_t, uint16_t
     return environment;
 }
 
+bool DeclareDataAware::checkValidity(bool isLeftMap, uint32_t t2, uint16_t e2) const {
+    if (isLeftMap ? dnf_left_map.empty() : dnf_right_map.empty()) return true;
+    size_t table_offset =
+            kb->act_table_by_act_id.getBuilder().trace_id_to_event_id_to_offset.at(t2).at(e2);
+    const std::string& eventName = kb->event_label_mapper.get(kb->act_table_by_act_id.table.at(table_offset).entry.id.parts.act);
+    for(const auto& pred_withConj : (isLeftMap ? dnf_left_map : dnf_right_map)){
+        bool result = true;
+        for (const auto& predDummy : pred_withConj) {
+            DEBUG_ASSERT(predDummy.second.BiVariableConditions.empty());
+            bool test = true;
+            auto temp2_a = kb->attribute_name_to_table.find(predDummy.second.var);
+            if (temp2_a != kb->attribute_name_to_table.end()) {
+                size_t offset = kb->act_table_by_act_id.getBuilder().trace_id_to_event_id_to_offset.at(
+                        t2).at(e2);
+                std::optional<union_minimal> data = temp2_a->second.resolve_record_if_exists2(offset);
+                if (data.has_value()) {
+                    if (predDummy.second.testOverSingleVariable(data.value())) {
+                        test = false;
+                    }
+                }
+            }
+            if (!test) {
+                result = false;
+                break;
+            }
+        }
+        if (result)
+            return true;
+    }
+    return false;
+}
+
 env DeclareDataAware::GetPayloadDataFromEvent(uint32_t first, uint16_t second, bool isLeft, std::unordered_set<std::string>& cache) const {
     env environment;
 

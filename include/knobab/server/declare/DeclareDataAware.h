@@ -302,7 +302,11 @@ struct DeclareDataAware {
     {
         return std::tie(l.casusu, l.left_act, /*l.left_act_id,*/ l.right_act, /*l.right_act_id,*/ l.n) < std::tie(r.casusu, r.left_act, /*r.left_act_id,*/ r.right_act, /*r.right_act_id,*/ r.n); // keep the same order
     }
+
+    bool checkValidity(bool isLeftMap, uint32_t t2, uint16_t e2) const;
 };
+
+
 
 //ltlf toFiniteSemantics(declare_templates casusu, size_t n, const std::string& left_act, const std::string& right_act = "");
 

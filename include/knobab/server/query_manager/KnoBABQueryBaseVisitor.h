@@ -131,6 +131,14 @@ public:
     return visitChildren(ctx);
   }
 
+  virtual std::any visitAnd_future_not_next(KnoBABQueryParser::And_future_not_nextContext *ctx) override {
+    return visitChildren(ctx);
+  }
+
+  virtual std::any visitAnd_wfuture_not_next(KnoBABQueryParser::And_wfuture_not_nextContext *ctx) override {
+    return visitChildren(ctx);
+  }
+
   virtual std::any visitDiamond(KnoBABQueryParser::DiamondContext *ctx) override {
     return visitChildren(ctx);
   }
