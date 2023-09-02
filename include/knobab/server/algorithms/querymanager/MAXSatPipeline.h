@@ -158,8 +158,8 @@ private:
     void data_chunk(CNFDeclareDataAware* model, const AtomizingPipeline& atomization, const KnowledgeBase& kb);
     std::vector<PartialResult> subqueriesRunning(const KnowledgeBase &kb);
     void abidinglogic_query_running(const std::vector<PartialResult>& results_cache, const KnowledgeBase& kb);
-    void fast_v1_query_running(const std::vector<PartialResult>& results_cache, const KnowledgeBase& kb);
-    void hybrid_query_running(const std::vector<PartialResult>& results_cache, const KnowledgeBase& kb);
+    void fast_v1_query_running(const std::vector<PartialResult>& results_cache, const AtomizingPipeline& ap, const KnowledgeBase& kb);
+    void hybrid_query_running(const std::vector<PartialResult>& results_cache, const AtomizingPipeline& ap, const KnowledgeBase& kb);
 //    LTLfQuery *pushAtomicQueries(const AtomizingPipeline &atomization, LTLfQuery *formula);
 
 };

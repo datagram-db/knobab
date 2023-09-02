@@ -499,3 +499,44 @@ LTLfQuery LTLfQuery::qDIAMOND(const LTLfQuery& lhs, bool isTimed) {
     q.fields.id.parts.directly_from_cache = false;
     return q;
 }
+
+    LTLfQuery LTLfQuery::qANDNEXT(const LTLfQuery& lhs, short declare_argument, LeafType marking, bool isTimed, bool hasTheta, bool isInv) {
+        LTLfQuery q;
+        q.t = AND_NEXT_QPT;
+        q.n = 0;
+        DEBUG_ASSERT(marking != NotALeaf);
+        q.isLeaf = marking;
+        q.declare_arg = declare_argument;
+        q.fields.id.parts.has_theta = hasTheta;
+        q.fields.id.parts.preserve = false;
+        q.fields.id.parts.is_atom = false;
+        q.fields.id.parts.is_negated = false;
+        q.fields.id.parts.is_timed = isTimed;
+        q.fields.id.parts.is_numbered = false;
+        q.args_from_script.emplace_back(lhs);
+//        q.args_from_script.emplace_back(rhs);
+        q.fields.id.parts.is_queryplan = false;
+        q.fields.id.parts.directly_from_cache = false;
+        q.doInvTheta = isInv;
+        return q;
+}
+    LTLfQuery LTLfQuery::qNEXTAND(const LTLfQuery& lhs, short declare_argument, LeafType marking, bool isTimed, bool hasTheta, bool isInv) {
+        LTLfQuery q;
+        q.t = NEXT_AND_QPT;
+        q.n = 0;
+        DEBUG_ASSERT(marking != NotALeaf);
+        q.isLeaf = marking;
+        q.declare_arg = declare_argument;
+        q.fields.id.parts.has_theta = hasTheta;
+        q.fields.id.parts.preserve = false;
+        q.fields.id.parts.is_atom = false;
+        q.fields.id.parts.is_negated = false;
+        q.fields.id.parts.is_timed = isTimed;
+        q.fields.id.parts.is_numbered = false;
+        q.args_from_script.emplace_back(lhs);
+//        q.args_from_script.emplace_back(rhs);
+        q.fields.id.parts.is_queryplan = false;
+        q.fields.id.parts.directly_from_cache = false;
+        q.doInvTheta = isInv;
+        return q;
+}

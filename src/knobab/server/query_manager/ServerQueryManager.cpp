@@ -527,7 +527,8 @@ antlrcpp::Any ServerQueryManager::visitExists(KnoBABQueryParser::ExistsContext *
     ASSERT_ON_TIMING(context);
     auto argument = decleare_templates_determine(context->declare_arguments());
     max_aspect = std::max(max_aspect, argument);
-    return {LTLfQuery::qEXISTS(context->JOLLY() != nullptr ? -1 : std::stoull(context->INTNUMBER()->getText()), argument, decleare_leaf_determine(context->declare_act_target()), GET_TIMING(context), context->NEGATED())};
+    return {LTLfQuery::qEXISTS(context->JOLLY() != nullptr ? -1 : std::stoull(context->INTNUMBER()->getText()),
+                               argument, decleare_leaf_determine(context->declare_act_target()), GET_TIMING(context), context->NEGATED())};
 }
 
 antlrcpp::Any ServerQueryManager::visitNext(KnoBABQueryParser::NextContext *context) {
@@ -1384,4 +1385,33 @@ std::any ServerQueryManager::visitAnd_wfuture_not_next(KnoBABQueryParser::And_wf
 
     return {LTLfQuery::qANDFUTURENOTWNEXTA(lhs, rhs, true, context->THETA() != nullptr,
                                           context->INV() != nullptr)};
+}
+
+std::any ServerQueryManager::visitAnd_next_B(KnoBABQueryParser::And_next_BContext *ctx) {
+    ASSERT_ON_GIVEN_TIMING(true);
+    auto argument = decleare_templates_determine(ctx->declare_arguments());
+    max_aspect = std::max(max_aspect, argument);
+
+    fromNowOnTimedStack.push(fromNowOnTimed);
+    auto lhs = std::any_cast<LTLfQuery>(visit(ctx->ltlf()));
+    fromNowOnTimed = fromNowOnTimedStack.top();
+    fromNowOnTimedStack.pop();
+
+    return {LTLfQuery::qANDNEXT(lhs, argument, decleare_leaf_determine(ctx->declare_act_target()), true, ctx->THETA() != nullptr,
+                                ctx->INV() != nullptr)};
+}
+
+std::any ServerQueryManager::visitNext_and_B(KnoBABQueryParser::Next_and_BContext *ctx) {
+    ASSERT_ON_GIVEN_TIMING(true);
+    auto argument = decleare_templates_determine(ctx->declare_arguments());
+    max_aspect = std::max(max_aspect, argument);
+
+    fromNowOnTimedStack.push(fromNowOnTimed);
+    fromNowOnTimed = true;
+    auto lhs = std::any_cast<LTLfQuery>(visit(ctx->ltlf()));
+    fromNowOnTimed = fromNowOnTimedStack.top();
+    fromNowOnTimedStack.pop();
+
+    return {LTLfQuery::qNEXTAND(lhs, argument, decleare_leaf_determine(ctx->declare_act_target()), true, ctx->THETA() != nullptr,
+                                ctx->INV() != nullptr)};
 }

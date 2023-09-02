@@ -158,7 +158,7 @@ TEST_CASE("basic_operators") {
     SECTION("ANDNEXT") {
         auto As = env.db.timed_dataless_exists("A", ActivationLeaf);
         Result out, expected;
-        and_next(As, out, env.db, env.db.event_label_mapper.get("B"), nullptr, nullptr);
+        and_next(As, out, env.db, nullptr, {"B"}, nullptr);
         DATA_DECREMENT_EMPLACE_CORRNEXTBACK(expected, 3, 0, true);
         DATA_DECREMENT_EMPLACE_CORRNEXTBACK(expected, 5, 0, true);
         DATA_DECREMENT_EMPLACE_CORRNEXTBACK(expected, 7, 0, true);

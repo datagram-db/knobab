@@ -92,6 +92,9 @@ public:
   virtual void enterOr(KnoBABQueryParser::OrContext *ctx) = 0;
   virtual void exitOr(KnoBABQueryParser::OrContext *ctx) = 0;
 
+  virtual void enterAnd_next_B(KnoBABQueryParser::And_next_BContext *ctx) = 0;
+  virtual void exitAnd_next_B(KnoBABQueryParser::And_next_BContext *ctx) = 0;
+
   virtual void enterLast(KnoBABQueryParser::LastContext *ctx) = 0;
   virtual void exitLast(KnoBABQueryParser::LastContext *ctx) = 0;
 
@@ -136,6 +139,9 @@ public:
 
   virtual void enterUntil(KnoBABQueryParser::UntilContext *ctx) = 0;
   virtual void exitUntil(KnoBABQueryParser::UntilContext *ctx) = 0;
+
+  virtual void enterNext_and_B(KnoBABQueryParser::Next_and_BContext *ctx) = 0;
+  virtual void exitNext_and_B(KnoBABQueryParser::Next_and_BContext *ctx) = 0;
 
   virtual void enterAnd_future(KnoBABQueryParser::And_futureContext *ctx) = 0;
   virtual void exitAnd_future(KnoBABQueryParser::And_futureContext *ctx) = 0;

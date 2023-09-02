@@ -52,7 +52,9 @@ struct LTLfQuery {
         LAST_QP = 17,
         FALSEHOOD_QP = 18,
         AFNXA_QPT = 19,
-        AFNWXA_QPT = 20
+        AFNWXA_QPT = 20,
+        AND_NEXT_QPT = 21,
+        NEXT_AND_QPT = 22,
     };
     bool doInvTheta = false;
     type t;
@@ -114,6 +116,8 @@ struct LTLfQuery {
     static LTLfQuery qDIAMOND(const LTLfQuery& lhs, bool isTimed);
     static LTLfQuery qANDFUTURENOTNEXTA(const LTLfQuery& lhs, const LTLfQuery& rhs, bool isTimed, bool hasTheta, bool isInv);
     static LTLfQuery qANDFUTURENOTWNEXTA(const LTLfQuery& lhs, const LTLfQuery& rhs, bool isTimed, bool hasTheta, bool isInv);
+    static LTLfQuery qANDNEXT(const LTLfQuery& lhs, short declare_argument, LeafType marking, bool isTimed, bool hasTheta, bool isInv);
+    static LTLfQuery qNEXTAND(const LTLfQuery& lhs, short declare_argument, LeafType marking, bool isTimed, bool hasTheta, bool isInv);
 };
 
 

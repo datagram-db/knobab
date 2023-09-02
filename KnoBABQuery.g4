@@ -83,6 +83,8 @@ ltlf : INIT TIMED?                      declare_arguments? declare_act_target?  
       | DIAMOND TIMED?   ltlf                                                         #diamond
       | NEGATED TIMED? ltlf PRESERVE?                                                 #not
       | '(' ltlf ')'                                                                  #paren
+      |<assoc=right> ltlf 'BX' THETA? INV? declare_arguments? declare_act_target?                                          #and_next_B
+      |<assoc=right> ltlf 'XB' THETA? INV? declare_arguments? declare_act_target?                                         #next_and_B
       |<assoc=right> ltlf '&Ft' THETA? INV? ltlf                                          #and_future
       |<assoc=right> ltlf '&Ft!X' THETA? INV? ltlf                                          #and_future_not_next
       |<assoc=right> ltlf '&Ft!WX' THETA? INV? ltlf                                          #and_wfuture_not_next

@@ -4,6 +4,7 @@
 
 #include <iostream>
 #include "yaucl/strings/serializers.h"
+#include "ServerQueryManager.h"
 //#include "knobab/dataStructures/TraceData.h"
 //#include "knobab/Environment.h"
 #include <yaucl/graphs/algorithms/minimizeDFA.h>
@@ -280,8 +281,83 @@ void generatePatternLog(std::map<std::vector<std::string>, std::vector<std::stri
 //        }
 //    }
 //}
-
+const std::string query_plan_novel = "queryplan \"edbt24\" {\n"
+                                     "     template \"Init\"                   := INIT  activation\n"
+                                     "     template \"End\"                    := END activation\n"
+                                     "     template \"Exists\"                := (EXISTS $ activation)\n"
+                                     "     template \"Exists1\"                := (EXISTS 1 activation)\n"
+                                     "     template \"Absence\"               := ABSENCE $ activation\n"
+                                     "     template \"Absence1\"               := ABSENCE 1 activation\n"
+                                     "     template \"Absence2\"               := ABSENCE 2 activation\n"
+                                     "     template \"Precedence\" args 2      := ((EXISTS  ~ 1 t #2) U (EXISTS 1 t #1 activation)) OR (ABSENCE 1 #2)\n"
+                                     "     template \"ChainPrecedence\" args 2 := G(((LAST OR t (NEXT EXISTS ~ 1 t #1))) OR t ((EXISTS 1 t #1 activation) XB THETA INV #2 target ))\n"
+                                     "     template \"Choice\" args 2          := (EXISTS 1 t #1 activation) OR THETA (EXISTS 1 t #2 activation)\n"
+                                     "     template \"Response\" args 2        := G ( ((EXISTS ~ 1 t #1)) OR t ((EXISTS 1 t #1 activation) &Ft THETA (EXISTS 1 t #2 target)) )\n"
+                                     "     template \"ChainResponse\" args 2   := G ( ((EXISTS ~ 1 t #1)) OR t ((EXISTS 1 t #1 activation) BX THETA  #2 target))\n"
+                                     "     template \"RespExistence\" args 2   := ( ((ABSENCE 1 #1)) OR ((EXISTS 1 #1 activation) AND THETA (EXISTS 1 #2 target)))\n"
+                                     "     template \"ExclChoice\" args 2       := ((EXISTS 1 t #1 activation) OR THETA (EXISTS 1 t #2 activation)) AND ((ABSENCE 1 #1) OR (ABSENCE 1 #2))\n"
+                                     "     template \"CoExistence\" args 2     := ( ((ABSENCE 1 #1)) OR ((EXISTS 1 #1 activation) AND THETA (EXISTS 1 #2 target))) AND ( ((ABSENCE 1 #2)) OR ((EXISTS 1 #2 activation) AND THETA INV (EXISTS 1 #1 target)))\n"
+                                     "     template \"NotCoExistence\" args 2  := ~ ((EXISTS 1 t #1 activation) AND THETA (EXISTS 1 t #2 target)) PRESERVE\n"
+                                     "\n"
+                                     "     template \"Succession\" args 2      := (G ( ((EXISTS ~ 1 t #1)) OR t ((EXISTS 1 t #1 activation) &Ft THETA (EXISTS 1 t #2 target)) )) AND (((EXISTS  ~ 1 t #2) U (EXISTS 1 t #1 target)) OR (ABSENCE 1 #2))\n"
+                                     "     template \"NegSuccession\" args 2   := (G ( ((EXISTS ~ 1 t #1)) OR t ((EXISTS 1 t #1 activation) &Gt  (EXISTS ~ 1 t #2)) ))\n"
+                                     "     template \"ChainSuccession\" args 2 := G( (((LAST OR t (NEXT EXISTS ~ 1 t #2))) OR t ((NEXT EXISTS 1 t #2 activation) AND t THETA INV (EXISTS 1 t #1 target))) AND t\n"
+                                     "                                             ( ((EXISTS ~ 1 t #1)) OR t ((EXISTS 1 t #1 activation) AND t THETA (NEXT EXISTS 1 t #2 target)))\n"
+                                     "                                           )\n"
+                                     "     template \"AltResponse\" args 2     := G ( (EXISTS ~ 1 t #1) OR t ((EXISTS 1 t #1 activation) &Ft!X THETA (((EXISTS 1 t #2 target)))))\n"
+                                     "     template \"AltPrecedence\" args 2   := (((EXISTS  ~ 1 t #2) U (EXISTS 1 t #1 activation)) OR (ABSENCE 1 #2)) AND\n"
+                                     "                                           (G(((EXISTS ~ 1 t #2)) OR t ((EXISTS 1 t #2 target) &Ft!WX THETA INV (((EXISTS 1 t #1 activation))))))\n"
+                                     "}";
 int main() {
+    size_t pos, neg;
+    const std::vector<std::string> log_parse_format_type{"HRF", "XES", "TAB"};
+    std::ofstream f{"/home/giacomo/b.txt", std::ios_base::app};
+
+    auto root_folder =  std::filesystem::current_path();
+    std::string base{"ChainPrecedence"};
+    std::string operators{"Hybrid"};
+    std::filesystem::path curr = root_folder / "data" / "testing" / "declare" / base;
+    auto sizes = root_folder / "data" /"testing"/"declare" / (base+"_pos_neg.txt");
+
+    ServerQueryManager sqm;
+    std::stringstream ss;
+    std::ifstream fs{sizes};
+    fs >> pos >> neg;
+    auto declare_file_path = (root_folder / "data" /"testing"/"declare" / (base+".powerdecl")).string();
+    std::ifstream t(declare_file_path);
+    std::stringstream buffer;
+    buffer << t.rdbuf();
+
+    ss << "load "
+       << log_parse_format_type.at((size_t)TAB_SEPARATED_EVENTS)
+    << " "
+            << std::quoted(curr.string())
+            <<  " no stats as "
+            << std::quoted(base);
+    auto tmp = sqm.runQuery(ss.str());
+    ss.str(std::string());
+    ss.clear();
+
+    sqm.runQuery(query_plan_novel);
+    ss << "model-check declare " << buffer.str() << std::endl;
+    ss << " using \"TraceMaximumSatisfiability\" over " << std::quoted(base) << std::endl;
+    ss << " plan \"edbt24\" "  << std::endl;
+    ss << " with operators  " << std::quoted(operators);
+    std::string a,b;
+    std::tie(a,b) = sqm.runQuery(ss.str());
+    auto js = nlohmann::json::parse(a);
+    std::vector<double> max_sat_per_trace = js["TraceMaximumSatisfiability"].get<std::vector<double>>();
+    f << base<< " "<<operators <<" : " << js["model_ltlf_query_time"].get<double>() << std::endl;
+    for (size_t i = 0; i<max_sat_per_trace.size(); i++) {
+//        std::cout << i << " for "<< max_sat_per_trace.size() << std::endl;
+        if (i<pos)
+            DEBUG_ASSERT(max_sat_per_trace.at(i)== 1.0);
+        else
+            DEBUG_ASSERT(max_sat_per_trace.at(i)== 0.0);
+    }
+}
+
+int main2() {
     std::vector<DeclareDataAware> model;
 //    model.emplace_back(DeclareDataAware::binary("ChainPrecedence", "b", "c"));
 //    model.emplace_back(DeclareDataAware::binary("ChainResponse", "d", "e"));
