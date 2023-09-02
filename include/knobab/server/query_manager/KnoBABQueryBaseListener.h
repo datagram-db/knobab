@@ -94,6 +94,9 @@ public:
   virtual void enterOr(KnoBABQueryParser::OrContext * /*ctx*/) override { }
   virtual void exitOr(KnoBABQueryParser::OrContext * /*ctx*/) override { }
 
+  virtual void enterAnd_next_B(KnoBABQueryParser::And_next_BContext * /*ctx*/) override { }
+  virtual void exitAnd_next_B(KnoBABQueryParser::And_next_BContext * /*ctx*/) override { }
+
   virtual void enterLast(KnoBABQueryParser::LastContext * /*ctx*/) override { }
   virtual void exitLast(KnoBABQueryParser::LastContext * /*ctx*/) override { }
 
@@ -138,6 +141,9 @@ public:
 
   virtual void enterUntil(KnoBABQueryParser::UntilContext * /*ctx*/) override { }
   virtual void exitUntil(KnoBABQueryParser::UntilContext * /*ctx*/) override { }
+
+  virtual void enterNext_and_B(KnoBABQueryParser::Next_and_BContext * /*ctx*/) override { }
+  virtual void exitNext_and_B(KnoBABQueryParser::Next_and_BContext * /*ctx*/) override { }
 
   virtual void enterAnd_future(KnoBABQueryParser::And_futureContext * /*ctx*/) override { }
   virtual void exitAnd_future(KnoBABQueryParser::And_futureContext * /*ctx*/) override { }

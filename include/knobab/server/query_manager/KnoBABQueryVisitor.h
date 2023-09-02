@@ -71,6 +71,8 @@ public:
 
     virtual std::any visitOr(KnoBABQueryParser::OrContext *context) = 0;
 
+    virtual std::any visitAnd_next_B(KnoBABQueryParser::And_next_BContext *context) = 0;
+
     virtual std::any visitLast(KnoBABQueryParser::LastContext *context) = 0;
 
     virtual std::any visitAbsence(KnoBABQueryParser::AbsenceContext *context) = 0;
@@ -100,6 +102,8 @@ public:
     virtual std::any visitEnd(KnoBABQueryParser::EndContext *context) = 0;
 
     virtual std::any visitUntil(KnoBABQueryParser::UntilContext *context) = 0;
+
+    virtual std::any visitNext_and_B(KnoBABQueryParser::Next_and_BContext *context) = 0;
 
     virtual std::any visitAnd_future(KnoBABQueryParser::And_futureContext *context) = 0;
 

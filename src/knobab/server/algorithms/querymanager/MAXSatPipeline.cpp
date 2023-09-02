@@ -1215,6 +1215,19 @@ void MAXSatPipeline::abidinglogic_query_running(const std::vector<PartialResult>
                             }
                             break;
 
+                        case LTLfQuery::AND_NEXT_QPT: {
+
+                            throw std::runtime_error("ERROR: use the other semantics plan!");
+                        }
+                            break;
+
+
+                        case LTLfQuery::NEXT_AND_QPT: {
+
+                            throw std::runtime_error("ERROR: use the other semantics plan!");
+                        }
+                            break;
+
                         case LTLfQuery::AFNXA_QPT: {
                             throw std::runtime_error("ERROR: use the other semantics plan!");
 //                            Result local;
@@ -1311,7 +1324,9 @@ void MAXSatPipeline::abidinglogic_query_running(const std::vector<PartialResult>
 
 
 
-void MAXSatPipeline::fast_v1_query_running(const std::vector<PartialResult>& results_cache, const KnowledgeBase& kb) {
+void MAXSatPipeline::fast_v1_query_running(const std::vector<PartialResult>& results_cache,
+                                           const AtomizingPipeline& ap,
+                                           const KnowledgeBase& kb) {
 /// Scanning the query plan starting from the leaves (rbegin) towards the actual declare formulae (rend)
     auto it = qm.Q.rbegin(), en = qm.Q.rend();
     size_t Depthidx = qm.Q.size()-1;
@@ -1516,6 +1531,35 @@ void MAXSatPipeline::fast_v1_query_running(const std::vector<PartialResult>& res
                                 throw std::runtime_error("AndFuture is untimed: unexpected implementation!");
                             break;
 
+                        case LTLfQuery::AND_NEXT_QPT: {
+                            if (formula->fields.id.parts.is_timed)
+                                and_next(formula->args.at(0)->result,
+                                                     formula->result,
+                                                     kb,
+                                                    &ap,
+                                         formula->atom,
+                                                     formula->joinCondition);
+                            else
+                                throw std::runtime_error("AND_NEXT_QPT is untimed: unexpected implementation!");
+                            break;
+                        }
+                            break;
+
+
+                        case LTLfQuery::NEXT_AND_QPT: {
+                            if (formula->fields.id.parts.is_timed)
+                                next_and(formula->args.at(0)->result,
+                                         formula->result,
+                                         kb,
+                                         &ap,
+                                         formula->atom,
+                                         formula->joinCondition);
+                            else
+                                throw std::runtime_error("AND_NEXT_QPT is untimed: unexpected implementation!");
+                            break;
+                        }
+                            break;
+
                         case LTLfQuery::AFNWXA_QPT:
                             if (formula->fields.id.parts.is_timed)
                                 aWeakAlternateAndFutureB(formula->args.at(0)->result,
@@ -1580,7 +1624,9 @@ void MAXSatPipeline::fast_v1_query_running(const std::vector<PartialResult>& res
     }
 }
 
-void MAXSatPipeline::hybrid_query_running(const std::vector<PartialResult>& results_cache, const KnowledgeBase& kb) {
+void MAXSatPipeline::hybrid_query_running(const std::vector<PartialResult>& results_cache,
+                                          const AtomizingPipeline& ap,
+                                          const KnowledgeBase& kb) {
 /// Scanning the query plan starting from the leaves (rbegin) towards the actual declare formulae (rend)
     auto it = qm.Q.rbegin(), en = qm.Q.rend();
     size_t idx = qm.Q.size()-1;
@@ -1812,6 +1858,35 @@ void MAXSatPipeline::hybrid_query_running(const std::vector<PartialResult>& resu
                                 throw std::runtime_error("AndFutureBNotNextA is untimed: unexpected implementation!");
                             break;
 
+                        case LTLfQuery::AND_NEXT_QPT: {
+                            if (formula->fields.id.parts.is_timed)
+                                and_next(formula->args.at(0)->result,
+                                         formula->result,
+                                         kb,
+                                         &ap,
+                                         formula->atom,
+                                         formula->joinCondition);
+                            else
+                                throw std::runtime_error("AND_NEXT_QPT is untimed: unexpected implementation!");
+                            break;
+                        }
+                            break;
+
+
+                        case LTLfQuery::NEXT_AND_QPT: {
+                            if (formula->fields.id.parts.is_timed)
+                                next_and(formula->args.at(0)->result,
+                                         formula->result,
+                                         kb,
+                                         &ap,
+                                         formula->atom,
+                                         formula->joinCondition);
+                            else
+                                throw std::runtime_error("AND_NEXT_QPT is untimed: unexpected implementation!");
+                            break;
+                        }
+                            break;
+
                         case LTLfQuery::AXG_QPT:
                             if (formula->fields.id.parts.is_timed)
                                 aAndNextGloballyB_timed(formula->args.at(0)->result,
@@ -1901,11 +1976,11 @@ void MAXSatPipeline::pipeline(CNFDeclareDataAware* model,
                 break;
 
             case FastOperator_v1:
-                fast_v1_query_running(pr, kb);
+                fast_v1_query_running(pr,atomization, kb);
                 break;
 
             case Hybrid:
-                hybrid_query_running(pr, kb);
+                hybrid_query_running(pr,atomization, kb);
                 break;
 
             default:

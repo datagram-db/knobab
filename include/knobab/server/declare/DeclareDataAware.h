@@ -165,9 +165,9 @@ struct DeclareDataAware {
     bool compareAsThetaPredicate(const struct DeclareDataAware* ptr) const {
         if (ptr == nullptr) return false;
         return n == ptr->n
-                && left_act == ptr->left_act
+                && left_act == ptr->left_act && ptr->dnf_left_map == dnf_left_map
 //                && left_act_id == ptr->left_act_id
-                && right_act == ptr->right_act
+                && right_act == ptr->right_act && ptr->dnf_right_map == dnf_right_map
 //                && right_act_id == ptr->right_act_id
                 && conjunctive_map == ptr->conjunctive_map;
     }

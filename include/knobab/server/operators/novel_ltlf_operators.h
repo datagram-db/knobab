@@ -7,24 +7,62 @@
 #ifndef KNOBAB_NOVEL_LTLF_OPERATORS_H
 #define KNOBAB_NOVEL_LTLF_OPERATORS_H
 
+#include <knobab/server/algorithms/atomization/AtomizingPipeline.h>
 #include <knobab/server/tables/KnowledgeBase.h>
 
 inline void and_next(const Result &lhsOperand,
                                  Result& result,
                                  const KnowledgeBase& kb,
-                                 act_t right_activity,
-                                 const PredicateManager* right_predicate = nullptr,
+                                 const AtomizingPipeline* ap,
+                                 const std::set<std::string>& rhs_atoms,
                                  const PredicateManager* correlation = nullptr) {
     std::unordered_set<std::string> cache;
-    if (right_predicate)
-        DEBUG_ASSERT(right_predicate->kb == &kb);
+    act_t right_activity;
+    bool right_predicate;
+    if ((!ap) ||((rhs_atoms.size() == 1) && ap->act_atoms.contains(*rhs_atoms.begin()))) {
+        right_predicate = false;
+        right_activity = kb.event_label_mapper.get(*rhs_atoms.begin());
+    } else {
+        right_predicate = true;
+        right_activity = kb.event_label_mapper.get(ap->atom_to_conjunctedPredicates.at(*rhs_atoms.begin()).at(0).label);
+    }
+//    if (right_predicate)
+//        DEBUG_ASSERT(right_predicate->kb == &kb);
     for (const auto& x : lhsOperand) {
         if ((kb.act_table_by_act_id.getTraceLength(x.first.first)-1) == (x.first.second))
             continue;
         size_t right_offset = kb.act_table_by_act_id.getBuilder().trace_id_to_event_id_to_offset.at(x.first.first).at(x.first.second+1);
         if ((kb.act_table_by_act_id.table.at(right_offset).entry.id.parts.act != right_activity))
             continue;
-        bool rightMatch = !right_predicate ? true : right_predicate->checkValidity(false, x.first.first, x.first.second);
+        bool rightMatch = true;
+        if (right_predicate) {
+            size_t table_offset =
+                    kb.act_table_by_act_id.getBuilder().trace_id_to_event_id_to_offset.at(x.first.first).at(x.first.second+1);
+            for(const auto& pred_withConj : rhs_atoms){
+                bool result = true;
+                for (const auto& predDummy : ap->atom_to_conjunctedPredicates.at(pred_withConj)) {
+                    bool test = true;
+                    auto temp2_a = kb.attribute_name_to_table.find(predDummy.var);
+                    if (temp2_a != kb.attribute_name_to_table.end()) {
+                        std::optional<union_minimal> data = temp2_a->second.resolve_record_if_exists2(table_offset);
+                        if (data.has_value()) {
+                            if (!predDummy.testOverSingleVariable(data.value())) {
+                                test = false;
+                            }
+                        }
+                    }
+                    if (!test) {
+                        result = false;
+                        break;
+                    }
+                }
+                if (result) {
+                    rightMatch= true;
+                    break;
+                }
+            }
+            rightMatch=  false;
+        }
         if (rightMatch) {
             if (correlation) {
                 env e1 = correlation->GetPayloadDataFromEvent(x.first.first, x.first.second, true, cache);
@@ -41,26 +79,65 @@ inline void and_next(const Result &lhsOperand,
 inline void next_and(const Result &lhsOperand,
                      Result& result,
                      const KnowledgeBase& kb,
-                     act_t right_activity,
-                     const PredicateManager* right_predicate = nullptr,
+                     const AtomizingPipeline* ap,
+                     const std::set<std::string>& rhs_atoms,
                      const PredicateManager* correlation = nullptr) {
     std::unordered_set<std::string> cache;
-    if (right_predicate)
-        DEBUG_ASSERT(right_predicate->kb == &kb);
+    act_t right_activity;
+    bool right_predicate;
+    if ((!ap) ||((rhs_atoms.size() == 1) && ap->act_atoms.contains(*rhs_atoms.begin()))) {
+        right_predicate = false;
+        right_activity = kb.event_label_mapper.get(*rhs_atoms.begin());
+    } else {
+        right_predicate = true;
+        right_activity = kb.event_label_mapper.get(ap->atom_to_conjunctedPredicates.at(*rhs_atoms.begin()).at(0).label);
+    }
     for (const auto& x : lhsOperand) {
-        if (x.first.first == 0) continue;
+        if (x.first.second == 0) continue;
         size_t right_offset = kb.act_table_by_act_id.getBuilder().trace_id_to_event_id_to_offset.at(x.first.first).at(x.first.second-1);
         if ((kb.act_table_by_act_id.table.at(right_offset).entry.id.parts.act != right_activity))
             continue;
-        bool rightMatch = !right_predicate ? true : right_predicate->checkValidity(false, x.first.first, x.first.second);
+        bool rightMatch = true;
+        if (right_predicate) {
+            size_t table_offset =
+                    kb.act_table_by_act_id.getBuilder().trace_id_to_event_id_to_offset.at(x.first.first).at(x.first.second-1);
+            for(const auto& pred_withConj : rhs_atoms){
+                bool result = true;
+                for (const auto& predDummy : ap->atom_to_conjunctedPredicates.at(pred_withConj)) {
+                    bool test = true;
+                    auto temp2_a = kb.attribute_name_to_table.find(predDummy.var);
+                    if (temp2_a != kb.attribute_name_to_table.end()) {
+                        std::optional<union_minimal> data = temp2_a->second.resolve_record_if_exists2(table_offset);
+                        if (data.has_value()) {
+                            if (!predDummy.testOverSingleVariable(data.value())) {
+                                test = false;
+                            }
+                        }
+                    }
+                    if (!test) {
+                        result = false;
+                        break;
+                    }
+                }
+                if (result) {
+                    rightMatch= true;
+                    break;
+                }
+            }
+            rightMatch=  false;
+        }
         if (rightMatch) {
             if (correlation) {
                 env e1 = correlation->GetPayloadDataFromEvent(x.first.first, x.first.second, true, cache);
                 if (correlation->checkValidity(e1, x.first.first, x.first.second-1)) {
-                    result.emplace_back(x).second.second.emplace_back(marked_event::right(x.first.second-1));
+                    auto& ref = result.emplace_back(x);
+                    ref.first.second--;
+                    ref.second.second.emplace_back(marked_event::right(x.first.second-1));
                 }
             } else {
-                result.emplace_back(x).second.second.emplace_back(marked_event::right(x.first.second-1));
+                auto& ref = result.emplace_back(x);
+                ref.first.second--;
+                ref.second.second.emplace_back(marked_event::right(x.first.second-1));
             }
         }
     }

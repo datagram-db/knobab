@@ -119,6 +119,10 @@ public:
     return visitChildren(ctx);
   }
 
+  virtual std::any visitAnd_next_B(KnoBABQueryParser::And_next_BContext *ctx) override {
+    return visitChildren(ctx);
+  }
+
   virtual std::any visitLast(KnoBABQueryParser::LastContext *ctx) override {
     return visitChildren(ctx);
   }
@@ -176,6 +180,10 @@ public:
   }
 
   virtual std::any visitUntil(KnoBABQueryParser::UntilContext *ctx) override {
+    return visitChildren(ctx);
+  }
+
+  virtual std::any visitNext_and_B(KnoBABQueryParser::Next_and_BContext *ctx) override {
     return visitChildren(ctx);
   }
 
