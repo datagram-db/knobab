@@ -253,7 +253,27 @@ inline void aWeakAlternateAndFutureB(const Result& aResult, const Result& bResul
     for (auto aCurrent = aResult.begin(), aEnd = aResult.end(); aCurrent != aEnd; /*++d_first*/) {
         if (aCurrent->first > bCurrent->first) {
             bCurrent++;
-            if (bCurrent == bEnd) break;
+            if (bCurrent == bEnd) {
+                rcx.first = aCurrent->first;
+                rcx.second.second.clear();
+                rcx.second.first = 1.0;
+                hasMatch = false;
+                if (lengths.at(aCurrent->first.first)-1==aCurrent->first.second)
+                    hasMatch = false;
+                else  {
+                    auto aNext = aCurrent + 1;
+                    if ((aNext != aEnd) && (aNext->first.first == rcx.first.first))
+                        hasMatch = false;
+                    else
+                        hasMatch = true;
+                }
+                if (hasMatch) {
+                    rcx.second.second.insert(rcx.second.second.end(), aCurrent->second.second.begin(), aCurrent->second.second.end());
+                    remove_duplicates(rcx.second.second);
+                    result.emplace_back(rcx);
+                }
+                break;
+            }
         } else {
             auto newItr = bCurrent;
             rcx.first = aCurrent->first;
@@ -306,7 +326,8 @@ inline void aWeakAlternateAndFutureB(const Result& aResult, const Result& bResul
             }
 
             if (hasMatch) {
-                if (!manager) rcx.second.second.insert(rcx.second.second.end(), aCurrent->second.second.begin(), aCurrent->second.second.end());
+                if ((!manager))
+                    rcx.second.second.insert(rcx.second.second.end(), aCurrent->second.second.begin(), aCurrent->second.second.end());
                 remove_duplicates(rcx.second.second);
                 if (manager) rcx.second.first = 1.0 - rcx.second.first;
                 result.emplace_back(rcx);
@@ -314,7 +335,9 @@ inline void aWeakAlternateAndFutureB(const Result& aResult, const Result& bResul
 
             if (aCurrent->first == bCurrent->first) {
                 bCurrent++;
-                if (bCurrent == bEnd) break;
+                if (bCurrent == bEnd) {
+                    break;
+                }
             }
 
             aCurrent++;

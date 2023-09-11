@@ -409,6 +409,58 @@ TEST_CASE("novelAltPrecedenceHybrid") {
             ASSERT_TRUE(max_sat_per_trace.at(i)== 0.0);
     }
 }
+
+TEST_CASE("novelAltPrecedenceHybrid2") {
+    size_t pos, neg;
+    const std::vector<std::string> log_parse_format_type{"HRF", "XES", "TAB"};
+//    std::ofstream f{"/home/giacomo/b.txt", std::ios_base::app};
+
+    auto root_folder =  std::filesystem::current_path().parent_path();
+    std::string base{"AltPrecedence"};
+    std::string operators{"Hybrid"};
+    std::filesystem::path curr = "/home/giacomo/basic.txt";
+//    auto sizes = root_folder / "data" /"testing"/"declare" / (base+"_pos_neg.txt");
+
+    ServerQueryManager sqm;
+    std::stringstream ss;
+//    std::ifstream fs{sizes};
+//    fs >> pos >> neg;
+    auto declare_file_path = (root_folder / "data" /"testing"/"declare" / (base+".powerdecl")).string();
+    std::ifstream t(declare_file_path);
+    std::stringstream buffer;
+    buffer << t.rdbuf();
+
+    ss << "load "
+       << log_parse_format_type.at((size_t)TAB_SEPARATED_EVENTS)
+       << " "
+       << std::quoted(curr.string())
+       <<  " no stats as "
+       << std::quoted(base);
+    auto tmp = sqm.runQuery(ss.str());
+    ss.str(std::string());
+    ss.clear();
+
+    sqm.runQuery(query_plan_novel);
+    ss << "model-check declare " << buffer.str() << std::endl;
+    ss << " using \"TraceMaximumSatisfiability\" over " << std::quoted(base) << std::endl;
+    ss << " plan \"edbt24\" "  << std::endl;
+    ss << " with operators  " << std::quoted(operators);
+    std::string a,b;
+    std::tie(a,b) = sqm.runQuery(ss.str());
+    auto js = nlohmann::json::parse(a);
+    std::vector<double> max_sat_per_trace = js["TraceMaximumSatisfiability"].get<std::vector<double>>();
+
+    std::cout << "j" << std::endl;
+
+//    for (size_t i = 0; i<max_sat_per_trace.size(); i++) {
+////        std::cout << i << " for "<< max_sat_per_trace.size() << std::endl;
+//        if (i<pos)
+//            ASSERT_TRUE(max_sat_per_trace.at(i)== 1.0);
+//        else
+//            ASSERT_TRUE(max_sat_per_trace.at(i)== 0.0);
+//    }
+}
+
 TEST_CASE_PER_OPERATOR(ChainPrecedence, Hybrid)
 TEST_CASE_PER_OPERATOR(ChainResponse, Hybrid)
 TEST_CASE_PER_OPERATOR(ChainSuccession, Hybrid)
