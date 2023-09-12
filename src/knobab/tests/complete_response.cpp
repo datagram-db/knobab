@@ -470,3 +470,85 @@ TEST_CASE_PER_OPERATOR(Precedence, Hybrid)
 TEST_CASE_PER_OPERATOR(RespExistence, Hybrid)
 TEST_CASE_PER_OPERATOR(Response, Hybrid)
 TEST_CASE_PER_OPERATOR(Succession, Hybrid)
+
+
+TEST_CASE("benchmarking") {
+    const uint32_t iter_count = 1;
+    const double support = 0.02;
+    auto root_folder = std::filesystem::current_path().parent_path();
+    std::vector<std::string> base{"AltResponse"};
+    std::string operators{"Hybrid"};
+    std::string ensemble{"TraceMaximumSatisfiability"};
+//    std::string ensemble{"PerDeclareSupport"};
+//    std::string ensemble{"Nothing"};
+    std::filesystem::path curr = root_folder / "data" / "testing" / "cyber_security" / "all_classes_sampled";
+    std::unordered_map<std::string, std::string> plans{
+            {query_plan, "nfmcp23"},
+            {query_plan_novel, "edbt24"}
+    };
+
+    using recursive_directory_iterator = std::filesystem::recursive_directory_iterator;
+    const std::vector<std::string> log_parse_format_type{"HRF", "XES", "TAB"};
+
+    for(uint32_t i = 0; i < iter_count; ++i) {
+        for (const auto& dirEntry : recursive_directory_iterator(curr)) {
+            for(const std::string& s : base) {
+                ServerQueryManager sqm;
+                std::stringstream ss;
+
+                ss << "load "
+                   << log_parse_format_type.at((size_t)TAB_SEPARATED_EVENTS)
+                   << " "
+                   << std::quoted(dirEntry.path().string())
+                   <<  " no stats as "
+                   << std::quoted(dirEntry.path().string());
+
+                auto tmp = sqm.runQuery(ss.str());
+                ss.str(std::string());
+                ss.clear();
+
+                Environment& env = sqm.multiple_logs[dirEntry.path().string()];
+//                size_t support_int = (size_t)std::ceil((support) * (double)env.db.nAct());
+                size_t support_int = 1;
+
+                for(const std::pair<std::string, std::string>& str : plans) {
+                    sqm.runQuery(str.first);
+
+                    auto declare_file_path = (root_folder / "data" / "testing" / "declare" / (s+".powerdecl")).string();
+                    std::ifstream t(declare_file_path);
+                    std::stringstream buffer;
+                    buffer << t.rdbuf();
+
+                    ss << "model-check declare " << buffer.str() << std::endl;
+//                    ss << "model-check template " << std::quoted(s) << " logtop " << support_int << std::endl;
+                    ss << " using \"" << ensemble << "\" over " << std::quoted(dirEntry.path().string()) << std::endl;
+                    ss << " plan \"" << str.second << "\" "  << std::endl;
+                    ss << " with operators  " << std::quoted(operators);
+
+                    std::string a,b;
+                    std::tie(a,b) = sqm.runQuery(ss.str());
+                    ss.str(std::string());
+                    ss.clear();
+
+                    auto js = nlohmann::json::parse(a);
+
+                    if (env.strategy != Nothing) {
+                        std::vector<double> result = js[ensemble].get<std::vector<double>>();
+
+                        for(LoggerInformation& log : sqm.infos) {
+                            log.mining_algorithm = str.second;
+                            log.iteration_num = i;
+                        }
+                    }
+
+                    ss << "benchmarking-log " << std::quoted((root_folder / "data" / "testing" / "cyber_security" / "output.csv").string());
+                    sqm.runQuery(ss.str());
+                    ss.str(std::string());
+                    ss.clear();
+                }
+            }
+        }
+    }
+}
+
+
