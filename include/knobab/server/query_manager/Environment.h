@@ -91,22 +91,29 @@ public:
     }
 
     std::vector<DeclareDataAware> generate_top_n_clauses(const std::string& template_name, size_t topN = 0, const std::string& writeFile = "") {
+        bool is_unary = isUnaryPredicate(template_name);
+
+        /* If generating binary clauses, we require at least one permutative pair */
+        if(!is_unary && (topN == 1)) {
+            topN = 2;
+        }
+
         auto n = db.doActCounting();
         std::vector<std::string> cpy;
         std::vector<DeclareDataAware> toGen;
         size_t max = std::ceil(std::sqrt(n.size())), count = 0;
 
-        if(max < topN){
+        if(max < topN) {
             topN = max;
         }
 
         for (auto it = n.rbegin(), en = n.rend(); it != en; it++) {
-            if (count > topN) break;
+            if (count == topN) break;
             cpy.emplace_back(it->second);
             count++;
         }
 
-        if(isUnaryPredicate(template_name)){
+        if(is_unary){
             for (const auto& x : cpy) {
                 toGen.emplace_back(DeclareDataAware::unary_for_testing(template_name, x, 1));
             }
