@@ -27,8 +27,8 @@ The suggested command to clone this project alongside its submodules and depende
 This repository is associated with a Dockerfile. Therefore, a possible way to start in from a Linux environment is the following:
 
 ```bash
-docker build -t "edbt24:DockerEDBT24" .
-docker run -it "edbt24:DockerEDBT24" bash
+docker build -t "conference:DockerConference" .
+docker run -it "conference:DockerConference" bash
 ```
 
 The docker file will also automatically run the tests associated to the programs. As suggested in the paper, please also consider running the
