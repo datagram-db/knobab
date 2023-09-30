@@ -1,5 +1,5 @@
 //
-// Created by giacomo on 11/03/2022.
+// Created by Giacomo Bergami on 11/03/2022.
 //
 #include <knobab/server/operators/simple_ltlf_operators.h>
 #include <yaucl/numeric/ssize_t.h>
@@ -21,14 +21,26 @@ inline void and_next(const Result &lhsOperand,
     bool right_predicate;
     if ((!ap) ||((rhs_atoms.size() == 1) && ap->act_atoms.contains(*rhs_atoms.begin()))) {
         right_predicate = false;
-        right_activity = kb.event_label_mapper.get(*rhs_atoms.begin());
+        ssize_t tmp = kb.event_label_mapper.signed_get(*rhs_atoms.begin());
+        if (tmp == -1) return;
+        right_activity = tmp;
     } else {
         right_predicate = true;
-        right_activity = kb.event_label_mapper.get(ap->atom_to_conjunctedPredicates.at(*rhs_atoms.begin()).at(0).label);
+        ssize_t tmp = kb.event_label_mapper.signed_get(ap->atom_to_conjunctedPredicates.at(*rhs_atoms.begin()).at(0).label);
+        if (tmp == -1) return;
+        right_activity = tmp;
     }
-//    if (right_predicate)
-//        DEBUG_ASSERT(right_predicate->kb == &kb);
+    event_t count = 0;
+    auto cp = kb.getCountTable().resolve_primary_index2(right_activity);
+    auto iter = cp.first;
+    while (iter != cp.second) {
+        count += cp.first->id.parts.event_id;
+        if (count > 0) break;
+        iter++;
+    }
+    if (count == 0) return;
     for (const auto& x : lhsOperand) {
+        if (iter[x.first.first].id.parts.event_id == 0) continue;
         if ((kb.act_table_by_act_id.getTraceLength(x.first.first)-1) == (x.first.second))
             continue;
         size_t right_offset = kb.act_table_by_act_id.getBuilder().trace_id_to_event_id_to_offset.at(x.first.first).at(x.first.second+1);
@@ -87,13 +99,26 @@ inline void next_and(const Result &lhsOperand,
     bool right_predicate;
     if ((!ap) ||((rhs_atoms.size() == 1) && ap->act_atoms.contains(*rhs_atoms.begin()))) {
         right_predicate = false;
-        right_activity = kb.event_label_mapper.get(*rhs_atoms.begin());
+        ssize_t tmp = kb.event_label_mapper.signed_get(*rhs_atoms.begin());
+        if (tmp == -1) return;
+        right_activity = tmp;
     } else {
         right_predicate = true;
-        right_activity = kb.event_label_mapper.get(ap->atom_to_conjunctedPredicates.at(*rhs_atoms.begin()).at(0).label);
+        ssize_t tmp = kb.event_label_mapper.signed_get(ap->atom_to_conjunctedPredicates.at(*rhs_atoms.begin()).at(0).label);
+        if (tmp == -1) return;
+        right_activity = tmp;
     }
+//    if ((!ap) ||((rhs_atoms.size() == 1) && ap->act_atoms.contains(*rhs_atoms.begin()))) {
+//        right_predicate = false;
+//        right_activity = kb.event_label_mapper.signed_get(*rhs_atoms.begin());
+//    } else {
+//        right_predicate = true;
+//        right_activity = kb.event_label_mapper.signed_get(ap->atom_to_conjunctedPredicates.at(*rhs_atoms.begin()).at(0).label);
+//    }
+    auto cp = kb.getCountTable().resolve_primary_index2(right_activity);
     for (const auto& x : lhsOperand) {
         if (x.first.second == 0) continue;
+        if (cp.first[x.first.first].id.parts.event_id == 0) continue;
         size_t right_offset = kb.act_table_by_act_id.getBuilder().trace_id_to_event_id_to_offset.at(x.first.first).at(x.first.second-1);
         if ((kb.act_table_by_act_id.table.at(right_offset).entry.id.parts.act != right_activity))
             continue;
@@ -176,6 +201,7 @@ inline void aAlternateAndFutureB(const Result& aResult, const Result& bResult, R
             rcx.first = aCurrent->first;
             rcx.second.second.clear();
             rcx.second.first = 1.0;
+            bool first= true;
             hasMatch = false;
             auto aNext = aCurrent+1;
             if ((aNext != aEnd) && (aNext->first.first == rcx.first.first) && (aNext->first < bCurrent->first)) {
@@ -183,7 +209,7 @@ inline void aAlternateAndFutureB(const Result& aResult, const Result& bResult, R
                 continue;
             }
 
-            while (newItr != bEnd) {
+            while (((first) || hasMatch) && (newItr != bEnd)) {
                 if(newItr->first.first != aCurrent->first.first){
                     break;
                 }
@@ -224,6 +250,7 @@ inline void aAlternateAndFutureB(const Result& aResult, const Result& bResult, R
                 if (bCurrent == bEnd) break;
             }
 
+            first = false;
             aCurrent++;
         }
     }
@@ -294,8 +321,9 @@ inline void aWeakAlternateAndFutureB(const Result& aResult, const Result& bResul
                     aCurrent++;
                     continue;
                 }
+                bool first = true;
 
-                while (newItr != bEnd) {
+                while ((first || hasMatch) && (newItr != bEnd)) {
                     if(newItr->first.first != aCurrent->first.first){
                         break;
                     }
@@ -321,6 +349,7 @@ inline void aWeakAlternateAndFutureB(const Result& aResult, const Result& bResul
                         if (manager)
                             rcx.second.second.insert(rcx.second.second.end(), aCurrent->second.second.begin(), aCurrent->second.second.end());
                     }
+                    first = false;
                     newItr++;
                 }
             }

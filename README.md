@@ -14,19 +14,23 @@ See the following branch: [loggen2](https://github.com/datagram-db/knobab/tree/l
 
 ## Mining+Inference Algorithm
 
-**TODO**
+See the following main entry point: src/knobab/mining/mining.cpp
 
 ## Cloning this branch
 
 The suggested command to clone this project alongside its submodules and dependencies is the following:
 
-    git clone --recurse-submodules -j8 --branch v2.0 git@github.com:datagram-db/knobab.git knobab2
+    git clone --recurse-submodules -j8 --branch loggen git@github.com:datagram-db/knobab.git knobab2
 
-## Windows
-The present project can be compiled with the Visual Studio toolchain via CMake configuration. 
+## Results' Reproducibility (Latest Version)
 
-    cmake.exe -DCMAKE_BUILD_TYPE=<Debug|Release> -G "CodeBlocks - NMake Makefiles" -S <source> -B <build-folder>
+This repository is associated with a Dockerfile. Therefore, a possible way to start in from a Linux environment is the following:
 
-Then, the process can be compiled as follows:
+```bash
+docker build -t "edbt24:DockerEDBT24" .
+docker run -it "edbt24:DockerEDBT24" bash
+```
 
-    cmake.exe <build-folder> --target all
+The docker file will also automatically run the tests associated to the programs. As suggested in the paper, please also consider running the
+given code using the dataset and scripts provided online via OSF anonymous submission: [https://osf.io/6y8cv/?view_only=3b8c01761fcf4941ad726aba4101151e](https://osf.io/6y8cv/?view_only=3b8c01761fcf4941ad726aba4101151e)
+

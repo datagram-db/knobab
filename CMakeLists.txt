@@ -190,6 +190,11 @@ target_link_libraries(basic_operators_testing Catch2::Catch2WithMain Threads::Th
         yaucl_stringutils yaucl_numeric  yaucl_data yaucl_bpm yaucl_graph yaucl_structures yaucl_data knobab_ndp yaucl_learning knobab_mining)
 
 
+add_executable(knobab2-edbt24-benchmarking benchmarking/edbt24.cpp)
+target_link_libraries(knobab2-edbt24-benchmarking Threads::Threads antlr4_shared yaucl_hashing yaucl_bpm yaucl_structures
+        yaucl_numeric yaucl_data yaucl_graph  yaucl_data yaucl_bpm knobab  knobab_ndp)
+
+
 catch_discover_tests(mining_tests)
 catch_discover_tests(until_tests)
 catch_discover_tests(complete_response)
