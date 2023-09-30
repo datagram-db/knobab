@@ -34,13 +34,13 @@ inline void and_next(const Result &lhsOperand,
     auto cp = kb.getCountTable().resolve_primary_index2(right_activity);
     auto iter = cp.first;
     while (iter != cp.second) {
-        count += cp.first->id.parts.event_id;
+        count += iter->id.parts.event_id;
         if (count > 0) break;
         iter++;
     }
     if (count == 0) return;
     for (const auto& x : lhsOperand) {
-        if (iter[x.first.first].id.parts.event_id == 0) continue;
+        if (cp.first[x.first.first].id.parts.event_id == 0) continue;
         if ((kb.act_table_by_act_id.getTraceLength(x.first.first)-1) == (x.first.second))
             continue;
         size_t right_offset = kb.act_table_by_act_id.getBuilder().trace_id_to_event_id_to_offset.at(x.first.first).at(x.first.second+1);
@@ -116,6 +116,14 @@ inline void next_and(const Result &lhsOperand,
 //        right_activity = kb.event_label_mapper.signed_get(ap->atom_to_conjunctedPredicates.at(*rhs_atoms.begin()).at(0).label);
 //    }
     auto cp = kb.getCountTable().resolve_primary_index2(right_activity);
+    auto iter = cp.first;
+    size_t count = 0;
+    while (iter != cp.second) {
+        count += iter->id.parts.event_id;
+        if (count > 0) break;
+        iter++;
+    }
+    if (count == 0) return;
     for (const auto& x : lhsOperand) {
         if (x.first.second == 0) continue;
         if (cp.first[x.first.first].id.parts.event_id == 0) continue;
