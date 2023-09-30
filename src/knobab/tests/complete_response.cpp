@@ -213,7 +213,7 @@ TEST_CASE("complete_response_support"){
 
 TEST_CASE_PER_OPERATOR(AltPrecedence, Hybrid)
 TEST_CASE_PER_OPERATOR(AltResponse, Hybrid)
-//TEST_CASE_PER_NOVEL_OPERATOR(AltResponse, Hybrid)
+/// @author: Giacomo Bergami
 TEST_CASE("novelAltResponseHybrid") {
     size_t pos, neg;
     const std::vector<std::string> log_parse_format_type{"HRF", "XES", "TAB"};
@@ -262,6 +262,7 @@ TEST_CASE("novelAltResponseHybrid") {
     }
 }
 
+/// @author: Giacomo Bergami
 TEST_CASE("novelChainResponseHybrid") {
     size_t pos, neg;
     const std::vector<std::string> log_parse_format_type{"HRF", "XES", "TAB"};
@@ -312,6 +313,7 @@ TEST_CASE("novelChainResponseHybrid") {
     }
 }
 
+/// @author: Giacomo Bergami
 TEST_CASE("novelChainPrecedenceHybrid") {
     size_t pos, neg;
     const std::vector<std::string> log_parse_format_type{"HRF", "XES", "TAB"};
@@ -354,14 +356,18 @@ TEST_CASE("novelChainPrecedenceHybrid") {
 
     f << base<< " "<<operators <<" : " << js["model_ltlf_query_time"].get<double>() << std::endl;
     for (size_t i = 0; i<max_sat_per_trace.size(); i++) {
-//        std::cout << i << " for "<< max_sat_per_trace.size() << std::endl;
-        if (i<pos)
+        if (i<pos) {
+            if (max_sat_per_trace.at(i)!= 1.0)
+                std::cerr << "HERE" << std::endl;
             ASSERT_TRUE(max_sat_per_trace.at(i)== 1.0);
-        else
-            ASSERT_TRUE(max_sat_per_trace.at(i)== 0.0);
+        }
+        else {
+            ASSERT_TRUE(max_sat_per_trace.at(i) == 0.0);
+        }
     }
 }
 
+/// @author: Giacomo Bergami
 TEST_CASE("novelAltPrecedenceHybrid") {
     size_t pos, neg;
     const std::vector<std::string> log_parse_format_type{"HRF", "XES", "TAB"};

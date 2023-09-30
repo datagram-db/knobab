@@ -155,6 +155,7 @@ TEST_CASE("basic_operators") {
             }
         }
     }
+        /// Anonymous submission
     SECTION("ANDNEXT") {
         auto As = env.db.timed_dataless_exists("A", ActivationLeaf);
         Result out, expected;
