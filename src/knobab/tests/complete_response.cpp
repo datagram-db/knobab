@@ -477,7 +477,8 @@ TEST_CASE_PER_OPERATOR(RespExistence, Hybrid)
 TEST_CASE_PER_OPERATOR(Response, Hybrid)
 TEST_CASE_PER_OPERATOR(Succession, Hybrid)
 
-
+#if 0
+/// Bugged test case: it misses the data, which stayed on SamuelAppleby's PC and was not pushed in the repo
 TEST_CASE("benchmarking") {
     const uint32_t iter_count = 1;
     const double support = 0.02;
@@ -556,5 +557,4 @@ TEST_CASE("benchmarking") {
         }
     }
 }
-
-
+#endif
