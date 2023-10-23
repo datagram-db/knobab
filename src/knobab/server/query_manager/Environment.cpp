@@ -66,6 +66,8 @@ void Environment::load_model(const std::string &model) {
 #endif
 }
 
+#include <knobab/server/dataStructures/knobab_data_loader.h>
+
 void Environment::load_log(log_data_format format,
                            bool loadData,
                            const std::string &filename,

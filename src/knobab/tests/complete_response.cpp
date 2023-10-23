@@ -2,7 +2,7 @@
 // Created by giacomo on 28/08/23.
 //
 
-#include <knobab/server/dataStructures/data_loader.h>
+#include "yaucl/bpm/structures/log/data_loader.h"
 #include "knobab/server/query_manager/ServerQueryManager.h"
 #include <iostream>
 #include <functional>

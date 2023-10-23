@@ -48,10 +48,10 @@ add_library(knobab OBJECT
         src/knobab/server/algorithms/grounding/grounding.cpp
         src/knobab/server/tables/CountTable.cpp
         src/knobab/server/tables/ActTable.cpp
-        src/knobab/server/dataStructures/data_loader.cpp
         src/knobab/server/tables/AttributeTable.cpp
         src/knobab/server/declare/DisjunctiveDeclareDataAware.cpp
         src/knobab/server/dataStructures/oid.cpp
+        src/knobab/server/dataStructures/knobab_data_loader.cpp
         src/knobab/server/tables/CountTable.cpp
         src/knobab/server/tables/ActTable.cpp
         src/knobab/server/tables/AttributeTable.cpp
@@ -71,7 +71,7 @@ add_library(knobab OBJECT
         include/knobab/server/algorithms/querymanager/DataQuery.h
         src/knobab/server/algorithms/querymanager/DataQuery.cpp
         include/knobab/server/algorithms/querymanager/LTLfQuery.h
-        src/knobab/server/algorithms/querymanager/LTLfQuery.cpp src/knobab/server/algorithms/dfa_generator/GenerateGraphFromAtomisedClause.cpp include/knobab/server/algorithms/dfa_generator/GenerateGraphFromAtomisedClause.h src/knobab/server/algorithms/dfa_generator/GenerateGraphFromEnvironment.cpp include/knobab/server/algorithms/dfa_generator/GenerateGraphFromEnvironment.h)
+        src/knobab/server/algorithms/querymanager/LTLfQuery.cpp src/knobab/server/algorithms/dfa_generator/GenerateGraphFromAtomisedClause.cpp include/knobab/server/algorithms/dfa_generator/GenerateGraphFromAtomisedClause.h src/knobab/server/algorithms/dfa_generator/GenerateGraphFromEnvironment.cpp include/knobab/server/algorithms/dfa_generator/GenerateGraphFromEnvironment.h src/knobab/server/dataStructures/knobab_data_loader.cpp include/knobab/server/dataStructures/knobab_data_loader.h)
 
 add_executable(knobab_server src/knobab/server/server.cpp)
 add_executable(tests_main src/knobab/tests/main.cpp)

@@ -1,5 +1,5 @@
 #include <args.hxx>
-#include "knobab/server/dataStructures/data_loader.h"
+#include "yaucl/bpm/structures/log/data_loader.h"
 #include "ServerQueryManager.h"
 
 const std::string query_plan = "queryplan \"nfmcp23\" {\n"
