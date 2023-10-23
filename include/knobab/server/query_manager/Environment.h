@@ -10,7 +10,7 @@
 #include <knobab/server/tables/KnowledgeBase.h>
 #include <knobab/server/algorithms/grounding/kb_grounding.h>
 #include <yaucl/bpm/structures/commons/easy_prop.h>
-#include <knobab/server/dataStructures/data_loader.h>
+#include "yaucl/bpm/structures/log/data_loader.h"
 #include <yaucl/bpm/algos/transformations/declare_to_dfa/TemplateCollectResult.h>
 #include <knobab/server/dataStructures/atomization_structures.h>
 #include <knobab/server/algorithms/atomization/AtomizingPipeline.h>

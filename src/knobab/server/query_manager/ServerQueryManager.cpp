@@ -276,6 +276,8 @@ std::any ServerQueryManager::visitNeq(KnoBABQueryParser::NeqContext *ctx) {
     return {NEQ};
 }
 
+#include <knobab/server/dataStructures/knobab_data_loader.h>
+
 std::any ServerQueryManager::visitLoad_data_query(KnoBABQueryParser::Load_data_queryContext *context) {
     if (context) {
         std::string filename = UNESCAPE(context->file->getText());
