@@ -4,6 +4,7 @@
 #include <yaucl/structures/any_to_uint_bimap.h>
 //using union_minimal = std::variant<std::string, size_t, long long, double>;
 
+#include "knobab/server/query_manager/ServerQueryManager.h"
 #include <yaucl/learning/DecisionTree.h>
 
 enum parsing_states {
@@ -19,6 +20,7 @@ enum parsing_states {
 #include <stack>
 
 struct myParser {
+    struct trace_visitor* filler{nullptr};
     std::vector<std::pair<int,size_t>> subclasses;
     std::vector<std::pair<size_t,size_t>> components;
     parsing_states state{BEGINNING};
@@ -154,6 +156,7 @@ struct myParser {
     bool start_object(std::size_t elements) {
         if ((state == LOG) && (object_stack.top()) && isSchemaOk && isEventHierarchyOk) {
             state = TRACE;
+            if (filler) filler->exitTrace(trace_id);
             trace_id++;
             event_id = -1;
         }
@@ -198,6 +201,34 @@ struct myParser {
 //                if (!payload.empty())
                 components.emplace_back(trace_id, event_id);
                 for_preliminary_classification.emplace_back(payload, (int)classInt);
+            } else if (filler) {
+                if (event_id == 0) {
+                    trace_id = filler->enterTrace(std::to_string(trace_id));
+                }
+                size_t eventId = filler->enterEvent(0, eventLabel);
+                if (!payload.empty()) {
+                    filler->enterData_part(true);
+                    for (const auto& [k,v] : payload) {
+                        if (std::holds_alternative<std::string>(v)) {
+                            filler->visitField(k, std::get<std::string>(v));
+                        } else {
+                            auto it = schema_def.find(keyV);
+                            if (it != schema_def.end()) {
+                                if (it->second == "discrete") {
+                                    filler->visitField(k, (size_t)std::get<double>(v));
+                                } else if (it->second == "boolean") {
+                                    filler->visitField(k, (bool)(std::get<double>(v) == 1.0));
+                                } else {
+                                    filler->visitField(k, std::get<double>(v));
+                                }
+                            } else {
+                                filler->visitField(k, std::get<double>(v));
+                            }
+                        }
+                    }
+                    filler->exitData_part(true);
+                }
+                filler->exitEvent(eventId);
             }
 //            std::cout << "storing polyadic event: " << trace_id << ", " << event_id << std::endl;
 //            std::cout << "\t- event label: " << eventLabel << std::endl;
@@ -379,12 +410,19 @@ static inline std::pair<int,size_t> test_single_conjunction(const std::unordered
     return {-1, 0};
 }
 
+
+
 int main() {
+    ServerQueryManager sqm;
     myParser sax;
     sax.ignore_keys = {"day","span","__class","__label"};
     std::string path{"/home/giacomo/projects/sdd-processing/sdd-processing/log_weekly.json"};
     std::ifstream f{path};
-    std::cout << nlohmann::json::sax_parse(f, &sax) << std::endl;
+
+    if (!nlohmann::json::sax_parse(f, &sax)) {
+        std::cerr << "ERROR while parsing the file: " << path << std::endl;
+        return 1;
+    }
     auto it = sax.for_preliminary_classification.begin();
     auto en = sax.for_preliminary_classification.end();
 
@@ -441,6 +479,75 @@ int main() {
         }
     }
     std::cout << ok/((double)sax.for_preliminary_classification.size()) << std::endl;
+
+    std::string filename = path;
+        bool oldLoading = true;
+        bool load_also_data = true;
+        bool doStats = false;
+        bool index_missing_data = false;
+        std::string env_name = "test1";
+        if (sqm.multiple_logs.contains(env_name)) {
+            sqm.multiple_logs.erase(env_name);
+        }
+        auto& env = sqm.multiple_logs[env_name];
+        log_data_format format;
+
+        using std::chrono::high_resolution_clock;
+        using std::chrono::duration_cast;
+        using std::chrono::duration;
+        using std::chrono::milliseconds;
+        env.experiment_logger.log_filename = filename;
+        f.clear();
+        f.seekg(0);
+//        env.experiment_logger.min_support = min_support;
+//        env.experiment_logger.mining_algorithm = mining_algorithm;
+//        env.experiment_logger.iteration_num = iteration_num;
+
+        {
+            //log_data_format format, bool loadData, std::istream &stream, KnowledgeBase &output,
+            //                              std::string &filename
+            auto t1 = high_resolution_clock::now();
+            // Loading
+            env.db.enterLog(path, env_name);
+            sax.filler = &env.db;
+            std::cout << nlohmann::json::sax_parse(f, &sax) << std::endl;
+            env.db.exitLog(path, env_name);
+            auto t2 = high_resolution_clock::now();
+
+            /* Getting number of milliseconds as a double. */
+            duration<double, std::milli> ms_double = t2 - t1;
+            env.experiment_logger.log_loading_and_parsing_ms = ms_double.count();
+            //std::cout << "Loading and parsing time = " << ms_double.count() << std::endl;
+        }
+
+
+        {
+            auto t1 = high_resolution_clock::now();
+            env.db.index_data_structures(index_missing_data);
+            auto t2 = high_resolution_clock::now();
+
+            /* Getting number of milliseconds as a double. */
+            duration<double, std::milli> ms_double = t2 - t1;
+            env.experiment_logger.log_indexing_ms = ms_double.count();
+            //std::cout << "Indexing time = " << ms_double.count() << std::endl;
+        }
+        auto tmp = env.db.getMaximumStringLength();
+        env.ap.s_max = std::string(tmp, std::numeric_limits<char>::max());
+        DataPredicate::MAX_STRING = env.ap.s_max;
+        DataPredicate::msl = tmp;
+
+        env.experiment_logger.n_traces = env.db.noTraces;
+        env.experiment_logger.n_acts = env.db.event_label_mapper.int_to_T.size();
+        // Compute some more trace statistics
+
+        double trace_avg = 0, trace_pow2 = 0, N;
+        N = env.db.act_table_by_act_id.trace_length.size();
+        size_t frequency_of_trace_length = 0;
+        size_t previousLength = 0;
+        std::multiset<size_t> O;
+
+        std::cout << "Loading and parsing: " << env.experiment_logger.log_loading_and_parsing_ms << " (ms)" << std::endl;
+        std::cout << "Indexing: " << env.experiment_logger.log_indexing_ms << " (ms)" << std::endl;
 
     return 0;
 }
