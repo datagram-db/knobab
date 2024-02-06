@@ -195,7 +195,8 @@ target_link_libraries(knobab2-edbt24-benchmarking Threads::Threads antlr4_shared
         yaucl_numeric yaucl_data yaucl_graph  yaucl_data yaucl_bpm knobab  knobab_ndp)
 
 add_executable(knobab_json new_pipeline.cpp)
-target_link_libraries(knobab_json antlr4_static yaucl_numeric yaucl_data yaucl_learning yaucl_graph yaucl_hashing yaucl_bpm)
+target_link_libraries(knobab_json Threads::Threads antlr4_static yaucl_hashing yaucl_bpm yaucl_structures
+        yaucl_numeric yaucl_data yaucl_graph  yaucl_data yaucl_bpm knobab  knobab_ndp   yaucl_learning  )
 
 catch_discover_tests(mining_tests)
 catch_discover_tests(until_tests)
