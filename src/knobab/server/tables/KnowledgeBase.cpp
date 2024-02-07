@@ -195,6 +195,21 @@ void KnowledgeBase::exitTrace(size_t traceId) {
     status = LogParsing;
 }
 
+size_t KnowledgeBase::enterEvent(size_t chronos_tick, const std::string &event_label, size_t consecutivePolyadicEvent) {
+    currentEventLabel = event_label;
+    actId = event_label_mapper.put(event_label).first;
+    auto it = counting_reference.emplace(actId, 1UL);
+    if (!it.second) {
+        // Existing key, increment the count val
+        it.first->second++;
+    }
+    status = EventParsing;
+    act_table_by_act_id.load_record(noTraces - 1, actId, consecutivePolyadicEvent);
+    currentEventId = std::max(consecutivePolyadicEvent+1, currentEventId);
+    visitField("__time", chronos_tick);
+    return currentEventId;
+}
+
 size_t KnowledgeBase::enterEvent(size_t chronos_tick, const std::string &event_label) {
     currentEventLabel = event_label;
     actId = event_label_mapper.put(event_label).first;

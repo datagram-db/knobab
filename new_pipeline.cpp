@@ -26,6 +26,7 @@ struct myParser {
     parsing_states state{BEGINNING};
     bool isSchemaOk = false;
     bool isEventHierarchyOk = false;
+    bool isBeginEvent = true;
     std::stack<bool> object_stack;
     std::unordered_set<std::string> ignore_keys;
     std::unordered_map<std::string, std::string> schema_def;
@@ -43,6 +44,23 @@ struct myParser {
     yaucl::structures::any_to_uint_bimap<std::string> class_to_int;
     std::unordered_set<std::string> numerical, categorical;
     std::vector<std::pair<std::unordered_map<std::string, union_minimal>, int>> for_preliminary_classification;
+
+    void clear() {
+        trace_id = event_id = -1;
+        isBeginEvent = true;
+        schema_def.clear();
+        hierarchy_def.clear();
+        while (!object_stack.empty())
+            object_stack.pop();
+        object_stack.emplace(false);
+        inHierarchyDef = traceNameOk = tracePayloadOk =  isSchemaOk = isEventHierarchyOk = false;
+        keyV.clear();
+        hierarchy.clear();
+        traceName.clear();
+        payload.clear();
+        eventLabel.clear();
+        state = BEGINNING;
+    }
 
             myParser() {
         object_stack.emplace(false);
@@ -156,9 +174,11 @@ struct myParser {
     bool start_object(std::size_t elements) {
         if ((state == LOG) && (object_stack.top()) && isSchemaOk && isEventHierarchyOk) {
             state = TRACE;
-            if (filler) filler->exitTrace(trace_id);
+            if (filler)
+                filler->exitTrace(trace_id);
             trace_id++;
             event_id = -1;
+            isBeginEvent = true;
         }
         if (state == EVENT) {
             payload.clear();
@@ -202,10 +222,11 @@ struct myParser {
                 components.emplace_back(trace_id, event_id);
                 for_preliminary_classification.emplace_back(payload, (int)classInt);
             } else if (filler) {
-                if (event_id == 0) {
-                    trace_id = filler->enterTrace(std::to_string(trace_id));
+                if ((event_id == 0) && isBeginEvent) {
+                    filler->enterTrace(std::to_string(trace_id));
+                    isBeginEvent = false;
                 }
-                size_t eventId = filler->enterEvent(0, eventLabel);
+                size_t eventId = filler->enterEvent(0, eventLabel, event_id);
                 if (!payload.empty()) {
                     filler->enterData_part(true);
                     for (const auto& [k,v] : payload) {
@@ -279,6 +300,7 @@ struct myParser {
         if ((state == BEGINNING) && (object_stack.top()) && (!isSchemaOk) && (!isEventHierarchyOk) && (val == "schema")) {
             trace_id = -1;
             event_id = -1;
+            isBeginEvent = true;
             state = SCHEMA;
             return true;
         } else if ((state == SCHEMA) && (object_stack.top())) {
@@ -305,6 +327,7 @@ struct myParser {
             } else if (val == "__events") {
                 state = POLYADIC_EVENT;
                 event_id = -1;
+                isBeginEvent = true;
                 return true;
             }
             if (tracePayloadOk) {
@@ -417,12 +440,15 @@ int main() {
     myParser sax;
     sax.ignore_keys = {"day","span","__class","__label"};
     std::string path{"/home/giacomo/projects/sdd-processing/sdd-processing/log_weekly.json"};
-    std::ifstream f{path};
+    {
+        std::ifstream f{path};
 
-    if (!nlohmann::json::sax_parse(f, &sax)) {
-        std::cerr << "ERROR while parsing the file: " << path << std::endl;
-        return 1;
+        if (!nlohmann::json::sax_parse(f, &sax)) {
+            std::cerr << "ERROR while parsing the file: " << path << std::endl;
+            return 1;
+        }
     }
+
     auto it = sax.for_preliminary_classification.begin();
     auto en = sax.for_preliminary_classification.end();
 
@@ -497,8 +523,6 @@ int main() {
         using std::chrono::duration;
         using std::chrono::milliseconds;
         env.experiment_logger.log_filename = filename;
-        f.clear();
-        f.seekg(0);
 //        env.experiment_logger.min_support = min_support;
 //        env.experiment_logger.mining_algorithm = mining_algorithm;
 //        env.experiment_logger.iteration_num = iteration_num;
@@ -509,8 +533,14 @@ int main() {
             auto t1 = high_resolution_clock::now();
             // Loading
             env.db.enterLog(path, env_name);
+//            myParser sax2;
             sax.filler = &env.db;
-            std::cout << nlohmann::json::sax_parse(f, &sax) << std::endl;
+            sax.clear();
+            {
+                // TODO: store the log in different environments depending on the annotated class being provided
+                std::ifstream f{path};
+                std::cout << nlohmann::json::sax_parse(f, &sax) << std::endl;
+            }
             env.db.exitLog(path, env_name);
             auto t2 = high_resolution_clock::now();
 
@@ -535,6 +565,9 @@ int main() {
         env.ap.s_max = std::string(tmp, std::numeric_limits<char>::max());
         DataPredicate::MAX_STRING = env.ap.s_max;
         DataPredicate::msl = tmp;
+
+        env.print_count_table(std::cout);
+        env.print_act_table(std::cout);
 
         env.experiment_logger.n_traces = env.db.noTraces;
         env.experiment_logger.n_acts = env.db.event_label_mapper.int_to_T.size();

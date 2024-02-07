@@ -261,6 +261,7 @@ public:
     void exitLog(const std::string &source, const std::string &name) override;
     size_t enterTrace(const std::string &trace_label) override;
     void exitTrace(size_t traceId) override;
+    size_t enterEvent(size_t chronos_tick, const std::string &event_label, size_t consecutivePolyadicEvent) override;
     size_t enterEvent(size_t chronos_tick, const std::string &event_label) override;
     void exitEvent(size_t event_id) override;
     void enterData_part(bool isEvent) override;
