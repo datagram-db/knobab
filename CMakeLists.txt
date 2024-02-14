@@ -196,7 +196,7 @@ add_executable(complete_response src/knobab/tests/complete_response.cpp)
 target_link_libraries(complete_response Catch2::Catch2WithMain Threads::Threads knobab antlr4_static yaucl_hashing
         yaucl_stringutils yaucl_numeric  yaucl_data yaucl_bpm yaucl_graph yaucl_structures yaucl_data knobab_ndp yaucl_learning knobab_mining)
 
-add_executable(basic_operators_testing src/knobab/tests/basic_operators_testing.cpp)
+add_executable(basic_operators_testing src/knobab/tests/basic_operators_testing.cpp include/knobab/server/dataStructures/polyadic/basic_polyadic.h)
 target_link_libraries(basic_operators_testing Catch2::Catch2WithMain Threads::Threads knobab antlr4_static yaucl_hashing
         yaucl_stringutils yaucl_numeric  yaucl_data yaucl_bpm yaucl_graph yaucl_structures yaucl_data knobab_ndp yaucl_learning knobab_mining)
 
@@ -205,7 +205,7 @@ add_executable(knobab2-edbt24-benchmarking benchmarking/edbt24.cpp)
 target_link_libraries(knobab2-edbt24-benchmarking Threads::Threads antlr4_shared yaucl_hashing yaucl_bpm yaucl_structures
         yaucl_numeric yaucl_data yaucl_graph  yaucl_data yaucl_bpm knobab  knobab_ndp)
 
-add_executable(knobab_json new_pipeline.cpp)
+add_executable(knobab_json new_pipeline.cpp src/knobab/dataStructures/polyadic/myParser.cpp include/knobab/server/dataStructures/polyadic/myParser.h include/knobab/server/dataStructures/polyadic.h src/knobab/algorithms/polyadic/polyadic_loading.cpp include/knobab/algorithms/polyadic/polyadic_loading.h)
 target_link_libraries(knobab_json Threads::Threads antlr4_static yaucl_hashing yaucl_bpm yaucl_structures
         yaucl_numeric yaucl_data yaucl_graph  yaucl_data yaucl_bpm knobab  knobab_ndp   yaucl_learning  )
 
