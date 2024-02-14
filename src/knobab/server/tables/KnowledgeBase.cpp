@@ -197,6 +197,7 @@ void KnowledgeBase::exitLog(const std::string &source, const std::string &name) 
 }
 
 size_t KnowledgeBase::enterTrace(const std::string &trace_label) {
+    DEBUG_ASSERT(this->alreadySet);
     currentEventId = 0;
     counting_reference.clear();
     status = TraceParsing;
@@ -205,11 +206,14 @@ size_t KnowledgeBase::enterTrace(const std::string &trace_label) {
 }
 
 void KnowledgeBase::exitTrace(size_t traceId) {
+    DEBUG_ASSERT(this->alreadySet);
     DEBUG_ASSERT(noTraces == (traceId+1));
     status = LogParsing;
 }
 
 size_t KnowledgeBase::enterEvent(size_t chronos_tick, const std::string &event_label, size_t consecutivePolyadicEvent) {
+    DEBUG_ASSERT(std::abs(((std::ptrdiff_t)(consecutivePolyadicEvent+1))-((std::ptrdiff_t)currentEventId))<=1);
+    DEBUG_ASSERT(this->alreadySet);
     currentEventLabel = event_label;
     actId = event_label_mapper.put(event_label).first;
     auto it = counting_reference.emplace(actId, 1UL);
@@ -219,12 +223,13 @@ size_t KnowledgeBase::enterEvent(size_t chronos_tick, const std::string &event_l
     }
     status = EventParsing;
     act_table_by_act_id.load_record(noTraces - 1, actId, consecutivePolyadicEvent);
-    currentEventId = std::max(consecutivePolyadicEvent+1, currentEventId);
-    visitField("__time", chronos_tick);
+    currentEventId = consecutivePolyadicEvent+1;
+//    visitField("__time", chronos_tick);
     return currentEventId;
 }
 
 size_t KnowledgeBase::enterEvent(size_t chronos_tick, const std::string &event_label) {
+    DEBUG_ASSERT(this->alreadySet);
     currentEventLabel = event_label;
     actId = event_label_mapper.put(event_label).first;
     auto it = counting_reference.emplace(actId, 1UL);
@@ -254,6 +259,7 @@ void KnowledgeBase::exitEvent(size_t event_id) {
 }
 
 void KnowledgeBase::enterData_part(bool isEvent) {
+    DEBUG_ASSERT(this->alreadySet);
     if (isEvent)
         DEBUG_ASSERT(status == EventParsing);
     else
@@ -261,6 +267,7 @@ void KnowledgeBase::enterData_part(bool isEvent) {
 }
 
 void KnowledgeBase::exitData_part(bool isEvent) {
+    DEBUG_ASSERT(this->alreadySet);
     if (isEvent)
         DEBUG_ASSERT(status == EventParsing);
     else
@@ -268,6 +275,7 @@ void KnowledgeBase::exitData_part(bool isEvent) {
 }
 
 void KnowledgeBase::visitField(const std::string &key, bool value) {
+    DEBUG_ASSERT(this->alreadySet);
     constexpr AttributeTableType type = BoolAtt;
     std::unordered_map<std::string, AttributeTable>* ptr = nullptr;
     std::unordered_map<std::string, std::unordered_set<std::string>>* ptr2 = nullptr;
@@ -285,6 +293,7 @@ void KnowledgeBase::visitField(const std::string &key, bool value) {
 
 
 void KnowledgeBase::visitField(const std::string &key, double value) {
+    DEBUG_ASSERT(this->alreadySet);
     constexpr AttributeTableType type = DoubleAtt;
     std::unordered_map<std::string, AttributeTable>* ptr = nullptr;
     std::unordered_map<std::string, std::unordered_set<std::string>>* ptr2 = nullptr;
@@ -300,6 +309,7 @@ void KnowledgeBase::visitField(const std::string &key, double value) {
 }
 
 void KnowledgeBase::visitField(const std::string &key, const std::string &value) {
+    DEBUG_ASSERT(this->alreadySet);
     constexpr AttributeTableType type = StringAtt;
     std::unordered_map<std::string, AttributeTable>* ptr = nullptr;
     std::unordered_map<std::string, std::unordered_set<std::string>>* ptr2 = nullptr;
@@ -316,6 +326,7 @@ void KnowledgeBase::visitField(const std::string &key, const std::string &value)
 }
 
 void KnowledgeBase::visitField(const std::string &key, size_t value) {
+    DEBUG_ASSERT(this->alreadySet);
     constexpr AttributeTableType type = SizeTAtt;
     std::unordered_map<std::string, AttributeTable>* ptr = nullptr;
     std::unordered_map<std::string, std::unordered_set<std::string>>* ptr2 = nullptr;
