@@ -33,13 +33,13 @@ struct GroundingStrategyConf {
     pruning_strategy strategy1;
 
     void clear() {
-        trace_ids.clear();
-        ActToAttribute.clear();
-        OtherAttributes.clear();
-        I_A_x.clear();
-        I_x.clear();
-        LEFT.clear();
-        RIGHT.clear();
+//        trace_ids.clear();
+//        ActToAttribute.clear();
+//        OtherAttributes.clear();
+//        I_A_x.clear();
+//        I_x.clear();
+//        LEFT.clear();
+//        RIGHT.clear();
     }
 
     GroundingStrategyConf();

@@ -278,11 +278,14 @@ bool DeclareDataAware::checkValidity(const env &e1, uint32_t t2, uint16_t e2) co
                     {
                         auto temp2_a = kb->attribute_name_to_table.find(pred.varRHS);
                         if (temp2_a != kb->attribute_name_to_table.end()) {
-                            size_t offset = kb->act_table_by_act_id.getBuilder().trace_id_to_event_id_to_offset.at(
+                            const auto& offsets = kb->act_table_by_act_id.getBuilder().trace_id_to_event_id_to_offset.at(
                                     t2).at(e2);
-                            std::optional<union_minimal> data = temp2_a->second.resolve_record_if_exists2(offset);
-                            if (data.has_value()) {
-                                rhs = data.value();
+                            for (const auto offset : offsets) {
+                                std::optional<union_minimal> data = temp2_a->second.resolve_record_if_exists2(offset);
+                                if (data.has_value()) {
+                                    rhs = data.value();
+                                    break;
+                                }
                             }
                         }
                             switch (pred.casusu) {
@@ -313,12 +316,16 @@ bool DeclareDataAware::checkValidity(const env &e1, uint32_t t2, uint16_t e2) co
                     if (!pred.is_left_for_activation) {
                         auto temp2_a = kb->attribute_name_to_table.find(pred.varRHS);
                         if (temp2_a != kb->attribute_name_to_table.end()) {
-                            size_t offset = kb->act_table_by_act_id.getBuilder().trace_id_to_event_id_to_offset.at(
+                            const auto& offsets = kb->act_table_by_act_id.getBuilder().trace_id_to_event_id_to_offset.at(
                                     t2).at(e2);
-                            std::optional<union_minimal> data = temp2_a->second.resolve_record_if_exists2(offset);
-                            if (data.has_value()) {
-                                val = data.value();
+                            for (const auto offset : offsets) {
+                                std::optional<union_minimal> data = temp2_a->second.resolve_record_if_exists2(offset);
+                                if (data.has_value()) {
+                                    val = data.value();
+                                    break;
+                                }
                             }
+
                         }
                     } // otherwise, using the lhs val!
 
@@ -339,47 +346,50 @@ env DeclareDataAware::GetPayloadDataFromEvent(const std::pair<uint32_t, uint16_t
     env environment;
 
     for(const auto& p : kb->attribute_name_to_table){
-        size_t offset = kb->act_table_by_act_id.getBuilder().trace_id_to_event_id_to_offset.at(pair.first).at(pair.second);
-        std::optional<union_minimal> data = p.second.resolve_record_if_exists2(offset);
-        if(data.has_value()) {
-            environment[p.first] = data.value();
+        const auto& offsets = kb->act_table_by_act_id.getBuilder().trace_id_to_event_id_to_offset.at(pair.first).at(pair.second);
+        for (const auto offset : offsets) {
+            std::optional<union_minimal> data = p.second.resolve_record_if_exists2(offset);
+            if(data.has_value()) {
+                environment[p.first] = data.value();
+                break;
+            }
         }
     }
 
     return environment;
 }
 
-bool DeclareDataAware::checkValidity(bool isLeftMap, uint32_t t2, uint16_t e2) const {
-    if (isLeftMap ? dnf_left_map.empty() : dnf_right_map.empty()) return true;
-    size_t table_offset =
-            kb->act_table_by_act_id.getBuilder().trace_id_to_event_id_to_offset.at(t2).at(e2);
-    const std::string& eventName = kb->event_label_mapper.get(kb->act_table_by_act_id.table.at(table_offset).entry.id.parts.act);
-    for(const auto& pred_withConj : (isLeftMap ? dnf_left_map : dnf_right_map)){
-        bool result = true;
-        for (const auto& predDummy : pred_withConj) {
-            DEBUG_ASSERT(predDummy.second.BiVariableConditions.empty());
-            bool test = true;
-            auto temp2_a = kb->attribute_name_to_table.find(predDummy.second.var);
-            if (temp2_a != kb->attribute_name_to_table.end()) {
-                size_t offset = kb->act_table_by_act_id.getBuilder().trace_id_to_event_id_to_offset.at(
-                        t2).at(e2);
-                std::optional<union_minimal> data = temp2_a->second.resolve_record_if_exists2(offset);
-                if (data.has_value()) {
-                    if (predDummy.second.testOverSingleVariable(data.value())) {
-                        test = false;
-                    }
-                }
-            }
-            if (!test) {
-                result = false;
-                break;
-            }
-        }
-        if (result)
-            return true;
-    }
-    return false;
-}
+//bool DeclareDataAware::checkValidity(bool isLeftMap, uint32_t t2, uint16_t e2) const {
+//    if (isLeftMap ? dnf_left_map.empty() : dnf_right_map.empty()) return true;
+//    const auto& table_offsets =
+//            kb->act_table_by_act_id.getBuilder().trace_id_to_event_id_to_offset.at(t2).at(e2);
+//    const std::string& eventName = kb->event_label_mapper.get(kb->act_table_by_act_id.table.at(table_offset).entry.id.parts.act);
+//    for(const auto& pred_withConj : (isLeftMap ? dnf_left_map : dnf_right_map)){
+//        bool result = true;
+//        for (const auto& predDummy : pred_withConj) {
+//            DEBUG_ASSERT(predDummy.second.BiVariableConditions.empty());
+//            bool test = true;
+//            auto temp2_a = kb->attribute_name_to_table.find(predDummy.second.var);
+//            if (temp2_a != kb->attribute_name_to_table.end()) {
+//                size_t offset = kb->act_table_by_act_id.getBuilder().trace_id_to_event_id_to_offset.at(
+//                        t2).at(e2);
+//                std::optional<union_minimal> data = temp2_a->second.resolve_record_if_exists2(offset);
+//                if (data.has_value()) {
+//                    if (predDummy.second.testOverSingleVariable(data.value())) {
+//                        test = false;
+//                    }
+//                }
+//            }
+//            if (!test) {
+//                result = false;
+//                break;
+//            }
+//        }
+//        if (result)
+//            return true;
+//    }
+//    return false;
+//}
 
 env DeclareDataAware::GetPayloadDataFromEvent(uint32_t first, uint16_t second, bool isLeft, std::unordered_set<std::string>& cache) const {
     env environment;
@@ -397,11 +407,15 @@ env DeclareDataAware::GetPayloadDataFromEvent(uint32_t first, uint16_t second, b
     for (const auto& x : cache) {
         auto it = kb->attribute_name_to_table.find(x);
         if (it != kb->attribute_name_to_table.end()) {
-            size_t offset = kb->act_table_by_act_id.getBuilder().trace_id_to_event_id_to_offset.at(first).at(second);
-            std::optional<union_minimal> data = it->second.resolve_record_if_exists2(offset);
-            if(data.has_value()) {
-                environment[x] = data.value();
+            const auto& offsets = kb->act_table_by_act_id.getBuilder().trace_id_to_event_id_to_offset.at(first).at(second);
+            for (const auto offset : offsets) {
+                std::optional<union_minimal> data = it->second.resolve_record_if_exists2(offset);
+                if(data.has_value()) {
+                    environment[x] = data.value();
+                    break;
+                }
             }
+
         }
     }
 

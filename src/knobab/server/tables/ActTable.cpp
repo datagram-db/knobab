@@ -17,7 +17,7 @@ uint16_t cast_to_float2(size_t x, size_t l) {
 
 ActTable::record::record() : record{0,0,0,nullptr, nullptr} {}
 
-ActTable::record::record(act_t act, trace_t id, time_t time, ActTable::record *prev, ActTable::record *next) : prev{prev}, next{next} {
+ActTable::record::record(act_t act, trace_t id, time_t time, ActTable::record *prev, ActTable::record *next) /*: prev{prev}, next{next}*/ {
     //entry.id.parts.future = 0;
     entry.id.parts.event_id = time;
     entry.id.parts.trace_id = id;
@@ -59,14 +59,22 @@ void ActTable::load_record(trace_t id, act_t act, time_t time) {
         //DEBUG_ASSERT(M >= id);
         if (M == id) {
             //DEBUG_ASSERT(trace_length.size() == M);
-            builder.trace_id_to_event_id_to_offset.emplace_back();
-            trace_length.push_back(1);
+            if (trace_length.size() == M)
+            {
+                builder.trace_id_to_event_id_to_offset.emplace_back();
+                trace_length.push_back(1);
+            }
         } else {
             //DEBUG_ASSERT((M-1) == id);
-            DEBUG_ASSERT(trace_length.size() > id);
-            trace_length[id]++;
+            if (((M-1) == id) && (trace_length.size() > id))
+            {
+//                DEBUG_ASSERT();
+                trace_length[id]++;
+            }
         }
-        builder.trace_id_to_event_id_to_offset[builder.trace_id_to_event_id_to_offset.size()-1].emplace_back(time);
+        if (time == builder.trace_id_to_event_id_to_offset[id].size()) {
+            builder.trace_id_to_event_id_to_offset[id].emplace_back();
+        }
     }
 }
 
@@ -79,7 +87,7 @@ void ActTable::sanityCheck() {
     //assert(std::is_sorted(table.begin(), table.end()));
 }
 
-const std::vector<std::vector<size_t>> & ActTable::indexing1() { // todo: rename as indexing, and remove expectedOrdering from emplace_back, instead, put in
+const std::vector<std::vector<std::vector<size_t>>> & ActTable::indexing1() { // todo: rename as indexing, and remove expectedOrdering from emplace_back, instead, put in
     size_t offset = 0;
     // Phase 1
     for (size_t k = 0, N = builder.act_id_to_trace_id_and_time.size(); k < N; k++) {
@@ -90,7 +98,7 @@ const std::vector<std::vector<size_t>> & ActTable::indexing1() { // todo: rename
                                cp.first,
                                cp.second,//cast_to_float(cp.second, trace_length.at(cp.first) - 1),
                                nullptr, nullptr);
-            builder.trace_id_to_event_id_to_offset[cp.first][cp.second] = offset++;
+            builder.trace_id_to_event_id_to_offset[cp.first][cp.second].emplace_back(offset++);
         }
         ref.clear(); // freeing some memory
     }
@@ -100,27 +108,27 @@ const std::vector<std::vector<size_t>> & ActTable::indexing1() { // todo: rename
 
 
 void ActTable::indexing2() { // todo: rename as indexing, and remove expectedOrdering from emplace_back, instead, put in
-
-    // Phase 2, creating the secondary index, for accessing the beginning and the end of the trace from the table
-    for (size_t sigma_id = 0, M = builder.trace_id_to_event_id_to_offset.size(); sigma_id < M ; sigma_id++) {
-        auto& ref = builder.trace_id_to_event_id_to_offset[sigma_id];
-        for (size_t time = 0, T = ref.size(); time < T; time++) {
-            size_t offset = ref[time];
-            auto& real_ref = table[offset];
-            if (time == 0) {
-                DEBUG_ASSERT(secondary_index.size() == sigma_id);
-                secondary_index.emplace_back(&real_ref, &table[ref.back()]);
-            }
-            if (time < T-1) {
-                real_ref.next = &table[ref.at(time+1)];
-            }
-            if (time > 0) {
-                real_ref.prev = &table[ref.at(time-1)];
-            }
-        }
-        ///ref.clear();
-    }
-    ///builder.trace_id_to_event_id_to_offset.clear();
+//
+//    // Phase 2, creating the secondary index, for accessing the beginning and the end of the trace from the table
+//    for (size_t sigma_id = 0, M = builder.trace_id_to_event_id_to_offset.size(); sigma_id < M ; sigma_id++) {
+//        auto& ref = builder.trace_id_to_event_id_to_offset[sigma_id];
+//        for (size_t time = 0, T = ref.size(); time < T; time++) {
+//            size_t offset = ref[time];
+//            auto& real_ref = table[offset];
+//            if (time == 0) {
+//                DEBUG_ASSERT(secondary_index.size() == sigma_id);
+//                secondary_index.emplace_back(&real_ref, &table[ref.back()]);
+//            }
+//            if (time < T-1) {
+//                real_ref.next = &table[ref.at(time+1)];
+//            }
+//            if (time > 0) {
+//                real_ref.prev = &table[ref.at(time-1)];
+//            }
+//        }
+//        ///ref.clear();
+//    }
+//    ///builder.trace_id_to_event_id_to_offset.clear();
 }
 
 //std::pair<const ActTable::record *, const ActTable::record *> ActTable::resolve_index(act_t id) const {
@@ -149,9 +157,10 @@ std::ostream &operator<<(std::ostream &os, const ActTable &table) {
     auto ptr = table.table.data();
     os << "Act,TraceId,EventId,PREVPTR,NEXTPTR" << std::endl;
     for (const auto& ref : table.table) {
-        os <<  ref.entry.id.parts.act << "," << ref.entry.id.parts.trace_id << "," << /*std::trunc((((double)ref.entry.id.parts.event_id)/at16)*table.trace_length[ ref.entry.id.parts.trace_id])*/ref.entry.id.parts.event_id  << ","<< (
-                ref.prev == nullptr ? "-1" : "+"+std::to_string((ref.prev-ptr)))<<","<< (
-                   ref.next == nullptr ? "-1" : "+"+std::to_string((ref.next-ptr))) << std::endl;
+        os <<  ref.entry.id.parts.act << "," << ref.entry.id.parts.trace_id << "," << /*std::trunc((((double)ref.entry.id.parts.event_id)/at16)*table.trace_length[ ref.entry.id.parts.trace_id])*/ref.entry.id.parts.event_id  << ","//<< (
+//                ref.prev == nullptr ? "-1" : "+"+std::to_string((ref.prev-ptr)))<<","<< (
+//                   ref.next == nullptr ? "-1" : "+"+std::to_string((ref.next-ptr)))
+                   << std::endl;
     }
     //os << std::endl << "-------------------------------" << std::endl;
     return os;
