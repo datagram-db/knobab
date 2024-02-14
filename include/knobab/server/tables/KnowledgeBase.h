@@ -292,8 +292,8 @@ public:
      * First part of the pipeline *
      ******************************/
 
-    const Result getLastElements(LeafType leafType = NoneLeaf) const;
-    const Result getNotFirstElements(LeafType leafType);
+//    const Result getLastElements(LeafType leafType = NoneLeaf) const;
+//    const Result getNotFirstElements(LeafType leafType);
 
     uint16_t getMappedValueFromAction(const std::string &act) const;
     std::pair<const uint32_t, const uint32_t> resolveCountingData(const std::string &act) const;
@@ -322,7 +322,7 @@ public:
         if(indexes.first < 0){
             return {nullptr, nullptr};
         }
-#ifdef _MSC_VER
+#if 1
         return {((ActTable::record*)&(*act_table_by_act_id.table.begin())+ indexes.first), ((ActTable::record*)&(*act_table_by_act_id.table.begin())+ indexes.second+1)};
 #else
         return {((ActTable::record*)act_table_by_act_id.table.begin().base()+ indexes.first), ((ActTable::record*)act_table_by_act_id.table.begin().base()+ indexes.second+1)};

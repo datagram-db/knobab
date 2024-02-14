@@ -1277,7 +1277,9 @@ std::any ServerQueryManager::visitWith_model(KnoBABQueryParser::With_modelContex
                         }
                         DEBUG_ASSERT(S.size() == 1);
                         serialize_event_label(xes, *S.begin(), milliseconds);
-                        ptrTrace = ptrTrace->next;
+                        std::cerr<< "REIMPLEMENT THIS ALGORITHM!, due to 'ptrTrace = ptrTrace->next'" << std::endl;
+                        exit(2);
+//                        ptrTrace = ptrTrace->next;
                         if (isXes) end_event_serialize(xes); else if (ptrTrace) xes << "\t";
                     }
                     if (isXes) end_trace_serialize(xes); else if (trace_id<N-1) xes << std::endl;

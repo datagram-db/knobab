@@ -211,10 +211,13 @@ public:
         env environment;
         for(const auto& p : db.attribute_name_to_table){
             if (toRemove.contains(p.first)) continue;
-            size_t offset = db.act_table_by_act_id.getBuilder().trace_id_to_event_id_to_offset.at(pair.first).at(pair.second);
-            std::optional<union_minimal> data = p.second.resolve_record_if_exists2(offset);
-            if(data.has_value()) {
-                environment[appendix+p.first] = data.value();
+            const auto& offsets = db.act_table_by_act_id.getBuilder().trace_id_to_event_id_to_offset.at(pair.first).at(pair.second);
+            for (size_t offset : offsets) {
+                std::optional<union_minimal> data = p.second.resolve_record_if_exists2(offset);
+                if(data.has_value()) {
+                    environment[appendix+p.first] = data.value();
+                    break;
+                }
             }
         }
         return environment;

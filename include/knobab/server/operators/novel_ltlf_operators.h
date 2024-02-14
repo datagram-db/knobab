@@ -43,23 +43,32 @@ inline void and_next(const Result &lhsOperand,
         if (cp.first[x.first.first].id.parts.event_id == 0) continue;
         if ((kb.act_table_by_act_id.getTraceLength(x.first.first)-1) == (x.first.second))
             continue;
-        size_t right_offset = kb.act_table_by_act_id.getBuilder().trace_id_to_event_id_to_offset.at(x.first.first).at(x.first.second+1);
-        if ((kb.act_table_by_act_id.table.at(right_offset).entry.id.parts.act != right_activity))
-            continue;
+        const auto& right_offsets = kb.act_table_by_act_id.getBuilder().trace_id_to_event_id_to_offset.at(x.first.first).at(x.first.second+1);
+        bool found = false;
+        for (const auto right_offset : right_offsets) {
+            if ((kb.act_table_by_act_id.table.at(right_offset).entry.id.parts.act == right_activity)) {
+                found = true;
+                break;
+            }
+        }
+        if (!found) continue;
         bool rightMatch = true;
         if (right_predicate) {
-            size_t table_offset =
+            const auto& table_offsets =
                     kb.act_table_by_act_id.getBuilder().trace_id_to_event_id_to_offset.at(x.first.first).at(x.first.second+1);
             for(const auto& pred_withConj : rhs_atoms){
                 bool result = true;
                 for (const auto& predDummy : ap->atom_to_conjunctedPredicates.at(pred_withConj)) {
-                    bool test = true;
+                    bool test = false;
                     auto temp2_a = kb.attribute_name_to_table.find(predDummy.var);
                     if (temp2_a != kb.attribute_name_to_table.end()) {
-                        std::optional<union_minimal> data = temp2_a->second.resolve_record_if_exists2(table_offset);
-                        if (data.has_value()) {
-                            if (!predDummy.testOverSingleVariable(data.value())) {
-                                test = false;
+                        for (const auto table_offset : table_offsets) {
+                            std::optional<union_minimal> data = temp2_a->second.resolve_record_if_exists2(table_offset);
+                            if (data.has_value()) {
+                                if (predDummy.testOverSingleVariable(data.value())) {
+                                    test = true;
+                                    break;
+                                }
                             }
                         }
                     }
@@ -127,23 +136,32 @@ inline void next_and(const Result &lhsOperand,
     for (const auto& x : lhsOperand) {
         if (x.first.second == 0) continue;
         if (cp.first[x.first.first].id.parts.event_id == 0) continue;
-        size_t right_offset = kb.act_table_by_act_id.getBuilder().trace_id_to_event_id_to_offset.at(x.first.first).at(x.first.second-1);
-        if ((kb.act_table_by_act_id.table.at(right_offset).entry.id.parts.act != right_activity))
-            continue;
+        const auto& right_offsets = kb.act_table_by_act_id.getBuilder().trace_id_to_event_id_to_offset.at(x.first.first).at(x.first.second-1);
+        bool found = false;
+        for (const auto right_offset : right_offsets ){
+            if ((kb.act_table_by_act_id.table.at(right_offset).entry.id.parts.act == right_activity)) {
+                found = true;
+                break;
+            }
+        }
+        if (!found) continue;
         bool rightMatch = true;
         if (right_predicate) {
-            size_t table_offset =
+            const auto& table_offsets =
                     kb.act_table_by_act_id.getBuilder().trace_id_to_event_id_to_offset.at(x.first.first).at(x.first.second-1);
             for(const auto& pred_withConj : rhs_atoms){
                 bool result = true;
                 for (const auto& predDummy : ap->atom_to_conjunctedPredicates.at(pred_withConj)) {
-                    bool test = true;
+                    bool test = false;
                     auto temp2_a = kb.attribute_name_to_table.find(predDummy.var);
                     if (temp2_a != kb.attribute_name_to_table.end()) {
-                        std::optional<union_minimal> data = temp2_a->second.resolve_record_if_exists2(table_offset);
-                        if (data.has_value()) {
-                            if (!predDummy.testOverSingleVariable(data.value())) {
-                                test = false;
+                        for (size_t table_offset : table_offsets ) {
+                            std::optional<union_minimal> data = temp2_a->second.resolve_record_if_exists2(table_offset);
+                            if (data.has_value()) {
+                                if (predDummy.testOverSingleVariable(data.value())) {
+                                    test = true;
+                                    break;
+                                }
                             }
                         }
                     }

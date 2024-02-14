@@ -37,44 +37,58 @@ KnowledgeBase::KnowledgeBase() : alreadySet{false} {
 }
 
 void KnowledgeBase::reconstruct_trace_no_data(std::ostream &os) const {
-    for (size_t trace_id = 0, N = act_table_by_act_id.secondary_index.size(); trace_id < N; trace_id++) {
+    for (size_t trace_id = 0, N = act_table_by_act_id.getBuilder().trace_id_to_event_id_to_offset.size(); trace_id<N; trace_id++) {
         os << "Trace #" << trace_id << std::endl << "\t- ";
-        const auto& ref = act_table_by_act_id.secondary_index[trace_id];
-        auto ptr = ref.first;
-        while (ptr) {
-            os << event_label_mapper.get(ptr->entry.id.parts.act) << "; ";
-            ptr = ptr->next;
-        };
+        for (size_t event_id = 0, M = act_table_by_act_id.getBuilder().trace_id_to_event_id_to_offset.at(trace_id).size(); event_id<M; event_id++) {
+            os << "{";
+            for (size_t idx  = 0, O = act_table_by_act_id.getBuilder().trace_id_to_event_id_to_offset.at(trace_id).at(event_id).size(); idx<O; idx++) {
+                os << event_label_mapper.get(act_table_by_act_id.table.at(act_table_by_act_id.getBuilder().trace_id_to_event_id_to_offset.at(trace_id).at(event_id).at(idx)).entry.id.parts.act);
+                if (idx+1<O) os << ", ";
+            }
+            os << "}";
+            if (event_id+1<M) os << "; ";
+        }
         os << std::endl;
     }
+//    for (size_t trace_id = 0, N = act_table_by_act_id.secondary_index.size(); trace_id < N; trace_id++) {
+//        os << "Trace #" << trace_id << std::endl << "\t- ";
+//        const auto& ref = act_table_by_act_id.secondary_index[trace_id];
+//        auto ptr = ref.first;
+//        while (ptr) {
+//            os << event_label_mapper.get(ptr->entry.id.parts.act) << "; ";
+//            ptr = ptr->next;
+//        };
+//        os << std::endl;
+//    }
 }
 
 
 void KnowledgeBase::reconstruct_trace_with_data(std::ostream &os) const {
-    constexpr size_t record_size = sizeof(ActTable::record);
-    for (size_t trace_id = 0, N = act_table_by_act_id.secondary_index.size(); trace_id < N; trace_id++) {
-        os << "Trace #" << trace_id << std::endl << "\t- ";
-        const auto& ref = act_table_by_act_id.secondary_index[trace_id];
-        auto ptr = ref.first;
-        while (ptr) {
-            size_t offset = (((size_t)ptr) - ((size_t)act_table_by_act_id.table.data()));
-            offset = offset / record_size;
-            // printing one event at a time
-            os << event_label_mapper.get(ptr->entry.id.parts.act) << "{ ";
-            for (const auto& attr_table : this->attribute_name_to_table) {
-                const AttributeTable::record* recordPtr = attr_table.second.resolve_record_if_exists(offset);
-                if (recordPtr) {
-                    DEBUG_ASSERT(recordPtr->act_table_offset == offset);
-                    os << attr_table.first << '=';
-                    attr_table.second.resolve_and_print(os, *recordPtr);
-                    os << ", ";
-                }
-            }
-            os << "} ";
-            ptr = ptr->next;
-        };
-        os << std::endl;
-    }
+    std::cerr << "TODO: IMPLEMENT reconstruct_trace_with_data" << std::endl;
+//    constexpr size_t record_size = sizeof(ActTable::record);
+//    for (size_t trace_id = 0, N = act_table_by_act_id.secondary_index.size(); trace_id < N; trace_id++) {
+//        os << "Trace #" << trace_id << std::endl << "\t- ";
+//        const auto& ref = act_table_by_act_id.secondary_index[trace_id];
+//        auto ptr = ref.first;
+//        while (ptr) {
+//            size_t offset = (((size_t)ptr) - ((size_t)act_table_by_act_id.table.data()));
+//            offset = offset / record_size;
+//            // printing one event at a time
+//            os << event_label_mapper.get(ptr->entry.id.parts.act) << "{ ";
+//            for (const auto& attr_table : this->attribute_name_to_table) {
+//                const AttributeTable::record* recordPtr = attr_table.second.resolve_record_if_exists(offset);
+//                if (recordPtr) {
+//                    DEBUG_ASSERT(recordPtr->act_table_offset == offset);
+//                    os << attr_table.first << '=';
+//                    attr_table.second.resolve_and_print(os, *recordPtr);
+//                    os << ", ";
+//                }
+//            }
+//            os << "} ";
+//            ptr = ptr->next;
+//        };
+//        os << std::endl;
+//    }
 }
 
 
@@ -88,7 +102,7 @@ void KnowledgeBase::index_data_structures(bool missingDataIndexing) {
 
     /// Applying the intermediate index M2 to each attribute table, so to continue with the value indexing
     for (auto& attr_name_to_table_cp : attribute_name_to_table)
-        attr_name_to_table_cp.second.index(idx);
+        attr_name_to_table_cp.second.index(idx, act_table_by_act_id.table);
 
     /// Continuing to create the secondary index out of M2, as well as clearing M2
     act_table_by_act_id.indexing2();
@@ -105,56 +119,56 @@ void KnowledgeBase::index_data_structures(bool missingDataIndexing) {
     }*/
     DEBUG_ASSERT(std::is_sorted(universe.begin(), universe.end()));
 
-    if (missingDataIndexing) {
-        std::cout << "NOW INDEXING 'MISSING DATA'" << std::endl;
-        auto tmp = status;
-        status = MissingDataParsing;
-        constexpr size_t record_size = sizeof(ActTable::record);
-        for (size_t trace_id = 0, N = act_table_by_act_id.secondary_index.size(); trace_id < N; trace_id++) {
-            ///os << "Trace #" << trace_id << std::endl << "\t- ";
-            const auto& ref = act_table_by_act_id.secondary_index[trace_id];
-            auto ptr = ref.first;
-            size_t event_id = 0;
-            while (ptr) {
-                size_t offset = (((size_t)ptr) - ((size_t)act_table_by_act_id.table.data()));
-                offset = offset / record_size;
-                std::string eventLabel = event_label_mapper.get(ptr->entry.id.parts.act);
-                for (const auto& attr_table : this->attribute_name_to_table) {
-                    const AttributeTable::record* recordPtr = attr_table.second.resolve_record_if_exists(offset);
-                    if (!recordPtr) {
-                        std::variant<double, size_t, long long int, std::string, bool> val;
-                        switch (attr_table.second.type) {
-                            case DoubleAtt:
-                                val = default_double;
-                                break;
-                            case SizeTAtt:
-                                val = default_size_t;
-                                break;
-                            case LongAtt:
-                                val = default_longlong;
-                                break;
-                            case StringAtt:
-                                val = default_string;
-                                break;
-                            case BoolAtt:
-                                val = default_bool;
-                                break;
-                        }
-                        fillInAtGivenStep(attr_table.first, val, attr_table.second.type, &approximate_attribute_to_table,
-                                          nullptr, trace_id, event_id, eventLabel, ptr->entry.id.parts.act);
-                    }
-                }
-                ptr = ptr->next;
-                event_id++;
-            }
-            status = tmp;
-
-        }
-
-        /// Applying the intermediate index M2 to each attribute table, so to continue with the value indexing
-        for (auto& attr_name_to_table_cp : approximate_attribute_to_table)
-            attr_name_to_table_cp.second.index(idx);
-    }
+//    if (missingDataIndexing) {
+//        std::cout << "NOW INDEXING 'MISSING DATA'" << std::endl;
+//        auto tmp = status;
+//        status = MissingDataParsing;
+//        constexpr size_t record_size = sizeof(ActTable::record);
+//        for (size_t trace_id = 0, N = act_table_by_act_id.secondary_index.size(); trace_id < N; trace_id++) {
+//            ///os << "Trace #" << trace_id << std::endl << "\t- ";
+//            const auto& ref = act_table_by_act_id.secondary_index[trace_id];
+//            auto ptr = ref.first;
+//            size_t event_id = 0;
+//            while (ptr) {
+//                size_t offset = (((size_t)ptr) - ((size_t)act_table_by_act_id.table.data()));
+//                offset = offset / record_size;
+//                std::string eventLabel = event_label_mapper.get(ptr->entry.id.parts.act);
+//                for (const auto& attr_table : this->attribute_name_to_table) {
+//                    const AttributeTable::record* recordPtr = attr_table.second.resolve_record_if_exists(offset);
+//                    if (!recordPtr) {
+//                        std::variant<double, size_t, long long int, std::string, bool> val;
+//                        switch (attr_table.second.type) {
+//                            case DoubleAtt:
+//                                val = default_double;
+//                                break;
+//                            case SizeTAtt:
+//                                val = default_size_t;
+//                                break;
+//                            case LongAtt:
+//                                val = default_longlong;
+//                                break;
+//                            case StringAtt:
+//                                val = default_string;
+//                                break;
+//                            case BoolAtt:
+//                                val = default_bool;
+//                                break;
+//                        }
+//                        fillInAtGivenStep(attr_table.first, val, attr_table.second.type, &approximate_attribute_to_table,
+//                                          nullptr, trace_id, event_id, eventLabel, ptr->entry.id.parts.act);
+//                    }
+//                }
+//                ptr = ptr->next;
+//                event_id++;
+//            }
+//            status = tmp;
+//
+//        }
+//
+//        /// Applying the intermediate index M2 to each attribute table, so to continue with the value indexing
+//        for (auto& attr_name_to_table_cp : approximate_attribute_to_table)
+//            attr_name_to_table_cp.second.index(idx);
+//    }
 
     //act_table_by_act_id.clearIDX();
 }
@@ -228,7 +242,7 @@ size_t KnowledgeBase::enterEvent(size_t chronos_tick, const std::string &event_l
 
 void KnowledgeBase::exitEvent(size_t event_id) {
     currentEventLabel.clear();
-    DEBUG_ASSERT(currentEventId == (event_id+1));
+//    DEBUG_ASSERT(currentEventId == (event_id+1));
     // using counting_reference to populate
     std::vector<std::pair<size_t, size_t>> cp;
     for (const auto& it : counting_reference)
@@ -336,20 +350,22 @@ KnowledgeBase::collectValuesFrom(std::set<union_type> &S, ssize_t trace_id, uint
 
 void KnowledgeBase::collectValuesAmongTraces(std::set<union_type> &S, size_t trace_id, act_t acts, bool hasNoActId,
                                              const std::string &attribute_name, bool hasNoAttribute) const {
-    const auto& ref = act_table_by_act_id.secondary_index[trace_id];
-    auto ptr = ref.first;
-    while (ptr) {
-        if (hasNoActId || (ptr->entry.id.parts.act == acts)) {
-            for (const auto& attr_table : attribute_name_to_table) {
-                ptrdiff_t offset = ptr - act_table_by_act_id.table.data();
-                const AttributeTable::record* recordPtr = attr_table.second.resolve_record_if_exists(offset);
-                if (recordPtr &&  (hasNoAttribute || (attribute_name == attr_table.first))) {
-                    S.insert(attr_table.second.resolve(*recordPtr));
-                }
-            }
-        }
-        ptr = ptr->next;
-    }
+    std::cerr << "TODO: implement collectValuesAmongTraces" << std::endl;
+    exit(1);
+//    const auto& ref = act_table_by_act_id.secondary_index[trace_id];
+//    auto ptr = ref.first;
+//    while (ptr) {
+//        if (hasNoActId || (ptr->entry.id.parts.act == acts)) {
+//            for (const auto& attr_table : attribute_name_to_table) {
+//                ptrdiff_t offset = ptr - act_table_by_act_id.table.data();
+//                const AttributeTable::record* recordPtr = attr_table.second.resolve_record_if_exists(offset);
+//                if (recordPtr &&  (hasNoAttribute || (attribute_name == attr_table.first))) {
+//                    S.insert(attr_table.second.resolve(*recordPtr));
+//                }
+//            }
+//        }
+//        ptr = ptr->next;
+//    }
 }
 
 void
@@ -390,28 +406,30 @@ void KnowledgeBase::collectValuesAmongTraces(
         std::unordered_map<std::string, std::set<union_type>> &resultOtherValues,
         const std::unordered_map<std::string, std::unordered_set<std::string>> &actToTables,
         const std::unordered_set<std::string> &otherValues, trace_t traceId) const {
-    const auto& ref = act_table_by_act_id.secondary_index[traceId];
-    ActTable::record* ptr = ref.first;
-    while (ptr) {
-        std::string sAct = event_label_mapper.get(ptr->entry.id.parts.act);
-        auto it = actToTables.find(sAct);
-        bool hasId = it != actToTables.end();
-        if ((!resultOtherValues.empty()) || (hasId)) {
-            for (const auto& attr_table : attribute_name_to_table) {
-                ptrdiff_t offset = ptr - act_table_by_act_id.table.data();
-                const AttributeTable::record* recordPtr = attr_table.second.resolve_record_if_exists(offset);
-                if (recordPtr) {
-                    if (hasId && it->second.contains(attr_table.first)) {
-                        result[sAct][attr_table.first].insert(attr_table.second.resolve(*recordPtr));
-                    }
-                    if (otherValues.contains(attr_table.first)) {
-                        resultOtherValues[attr_table.first].insert(attr_table.second.resolve(*recordPtr));
-                    }
-                }
-            }
-        }
-        ptr = ptr->next;
-    }
+    std::cerr << "TODO: implement collectValuesAmongTraces" << std::endl;
+    exit(1);
+//    const auto& ref = act_table_by_act_id.secondary_index[traceId];
+//    ActTable::record* ptr = ref.first;
+//    while (ptr) {
+//        std::string sAct = event_label_mapper.get(ptr->entry.id.parts.act);
+//        auto it = actToTables.find(sAct);
+//        bool hasId = it != actToTables.end();
+//        if ((!resultOtherValues.empty()) || (hasId)) {
+//            for (const auto& attr_table : attribute_name_to_table) {
+//                ptrdiff_t offset = ptr - act_table_by_act_id.table.data();
+//                const AttributeTable::record* recordPtr = attr_table.second.resolve_record_if_exists(offset);
+//                if (recordPtr) {
+//                    if (hasId && it->second.contains(attr_table.first)) {
+//                        result[sAct][attr_table.first].insert(attr_table.second.resolve(*recordPtr));
+//                    }
+//                    if (otherValues.contains(attr_table.first)) {
+//                        resultOtherValues[attr_table.first].insert(attr_table.second.resolve(*recordPtr));
+//                    }
+//                }
+//            }
+//        }
+//        ptr = ptr->next;
+//    }
 }
 
 void KnowledgeBase::clear() {
@@ -868,79 +886,79 @@ void KnowledgeBase::exact_range_query(const std::string &field_name,
     }
 }
 
-const Result KnowledgeBase::getLastElements(LeafType leafType) const {
-    Result elems{};
-    ResultRecord result{{0,0}, {1, {}}};
-    bool marked_event_type = (((short)leafType)>=1) && (((short)leafType)<=3);
-    switch (leafType) {
-        case ActivationLeaf:
-            result.second.second.push_back(marked_event::activation(0));
-            break;
-        case TargetLeaf:
-            result.second.second.push_back(marked_event::target(0));
-            break;
-        case MatchActivationTarget:
-            result.second.second.push_back(marked_event::join(0, 0));
-            break;
-        default:
-            break;
-    }
+//const Result KnowledgeBase::getLastElements(LeafType leafType) const {
+//    Result elems{};
+//    ResultRecord result{{0,0}, {1, {}}};
+//    bool marked_event_type = (((short)leafType)>=1) && (((short)leafType)<=3);
+//    switch (leafType) {
+//        case ActivationLeaf:
+//            result.second.second.push_back(marked_event::activation(0));
+//            break;
+//        case TargetLeaf:
+//            result.second.second.push_back(marked_event::target(0));
+//            break;
+//        case MatchActivationTarget:
+//            result.second.second.push_back(marked_event::join(0, 0));
+//            break;
+//        default:
+//            break;
+//    }
+//
+//    for (const std::pair<ActTable::record *, ActTable::record *> &rec: act_table_by_act_id.secondary_index) {
+//        result.first.first = rec.second->entry.id.parts.trace_id;
+//        result.first.second = rec.second->entry.id.parts.event_id;
+//        result.first.second = getPositionFromEventId(result.first);
+//        ///const std::pair<uint32_t, uint16_t> traceEventPair{traceId, eventId};
+//
+//        if (marked_event_type) {
+//            auto& ref = result.second.second[0];
+//            SET_EVENT(ref, result.first.second);
+//        }
+//        elems.push_back(result);
+//    }
+//
+//    return elems;
+//}
 
-    for (const std::pair<ActTable::record *, ActTable::record *> &rec: act_table_by_act_id.secondary_index) {
-        result.first.first = rec.second->entry.id.parts.trace_id;
-        result.first.second = rec.second->entry.id.parts.event_id;
-        result.first.second = getPositionFromEventId(result.first);
-        ///const std::pair<uint32_t, uint16_t> traceEventPair{traceId, eventId};
-
-        if (marked_event_type) {
-            auto& ref = result.second.second[0];
-            SET_EVENT(ref, result.first.second);
-        }
-        elems.push_back(result);
-    }
-
-    return elems;
-}
-
-const Result KnowledgeBase::getNotFirstElements(LeafType leafType) {
-    Result elems{};
-    ResultRecord result{{0,0}, {1, {}}};
-    bool marked_event_type = (((short)leafType)>=1) && (((short)leafType)<=3);
-    switch (leafType) {
-        case ActivationLeaf:
-            result.second.second.push_back(marked_event::activation(0));
-            break;
-        case TargetLeaf:
-            result.second.second.push_back(marked_event::target(0));
-            break;
-        case MatchActivationTarget:
-            result.second.second.push_back(marked_event::join(0, 0));
-            break;
-        default:
-            break;
-    }
-
-    auto itr = act_table_by_act_id.secondary_index.begin();
-    while (itr != act_table_by_act_id.secondary_index.end()) {
-        auto currentElem = itr->first;
-
-        while (currentElem = currentElem->next) {
-            result.first.first = currentElem->entry.id.parts.trace_id;
-            result.first.second = currentElem->entry.id.parts.event_id;
-            result.first.second = getPositionFromEventId(result.first);
-
-            if (marked_event_type) {
-                auto& ref = result.second.second[0];
-                SET_EVENT(ref, result.first.second);
-            }
-            elems.push_back(result);
-        }
-
-        ++itr;
-    }
-
-    return elems;
-}
+//const Result KnowledgeBase::getNotFirstElements(LeafType leafType) {
+//    Result elems{};
+//    ResultRecord result{{0,0}, {1, {}}};
+//    bool marked_event_type = (((short)leafType)>=1) && (((short)leafType)<=3);
+//    switch (leafType) {
+//        case ActivationLeaf:
+//            result.second.second.push_back(marked_event::activation(0));
+//            break;
+//        case TargetLeaf:
+//            result.second.second.push_back(marked_event::target(0));
+//            break;
+//        case MatchActivationTarget:
+//            result.second.second.push_back(marked_event::join(0, 0));
+//            break;
+//        default:
+//            break;
+//    }
+//
+//    auto itr = act_table_by_act_id.secondary_index.begin();
+//    while (itr != act_table_by_act_id.secondary_index.end()) {
+//        auto currentElem = itr->first;
+//
+//        while (currentElem = currentElem->next) {
+//            result.first.first = currentElem->entry.id.parts.trace_id;
+//            result.first.second = currentElem->entry.id.parts.event_id;
+//            result.first.second = getPositionFromEventId(result.first);
+//
+//            if (marked_event_type) {
+//                auto& ref = result.second.second[0];
+//                SET_EVENT(ref, result.first.second);
+//            }
+//            elems.push_back(result);
+//        }
+//
+//        ++itr;
+//    }
+//
+//    return elems;
+//}
 
 Result KnowledgeBase::init(const std::string &act, bool doExtractEvent, const double minThreshold) const {
     return initOrEnds(act, true, doExtractEvent, minThreshold);
@@ -1028,61 +1046,63 @@ KnowledgeBase::untimed_dataless_absence(const std::pair<const uint32_t, const ui
 void KnowledgeBase::dump_for_sqlminer(std::ostream &log, std::ostream &payload, std::ostream &schema_configuration) {
     constexpr size_t record_size = sizeof(ActTable::record);
     size_t eventId = 0;
-    // Writing the schema associated to the payload
-    schema_configuration << "event_id\tbigint" << std::endl;
-    for (const auto kv : this->attribute_name_to_table) {
-        std::string data = kv.first;
-        // convert string to back to lower case
-        std::for_each(data.begin(), data.end(), [](char & c) {
-            c = ::tolower(c);
-        });
-        schema_configuration << data << '\t';
-        switch (kv.second.type) {
-            case DoubleAtt:
-                schema_configuration <<"real" << std::endl;
-                break;
-            case SizeTAtt:
-            case LongAtt:
-                schema_configuration <<"bigint" << std::endl;
-                break;
-                break;
-            case StringAtt:
-                schema_configuration <<"varchar" << std::endl;
-                break;
-            case BoolAtt:
-                schema_configuration <<"boolean" << std::endl;
-                break;
-        }
-    }
-    for (size_t trace_id = 0, N = act_table_by_act_id.secondary_index.size(); trace_id < N; trace_id++) {
-        //os << "Trace #" << trace_id << std::endl << "\t- ";
-        const auto& ref = act_table_by_act_id.secondary_index[trace_id];
-        auto ptr = ref.first;
-        size_t time = 0;
-        while (ptr) {
-            size_t offset = (((size_t)ptr) - ((size_t)act_table_by_act_id.table.data()));
-            offset = offset / record_size;
-            // printing one event at a time
-            log << eventId << "\t" << trace_id << "\t" << event_label_mapper.get(ptr->entry.id.parts.act) << "\t" << time << std::endl;
-            payload << eventId << "\t";
-            auto it = this->attribute_name_to_table.begin(), en = this->attribute_name_to_table.end();
-            while (it != en) {
-                const AttributeTable::record* recordPtr = it->second.resolve_record_if_exists(offset);
-                if (recordPtr) {
-                    DEBUG_ASSERT(recordPtr->act_table_offset == offset);
-                    it->second.resolve_and_print(payload, *recordPtr);
-                }
-                it++;
-                if (it != en)
-                    payload << "\t";
-                else
-                    payload << std::endl;
-            }
-            ptr = ptr->next;
-            eventId++;
-            time++;
-        };
-    }
+    std::cerr << "TODO: implement dump_for_sqlminer" << std::endl;
+    exit(1);
+//    // Writing the schema associated to the payload
+//    schema_configuration << "event_id\tbigint" << std::endl;
+//    for (const auto kv : this->attribute_name_to_table) {
+//        std::string data = kv.first;
+//        // convert string to back to lower case
+//        std::for_each(data.begin(), data.end(), [](char & c) {
+//            c = ::tolower(c);
+//        });
+//        schema_configuration << data << '\t';
+//        switch (kv.second.type) {
+//            case DoubleAtt:
+//                schema_configuration <<"real" << std::endl;
+//                break;
+//            case SizeTAtt:
+//            case LongAtt:
+//                schema_configuration <<"bigint" << std::endl;
+//                break;
+//                break;
+//            case StringAtt:
+//                schema_configuration <<"varchar" << std::endl;
+//                break;
+//            case BoolAtt:
+//                schema_configuration <<"boolean" << std::endl;
+//                break;
+//        }
+//    }
+//    for (size_t trace_id = 0, N = act_table_by_act_id.secondary_index.size(); trace_id < N; trace_id++) {
+//        //os << "Trace #" << trace_id << std::endl << "\t- ";
+//        const auto& ref = act_table_by_act_id.secondary_index[trace_id];
+//        auto ptr = ref.first;
+//        size_t time = 0;
+//        while (ptr) {
+//            size_t offset = (((size_t)ptr) - ((size_t)act_table_by_act_id.table.data()));
+//            offset = offset / record_size;
+//            // printing one event at a time
+//            log << eventId << "\t" << trace_id << "\t" << event_label_mapper.get(ptr->entry.id.parts.act) << "\t" << time << std::endl;
+//            payload << eventId << "\t";
+//            auto it = this->attribute_name_to_table.begin(), en = this->attribute_name_to_table.end();
+//            while (it != en) {
+//                const AttributeTable::record* recordPtr = it->second.resolve_record_if_exists(offset);
+//                if (recordPtr) {
+//                    DEBUG_ASSERT(recordPtr->act_table_offset == offset);
+//                    it->second.resolve_and_print(payload, *recordPtr);
+//                }
+//                it++;
+//                if (it != en)
+//                    payload << "\t";
+//                else
+//                    payload << std::endl;
+//            }
+//            ptr = ptr->next;
+//            eventId++;
+//            time++;
+//        };
+//    }
 }
 
 PartialResult KnowledgeBase::getFirstLastOtherwise(const bool isFirst) const {
@@ -1097,78 +1117,81 @@ PartialResult KnowledgeBase::getFirstLastOtherwise(const bool isFirst) const {
 }
 
 void KnowledgeBase::dump_tab_format(std::ostream &tab) const {
-    constexpr size_t record_size = sizeof(ActTable::record);
-    for (size_t trace_id = 0, N = act_table_by_act_id.secondary_index.size(); trace_id < N; trace_id++) {
-        const auto& ref = act_table_by_act_id.secondary_index[trace_id];
-        auto ptr = ref.first;
-        size_t time = 0;
-        while (ptr) {
-            size_t offset = (((size_t)ptr) - ((size_t)act_table_by_act_id.table.data()));
-            offset = offset / record_size;
-            tab << event_label_mapper.get(ptr->entry.id.parts.act);
-            if (ptr->next)
-                tab << "\t";
-            else
-                tab << std::endl;
-            ptr = ptr->next;
-            time++;
-        }
-    }
+    std::cerr << " TODO: IMPLEMENT dump_tab_format" << std::endl;
+//    constexpr size_t record_size = sizeof(ActTable::record);
+//    for (size_t trace_id = 0, N = act_table_by_act_id.secondary_index.size(); trace_id < N; trace_id++) {
+//        const auto& ref = act_table_by_act_id.secondary_index[trace_id];
+//        auto ptr = ref.first;
+//        size_t time = 0;
+//        while (ptr) {
+//            size_t offset = (((size_t)ptr) - ((size_t)act_table_by_act_id.table.data()));
+//            offset = offset / record_size;
+//            tab << event_label_mapper.get(ptr->entry.id.parts.act);
+//            if (ptr->next)
+//                tab << "\t";
+//            else
+//                tab << std::endl;
+//            ptr = ptr->next;
+//            time++;
+//        }
+//    }
 }
 
 void KnowledgeBase::dump_xes_format(std::ostream &xes) const {
-    constexpr size_t record_size = sizeof(ActTable::record);
-    begin_log(xes);
-    for (size_t trace_id = 0, N = act_table_by_act_id.secondary_index.size(); trace_id < N; trace_id++) {
-        begin_trace_serialize(xes, std::to_string(trace_id));
-        //os << "Trace #" << trace_id << std::endl << "\t- ";
-        const auto& ref = act_table_by_act_id.secondary_index[trace_id];
-        auto ptr = ref.first;
-        while (ptr) {
-            begin_event_serialize(xes);
-            size_t offset = (((size_t)ptr) - ((size_t)act_table_by_act_id.table.data()));
-            offset = offset / record_size;
-            const std::string& eventName = event_label_mapper.get(ptr->entry.id.parts.act);
-            auto hasTime = attribute_name_to_table.find("__time");
-            long long milliseconds = std::chrono::duration_cast< std::chrono::milliseconds >(
-                    std::chrono::system_clock::now().time_since_epoch()
-            ).count();
-            if (hasTime != attribute_name_to_table.end()) {
-                const AttributeTable::record* recordPtr = hasTime->second.resolve_record_if_exists(offset);
-                if (recordPtr) {
-                    DEBUG_ASSERT(recordPtr->act_table_offset == offset);
-                    union_type val = hasTime->second.resolve(*recordPtr);
-                    DEBUG_ASSERT(std::holds_alternative<long long>(val));
-                    milliseconds = std::get<long long>(val);
-                }
-            }
-            serialize_event_label(xes, eventName, milliseconds);
-            auto it = this->attribute_name_to_table.begin(), en = this->attribute_name_to_table.end();
-            while (it != en) {
-                if (it->first != "__time") {
-                    const AttributeTable::record* recordPtr = it->second.resolve_record_if_exists(offset);
-                    if (recordPtr) {
-                        DEBUG_ASSERT(recordPtr->act_table_offset == offset);
-                        union_type val = it->second.resolve(*recordPtr);
-                        if (std::holds_alternative<bool>(val)) {
-                            serialize_event_attribute(xes, it->first, std::get<bool>(val));
-                        } else if (std::holds_alternative<long long>(val)) {
-                            serialize_event_attribute(xes, it->first, std::get<long long>(val));
-                        } else if (std::holds_alternative<std::string>(val)) {
-                            serialize_event_attribute(xes, it->first, std::get<std::string>(val));
-                        } else if (std::holds_alternative<double>(val)) {
-                            serialize_event_attribute(xes, it->first, std::get<double>(val));
-                        }
-                    }
-                }
-                it++;
-            }
-            ptr = ptr->next;
-            end_event_serialize(xes);
-        }
-        end_trace_serialize(xes);
-    }
-    end_log(xes);
+
+    std::cerr << " TODO: IMPLEMENT dump_xes_format" << std::endl;
+//    constexpr size_t record_size = sizeof(ActTable::record);
+//    begin_log(xes);
+//    for (size_t trace_id = 0, N = act_table_by_act_id.secondary_index.size(); trace_id < N; trace_id++) {
+//        begin_trace_serialize(xes, std::to_string(trace_id));
+//        //os << "Trace #" << trace_id << std::endl << "\t- ";
+//        const auto& ref = act_table_by_act_id.secondary_index[trace_id];
+//        auto ptr = ref.first;
+//        while (ptr) {
+//            begin_event_serialize(xes);
+//            size_t offset = (((size_t)ptr) - ((size_t)act_table_by_act_id.table.data()));
+//            offset = offset / record_size;
+//            const std::string& eventName = event_label_mapper.get(ptr->entry.id.parts.act);
+//            auto hasTime = attribute_name_to_table.find("__time");
+//            long long milliseconds = std::chrono::duration_cast< std::chrono::milliseconds >(
+//                    std::chrono::system_clock::now().time_since_epoch()
+//            ).count();
+//            if (hasTime != attribute_name_to_table.end()) {
+//                const AttributeTable::record* recordPtr = hasTime->second.resolve_record_if_exists(offset);
+//                if (recordPtr) {
+//                    DEBUG_ASSERT(recordPtr->act_table_offset == offset);
+//                    union_type val = hasTime->second.resolve(*recordPtr);
+//                    DEBUG_ASSERT(std::holds_alternative<long long>(val));
+//                    milliseconds = std::get<long long>(val);
+//                }
+//            }
+//            serialize_event_label(xes, eventName, milliseconds);
+//            auto it = this->attribute_name_to_table.begin(), en = this->attribute_name_to_table.end();
+//            while (it != en) {
+//                if (it->first != "__time") {
+//                    const AttributeTable::record* recordPtr = it->second.resolve_record_if_exists(offset);
+//                    if (recordPtr) {
+//                        DEBUG_ASSERT(recordPtr->act_table_offset == offset);
+//                        union_type val = it->second.resolve(*recordPtr);
+//                        if (std::holds_alternative<bool>(val)) {
+//                            serialize_event_attribute(xes, it->first, std::get<bool>(val));
+//                        } else if (std::holds_alternative<long long>(val)) {
+//                            serialize_event_attribute(xes, it->first, std::get<long long>(val));
+//                        } else if (std::holds_alternative<std::string>(val)) {
+//                            serialize_event_attribute(xes, it->first, std::get<std::string>(val));
+//                        } else if (std::holds_alternative<double>(val)) {
+//                            serialize_event_attribute(xes, it->first, std::get<double>(val));
+//                        }
+//                    }
+//                }
+//                it++;
+//            }
+//            ptr = ptr->next;
+//            end_event_serialize(xes);
+//        }
+//        end_trace_serialize(xes);
+//    }
+//    end_log(xes);
 }
 
 

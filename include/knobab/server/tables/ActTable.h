@@ -26,8 +26,8 @@ struct ActTable {
 
     struct record {
         oid             entry;
-        struct record*  prev;
-        struct record*  next;
+//        struct record*  prev;
+//        struct record*  next;
 
         record();
         record(act_t act, trace_t id, time_t time, struct record* prev, struct record* next);
@@ -62,7 +62,7 @@ struct ActTable {
     std::vector<std::pair<record*, record*>> secondary_index;
 
     void load_record(trace_t id, act_t act, time_t time); // rename: loading_step (emplace_back)
-    const std::vector<std::vector<size_t>> & indexing1();
+    const std::vector<std::vector<std::vector<size_t>>> & indexing1();
     void indexing2();
     void sanityCheck();
     void clear();
@@ -80,7 +80,7 @@ private:
 
     struct table_builder {
         std::vector<std::vector<std::pair<trace_t, event_t>>> act_id_to_trace_id_and_time; // M1
-        std::vector<std::vector<size_t>> trace_id_to_event_id_to_offset; // M2
+        std::vector<std::vector<std::vector<size_t>>> trace_id_to_event_id_to_offset; // M2
     };
 
     table_builder builder;

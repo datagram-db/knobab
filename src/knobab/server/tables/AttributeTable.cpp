@@ -106,18 +106,23 @@ size_t AttributeTable::storeLoad(const std::variant<double, size_t, long long in
     }
 }
 
-void AttributeTable::index(const std::vector<std::vector<size_t>> &trace_id_to_event_id_to_offset) {
+void AttributeTable::index(const std::vector<std::vector<std::vector<size_t>>> &trace_id_to_event_id_to_offset,
+                           const std::vector<ActTable::record>& act_table) {
     for (size_t act_id = 0, N = elements.size(); act_id < N; act_id++) {
         auto& ref = elements[act_id];
         size_t begin = table.size();
         if (!ref.empty()) {
-            std::map<union_type, std::vector<size_t>> valueToOffsetInTable;
+            std::map<union_type, std::vector<std::vector<size_t>>> valueToOffsetInTable;
             for (const auto& val_offset : ref) {
                 for (const auto& traceid_eventid : val_offset.second) {
-                    size_t offset =
+                    const auto& offset =
                             trace_id_to_event_id_to_offset.at(traceid_eventid.first).at(traceid_eventid.second);
-
-                    valueToOffsetInTable[val_offset.first].emplace_back(offset);
+                    auto& OBJ = valueToOffsetInTable[val_offset.first].emplace_back();
+                    for (const auto idx : offset)
+                        if (act_table.at(idx).entry.id.parts.act == act_id) {
+                            OBJ.emplace_back(idx);
+                        }
+//                    valueToOffsetInTable[val_offset.first].emplace_back(offset);
                 }
             }
             for (auto it = valueToOffsetInTable.begin(); it != valueToOffsetInTable.end(); it++) {
@@ -129,8 +134,10 @@ void AttributeTable::index(const std::vector<std::vector<size_t>> &trace_id_to_e
                 for (const auto& refx : it->second) {
                     if (type == StringAtt)
                         string_offset_mapping[current_string].emplace_back(table.size());
-                    secondary_index[refx] = table.size();
-                    table.emplace_back(act_id, val, refx);
+                    for (const auto idx : refx) {
+                        secondary_index[idx] = table.size();
+                        table.emplace_back(act_id, val, idx);
+                    }
                 }
 //                it = valueToOffsetInTable.erase(it);
             }

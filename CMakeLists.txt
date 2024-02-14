@@ -22,6 +22,17 @@ include_directories(submodules/args)
 set(THREADS_PREFER_PTHREAD_FLAG TRUE)
 find_package(Threads REQUIRED)
 
+include(FetchContent)
+# Also requires one of: libbfd (gnu binutils), libdwarf, libdw (elfutils)
+FetchContent_Declare(backward
+        GIT_REPOSITORY https://github.com/bombela/backward-cpp
+        GIT_TAG v1.6  # or a version tag, such as v1.6
+        #SYSTEM          # optional, the Backward include directory will be treated as system directory
+        )
+FetchContent_MakeAvailable(backward)
+include_directories(${backward_SOURCE_DIR})
+
+
 IF(CMAKE_BUILD_TYPE MATCHES Debug)
     message(WARNING "Compiling in debug mode")
     add_compile_definitions(DEBUG)

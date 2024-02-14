@@ -1,3 +1,7 @@
+//#define BACKWARD_HAS_BFD 1
+//#define _GLIBCXX_DEBUG
+//#define _GLIBXX_DEBUG_PEDANTIC
+//#include <backward.hpp>
 #include <iostream>
 #include <yaucl/data/json.h>
 #include <variant>
@@ -5,6 +9,7 @@
 //using union_minimal = std::variant<std::string, size_t, long long, double>;
 
 #include "knobab/server/query_manager/ServerQueryManager.h"
+#include "yaucl/numeric/numeric_base.h"
 #include <yaucl/learning/DecisionTree.h>
 
 enum parsing_states {
@@ -21,8 +26,7 @@ enum parsing_states {
 
 struct myParser {
     struct trace_visitor* filler{nullptr};
-    std::vector<std::pair<int,size_t>> subclasses;
-    std::vector<std::pair<size_t,size_t>> components;
+//    std::vector<std::pair<int,size_t>> subclasses;
     parsing_states state{BEGINNING};
     bool isSchemaOk = false;
     bool isEventHierarchyOk = false;
@@ -43,7 +47,16 @@ struct myParser {
     size_t event_id = -1;
     yaucl::structures::any_to_uint_bimap<std::string> class_to_int;
     std::unordered_set<std::string> numerical, categorical;
+
+    std::vector<std::vector<size_t>> eventClassification;
+    bool isClassificationDone = false;
+    std::vector<std::pair<size_t,size_t>> components;
     std::vector<std::pair<std::unordered_map<std::string, union_minimal>, int>> for_preliminary_classification;
+//    std::vector<size_t> classId;
+//    bool storeTimeIntervalsWithClazzez = false;
+    std::unordered_map<std::string, std::vector<std::vector<double>>> clazz_to_time;
+    std::unordered_map<std::string, std::vector<std::vector<std::pair<double,double>>>> clazz_to_time_intervals;
+    std::string timeLabel, traceDistinguisher, traceDistinguisherValue;
 
     void clear() {
         trace_id = event_id = -1;
@@ -62,13 +75,12 @@ struct myParser {
         state = BEGINNING;
     }
 
-            myParser() {
+    myParser() {
         object_stack.emplace(false);
     }
 
     // called when null is parsed
     bool null() {
-
     }
 
 // called when a boolean is parsed; value is passed
@@ -86,6 +98,9 @@ struct myParser {
     bool number_integer(nlohmann::json::number_integer_t val) {
         if (state == TRACE) {
             if (tracePayloadOk) {
+                if ((!traceDistinguisher.empty()) && (keyV == traceDistinguisher)) {
+                    traceDistinguisherValue =std::to_string(val);
+                }
                 payload[keyV] = (double)val;
                 return true;
             }
@@ -95,6 +110,9 @@ struct myParser {
     bool number_unsigned(nlohmann::json::number_unsigned_t val) {
         if (state == TRACE) {
             if (tracePayloadOk) {
+                if ((!traceDistinguisher.empty()) && (keyV == traceDistinguisher)) {
+                    traceDistinguisherValue =std::to_string(val);
+                }
                 payload[keyV] = (double)val;
                 return true;
             }
@@ -106,6 +124,9 @@ struct myParser {
     bool number_float(nlohmann::json::number_float_t val, const nlohmann::json::string_t& s) {
         if (state == TRACE) {
             if (tracePayloadOk) {
+                if ((!traceDistinguisher.empty()) && (keyV == traceDistinguisher)) {
+                    traceDistinguisherValue =std::to_string(val);
+                }
                 payload[keyV] = (double)val;
                 return true;
             }
@@ -127,6 +148,9 @@ struct myParser {
                 traceNameOk = false;
                 return true;
             } else if (tracePayloadOk) {
+                if ((!traceDistinguisher.empty()) && (keyV == traceDistinguisher)) {
+                    traceDistinguisherValue = val;
+                }
                 auto it = schema_def.find(keyV);
                 if (it != schema_def.end()) {
                     if (it->second == "continuous") {
@@ -135,6 +159,8 @@ struct myParser {
                         payload[keyV] = (double)std::stoll(val);
                     } else if (it->second == "boolean") {
                         payload[keyV] = (tolower(val[0]) == 't') ? 1.0 : 0.0;
+                    } else if (it->second == "timestamp") {
+                        payload[keyV] = (double)yaucl::numeric::parse8601(val);
                     } else {
                         payload[keyV] = val;
                     }
@@ -155,6 +181,8 @@ struct myParser {
                         payload[keyV] = (double)std::stoll(val);
                     } else if (it->second == "boolean") {
                         payload[keyV] = (tolower(val[0]) == 't') ? 1.0 : 0.0;
+                    } else if (it->second == "timestamp") {
+                        payload[keyV] = (double)yaucl::numeric::parse8601(val);
                     } else {
                         payload[keyV] = val;
                     }
@@ -177,6 +205,9 @@ struct myParser {
             if (filler)
                 filler->exitTrace(trace_id);
             trace_id++;
+            if (trace_id != 0) {
+                eventClassification.emplace_back().resize(event_id);
+            }
             event_id = -1;
             isBeginEvent = true;
         }
@@ -205,11 +236,19 @@ struct myParser {
             // TODO: trace id and event id counter
             if (payload.contains("__class")) {
                 size_t classInt = class_to_int.put(std::get<std::string>(payload["__class"])).first;
-//                    auto& array = for_preliminary_classification[];
-//                    array.emplace_back(payload);
+                if (!timeLabel.empty()) {
+                    size_t finalClass;
+                    if (eventClassification.empty()) {
+                        finalClass = classInt;
+                    } else {
+                        finalClass = eventClassification[trace_id][event_id];
+                    }
+                    while (clazz_to_time[traceDistinguisherValue].size() <= finalClass)
+                        clazz_to_time[traceDistinguisherValue].emplace_back();
+                    clazz_to_time[traceDistinguisherValue][finalClass].emplace_back(std::get<double>(payload.at(timeLabel)));
+                }
                 payload.erase("__class");
                 for (const auto& [k,v] : payload) {
-
                     if (std::holds_alternative<std::string>(v))
                         categorical.insert(k);
                     else
@@ -218,9 +257,10 @@ struct myParser {
                 for (const auto& k : ignore_keys) {
                     payload.erase(k);
                 }
-//                if (!payload.empty())
-                components.emplace_back(trace_id, event_id);
-                for_preliminary_classification.emplace_back(payload, (int)classInt);
+                if (!isClassificationDone) {
+                    components.emplace_back(trace_id, event_id);
+                    for_preliminary_classification.emplace_back(payload, (int)classInt);
+                }
             } else if (filler) {
                 if ((event_id == 0) && isBeginEvent) {
                     filler->enterTrace(std::to_string(trace_id));
@@ -239,6 +279,8 @@ struct myParser {
                                     filler->visitField(k, (size_t)std::get<double>(v));
                                 } else if (it->second == "boolean") {
                                     filler->visitField(k, (bool)(std::get<double>(v) == 1.0));
+                                } else if (it->second == "timestamp") {
+                                    payload[keyV] = std::get<double>(v);
                                 } else {
                                     filler->visitField(k, std::get<double>(v));
                                 }
@@ -285,6 +327,7 @@ struct myParser {
             hierarchy.clear();
             return true;
         } else if (state == LOG) {
+            eventClassification.emplace_back().resize(event_id);
             return true;
         } else if (state == POLYADIC_EVENT) {
             state = LOG;
@@ -411,8 +454,8 @@ static inline void actualClauseRefine(std::vector<std::pair<double,std::unordere
 
 static inline std::pair<int,size_t> test_single_conjunction(const std::unordered_map<int, std::vector<std::pair<double,std::unordered_map<std::string, DataPredicate>>>> & model,
                                                             const std::unordered_map<std::string, union_minimal>& payload) {
+    size_t sub_class = 0;
     for (const auto& [clazz, disj] : model) {
-        size_t sub_class = 0;
         for (const auto& [score,map] : disj) {
             bool found = false;
             for (const auto& [k,v] : map) {
@@ -433,13 +476,23 @@ static inline std::pair<int,size_t> test_single_conjunction(const std::unordered
     return {-1, 0};
 }
 
-
+struct comparator {
+    _GLIBCXX14_CONSTEXPR
+    bool
+    operator()(const std::pair<std::vector<double>::iterator,size_t>& __x, const std::pair<std::vector<double>::iterator,size_t>& __y) const
+    { return (*__x.first > *__y.first) || ((*__x.first == *__y.first) && (__x.second > __y.second));
+    }
+};
 
 int main() {
     ServerQueryManager sqm;
     myParser sax;
+    std::cout << std::setprecision (15);
     sax.ignore_keys = {"day","span","__class","__label"};
-    std::string path{"/home/giacomo/projects/sdd-processing/sdd-processing/log_weekly.json"};
+    sax.traceDistinguisher = "user";
+    std::string path{"/home/giacomo/projects/sdd-processing/sdd-processing/log_weekly.json"}; // "simple.json" /home/giacomo/projects/sdd-processing/sdd-processing/log_weekly.json
+
+    // Storing in the main memory the "header" event of each polyadic event
     {
         std::ifstream f{path};
 
@@ -448,63 +501,128 @@ int main() {
             return 1;
         }
     }
-
     auto it = sax.for_preliminary_classification.begin();
     auto en = sax.for_preliminary_classification.end();
 
-    DecisionTree<std::unordered_map<std::string, union_minimal>> dt(it,
-                                                                   en,
-                                                                   sax.class_to_int.size(),
-    [](const auto& map, const std::string& key) {
-        auto it = map.find(key);
-        if (it == map.end())
-            return (union_minimal)0.0;
-        else
-            return it->second;
-    },
-    sax.numerical,
-                                                                    {},
-                                                                   ForTheWin::gain_measures::Gini,
-                                                                   0.97,
-                                                                   1,
-                                                                   1,
-                                                                   1,
-                                                                   false,
-                                                                   nullptr,
-                                                                   nullptr,
-                                                                   5);
+    bool reclassify = true;
+    if (reclassify) {
+        // Using the sub-cases identified within the decision tree to target different sub-classes or cases
+        DecisionTree<std::unordered_map<std::string, union_minimal>> dt(it,
+                                                                        en,
+                                                                        sax.class_to_int.size(),
+                                                                        [](const auto& map, const std::string& key) {
+                                                                            auto it = map.find(key);
+                                                                            if (it == map.end())
+                                                                                return (union_minimal)0.0;
+                                                                            else
+                                                                                return it->second;
+                                                                        },
+                                                                        sax.numerical,
+                                                                        {},
+                                                                        ForTheWin::gain_measures::Gini,
+                                                                        0.97,
+                                                                        1,
+                                                                        1,
+                                                                        1,
+                                                                        false,
+                                                                        nullptr,
+                                                                        nullptr,
+                                                                        5);
 
-    std::unordered_map<int, std::vector<std::pair<double,std::unordered_map<std::string, DataPredicate>>>> actual_result;
+        std::unordered_map<int, std::vector<std::pair<double,std::unordered_map<std::string, DataPredicate>>>> actual_result;
+        {
+
+            std::unordered_map<int, std::vector<std::pair<double,std::vector<dt_predicate>>>> result;
+            dt.populate_children_predicates2(result);
+            for (const auto& kv : result) {
+                std::vector<std::pair<double,std::unordered_map<std::string, DataPredicate>>> current_conds;
+                actualClauseRefine(current_conds, kv);
+                actual_result.emplace(kv.first, current_conds);
+            }
+        }
+        double ok = 0;
+        for (size_t idx = 0, N = sax.for_preliminary_classification.size(); idx<N; idx++) {
+            const auto& posToTraceInfo = sax.components.at(idx);
+            const auto& elements = sax.for_preliminary_classification.at(idx);
+            auto cp = test_single_conjunction(actual_result, elements.first);
+            sax.eventClassification[posToTraceInfo.first][posToTraceInfo.second] = cp.second;
+            if (elements.second == cp.first) {
+                ok++;
+            }
+        }
+        std::cout << "Re-classification precision: " << ok/((double)sax.for_preliminary_classification.size()) << std::endl;
+    } else {
+        // Keeping the same original classes for each event
+        for (size_t idx = 0, N = sax.for_preliminary_classification.size(); idx<N; idx++) {
+            const auto& posToTraceInfo = sax.components.at(idx);
+            const auto& elements = sax.for_preliminary_classification.at(idx);
+            sax.eventClassification[posToTraceInfo.first][posToTraceInfo.second] = elements.second;
+        }
+        // No reclassification, so precision = 1.0
+    }
+
+
+    // Now, after the re-classification, we can collect back the time intervals
+    sax.isClassificationDone = true;
+    sax.timeLabel = "fulltime";
+    sax.clear();
     {
+        std::ifstream f{path};
+        std::cout << nlohmann::json::sax_parse(f, &sax) << std::endl;
+    }
 
-        std::unordered_map<int, std::vector<std::pair<double,std::vector<dt_predicate>>>> result;
-        dt.populate_children_predicates2(result);
-        for (const auto& kv : result) {
-            std::vector<std::pair<double,std::unordered_map<std::string, DataPredicate>>> current_conds;
-            actualClauseRefine(current_conds, kv);
-            actual_result.emplace(kv.first, current_conds);
+    for (auto& [user_key, timestamps] : sax.clazz_to_time) {
+        std::cout << user_key << std::endl;
+        remove_duplicates(timestamps);
+        std::vector<std::vector<std::pair<double,double>>>& intervals = sax.clazz_to_time_intervals[user_key];
+        intervals.resize(sax.clazz_to_time.size());
+        std::priority_queue<std::pair<std::vector<double>::iterator,size_t>, std::vector<std::pair<std::vector<double>::iterator,size_t>>, comparator> minheap;
+        int k = timestamps.size();
+        int i;
+        for (i = 0; i < k; i++){
+            auto ptr = timestamps[i].begin(), end = timestamps[i].end();
+            if (ptr != end) {
+                minheap.emplace(ptr, i);
+            }
+        }
+
+        //int count = 0;
+//    long written = 0;
+        ssize_t current = -1;
+        double previousValue = -1;
+
+        // Now one by one get the minimum element from min
+        // heap and replace it with next element.
+        // run till all filled input files reach EOF
+        while (!minheap.empty()) {
+            // Get the minimum element and store it in output file
+            std::pair<std::vector<double>::iterator,size_t> x = minheap.top();
+            std::cout << *x.first << "@" << x.second << std::endl;
+            int fileid = x.second;
+            if (current == -1) {
+                current = x.second;
+                previousValue = *x.first;
+                intervals[fileid].emplace_back(previousValue, previousValue);
+            } else if (current == fileid) {
+                intervals[fileid].back().second = previousValue = *x.first;
+            } else {
+                intervals[current].back().second = previousValue;
+                previousValue = *x.first;
+                intervals[fileid].emplace_back(previousValue, previousValue);
+                current = x.second;
+            }
+            //std::cout << std::string((const char*)x.iovec.iov_base, x.iovec.iov_len) << std::endl;
+//        out.writeKeyAndValue(x.iovec);
+            minheap.pop();
+
+            // Find the next element that will replace current
+            // root of heap. The next element belongs to same
+            // input file as the current min element.
+            if (((x.first+1) != timestamps[fileid].end())) {
+                minheap.emplace(x.first+1, fileid);
+            }
         }
     }
-//    for (const auto& [clazz, cases] : actual_result) {
-//        std::cout << "class = " << clazz << std::endl;
-//        for (const auto& [score,map] : cases) {
-//            std::cout << " * with score = " << score << " having: ";
-//            for (const auto& [k,v] : map) {
-//                std::cout << v << " && ";
-//            }
-//            std::cout << std::endl;
-//        }
-//    }
-
-    double ok = 0;
-    for (const auto& elements : sax.for_preliminary_classification) {
-        auto cp = test_single_conjunction(actual_result, elements.first);
-        sax.subclasses.emplace_back(cp);
-        if (elements.second == cp.first) {
-            ok++;
-        }
-    }
-    std::cout << ok/((double)sax.for_preliminary_classification.size()) << std::endl;
 
     std::string filename = path;
         bool oldLoading = true;
@@ -523,9 +641,6 @@ int main() {
         using std::chrono::duration;
         using std::chrono::milliseconds;
         env.experiment_logger.log_filename = filename;
-//        env.experiment_logger.min_support = min_support;
-//        env.experiment_logger.mining_algorithm = mining_algorithm;
-//        env.experiment_logger.iteration_num = iteration_num;
 
         {
             //log_data_format format, bool loadData, std::istream &stream, KnowledgeBase &output,
@@ -533,7 +648,6 @@ int main() {
             auto t1 = high_resolution_clock::now();
             // Loading
             env.db.enterLog(path, env_name);
-//            myParser sax2;
             sax.filler = &env.db;
             sax.clear();
             {
@@ -541,13 +655,12 @@ int main() {
                 std::ifstream f{path};
                 std::cout << nlohmann::json::sax_parse(f, &sax) << std::endl;
             }
-            env.db.exitLog(path, env_name);
+//            env.db.exitLog(path, env_name);
             auto t2 = high_resolution_clock::now();
 
             /* Getting number of milliseconds as a double. */
             duration<double, std::milli> ms_double = t2 - t1;
             env.experiment_logger.log_loading_and_parsing_ms = ms_double.count();
-            //std::cout << "Loading and parsing time = " << ms_double.count() << std::endl;
         }
 
 
@@ -559,15 +672,14 @@ int main() {
             /* Getting number of milliseconds as a double. */
             duration<double, std::milli> ms_double = t2 - t1;
             env.experiment_logger.log_indexing_ms = ms_double.count();
-            //std::cout << "Indexing time = " << ms_double.count() << std::endl;
         }
         auto tmp = env.db.getMaximumStringLength();
         env.ap.s_max = std::string(tmp, std::numeric_limits<char>::max());
         DataPredicate::MAX_STRING = env.ap.s_max;
         DataPredicate::msl = tmp;
 
-        env.print_count_table(std::cout);
-        env.print_act_table(std::cout);
+        env.db.reconstruct_trace_no_data(std::cout);
+//        env.print_act_table(std::cout);
 
         env.experiment_logger.n_traces = env.db.noTraces;
         env.experiment_logger.n_acts = env.db.event_label_mapper.int_to_T.size();
