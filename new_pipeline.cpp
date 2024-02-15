@@ -15,6 +15,7 @@ int main() {
     std::cout << "Loading and parsing: " << loading << " (ms)" << std::endl;
     std::cout << "Indexing: " << indexing << " (ms)" << std::endl;
 
+
 //    ServerQueryManager sqm;
 //    myParser sax;
 //    std::cout << std::setprecision (15);

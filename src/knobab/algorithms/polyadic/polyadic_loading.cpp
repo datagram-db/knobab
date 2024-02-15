@@ -365,6 +365,4 @@ std::pair<double,double> polyadic_loader(const std::unordered_set<std::string>& 
     }
 
     return {log_loading_and_parsing_ms, log_indexing_ms};
-//    std::cout << "Loading and parsing: " << log_loading_and_parsing_ms << " (ms)" << std::endl;
-//    std::cout << "Indexing: " << log_indexing_ms << " (ms)" << std::endl;
 }

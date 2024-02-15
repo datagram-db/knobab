@@ -15,9 +15,9 @@ uint16_t cast_to_float2(size_t x, size_t l) {
     return l == 1 ? 0 : (uint16_t) (((double) x) / ((double) (l - 1)) * at16);
 }
 
-ActTable::record::record() : record{0,0,0,nullptr, nullptr} {}
+ActTable::record::record() : record{0,0,0,1} {}
 
-ActTable::record::record(act_t act, trace_t id, time_t time, ActTable::record *prev, ActTable::record *next) /*: prev{prev}, next{next}*/ {
+ActTable::record::record(act_t act, trace_t id, time_t time, event_t span) /*: prev{prev}, next{next}*/ : span(span){
     //entry.id.parts.future = 0;
     entry.id.parts.event_id = time;
     entry.id.parts.trace_id = id;
@@ -43,15 +43,15 @@ bool ActTable::record::operator!=(const ActTable::record &rhs) const {
 #include <yaucl/functional/assert.h>
 #include <iostream>
 
-void ActTable::load_record(trace_t id, act_t act, time_t time) {
+void ActTable::load_record(trace_t id, act_t act, event_t time, event_t span) {
     {
         const size_t N = builder.act_id_to_trace_id_and_time.size();
         //DEBUG_ASSERT(N >= act);
         if (N == act) {
-            builder.act_id_to_trace_id_and_time.emplace_back().emplace_back(id, time);
+            builder.act_id_to_trace_id_and_time.emplace_back().emplace_back(id, time, span);
         } else if (N > act){
             //DEBUG_ASSERT(builder.act_id_to_trace_id_and_time.size() > act);
-            builder.act_id_to_trace_id_and_time[act].emplace_back(id, time);
+            builder.act_id_to_trace_id_and_time[act].emplace_back(id, time, span);
         }
     }
     {
@@ -93,12 +93,12 @@ const std::vector<std::vector<std::vector<size_t>>> & ActTable::indexing1() { //
     for (size_t k = 0, N = builder.act_id_to_trace_id_and_time.size(); k < N; k++) {
         primary_index.emplace_back(offset);
         auto& ref = builder.act_id_to_trace_id_and_time[k];
-        for (const std::pair<trace_t, event_t>& cp : ref) {
+        for (const std::tuple<trace_t, event_t, event_t>& cp : ref) {
             table.emplace_back(k,
-                               cp.first,
-                               cp.second,//cast_to_float(cp.second, trace_length.at(cp.first) - 1),
-                               nullptr, nullptr);
-            builder.trace_id_to_event_id_to_offset[cp.first][cp.second].emplace_back(offset++);
+                               std::get<0>(cp),
+                               std::get<1>(cp),//cast_to_float(cp.second, trace_length.at(cp.first) - 1),
+                               std::get<2>(cp));
+            builder.trace_id_to_event_id_to_offset[std::get<0>(cp)][std::get<1>(cp)].emplace_back(offset++);
         }
         ref.clear(); // freeing some memory
     }

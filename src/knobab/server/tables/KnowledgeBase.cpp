@@ -211,7 +211,7 @@ void KnowledgeBase::exitTrace(size_t traceId) {
     status = LogParsing;
 }
 
-size_t KnowledgeBase::enterEvent(size_t chronos_tick, const std::string &event_label, size_t consecutivePolyadicEvent) {
+size_t KnowledgeBase::enterEvent(size_t chronos_tick, const std::string &event_label, size_t consecutivePolyadicEvent, event_t span) {
     DEBUG_ASSERT(std::abs(((std::ptrdiff_t)(consecutivePolyadicEvent+1))-((std::ptrdiff_t)currentEventId))<=1);
     DEBUG_ASSERT(this->alreadySet);
     currentEventLabel = event_label;
@@ -222,7 +222,7 @@ size_t KnowledgeBase::enterEvent(size_t chronos_tick, const std::string &event_l
         it.first->second++;
     }
     status = EventParsing;
-    act_table_by_act_id.load_record(noTraces - 1, actId, consecutivePolyadicEvent);
+    act_table_by_act_id.load_record(noTraces - 1, actId, consecutivePolyadicEvent, span);
     currentEventId = consecutivePolyadicEvent+1;
 //    visitField("__time", chronos_tick);
     return currentEventId;
