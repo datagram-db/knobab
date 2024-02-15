@@ -304,7 +304,9 @@ struct myParser {
                     envFiller.enterTrace(std::to_string(zncs.trace_id));
                 }
                 zncs.first_time = false;
-                size_t eventId = envFiller.enterEvent(0, eventLabel, zncs.event_id);
+                auto hasSpan = payload.find("span");
+                event_t spanValue = hasSpan == payload.end() ? 1 : (event_t)std::get<double>(hasSpan->second);
+                size_t eventId = envFiller.enterEvent(0, eventLabel, zncs.event_id, spanValue);
                 if (!payload.empty()) {
                     envFiller.enterData_part(true);
                     for (const auto& [k,v] : payload) {
@@ -385,7 +387,7 @@ struct myParser {
                         envFiller.exitTrace(zncs.trace_id-1);
                         envFiller.enterTrace(std::to_string(zncs.trace_id));
                     }
-                    auto e = envFiller.enterEvent(0, "__missing", zncs.event_id);
+                    auto e = envFiller.enterEvent(0, "__missing", zncs.event_id, 1);
                     envFiller.exitEvent(e);
                     zncs.first_time = false;
                 }
