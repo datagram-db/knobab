@@ -279,6 +279,8 @@ std::pair<double,double> polyadic_loader(const std::unordered_set<std::string>& 
                 sqm.multiple_logs.erase(newLogName);
             }
             auto& env = sqm.multiple_logs[newLogName];
+            env.db.schema_def = sax.schema_def;
+            env.db.hierarchy_def = sax.hierarchy_def;
             env.db.enterLog(path, newLogName);
             env.experiment_logger.log_filename = filename;
         }

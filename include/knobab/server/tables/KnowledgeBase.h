@@ -115,7 +115,6 @@ namespace std {
 class KnowledgeBase : public trace_visitor {
     CountTemplate                                   count_table;
     SimplifiedFuzzyStringMatching                   string_values;
-
     std::unordered_map<std::string, std::unordered_set<std::string>> registerEventLabelSchema;
 
     std::string currentEventLabel;
@@ -132,6 +131,8 @@ public:
     size_t average_trace_length;
     size_t noTraces;
     size_t actId;
+    std::unordered_map<std::string, std::string> schema_def;
+    std::unordered_map<std::string, std::vector<std::string>> hierarchy_def;
     static constexpr double    default_double   = 0.0;
     static constexpr size_t    default_size_t   = 0;
     static constexpr long long default_longlong = 0;
