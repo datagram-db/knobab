@@ -106,7 +106,7 @@ size_t AttributeTable::storeLoad(const std::variant<double, size_t, long long in
     }
 }
 
-void AttributeTable::index(const std::vector<std::vector<std::vector<size_t>>> &trace_id_to_event_id_to_offset,
+void AttributeTable::index(const std::vector<std::vector<std::unordered_map<act_t, std::vector<size_t>>>> &trace_id_to_event_id_to_offset,
                            const std::vector<ActTable::record>& act_table) {
     for (size_t act_id = 0, N = elements.size(); act_id < N; act_id++) {
         auto& ref = elements[act_id];
@@ -115,15 +115,16 @@ void AttributeTable::index(const std::vector<std::vector<std::vector<size_t>>> &
             std::map<union_type, std::vector<std::vector<size_t>>> valueToOffsetInTable;
             for (const auto& val_offset : ref) {
                 for (const auto& traceid_eventid : val_offset.second) {
-                    const auto& offset =
+                    const auto& offsets_map =
                             trace_id_to_event_id_to_offset.at(traceid_eventid.first).at(traceid_eventid.second);
                     auto& OBJ = valueToOffsetInTable[val_offset.first].emplace_back();
-                    for (const auto idx : offset)
-                        if (act_table.at(idx).entry.id.parts.act == act_id) {
-                            OBJ.emplace_back(idx);
+                    for (const auto& [act, offsets] : offsets_map) {
+                        for (const auto idx : offsets)
+                            if (act_table.at(idx).entry.id.parts.act == act_id) {
+                                OBJ.emplace_back(idx);
+                            }
                         }
-//                    valueToOffsetInTable[val_offset.first].emplace_back(offset);
-                }
+                    }
             }
             for (auto it = valueToOffsetInTable.begin(); it != valueToOffsetInTable.end(); it++) {
                 std::sort(it->second.begin(), it->second.end());

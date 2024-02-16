@@ -443,7 +443,7 @@ Bolt2Branching(const KnowledgeBase &kb, bool only_precise_temporal_patterns,
             a_prev_trace_id = trace_id;
         }
 
-        if (!forward_response && ((a_beginend.first->next == nullptr) || (a_beginend.first->next->entry.id.parts.act != B))) {
+        if (!forward_response && ((a_beginend.first->next == nullptr) || (a_beginend.first->next->find(B) == a_beginend.first->next->end()))) {
             decrease_support_X(kb, expected_support, alles_next, alles_not_next);
             if (left_branch) {
                 TRACE_SET_ADD(data.cr_lb_violations, ((trace_t)a_beginend.first->entry.id.parts.trace_id));
@@ -460,7 +460,7 @@ Bolt2Branching(const KnowledgeBase &kb, bool only_precise_temporal_patterns,
             forward_response = true;
         }
 
-        if (!forward_precedence && ((a_beginend.first->prev != nullptr) && (a_beginend.first->prev->entry.id.parts.act != B))) {
+        if (!forward_precedence && ((a_beginend.first->prev != nullptr) && (a_beginend.first->prev->find(B) == a_beginend.first->prev->end()))) {
             decrease_support_X(kb, expected_support, alles_prev, alles_not_prev);
             if (left_branch) {
                 TRACE_SET_ADD(data.cp_lb_violations, (trace_t)(a_beginend.first->entry.id.parts.trace_id));
@@ -483,14 +483,15 @@ Bolt2Branching(const KnowledgeBase &kb, bool only_precise_temporal_patterns,
                 TRACE_SET_ADD(data.cr_activation_traces.first, trace_id);
             else
                 TRACE_SET_ADD(data.cr_activation_traces.second, trace_id);
-            if ((a_beginend.first->prev != nullptr) || (kb.getCountTable().resolve_length(A, trace_id) > 1)) {
+
+            if ((/*a_beginend.first->prev != nullptr*/ a_beginend.first->entry.id.parts.event_id>0) || (kb.getCountTable().resolve_length(A, trace_id) > 1)) {
                 conf_prev_counting++;
                 if (left_branch)
                     TRACE_SET_ADD(data.cp_activation_traces.first, trace_id);
                 else
                     TRACE_SET_ADD(data.cp_activation_traces.second, trace_id);
             }
-            else if ((a_beginend.first->prev == nullptr) && (kb.getCountTable().resolve_length(A, trace_id) == 1)) {
+            else if ((/*a_beginend.first->prev == nullptr*/ a_beginend.first->entry.id.parts.event_id == 0) && (kb.getCountTable().resolve_length(A, trace_id) == 1)) {
                 conf_prev_not_counting++;
             }
         }
@@ -914,13 +915,16 @@ std::pair<std::vector<pattern_mining_result<FastDatalessClause>>, double> bolt2(
     // secondary index of the knowledge base
     std::vector<size_t> first(max_act_id, 0), last(max_act_id, 0);
     for (size_t trace_id = 0; trace_id < log_size; trace_id++) {
-        const auto& cp =kb.act_table_by_act_id.secondary_index.at(trace_id);
-        if (count_table.resolve_length(cp.first->entry.id.parts.act, trace_id) == 1) {
-            count_beginnings[cp.first->entry.id.parts.act]++;
+        const auto& first_last =kb.act_table_by_act_id.secondary_index.at(trace_id);
+        for (auto it = first_last.first->begin(), en = first_last.first->end(); it!=en; it++) {
+            if (count_table.resolve_length(it->first, trace_id) == 1) {
+                count_beginnings[it->first]++;
+            }
+            first[it->first]++;
         }
-        auto first_last = kb.act_table_by_act_id.secondary_index.at(trace_id);
-        first[first_last.first->entry.id.parts.act]++;
-        last[first_last.second->entry.id.parts.act]++;
+        for (auto it = first_last.second->begin(), en = first_last.second->end(); it!=en; it++) {
+            last[it->first]++;
+        }
     }
     std::unordered_map<act_t, retain_choice> map_for_retain;
     std::vector<std::vector<act_t>> map(log_size, std::vector<act_t>{}); // getting all the trace ids being identified
@@ -1142,7 +1146,7 @@ std::pair<std::vector<pattern_mining_result<FastDatalessClause>>, double> bolt2(
                 /* We need to check lA is greater than 0 because it is the activation we are interested in */
                 if (lA && (alles_chain_succession_ab || alles_surround_ab)) {
                     size_t cs_coarsening =
-                            kb.act_table_by_act_id.secondary_index.at(sigma).first->entry.id.parts.act == B ? 1 : 0;
+                            kb.act_table_by_act_id.secondary_index.at(sigma).first->find(B) !=kb.act_table_by_act_id.secondary_index.at(sigma).first->end() ? 1 : 0;
                     if (!(((lB-cs_coarsening) <= lA) && (lA <= (lB)))) {
                         decrease_support_X(kb, expected_support, alles_chain_succession_ab,
                                            alles_not_chain_succession_ab);
@@ -1154,7 +1158,7 @@ std::pair<std::vector<pattern_mining_result<FastDatalessClause>>, double> bolt2(
 
                 if (lB && (alles_chain_succession_ba || alles_surround_ba)) {
                     size_t coarsening =
-                            kb.act_table_by_act_id.secondary_index.at(sigma).first->entry.id.parts.act != A ? 0 : 1;
+                            kb.act_table_by_act_id.secondary_index.at(sigma).first->find(A) == kb.act_table_by_act_id.secondary_index.at(sigma).first->end() ? 0 : 1;
                     if (!(((lA-coarsening) <= lB) && (lB <= (lA)))) {
                         decrease_support_X(kb, expected_support, alles_chain_succession_ba,
                                            alles_not_chain_succession_ba);

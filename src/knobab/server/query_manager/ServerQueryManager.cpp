@@ -1184,7 +1184,10 @@ std::any ServerQueryManager::visitWith_model(KnoBABQueryParser::With_modelContex
                         begin_event_serialize(xes);
                         size_t offset = (((size_t)ptrTrace) - ((size_t)ptr->db.act_table_by_act_id.table.data()));
                         offset = offset / record_size;
-                        std::string event_label = ptr->db.event_label_mapper.get(ptrTrace->entry.id.parts.act);
+                        std::cerr<< "REIMPLEMENT THIS ALGORITHM!, due to 'std::string event_label = ptr->db.event_label_mapper.get(ptrTrace->entry.id.parts.act)'" << std::endl;
+                        exit(2);
+                        std::string event_label;
+//                        std::string event_label = ptr->db.event_label_mapper.get(ptrTrace->entry.id.parts.act);
                         auto hasTime = ptr->db.attribute_name_to_table.find("__time");
                         long long milliseconds = std::chrono::duration_cast< std::chrono::milliseconds >(
                                 std::chrono::system_clock::now().time_since_epoch()

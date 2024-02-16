@@ -16,19 +16,15 @@
 uint16_t cast_to_float(size_t x, size_t l);
 uint16_t cast_to_float2(size_t x, size_t l);
 
-/**
- * TODO: use a graph to store the prev/next information
- *        look up at the original setting, too
- *  then, populate using emplace_back
- */
+#include <unordered_map>
 
 struct ActTable {
 
     struct record {
         oid             entry;
         event_t         span = 1;
-//        struct record*  prev;
-//        struct record*  next;
+        std::unordered_map<act_t, std::vector<ActTable::record*>>*  prev{nullptr};
+        std::unordered_map<act_t, std::vector<ActTable::record*>>*  next{nullptr};
 
         record();
         record(act_t act, trace_t id, time_t time, event_t span = 1);
@@ -60,10 +56,11 @@ struct ActTable {
     /**
      * Mapping the trace id to the first and last event (see the log printer from the KnowledgeBase for a usage example)
      */
-    std::vector<std::pair<record*, record*>> secondary_index;
+    std::vector<std::pair<std::unordered_map<act_t, std::vector<ActTable::record*>>*, std::unordered_map<act_t, std::vector<ActTable::record*>>*>> secondary_index;
+    std::vector<std::vector<std::unordered_map<act_t, std::vector<ActTable::record*>>>> secondary_index_polyadic;
 
     void load_record(trace_t id, act_t act, event_t time, event_t span = 1); // rename: loading_step (emplace_back)
-    const std::vector<std::vector<std::vector<size_t>>> & indexing1();
+    const std::vector<std::vector<std::unordered_map<act_t, std::vector<size_t>>>> & indexing1();
     void indexing2();
     void sanityCheck();
     void clear();
@@ -81,7 +78,7 @@ private:
 
     struct table_builder {
         std::vector<std::vector<std::tuple<trace_t, event_t, event_t>>> act_id_to_trace_id_and_time; // M1
-        std::vector<std::vector<std::vector<size_t>>> trace_id_to_event_id_to_offset; // M2
+        std::vector<std::vector<std::unordered_map<act_t, std::vector<size_t>>>> trace_id_to_event_id_to_offset; // M2
     };
 
     table_builder builder;

@@ -222,8 +222,8 @@ struct DeclareDataAware {
      * @param pair
      * @return
      */
-    env GetPayloadDataFromEvent(const std::pair<uint32_t , uint16_t>& pair) const;
-    env GetPayloadDataFromEvent(uint32_t first, uint16_t second, bool isLeft, std::unordered_set<std::string>& leftArgs) const;
+    std::vector<env> GetPayloadDataFromEvent(const std::pair<uint32_t , uint16_t>& pair) const;
+    std::vector<env> GetPayloadDataFromEvent(uint32_t first, uint16_t second, bool isLeft, std::unordered_set<std::string>& leftArgs) const;
 
     DeclareDataAware flip() const;
     DeclareDataAware* flipLocal();

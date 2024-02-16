@@ -44,17 +44,17 @@ inline void and_next(const Result &lhsOperand,
         if ((kb.act_table_by_act_id.getTraceLength(x.first.first)-1) == (x.first.second))
             continue;
         const auto& right_offsets = kb.act_table_by_act_id.getBuilder().trace_id_to_event_id_to_offset.at(x.first.first).at(x.first.second+1);
-        bool found = false;
-        for (const auto right_offset : right_offsets) {
-            if ((kb.act_table_by_act_id.table.at(right_offset).entry.id.parts.act == right_activity)) {
-                found = true;
-                break;
-            }
-        }
+        bool found = right_offsets.find(right_activity) != right_offsets.end();
+//        for (const auto right_offset : right_offsets) {
+//            if ((kb.act_table_by_act_id.table.at(right_offset).entry.id.parts.act == right_activity)) {
+//                found = true;
+//                break;
+//            }
+//        }
         if (!found) continue;
         bool rightMatch = true;
         if (right_predicate) {
-            const auto& table_offsets =
+            const auto& table_offsets_map =
                     kb.act_table_by_act_id.getBuilder().trace_id_to_event_id_to_offset.at(x.first.first).at(x.first.second+1);
             for(const auto& pred_withConj : rhs_atoms){
                 bool result = true;
@@ -62,12 +62,14 @@ inline void and_next(const Result &lhsOperand,
                     bool test = false;
                     auto temp2_a = kb.attribute_name_to_table.find(predDummy.var);
                     if (temp2_a != kb.attribute_name_to_table.end()) {
-                        for (const auto table_offset : table_offsets) {
-                            std::optional<union_minimal> data = temp2_a->second.resolve_record_if_exists2(table_offset);
-                            if (data.has_value()) {
-                                if (predDummy.testOverSingleVariable(data.value())) {
-                                    test = true;
-                                    break;
+                        for (const auto& [act,table_offsets] : table_offsets_map) {
+                            for (const auto table_offset : table_offsets) {
+                                std::optional<union_minimal> data = temp2_a->second.resolve_record_if_exists2(table_offset);
+                                if (data.has_value()) {
+                                    if (predDummy.testOverSingleVariable(data.value())) {
+                                        test = true;
+                                        break;
+                                    }
                                 }
                             }
                         }
@@ -86,10 +88,16 @@ inline void and_next(const Result &lhsOperand,
         }
         if (rightMatch) {
             if (correlation) {
-                env e1 = correlation->GetPayloadDataFromEvent(x.first.first, x.first.second, true, cache);
-                if (correlation->checkValidity(e1, x.first.first, x.first.second+1)) {
-                    result.emplace_back(x).second.second.emplace_back(marked_event::right(x.first.second+1));
+                for (const auto& e1 : correlation->GetPayloadDataFromEvent(x.first.first, x.first.second, true, cache)) {
+                    if (correlation->checkValidity(e1, x.first.first, x.first.second+1)) {
+                        result.emplace_back(x).second.second.emplace_back(marked_event::right(x.first.second+1));
+                        break;
+                    }
                 }
+//                env e1 = correlation->GetPayloadDataFromEvent(x.first.first, x.first.second, true, cache);
+//                if (correlation->checkValidity(e1, x.first.first, x.first.second+1)) {
+//                    result.emplace_back(x).second.second.emplace_back(marked_event::right(x.first.second+1));
+//                }
             } else {
                 result.emplace_back(x).second.second.emplace_back(marked_event::right(x.first.second+1));
             }
@@ -137,17 +145,17 @@ inline void next_and(const Result &lhsOperand,
         if (x.first.second == 0) continue;
         if (cp.first[x.first.first].id.parts.event_id == 0) continue;
         const auto& right_offsets = kb.act_table_by_act_id.getBuilder().trace_id_to_event_id_to_offset.at(x.first.first).at(x.first.second-1);
-        bool found = false;
-        for (const auto right_offset : right_offsets ){
-            if ((kb.act_table_by_act_id.table.at(right_offset).entry.id.parts.act == right_activity)) {
-                found = true;
-                break;
-            }
-        }
+        bool found = right_offsets.find(right_activity) != right_offsets.end();
+//        for (const auto right_offset : right_offsets ){
+//            if ((kb.act_table_by_act_id.table.at(right_offset).entry.id.parts.act == right_activity)) {
+//                found = true;
+//                break;
+//            }
+//        }
         if (!found) continue;
         bool rightMatch = true;
         if (right_predicate) {
-            const auto& table_offsets =
+            const auto& table_offsets_map =
                     kb.act_table_by_act_id.getBuilder().trace_id_to_event_id_to_offset.at(x.first.first).at(x.first.second-1);
             for(const auto& pred_withConj : rhs_atoms){
                 bool result = true;
@@ -155,12 +163,14 @@ inline void next_and(const Result &lhsOperand,
                     bool test = false;
                     auto temp2_a = kb.attribute_name_to_table.find(predDummy.var);
                     if (temp2_a != kb.attribute_name_to_table.end()) {
-                        for (size_t table_offset : table_offsets ) {
-                            std::optional<union_minimal> data = temp2_a->second.resolve_record_if_exists2(table_offset);
-                            if (data.has_value()) {
-                                if (predDummy.testOverSingleVariable(data.value())) {
-                                    test = true;
-                                    break;
+                        for (const auto& [act, table_offsets] : table_offsets_map) {
+                            for (size_t table_offset : table_offsets ) {
+                                std::optional<union_minimal> data = temp2_a->second.resolve_record_if_exists2(table_offset);
+                                if (data.has_value()) {
+                                    if (predDummy.testOverSingleVariable(data.value())) {
+                                        test = true;
+                                        break;
+                                    }
                                 }
                             }
                         }
@@ -179,12 +189,15 @@ inline void next_and(const Result &lhsOperand,
         }
         if (rightMatch) {
             if (correlation) {
-                env e1 = correlation->GetPayloadDataFromEvent(x.first.first, x.first.second, true, cache);
-                if (correlation->checkValidity(e1, x.first.first, x.first.second-1)) {
-                    auto& ref = result.emplace_back(x);
-                    ref.first.second--;
-                    ref.second.second.emplace_back(marked_event::right(x.first.second-1));
+                for (const auto& e1 : correlation->GetPayloadDataFromEvent(x.first.first, x.first.second, true, cache)) {
+                    if (correlation->checkValidity(e1, x.first.first, x.first.second-1)) {
+                        auto& ref = result.emplace_back(x);
+                        ref.first.second--;
+                        ref.second.second.emplace_back(marked_event::right(x.first.second-1));
+                        break;
+                    }
                 }
+//                env e1 = correlation->GetPayloadDataFromEvent(x.first.first, x.first.second, true, cache);
             } else {
                 auto& ref = result.emplace_back(x);
                 ref.first.second--;
@@ -243,15 +256,17 @@ inline void aAlternateAndFutureB(const Result& aResult, const Result& bResult, R
                     for (const auto &elem: aCurrent->second.second) {
                         if (!IS_MARKED_EVENT_ACTIVATION(elem)) continue;
                         join.id.parts.left = GET_ACTIVATION_EVENT(elem);
-                        env e1 = manager->GetPayloadDataFromEvent(aCurrent->first.first, join.id.parts.left, true, cache);
+                        const auto e1V = manager->GetPayloadDataFromEvent(aCurrent->first.first, join.id.parts.left, true, cache);
                         for (const auto &elem1: newItr->second.second) {
                             if (!IS_MARKED_EVENT_TARGET(elem1)) continue;
                             join.id.parts.right = GET_TARGET_EVENT(elem1);
-
-                            if (manager->checkValidity(e1, newItr->first.first, join.id.parts.right)) {
-                                hasMatch = true;
-                                rcx.second.second.push_back(join);
-                                rcx.second.first *= (1.0 - std::min(aCurrent->second.first, newItr->second.first));
+                            for (const auto& e1 : e1V) {
+                                if (manager->checkValidity(e1, newItr->first.first, join.id.parts.right)) {
+                                    hasMatch = true;
+                                    rcx.second.second.push_back(join);
+                                    rcx.second.first *= (1.0 - std::min(aCurrent->second.first, newItr->second.first));
+                                    break;
+                                }
                             }
                         }
                     }
@@ -357,15 +372,17 @@ inline void aWeakAlternateAndFutureB(const Result& aResult, const Result& bResul
                         for (const auto &elem: aCurrent->second.second) {
                             if (!IS_MARKED_EVENT_ACTIVATION(elem)) continue;
                             join.id.parts.left = GET_ACTIVATION_EVENT(elem);
-                            env e1 = manager->GetPayloadDataFromEvent(aCurrent->first.first, join.id.parts.left, true, cache);
+                            const auto e1V = manager->GetPayloadDataFromEvent(aCurrent->first.first, join.id.parts.left, true, cache);
                             for (const auto &elem1: newItr->second.second) {
                                 if (!IS_MARKED_EVENT_TARGET(elem1)) continue;
                                 join.id.parts.right = GET_TARGET_EVENT(elem1);
-
-                                if (manager->checkValidity(e1, newItr->first.first, join.id.parts.right)) {
-                                    hasMatch = true;
-                                    rcx.second.second.push_back(join);
-                                    rcx.second.first *= (1.0 - std::min(aCurrent->second.first, newItr->second.first));
+                                for (const auto& e1 : e1V) {
+                                    if (manager->checkValidity(e1, newItr->first.first, join.id.parts.right)) {
+                                        hasMatch = true;
+                                        rcx.second.second.push_back(join);
+                                        rcx.second.first *= (1.0 - std::min(aCurrent->second.first, newItr->second.first));
+                                        break;
+                                    }
                                 }
                             }
                         }
