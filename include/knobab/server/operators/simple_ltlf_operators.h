@@ -21,7 +21,7 @@ inline void or_logic_timed(const Result &lhs, const Result &rhs, Result &out, co
                            const std::vector<size_t> &lengths = {}) {
     auto first1 = lhs.begin(), first2 = rhs.begin(),
             last1 = lhs.end(), last2 = rhs.end();
-    env e1, e2;
+//    env e1, e2;
     ResultIndex pair, pair1;
     bool hasMatch;
     ResultRecord result{{0,   0},
@@ -53,12 +53,22 @@ inline void or_logic_timed(const Result &lhs, const Result &rhs, Result &out, co
                         if (!IS_MARKED_EVENT_TARGET(elem1)) continue;
                         pair1.second = GET_TARGET_EVENT(elem1);
 
-                        e1 = manager->GetPayloadDataFromEvent(pair);
-                        e2 = manager->GetPayloadDataFromEvent(pair1);
-                        if (manager->checkValidity(e1, e2)) {
-                            hasMatch = true;
-                            result.second.second.emplace_back(marked_event::join(pair.second, pair1.second));
+                        for (const auto& e1 : manager->GetPayloadDataFromEvent(pair)) {
+                            for (const auto& e2 : manager->GetPayloadDataFromEvent(pair1)) {
+                                if (manager->checkValidity(e1, e2)) {
+                                    hasMatch = true;
+                                    result.second.second.emplace_back(marked_event::join(pair.second, pair1.second));
+                                    break;
+                                }
+                            }
+                            if (hasMatch) break;
                         }
+//                        e1 = manager->GetPayloadDataFromEvent(pair);
+//                        e2 = manager->GetPayloadDataFromEvent(pair1);
+//                        if (manager->checkValidity(e1, e2)) {
+//                            hasMatch = true;
+//                            result.second.second.emplace_back(marked_event::join(pair.second, pair1.second));
+//                        }
                     }
                 }
             } else {
@@ -188,13 +198,18 @@ inline void or_logic_untimed(const Result &lhs, const Result &rhs,
                             for (const auto &elem1: cont2.second.second) {
                                 if (!IS_MARKED_EVENT_TARGET(elem1)) continue;
                                 pair1.second = GET_TARGET_EVENT(elem1);
-
-                                e1 = manager->GetPayloadDataFromEvent(pair);
-                                e2 = manager->GetPayloadDataFromEvent(pair1);
-                                if (manager->checkValidity(e1, e2)) {
-                                    hasMatch = true;
-                                    result.second.second.emplace_back(marked_event::join(pair.second, pair1.second));
+                                for (const auto& e1 :manager->GetPayloadDataFromEvent(pair) ) {
+                                    for (const auto& e2 : manager->GetPayloadDataFromEvent(pair1)) {
+                                        if (manager->checkValidity(e1, e2)) {
+                                            hasMatch = true;
+                                            result.second.second.emplace_back(marked_event::join(pair.second, pair1.second));
+                                            break;
+                                        }
+                                    }
+                                    if (hasMatch) break;
                                 }
+//                                e1 = manager->GetPayloadDataFromEvent(pair);
+//                                e2 = manager->GetPayloadDataFromEvent(pair1);
                             }
                         }
                     } else {
@@ -276,12 +291,22 @@ inline void and_logic_timed(const Result &lhs, const Result &rhs,
                         if (!IS_MARKED_EVENT_TARGET(elem1)) continue;
                         pair1.second = GET_TARGET_EVENT(elem1);
 
-                        e1 = manager->GetPayloadDataFromEvent(pair);
-                        e2 = manager->GetPayloadDataFromEvent(pair1);
-                        if (manager->checkValidity(e1, e2)) {
-                            hasMatch = true;
-                            result.second.second.emplace_back(marked_event::join(pair.second, pair1.second));
+                        for (const auto& e1:manager->GetPayloadDataFromEvent(pair)) {
+                            for (const auto& e2 : manager->GetPayloadDataFromEvent(pair1)) {
+                                if (manager->checkValidity(e1, e2)) {
+                                    hasMatch = true;
+                                    result.second.second.emplace_back(marked_event::join(pair.second, pair1.second));
+                                    break;
+                                }
+                            }
+                            if (hasMatch) break;
                         }
+//                        e1 = manager->GetPayloadDataFromEvent(pair);
+//                        e2 = manager->GetPayloadDataFromEvent(pair1);
+//                        if (manager->checkValidity(e1, e2)) {
+//                            hasMatch = true;
+//                            result.second.second.emplace_back(marked_event::join(pair.second, pair1.second));
+//                        }
                     }
                 }
             } else {
@@ -365,12 +390,22 @@ inline void and_logic_untimed(const Result &lhs, const Result &rhs,
                                 if (!IS_MARKED_EVENT_TARGET(elem1)) continue;
                                 pair1.second = GET_TARGET_EVENT(elem1);
 
-                                e1 = manager->GetPayloadDataFromEvent(pair);
-                                e2 = manager->GetPayloadDataFromEvent(pair1);
-                                if (manager->checkValidity(e1, e2)) {
-                                    hasMatch = true;
-                                    result.second.second.emplace_back(marked_event::join(pair.second, pair1.second));
+                                for (const auto& e1 :manager->GetPayloadDataFromEvent(pair) ) {
+                                    for (const auto& e2 :manager->GetPayloadDataFromEvent(pair1) ) {
+                                        if (manager->checkValidity(e1, e2)) {
+                                            hasMatch = true;
+                                            result.second.second.emplace_back(marked_event::join(pair.second, pair1.second));
+                                            break;
+                                        }
+                                    }
+                                    if (hasMatch) break;
                                 }
+//                                e1 = manager->GetPayloadDataFromEvent(pair);
+//                                e2 = manager->GetPayloadDataFromEvent(pair1);
+//                                if (manager->checkValidity(e1, e2)) {
+//                                    hasMatch = true;
+//                                    result.second.second.emplace_back(marked_event::join(pair.second, pair1.second));
+//                                }
                             }
                         }
                     } else {
@@ -682,15 +717,25 @@ inline void until_logic_timed(const Result &aSection, const Result &bSection, Re
                                 if (hasFail) break;
                                 if (!IS_MARKED_EVENT_TARGET(activationEvent)) continue;
                                 Fut.second = GET_TARGET_EVENT(activationEvent);
-                                e1 = manager->GetPayloadDataFromEvent(Fut);
+                                auto e1V = manager->GetPayloadDataFromEvent(Fut);
                                 for (auto curr = aLower; curr != aLocalUpper; curr++) {
                                     Prev.first = curr->first.first;
                                     if (hasFail) break;
                                     for (auto &targetEvent: curr->second.second) {
                                         if (!IS_MARKED_EVENT_ACTIVATION(targetEvent)) continue;
                                         Prev.second = GET_ACTIVATION_EVENT(targetEvent);
-                                        e2 = manager->GetPayloadDataFromEvent(Prev);
-                                        if (!manager->checkValidity(e2, e1)) {
+                                        bool intermediateRsult = false;
+                                        for (const auto& e1 : e1V) {
+                                            for (const auto& e2 : manager->GetPayloadDataFromEvent(Prev)) {
+                                                if (manager->checkValidity(e1, e2)) {
+                                                    intermediateRsult = true;
+                                                    break;
+                                                }
+                                            }
+                                            if (intermediateRsult) break;
+                                        }
+//                                        e2 = manager->GetPayloadDataFromEvent(Prev);
+                                        if (!intermediateRsult) {
                                             hasFail = true;
                                             auto low = localResultBeforeShift.find(aLower->first.second);
                                             auto up  = localResultBeforeShift.find(curr->first.second);
@@ -820,15 +865,25 @@ inline void until_logic_untimed(const Result &aSection, const Result &bSection, 
                                 if (hasFail) break;
                                 if (!IS_MARKED_EVENT_TARGET(activationEvent)) continue;
                                 Fut.second = GET_TARGET_EVENT(activationEvent);
-                                e1 = manager->GetPayloadDataFromEvent(Fut);
+                                auto e1V = manager->GetPayloadDataFromEvent(Fut);
                                 for (auto curr = aIt; curr != aEn; curr++) {
                                     if (hasFail) break;
                                     Prev.first = curr->first.first;
                                     for (auto &targetEvent: curr->second.second) {
                                         if (!IS_MARKED_EVENT_ACTIVATION(targetEvent)) continue;
                                         Prev.second = GET_ACTIVATION_EVENT(targetEvent);
-                                        e2 = manager->GetPayloadDataFromEvent(Prev);
-                                        if (!manager->checkValidity(e2, e1)) {
+                                        bool intermediateResult = false;
+                                        for (const auto& e1 : e1V) {
+                                            for (const auto& e2 : manager->GetPayloadDataFromEvent(Prev)) {
+                                                if (manager->checkValidity(e1,e2)) {
+                                                    intermediateResult = true;
+                                                    break;
+                                                }
+                                            }
+                                            if (intermediateResult) break;
+                                        }
+//                                        e2 = manager->GetPayloadDataFromEvent(Prev);
+                                        if (!intermediateResult) {
                                             hasFail = true;
                                             break;
                                         } else {

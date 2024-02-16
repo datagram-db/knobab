@@ -278,36 +278,40 @@ bool DeclareDataAware::checkValidity(const env &e1, uint32_t t2, uint16_t e2) co
                     {
                         auto temp2_a = kb->attribute_name_to_table.find(pred.varRHS);
                         if (temp2_a != kb->attribute_name_to_table.end()) {
-                            const auto& offsets = kb->act_table_by_act_id.getBuilder().trace_id_to_event_id_to_offset.at(
+                            const auto& offsets_map = kb->act_table_by_act_id.getBuilder().trace_id_to_event_id_to_offset.at(
                                     t2).at(e2);
-                            for (const auto offset : offsets) {
-                                std::optional<union_minimal> data = temp2_a->second.resolve_record_if_exists2(offset);
-                                if (data.has_value()) {
-                                    rhs = data.value();
-                                    break;
+                            for (const auto& [act,offsets] : offsets_map) {
+                                for (const auto offset : offsets) {
+                                    std::optional<union_minimal> data = temp2_a->second.resolve_record_if_exists2(offset);
+                                    if (data.has_value()) {
+                                        rhs = data.value();
+                                        switch (pred.casusu) {
+                                            case LT:
+                                                test = val < rhs; break;
+                                            case LEQ:
+                                                test =  val <= rhs; break;
+                                            case GT:
+                                                test =  val > rhs; break;
+                                            case GEQ:
+                                                test =  val >= rhs; break;
+                                            case EQ:
+                                                test =  val == rhs; break;
+                                            case NEQ:
+                                                test =  val != rhs; break;
+                                            case TTRUE:
+                                                test =  true; break;
+                                            case INTERVAL:
+                                                DEBUG_ASSERT(false);
+                                            default:
+                                                test =  false; break;
+                                        }
+                                        if (test) break;
+                                    }
                                 }
+                                if (test) break;
                             }
                         }
-                            switch (pred.casusu) {
-                                case LT:
-                                    test = val < rhs; break;
-                                case LEQ:
-                                    test =  val <= rhs; break;
-                                case GT:
-                                    test =  val > rhs; break;
-                                case GEQ:
-                                    test =  val >= rhs; break;
-                                case EQ:
-                                    test =  val == rhs; break;
-                                case NEQ:
-                                    test =  val != rhs; break;
-                                case TTRUE:
-                                    test =  true; break;
-                                case INTERVAL:
-                                    DEBUG_ASSERT(false);
-                                default:
-                                    test =  false; break;
-                            }
+
 //                        } else {
 //                            test = false;
 //                        }
@@ -316,20 +320,21 @@ bool DeclareDataAware::checkValidity(const env &e1, uint32_t t2, uint16_t e2) co
                     if (!pred.is_left_for_activation) {
                         auto temp2_a = kb->attribute_name_to_table.find(pred.varRHS);
                         if (temp2_a != kb->attribute_name_to_table.end()) {
-                            const auto& offsets = kb->act_table_by_act_id.getBuilder().trace_id_to_event_id_to_offset.at(
+                            const auto& offsets_map = kb->act_table_by_act_id.getBuilder().trace_id_to_event_id_to_offset.at(
                                     t2).at(e2);
-                            for (const auto offset : offsets) {
-                                std::optional<union_minimal> data = temp2_a->second.resolve_record_if_exists2(offset);
-                                if (data.has_value()) {
-                                    val = data.value();
-                                    break;
+                            for (const auto& [act,offsets] : offsets_map) {
+                                for (const auto offset : offsets) {
+                                    std::optional<union_minimal> data = temp2_a->second.resolve_record_if_exists2(offset);
+                                    if (data.has_value()) {
+                                        val = data.value();
+                                        test = pred.testOverSingleVariable(val);
+                                        if (test) break;
+                                    }
                                 }
+                                if (test) break;
                             }
-
                         }
                     } // otherwise, using the lhs val!
-
-                    test = pred.testOverSingleVariable(val);
                 }
                 if(!test){
                     result = false;
@@ -342,21 +347,25 @@ bool DeclareDataAware::checkValidity(const env &e1, uint32_t t2, uint16_t e2) co
     return false;
 }
 
-env DeclareDataAware::GetPayloadDataFromEvent(const std::pair<uint32_t, uint16_t> &pair) const {
+std::vector<env> DeclareDataAware::GetPayloadDataFromEvent(const std::pair<uint32_t, uint16_t> &pair) const {
+    std::vector<env> result;
+    DEBUG_ASSERT(kb != nullptr);
     env environment;
-
-    for(const auto& p : kb->attribute_name_to_table){
-        const auto& offsets = kb->act_table_by_act_id.getBuilder().trace_id_to_event_id_to_offset.at(pair.first).at(pair.second);
+    const auto& offsets_map = kb->act_table_by_act_id.getBuilder().trace_id_to_event_id_to_offset.at(pair.first).at(pair.second);
+    for (const auto& [act,offsets] : offsets_map) {
         for (const auto offset : offsets) {
-            std::optional<union_minimal> data = p.second.resolve_record_if_exists2(offset);
-            if(data.has_value()) {
-                environment[p.first] = data.value();
-                break;
+            environment.clear();
+            for(const auto& p : kb->attribute_name_to_table){
+                std::optional<union_minimal> data = p.second.resolve_record_if_exists2(offset);
+                if(data.has_value()) {
+                    environment[p.first] = data.value();
+                }
             }
+            if (!environment.empty())
+                result.emplace_back(environment);
         }
     }
-
-    return environment;
+    return result;
 }
 
 //bool DeclareDataAware::checkValidity(bool isLeftMap, uint32_t t2, uint16_t e2) const {
@@ -391,8 +400,8 @@ env DeclareDataAware::GetPayloadDataFromEvent(const std::pair<uint32_t, uint16_t
 //    return false;
 //}
 
-env DeclareDataAware::GetPayloadDataFromEvent(uint32_t first, uint16_t second, bool isLeft, std::unordered_set<std::string>& cache) const {
-    env environment;
+std::vector<env> DeclareDataAware::GetPayloadDataFromEvent(uint32_t first, uint16_t second, bool isLeft, std::unordered_set<std::string>& cache) const {
+    std::vector<env> result;
 
     if (cache.empty()) {
         for(const auto& pred_withConj : conjunctive_map){
@@ -404,22 +413,27 @@ env DeclareDataAware::GetPayloadDataFromEvent(uint32_t first, uint16_t second, b
         }
     }
 
-    for (const auto& x : cache) {
-        auto it = kb->attribute_name_to_table.find(x);
-        if (it != kb->attribute_name_to_table.end()) {
-            const auto& offsets = kb->act_table_by_act_id.getBuilder().trace_id_to_event_id_to_offset.at(first).at(second);
-            for (const auto offset : offsets) {
-                std::optional<union_minimal> data = it->second.resolve_record_if_exists2(offset);
-                if(data.has_value()) {
-                    environment[x] = data.value();
-                    break;
+    env environment;
+    const auto& offsets_map = kb->act_table_by_act_id.getBuilder().trace_id_to_event_id_to_offset.at(first).at(second);
+    for (const auto& [act,offsets] : offsets_map) {
+        for (const auto offset : offsets) {
+            environment.clear();
+            for (const auto& x : cache) {
+                auto it = kb->attribute_name_to_table.find(x);
+                if (it != kb->attribute_name_to_table.end()) {
+                    std::optional<union_minimal> data = it->second.resolve_record_if_exists2(offset);
+                    if(data.has_value()) {
+                        environment[x] = data.value();
+                        break;
+                    }
                 }
             }
-
+            if (!environment.empty())
+                result.emplace_back(environment);
         }
     }
 
-    return environment;
+    return result;
 }
 
 DeclareDataAware::DeclareDataAware(const std::vector<std::vector<DataPredicate>> &predicate,

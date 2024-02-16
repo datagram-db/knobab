@@ -12,7 +12,7 @@
 template<typename InputIt1, typename InputIt2, typename OutputIt, typename Aggregation> inline
 OutputIt setUnion(InputIt1 first1, InputIt1 last1, InputIt2 first2, InputIt2 last2,
                   OutputIt d_first, Aggregation aggr, const PredicateManager *manager = nullptr, bool dropMatches = false) {
-    env e1, e2;
+//    env e1, e2;
     ResultIndex pair, pair1;
     bool hasMatch;
     ResultRecord result{{0, 0}, {0.0, {}}};
@@ -40,15 +40,22 @@ OutputIt setUnion(InputIt1 first1, InputIt1 last1, InputIt2 first2, InputIt2 las
                     for (const marked_event &elem1: first2->second.second) {
                         if (!IS_MARKED_EVENT_TARGET(elem1)) continue;
                         pair1.second = GET_TARGET_EVENT(elem1);
-                        e1 = manager->GetPayloadDataFromEvent(pair);
-                        e2 = manager->GetPayloadDataFromEvent(pair1);
+//                        e1 = manager->GetPayloadDataFromEvent(pair);
+//                        e2 = manager->GetPayloadDataFromEvent(pair1);
 
-                        if (manager->checkValidity(e1, e2)) {
-                            hasMatch = true;
-                            if (!dropMatches) {
-                                result.second.second.emplace_back(marked_event::join(pair.second, pair1.second));
+                        for (const auto& e1 : manager->GetPayloadDataFromEvent(pair)) {
+                            for (const auto& e2 : manager->GetPayloadDataFromEvent(pair1)) {
+                                if (manager->checkValidity(e1, e2)) {
+                                    hasMatch = true;
+                                    if (!dropMatches) {
+                                        result.second.second.emplace_back(marked_event::join(pair.second, pair1.second));
+                                    }
+                                    break;
+                                }
                             }
+                            if (hasMatch) break;
                         }
+
                     }
                 }
             } else {
@@ -87,7 +94,7 @@ setUnionUntimed(InputIt1 first1, InputIt1 last1, InputIt2 first2, InputIt2 last2
                 return p.first.first;
             });
 
-    env e1, e2;
+//    env e1, e2;
     std::pair<uint32_t, uint16_t> pair, pair1;
     auto start1 = group1.begin(), end1 = group1.end();
     auto start2 = group2.begin(), end2 = group2.end();
@@ -125,15 +132,21 @@ setUnionUntimed(InputIt1 first1, InputIt1 last1, InputIt2 first2, InputIt2 last2
                             for (const auto &elem1: cont2.second.second) {
                                 if (!IS_MARKED_EVENT_TARGET(elem1)) continue;
                                 pair1.second = GET_TARGET_EVENT(elem1);
-                                e1 = manager->GetPayloadDataFromEvent(pair);
-                                e2 = manager->GetPayloadDataFromEvent(pair1);
 
-                                if (manager->checkValidity(e1, e2)) {
-                                    hasMatch = true;
-                                    if (!dropMatches) {
-                                        result.second.second.emplace_back(marked_event::join(pair.second, pair1.second));
+                                for (const auto& e1 : manager->GetPayloadDataFromEvent(pair)) {
+                                    for (const auto& e2 : manager->GetPayloadDataFromEvent(pair1)) {
+                                        if (manager->checkValidity(e1, e2)) {
+                                            hasMatch = true;
+                                            if (!dropMatches) {
+                                                result.second.second.emplace_back(marked_event::join(pair.second, pair1.second));
+                                            }
+                                            break;
+                                        }
                                     }
+                                    if (hasMatch) break;
                                 }
+//                                e1 = manager->GetPayloadDataFromEvent(pair);
+//                                e2 = manager->GetPayloadDataFromEvent(pair1);
                             }
                         }
                     } else {
@@ -166,7 +179,7 @@ setUnionUntimed(InputIt1 first1, InputIt1 last1, InputIt2 first2, InputIt2 last2
 template<typename InputIt1, typename InputIt2, typename OutputIt, typename Aggregation> inline
 OutputIt setIntersection(InputIt1 first1, InputIt1 last1, InputIt2 first2, InputIt2 last2,
                          OutputIt d_first, Aggregation aggr, const PredicateManager *manager = nullptr, bool dropMatches = false) {
-    env e1, e2;
+//    env e1, e2;
     ResultIndex pair, pair1;
     ResultRecord result{{0, 0}, {1.0, {}}};
     bool hasMatch;
@@ -195,15 +208,20 @@ OutputIt setIntersection(InputIt1 first1, InputIt1 last1, InputIt2 first2, Input
                         if (!IS_MARKED_EVENT_TARGET(elem1)) continue;
                         pair1.second = GET_TARGET_EVENT(elem1);
 
-                        e1 = manager->GetPayloadDataFromEvent(pair);
-                        e2 = manager->GetPayloadDataFromEvent(pair1);
-
-                        if (manager->checkValidity(e1, e2)) {
-                            hasMatch = true;
-                            if (!dropMatches) {
-                                result.second.second.emplace_back(marked_event::join(pair.second, pair1.second));
+                        for (const auto& e1 : manager->GetPayloadDataFromEvent(pair)) {
+                            for (const auto& e2 : manager->GetPayloadDataFromEvent(pair1)) {
+                                if (manager->checkValidity(e1, e2)) {
+                                    hasMatch = true;
+                                    if (!dropMatches) {
+                                        result.second.second.emplace_back(marked_event::join(pair.second, pair1.second));
+                                    }
+                                    break;
+                                }
                             }
+                            if (hasMatch) break;
                         }
+//                        e1 = manager->GetPayloadDataFromEvent(pair);
+//                        e2 = manager->GetPayloadDataFromEvent(pair1);
                     }
                 }
             } else {
@@ -243,7 +261,7 @@ OutputIt setIntersectionUntimed(InputIt1 first1, InputIt1 last1, InputIt2 first2
                 return p.first.first;
             });
 
-    env e1, e2;
+//    env e1, e2;
     std::pair<uint32_t, uint16_t> pair, pair1;
     auto start1 = group1.begin(), end1 = group1.end();
     auto start2 = group2.begin(), end2 = group2.end();
@@ -276,15 +294,27 @@ OutputIt setIntersectionUntimed(InputIt1 first1, InputIt1 last1, InputIt2 first2
                                 if (!IS_MARKED_EVENT_TARGET(elem1)) continue;
                                 pair1.second = GET_TARGET_EVENT(elem1);
 
-                                e1 = manager->GetPayloadDataFromEvent(pair);
-                                e2 = manager->GetPayloadDataFromEvent(pair1);
-
-                                if (manager->checkValidity(e1, e2)) {
-                                    hasMatch = true;
-                                    if (!dropMatches) {
-                                        result.second.second.emplace_back(marked_event::join(pair.second, pair1.second));
+                                for (const auto& e1 : manager->GetPayloadDataFromEvent(pair)) {
+                                    for (const auto& e2 : manager->GetPayloadDataFromEvent(pair1)) {
+                                        if (manager->checkValidity(e1, e2)) {
+                                            hasMatch = true;
+                                            if (!dropMatches) {
+                                                result.second.second.emplace_back(marked_event::join(pair.second, pair1.second));
+                                            }
+                                            break;
+                                        }
                                     }
+                                    if (hasMatch) break;
                                 }
+//                                e1 = manager->GetPayloadDataFromEvent(pair);
+//                                e2 = manager->GetPayloadDataFromEvent(pair1);
+//
+//                                if (manager->checkValidity(e1, e2)) {
+//                                    hasMatch = true;
+//                                    if (!dropMatches) {
+//                                        result.second.second.emplace_back(marked_event::join(pair.second, pair1.second));
+//                                    }
+//                                }
                             }
                         }
                     } else {
@@ -487,145 +517,154 @@ Result negateUntimed(TableSection &data_untimed, const std::vector<size_t> &leng
     return result;
 }
 
-template<typename TableSection> inline
-Result until(const uint32_t &traceId,
-             const uint16_t &startEventId,
-             const uint16_t& endEventId,
-
-             const TableSection &aSection,
-             const TableSection &bSection,
-
-             const PredicateManager* manager = nullptr) {
-
-    SCAN_MIN_MAX(traceId, startEventId, min, max, lower, upper, bSection)
+//template<typename TableSection> inline
+//Result until(const uint32_t &traceId,
+//             const uint16_t &startEventId,
+//             const uint16_t& endEventId,
 //
-//    auto lower = std::lower_bound(bSection.begin(), bSection.end(), std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>{{traceId, startEventId}, {0, {}}});
-//    //auto localUpper = lower;
-//    auto upper = std::upper_bound(lower, bSection.end(), std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>{{traceId, endEventId},  {1, maxVec}});
-    if(lower == upper){
-        return {};
-    }
-    ResultRecord result{{traceId, startEventId}, {1, {}}};
+//             const TableSection &aSection,
+//             const TableSection &bSection,
+//
+//             const PredicateManager* manager = nullptr) {
+//
+//    SCAN_MIN_MAX(traceId, startEventId, min, max, lower, upper, bSection)
+////
+////    auto lower = std::lower_bound(bSection.begin(), bSection.end(), std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>{{traceId, startEventId}, {0, {}}});
+////    //auto localUpper = lower;
+////    auto upper = std::upper_bound(lower, bSection.end(), std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>{{traceId, endEventId},  {1, maxVec}});
+//    if(lower == upper){
+//        return {};
+//    }
+//    ResultRecord result{{traceId, startEventId}, {1, {}}};
+//
+//    auto aIt = std::lower_bound(aSection.begin(), aSection.end(), std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>{{traceId, startEventId}, {0, {}}});
+//    auto aEn = aIt;//std::upper_bound(aIt, aSection.end(), std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>{{traceId, endEventId}, {1, maxVec}});
+//    auto aEnd = aSection.end();
+//
+//    Result temp {};
+////    env e1, e2;
+//    std::pair<uint32_t, uint16_t> Fut, Prev;
+//
+//    for( ; lower != upper; lower++) {
+//        Fut.first = lower->first.first;
+//        if (lower->first.second == startEventId) {
+//            temp.emplace_back(*lower);
+//        } else {
+//            aEn = std::upper_bound(aEn, aEnd, std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>{{traceId, lower->first.second-1},  {1, maxVec}});
+//            if(aIt == aEn){
+//                // Rationale: (1)
+//                // if the condition does not hold for a time [startEventId, lower->first.second-1], it is because one event makes it not hold.
+//                // Therefore, it should never hold even if you are extending the data that you have.
+//                return temp;
+//            } else {
+//                result.second.second.clear();
+//                const uint32_t dist = std::distance(aIt, aEn - 1);
+//                //MarkedEventsVector V;
+//                if(dist == ((lower->first.second) - startEventId)-1){
+//                    if (manager) {
+//                        for (marked_event& activationEvent : lower->second.second) {
+//                            if (!IS_MARKED_EVENT_TARGET(activationEvent)) continue;
+//                            Fut.second = GET_TARGET_EVENT(activationEvent);
+//                            auto e1V = manager->GetPayloadDataFromEvent(Fut);
+//                            for (auto curr = aIt; curr != aEn; curr++) {
+//                                Prev.first = curr->first.first;
+//                                for (marked_event& targetEvent : curr->second.second) {
+//                                    if (!IS_MARKED_EVENT_ACTIVATION(targetEvent)) continue;
+//                                    Prev.second = GET_ACTIVATION_EVENT(targetEvent);
+//                                    bool test = false;
+//                                    for (const auto& e1 : e1V) {
+//                                        for (const auto& e2 : manager->GetPayloadDataFromEvent(Prev)) {
+//                                            if (manager->checkValidity(e1, e2)) {
+//
+//                                            }
+//                                        }
+//                                        if (hasMatch) break;
+//                                    }
+//                                    e2 = manager->GetPayloadDataFromEvent(Prev);
+//                                    if (!manager->checkValidity(e2, e1)) {
+//                                        return temp;
+//                                    } else {
+//                                        result.second.second.emplace_back(targetEvent);
+//                                    }
+//                                }
+//                            }
+//                        }
+//                        ///V.insert(V.begin(), lower->second.second.begin(), lower->second.second.end());
+//                    } else {
+//                        result.second.second = populateAndReturnEvents(aIt, aEn);
+//                        result.second.second.insert(result.second.second.begin(), lower->second.second.begin(), lower->second.second.end());
+//                    }
+//                    temp.emplace_back(result);
+//                } else {
+//                    // For (1)
+//                    return temp;
+//                }
+//            }
+//        }
+//
+//    }
+//
+//    return temp;
+//}
 
-    auto aIt = std::lower_bound(aSection.begin(), aSection.end(), std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>{{traceId, startEventId}, {0, {}}});
-    auto aEn = aIt;//std::upper_bound(aIt, aSection.end(), std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>{{traceId, endEventId}, {1, maxVec}});
-    auto aEnd = aSection.end();
+//
+//class Aggregators {
+//public:
+//    template<typename Input1, typename Input2, typename Output>
+//    static Output maxSimilarity(Input1 t1, Input2 t2){
+//        return t1 > t2 ? t1 : t2;
+//    }
+//
+//    template<typename Input1, typename Input2, typename Output>
+//    static Output joinSimilarity(Input1 t1, Input2 t2){
+//        return t1 * t2;
+//    }
+//};
 
-    Result temp {};
-    env e1, e2;
-    std::pair<uint32_t, uint16_t> Fut, Prev;
-
-    for( ; lower != upper; lower++) {
-        Fut.first = lower->first.first;
-        if (lower->first.second == startEventId) {
-            temp.emplace_back(*lower);
-        } else {
-            aEn = std::upper_bound(aEn, aEnd, std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>{{traceId, lower->first.second-1},  {1, maxVec}});
-            if(aIt == aEn){
-                // Rationale: (1)
-                // if the condition does not hold for a time [startEventId, lower->first.second-1], it is because one event makes it not hold.
-                // Therefore, it should never hold even if you are extending the data that you have.
-                return temp;
-            } else {
-                result.second.second.clear();
-                const uint32_t dist = std::distance(aIt, aEn - 1);
-                //MarkedEventsVector V;
-                if(dist == ((lower->first.second) - startEventId)-1){
-                    if (manager) {
-                        for (marked_event& activationEvent : lower->second.second) {
-                            if (!IS_MARKED_EVENT_TARGET(activationEvent)) continue;
-                            Fut.second = GET_TARGET_EVENT(activationEvent);
-                            e1 = manager->GetPayloadDataFromEvent(Fut);
-                            for (auto curr = aIt; curr != aEn; curr++) {
-                                Prev.first = curr->first.first;
-                                for (marked_event& targetEvent : curr->second.second) {
-                                    if (!IS_MARKED_EVENT_ACTIVATION(targetEvent)) continue;
-                                    Prev.second = GET_ACTIVATION_EVENT(targetEvent);
-                                    e2 = manager->GetPayloadDataFromEvent(Prev);
-                                    if (!manager->checkValidity(e2, e1)) {
-                                        return temp;
-                                    } else {
-                                        result.second.second.emplace_back(targetEvent);
-                                    }
-                                }
-                            }
-                        }
-                        ///V.insert(V.begin(), lower->second.second.begin(), lower->second.second.end());
-                    } else {
-                        result.second.second = populateAndReturnEvents(aIt, aEn);
-                        result.second.second.insert(result.second.second.begin(), lower->second.second.begin(), lower->second.second.end());
-                    }
-                    temp.emplace_back(result);
-                } else {
-                    // For (1)
-                    return temp;
-                }
-            }
-        }
-
-    }
-
-    return temp;
-}
-
-
-class Aggregators {
-public:
-    template<typename Input1, typename Input2, typename Output>
-    static Output maxSimilarity(Input1 t1, Input2 t2){
-        return t1 > t2 ? t1 : t2;
-    }
-
-    template<typename Input1, typename Input2, typename Output>
-    static Output joinSimilarity(Input1 t1, Input2 t2){
-        return t1 * t2;
-    }
-};
-
-template<typename TableSection> inline
-Result weakUntil(const uint32_t &traceId,
-                 const uint16_t &startEventId,
-                 const uint16_t& endEventId,
-
-                 const TableSection &aSection,
-                 const TableSection &bSection,
-
-                 const PredicateManager* manager = nullptr) {
-    Result result;
-    Result untilR = until(traceId, startEventId, endEventId, aSection, bSection, manager);
-    Result globally = global(traceId, startEventId, endEventId, aSection);
-    setUnion(untilR.begin(), untilR.end(), globally.begin(), globally.end(), std::back_inserter(result), Aggregators::joinSimilarity<double, double, double>, nullptr);
-    return result;
-}
+//template<typename TableSection> inline
+//Result weakUntil(const uint32_t &traceId,
+//                 const uint16_t &startEventId,
+//                 const uint16_t& endEventId,
+//
+//                 const TableSection &aSection,
+//                 const TableSection &bSection,
+//
+//                 const PredicateManager* manager = nullptr) {
+//    Result result;
+//    Result untilR = until(traceId, startEventId, endEventId, aSection, bSection, manager);
+//    Result globally = global(traceId, startEventId, endEventId, aSection);
+//    setUnion(untilR.begin(), untilR.end(), globally.begin(), globally.end(), std::back_inserter(result), Aggregators::joinSimilarity<double, double, double>, nullptr);
+//    return result;
+//}
 
 
 
-template<typename TableSection> inline
-Result release(const uint32_t &traceId,
-               const uint16_t &startEventId,
-               const uint16_t& endEventId,
-
-               const TableSection &aSection,
-               const TableSection &bSection,
-
-               const PredicateManager* manager = nullptr) {
-
-    Result newB;
-    Result result;
-    setIntersection(aSection.begin(), aSection.end(),
-                    bSection.begin(), bSection.end(),
-                    std::back_inserter(newB),
-                    Aggregators::joinSimilarity<double,double,double>,
-                    manager);
-
-    if (manager) {
-        auto flipped = manager->flip();
-        weakUntil(traceId, startEventId, endEventId, bSection, newB, flipped);
-    } else {
-        weakUntil(traceId, startEventId, endEventId, bSection, newB, nullptr);
-    }
-    return result;
-}
+//template<typename TableSection> inline
+//Result release(const uint32_t &traceId,
+//               const uint16_t &startEventId,
+//               const uint16_t& endEventId,
+//
+//               const TableSection &aSection,
+//               const TableSection &bSection,
+//
+//               const PredicateManager* manager = nullptr) {
+//
+//    Result newB;
+//    Result result;
+//    setIntersection(aSection.begin(), aSection.end(),
+//                    bSection.begin(), bSection.end(),
+//                    std::back_inserter(newB),
+//                    Aggregators::joinSimilarity<double,double,double>,
+//                    manager);
+//
+//    if (manager) {
+//        auto flipped = manager->flip();
+//        weakUntil(traceId, startEventId, endEventId, bSection, newB, flipped);
+//    } else {
+//        weakUntil(traceId, startEventId, endEventId, bSection, newB, nullptr);
+//    }
+//    return result;
+//}
 
 
 template<typename TableSection> inline
@@ -639,7 +678,7 @@ Result until(const TableSection &aSection, const TableSection &bSection, const s
     auto upperA = aSection.end();
 
     Result temp {};
-    env e1, e2;
+//    env e1, e2;
     std::pair<uint32_t, uint16_t> Fut, Prev;
     ResultRecord rU{{0, 0}, {0, {}}};
     ResultRecord rD{{0, 0}, {0, {}}};
@@ -677,20 +716,32 @@ Result until(const TableSection &aSection, const TableSection &bSection, const s
                                 if (hasFail) break;
                                 if (!IS_MARKED_EVENT_TARGET(activationEvent)) continue;
                                 Fut.second = GET_TARGET_EVENT(activationEvent);
-                                e1 = manager->GetPayloadDataFromEvent(Fut);
+                                auto e1V = manager->GetPayloadDataFromEvent(Fut);
                                 for (auto curr = aIt; curr != aEn; curr++) {
                                     if (hasFail) break;
                                     Prev.first = curr->first.first;
                                     for (const marked_event& targetEvent : curr->second.second) {
                                         if (!IS_MARKED_EVENT_ACTIVATION(targetEvent)) continue;
                                         Prev.second = GET_ACTIVATION_EVENT(targetEvent);
-                                        e2 = manager->GetPayloadDataFromEvent(Prev);
-                                        if (!manager->checkValidity(e2, e1)) {
+                                        bool intermediateTest = false;
+                                        for (const auto& e1 : e1V) {
+                                            for (const auto& e2 : manager->GetPayloadDataFromEvent(Prev)) {
+                                                if (manager->checkValidity(e2, e1)) {
+                                                    V.emplace_back(marked_event::join(Fut.second, Prev.first));
+                                                    intermediateTest = true;
+                                                    break;
+                                                }
+                                            }
+                                            if (intermediateTest) break;
+                                        }
+//                                        e2 = manager->GetPayloadDataFromEvent(Prev);
+                                        if (!intermediateTest) {
                                             hasFail = true;
                                             break;
-                                        } else {
-                                            V.emplace_back(marked_event::join(Fut.second, Prev.first));
                                         }
+//                                        else {
+//                                            V.emplace_back(marked_event::join(Fut.second, Prev.first));
+//                                        }
                                     }
                                 }
                             }

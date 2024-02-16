@@ -207,21 +207,21 @@ public:
         experiment_logger.model_filename = generatedName;
     }
 
-    env GetPayloadDataFromEvent(const std::pair<uint32_t, uint16_t> &pair, const std::unordered_set<std::string>& toRemove = {}, const std::string& appendix = "") const {
-        env environment;
-        for(const auto& p : db.attribute_name_to_table){
-            if (toRemove.contains(p.first)) continue;
-            const auto& offsets = db.act_table_by_act_id.getBuilder().trace_id_to_event_id_to_offset.at(pair.first).at(pair.second);
-            for (size_t offset : offsets) {
-                std::optional<union_minimal> data = p.second.resolve_record_if_exists2(offset);
-                if(data.has_value()) {
-                    environment[appendix+p.first] = data.value();
-                    break;
-                }
-            }
-        }
-        return environment;
-    }
+//    env GetPayloadDataFromEvent(const std::pair<uint32_t, uint16_t> &pair, const std::unordered_set<std::string>& toRemove = {}, const std::string& appendix = "") const {
+//        env environment;
+//        for(const auto& p : db.attribute_name_to_table){
+//            if (toRemove.contains(p.first)) continue;
+//            const auto& offsets_map = db.act_table_by_act_id.getBuilder().trace_id_to_event_id_to_offset.at(pair.first).at(pair.second);
+//            for (size_t offset : offsets) {
+//                std::optional<union_minimal> data = p.second.resolve_record_if_exists2(offset);
+//                if(data.has_value()) {
+//                    environment[appendix+p.first] = data.value();
+//                    break;
+//                }
+//            }
+//        }
+//        return environment;
+//    }
 
     void set_atomization_parameters(const std::filesystem::path& atomization_conf);
     void set_atomization_parameters(const std::string &fresh_atom_label = "p",

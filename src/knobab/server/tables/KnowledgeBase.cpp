@@ -41,8 +41,13 @@ void KnowledgeBase::reconstruct_trace_no_data(std::ostream &os) const {
         os << "Trace #" << trace_id << std::endl << "\t- ";
         for (size_t event_id = 0, M = act_table_by_act_id.getBuilder().trace_id_to_event_id_to_offset.at(trace_id).size(); event_id<M; event_id++) {
             os << "{";
-            for (size_t idx  = 0, O = act_table_by_act_id.getBuilder().trace_id_to_event_id_to_offset.at(trace_id).at(event_id).size(); idx<O; idx++) {
-                os << event_label_mapper.get(act_table_by_act_id.table.at(act_table_by_act_id.getBuilder().trace_id_to_event_id_to_offset.at(trace_id).at(event_id).at(idx)).entry.id.parts.act);
+            std::vector<act_t> labels;
+            for (const auto& [act, elements] : act_table_by_act_id.getBuilder().trace_id_to_event_id_to_offset.at(trace_id).at(event_id)) {
+                for (size_t i = 0, O = elements.size(); i<O; i++)
+                    labels.emplace_back(act);
+            }
+            for (size_t idx  = 0, O = labels.size(); idx<O; idx++) {
+                os << event_label_mapper.get(labels.at(idx));
                 if (idx+1<O) os << ", ";
             }
             os << "}";
@@ -1119,10 +1124,26 @@ void KnowledgeBase::dump_for_sqlminer(std::ostream &log, std::ostream &payload, 
 PartialResult KnowledgeBase::getFirstLastOtherwise(const bool isFirst) const {
     PartialResult elems{};
     PartialResultRecord traceEventPair{{0,0}, 1.0};
-    for (const std::pair<ActTable::record *, ActTable::record *> &rec: act_table_by_act_id.secondary_index) {
-        traceEventPair.first.first = isFirst ? rec.first->entry.id.parts.trace_id : rec.second->entry.id.parts.trace_id;
-        traceEventPair.first.second = isFirst ? rec.first->entry.id.parts.event_id : rec.second->entry.id.parts.event_id;
-        elems.push_back(traceEventPair);
+    for (size_t traceId = 0, N = act_table_by_act_id.secondary_index.size(); traceId<N; traceId++) {
+        traceEventPair.first.first = traceId;
+        const auto &rec = act_table_by_act_id.secondary_index.at(traceId);
+        if (isFirst) {
+            for (const auto& [act,insiders] : *rec.first) {
+                for (const auto& insider : insiders) {
+                    traceEventPair.first.second = insider->entry.id.parts.trace_id;
+                    elems.push_back(traceEventPair);
+                }
+            }
+        } else {
+            for (const auto& [act,insiders] : *rec.second) {
+                for (const auto& insider : insiders) {
+                    traceEventPair.first.second = insider->entry.id.parts.trace_id;
+                    elems.push_back(traceEventPair);
+                }
+            }
+        }
+//        traceEventPair.first.first = isFirst ? rec.first->entry.id.parts.trace_id : rec.second->entry.id.parts.trace_id;
+//        traceEventPair.first.second = isFirst ? rec.first->entry.id.parts.event_id : rec.second->entry.id.parts.event_id;
     }
     return elems;
 }

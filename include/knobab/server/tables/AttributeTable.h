@@ -150,7 +150,7 @@ struct AttributeTable {
     void record_load(act_t act_id, const union_type &val, trace_t tid, event_t eid);
 
 
-    void index(const std::vector<std::vector<std::vector<size_t>>> &trace_id_to_event_id_to_offset,
+    void index(const std::vector<std::vector<std::unordered_map<act_t, std::vector<size_t>>>> &trace_id_to_event_id_to_offset,
     const std::vector<ActTable::record>& act_table);
 
     union_type resolve(const record &x) const;

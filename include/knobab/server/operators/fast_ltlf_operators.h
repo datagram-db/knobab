@@ -18,7 +18,7 @@
 inline void or_fast_timed(const Result& lhs, const Result& rhs, Result& out, const PredicateManager *manager = nullptr, const std::vector<size_t>& lengths = {}) {
     auto first1 = lhs.begin(), first2 = rhs.begin(),
             last1 = lhs.end(), last2 = rhs.end();
-    env e1, e2;
+//    env e1, e2;
     ResultIndex pair, pair1;
     bool hasMatch;
     ResultRecord result{{0, 0}, {0.0, {}}};
@@ -46,15 +46,18 @@ inline void or_fast_timed(const Result& lhs, const Result& rhs, Result& out, con
                 for (const marked_event &elem: first1->second.second) {
                     if (!IS_MARKED_EVENT_ACTIVATION(elem)) continue;
                     join.id.parts.left = pair.second = GET_ACTIVATION_EVENT(elem);
-                    e1 = manager->GetPayloadDataFromEvent(pair.first, pair.second, true, cache);
+                    auto e1V = manager->GetPayloadDataFromEvent(pair.first, pair.second, true, cache);
 
                     for (const marked_event &elem1: first2->second.second) {
                         if (!IS_MARKED_EVENT_TARGET(elem1)) continue;
                         join.id.parts.right = GET_TARGET_EVENT(elem1);
 
-                        if (manager->checkValidity(e1, first2->first.first, join.id.parts.right)) {
-                            hasMatch = true;
-                            result.second.second.emplace_back(join);
+                        for (const auto& e1 : e1V) {
+                            if (manager->checkValidity(e1, first2->first.first, join.id.parts.right)) {
+                                hasMatch = true;
+                                result.second.second.emplace_back(join);
+                                break;
+                            }
                         }
                     }
                 }
@@ -96,7 +99,7 @@ inline void or_fast_timed(const Result& lhs, const Result& rhs, Result& out, con
 inline void or_fast_untimed(const Result& lhs, const Result& rhs, Result& out, const PredicateManager *manager = nullptr, const std::vector<size_t>& lengths = {}) {
     auto first1 = lhs.begin(), first2 = rhs.begin(),
             last1 = lhs.end(), last2 = rhs.end();
-    env e1, e2;
+//    env e1, e2;
     size_t localTrace = 0;
     ResultRecord result{{0, 0}, {0.0, {}}};
     ResultRecord idx{{0, 0}, {0.0, {}}};
@@ -170,15 +173,18 @@ inline void or_fast_untimed(const Result& lhs, const Result& rhs, Result& out, c
                             for (const marked_event &elem: first1->second.second) {
                                 if (!IS_MARKED_EVENT_ACTIVATION(elem)) continue;
                                 join.id.parts.left = pair.second = GET_ACTIVATION_EVENT(elem);
-                                e1 = manager->GetPayloadDataFromEvent(pair.first, pair.second, true, cache);
+                                auto e1V = manager->GetPayloadDataFromEvent(pair.first, pair.second, true, cache);
 
                                 for (const marked_event &elem1: first2->second.second) {
                                     if (!IS_MARKED_EVENT_TARGET(elem1)) continue;
                                     join.id.parts.right = pair1.second = GET_TARGET_EVENT(elem1);
 
-                                    if (manager->checkValidity(e1, localTrace, join.id.parts.right)) {
-                                        hasMatch = true;
-                                        result.second.second.emplace_back(join);
+                                    for (const auto& e1 : e1V) {
+                                        if (manager->checkValidity(e1, localTrace, join.id.parts.right)) {
+                                            hasMatch = true;
+                                            result.second.second.emplace_back(join);
+                                            break;
+                                        }
                                     }
                                 }
                             }
@@ -238,7 +244,7 @@ inline void or_fast_untimed(const Result& lhs, const Result& rhs, Result& out, c
 inline void and_fast_timed(const Result& lhs, const Result& rhs, Result& out, const PredicateManager *manager = nullptr, const std::vector<size_t>& lengths = {}) {
     auto first1 = lhs.begin(), first2 = rhs.begin(),
             last1 = lhs.end(), last2 = rhs.end();
-    env e1, e2;
+//    env e1, e2;
     ResultIndex pair, pair1;
     ResultRecord result{{0, 0}, {1.0, {}}};
     bool hasMatch;
@@ -264,15 +270,18 @@ inline void and_fast_timed(const Result& lhs, const Result& rhs, Result& out, co
                 for (const marked_event &elem: first1->second.second) {
                     if (!IS_MARKED_EVENT_ACTIVATION(elem)) continue;
                     join.id.parts.left = pair.second = GET_ACTIVATION_EVENT(elem);
-                    e1 = manager->GetPayloadDataFromEvent(pair.first, pair.second, true, cache);
+                    auto e1V = manager->GetPayloadDataFromEvent(pair.first, pair.second, true, cache);
 
                     for (const marked_event &elem1: first2->second.second) {
                         if (!IS_MARKED_EVENT_TARGET(elem1)) continue;
                         join.id.parts.right = pair1.second = GET_TARGET_EVENT(elem1);
 
-                        if (manager->checkValidity(e1, first2->first.first, join.id.parts.right)) {
-                            hasMatch = true;
-                            result.second.second.emplace_back(join);
+                        for (const auto& e1 : e1V) {
+                            if (manager->checkValidity(e1, first2->first.first, join.id.parts.right)) {
+                                hasMatch = true;
+                                result.second.second.emplace_back(join);
+                                break;
+                            }
                         }
                     }
                 }
@@ -306,7 +315,7 @@ inline void and_fast_timed(const Result& lhs, const Result& rhs, Result& out, co
 inline void and_fast_untimed(const Result& lhs, const Result& rhs, Result& out, const PredicateManager *manager = nullptr, const std::vector<size_t>& lengths = {}) {
     auto first1 = lhs.begin(), first2 = rhs.begin(),
             last1 = lhs.end(), last2 = rhs.end();
-    env e1, e2;
+//    env e1, e2;
     ResultRecord result{{0, 0}, {0.0, {}}};
     ResultRecord idx{{0, 0}, {0.0, {}}};
     ResultIndex pair, pair1;
@@ -341,15 +350,18 @@ inline void and_fast_untimed(const Result& lhs, const Result& rhs, Result& out, 
                             for (const marked_event &elem: first1->second.second) {
                                 if (!IS_MARKED_EVENT_ACTIVATION(elem)) continue;
                                 join.id.parts.left = pair.second = GET_ACTIVATION_EVENT(elem);
-                                e1 = manager->GetPayloadDataFromEvent(pair.first, pair.second, true, cache);
+                                auto e1V = manager->GetPayloadDataFromEvent(pair.first, pair.second, true, cache);
 
                                 for (const marked_event &elem1: first2->second.second) {
                                     if (!IS_MARKED_EVENT_TARGET(elem1)) continue;
                                     join.id.parts.right = GET_TARGET_EVENT(elem1);
 
-                                    if (manager->checkValidity(e1, localTrace, join.id.parts.right)) {
-                                        hasMatch = true;
-                                        result.second.second.emplace_back(join);
+                                    for (const auto& e1 : e1V) {
+                                        if (manager->checkValidity(e1, localTrace, join.id.parts.right)) {
+                                            hasMatch = true;
+                                            result.second.second.emplace_back(join);
+                                            break;
+                                        }
                                     }
                                 }
                             }
@@ -647,15 +659,18 @@ inline void aAndFutureB_timed_variant_2(const Result& a, const Result& b,Result&
                         for (const auto &elem: aIter->second.second) {
                             if (!IS_MARKED_EVENT_ACTIVATION(elem)) continue;
                             join.id.parts.left = GET_ACTIVATION_EVENT(elem);
-                            env e1 = manager->GetPayloadDataFromEvent(aIter->first.first, join.id.parts.left, true, cache);
+                            auto e1V = manager->GetPayloadDataFromEvent(aIter->first.first, join.id.parts.left, true, cache);
                             for (const auto &elem1: second_g.second) {
                                 if (!IS_MARKED_EVENT_TARGET(elem1)) continue;
                                 join.id.parts.right = GET_TARGET_EVENT(elem1);
 
-                                if (manager->checkValidity(e1, current_trace, join.id.parts.right)) {
-                                    rcx.second.second.push_back(join);
-                                    rcx.second.first *= (1.0 - std::min(aIter->second.first, second_g.first));
-                                    hasMatch = true;
+                                for (const auto& e1 : e1V) {
+                                    if (manager->checkValidity(e1, current_trace, join.id.parts.right)) {
+                                        rcx.second.second.push_back(join);
+                                        rcx.second.first *= (1.0 - std::min(aIter->second.first, second_g.first));
+                                        hasMatch = true;
+                                        break;
+                                    }
                                 }
                             }
                         }
@@ -736,15 +751,18 @@ inline void aAndFutureB_timed_variant_1(const Result& aResult, const Result& bRe
                     for (const auto &elem: aCurrent->second.second) {
                         if (!IS_MARKED_EVENT_ACTIVATION(elem)) continue;
                         join.id.parts.left = GET_ACTIVATION_EVENT(elem);
-                        env e1 = manager->GetPayloadDataFromEvent(aCurrent->first.first, join.id.parts.left, true, cache);
+                        const auto e1V = manager->GetPayloadDataFromEvent(aCurrent->first.first, join.id.parts.left, true, cache);
                         for (const auto &elem1: newItr->second.second) {
                             if (!IS_MARKED_EVENT_TARGET(elem1)) continue;
                             join.id.parts.right = GET_TARGET_EVENT(elem1);
 
-                            if (manager->checkValidity(e1, newItr->first.first, join.id.parts.right)) {
-                                hasMatch = true;
-                                rcx.second.second.push_back(join);
-                                rcx.second.first *= (1.0 - std::min(aCurrent->second.first, newItr->second.first));
+                            for (const auto& e1 : e1V) {
+                                if (manager->checkValidity(e1, newItr->first.first, join.id.parts.right)) {
+                                    hasMatch = true;
+                                    rcx.second.second.push_back(join);
+                                    rcx.second.first *= (1.0 - std::min(aCurrent->second.first, newItr->second.first));
+                                    break;
+                                }
                             }
                         }
                     }
@@ -829,17 +847,21 @@ inline void aAndNextGloballyB_timed(const Result& a, const Result& b,Result& res
                         for (const auto &elem: aCurrent->second.second) {
                             if (!IS_MARKED_EVENT_ACTIVATION(elem)) continue;
                             join.id.parts.left = GET_ACTIVATION_EVENT(elem);
-                            env e1 = manager->GetPayloadDataFromEvent(aCurrent->first.first, join.id.parts.left, true, cache);
+                            const auto e1V = manager->GetPayloadDataFromEvent(aCurrent->first.first, join.id.parts.left, true, cache);
                             for (const auto &elem1: newItr->second.second) {
                                 if (!IS_MARKED_EVENT_TARGET(elem1)) continue;
                                 join.id.parts.right = GET_TARGET_EVENT(elem1);
 
-                                if (manager->checkValidity(e1, newItr->first.first, join.id.parts.right)) {
-                                    rcx.second.second.push_back(join);
-                                    rcx.second.first *= (1.0 - std::min(aCurrent->second.first, newItr->second.first));
-                                    count++;
-                                    hasMatch = true;
+                                for (const auto& e1 : e1V) {
+                                    if (manager->checkValidity(e1, newItr->first.first, join.id.parts.right)) {
+                                        rcx.second.second.push_back(join);
+                                        rcx.second.first *= (1.0 - std::min(aCurrent->second.first, newItr->second.first));
+                                        count++;
+                                        hasMatch = true;
+                                        break;
+                                    }
                                 }
+
                             }
                         }
                     } else {
@@ -1078,15 +1100,18 @@ inline void aAndGloballyB_timed_variant_2(const Result& a, const Result& b,Resul
                         for (const auto &elem: aIter->second.second) {
                             if (!IS_MARKED_EVENT_ACTIVATION(elem)) continue;
                             join.id.parts.left = GET_ACTIVATION_EVENT(elem);
-                            env e1 = manager->GetPayloadDataFromEvent(aIter->first.first, join.id.parts.left, true, cache);
+                            const auto e1V = manager->GetPayloadDataFromEvent(aIter->first.first, join.id.parts.left, true, cache);
                             for (const auto &elem1: second_g.second) {
                                 if (!IS_MARKED_EVENT_TARGET(elem1)) continue;
                                 join.id.parts.right = GET_TARGET_EVENT(elem1);
 
-                                if (manager->checkValidity(e1, current_trace, join.id.parts.right)) {
-                                    rcx.second.second.push_back(join);
-                                    rcx.second.first *= (1.0 - std::min(aIter->second.first, second_g.first));
-                                    hasMatch = true;
+                                for (const auto& e1 : e1V) {
+                                    if (manager->checkValidity(e1, current_trace, join.id.parts.right)) {
+                                        rcx.second.second.push_back(join);
+                                        rcx.second.first *= (1.0 - std::min(aIter->second.first, second_g.first));
+                                        hasMatch = true;
+                                        break;
+                                    }
                                 }
                             }
                         }
@@ -1161,16 +1186,18 @@ inline void aAndGloballyB_timed_variant_1(const Result& a, const Result& b,Resul
                         for (const auto &elem: aCurrent->second.second) {
                             if (!IS_MARKED_EVENT_ACTIVATION(elem)) continue;
                             join.id.parts.left = GET_ACTIVATION_EVENT(elem);
-                            env e1 = manager->GetPayloadDataFromEvent(aCurrent->first.first, join.id.parts.left, true, cache);
+                            const auto e1V = manager->GetPayloadDataFromEvent(aCurrent->first.first, join.id.parts.left, true, cache);
                             for (const auto &elem1: newItr->second.second) {
                                 if (!IS_MARKED_EVENT_TARGET(elem1)) continue;
                                 join.id.parts.right = GET_TARGET_EVENT(elem1);
-
-                                if (manager->checkValidity(e1, newItr->first.first, join.id.parts.right)) {
-                                    rcx.second.second.push_back(join);
-                                    rcx.second.first *= (1.0 - std::min(aCurrent->second.first, newItr->second.first));
-                                    count++;
-                                    hasMatch = true;
+                                for (const auto& e1: e1V) {
+                                    if (manager->checkValidity(e1, newItr->first.first, join.id.parts.right)) {
+                                        rcx.second.second.push_back(join);
+                                        rcx.second.first *= (1.0 - std::min(aCurrent->second.first, newItr->second.first));
+                                        count++;
+                                        hasMatch = true;
+                                        break;
+                                    }
                                 }
                             }
                         }
@@ -1227,7 +1254,7 @@ inline void until_fast_untimed(const Result &aSection, const Result &bSection, R
     ResultRecord cpResult{{0,   0},
                           {1.0, {}}};
 
-    env e1, e2;
+//    env e1, e2;
     std::pair<uint32_t, uint16_t> Fut, Prev;
     temp.clear();
     auto join = marked_event::join(0, 0);
@@ -1273,7 +1300,7 @@ inline void until_fast_untimed(const Result &aSection, const Result &bSection, R
                             if (hasFail) break;
                             if (!IS_MARKED_EVENT_TARGET(activationEvent)) continue;
                             Fut.second = GET_TARGET_EVENT(activationEvent);
-                            e1 = manager->GetPayloadDataFromEvent(Fut);
+                            const auto e1V = manager->GetPayloadDataFromEvent(Fut);
                             for (auto curr = aIt; curr != aEn; curr++) {
                                 if (hasFail) break;
                                 Prev.first = curr->first.first;
@@ -1281,8 +1308,18 @@ inline void until_fast_untimed(const Result &aSection, const Result &bSection, R
                                     for (auto &targetEvent: curr->second.second) {
                                         if (!IS_MARKED_EVENT_ACTIVATION(targetEvent)) continue;
                                         Prev.second = GET_ACTIVATION_EVENT(targetEvent);
-                                        e2 = manager->GetPayloadDataFromEvent(Prev);
-                                        if (!manager->checkValidity(e2, e1)) {
+                                        const auto e2V = manager->GetPayloadDataFromEvent(Prev);
+                                        bool localTestFail = false;
+                                        for (const auto& e1 : e1V) {
+                                            for (const auto& e2 : e2V) {
+                                                if (!manager->checkValidity(e2, e1)) {
+                                                    hasFail = true;
+                                                    break;
+                                                }
+                                            }
+                                            if (hasFail) break;
+                                        }
+                                        if (localTestFail) {
                                             hasFail = true;
                                             break;
                                         } else {
