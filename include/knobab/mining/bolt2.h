@@ -37,18 +37,18 @@ std::tuple<std::unordered_map<std::string, std::vector<pattern_mining_result<Fas
                                                                                     bool only_precise_temporal_patterns = false,
                                                                                     bool negative_ones = false);
 
-std::tuple<std::vector<std::vector<DeclareDataAware>>,double,double> boltk(ServerQueryManager& sqm,
-                                                                           const std::vector<std::string>& model_entry_names,
-                                                                           double support,
-                                                                           double tau,// @author: Samuel Appleby
-                                                                                       double purity,
-                                                                           size_t maxL,
-                                                                           size_t minL,
-                                                                           bool naif = false,
-                                                                           bool init_end = true,
-                                                                           bool special_temporal_patterns = true,
-                                                                           bool only_precise_temporal_patterns = false,
-                                                                           bool negative_ones = false);
+//std::tuple<std::vector<std::vector<DeclareDataAware>>,double,double> boltk(ServerQueryManager& sqm,
+//                                                                           const std::vector<std::string>& model_entry_names,
+//                                                                           double support,
+//                                                                           double tau,// @author: Samuel Appleby
+//                                                                                       double purity,
+//                                                                           size_t maxL,
+//                                                                           size_t minL,
+//                                                                           bool naif = false,
+//                                                                           bool init_end = true,
+//                                                                           bool special_temporal_patterns = true,
+//                                                                           bool only_precise_temporal_patterns = false,
+//                                                                           bool negative_ones = false);
 
 #include <filesystem>
 

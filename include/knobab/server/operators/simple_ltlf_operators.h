@@ -863,15 +863,15 @@ inline void until_logic_untimed(const Result &aSection, const Result &bSection, 
                             bool hasFail = false;
                             for (auto &activationEvent: bCurrent->second.second) {
                                 if (hasFail) break;
-                                if (!IS_MARKED_EVENT_TARGET(activationEvent)) continue;
-                                Fut.second = GET_TARGET_EVENT(activationEvent);
+                                if (!IS_MARKED_EVENT_ACTIVATION(activationEvent)) continue;
+                                Fut.second = GET_ACTIVATION_EVENT(activationEvent);
                                 auto e1V = manager->GetPayloadDataFromEvent(Fut);
                                 for (auto curr = aIt; curr != aEn; curr++) {
                                     if (hasFail) break;
                                     Prev.first = curr->first.first;
                                     for (auto &targetEvent: curr->second.second) {
-                                        if (!IS_MARKED_EVENT_ACTIVATION(targetEvent)) continue;
-                                        Prev.second = GET_ACTIVATION_EVENT(targetEvent);
+                                        if (!IS_MARKED_EVENT_TARGET(targetEvent)) continue;
+                                        Prev.second = GET_TARGET_EVENT(targetEvent);
                                         bool intermediateResult = false;
                                         for (const auto& e1 : e1V) {
                                             for (const auto& e2 : manager->GetPayloadDataFromEvent(Prev)) {

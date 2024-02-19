@@ -1130,14 +1130,14 @@ PartialResult KnowledgeBase::getFirstLastOtherwise(const bool isFirst) const {
         if (isFirst) {
             for (const auto& [act,insiders] : *rec.first) {
                 for (const auto& insider : insiders) {
-                    traceEventPair.first.second = insider->entry.id.parts.trace_id;
+                    traceEventPair.first.second = insider->entry.id.parts.event_id;
                     elems.push_back(traceEventPair);
                 }
             }
         } else {
             for (const auto& [act,insiders] : *rec.second) {
                 for (const auto& insider : insiders) {
-                    traceEventPair.first.second = insider->entry.id.parts.trace_id;
+                    traceEventPair.first.second = insider->entry.id.parts.event_id;
                     elems.push_back(traceEventPair);
                 }
             }

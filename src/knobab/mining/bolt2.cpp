@@ -1450,6 +1450,7 @@ std::tuple<std::unordered_map<std::string, std::vector<pattern_mining_result<Fas
     return {VVV, overall_dataless_mining_time};
 }
 
+#if 0
 std::tuple<std::vector<std::vector<DeclareDataAware>>,double,double> boltk(ServerQueryManager& sqm,
                                                                            const std::vector<std::string>& model_entry_names,
                                                                            double support,
@@ -1469,7 +1470,7 @@ std::tuple<std::vector<std::vector<DeclareDataAware>>,double,double> boltk(Serve
         if (it != kb.attribute_name_to_table.end()) {
             size_t offsetO = 0;
             if (isTarget) offsetO = 1;
-            size_t offset = kb.act_table_by_act_id.getBuilder().trace_id_to_event_id_to_offset.at(x.result.at(offsetO).first).at(x.result.at(offsetO).second);
+            const auto& offsets = kb.act_table_by_act_id.getBuilder().trace_id_to_event_id_to_offset.at(x.result.at(offsetO).first).at(x.result.at(offsetO).second);
             std::optional<union_minimal> data = it->second.resolve_record_if_exists2(offset);
             if(data.has_value()) {
                 return data.value();
@@ -1723,3 +1724,4 @@ std::tuple<std::vector<std::vector<DeclareDataAware>>,double,double> boltk(Serve
 //#endif
     return std::make_tuple(VVV,overall_dataless_mining_time, ms_double.count());
 }
+#endif

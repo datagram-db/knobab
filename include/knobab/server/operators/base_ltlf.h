@@ -714,15 +714,15 @@ Result until(const TableSection &aSection, const TableSection &bSection, const s
                             bool hasFail = false;
                             for (const marked_event& activationEvent : lower->second.second) {
                                 if (hasFail) break;
-                                if (!IS_MARKED_EVENT_TARGET(activationEvent)) continue;
-                                Fut.second = GET_TARGET_EVENT(activationEvent);
+                                if (!IS_MARKED_EVENT_ACTIVATION(activationEvent)) continue;
+                                Fut.second = GET_ACTIVATION_EVENT(activationEvent);
                                 auto e1V = manager->GetPayloadDataFromEvent(Fut);
                                 for (auto curr = aIt; curr != aEn; curr++) {
                                     if (hasFail) break;
                                     Prev.first = curr->first.first;
                                     for (const marked_event& targetEvent : curr->second.second) {
-                                        if (!IS_MARKED_EVENT_ACTIVATION(targetEvent)) continue;
-                                        Prev.second = GET_ACTIVATION_EVENT(targetEvent);
+                                        if (!IS_MARKED_EVENT_TARGET(targetEvent)) continue;
+                                        Prev.second = GET_TARGET_EVENT(targetEvent);
                                         bool intermediateTest = false;
                                         for (const auto& e1 : e1V) {
                                             for (const auto& e2 : manager->GetPayloadDataFromEvent(Prev)) {
