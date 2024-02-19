@@ -1298,26 +1298,26 @@ inline void until_fast_untimed(const Result &aSection, const Result &bSection, R
                         bool hasFail = false;
                         for (auto &activationEvent: bCurrent->second.second) {
                             if (hasFail) break;
-                            if (!IS_MARKED_EVENT_TARGET(activationEvent)) continue;
-                            Fut.second = GET_TARGET_EVENT(activationEvent);
+                            if (!IS_MARKED_EVENT_ACTIVATION(activationEvent)) continue;
+                            Fut.second = GET_ACTIVATION_EVENT(activationEvent);
                             const auto e1V = manager->GetPayloadDataFromEvent(Fut);
                             for (auto curr = aIt; curr != aEn; curr++) {
                                 if (hasFail) break;
                                 Prev.first = curr->first.first;
                                 if (!curr->second.second.empty())
                                     for (auto &targetEvent: curr->second.second) {
-                                        if (!IS_MARKED_EVENT_ACTIVATION(targetEvent)) continue;
-                                        Prev.second = GET_ACTIVATION_EVENT(targetEvent);
+                                        if (!IS_MARKED_EVENT_TARGET(targetEvent)) continue;
+                                        Prev.second = GET_TARGET_EVENT(targetEvent);
                                         const auto e2V = manager->GetPayloadDataFromEvent(Prev);
-                                        bool localTestFail = false;
+                                        bool localTestFail = true;
                                         for (const auto& e1 : e1V) {
                                             for (const auto& e2 : e2V) {
-                                                if (!manager->checkValidity(e2, e1)) {
-                                                    hasFail = true;
+                                                if (manager->checkValidity(e1,e2)) {
+                                                    localTestFail = false;
                                                     break;
                                                 }
                                             }
-                                            if (hasFail) break;
+                                            if (!localTestFail) break;
                                         }
                                         if (localTestFail) {
                                             hasFail = true;

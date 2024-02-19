@@ -76,9 +76,9 @@ TEST_CASE("until_tests, predicate_manager") {
         std::ifstream if_{file};
         env.load_log(HUMAN_READABLE_YAUCL, true, file.string(), false, if_);
     }
-    auto a = env.db.timed_dataless_exists("A", ActivationLeaf);
-    auto b = env.db.timed_dataless_exists("B", TargetLeaf);
-    PredicateManager pm{{{{"x", "y", LT}}}, &env.db};
+    auto a = env.db.timed_dataless_exists("A", TargetLeaf);
+    auto b = env.db.timed_dataless_exists("B", ActivationLeaf);
+    PredicateManager pm{{{{"y", "x", GT}}}, &env.db};
     std::set<uint32_t> expectedTraces{1,3,5,7,13};
     auto result = until(a, b, env.db.act_table_by_act_id.getTraceLengths(), &pm);
     for (const auto& ref : result)
@@ -92,14 +92,18 @@ TEST_CASE("until_tests, logic_pm") {
         std::ifstream if_{file};
         env.load_log(HUMAN_READABLE_YAUCL, true, file.string(), false, if_);
     }
-    auto a = env.db.timed_dataless_exists("A", ActivationLeaf);
-    auto b = env.db.timed_dataless_exists("B", TargetLeaf);
-    PredicateManager pm{{{{"x", "y", LT}}}, &env.db};
+    auto a = env.db.timed_dataless_exists("A", TargetLeaf);
+    auto b = env.db.timed_dataless_exists("B", ActivationLeaf);
+    PredicateManager pm{{{{"y","x",  GT}}}, &env.db};
     std::set<uint32_t> expectedTraces{1,3,5,7,13};
+    std::set<uint32_t> returnedTraces;
     Result result;
     until_logic_untimed(a, b, result, &pm, env.db.act_table_by_act_id.trace_length);
     for (const auto& ref : result)
         EXPECT_TRUE(expectedTraces.contains(ref.first.first));
+    for (const auto& ref : result)
+        returnedTraces.insert(ref.first.first);
+    EXPECT_EQ(returnedTraces, expectedTraces);
 }
 
 TEST_CASE("until_tests, fast_pm") {
@@ -109,9 +113,9 @@ TEST_CASE("until_tests, fast_pm") {
         std::ifstream if_{file};
         env.load_log(HUMAN_READABLE_YAUCL, true, file.string(), false, if_);
     }
-    auto a = env.db.timed_dataless_exists("A", ActivationLeaf);
-    auto b = env.db.timed_dataless_exists("B", TargetLeaf);
-    PredicateManager pm{{{{"x", "y", LT}}}, &env.db};
+    auto a = env.db.timed_dataless_exists("A", TargetLeaf);
+    auto b = env.db.timed_dataless_exists("B", ActivationLeaf);
+    PredicateManager pm{{{{"y", "x", GT}}}, &env.db};
     Result result, result2;
     until_fast_untimed(a, b, result, &pm, env.db.act_table_by_act_id.trace_length);
     until_logic_untimed(a, b, result2, &pm, env.db.act_table_by_act_id.trace_length);

@@ -82,31 +82,61 @@ const std::string& envName,
             bool isMatch = IS_MARKED_EVENT_MATCH(ev) && (hasActivations && hasTargets);
             if ((IS_MARKED_EVENT_ACTIVATION(ev) && hasActivations) || isMatch) {
                 match.second = GET_ACTIVATION_EVENT(ev);
-                if (e->db.act_table_by_act_id.table.at(thisRef.at(match.second)).entry.id.parts.act == leftAct) {
-//                    auto tmp = e->GetPayloadDataFromEvent(match, toIgnore);
-                    activations.emplace_back(/*tmp, clazz*/ ForResultReference{true, envName, match.first, match.second}, clazz);
-                    if (isMatch) {
-                        ref.result[0] = match;
+                auto it = thisRef.at(match.second).find(leftAct);
+                if (it != thisRef.at(match.second).end()) {
+                    for (size_t id : it->second) {
+                        DEBUG_ASSERT(e->db.act_table_by_act_id.table.at(id).entry.id.parts.act == leftAct);
+                        activations.emplace_back(/*tmp, clazz*/ ForResultReference{true, envName, match.first, match.second}, clazz);
+                        if (isMatch) {
+                            ref.result[0] = match;
 //                        envM.clear();
 //                        for (const auto&[k,v] : tmp)
 //                            envM["A."+k] = v;
-                    } else
-                        act_targ[0].emplace_back( GET_ACTIVATION_EVENT(ev));
+                        } else
+                            act_targ[0].emplace_back( GET_ACTIVATION_EVENT(ev));
+                    }
+//                    if (e->db.act_table_by_act_id.table.at(thisRef.at(match.second)).entry.id.parts.act == leftAct) {
+////                    auto tmp = e->GetPayloadDataFromEvent(match, toIgnore);
+//                        activations.emplace_back(/*tmp, clazz*/ ForResultReference{true, envName, match.first, match.second}, clazz);
+//                        if (isMatch) {
+//                            ref.result[0] = match;
+////                        envM.clear();
+////                        for (const auto&[k,v] : tmp)
+////                            envM["A."+k] = v;
+//                        } else
+//                            act_targ[0].emplace_back( GET_ACTIVATION_EVENT(ev));
+//                    }
                 }
+
+
             }
             if ((IS_MARKED_EVENT_TARGET(ev) && hasTargets) || isMatch) {
                 match.second = GET_TARGET_EVENT(ev);
-                if (e->db.act_table_by_act_id.table.at(thisRef.at(match.second)).entry.id.parts.act == rightAct) {
-//                    auto tmp = e->GetPayloadDataFromEvent(match, toIgnore);
-                    targets.emplace_back(/*tmp, clazz*/ ForResultReference{true, envName, match.first, match.second}, clazz);
-                    if (isMatch) {
-                        ref.result[1] = match;
+                auto it = thisRef.at(match.second).find(rightAct);
+                if (it != thisRef.at(match.second).end()) {
+                    for (size_t id : it->second) {
+                        DEBUG_ASSERT(e->db.act_table_by_act_id.table.at(id).entry.id.parts.act == rightAct);
+                        targets.emplace_back(/*tmp, clazz*/ ForResultReference{true, envName, match.first, match.second}, clazz);
+                        if (isMatch) {
+                            ref.result[1] = match;
 //                        for (const auto&[k,v] : tmp)
 //                            envM["T."+k] = v;
-                        correlations.emplace_back(/*envM*/ ref, clazz);
-                    } else
-                        act_targ[1].emplace_back( GET_TARGET_EVENT(ev));
+                            correlations.emplace_back(/*envM*/ ref, clazz);
+                        } else
+                            act_targ[1].emplace_back( GET_TARGET_EVENT(ev));
+                    }
                 }
+//                if (e->db.act_table_by_act_id.table.at(thisRef.at(match.second)).entry.id.parts.act == rightAct) {
+////                    auto tmp = e->GetPayloadDataFromEvent(match, toIgnore);
+//                    targets.emplace_back(/*tmp, clazz*/ ForResultReference{true, envName, match.first, match.second}, clazz);
+//                    if (isMatch) {
+//                        ref.result[1] = match;
+////                        for (const auto&[k,v] : tmp)
+////                            envM["T."+k] = v;
+//                        correlations.emplace_back(/*envM*/ ref, clazz);
+//                    } else
+//                        act_targ[1].emplace_back( GET_TARGET_EVENT(ev));
+//                }
             }
         }
         if ((!act_targ.at(0).empty()) && (!act_targ.at(1).empty())) {

@@ -1935,13 +1935,13 @@ void MAXSatPipeline::hybrid_query_running(const std::vector<PartialResult>& resu
         PARALLELIZE_LOOP_BEGIN(pool, schedulingType ,blocks,it->second,[](auto& x ){return 1;})
 //        PARALLELIZE_LOOP_BEGIN(pool, 0, it->second.size(), lb, ub)
 //        for (size_t j = lb; j < ub; j++) {
-                            auto formula = it->second.at(i);
-                            for (auto ptr : formula->args) {
-                                // Preserving the cache only if I need it for computing the Support
-                                if (ptr->parentMin == idx && (((final_ensemble != PerDeclareSupport) || (ptr->isLeaf != ActivationLeaf)))) {
-                                    ptr->result.clear(); ptr->result.shrink_to_fit();
-                                }
-                            }
+//                            auto formula = it->second.at(i);
+//                            for (auto ptr : formula->args) {
+//                                // Preserving the cache only if I need it for computing the Support
+//                                if (ptr->parentMin == idx && (((final_ensemble != PerDeclareSupport) || (ptr->isLeaf != ActivationLeaf)))) {
+//                                    ptr->result.clear(); ptr->result.shrink_to_fit();
+//                                }
+//                            }
 //        }
                 PARALLELIZE_LOOP_END
 #endif

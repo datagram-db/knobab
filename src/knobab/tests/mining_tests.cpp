@@ -515,8 +515,6 @@ TEST_CASE("mining_tests: chain_precedence_mirror") {
     to_find.restrictive_confidence_plus_declarative_pattern = 1.0;
 
     ASSERT_TRUE(std::find(values.first.begin(), values.first.end(), to_find) != values.first.end());
-
     std::swap(to_find.clause.left, to_find.clause.right);
-
     ASSERT_TRUE(std::find(values.first.begin(), values.first.end(), to_find) != values.first.end());
 }

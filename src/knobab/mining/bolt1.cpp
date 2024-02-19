@@ -159,16 +159,17 @@ static inline DeclareDataAware &getAware(const KnowledgeBase &kb,
             auto a_beginend = kb.timed_dataless_exists(A);
             DEBUG_ASSERT(a_beginend.first != a_beginend.second);
             while (a_beginend.first != a_beginend.second) {
+
                 if (!isTraceVisitedU.at(a_beginend.first->entry.id.parts.trace_id)) {
                     if (alles_prev && (a_beginend.first->prev == nullptr ||
-                                       (a_beginend.first->prev->entry.id.parts.act != B))) {
+                                       (a_beginend.first->prev->find(B) == a_beginend.first->prev->end()))) {
                         alles_not_prev++;
                         if ((ntraces - alles_not_prev) < expected_support) {
                             alles_prev = false;
                         }
                     }
                     if (alles_next && (a_beginend.first->next == nullptr ||
-                                       (a_beginend.first->next->entry.id.parts.act != B))) {
+                                       (a_beginend.first->next->find(B) == a_beginend.first->next->end()))) {
                         alles_not_next++;
                         if ((ntraces - alles_not_next) < expected_support) {
                             alles_next = false;
@@ -858,10 +859,19 @@ std::pair<std::vector<pattern_mining_result<DeclareDataAware>>, double> pattern_
         // secondary index of the knowledge base
         std::vector<size_t> first(max_act_id, 0), last(max_act_id, 0);
         for (size_t trace_id = 0; trace_id < log_size; trace_id++) {
-            auto first_last = kb.act_table_by_act_id.secondary_index.at(trace_id);
-            first[first_last.first->entry.id.parts.act]++;
-            last[first_last.second->entry.id.parts.act]++;
+            const auto& first_last =kb.act_table_by_act_id.secondary_index.at(trace_id);
+            for (auto it = first_last.first->begin(), en = first_last.first->end(); it!=en; it++) {
+                first[it->first]++;
+            }
+            for (auto it = first_last.second->begin(), en = first_last.second->end(); it!=en; it++) {
+                last[it->first]++;
+            }
         }
+//        for (size_t trace_id = 0; trace_id < log_size; trace_id++) {
+//            auto first_last = kb.act_table_by_act_id.secondary_index.at(trace_id);
+//            first[first_last.first->entry.id.parts.act]++;
+//            last[first_last.second->entry.id.parts.act]++;
+//        }
         for (size_t act_id = 0; act_id < max_act_id; act_id++) {
             DeclareDataAware clause;
             clause.n = 1;
