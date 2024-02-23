@@ -76,4 +76,36 @@ TEST_CASE("mining_tests: exists_absence") {
     to_find_1.restrictive_confidence_plus_declarative_pattern = 1.0;
 
     ASSERT_TRUE(std::find(values.first.begin(), values.first.end(), to_find) != values.first.end());
+    ASSERT_TRUE(std::find(values.first.begin(), values.first.end(), to_find_1) != values.first.end());
+}
+
+
+TEST_CASE("mining_tests: init") {
+    std::pair<std::vector<pattern_mining_result<FastDatalessClause>>,std::vector<pattern_mining_result<FastDatalessClause>>> values =
+            load_and_return_polyadic(folder / "init.tab");
+
+    pattern_mining_result<FastDatalessClause> to_find;
+    to_find.clause.casusu = "Init";
+    to_find.clause.left = "a";
+    to_find.clause.n = 1;
+    to_find.support_generating_original_pattern = 1.0;
+    to_find.support_declarative_pattern = 1.0;
+    to_find.restrictive_confidence_plus_declarative_pattern = 1.0;
+
+    ASSERT_TRUE(std::find(values.first.begin(), values.first.end(), to_find) != values.first.end());
+}
+
+TEST_CASE("mining_tests: end") {
+    std::pair<std::vector<pattern_mining_result<FastDatalessClause>>,std::vector<pattern_mining_result<FastDatalessClause>>> values =
+            load_and_return_polyadic(folder / "end.tab");
+
+    pattern_mining_result<FastDatalessClause> to_find;
+    to_find.clause.casusu = "End";
+    to_find.clause.left = "a";
+    to_find.clause.n = 1;
+    to_find.support_generating_original_pattern = 1.0;
+    to_find.support_declarative_pattern = 1.0;
+    to_find.restrictive_confidence_plus_declarative_pattern = 1.0;
+
+    ASSERT_TRUE(std::find(values.first.begin(), values.first.end(), to_find) != values.first.end());
 }
