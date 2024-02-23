@@ -153,6 +153,7 @@ TEST_CASE("mining_tests: exists_absence") {
     to_find_1.restrictive_confidence_plus_declarative_pattern = 1.0;
 
     ASSERT_TRUE(std::find(values.first.begin(), values.first.end(), to_find) != values.first.end());
+    ASSERT_TRUE(std::find(values.first.begin(), values.first.end(), to_find_1) != values.first.end());
 }
 
 TEST_CASE("mining_tests: init") {

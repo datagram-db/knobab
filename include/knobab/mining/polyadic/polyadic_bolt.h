@@ -299,6 +299,7 @@ struct polyadic_bolt {
 //        std::sort(ChoiceFilter.begin(), ChoiceFilter.end());
         remove_index(frequent_itemset_mining, indices_to_remove);
 
+        clause.n = 1;
         for (auto act_id = 0; act_id<max_act_id; act_id++) {
             for (size_t trace_id = 0; trace_id < log_size; trace_id++) {
                 event_t count = count_table->resolve_length(act_id, trace_id);
