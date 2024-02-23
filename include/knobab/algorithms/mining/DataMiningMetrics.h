@@ -24,6 +24,8 @@
 struct DataMiningMetrics {
 
     std::vector<std::vector<trace_t>> act_to_traces;
+    std::unordered_map<std::vector<act_t>, size_t> compute_and;
+    std::unordered_map<std::vector<act_t>, size_t> compute_or;
 //    std::map<std::vector<T>, unsigned long, LexicographicalOrder<std::vector<T>, T>> f;///<  Storing the item-support information from the FPGrowth algorithm
     double sumAll = 0.0;                                         ///<  Sum of all the supports for |T|
 
@@ -33,6 +35,22 @@ struct DataMiningMetrics {
      */
     DataMiningMetrics(const CountTemplate& S) : sumAll{(double)S.nTraces()}, act_to_traces(S.nAct()) {
         for (const auto& ref : S.table) {
+            if (ref.id.parts.event_id > 0)
+                act_to_traces[ref.id.parts.act].emplace_back(ref.id.parts.trace_id);
+        }
+    }
+    DEFAULT_CONSTRUCTORS(DataMiningMetrics)
+    void clear() {
+        act_to_traces.clear();
+        compute_and.clear();
+        compute_or.clear();
+        sumAll = 0.0;
+    }
+    void reset(const CountTemplate* S) {
+        clear();
+        sumAll = (double ) S->nTraces();
+        act_to_traces.resize(S->nAct());
+        for (const auto& ref : S->table) {
             if (ref.id.parts.event_id > 0)
                 act_to_traces[ref.id.parts.act].emplace_back(ref.id.parts.trace_id);
         }
@@ -70,8 +88,7 @@ struct DataMiningMetrics {
         return res;
     }
 
-    std::unordered_map<std::vector<act_t>, size_t> compute_and;
-    std::unordered_map<std::vector<act_t>, size_t> compute_or;
+
     size_t and_(const std::vector<act_t>& i)  {
         if (i.empty())
             return sumAll;
@@ -136,6 +153,15 @@ struct DataMiningMetrics {
             return ((double)and_(unione)+(sumAll-and_(r.head))) / sumAll;
     }
 
+    size_t decl_int_support(const Rule<act_t>& r) {
+        std::vector<act_t> unione;
+        for (const auto& x: r.head) unione.emplace_back(x);
+        for (const auto& x: r.tail) unione.emplace_back(x);
+        std::sort(unione.begin(), unione.end());
+        unione.erase(std::unique(unione.begin(), unione.end()), unione.end());
+        return and_(unione)+(sumAll-and_(r.head));
+    }
+
     double decl_coex_support(act_t a, act_t b, trace_t max_trace_id) {
         std::vector<act_t> unione{{a,b}};
         auto not_a = negate_presence(a, max_trace_id);
@@ -146,6 +172,16 @@ struct DataMiningMetrics {
         return ((double)and_(unione)+res.size())/ ((double)sumAll);
     }
 
+    size_t decl_coex_int_support(act_t a, act_t b, trace_t max_trace_id) {
+        std::vector<act_t> unione{{a,b}};
+        auto not_a = negate_presence(a, max_trace_id);
+        const std::vector<trace_t>& orig = act_to_traces.at(b);
+        std::vector<trace_t> res;
+        std::set_difference(not_a.begin(), not_a.end(), orig.begin(), orig.end(),
+                            std::back_inserter(res));
+        return (and_(unione)+res.size());
+    }
+
     double decl_coex_conf(act_t a, act_t b) {
         std::vector<act_t> unione{{a,b}};
         double above = and_(unione);
@@ -153,7 +189,7 @@ struct DataMiningMetrics {
         return ((double)and_(unione))/ ((double)or_(unione));
     }
 
-    std::unordered_map<Rule<act_t>, double> score_conf;
+//    std::unordered_map<Rule<act_t>, double> score_conf;
 
     /**
      * Rule confidence

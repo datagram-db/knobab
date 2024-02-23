@@ -205,7 +205,7 @@ add_executable(knobab2-edbt24-benchmarking benchmarking/edbt24.cpp)
 target_link_libraries(knobab2-edbt24-benchmarking Threads::Threads antlr4_shared yaucl_hashing yaucl_bpm yaucl_structures
         yaucl_numeric yaucl_data yaucl_graph  yaucl_data yaucl_bpm knobab  knobab_ndp)
 
-add_executable(knobab_json new_pipeline.cpp src/knobab/dataStructures/polyadic/myParser.cpp include/knobab/server/dataStructures/polyadic/myParser.h include/knobab/server/dataStructures/polyadic.h src/knobab/algorithms/polyadic/polyadic_loading.cpp include/knobab/algorithms/polyadic/polyadic_loading.h)
+add_executable(knobab_json new_pipeline.cpp src/knobab/dataStructures/polyadic/myParser.cpp include/knobab/server/dataStructures/polyadic/myParser.h include/knobab/server/dataStructures/polyadic.h src/knobab/algorithms/polyadic/polyadic_loading.cpp include/knobab/algorithms/polyadic/polyadic_loading.h src/knobab/mining/polyadic/polyadic_bolt.cpp include/knobab/mining/polyadic/polyadic_bolt.h include/knobab/mining/polyadic/lattice.h)
 target_link_libraries(knobab_json Threads::Threads antlr4_static yaucl_hashing yaucl_bpm yaucl_structures
         yaucl_numeric yaucl_data yaucl_graph  yaucl_data yaucl_bpm knobab  knobab_ndp   yaucl_learning  )
 

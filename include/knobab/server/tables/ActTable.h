@@ -82,6 +82,7 @@ private:
     };
 
     table_builder builder;
+    std::vector<std::vector<std::unordered_map<act_t, std::vector<size_t>>>> trace_id_to_endTimeId_to_offset;
 
 public:
     const std::vector<size_t>& getTraceLengths() const {

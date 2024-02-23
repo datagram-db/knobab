@@ -562,7 +562,7 @@ Bolt2Branching(const KnowledgeBase &kb, bool only_precise_temporal_patterns,
         const double cp_restr = ((double) cp_satisfied_not_vacuous) / ((double) ntraces);
         clause.support_declarative_pattern = cp_sup;
         clause.restrictive_confidence_plus_declarative_pattern = cp_conf;
-        clause.restrictive_support_declarative_pattern = cp_restr;
+//        clause.restrictive_support_declarative_pattern = cp_restr;
 
         if (alles_surround) {
             const uint32_t sr_satisfied = (ntraces - alles_not_surround);
@@ -577,7 +577,7 @@ Bolt2Branching(const KnowledgeBase &kb, bool only_precise_temporal_patterns,
                 const double sr_restr =  ((double) sr_satisfied_not_vacuous) / ((double) ntraces);
                 clause.support_declarative_pattern = sr_sup;
                 clause.restrictive_confidence_plus_declarative_pattern = sr_conf;
-                clause.restrictive_support_declarative_pattern = sr_restr;
+//                clause.restrictive_support_declarative_pattern = sr_restr;
                 clauses.emplace_back(clause);
                 isSurroundIn = true;
             }
@@ -585,7 +585,7 @@ Bolt2Branching(const KnowledgeBase &kb, bool only_precise_temporal_patterns,
         if(!right_branch && !left_branch && !isSurroundIn) {
             clause.support_declarative_pattern = cp_sup;
             clause.restrictive_confidence_plus_declarative_pattern = cp_conf;
-            clause.restrictive_support_declarative_pattern = cp_restr;
+//            clause.restrictive_support_declarative_pattern = cp_restr;
             clauses.emplace_back(clause);
         } else if (left_branch) {
                 /* If we are on the left branch, there may be a ChainSuccession only detectable on the other
@@ -605,7 +605,7 @@ Bolt2Branching(const KnowledgeBase &kb, bool only_precise_temporal_patterns,
                 const double cs_ab_restr = ((double) cs_ab_satisfied_not_vacuous) / ((double) ntraces);
                 clause.support_declarative_pattern = cs_ab_sup;
                 clause.restrictive_confidence_plus_declarative_pattern = cs_ab_conf;
-                clause.restrictive_support_declarative_pattern = cs_ab_restr;
+//                clause.restrictive_support_declarative_pattern = cs_ab_restr;
                 auto& ref = clauses.emplace_back(clause);
                 std::swap(ref.clause.left, ref.clause.right);
             }
@@ -616,7 +616,7 @@ Bolt2Branching(const KnowledgeBase &kb, bool only_precise_temporal_patterns,
                     // Enforcing this, as you might have changed the clause name to Surround!
                     clause.support_declarative_pattern = cp_sup;
                     clause.restrictive_confidence_plus_declarative_pattern = cp_conf;
-                    clause.restrictive_support_declarative_pattern = cp_restr;
+//                    clause.restrictive_support_declarative_pattern = cp_restr;
                     clauses.emplace_back(clause);
                 }
 
@@ -684,7 +684,7 @@ Bolt2Branching(const KnowledgeBase &kb, bool only_precise_temporal_patterns,
                         const double cs_ba_restr = ((double) cs_ba_satisfied_not_vacuous) / ((double) ntraces);
                         clause.support_declarative_pattern = cs_ba_sup;
                         clause.restrictive_confidence_plus_declarative_pattern = cs_ba_conf;
-                        clause.restrictive_support_declarative_pattern = cs_ba_restr;
+//                        clause.restrictive_support_declarative_pattern = cs_ba_restr;
                         clauses.emplace_back(clause.clause,
                                              candidate.support_generating_original_pattern,
                                              cs_ba_sup,
@@ -722,7 +722,7 @@ Bolt2Branching(const KnowledgeBase &kb, bool only_precise_temporal_patterns,
                 double r_restr = ((double) r_satisfied_not_vacuous) / ((double) ntraces);
                 clause.support_declarative_pattern = r_sup;
                 clause.restrictive_confidence_plus_declarative_pattern = r_conf;
-                clause.restrictive_support_declarative_pattern = r_restr;
+//                clause.restrictive_support_declarative_pattern = r_restr;
                 if(!right_branch && !left_branch) {
                     clauses.emplace_back(clause);
                 } else if (left_branch) {
@@ -741,7 +741,7 @@ Bolt2Branching(const KnowledgeBase &kb, bool only_precise_temporal_patterns,
                         const double s_ba_restr =  ((double) s_ba_satisfied_not_vacuous) / ((double) ntraces);
                         clause.support_declarative_pattern = s_ba_sup;
                         clause.restrictive_confidence_plus_declarative_pattern = s_ba_conf;
-                        clause.restrictive_support_declarative_pattern = s_ba_restr;
+//                        clause.restrictive_support_declarative_pattern = s_ba_restr;
                         clauses.emplace_back(clause);
                     }
                     else {
@@ -752,7 +752,7 @@ Bolt2Branching(const KnowledgeBase &kb, bool only_precise_temporal_patterns,
                             clause.clause.casusu = "Precedence";
                             clause.support_declarative_pattern = std::get<0>(data.p_lb_sup_conf);
                             clause.restrictive_confidence_plus_declarative_pattern = std::get<1>(data.p_lb_sup_conf);
-                            clause.restrictive_support_declarative_pattern = std::get<2>(data.p_lb_sup_conf);
+//                            clause.restrictive_support_declarative_pattern = std::get<2>(data.p_lb_sup_conf);
                             clauses.emplace_back(clause);
                         }
                     }
@@ -768,7 +768,7 @@ Bolt2Branching(const KnowledgeBase &kb, bool only_precise_temporal_patterns,
             const double p_restr = ((double) p_satisfied_not_vacuous) / ((double) ntraces);
             clause.support_declarative_pattern = p_sup;
             clause.restrictive_confidence_plus_declarative_pattern = p_conf;
-            clause.restrictive_support_declarative_pattern = p_restr;
+//            clause.restrictive_support_declarative_pattern = p_restr;
             if(!right_branch && !left_branch) {
                 clauses.emplace_back(clause);
             } else if (left_branch) {
@@ -787,7 +787,7 @@ Bolt2Branching(const KnowledgeBase &kb, bool only_precise_temporal_patterns,
                     const double s_ab_restr =  ((double) s_ab_satisfied_not_vacuous) / ((double) ntraces);
                     clause.support_declarative_pattern = s_ab_sup;
                     clause.restrictive_confidence_plus_declarative_pattern = s_ab_conf;
-                    clause.restrictive_support_declarative_pattern = s_ab_restr;
+//                    clause.restrictive_support_declarative_pattern = s_ab_restr;
                     clauses.emplace_back(clause);
                 }
                 else {
@@ -814,74 +814,9 @@ Bolt2Branching(const KnowledgeBase &kb, bool only_precise_temporal_patterns,
 #include <yaucl/hashing/uset_hash.h>
 #include <roaring.hh>
 
-struct retain_choice {
-    //roaring::Roaring map;
-    std::map<double, std::unordered_set<pattern_mining_result<FastDatalessClause>>> maps;
-};
 
 
-static inline bool
-choice_exclchoice(act_t a, act_t b,
-                                     size_t log_size,
-                                     uint64_t minimum_support_threshold,
-                                     const KnowledgeBase& kb,
-                                     std::vector<std::vector<trace_t>>& inv_map,
-                                     std::unordered_map<act_t, retain_choice>& map_for_retain,
-                                     std::unordered_map<std::unordered_set<act_t>, uint64_t>& mapper) {
-    const std::unordered_set<act_t> lS{a,b};
-//    curr_pair.second = inv_pair.first = b;
-//    if (unary && ((!visited_pairs.emplace(curr_pair).second) ||
-//        (!visited_pairs.emplace(inv_pair).second))) return false;
-    const auto& aSet = inv_map.at(a);
-    const auto& bSet = inv_map.at(b);
-    std::pair<size_t, size_t> ratio = yaucl::iterators::ratio(aSet.begin(), aSet.end(), bSet.begin(), bSet.end());
-    double local_support = ((double)(ratio.first)) / ((double)log_size);
-    static FastDatalessClause clause;
 
-//    clause.right_act_id = b;
-
-    if (ratio.first >= minimum_support_threshold) {
-//        static pattern_mining_result<FastDatalessClause> c(clause,  0.0, local_support, local_support, local_support);
-
-        if (a>b) {
-            std::swap(a,b);
-//        std::swap(clause.left_act_id, clause.right_act_id);
-        }
-        clause.left = kb.event_label_mapper.get(a);
-//    clause.left_act_id = a;
-        clause.right = kb.event_label_mapper.get(b);
-//        c.confidence_declarative_pattern = c.support_declarative_pattern = c.restrictive_support_declarative_pattern = local_support;
-        clause.n = 1;
-
-        // I can consider this pattern, again, only if it is within the expected
-        // support rate which, in this case, is given by the amount of traces
-        // globally setting up this pattern
-        auto it = mapper.find(lS);
-        if (ratio.second == 0) {
-            // If there is no intersection, I can also be more strict if I want,
-            // and provide an exclusive choice pattern if I am confident that
-            // the two events will never appear in the same trace (according to
-            // the "training" data
-            clause.casusu = "ExclChoice";
-        } else {
-            clause.casusu = "Choice";
-        }
-        auto& refA = map_for_retain[a];
-//        auto& refB = map_for_retain[b];
-//        refA.map.add(b);
-//        refB.map.add(a);
-        /*if (it != mapper.end())
-            c.support_generating_original_pattern =  ((double)it->second)/((double)log_size);
-        else
-            c.support_generating_original_pattern = 0;*/
-//        std::cout << c << std::endl;
-        refA.maps[local_support].emplace(clause, (it != mapper.end())?((double)it->second)/((double)log_size):0.0, local_support, local_support, local_support);
-//        refB.maps[local_support].emplace(c);
-        return true;
-    }
-
-    return false;
-}
 
 /** Pattern mining **/
 std::pair<std::vector<pattern_mining_result<FastDatalessClause>>, double> bolt2(const KnowledgeBase& kb,
@@ -903,13 +838,13 @@ std::pair<std::vector<pattern_mining_result<FastDatalessClause>>, double> bolt2(
 #ifndef ORIGINAL
     GetAwareData data(log_size);
 #endif
-    std::unordered_set<act_t> absent_acts;
+//    std::unordered_set<act_t> absent_acts;
     const auto& count_table = kb.getCountTable();
 //    std::cout << count_table << std::endl;
     uint64_t minimum_support_threshold = std::min((uint64_t)std::ceil((double)log_size * support), log_size);
     auto max_act_id = (act_t)kb.nAct();
     std::vector<size_t> count_beginnings(max_act_id, 0);
-    std::unordered_set<std::pair<act_t, act_t>> visited_pairs;
+//    std::unordered_set<std::pair<act_t, act_t>> visited_pairs;
     // This is not directly mined via the frequent mining algorithm but,
     // still, if needed, this can be obtained via an easy linear scan of the
     // secondary index of the knowledge base
@@ -942,7 +877,7 @@ std::pair<std::vector<pattern_mining_result<FastDatalessClause>>, double> bolt2(
     std::unordered_set<Pattern> binary_patterns;
     std::unordered_map<std::unordered_set<act_t>, uint64_t> map_for_itemset_support_score;
     for (const auto& x : fpt_result) {
-        for (const auto& y : x.second) absent_acts.erase(y);
+//        for (const auto& y : x.second) absent_acts.erase(y);
         if (x.second.size() == 1) {
             auto it = *x.second.begin();
             if (x.first == kb.nTraces()) {
@@ -996,7 +931,7 @@ std::pair<std::vector<pattern_mining_result<FastDatalessClause>>, double> bolt2(
 
     clause.n = 1;
     for (auto act_id = 0; act_id<max_act_id; act_id++) {
-        absent_acts.insert(act_id);
+//        absent_acts.insert(act_id);
         for (size_t trace_id = 0; trace_id < log_size; trace_id++) {
             event_t count = count_table.resolve_length(act_id, trace_id);
             if (count > 0) {
@@ -1058,9 +993,9 @@ std::pair<std::vector<pattern_mining_result<FastDatalessClause>>, double> bolt2(
         std::cout << "   conf: " << lr_conf << " conf: " << rl_conf << std::endl;
         std::cout << "   lift: " << counter.lift(lr) << " lift: " << counter.lift(rl) << std::endl;
 #endif
-        candidate_rule.restrictive_support_declarative_pattern
-            = candidate_rule.support_generating_original_pattern
-            = ((double) pattern.second) / ((double) log_size); //double supportGeneratingOriginalPattern,
+//        candidate_rule.restrictive_support_declarative_pattern
+//            = candidate_rule.support_generating_original_pattern
+//            = ((double) pattern.second) / ((double) log_size); //double supportGeneratingOriginalPattern,
         if ((lr_conf == rl_conf) && (lr_conf >= support)) {
             candidate_rule.clause.new_head(pattern.first);
             // Observe! To engage with a correct search, I am doing this instead...
@@ -1207,8 +1142,8 @@ std::pair<std::vector<pattern_mining_result<FastDatalessClause>>, double> bolt2(
                     if (clause.clause.casusu == "CoExistence") {
                         candidate_rule.support_declarative_pattern = counter.decl_coex_support(A, B, log_size);
                         candidate_rule.restrictive_confidence_plus_declarative_pattern =
-                        candidate_rule.restrictive_support_declarative_pattern
-                                = counter.decl_coex_conf(A, B);
+//                        candidate_rule.restrictive_support_declarative_pattern
+                                 counter.decl_coex_conf(A, B);
                     }
 #ifndef CORRECT_IMPLEMENTATION
                     if ((clause.clause.casusu == "RespExistence") || (clause.clause.casusu == "CoExistence"))
@@ -1217,7 +1152,7 @@ std::pair<std::vector<pattern_mining_result<FastDatalessClause>>, double> bolt2(
                                                          candidate_rule.support_generating_original_pattern,
                                                          candidate_rule.support_declarative_pattern,
                                                          candidate_rule.restrictive_confidence_plus_declarative_pattern,
-                                                         candidate_rule.restrictive_support_declarative_pattern);
+                                                         0/*candidate_rule.restrictive_support_declarative_pattern*/);
                     else
                         // Otherwise, this is something that was cached in one of the undergoing calls
 #endif

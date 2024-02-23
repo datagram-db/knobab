@@ -63,6 +63,7 @@ void ActTable::load_record(trace_t id, act_t act, event_t time, event_t span) {
             {
                 secondary_index_polyadic.emplace_back();
                 builder.trace_id_to_event_id_to_offset.emplace_back();
+                trace_id_to_endTimeId_to_offset.emplace_back();
                 trace_length.push_back(1);
             }
         } else {
@@ -75,6 +76,7 @@ void ActTable::load_record(trace_t id, act_t act, event_t time, event_t span) {
         }
         if (time == builder.trace_id_to_event_id_to_offset[id].size()) {
             builder.trace_id_to_event_id_to_offset[id].emplace_back();
+            trace_id_to_endTimeId_to_offset[id].emplace_back();
             secondary_index_polyadic[id].emplace_back();
         }
     }
@@ -98,9 +100,11 @@ const std::vector<std::vector<std::unordered_map<act_t, std::vector<size_t>>>> &
         for (const std::tuple<trace_t, event_t, event_t>& cp : ref) {
             table.emplace_back(k,
                                std::get<0>(cp),
-                               std::get<1>(cp),//cast_to_float(cp.second, trace_length.at(cp.first) - 1),
+                               std::get<1>(cp),
                                std::get<2>(cp));
-            builder.trace_id_to_event_id_to_offset[std::get<0>(cp)][std::get<1>(cp)][k].emplace_back(offset++);
+            builder.trace_id_to_event_id_to_offset[std::get<0>(cp)][std::get<1>(cp)][k].emplace_back(offset);
+            trace_id_to_endTimeId_to_offset[std::get<0>(cp)][std::get<1>(cp)+std::get<2>(cp)-1][k].emplace_back(offset);
+            offset++;
         }
         ref.clear(); // freeing some memory
     }

@@ -55,13 +55,13 @@ const std::string query_plan_novel = "queryplan \"edbt24\" {\n"
                                "     template \"Absence1\"               := ABSENCE 1 activation\n"
                                "     template \"Absence2\"               := ABSENCE 2 activation\n"
                                "     template \"Precedence\" args 2      := ((EXISTS  ~ 1 t #2) U (EXISTS 1 t #1 activation)) OR (ABSENCE 1 #2)\n"
-                               "     template \"ChainPrecedence\" args 2 := G (((LAST OR t (NEXT EXISTS ~ 1 t #1))) OR t ((EXISTS 1 t #1 activation) XB THETA INV #2 target ))\n"
+                               "     template \"ChainPrecedence\" args 2 := G (((LAST OR t (NEXT EXISTS ~ 1 t #1))) OR t ((EXISTS 1 t #1 activation) XB THETA #2 target ))\n"
                                "     template \"Choice\" args 2          := (EXISTS 1 t #1 activation) OR THETA (EXISTS 1 t #2 activation)\n"
                                "     template \"Response\" args 2        := G ( ((EXISTS ~ 1 t #1)) OR t ((EXISTS 1 t #1 activation) &Ft THETA (EXISTS 1 t #2 target)) )\n"
                                "     template \"ChainResponse\" args 2   := G ( ((EXISTS ~ 1 t #1)) OR t ((EXISTS 1 t #1 activation) BX THETA  #2 target))\n"
                                "     template \"RespExistence\" args 2   := ( ((ABSENCE 1 #1)) OR ((EXISTS 1 #1 activation) AND THETA (EXISTS 1 #2 target)))\n"
                                "     template \"ExclChoice\" args 2       := ((EXISTS 1 t #1 activation) OR THETA (EXISTS 1 t #2 activation)) AND ((ABSENCE 1 #1) OR (ABSENCE 1 #2))\n"
-                               "     template \"CoExistence\" args 2     := ( ((ABSENCE 1 #1)) OR ((EXISTS 1 #1 activation) AND THETA (EXISTS 1 #2 target))) AND ( ((ABSENCE 1 #2)) OR ((EXISTS 1 #2 activation) AND THETA INV (EXISTS 1 #1 target)))\n"
+                               "     template \"CoExistence\" args 2     := ( ((ABSENCE 1 #1)) OR ((EXISTS 1 #1 activation) AND THETA (EXISTS 1 #2 target))) AND ( ((ABSENCE 1 #2)) OR ((EXISTS 1 #2 activation) AND THETA (EXISTS 1 #1 target)))\n"
                                "     template \"NotCoExistence\" args 2  := ~ ((EXISTS 1 t #1 activation) AND THETA (EXISTS 1 t #2 target)) PRESERVE\n"
                                "\n"
                                "     template \"Succession\" args 2      := (G ( ((EXISTS ~ 1 t #1)) OR t ((EXISTS 1 t #1 activation) &Ft THETA (EXISTS 1 t #2 target)) )) AND (((EXISTS  ~ 1 t #2) U (EXISTS 1 t #1 target)) OR (ABSENCE 1 #2))\n"
@@ -355,8 +355,6 @@ TEST_CASE("novelChainPrecedenceHybrid") {
 //    f << base<< " "<<operators <<" : " << js["model_ltlf_query_time"].get<double>() << std::endl;
     for (size_t i = 0; i<max_sat_per_trace.size(); i++) {
         if (i<pos) {
-            if (max_sat_per_trace.at(i)!= 1.0)
-                std::cerr << "HERE" << std::endl;
             ASSERT_TRUE(max_sat_per_trace.at(i)== 1.0);
         }
         else {
