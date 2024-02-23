@@ -90,11 +90,9 @@ struct lattice {
 
 
     template <typename QualityMeasure, typename R>
-    R visit(const URI& root, const QualityMeasure& Q) {
-        R output;
+    void visit(const URI& root, const QualityMeasure& Q, R& output) {
         visited_uris.clear();
         visit_rec(root, Q, output);
-        return output;
     }
 
 private:

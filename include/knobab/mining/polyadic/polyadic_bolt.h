@@ -68,13 +68,15 @@ struct SimpleDeclare {
 
 struct result_container {
     u_int16_t A, B;
+    double log_size;
     std::vector<SimpleDeclare> result;
 
     void operator()(const simple_declare& x, const declare_lattice_node& node) {
+        DEBUG_ASSERT((((double)node.log_support)/log_size)<=1);
         if (x.second) {
-            result.emplace_back(x.first, A, B, node.log_support, node.rconf);
+            result.emplace_back(x.first, A, B, ((double)node.log_support)/log_size, node.rconf);
         } else {
-            result.emplace_back(x.first, B, A, node.log_support, node.rconf);
+            result.emplace_back(x.first, B, A, ((double)node.log_support)/log_size, node.rconf);
         }
     }
 };
@@ -133,7 +135,8 @@ struct polyadic_bolt {
         graph.add_edge(choiceAB_BA, resp_existenceBA, true);
 
         graph.add_node(coexistenceAB_BA);
-        graph.add_edge(resp_existenceBA, resp_existenceBA, true);
+        graph.add_edge(resp_existenceBA, coexistenceAB_BA, true);
+        graph.add_edge(resp_existenceAB, coexistenceAB_BA, true);
 
         graph.add_node(respBA);
         graph.add_edge(resp_existenceBA, respBA);
@@ -165,12 +168,10 @@ struct polyadic_bolt {
     }
 
     // O: always, *(A,B). 1: always, *(B,A)
-    std::array<std::vector<size_t>, 2> act_r, viol_r, act_p, viol_p, act_cr, viol_cr, act_cp, viol_cp, sat_r, sat_p, sat_cr, sat_cp, vac_r, vac_p, vac_cr, vac_cp;
+    std::array<std::vector<size_t>, 2> act_r, sat_r, viol_r, act_p, sat_p, viol_p, act_cr, sat_cr,  viol_cr, act_cp, sat_cp, viol_cp,  vac_r, vac_p, vac_cr, vac_cp;
     std::vector<size_t> act_cs0, act_cs1, sat_cs0, sat_cs1, viol_cs0, viol_cs1, act_s0, act_s1, sat_s0, sat_s1, viol_s0, viol_s1;
 
-
-    void setKnowledgeBaseAndInit(const KnowledgeBase* ptr) {
-        kb = ptr;
+    void clearResultsVector() {
         act_cs0.clear();
         act_cs1.clear();
         sat_cs0.clear();
@@ -201,7 +202,13 @@ struct polyadic_bolt {
             vac_cr[i].clear();
             vac_cp[i].clear();
         }
+    }
 
+    void setKnowledgeBaseAndInit(const KnowledgeBase* ptr) {
+        kb = ptr;
+        clearResultsVector();
+
+        Phi.clear();
         count_table = &kb->getCountTable();
         counter.reset(count_table);
 
@@ -282,7 +289,6 @@ struct polyadic_bolt {
                                      1.0,
                                      1.0);
                 }
-#ifndef ORIGINAL_ALL
                 else {
                     ChoiceFilter.emplace_back(it);
                 }
@@ -338,7 +344,7 @@ struct polyadic_bolt {
         std::cout << "   conf: " << lr_conf << " conf: " << rl_conf << std::endl;
         std::cout << "   lift: " << counter.lift(lr) << " lift: " << counter.lift(rl) << std::endl;
 #endif
-        size_t di_rl = counter.decl_support(rl), di_lr = counter.decl_int_support(lr);
+        size_t di_rl = counter.decl_int_support(rl), di_lr = counter.decl_int_support(lr);
         if ((lr_conf == rl_conf) && (lr_conf >= support)) {
             graph.get(resp_existenceAB).set(di_lr, lr_conf);
             graph.get(resp_existenceBA).set(di_rl, rl_conf);
@@ -679,14 +685,22 @@ struct polyadic_bolt {
         std::unordered_map<act_t, std::string> resolveLabelCache;
         clause.n = 2;
         size_t min_int_supp_patt = std::ceil(((double)support) * (minimum_support_threshold));
-        std::set<act_t> discarded_actions, considered_actions;
+//        std::set<act_t> discarded_actions, considered_actions;
+        result_container rc;
+        rc.log_size = log_size;
+        std::unordered_set<std::pair<act_t,act_t>> used;
         for (const auto& binary_pattern : frequent_itemset_mining) {
+            rc.result.clear();
+            clearResultsVector();
             std::vector<unsigned short> AB{binary_pattern.second.begin(), binary_pattern.second.end()};
-            A = AB[0];
-            B = AB[1];
+            rc.A = A = AB[0];
+            rc.B = B = AB[1];
             resolveLabelCache.clear();
             resolveLabelCache.emplace(A, kb->event_label_mapper.get(A));
             resolveLabelCache.emplace(B, kb->event_label_mapper.get(B));
+
+            auto A_label = resolveLabelCache.at(A);
+            auto B_label = resolveLabelCache.at(B);
             bool hasCoExistence = association_rules_for_declare(support, binary_pattern, A, B);
 
             /* We want to force a branch if the Bs ever occur at the start of the trace and occur only once.
@@ -720,25 +734,22 @@ struct polyadic_bolt {
                 cross_branch_entailment(A, B, min_int_supp_patt);
             }
             QM_DECLARE Q{&graph, min_int_supp_patt};
-            auto result = graph.visit<QM_DECLARE, result_container>(choiceAB_BA, Q);
-            if (!result.result.empty()) {
-                for (const auto& res : result.result) {
+            graph.visit<QM_DECLARE, result_container>(choiceAB_BA, Q, rc);
+            if (!rc.result.empty()) {
+                for (const auto& res : rc.result) {
                     clause.casusu = res.name;
                     clause.left = resolveLabelCache.at(res.A);
                     clause.right = resolveLabelCache.at(res.B);
                     Phi.emplace_back(clause,-1.0,res.support,res.rconf,-1.0);
-                    discarded_actions.erase(res.A);
-                    discarded_actions.erase(res.B);
-                    considered_actions.insert(res.A);
-                    considered_actions.insert(res.B);
                 }
-
-            } else {
-                discarded_actions.insert(A);
-                discarded_actions.insert(B);
+                if (A<B) {
+                    used.emplace(A,B);
+                } else {
+                    used.emplace(B,A);
+                }
             }
         }
-        std::set_difference(discarded_actions.begin(), discarded_actions.end(), considered_actions.begin(), considered_actions.end(), std::back_inserter(ChoiceFilter));
+//        std::set_difference(discarded_actions.begin(), discarded_actions.end(), considered_actions.begin(), considered_actions.end(), std::back_inserter(ChoiceFilter));
         remove_duplicates(ChoiceFilter);
         std::pair<act_t, act_t> cp;
         std::unordered_map<act_t, retain_choice> map_for_retain;
@@ -746,14 +757,15 @@ struct polyadic_bolt {
             cp.first = ChoiceFilter.at(act_id_offset);
             for (size_t act_idB_offset = act_id_offset+1; act_idB_offset<ChoiceFilter.size(); act_idB_offset++) {
                 cp.second = ChoiceFilter.at(act_idB_offset);
-                choice_exclchoice(cp.first, cp.second,
-                                  log_size,
-                                  minimum_support_threshold,
-                                  *kb,
-                                  inv_map,
-                                  map_for_retain,
-                                  map_for_itemset_support_score);
-
+                if (!used.contains(cp)) {
+                    choice_exclchoice(cp.first, cp.second,
+                                      log_size,
+                                      minimum_support_threshold,
+                                      *kb,
+                                      inv_map,
+                                      map_for_retain,
+                                      map_for_itemset_support_score);
+                }
             }
         }
         for (auto& [act_id, ref_act] : map_for_retain) {
@@ -787,9 +799,10 @@ struct polyadic_bolt {
         DEBUG_ASSERT(curr_size_Clauses == Phi.size());
     }
 
-    void run(double support) {
-        if (!kb) return;
+    void run(double support, const KnowledgeBase* ptr) {
+        if (!ptr) return;
         clear();
+        setKnowledgeBaseAndInit(ptr);
 
         support = std::max(std::min(support, 1.0), 0.0);
         uint64_t minimum_support_threshold = std::min((uint64_t)std::ceil((double)log_size * support), log_size);
