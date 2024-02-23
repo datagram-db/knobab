@@ -101,7 +101,7 @@ static inline void serialize_bolt2_outcome(const std::vector<pattern_mining_resu
             } else {
                 model_file << std::quoted(clause.clause.right) << ", true)" << std::endl;
             }
-            sup_conf_file << clause.support_declarative_pattern << "\t" << clause.restrictive_confidence_plus_declarative_pattern << "\t" << clause.restrictive_support_declarative_pattern;
+            sup_conf_file << clause.support_declarative_pattern << "\t" << clause.restrictive_confidence_plus_declarative_pattern ;
             i++;
             if ((i)!=N) {
                 sup_conf_file << std::endl;
