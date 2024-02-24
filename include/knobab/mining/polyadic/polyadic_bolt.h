@@ -322,10 +322,11 @@ struct polyadic_bolt {
         }
     }
 
-    inline bool association_rules_for_declare(double support,
+    inline unsigned char association_rules_for_declare(double support,
                                               const std::pair<size_t, std::unordered_set<act_t>>& pattern,
                                               act_t A,
                                               act_t B) {
+        unsigned char shift;
         DEBUG_ASSERT(pattern.second.size() == 2);
         auto it = pattern.second.begin();
         lr.head.clear();
@@ -340,19 +341,20 @@ struct polyadic_bolt {
 
         double lr_conf = counter.confidence(lr);
         double rl_conf = counter.confidence(rl);
-        bool both = false;
 #ifdef DEBUG
         std::cout << "   conf: " << lr_conf << " conf: " << rl_conf << std::endl;
         std::cout << "   lift: " << counter.lift(lr) << " lift: " << counter.lift(rl) << std::endl;
 #endif
         size_t di_rl = counter.decl_int_support(rl), di_lr = counter.decl_int_support(lr);
         if ((lr_conf == rl_conf) && (lr_conf >= support)) {
+            shift = 2;
             graph.get(resp_existenceAB).set(di_lr, lr_conf);
             graph.get(resp_existenceBA).set(di_rl, rl_conf);
-            both = true;
         } else if (lr_conf >= rl_conf && lr_conf >= support) {
+            shift = 0;
             graph.get(resp_existenceAB).set(di_lr, lr_conf);
         } else if (rl_conf >= support) {
+            shift = 1;
             graph.get(resp_existenceBA).set(di_rl, rl_conf);
         }
         graph.get(coexistenceAB_BA).set(counter.decl_coex_int_support(A, B, log_size), counter.decl_coex_conf(A, B));
@@ -360,7 +362,7 @@ struct polyadic_bolt {
         const auto& bSet = inv_map.at(B);
         std::pair<size_t, size_t> ratio = yaucl::iterators::ratio(aSet.begin(), aSet.end(), bSet.begin(), bSet.end());
         graph.get(choiceAB_BA).set(ratio.first, ((double)(ratio.first)) / ((double)log_size));
-        return both;
+        return shift;
     }
 
     inline void precedence_response(act_t A, act_t B, size_t minimum_support_threshold, unsigned char shift) {
@@ -649,15 +651,15 @@ struct polyadic_bolt {
         chain_precedence_response(A, B, minimum_support_threshold, shift);
     }
 
-    inline void single_banching_mining(act_t A, act_t B, size_t log_theta, unsigned char shift) {
+    inline void single_banching_mining(unsigned char shift) {
         auto flip = shift ^ 0x1;
-        graph.get(shift ? crespAB : crespBA).set(sat_cr[shift].size(), ((double)yaucl::iterators::ratio_intersection(sat_cr[shift], act_cr[shift]))/((double)yaucl::iterators::ratio_union(act_cr[shift], viol_cr[shift])));
-        graph.get(shift ? respAB : respBA).set(sat_r[shift].size(), ((double)yaucl::iterators::ratio_intersection(sat_r[shift], act_r[shift]))/((double)yaucl::iterators::ratio_union(act_r[shift], viol_r[shift])));
-        graph.get(shift ? precBA : precAB).set(sat_p[flip].size(), ((double)yaucl::iterators::ratio_intersection(sat_p[flip], act_p[flip]))/((double)yaucl::iterators::ratio_union(act_p[flip], viol_p[flip])));
-        graph.get(shift ? crespAB : crespBA).set(sat_cp[shift].size(), ((double)yaucl::iterators::ratio_intersection(sat_cp[shift], act_cp[shift]))/((double)yaucl::iterators::ratio_union(act_cp[shift], viol_cp[shift])));
+        graph.get(flip ? crespAB : crespBA).set(sat_cr[shift].size(), ((double)yaucl::iterators::ratio_intersection(sat_cr[shift], act_cr[shift]))/((double)yaucl::iterators::ratio_union(act_cr[shift], viol_cr[shift])));
+        graph.get(flip ? respAB : respBA).set(sat_r[shift].size(), ((double)yaucl::iterators::ratio_intersection(sat_r[shift], act_r[shift]))/((double)yaucl::iterators::ratio_union(act_r[shift], viol_r[shift])));
+        graph.get(flip ? precBA : precAB).set(sat_p[flip].size(), ((double)yaucl::iterators::ratio_intersection(sat_p[flip], act_p[flip]))/((double)yaucl::iterators::ratio_union(act_p[flip], viol_p[flip])));
+        graph.get(flip ? cprecAB : cprecBA).set(sat_cp[shift].size(), ((double)yaucl::iterators::ratio_intersection(sat_cp[shift], act_cp[shift]))/((double)yaucl::iterators::ratio_union(act_cp[shift], viol_cp[shift])));
     }
 
-    inline void cross_branch_entailment(act_t A, act_t B, size_t log_theta) {
+    inline void cross_branch_entailment(size_t log_theta) {
         if ((sat_r[1].size() < log_theta) && (sat_p[0].size() < log_theta) && (sat_cr[1].size() < log_theta) && (sat_cp[1].size() < log_theta)) {
             return;
         }
@@ -702,38 +704,34 @@ struct polyadic_bolt {
 
             auto A_label = resolveLabelCache.at(A);
             auto B_label = resolveLabelCache.at(B);
-            bool hasCoExistence = association_rules_for_declare(support, binary_pattern, A, B);
+            unsigned char hasCoExistence = association_rules_for_declare(support, binary_pattern, A, B);
 
             /* We want to force a branch if the Bs ever occur at the start of the trace and occur only once.
              * This is due to ChainPrecedence, which has an activation of X(A), and we want to mine a potential
              * ChainPrecedence(A,B) */
-            bool branch = hasCoExistence || (Beginnings.at(B) > 0); // Algorithm 7, L. 15
+            bool branch = (hasCoExistence==2) || (Beginnings.at(B) > 0); // Algorithm 7, L. 15
 
-            temporal_refinement(A, B, min_int_supp_patt, 0);
             if (branch) {
-                temporal_refinement(A, B, min_int_supp_patt, 1);
+                temporal_refinement(A, B, min_int_supp_patt, 0);
+                temporal_refinement(B, A, min_int_supp_patt, 1);
+                mdev(0);
+                mdev(1);
+            } else if (hasCoExistence){
+                temporal_refinement(B, A, min_int_supp_patt, 1);
+                mdev(1);
+            } else {
+                temporal_refinement(A, B, min_int_supp_patt, 0);
+                mdev(0);
             }
 
-            for (size_t i = 0; i<2; i++) {
-                remove_duplicates(act_r[i]);
-                remove_duplicates(viol_r[i]);
-                set_complement(log_size, viol_r[i].begin(), viol_r[i].end(), std::back_inserter(sat_r[i]));
-                remove_duplicates(act_p[i]);
-                remove_duplicates(viol_p[i]);
-                set_complement(log_size, viol_p[i].begin(), viol_p[i].end(), std::back_inserter(sat_p[i]));
-                remove_duplicates(act_cr[i]);
-                remove_duplicates(viol_cr[i]);
-                set_complement(log_size, viol_cr[i].begin(), viol_cr[i].end(), std::back_inserter(sat_cr[i]));
-                remove_duplicates(act_cp[i]);
-                remove_duplicates(viol_cp[i]);
-                set_complement(log_size, viol_cp[i].begin(), viol_cp[i].end(), std::back_inserter(sat_cp[i]));
-            }
-
-            single_banching_mining(A, B, min_int_supp_patt, 0);
             if (branch) {
-                single_banching_mining(A, B, min_int_supp_patt, 1);
-                cross_branch_entailment(A, B, min_int_supp_patt);
+                single_banching_mining(0);
+                single_banching_mining(1);
+                cross_branch_entailment(min_int_supp_patt);
+            } else {
+                single_banching_mining(hasCoExistence);
             }
+
             QM_DECLARE Q{&graph, min_int_supp_patt};
             graph.visit<QM_DECLARE, result_container>(choiceAB_BA, Q, rc);
             if (!rc.result.empty()) {
@@ -798,6 +796,22 @@ struct polyadic_bolt {
             return std::tie(l.clause.casusu, l.clause.left, l.clause.right, l.clause.n) == std::tie(r.clause.casusu, r.clause.left, r.clause.right, r.clause.n);
         }), Phi.end());
         DEBUG_ASSERT(curr_size_Clauses == Phi.size());
+    }
+
+    inline void mdev(size_t i) {
+        auto flip = i ^ 0x1;
+        remove_duplicates(act_r[i]);
+        remove_duplicates(viol_r[i]);
+        set_complement(log_size, viol_r[i].begin(), viol_r[i].end(), std::back_inserter(sat_r[i]));
+        remove_duplicates(act_p[flip]);
+        remove_duplicates(viol_p[flip]);
+        set_complement(log_size, viol_p[flip].begin(), viol_p[flip].end(), std::back_inserter(sat_p[flip]));
+        remove_duplicates(act_cr[i]);
+        remove_duplicates(viol_cr[i]);
+        set_complement(log_size, viol_cr[i].begin(), viol_cr[i].end(), std::back_inserter(sat_cr[i]));
+        remove_duplicates(act_cp[i]);
+        remove_duplicates(viol_cp[i]);
+        set_complement(log_size, viol_cp[i].begin(), viol_cp[i].end(), std::back_inserter(sat_cp[i]));
     }
 
     void run(double support, const KnowledgeBase* ptr) {

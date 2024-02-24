@@ -55,7 +55,7 @@ static inline std::pair<std::vector<pattern_mining_result<FastDatalessClause>>,s
     return values;
 }
 
-TEST_CASE("mining_tests: exists_absence") {
+TEST_CASE("mining_tests2: exists_absence") {
     std::pair<std::vector<pattern_mining_result<FastDatalessClause>>,std::vector<pattern_mining_result<FastDatalessClause>>> values =
             load_and_return_polyadic(folder / "exists_absence.tab");
 
@@ -80,7 +80,7 @@ TEST_CASE("mining_tests: exists_absence") {
 }
 
 
-TEST_CASE("mining_tests: init") {
+TEST_CASE("mining_tests2: init") {
     std::pair<std::vector<pattern_mining_result<FastDatalessClause>>,std::vector<pattern_mining_result<FastDatalessClause>>> values =
             load_and_return_polyadic(folder / "init.tab");
 
@@ -95,7 +95,7 @@ TEST_CASE("mining_tests: init") {
     ASSERT_TRUE(std::find(values.first.begin(), values.first.end(), to_find) != values.first.end());
 }
 
-TEST_CASE("mining_tests: end") {
+TEST_CASE("mining_tests2: end") {
     std::pair<std::vector<pattern_mining_result<FastDatalessClause>>,std::vector<pattern_mining_result<FastDatalessClause>>> values =
             load_and_return_polyadic(folder / "end.tab");
 
@@ -104,6 +104,22 @@ TEST_CASE("mining_tests: end") {
     to_find.clause.left = "a";
     to_find.clause.n = 1;
     to_find.support_generating_original_pattern = 1.0;
+    to_find.support_declarative_pattern = 1.0;
+    to_find.restrictive_confidence_plus_declarative_pattern = 1.0;
+
+    ASSERT_TRUE(std::find(values.first.begin(), values.first.end(), to_find) != values.first.end());
+}
+
+TEST_CASE("mining_tests2: precedence") {
+    std::pair<std::vector<pattern_mining_result<FastDatalessClause>>,std::vector<pattern_mining_result<FastDatalessClause>>> values =
+            load_and_return_polyadic(folder / "precedence.tab");
+
+    pattern_mining_result<FastDatalessClause> to_find;
+    to_find.clause.casusu = "Precedence";
+    to_find.clause.left = "a";
+    to_find.clause.right = "b";
+    to_find.clause.n = 2;
+    to_find.support_generating_original_pattern = -1.0;
     to_find.support_declarative_pattern = 1.0;
     to_find.restrictive_confidence_plus_declarative_pattern = 1.0;
 

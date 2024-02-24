@@ -113,15 +113,16 @@ private:
             visited_uris[x] = true;
             return true;
         } else {
-            bool all = true;
+            bool all = false;
             if (node_to_children_refiners.find(x) != node_to_children_refiners.end()) {
-                for (const auto& child : node_to_children_refiners.at(x)) {
+                for (const auto &child: node_to_children_refiners.at(x)) {
                     bool testOutcome = visit_rec(child, Q, output);
-                    all = all && testOutcome;
+                    all = all || testOutcome;
                 }
-            } else {
-                all = false;
             }
+//            } else {
+//                all = false;
+//            }
             if (all) {
                 visited_uris[x] = false;
                 return false;
