@@ -37,7 +37,7 @@ static inline std::pair<std::vector<pattern_mining_result<FastDatalessClause>>,s
     polyadic_bolt g;
 
     std::vector<DeclareDataAware> VVV;
-    g.run(supp, &sqm.multiple_logs[world_file_to_load].db);
+    g.run(supp, false, &sqm.multiple_logs[world_file_to_load].db);
 
 //    auto result = bolt2(
 //            sqm.multiple_logs[world_file_to_load].db, supp, false, true, true, false, false);

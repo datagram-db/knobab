@@ -58,6 +58,7 @@ struct ActTable {
      */
     std::vector<std::pair<std::unordered_map<act_t, std::vector<ActTable::record*>>*, std::unordered_map<act_t, std::vector<ActTable::record*>>*>> secondary_index;
     std::vector<std::vector<std::unordered_map<act_t, std::vector<ActTable::record*>>>> secondary_index_polyadic;
+    std::vector<std::vector<std::unordered_map<act_t, std::vector<size_t>>>> trace_id_to_endTimeId_to_offset;
 
     void load_record(trace_t id, act_t act, event_t time, event_t span = 1); // rename: loading_step (emplace_back)
     const std::vector<std::vector<std::unordered_map<act_t, std::vector<size_t>>>> & indexing1();
@@ -82,7 +83,6 @@ private:
     };
 
     table_builder builder;
-    std::vector<std::vector<std::unordered_map<act_t, std::vector<size_t>>>> trace_id_to_endTimeId_to_offset;
 
 public:
     const std::vector<size_t>& getTraceLengths() const {
