@@ -8,6 +8,7 @@ bool QM_DECLARE::operator()(const simple_declare& key, const struct declare_latt
     bool basic =  (x.isVisited) && (x.log_support >= log_theta) && (std::abs(x.rconf) > std::numeric_limits<double>::epsilon());
     if (!basic) return false;
     for (const simple_declare& parent : ptr->getGeneralisations(key)) {
+        if (parent.first == "Choice") continue;
         if (ptr->get(parent).log_support > x.log_support)
             return false;
     }
