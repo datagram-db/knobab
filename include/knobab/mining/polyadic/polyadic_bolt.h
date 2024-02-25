@@ -149,11 +149,11 @@ struct polyadic_bolt {
 
         graph.add_node(succAB);
         graph.add_edge(respAB, succAB);
-        graph.add_edge(precBA, succAB);
+        graph.add_edge(precAB, succAB);
 
         graph.add_node(succBA);
         graph.add_edge(respBA, succBA);
-        graph.add_edge(precAB, succBA);
+        graph.add_edge(precBA, succBA);
 
         graph.add_node(cprecBA);
         graph.add_edge(choiceAB_BA, cprecBA, true);
@@ -462,8 +462,11 @@ struct polyadic_bolt {
             }
             /* II. We have B's on their own */
             if ((a_beginend.first == a_beginend.second) || a_trace_id > b_trace_id) {
-                TRACE_SET_ADD(act_r[flip], a_trace_id);
+                for (size_t id = b_trace_id; id<a_trace_id; id++) {
+                    TRACE_SET_ADD(act_r[flip], id);
+                }
                 TRACE_SET_ADD(act_p[flip], a_trace_id);
+
 
 //                if(left_branch) {
 //                    TRACE_SET_ADD(data.r_activation_traces.second, a_trace_id);
@@ -667,18 +670,18 @@ struct polyadic_bolt {
         std::set_union(act_cr[1].begin(), act_cr[1].end(),act_cp[0].begin(), act_cp[0].end(), std::back_inserter(act_cs1));
         std::set_union(viol_cr[0].begin(), viol_cr[0].end(),viol_cp[1].begin(), viol_cp[1].end(), std::back_inserter(viol_cs0));
         std::set_union(viol_cr[1].begin(), viol_cr[1].end(),viol_cp[0].begin(), viol_cp[0].end(), std::back_inserter(viol_cs1));
-        std::set_intersection(sat_cr[0].begin(), sat_cr[0].end(),sat_cp[1].begin(), act_cp[1].end(), std::back_inserter(sat_cs0));
+        std::set_intersection(sat_cr[0].begin(), sat_cr[0].end(),sat_cp[1].begin(), sat_cp[1].end(), std::back_inserter(sat_cs0));
         std::set_intersection(sat_cr[1].begin(), sat_cr[1].end(),sat_cp[0].begin(), sat_cp[0].end(), std::back_inserter(sat_cs1));
         graph.get(csuccAB).set(sat_cs0.size(), ((double)yaucl::iterators::ratio_intersection(sat_cs0, act_cs0))/((double)yaucl::iterators::ratio_union(act_cs0, viol_cs0)));
-        graph.get(csuccBA).set(sat_cs0.size(), ((double)yaucl::iterators::ratio_intersection(sat_cs1, act_cs1))/((double)yaucl::iterators::ratio_union(act_cs1, viol_cs1)));
+        graph.get(csuccBA).set(sat_cs1.size(), ((double)yaucl::iterators::ratio_intersection(sat_cs1, act_cs1))/((double)yaucl::iterators::ratio_union(act_cs1, viol_cs1)));
         std::set_union(act_r[0].begin(), act_r[0].end(),act_p[1].begin(), act_p[1].end(), std::back_inserter(act_s0));
         std::set_union(act_r[1].begin(), act_r[1].end(),act_p[0].begin(), act_p[0].end(), std::back_inserter(act_s1));
         std::set_union(viol_r[0].begin(), viol_r[0].end(),viol_p[1].begin(), viol_p[1].end(), std::back_inserter(viol_s0));
         std::set_union(viol_r[1].begin(), viol_r[1].end(),viol_p[0].begin(), viol_p[0].end(), std::back_inserter(viol_s1));
-        std::set_intersection(sat_r[0].begin(), sat_r[0].end(),sat_p[1].begin(), act_p[1].end(), std::back_inserter(sat_s0));
-        std::set_intersection(sat_r[1].begin(), sat_r[1].end(),sat_p[0].begin(), sat_p[0].end(), std::back_inserter(sat_s1));
+        std::set_intersection(sat_r[0].begin(), sat_r[0].end(),sat_p[0].begin(), sat_p[0].end(), std::back_inserter(sat_s0));
+        std::set_intersection(sat_r[1].begin(), sat_r[1].end(),sat_p[1].begin(), sat_p[1].end(), std::back_inserter(sat_s1));
         graph.get(succAB).set(sat_s0.size(), ((double)yaucl::iterators::ratio_intersection(sat_s0, act_s0))/((double)yaucl::iterators::ratio_union(act_s0, viol_s0)));
-        graph.get(succBA).set(sat_s0.size(), ((double)yaucl::iterators::ratio_intersection(sat_s1, act_s1))/((double)yaucl::iterators::ratio_union(act_s1, viol_s1)));
+        graph.get(succBA).set(sat_s1.size(), ((double)yaucl::iterators::ratio_intersection(sat_s1, act_s1))/((double)yaucl::iterators::ratio_union(act_s1, viol_s1)));
     }
 
     inline void binary_clauses_mining(double support, size_t minimum_support_threshold,
@@ -749,6 +752,12 @@ struct polyadic_bolt {
             }
         }
 //        std::set_difference(discarded_actions.begin(), discarded_actions.end(), considered_actions.begin(), considered_actions.end(), std::back_inserter(ChoiceFilter));
+        if (ChoiceFilter.empty()) {
+            ChoiceFilter.reserve(max_act_id);
+            for (auto act_id = 0; act_id<max_act_id; act_id++) {
+                ChoiceFilter.emplace_back(act_id);
+            }
+        }
         remove_duplicates(ChoiceFilter);
         std::pair<act_t, act_t> cp;
         std::unordered_map<act_t, retain_choice> map_for_retain;

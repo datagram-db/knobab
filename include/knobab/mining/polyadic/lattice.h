@@ -124,8 +124,8 @@ private:
 //                all = false;
 //            }
             if (all) {
-                visited_uris[x] = false;
-                return false;
+                visited_uris[x] = true;
+                return true;
             }
             bool some = false;
             if (node_to_children_totallers.find(x) != node_to_children_totallers.end()) {
@@ -136,8 +136,8 @@ private:
                 }
             }
             if (some) {
-                visited_uris[x] = false;
-                return false;
+                visited_uris[x] = true;
+                return true;
             } else {
                 output(x, it->second);
                 visited_uris[x] = true;
