@@ -204,9 +204,13 @@ struct polyadic_bolt {
         }
     }
 
+    std::vector<size_t> event_to_root;
+
     void setKnowledgeBaseAndInit(const KnowledgeBase* ptr) {
         kb = ptr;
         clearResultsVector();
+        event_to_root.clear();
+
 
         Phi.clear();
         count_table = &kb->getCountTable();
@@ -214,6 +218,13 @@ struct polyadic_bolt {
 
         log_size = kb->nTraces();
         max_act_id = (act_t) kb->nAct();
+        event_to_root.clear();
+        event_to_root.resize(max_act_id, -1);
+        for (const auto& [root, children]: ptr->hierarchy_def) {
+            for (const auto& child : children) {
+                event_to_root[kb->event_label_mapper.get(child)] = kb->event_label_mapper.get(root);
+            }
+        }
         inv_map.clear();
         Beginnings.clear();
         first.clear();
@@ -365,7 +376,7 @@ struct polyadic_bolt {
         return shift;
     }
 
-    inline void precedence_response(act_t A, act_t B, size_t minimum_support_threshold, unsigned char shift) {
+    inline void precedence_response(act_t A, act_t B, size_t minimum_support_threshold, unsigned char shift, bool polyadic) {
         auto flip = shift ^ 0x1;
         bool alles_precedence = true, alles_response = true;
         size_t alles_not_precedence = 0, alles_not_response = 0;
@@ -579,7 +590,7 @@ struct polyadic_bolt {
         }
     }
 
-    inline void chain_precedence_response(act_t A, act_t B, size_t minimum_support_threshold, unsigned char shift) {
+    inline void chain_precedence_response(act_t A, act_t B, size_t minimum_support_threshold, unsigned char shift, bool polyadic) {
         auto flip = shift ^ 0x1;
         bool forward_response = false, forward_precedence = false;
         bool alles_next = true, alles_prev = true;
@@ -604,13 +615,30 @@ struct polyadic_bolt {
                 a_prev_trace_id = trace_id;
             }
 
-            if (!forward_response && ((a_beginend.first->next == nullptr) || (a_beginend.first->next->find(B) == a_beginend.first->next->end()))) {
+            bool test;
+            if (polyadic && (event_to_root.at(A) == event_to_root.at(B))) {
+                const auto& V = kb->act_table_by_act_id.secondary_index_polyadic.at(trace_id);
+                size_t offset = a_beginend.first->entry.id.parts.event_id+a_beginend.first->span;
+                test = (V.size() <= offset) || (V.at(offset).find(B) == V.at(offset).end());
+            } else {
+                test = ((a_beginend.first->next == nullptr) || (a_beginend.first->next->find(B) == a_beginend.first->next->end()));
+            }
+            if (!forward_response && (test)) {
                 decrease_support_X(*kb, expected_support, alles_next, alles_not_next);
                 TRACE_SET_ADD(viol_cr[shift], ((trace_t)a_beginend.first->entry.id.parts.trace_id));
                 forward_response = true;
             }
 
-            if (!forward_precedence && ((a_beginend.first->prev != nullptr) && (a_beginend.first->prev->find(B) == a_beginend.first->prev->end()))) {
+            if (a_beginend.first->prev == nullptr) {
+                test = false;
+            } else if (polyadic && (event_to_root.at(A) == event_to_root.at(B))) {
+                const auto& V = kb->act_table_by_act_id.trace_id_to_endTimeId_to_offset.at(trace_id);
+                size_t offset = a_beginend.first->entry.id.parts.event_id-1;
+                test = V.at(offset).find(B) == V.at(offset).end();
+            } else {
+                test = ( (a_beginend.first->prev->find(B) == a_beginend.first->prev->end()));
+            }
+            if (!forward_precedence && (test)) {
                 decrease_support_X(*kb, expected_support, alles_prev, alles_not_prev);
                 TRACE_SET_ADD(viol_cp[shift], (trace_t)(a_beginend.first->entry.id.parts.trace_id));
                 forward_precedence = true;
@@ -649,9 +677,9 @@ struct polyadic_bolt {
         }
     }
 
-    inline void temporal_refinement(act_t A, act_t B, size_t minimum_support_threshold, unsigned char shift) {
-        precedence_response(A, B, minimum_support_threshold, shift);
-        chain_precedence_response(A, B, minimum_support_threshold, shift);
+    inline void temporal_refinement(act_t A, act_t B, size_t minimum_support_threshold, unsigned char shift, bool polyadic) {
+        precedence_response(A, B, minimum_support_threshold, shift, polyadic);
+        chain_precedence_response(A, B, minimum_support_threshold, shift, polyadic);
     }
 
     inline void single_banching_mining(unsigned char shift) {
@@ -684,7 +712,7 @@ struct polyadic_bolt {
         graph.get(succBA).set(sat_s1.size(), ((double)yaucl::iterators::ratio_intersection(sat_s1, act_s1))/((double)yaucl::iterators::ratio_union(act_s1, viol_s1)));
     }
 
-    inline void binary_clauses_mining(double support, size_t minimum_support_threshold,
+    inline void binary_clauses_mining(double support, size_t minimum_support_threshold, bool polyadic,
                                       std::vector<std::pair<size_t, std::unordered_set<act_t>>>& frequent_itemset_mining) {
         act_t A, B;
         FastDatalessClause clause;
@@ -715,15 +743,15 @@ struct polyadic_bolt {
             bool branch = (hasCoExistence==2) || (Beginnings.at(B) > 0); // Algorithm 7, L. 15
 
             if (branch) {
-                temporal_refinement(A, B, min_int_supp_patt, 0);
-                temporal_refinement(B, A, min_int_supp_patt, 1);
+                temporal_refinement(A, B, min_int_supp_patt, 0, polyadic);
+                temporal_refinement(B, A, min_int_supp_patt, 1, polyadic);
                 mdev(0);
                 mdev(1);
             } else if (hasCoExistence){
-                temporal_refinement(B, A, min_int_supp_patt, 1);
+                temporal_refinement(B, A, min_int_supp_patt, 1, polyadic);
                 mdev(1);
             } else {
-                temporal_refinement(A, B, min_int_supp_patt, 0);
+                temporal_refinement(A, B, min_int_supp_patt, 0, polyadic);
                 mdev(0);
             }
 
@@ -823,7 +851,7 @@ struct polyadic_bolt {
         set_complement(log_size, viol_cp[i].begin(), viol_cp[i].end(), std::back_inserter(sat_cp[i]));
     }
 
-    void run(double support, const KnowledgeBase* ptr) {
+    void run(double support, bool polyadic, const KnowledgeBase* ptr) {
         if (!ptr) return;
         clear();
         setKnowledgeBaseAndInit(ptr);
@@ -842,7 +870,7 @@ struct polyadic_bolt {
         generate_unary_clauses(fpt_result);
 
         // Algorithm 6. Binary Clauses Mining
-        binary_clauses_mining(support, minimum_support_threshold, fpt_result);
+        binary_clauses_mining(support, minimum_support_threshold, polyadic, fpt_result);
     }
 
 private:
