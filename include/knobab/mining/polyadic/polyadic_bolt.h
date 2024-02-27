@@ -376,7 +376,7 @@ struct polyadic_bolt {
         return shift;
     }
 
-    inline void precedence_response(act_t A, act_t B, size_t minimum_support_threshold, unsigned char shift, bool polyadic) {
+    inline void precedence_response(act_t A, act_t B, size_t minimum_support_threshold, unsigned char shift, const bool polyadic) {
         auto flip = shift ^ 0x1;
         bool alles_precedence = true, alles_response = true;
         size_t alles_not_precedence = 0, alles_not_response = 0;
@@ -547,6 +547,8 @@ struct polyadic_bolt {
 //                }
             }
 
+            const size_t offset = polyadic ? a_beginend.first->span : 1;
+
             // While I'm scanning the A events within the same trace
             //        all_altresponse_in_trace = true;
             while ((a_beginend.first != a_beginend.second) &&
@@ -554,13 +556,13 @@ struct polyadic_bolt {
                 // ignoring all of the B events that are not relevant for the task!
                 while ((b_beginend.first != b_beginend.second) &&
                        (b_beginend.first->entry.id.parts.trace_id == a_trace_id) &&
-                       (b_beginend.first->entry.id.parts.event_id <
+                       (b_beginend.first->entry.id.parts.event_id + polyadic <=
                         a_beginend.first->entry.id.parts.event_id)) {
                     b_beginend.first++;
                 }
                 if ((b_beginend.first != b_beginend.second) &&
                     (b_beginend.first->entry.id.parts.trace_id == a_trace_id) &&
-                    (b_beginend.first->entry.id.parts.event_id >
+                    (b_beginend.first->entry.id.parts.event_id +polyadic >=
                      a_beginend.first->entry.id.parts.event_id)) {
                     // Ok, I have a match!
                 }
@@ -590,7 +592,7 @@ struct polyadic_bolt {
         }
     }
 
-    inline void chain_precedence_response(act_t A, act_t B, size_t minimum_support_threshold, unsigned char shift, bool polyadic) {
+    inline void chain_precedence_response(act_t A, act_t B, size_t minimum_support_threshold, unsigned char shift, const bool polyadic) {
         auto flip = shift ^ 0x1;
         bool forward_response = false, forward_precedence = false;
         bool alles_next = true, alles_prev = true;
