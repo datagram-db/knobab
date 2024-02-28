@@ -2,7 +2,7 @@
 // Created by giacomo on 14/02/24.
 //
 
-#include "knobab/algorithms/polyadic/polyadic_loading.h"
+#include "knobab/mining/polyadic/polyadic_loading.h"
 #include "knobab/server/dataStructures/polyadic/myParser.h"
 
 static inline void actualClauseRefine(std::vector<std::pair<double,std::unordered_map<std::string, DataPredicate>>> &result,
@@ -97,7 +97,7 @@ struct comparator {
     }
 };
 
-std::pair<double,double> polyadic_loader(const std::unordered_set<std::string>& ignore_keys,
+std::tuple<double,double,double> polyadic_loader(const std::unordered_set<std::string>& ignore_keys,
                      const std::string& traceDistinguisher,
                      const std::string& path,
                      bool reclassify,
@@ -107,7 +107,11 @@ std::pair<double,double> polyadic_loader(const std::unordered_set<std::string>& 
     sax.traceDistinguisher = traceDistinguisher;
     sax.event_coordinates_init = true;
 
-
+    using std::chrono::high_resolution_clock;
+    using std::chrono::duration_cast;
+    using std::chrono::duration;
+    using std::chrono::milliseconds;
+    auto r_preprocessing1 = high_resolution_clock::now();
     ////////////////////////////////////////////////////////////////////////////
     /// 1) Storing in the main memory the "header" event of each polyadic event
     ////////////////////////////////////////////////////////////////////////////
@@ -116,7 +120,7 @@ std::pair<double,double> polyadic_loader(const std::unordered_set<std::string>& 
 
         if (!nlohmann::json::sax_parse(f, &sax)) {
             std::cerr << "ERROR while parsing the file: " << path << std::endl;
-            return {-1,-1};
+            return {-1,-1,-1};
         }
     }
 
@@ -210,9 +214,11 @@ std::pair<double,double> polyadic_loader(const std::unordered_set<std::string>& 
     //////////////////////////////////////////////////////////////////
     std::vector<std::vector<std::pair<double,double>>> intervals;
     std::string filename = path;
+    std::unordered_set<size_t> metClasses;
+    counting_event_coordinates emptyPair;
     for (auto& [user_key, timestamps] : sax.clazz_to_time) {
         std::cout << user_key << std::endl;
-        std::unordered_set<size_t> metClasses;
+
         for (auto& inClazz : timestamps)
             remove_duplicates(inClazz);
         intervals.clear();
@@ -270,20 +276,20 @@ std::pair<double,double> polyadic_loader(const std::unordered_set<std::string>& 
 //                    DEBUG_ASSERT(false);
 //            }
 //        }
-        counting_event_coordinates emptyPair;
-        for (const auto& clazz : metClasses) {
-            auto newLogName = user_key+ "_"+ std::to_string(clazz);
+
+    }
+    for (const auto& clazz : metClasses) {
+        auto newLogName = /*user_key+ "_"+*/ std::to_string(clazz);
 //            gotFromActual.insert(newLogName);
-            sax.log_name_to_traceIdEventId.emplace(std::make_pair(newLogName,clazz), emptyPair);
-            if (sqm.multiple_logs.contains(newLogName)) {
-                sqm.multiple_logs.erase(newLogName);
-            }
-            auto& env = sqm.multiple_logs[newLogName];
-            env.db.schema_def = sax.schema_def;
-            env.db.hierarchy_def = sax.hierarchy_def;
-            env.db.enterLog(path, newLogName);
-            env.experiment_logger.log_filename = filename;
+        sax.log_name_to_traceIdEventId.emplace(std::make_pair(newLogName,clazz), emptyPair);
+        if (sqm.multiple_logs.contains(newLogName)) {
+            sqm.multiple_logs.erase(newLogName);
         }
+        auto& env = sqm.multiple_logs[newLogName];
+        env.db.schema_def = sax.schema_def;
+        env.db.hierarchy_def = sax.hierarchy_def;
+        env.db.enterLog(path, newLogName);
+        env.experiment_logger.log_filename = filename;
     }
     intervals.clear();
 //    std::cout << gotFromActual << std::endl;
@@ -294,8 +300,9 @@ std::pair<double,double> polyadic_loader(const std::unordered_set<std::string>& 
         auto& vector =sax.event_coordinates.at(global_trace_id);
         for (size_t global_event_id = 0, M = vector.size(); global_event_id<M; global_event_id++) {
             auto& event = vector.at(global_event_id);
-            cp.first = event.user_name;
+            cp.first = std::to_string(event.final_class);//event.user_name;
             cp.second = event.final_class;
+            DEBUG_ASSERT(sax.log_name_to_traceIdEventId.contains(cp));
             auto& traceid_eventid = sax.log_name_to_traceIdEventId[cp];
             if ((traceid_eventid.global_event_id == (size_t)-1) && (traceid_eventid.global_trace_id == (size_t)-1)) {
                 traceid_eventid.latest_new_event_id = event.event_id = 0;
@@ -319,6 +326,10 @@ std::pair<double,double> polyadic_loader(const std::unordered_set<std::string>& 
             traceid_eventid.global_event_id = global_event_id;
         }
     }
+    auto t_preprocessing2 = high_resolution_clock::now();
+    /* Getting number of milliseconds as a double. */
+    duration<double, std::milli> ms_double = t_preprocessing2 - r_preprocessing1;
+    double log_cpp_preprocessing = ms_double.count();
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // 5) As the traces are temporally ordered, we can freely assume that those are contiguous in time
@@ -332,10 +343,7 @@ std::pair<double,double> polyadic_loader(const std::unordered_set<std::string>& 
 //        std::string env_name = "test1";
     log_data_format format;
 
-    using std::chrono::high_resolution_clock;
-    using std::chrono::duration_cast;
-    using std::chrono::duration;
-    using std::chrono::milliseconds;
+
     double log_loading_and_parsing_ms = 0, log_indexing_ms = 0;
 
     {
@@ -366,5 +374,5 @@ std::pair<double,double> polyadic_loader(const std::unordered_set<std::string>& 
         log_indexing_ms = ms_double.count();
     }
 
-    return {log_loading_and_parsing_ms, log_indexing_ms};
+    return {log_cpp_preprocessing, log_loading_and_parsing_ms, log_indexing_ms};
 }

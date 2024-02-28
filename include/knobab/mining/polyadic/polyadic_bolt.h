@@ -219,20 +219,23 @@ struct polyadic_bolt {
         log_size = kb->nTraces();
         max_act_id = (act_t) kb->nAct();
         event_to_root.clear();
-        event_to_root.resize(max_act_id, -1);
-        for (const auto& [root, children]: ptr->hierarchy_def) {
-            for (const auto& child : children) {
-                event_to_root[kb->event_label_mapper.get(child)] = kb->event_label_mapper.get(root);
-            }
-        }
         inv_map.clear();
         Beginnings.clear();
         first.clear();
         last.clear();
-        Beginnings.resize(max_act_id, 0);
-        first.resize(max_act_id, 0);
-        last.resize(max_act_id, 0);
-        inv_map.resize(max_act_id, std::vector<trace_t>{});
+        for (int i = 0; i<max_act_id; i++) {
+            event_to_root.emplace_back(-1);
+            Beginnings.emplace_back(0);
+            first.emplace_back(0);
+            last.emplace_back(0);
+            inv_map.emplace_back();
+        }
+        for (const auto& [root, children]: ptr->hierarchy_def) {
+            for (const auto& child : children) {
+                if (kb->event_label_mapper.signed_get(child)!=-1)
+                    event_to_root[kb->event_label_mapper.get(child)] = kb->event_label_mapper.get(root);
+            }
+        }
 
         for (size_t trace_id = 0; trace_id < log_size; trace_id++) {
             const auto& first_last =kb->act_table_by_act_id.secondary_index.at(trace_id);
@@ -353,8 +356,8 @@ struct polyadic_bolt {
         double lr_conf = counter.confidence(lr);
         double rl_conf = counter.confidence(rl);
 #ifdef DEBUG
-        std::cout << "   conf: " << lr_conf << " conf: " << rl_conf << std::endl;
-        std::cout << "   lift: " << counter.lift(lr) << " lift: " << counter.lift(rl) << std::endl;
+//        std::cout << "   conf: " << lr_conf << " conf: " << rl_conf << std::endl;
+//        std::cout << "   lift: " << counter.lift(lr) << " lift: " << counter.lift(rl) << std::endl;
 #endif
         size_t di_rl = counter.decl_int_support(rl), di_lr = counter.decl_int_support(lr);
         if ((lr_conf == rl_conf) && (lr_conf >= support)) {
@@ -737,6 +740,8 @@ struct polyadic_bolt {
 
             auto A_label = resolveLabelCache.at(A);
             auto B_label = resolveLabelCache.at(B);
+            if ((A_label == "__missing") || (B_label == "__missing"))
+                continue;
             unsigned char hasCoExistence = association_rules_for_declare(support, binary_pattern, A, B);
 
             /* We want to force a branch if the Bs ever occur at the start of the trace and occur only once.

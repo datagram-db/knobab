@@ -104,7 +104,7 @@ add_library(knobab_mining
         src/knobab/mining/apriori.cpp
         include/knobab/mining/apriori.h
         include/knobab/mining/refinery.h
-        src/knobab/dataStructures/polyadic/myParser.cpp include/knobab/server/dataStructures/polyadic/myParser.h include/knobab/server/dataStructures/polyadic.h src/knobab/algorithms/polyadic/polyadic_loading.cpp include/knobab/algorithms/polyadic/polyadic_loading.h src/knobab/mining/polyadic/polyadic_bolt.cpp include/knobab/mining/polyadic/polyadic_bolt.h include/knobab/mining/polyadic/lattice.h
+        src/knobab/dataStructures/polyadic/myParser.cpp include/knobab/server/dataStructures/polyadic/myParser.h include/knobab/server/dataStructures/polyadic.h src/knobab/mining/polyadic/polyadic_loading.cpp include/knobab/mining/polyadic/polyadic_loading.h src/knobab/mining/polyadic/polyadic_bolt.cpp include/knobab/mining/polyadic/polyadic_bolt.h include/knobab/mining/polyadic/lattice.h
         )
 
 add_executable(benchmarking benchmarking/benchmarking.cpp benchmarking/benchmarking.cpp) #${BACKWARD_ENABLE})
@@ -179,7 +179,7 @@ FetchContent_Declare(
         GIT_TAG        v3.0.1 # or a later release
 )
 
-add_executable(knobab_json new_pipeline.cpp )
+add_executable(knobab_json new_pipeline.cpp src/knobab/mining/polyadic/polyadic_learning.cpp include/knobab/mining/polyadic/polyadic_learning.h src/knobab/mining/polyadic/polyadic_mining.cpp include/knobab/mining/polyadic/polyadic_mining.h)
 target_link_libraries(knobab_json Threads::Threads antlr4_static yaucl_hashing yaucl_bpm yaucl_structures
         yaucl_numeric yaucl_data yaucl_graph  yaucl_data yaucl_bpm knobab  knobab_ndp   yaucl_learning  knobab_mining)
 
