@@ -14,7 +14,7 @@
 #include <string>
 #include <unordered_set>
 
-std::pair<double,double> polyadic_loader(const std::unordered_set<std::string>& ignore_keys,
+std::tuple<double,double,double> polyadic_loader(const std::unordered_set<std::string>& ignore_keys,
                      const std::string& traceDistinguisher,
                      const std::string& path,
                      bool reclassify,

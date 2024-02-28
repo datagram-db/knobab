@@ -31,7 +31,7 @@ int main(int argc, char **argv) {
     std::vector<std::string> unary_templates{};
     std::vector<std::string> binary_templates{};
 
-    args::ArgumentParser parser("Title", "Description");
+    args::ArgumentParser parser("Bolt2", "This is the main entry-point program for the Bolt2 benchmark");
     args::HelpFlag help(parser, "help", "Display this help menu", {'h', "help"});
 
     args::Group file_format(parser, "This group is all exclusive:", args::Group::Validators::AtMostOne);

@@ -36,6 +36,20 @@ struct lattice {
         return id_to_node.emplace(key, empty).second;
     }
 
+    bool descendantOrEqualTo(const URI& desc, const URI& anc) const {
+        if (desc == anc) {
+            return true;
+        }
+        auto it = node_to_parents.find(desc);
+        if ((it == node_to_parents.end()) || (it->second.empty()))
+            return false;
+        for (const auto& parent : it->second) {
+            if (descendantOrEqualTo(parent, anc))
+                return true;
+        }
+        return false;
+    }
+
     T& get(const URI& key) {
         auto it = id_to_node.find(key);
         if (it == id_to_node.end())

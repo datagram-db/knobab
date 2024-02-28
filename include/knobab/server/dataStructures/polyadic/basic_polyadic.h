@@ -19,7 +19,7 @@ struct new_event_coordinates {
     DEFAULT_CONSTRUCTORS(new_event_coordinates)
 
     inline std::string get_log_name() const {
-        return user_name + "_" + std::to_string(final_class);
+        return /*user_name + "_" +*/ std::to_string(final_class);
     }
 };
 
