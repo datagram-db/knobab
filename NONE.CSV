@@ -1,3 +1,0 @@
-log_filename,mining_algorithm,n_traces,log_trace_average_length,min_support,iteration_num,loading_and_indexing_time,query_time
-/home/giacomo/Scaricati/1000_10_10(1).xes,ADM_S,1000,10,0.9,1,147.44212400000833,1946.634207999523
-/home/giacomo/Scaricati/1000_10_10(1).xes,ADM_S,1000,10,0.9,1,120.67877200024668,1670.0237189998006

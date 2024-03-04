@@ -18,7 +18,7 @@ using marked_event_type = uint16_t;
 using marked_event_future_t = uint16_t;
 
 TAGGED_UNION_WITH_ENCAPSULATION_BEGIN(uint64_t, marked_event, 0, 4, marked_event_type type:16, event_t left:16, event_t right:16, marked_event_future_t future:16)
-(marked_event_type type, event_t left, event_t right = 0, marked_event_future_t future = 0) {
+(marked_event_type type, event_t left, event_t right = 0, marked_event_future_t future = 1) {
 id.parts.type = type;
 id.parts.left = left;
 id.parts.right = right;

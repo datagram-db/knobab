@@ -41,9 +41,10 @@ inline void and_next(const Result &lhsOperand,
     if (count == 0) return;
     for (const auto& x : lhsOperand) {
         if (cp.first[x.first.first].id.parts.event_id == 0) continue;
-        if ((kb.act_table_by_act_id.getTraceLength(x.first.first)-1) == (x.first.second))
+        auto L =(kb.act_table_by_act_id.getTraceLength(x.first.first));
+        if (((L-1) == (x.first.second)) || (x.first.second+x.second.first>=L))
             continue;
-        const auto& right_offsets = kb.act_table_by_act_id.getBuilder().trace_id_to_event_id_to_offset.at(x.first.first).at(x.first.second+1);
+        const auto& right_offsets = kb.act_table_by_act_id.getBuilder().trace_id_to_event_id_to_offset.at(x.first.first).at(x.first.second+x.second.first);
         bool found = right_offsets.find(right_activity) != right_offsets.end();
 //        for (const auto right_offset : right_offsets) {
 //            if ((kb.act_table_by_act_id.table.at(right_offset).entry.id.parts.act == right_activity)) {
@@ -55,7 +56,7 @@ inline void and_next(const Result &lhsOperand,
         bool rightMatch = true;
         if (right_predicate) {
             const auto& table_offsets_map =
-                    kb.act_table_by_act_id.getBuilder().trace_id_to_event_id_to_offset.at(x.first.first).at(x.first.second+1);
+                    kb.act_table_by_act_id.getBuilder().trace_id_to_event_id_to_offset.at(x.first.first).at(x.first.second+x.second.first);
             for(const auto& pred_withConj : rhs_atoms){
                 bool result = true;
                 for (const auto& predDummy : ap->atom_to_conjunctedPredicates.at(pred_withConj)) {
@@ -264,7 +265,7 @@ inline void aAlternateAndFutureB(const Result& aResult, const Result& bResult, R
                                 if (manager->checkValidity(e1, newItr->first.first, join.id.parts.right)) {
                                     hasMatch = true;
                                     rcx.second.second.push_back(join);
-                                    rcx.second.first *= (1.0 - std::min(aCurrent->second.first, newItr->second.first));
+//                                    rcx.second.first *= (1.0 - std::min(aCurrent->second.first, newItr->second.first));
                                     break;
                                 }
                             }
@@ -380,7 +381,7 @@ inline void aWeakAlternateAndFutureB(const Result& aResult, const Result& bResul
                                     if (manager->checkValidity(e1, newItr->first.first, join.id.parts.right)) {
                                         hasMatch = true;
                                         rcx.second.second.push_back(join);
-                                        rcx.second.first *= (1.0 - std::min(aCurrent->second.first, newItr->second.first));
+//                                        rcx.second.first *= (1.0 - std::min(aCurrent->second.first, newItr->second.first));
                                         break;
                                     }
                                 }
