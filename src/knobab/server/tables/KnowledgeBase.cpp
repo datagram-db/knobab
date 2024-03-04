@@ -487,7 +487,7 @@ OutputIt tmp_set_union(InputIt1 first1, InputIt1 last1,
     return std::copy(first2, last2, d_first);
 }
 
-std::vector<std::pair<std::pair<trace_t, event_t>, double>>
+std::vector<std::pair<std::pair<trace_t, event_t>, event_t>>
 KnowledgeBase::range_query(DataPredicate prop, double min_threshold, const double c) const {
     if (prop.casusu == TTRUE)
         return universe; // Immediately returning the universe queries
@@ -530,20 +530,20 @@ KnowledgeBase::range_query(DataPredicate prop, double min_threshold, const doubl
         auto tmp2 = range_query(prop, min_threshold, maximum_reliability_for_insertion, c, false);
         if (tmp2.first == 1) {
             // performs the union with the approximated universe: TODO: replace tmp_set_union with Sam's
-            std::vector<std::pair<std::pair<trace_t, event_t>, double>> Result;
+            std::vector<std::pair<std::pair<trace_t, event_t>, event_t>> Result;
             tmp_set_union(tmp.second.begin(), tmp.second.end(),
                           universeApprox.begin(), universeApprox.end(),
-                          std::back_inserter(Result), [](double x, double y) {return std::max(x,y);});
+                          std::back_inserter(Result), [](size_t x, size_t y) {return std::max(x,y);});
             return Result;
         } else if (tmp.first == 0)
             // return the original data directly, with no union
             return tmp.second;
         else {
             // performs he union with the two datasets. TODO: replace tmp_set_union with Sam's
-            std::vector<std::pair<std::pair<trace_t, event_t>, double>> Result;
+            std::vector<std::pair<std::pair<trace_t, event_t>, event_t>> Result;
             tmp_set_union(tmp.second.begin(), tmp.second.end(),
                           tmp2.second.begin(), tmp2.second.end(),
-                          std::back_inserter(Result), [](double x, double y) {return std::max(x,y);});
+                          std::back_inserter(Result), [](size_t x, size_t y) {return std::max(x,y);});
             return Result;
         }
     } else {
@@ -551,7 +551,7 @@ KnowledgeBase::range_query(DataPredicate prop, double min_threshold, const doubl
     }
 }
 
-std::pair<int, std::vector<std::pair<std::pair<trace_t, event_t>, double>>>
+std::pair<int, std::vector<std::pair<std::pair<trace_t, event_t>, event_t>>>
 KnowledgeBase::range_query(DataPredicate &prop,
                            double min_threshold,
                            double correction,
@@ -575,25 +575,27 @@ KnowledgeBase::range_query(DataPredicate &prop,
         else if (tmp.isEmptySolution())
             return {0, {}}; // Return empty solution
         else {
-            std::vector<std::pair<std::pair<trace_t, event_t>, double>> S;
+            std::vector<std::pair<std::pair<trace_t, event_t>, event_t>> S;
             for (const auto& element : tmp._data) {
                 if (element.exact_solution.first != nullptr) {
                     size_t N = std::distance(element.exact_solution.first, element.exact_solution.second);
                     for (size_t i = 0; i<=N; i++) {
                         const auto& exactIt = element.exact_solution.first[i];
-                        const auto& resolve = act_table_by_act_id.table.at(exactIt.act_table_offset).entry.id.parts;
+                        const auto& ref = act_table_by_act_id.table.at(exactIt.act_table_offset);
+                        const auto& resolve = ref.entry.id.parts;
                         S.emplace_back(std::make_pair(resolve.trace_id,resolve.event_id
                                 /*trunc((((double)resolve.event_id)/at16) *
-                                      act_table_by_act_id.getTraceLength(resolve.trace_id))*/), 1.0 * correction);
+                                      act_table_by_act_id.getTraceLength(resolve.trace_id))*/), ref.span);
                     }
 
                 }
 
                 for (auto item : element.approx_solution) {
-                    const auto& resolve = act_table_by_act_id.table.at(item.first->act_table_offset).entry.id.parts;
+                    const auto& ref = act_table_by_act_id.table.at(item.first->act_table_offset);
+                    const auto& resolve = ref.entry.id.parts;
                     S.emplace_back(std::make_pair(resolve.trace_id,resolve.event_id
                             /*trunc((((double)resolve.event_id)/at16) *
-                                  act_table_by_act_id.getTraceLength(resolve.trace_id))*/), item.second * correction);
+                                  act_table_by_act_id.getTraceLength(resolve.trace_id))*/),ref.span);
 
                 }
             }
@@ -656,9 +658,9 @@ std::pair<const uint32_t, const uint32_t> KnowledgeBase::resolveCountingData(con
     return count_table.resolve_primary_index(mappedVal);
 }
 
-std::vector<std::pair<std::pair<trace_t, event_t>, double>> KnowledgeBase::untimed_dataless_exists(const std::pair<const uint32_t, const uint32_t>& indexes,
+std::vector<std::pair<std::pair<trace_t, event_t>, event_t>> KnowledgeBase::untimed_dataless_exists(const std::pair<const uint32_t, const uint32_t>& indexes,
                                                                                                    const uint16_t& amount) const {
-    std::vector<std::pair<std::pair<trace_t, event_t>, double>> foundElems;
+    std::vector<std::pair<std::pair<trace_t, event_t>, event_t>> foundElems;
 
     if ((indexes.first == indexes.second) && (indexes.first == (uint32_t)-1))
         return foundElems;
@@ -676,6 +678,15 @@ std::vector<std::pair<std::pair<trace_t, event_t>, double>> KnowledgeBase::untim
 
 Result KnowledgeBase::timed_dataless_exists(const std::string &act, LeafType leafType) const {
     Result foundData;
+    const uint16_t& mappedVal = getMappedValueFromAction(act);
+    if(mappedVal < 0){
+        return foundData;
+    }
+    std::pair<const uint32_t , const uint32_t> indexes = act_table_by_act_id.resolve_index(mappedVal);
+    if(indexes.first < 0){
+        return foundData;
+    }
+
     ResultRecord result{{0,0}, {1.0, {}}};
 //    std::pair<uint32_t, uint16_t> timePair;
 //    std::pair<double, std::vector<uint16_t>> dataPair{1.0, {}};
@@ -695,21 +706,15 @@ Result KnowledgeBase::timed_dataless_exists(const std::string &act, LeafType lea
             break;
     }
 
-    const uint16_t& mappedVal = getMappedValueFromAction(act);
-    if(mappedVal < 0){
-        return foundData;
-    }
-    std::pair<const uint32_t , const uint32_t> indexes = act_table_by_act_id.resolve_index(mappedVal);
-    if(indexes.first < 0){
-        return foundData;
-    }
     for (auto it = act_table_by_act_id.table.begin() + indexes.first; it != act_table_by_act_id.table.begin() + indexes.second + 1; ++it) {
         result.first.first = it->entry.id.parts.trace_id;
         result.first.second = it->entry.id.parts.event_id;
+        result.second.first = it->span;
 
         if (marked_event_type) {
             auto& ref = result.second.second[0];
             SET_EVENT(ref, result.first.second);
+            ref.id.parts.future = it->span;
         }
 
 //        if (markEventsForMatch)
@@ -880,7 +885,7 @@ void KnowledgeBase::exact_range_query(const std::string &field_name,
 //                        }
 //                        if (doInsert)
                         S.emplace_back(std::pair<trace_t,event_t>{resolve.trace_id, resolve.event_id},
-                                       /*std::pair<double,std::vector<uint16_t>>{*/1.0/*, W}*/);
+                                       /*std::pair<double,std::vector<uint16_t>>{*/act_table_by_act_id.table.at(exactIt.act_table_offset).span/*, W}*/);
                     }
                     std::sort(S.begin(), S.end());
                     S.erase(std::unique(S.begin(), S.end()), S.end());
@@ -1036,7 +1041,7 @@ PartialResult KnowledgeBase::timed_dataless_exists(const std::string &act) const
     for (auto it = act_table_by_act_id.table.begin() + indexes.first; it != act_table_by_act_id.table.begin() + indexes.second + 1; ++it) {
         timePair.first = it->entry.id.parts.trace_id;
         timePair.second = it->entry.id.parts.event_id;
-        foundData.emplace_back(timePair, 1.0);
+        foundData.emplace_back(timePair, it->span);
     }
     return foundData;
 }
@@ -1131,6 +1136,7 @@ PartialResult KnowledgeBase::getFirstLastOtherwise(const bool isFirst) const {
             for (const auto& [act,insiders] : *rec.first) {
                 for (const auto& insider : insiders) {
                     traceEventPair.first.second = insider->entry.id.parts.event_id;
+                    traceEventPair.second = insider->span;
                     elems.push_back(traceEventPair);
                 }
             }
@@ -1138,6 +1144,7 @@ PartialResult KnowledgeBase::getFirstLastOtherwise(const bool isFirst) const {
             for (const auto& [act,insiders] : *rec.second) {
                 for (const auto& insider : insiders) {
                     traceEventPair.first.second = insider->entry.id.parts.event_id;
+                    traceEventPair.second = insider->span;
                     elems.push_back(traceEventPair);
                 }
             }

@@ -66,7 +66,7 @@ MarkedEventsVector populateAndReturnEvents(T it1, T it2){
  * @param vec
  * @param sort
  */
-template <typename T> void populateAndReturnEvents(T it1, T it2, MarkedEventsVector& vec, bool sort = true){
+template <typename T> inline void populateAndReturnEvents(T it1, T it2, MarkedEventsVector& vec, bool sort = true){
     //vec.clear();
 
     for(auto itr = it1; itr != it2; ++itr){

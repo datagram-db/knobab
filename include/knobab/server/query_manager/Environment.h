@@ -86,7 +86,7 @@ public:
     bool   index_missing_data = false;
 
     /// Data Range Queries
-    std::vector<std::pair<std::pair<trace_t, event_t>, double>> range_query(DataPredicate prop) const {
+    std::vector<std::pair<std::pair<trace_t, event_t>, event_t>> range_query(DataPredicate prop) const {
         return db.range_query(prop, min_threshold, c);
     }
 

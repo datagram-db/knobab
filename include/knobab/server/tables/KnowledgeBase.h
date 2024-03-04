@@ -123,8 +123,8 @@ class KnowledgeBase : public trace_visitor {
     std::string name;
     size_t currentEventId;
     ParsingState status;
-    std::vector<std::pair<std::pair<trace_t, event_t>, double>> universe, universeApprox;
-    std::vector<std::pair<std::pair<trace_t, event_t>, double>> empty;
+    std::vector<std::pair<std::pair<trace_t, event_t>, event_t>> universe, universeApprox;
+    std::vector<std::pair<std::pair<trace_t, event_t>, event_t>> empty;
     size_t maximumStringLength = 0;
 
 public:
@@ -306,7 +306,7 @@ public:
 
 
     PartialResult exists(const std::pair<const uint32_t, const uint32_t>& indexes) const {
-        std::vector<std::pair<std::pair<trace_t, event_t>, double>> foundElems;
+        std::vector<std::pair<std::pair<trace_t, event_t>, event_t>> foundElems;
         for (auto it = count_table.table.begin() + indexes.first; it != count_table.table.begin() + indexes.second + 1; ++it) {
             foundElems.emplace_back(std::pair<trace_t, event_t>{it->id.parts.trace_id, 0}, 1.0);
         }
@@ -315,7 +315,7 @@ public:
 
     Result init(const std::string& act, bool doExtractEvent, const double minThreshold = 1) const;
     Result ends(const std::string& act, bool doExtractEvent, const double minThreshold = 1) const;
-    std::vector<std::pair<std::pair<trace_t, event_t>, double>> timed_dataless_exists(const std::string& act) const;
+    std::vector<std::pair<std::pair<trace_t, event_t>, event_t>> timed_dataless_exists(const std::string& act) const;
 
     std::pair<ActTable::record*, ActTable::record*> timed_dataless_exists(uint16_t mappedVal) const {
         std::pair<ActTable::record*, ActTable::record*> foundData{nullptr, nullptr};
@@ -401,7 +401,7 @@ private:
     uint16_t getPositionFromEventId(const std::pair<uint32_t, uint16_t> pair) const;
 
 
-    std::pair<int, std::vector<std::pair<std::pair<trace_t, event_t>, double>>>
+    std::pair<int, std::vector<std::pair<std::pair<trace_t, event_t>, event_t>>>
     range_query(DataPredicate &prop, double min_threshold, double correction, const double c, bool forExistingData = true) const;
 
 };

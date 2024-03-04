@@ -9,6 +9,86 @@
 #include "knobab/server/dataStructures/TraceData.h"
 #include "knobab/server/declare/DeclareDataAware.h"
 
+#if 0
+
+template<typename TableSection> inline
+Result global(const uint32_t &traceId, const uint16_t &startEventId, const uint16_t& endEventId, const TableSection &section) {
+//    auto lower = std::lower_bound(section.begin(), section.end(), std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>{{traceId, startEventId},  {0, {}}});
+//    auto upper = std::upper_bound(lower, section.end(), std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>{{traceId, endEventId},  {1, maxVec}});
+    SCAN_MIN_MAX(traceId, startEventId, min, max, lower, upper, section)
+    Result temp {};
+    if(lower == upper){
+        return temp;
+    }
+    static ResultRecordSemantics vec1;
+    vec1.first = 1.0;
+    const uint32_t dist = std::distance(lower, upper - 1);
+
+    if(dist == (endEventId - startEventId)){
+        vec1.second = populateAndReturnEvents(lower, upper);
+        temp.emplace_back(std::pair<uint32_t, uint16_t>{traceId, startEventId}, vec1);
+    }
+
+    return temp;
+}
+
+template<typename TableSection> inline
+Result global(const TableSection &section, const std::vector<size_t>& lengths) {
+    Result temp {};
+    auto lower = section.begin(), upper = section.begin();
+    auto end = section.end();
+    ResultRecord result;
+    ResultRecord var{{0,0}, {1.0,{}}};
+    ResultRecord maxVar{{0,0}, {0,{}}};
+
+    while(upper != end){
+        uint32_t currentTraceId = upper->first.first;
+        var.first.first = maxVar.first.first = result.first.first = currentTraceId;
+        maxVar.first.second = lengths.at(currentTraceId);
+
+        lower = upper;
+        upper = std::upper_bound(lower, section.end(), maxVar);
+
+        const uint32_t dist = std::distance(lower, upper - 1);
+
+        if(dist == lengths[currentTraceId] - 1){
+            var.second.second = populateAndReturnEvents(lower, upper);
+            temp.emplace_back(var);
+        }
+    }
+
+    return temp;
+}
+
+#include <iostream>
+
+
+template<typename TableSection> inline
+Result future(const uint32_t &traceId, const uint16_t &startEventId, const uint16_t& endEventId, const TableSection &section) {
+//    auto lower = std::lower_bound(section.begin(), section.end(), std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>{{traceId, startEventId}, {0, {}}});
+//    auto upper = std::upper_bound(section.begin(), section.end(), std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>{{traceId, endEventId}, {1, maxVec}});
+    SCAN_MIN_MAX(traceId, startEventId, min, max, lower, upper, section)
+    Result  temp {};
+    ResultIndex idx{traceId, 0};
+
+    if(lower == upper){
+        return temp;
+    }
+
+    while (lower != upper) {
+        idx.second = lower->first.second;
+        temp.emplace_back(idx, lower->second);
+        lower++;
+    }
+
+    return temp;
+}
+
+template<typename TableSection> inline
+Result future(const TableSection &section) {
+    return section;
+}
+
 template<typename InputIt1, typename InputIt2, typename OutputIt, typename Aggregation> inline
 OutputIt setUnion(InputIt1 first1, InputIt1 last1, InputIt2 first2, InputIt2 last2,
                   OutputIt d_first, Aggregation aggr, const PredicateManager *manager = nullptr, bool dropMatches = false) {
@@ -339,6 +419,7 @@ OutputIt setIntersectionUntimed(InputIt1 first1, InputIt1 last1, InputIt2 first2
 
     return d_first;
 }
+#endif
 
 #define SCAN_MIN_MAX(traceId, startEventId, min, max, lower, upper, section) RESULT_RECORD_MIN(min, traceId, startEventId); RESULT_RECORD_MIN(max, traceId, startEventId); auto lower = std::lower_bound(section.begin(), section.end(), min); auto upper = std::upper_bound(lower, section.end(), max);
 
@@ -379,83 +460,6 @@ Result rnext(const TableSection &section) {
 
 
 
-template<typename TableSection> inline
-Result global(const uint32_t &traceId, const uint16_t &startEventId, const uint16_t& endEventId, const TableSection &section) {
-//    auto lower = std::lower_bound(section.begin(), section.end(), std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>{{traceId, startEventId},  {0, {}}});
-//    auto upper = std::upper_bound(lower, section.end(), std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>{{traceId, endEventId},  {1, maxVec}});
-    SCAN_MIN_MAX(traceId, startEventId, min, max, lower, upper, section)
-    Result temp {};
-    if(lower == upper){
-        return temp;
-    }
-    static ResultRecordSemantics vec1;
-    vec1.first = 1.0;
-    const uint32_t dist = std::distance(lower, upper - 1);
-
-    if(dist == (endEventId - startEventId)){
-        vec1.second = populateAndReturnEvents(lower, upper);
-        temp.emplace_back(std::pair<uint32_t, uint16_t>{traceId, startEventId}, vec1);
-    }
-
-    return temp;
-}
-
-template<typename TableSection> inline
-Result global(const TableSection &section, const std::vector<size_t>& lengths) {
-    Result temp {};
-    auto lower = section.begin(), upper = section.begin();
-    auto end = section.end();
-    ResultRecord result;
-    ResultRecord var{{0,0}, {1.0,{}}};
-    ResultRecord maxVar{{0,0}, {0,{}}};
-
-    while(upper != end){
-        uint32_t currentTraceId = upper->first.first;
-        var.first.first = maxVar.first.first = result.first.first = currentTraceId;
-        maxVar.first.second = lengths.at(currentTraceId);
-
-        lower = upper;
-        upper = std::upper_bound(lower, section.end(), maxVar);
-
-        const uint32_t dist = std::distance(lower, upper - 1);
-
-        if(dist == lengths[currentTraceId] - 1){
-            var.second.second = populateAndReturnEvents(lower, upper);
-            temp.emplace_back(var);
-        }
-    }
-
-    return temp;
-}
-
-#include <iostream>
-
-
-template<typename TableSection> inline
-Result future(const uint32_t &traceId, const uint16_t &startEventId, const uint16_t& endEventId, const TableSection &section) {
-//    auto lower = std::lower_bound(section.begin(), section.end(), std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>{{traceId, startEventId}, {0, {}}});
-//    auto upper = std::upper_bound(section.begin(), section.end(), std::pair<std::pair<uint32_t, uint16_t>, std::pair<double, std::vector<uint16_t>>>{{traceId, endEventId}, {1, maxVec}});
-    SCAN_MIN_MAX(traceId, startEventId, min, max, lower, upper, section)
-    Result  temp {};
-    ResultIndex idx{traceId, 0};
-
-    if(lower == upper){
-        return temp;
-    }
-
-    while (lower != upper) {
-        idx.second = lower->first.second;
-        temp.emplace_back(idx, lower->second);
-        lower++;
-    }
-
-    return temp;
-}
-
-template<typename TableSection> inline
-Result future(const TableSection &section) {
-    return section;
-}
 
 template<typename TableSection> inline
 Result negateUntimed(TableSection &data_untimed, const std::vector<size_t> &lengths, bool preserveNegatedFacts = true) {
@@ -473,7 +477,7 @@ Result negateUntimed(TableSection &data_untimed, const std::vector<size_t> &leng
         if (first1 > first2->first.first) {
             if (preserveNegatedFacts) {
                 auto tmp = *first2;
-                tmp.second.first = 1.0 - tmp.second.first;
+                tmp.second.first = 1.0; //- tmp.second.first;
                 result.push_back(tmp);
             }
             first2++;
@@ -487,10 +491,10 @@ Result negateUntimed(TableSection &data_untimed, const std::vector<size_t> &leng
                 rc.second.first = 1.0;
                 while (first2 != last2 && (first2->first.first != first1)) {
                     rc.second.second.insert(rc.second.second.end(), first2->second.second.begin(), first2->second.second.end());
-                    rc.second.first *= first2->second.first;
+//                    rc.second.first *= first2->second.first;
                     first2++;
                 }
-                rc.second.first = 1.0 - rc.second.first;
+//                rc.second.first = 1.0 - rc.second.first;
                 remove_duplicates(rc.second.second);
                 result.push_back(rc);
             }
@@ -719,11 +723,12 @@ Result until(const TableSection &aSection, const TableSection &bSection, const s
                                 auto e1V = manager->GetPayloadDataFromEvent(Fut);
                                 for (auto curr = aIt; curr != aEn; curr++) {
                                     if (hasFail) break;
+                                    bool intermediateTest = false;
                                     Prev.first = curr->first.first;
                                     for (const marked_event& targetEvent : curr->second.second) {
                                         if (!IS_MARKED_EVENT_TARGET(targetEvent)) continue;
                                         Prev.second = GET_TARGET_EVENT(targetEvent);
-                                        bool intermediateTest = false;
+                                        if (Prev.second+targetEvent.id.parts.future>Fut.second) continue;
                                         for (const auto& e1 : e1V) {
                                             for (const auto& e2 : manager->GetPayloadDataFromEvent(Prev)) {
                                                 if (manager->checkValidity(e2, e1)) {
@@ -742,6 +747,10 @@ Result until(const TableSection &aSection, const TableSection &bSection, const s
 //                                        else {
 //                                            V.emplace_back(marked_event::join(Fut.second, Prev.first));
 //                                        }
+                                    }
+                                    if (!intermediateTest) {
+                                        hasFail = true;
+                                        break;
                                     }
                                 }
                             }

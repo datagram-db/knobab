@@ -12,10 +12,10 @@
 
 using MarkedEventsVector = std::vector<marked_event>;
 using ResultIndex = std::pair<trace_t, event_t>;
-using ResultRecordSemantics = std::pair<double, MarkedEventsVector>;
+using ResultRecordSemantics = std::pair<event_t, MarkedEventsVector>;
 using ResultRecord = std::pair<ResultIndex, ResultRecordSemantics>;
 using Result = std::vector<ResultRecord>;
-using PartialResultRecord = std::pair<ResultIndex, double>;
+using PartialResultRecord = std::pair<ResultIndex, event_t>;
 using PartialResult = std::vector<PartialResultRecord>;
 
 #define RESULT_RECORD_MIN(name, tid, eid)         ResultRecord name{{tid, eid}, {0.0, {}}}

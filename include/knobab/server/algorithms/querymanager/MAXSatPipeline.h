@@ -65,7 +65,8 @@ enum OperatorQueryPlan {
     AbidingLogic,
     FastOperator_v1,
     Hybrid,
-    NoQueryRunning
+    NoQueryRunning,
+    PolyadicDataless
 };
 
 struct MAXSatPipeline {

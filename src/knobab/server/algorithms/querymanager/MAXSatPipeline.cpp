@@ -8,6 +8,7 @@
 #include <yaucl/functional/assert.h>
 #include <knobab/server/operators/fast_ltlf_operators.h>
 #include <knobab/server/operators/novel_ltlf_operators.h>
+#include <knobab/server/operators/polyadic_dataless.h>
 #include <knobab/server/algorithms/querymanager/MAXSatPipeline.h>
 
 MAXSatPipeline::MAXSatPipeline(std::unordered_map<std::string, LTLfQuery>* ptrx,
@@ -95,12 +96,12 @@ static inline void partialResultIntersection(const PartialResult& lhs,
 }
 
 static inline
-std::vector<std::pair<std::pair<trace_t, event_t>, double>> partialResultIntersection(const std::set<size_t> &vecs,
-                                                                                      const std::vector<std::pair<DataQuery, std::vector<std::pair<std::pair<trace_t, event_t>, double>>>>& results) {
+std::vector<std::pair<std::pair<trace_t, event_t>, event_t>> partialResultIntersection(const std::set<size_t> &vecs,
+                                                                                      const std::vector<std::pair<DataQuery, std::vector<std::pair<std::pair<trace_t, event_t>, event_t>>>>& results) {
     if (vecs.empty()) return {};
     auto it = vecs.begin();
     auto last_intersection = results.at(*it).second;
-    std::vector<std::pair<std::pair<trace_t, event_t>, double>> curr_intersection;
+    std::vector<std::pair<std::pair<trace_t, event_t>, event_t>> curr_intersection;
     for (std::size_t i = 1; i < vecs.size(); ++i) {
         it++;
         auto ref = results.at(*it).second;
@@ -228,7 +229,7 @@ void MAXSatPipeline::pushDataRangeQuery(const LTLfQuery* query,
                                         const std::string &atom) {
     // Remembers the formula-atom association, so that the final atom ID can be performed after the intersection
     // decomposition part of the pipeline
-    static std::vector<std::pair<std::pair<trace_t, event_t>, double>> empty_result{};
+    static std::vector<std::pair<std::pair<trace_t, event_t>, event_t>> empty_result{};
     atomToFormulaId[atom].emplace_back((LTLfQuery*)query);
     if (!toUseAtoms.emplace(atom, toUseAtoms.size()).second) return;
 
@@ -266,7 +267,7 @@ void MAXSatPipeline::pushDataRangeQuery(const LTLfQuery* query,
 }
 
 size_t MAXSatPipeline::pushNonRangeQuery(const DataQuery &q, bool directlyFromCache) {
-    static std::vector<std::pair<std::pair<trace_t, event_t>, double>> empty_result{};
+    static std::vector<std::pair<std::pair<trace_t, event_t>, event_t>> empty_result{};
     size_t offset = data_accessing.size();
     auto find = data_offset.emplace(q, offset); // Determining whether the query already exists
     if (find.second){

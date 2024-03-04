@@ -7,6 +7,18 @@
 #ifndef KNOBAB_FAST_LTLF_OPERATORS_H
 #define KNOBAB_FAST_LTLF_OPERATORS_H
 
+template<typename Iterator, typename Pred, typename Operation> size_t
+for_each_if(Iterator begin, Iterator end, Pred p, Operation op) {
+    size_t count = 0;
+    for(; begin != end; begin++) {
+        if (p(*begin)) {
+            count++;
+            op(*begin);
+        }
+    }
+    return count;
+}
+
 /**
  * @author Samuel 'Sam' Appleby, Giacomo Bergami
  *
@@ -18,7 +30,6 @@
 inline void or_fast_timed(const Result& lhs, const Result& rhs, Result& out, const PredicateManager *manager = nullptr, const std::vector<size_t>& lengths = {}) {
     auto first1 = lhs.begin(), first2 = rhs.begin(),
             last1 = lhs.end(), last2 = rhs.end();
-//    env e1, e2;
     ResultIndex pair, pair1;
     bool hasMatch;
     ResultRecord result{{0, 0}, {0.0, {}}};
@@ -51,6 +62,11 @@ inline void or_fast_timed(const Result& lhs, const Result& rhs, Result& out, con
                     for (const marked_event &elem1: first2->second.second) {
                         if (!IS_MARKED_EVENT_TARGET(elem1)) continue;
                         join.id.parts.right = GET_TARGET_EVENT(elem1);
+                        if (join.id.parts.left<join.id.parts.right) {
+                            if (elem.id.parts.future+join.id.parts.left>join.id.parts.right) continue;
+                        } else {
+                            if (elem1.id.parts.future+join.id.parts.right>join.id.parts.left) continue;
+                        }
 
                         for (const auto& e1 : e1V) {
                             if (manager->checkValidity(e1, first2->first.first, join.id.parts.right)) {
@@ -178,6 +194,11 @@ inline void or_fast_untimed(const Result& lhs, const Result& rhs, Result& out, c
                                 for (const marked_event &elem1: first2->second.second) {
                                     if (!IS_MARKED_EVENT_TARGET(elem1)) continue;
                                     join.id.parts.right = pair1.second = GET_TARGET_EVENT(elem1);
+                                    if (join.id.parts.left<join.id.parts.right) {
+                                        if (elem.id.parts.future+join.id.parts.left>join.id.parts.right) continue;
+                                    } else {
+                                        if (elem1.id.parts.future+join.id.parts.right>join.id.parts.left) continue;
+                                    }
 
                                     for (const auto& e1 : e1V) {
                                         if (manager->checkValidity(e1, localTrace, join.id.parts.right)) {
@@ -253,7 +274,7 @@ inline void and_fast_timed(const Result& lhs, const Result& rhs, Result& out, co
 
     while (first1 != last1) {
         if (first2 == last2)
-            return /*d_first*/;
+            return;
         if (first1->first > first2->first) {
             first2++;
         } else if (first1->first < first2->first) {
@@ -275,6 +296,11 @@ inline void and_fast_timed(const Result& lhs, const Result& rhs, Result& out, co
                     for (const marked_event &elem1: first2->second.second) {
                         if (!IS_MARKED_EVENT_TARGET(elem1)) continue;
                         join.id.parts.right = pair1.second = GET_TARGET_EVENT(elem1);
+                        if (join.id.parts.left<join.id.parts.right) {
+                            if (elem.id.parts.future+join.id.parts.left>join.id.parts.right) continue;
+                        } else {
+                            if (elem1.id.parts.future+join.id.parts.right>join.id.parts.left) continue;
+                        }
 
                         for (const auto& e1 : e1V) {
                             if (manager->checkValidity(e1, first2->first.first, join.id.parts.right)) {
@@ -286,9 +312,23 @@ inline void and_fast_timed(const Result& lhs, const Result& rhs, Result& out, co
                     }
                 }
             } else {
-                hasMatch = true;
-                result.second.second.insert(result.second.second.end(), first1->second.second.begin(), first1->second.second.end());
-                result.second.second.insert(result.second.second.end(), first2->second.second.begin(), first2->second.second.end());
+                hasMatch |= (for_each_if(first1->second.second.begin(), first1->second.second.end(),
+                            [hasMatch](const marked_event& elem) {
+                    return (!hasMatch) && (!IS_MARKED_EVENT_ACTIVATION(elem));
+                },
+                [first2,&hasMatch](const marked_event& elem) {
+                    size_t c = for_each_if(first2->second.second.begin(), first2->second.second.end(),
+                    [hasMatch](const marked_event& elem) {
+                        return (!hasMatch) && (!IS_MARKED_EVENT_TARGET(elem));
+                    },[&hasMatch,elem](const marked_event& elem1) {
+                                hasMatch = true;
+                    });
+                    if (c==0) hasMatch= true;
+                }) == 0);
+                if (hasMatch) {
+                    result.second.second.insert(result.second.second.end(), first1->second.second.begin(), first1->second.second.end());
+                    result.second.second.insert(result.second.second.end(), first2->second.second.begin(), first2->second.second.end());
+                }
             }
 
             if (hasMatch) {
@@ -355,6 +395,13 @@ inline void and_fast_untimed(const Result& lhs, const Result& rhs, Result& out, 
                                 for (const marked_event &elem1: first2->second.second) {
                                     if (!IS_MARKED_EVENT_TARGET(elem1)) continue;
                                     join.id.parts.right = GET_TARGET_EVENT(elem1);
+                                    if (join.id.parts.left != join.id.parts.right) {
+                                        if (join.id.parts.left<join.id.parts.right) {
+                                            if (elem.id.parts.future+join.id.parts.left>join.id.parts.right) continue;
+                                        } else {
+                                            if (elem1.id.parts.future+join.id.parts.right>join.id.parts.left) continue;
+                                        }
+                                    }
 
                                     for (const auto& e1 : e1V) {
                                         if (manager->checkValidity(e1, localTrace, join.id.parts.right)) {
@@ -367,7 +414,7 @@ inline void and_fast_untimed(const Result& lhs, const Result& rhs, Result& out, 
                             }
                         } else {
                             hasMatch = true;
-                            if (!completeInsertionRight) {
+                            if ((hasMatch) && (!completeInsertionRight)) {
                                 result.second.second.insert(result.second.second.end(), dx->second.second.begin(), dx->second.second.end());
                             }
                         }
@@ -377,7 +424,7 @@ inline void and_fast_untimed(const Result& lhs, const Result& rhs, Result& out, 
                     endFirst2 = dx;
                 }
 
-                if (!manager){
+                if ((!manager) && hasMatch){
                     completeInsertionRight = true;
                     result.second.second.insert(result.second.second.end(), first1->second.second.begin(), first1->second.second.end());
                 }
@@ -663,11 +710,18 @@ inline void aAndFutureB_timed_variant_2(const Result& a, const Result& b,Result&
                             for (const auto &elem1: second_g.second) {
                                 if (!IS_MARKED_EVENT_TARGET(elem1)) continue;
                                 join.id.parts.right = GET_TARGET_EVENT(elem1);
+                                if (join.id.parts.left != join.id.parts.right) {
+                                    if (join.id.parts.left<join.id.parts.right) {
+                                        if (elem.id.parts.future+join.id.parts.left>join.id.parts.right) continue;
+                                    } else {
+                                        if (elem1.id.parts.future+join.id.parts.right>join.id.parts.left) continue;
+                                    }
+                                }
 
                                 for (const auto& e1 : e1V) {
                                     if (manager->checkValidity(e1, current_trace, join.id.parts.right)) {
                                         rcx.second.second.push_back(join);
-                                        rcx.second.first *= (1.0 - std::min(aIter->second.first, second_g.first));
+//                                        rcx.second.first *= (1.0 - std::min(aIter->second.first, second_g.first));
                                         hasMatch = true;
                                         break;
                                     }
@@ -681,19 +735,37 @@ inline void aAndFutureB_timed_variant_2(const Result& a, const Result& b,Result&
                             toRevert.emplace_back(rcx);
                         }
                     } else {
-                        rcx.first.second = i;
-                        MarkedEventsVector second_second(second_g.second.size()+aIter->second.second.size());
-                        size_t counter = 0;
-                        for (size_t j = 0, N = aIter->second.second.size(); j<N; j++)
-                            second_second[counter++] = aIter->second.second.at(j);
-                        for (size_t j = 0, N = second_g.second.size(); j<N; j++)
-                            second_second[counter++] = second_g.second.at(j);
-                        auto& back = toRevert.emplace_back(rcx);
-                        back.second.second = std::move(second_second);
+                        bool hasMatch = false;
+                        for (const marked_event &elem: aIter->second.second) {
+                            if (!IS_MARKED_EVENT_ACTIVATION(elem)) continue;
+                            for (const marked_event &elem1: second_g.second) {
+                                if (!IS_MARKED_EVENT_TARGET(elem1)) continue;
+                                if (join.id.parts.left != join.id.parts.right) {
+                                    if (join.id.parts.left<join.id.parts.right) {
+                                        if (elem.id.parts.future+elem.id.parts.left>elem1.id.parts.right) continue;
+                                    } else {
+                                        if (elem1.id.parts.future+elem1.id.parts.right>elem.id.parts.left) continue;
+                                    }
+                                }
+
+                                hasMatch = true;
+                            }
+                            if (hasMatch) break;
+                        }
+                        if (hasMatch) {
+                            rcx.first.second = i;
+                            MarkedEventsVector second_second(second_g.second.size()+aIter->second.second.size());
+                            size_t counter = 0;
+                            for (size_t j = 0, N = aIter->second.second.size(); j<N; j++)
+                                second_second[counter++] = aIter->second.second.at(j);
+                            for (size_t j = 0, N = second_g.second.size(); j<N; j++)
+                                second_second[counter++] = second_g.second.at(j);
+                            auto& back = toRevert.emplace_back(rcx);
+                            back.second.second = std::move(second_second);
+                        }
                     }
                 }
             }
-
 
             if (!toRevert.empty()) {
                 result.insert(result.end(), std::make_move_iterator(toRevert.rbegin()),
@@ -755,21 +827,45 @@ inline void aAndFutureB_timed_variant_1(const Result& aResult, const Result& bRe
                         for (const auto &elem1: newItr->second.second) {
                             if (!IS_MARKED_EVENT_TARGET(elem1)) continue;
                             join.id.parts.right = GET_TARGET_EVENT(elem1);
+                            if (join.id.parts.left!=join.id.parts.right) {
+                                if (join.id.parts.left<join.id.parts.right) {
+                                    if (elem.id.parts.future+join.id.parts.left>join.id.parts.right) continue;
+                                } else {
+                                    if (elem1.id.parts.future+join.id.parts.right>join.id.parts.left) continue;
+                                }
+                            }
 
                             for (const auto& e1 : e1V) {
                                 if (manager->checkValidity(e1, newItr->first.first, join.id.parts.right)) {
                                     hasMatch = true;
                                     rcx.second.second.push_back(join);
-                                    rcx.second.first *= (1.0 - std::min(aCurrent->second.first, newItr->second.first));
+//                                    rcx.second.first *= (1.0 - std::min(aCurrent->second.first, newItr->second.first));
                                     break;
                                 }
                             }
                         }
                     }
                 } else {
-                    hasMatch = true;
-                    rcx.second.second.insert(rcx.second.second.end(), newItr->second.second.begin(), newItr->second.second.end());
-                    if (manager) rcx.second.second.insert(rcx.second.second.end(), aCurrent->second.second.begin(), aCurrent->second.second.end());
+                    hasMatch = false;
+                    for (const marked_event &elem: aCurrent->second.second) {
+                        if (!IS_MARKED_EVENT_ACTIVATION(elem)) continue;
+                        for (const marked_event &elem1: newItr->second.second) {
+                            if (!IS_MARKED_EVENT_TARGET(elem1)) continue;
+                            if (join.id.parts.left != join.id.parts.right) {
+                                if (join.id.parts.left<join.id.parts.right) {
+                                    if (elem.id.parts.future+elem.id.parts.left>elem1.id.parts.right) continue;
+                                } else {
+                                    if (elem1.id.parts.future+elem1.id.parts.right>elem.id.parts.left) continue;
+                                }
+                            }
+                            hasMatch = true;
+                        }
+                        if (hasMatch) break;
+                    }
+                    if (hasMatch) {
+                        rcx.second.second.insert(rcx.second.second.end(), newItr->second.second.begin(), newItr->second.second.end());
+                        if (manager) rcx.second.second.insert(rcx.second.second.end(), aCurrent->second.second.begin(), aCurrent->second.second.end());
+                    }
                 }
                 newItr++;
             }
@@ -851,11 +947,18 @@ inline void aAndNextGloballyB_timed(const Result& a, const Result& b,Result& res
                             for (const auto &elem1: newItr->second.second) {
                                 if (!IS_MARKED_EVENT_TARGET(elem1)) continue;
                                 join.id.parts.right = GET_TARGET_EVENT(elem1);
+                                if (join.id.parts.left!=join.id.parts.right) {
+                                    if (join.id.parts.left<join.id.parts.right) {
+                                        if (elem.id.parts.future+join.id.parts.left>join.id.parts.right) continue;
+                                    } else {
+                                        if (elem1.id.parts.future+join.id.parts.right>join.id.parts.left) continue;
+                                    }
+                                }
 
                                 for (const auto& e1 : e1V) {
                                     if (manager->checkValidity(e1, newItr->first.first, join.id.parts.right)) {
                                         rcx.second.second.push_back(join);
-                                        rcx.second.first *= (1.0 - std::min(aCurrent->second.first, newItr->second.first));
+//                                        rcx.second.first *= (1.0 - std::min(aCurrent->second.first, newItr->second.first));
                                         count++;
                                         hasMatch = true;
                                         break;
@@ -865,9 +968,28 @@ inline void aAndNextGloballyB_timed(const Result& a, const Result& b,Result& res
                             }
                         }
                     } else {
-                        count++;
-                        hasMatch = true;
-                        rcx.second.second.insert(rcx.second.second.end(), newItr->second.second.begin(), newItr->second.second.end());
+                        hasMatch = false;
+                        for (const marked_event &elem: aCurrent->second.second) {
+                            if (!IS_MARKED_EVENT_ACTIVATION(elem)) continue;
+                            for (const marked_event &elem1: newItr->second.second) {
+                                if (!IS_MARKED_EVENT_TARGET(elem1)) continue;
+                                if (join.id.parts.left!=join.id.parts.right) {
+                                    if (join.id.parts.left<join.id.parts.right) {
+                                        if (elem.id.parts.future+elem.id.parts.left>elem1.id.parts.right) continue;
+                                    } else {
+                                        if (elem1.id.parts.future+elem1.id.parts.right>elem.id.parts.left) continue;
+                                    }
+                                }
+
+                                hasMatch = true;
+                            }
+                            if (hasMatch) break;
+                        }
+                        if (hasMatch) {
+                            count++;
+//                            hasMatch = true;
+                            rcx.second.second.insert(rcx.second.second.end(), newItr->second.second.begin(), newItr->second.second.end());
+                        }
                     }
 
                     newItr++;
@@ -894,13 +1016,13 @@ inline void aAndNextGloballyB_timed(const Result& a, const Result& b,Result& res
 
 }
 
-inline double average(std::vector<size_t> const& v){
-    if(v.empty()){
-        return 0;
-    }
-    const double count = static_cast<float>(v.size());
-    return ((double)std::reduce(v.begin(), v.end())) / count;
-}
+//inline double average(std::vector<size_t> const& v){
+//    if(v.empty()){
+//        return 0;
+//    }
+//    const double count = static_cast<float>(v.size());
+//    return ((double)std::reduce(v.begin(), v.end())) / count;
+//}
 
 ///**
 // *
@@ -1104,11 +1226,18 @@ inline void aAndGloballyB_timed_variant_2(const Result& a, const Result& b,Resul
                             for (const auto &elem1: second_g.second) {
                                 if (!IS_MARKED_EVENT_TARGET(elem1)) continue;
                                 join.id.parts.right = GET_TARGET_EVENT(elem1);
+                                if (join.id.parts.left!=join.id.parts.right) {
+                                    if (join.id.parts.left<join.id.parts.right) {
+                                        if (elem.id.parts.future+join.id.parts.left>join.id.parts.right) continue;
+                                    } else {
+                                        if (elem1.id.parts.future+join.id.parts.right>join.id.parts.left) continue;
+                                    }
+                                }
 
                                 for (const auto& e1 : e1V) {
                                     if (manager->checkValidity(e1, current_trace, join.id.parts.right)) {
                                         rcx.second.second.push_back(join);
-                                        rcx.second.first *= (1.0 - std::min(aIter->second.first, second_g.first));
+//                                        rcx.second.first *= (1.0 - std::min(aIter->second.first, second_g.first));
                                         hasMatch = true;
                                         break;
                                     }
@@ -1116,14 +1245,32 @@ inline void aAndGloballyB_timed_variant_2(const Result& a, const Result& b,Resul
                             }
                         }
                     } else {
-                        hasMatch = true;
-                        rcx.second.second.insert(rcx.second.second.end(), aIter->second.second.begin(), aIter->second.second.end());
-                        rcx.second.second.insert(rcx.second.second.end(), second_g.second.begin(), second_g.second.end());
+                        hasMatch = false;
+                        for (const marked_event &elem: aIter->second.second) {
+                            if (!IS_MARKED_EVENT_ACTIVATION(elem)) continue;
+                            for (const marked_event &elem1: second_g.second) {
+                                if (!IS_MARKED_EVENT_TARGET(elem1)) continue;
+                                if (join.id.parts.left!=join.id.parts.right) {
+                                    if (join.id.parts.left<join.id.parts.right) {
+                                        if (elem.id.parts.future+elem.id.parts.left>elem1.id.parts.right) continue;
+                                    } else {
+                                        if (elem1.id.parts.future+elem1.id.parts.right>elem.id.parts.left) continue;
+                                    }
+                                }
+                                hasMatch = true;
+                            }
+                            if (hasMatch) break;
+                        }
+                        if (hasMatch) {
+//                            hasMatch = true;
+                            rcx.second.second.insert(rcx.second.second.end(), aIter->second.second.begin(), aIter->second.second.end());
+                            rcx.second.second.insert(rcx.second.second.end(), second_g.second.begin(), second_g.second.end());
+                        }
                     }
                     if (hasMatch) {
                         rcx.first.second = i;
                         remove_duplicates(rcx.second.second);
-                        if (manager) rcx.second.first = 1.0 - rcx.second.first;
+//                        if (manager) rcx.second.first = 1.0 - rcx.second.first;
                         toRevert.emplace_back(rcx);
                     }
                 }
@@ -1190,10 +1337,19 @@ inline void aAndGloballyB_timed_variant_1(const Result& a, const Result& b,Resul
                             for (const auto &elem1: newItr->second.second) {
                                 if (!IS_MARKED_EVENT_TARGET(elem1)) continue;
                                 join.id.parts.right = GET_TARGET_EVENT(elem1);
+                                if (join.id.parts.left!=join.id.parts.right) {
+                                    if (join.id.parts.left<join.id.parts.right) {
+                                        if (elem.id.parts.future+join.id.parts.left>join.id.parts.right) continue;
+                                    } else {
+                                        if (elem1.id.parts.future+join.id.parts.right>join.id.parts.left) continue;
+                                    }
+                                }
+
+
                                 for (const auto& e1: e1V) {
                                     if (manager->checkValidity(e1, newItr->first.first, join.id.parts.right)) {
                                         rcx.second.second.push_back(join);
-                                        rcx.second.first *= (1.0 - std::min(aCurrent->second.first, newItr->second.first));
+//                                        rcx.second.first *= (1.0 - std::min(aCurrent->second.first, newItr->second.first));
                                         count++;
                                         hasMatch = true;
                                         break;
@@ -1202,9 +1358,27 @@ inline void aAndGloballyB_timed_variant_1(const Result& a, const Result& b,Resul
                             }
                         }
                     } else {
-                        count++;
-                        hasMatch = true;
-                        rcx.second.second.insert(rcx.second.second.end(), newItr->second.second.begin(), newItr->second.second.end());
+                        hasMatch = false;
+                        for (const marked_event &elem: aCurrent->second.second) {
+                            if (!IS_MARKED_EVENT_ACTIVATION(elem)) continue;
+                            for (const marked_event &elem1: newItr->second.second) {
+                                if (!IS_MARKED_EVENT_TARGET(elem1)) continue;
+                                if (join.id.parts.left!=join.id.parts.right) {
+                                    if (join.id.parts.left<join.id.parts.right) {
+                                        if (elem.id.parts.future+join.id.parts.left>join.id.parts.right) continue;
+                                    } else {
+                                        if (elem1.id.parts.future+join.id.parts.right>join.id.parts.left) continue;
+                                    }
+                                }
+                                hasMatch = true;
+                            }
+                            if (hasMatch) break;
+                        }
+                        if (hasMatch) {
+                            count++;
+//                            hasMatch = true;
+                            rcx.second.second.insert(rcx.second.second.end(), newItr->second.second.begin(), newItr->second.second.end());
+                        }
                     }
 
                     newItr++;
@@ -1308,6 +1482,8 @@ inline void until_fast_untimed(const Result &aSection, const Result &bSection, R
                                     for (auto &targetEvent: curr->second.second) {
                                         if (!IS_MARKED_EVENT_TARGET(targetEvent)) continue;
                                         Prev.second = GET_TARGET_EVENT(targetEvent);
+                                        if (Prev.second+targetEvent.id.parts.future>Fut.second) continue;
+
                                         const auto e2V = manager->GetPayloadDataFromEvent(Prev);
                                         bool localTestFail = true;
                                         for (const auto& e1 : e1V) {
@@ -1340,6 +1516,14 @@ inline void until_fast_untimed(const Result &aSection, const Result &bSection, R
                             break;
                         }
                     } else {
+                        for (auto &activationEvent: bCurrent->second.second) {
+                            
+                        }
+                        for (auto curr = aIt; curr != aEn; curr++) {
+                            for (auto &targetEvent: curr->second.second) {
+
+                            }
+                        }
                         populateAndReturnEvents(aIt, ++aEn, cpResult.second.second);
                         cpResult.second.second.insert(cpResult.second.second.end(),
                                                       bCurrent->second.second.begin(),
