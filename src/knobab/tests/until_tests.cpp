@@ -12,6 +12,7 @@
 //#include <gtest/gtest.h>
 #include <knobab/server/operators/simple_ltlf_operators.h>
 #include <knobab/server/operators/fast_ltlf_operators.h>
+#include <knobab/server/operators/polyadic_dataless.h>
 
 #include <catch2/catch_test_macros.hpp>
 #define ASSERT_TRUE(c)  REQUIRE(c)
@@ -44,10 +45,17 @@ TEST_CASE("until_tests, logic") {
     auto a = env.db.timed_dataless_exists("A", NoneLeaf);
     auto b = env.db.timed_dataless_exists("B", NoneLeaf);
     std::set<uint32_t> expectedTraces{1,3,5,7,9,10,11,12,13};
-    Result result;
-    until_logic_untimed(a, b, result, nullptr, env.db.act_table_by_act_id.trace_length);
-    for (const auto& ref : result)
-        ASSERT_TRUE(expectedTraces.contains(ref.first.first));
+
+    Result result, result2;
+
+    SECTION("nonpoly") {
+        until_logic_untimed(a, b, result, nullptr, env.db.act_table_by_act_id.trace_length);
+        for (const auto& ref : result)
+            ASSERT_TRUE(expectedTraces.contains(ref.first.first));
+
+        polydl_sameroot_until_logic_untimed(a, b, result2, nullptr, env.db.act_table_by_act_id.trace_length);
+        EXPECT_EQ(result, result2);
+    }
 }
 
 TEST_CASE("until_tests, fast") {
@@ -134,7 +142,7 @@ TEST_CASE("until_tests, logic_timed") {
     {
         auto a = env.db.timed_dataless_exists("A", NoneLeaf);
         auto b = env.db.timed_dataless_exists("B", NoneLeaf);
-        Result result, expected;
+        Result result, expected, result2;
 
         DATA_EMPLACE_BACK(expected, 1, 0)
         DATA_EMPLACE_BACK(expected, 3, 0)
@@ -173,12 +181,15 @@ TEST_CASE("until_tests, logic_timed") {
         DATA_EMPLACE_BACK(expected, 13, 5)
         until_logic_timed(a, b, result, nullptr, env.db.act_table_by_act_id.trace_length);
         EXPECT_EQ(result, expected);
+
+        polydl_sameroot_until_logic_timed(a, b, result2, nullptr, env.db.act_table_by_act_id.trace_length);
+        EXPECT_EQ(result, result2);
     }
 
     {
         auto a = env.db.timed_dataless_exists("A", NoneLeaf);
         auto b = env.db.timed_dataless_exists("B", TargetLeaf);
-        Result result, expected;
+        Result result, expected, result2;
         DATA_EMPLACE_BACK(expected, 1, 0, marked_event::target(0))
         DATA_EMPLACE_BACK(expected, 3, 0, marked_event::target(1))
         DATA_EMPLACE_BACK(expected, 3, 1, marked_event::target(1))
@@ -216,12 +227,15 @@ TEST_CASE("until_tests, logic_timed") {
         DATA_EMPLACE_BACK(expected, 13, 5, marked_event::target(5))
         until_logic_timed(a, b, result, nullptr, env.db.act_table_by_act_id.trace_length);
         EXPECT_EQ(result, expected);
+
+        polydl_sameroot_until_logic_timed(a, b, result2, nullptr, env.db.act_table_by_act_id.trace_length);
+        EXPECT_EQ(result, result2);
     }
 
     {
         auto a = env.db.timed_dataless_exists("A", ActivationLeaf);
         auto b = env.db.timed_dataless_exists("B", TargetLeaf);
-        Result result, expected;
+        Result result, expected, result2;
         DATA_EMPLACE_BACK(expected, 1, 0, marked_event::target(0))
         DATA_EMPLACE_BACK(expected, 3, 0, marked_event::activation(0), marked_event::target(1))
         DATA_EMPLACE_BACK(expected, 3, 1, marked_event::target(1))
@@ -261,6 +275,9 @@ TEST_CASE("until_tests, logic_timed") {
             std::sort(ref.second.second.begin(), ref.second.second.end());
         until_logic_timed(a, b, result, nullptr, env.db.act_table_by_act_id.trace_length);
         EXPECT_EQ(result, expected);
+
+        polydl_sameroot_until_logic_timed(a, b, result2, nullptr, env.db.act_table_by_act_id.trace_length);
+        EXPECT_EQ(result, result2);
     }
 
 }
