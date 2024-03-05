@@ -2,9 +2,11 @@
 // Created by giacomo on 02/11/22.
 //
 #include <vector>
+#include "ServerQueryManager.h"
+
 #include <yaucl/structures/set_operations.h>
 #include <knobab/server/query_manager/Environment.h>
-
+#include "knobab/server/operators/polyadic_dataless.h"
 //#include <gtest/gtest.h>
 #include <knobab/server/operators/simple_ltlf_operators.h>
 #include <knobab/server/operators/fast_ltlf_operators.h>
@@ -221,5 +223,54 @@ TEST_CASE("basic_operators") {
                 EXPECT_EQ(resultA, A);
             }
         }
+    }
+}
+
+
+TEST_CASE("globalTesting") {
+    size_t pos, neg;
+    const std::vector<std::string> log_parse_format_type{"HRF", "XES", "TAB"};
+
+    auto root_folder = std::filesystem::current_path().parent_path();
+    std::string base{"Box"};
+    std::filesystem::path curr = root_folder / "data" / "testing" / "ltlf" / base;
+    auto sizes = root_folder / "data" / "testing" / "declare" / (base + "_pos_neg.txt");
+    ServerQueryManager sqm;
+    std::stringstream ss;
+    std::ifstream fs{sizes};
+    fs >> pos >> neg;
+
+    ss << "load "
+       << log_parse_format_type.at((size_t) TAB_SEPARATED_EVENTS)
+       << " "
+       << std::quoted(curr.string())
+       << " no stats as "
+       << std::quoted(base);
+    auto tmp = sqm.runQuery(ss.str());
+    ss.str(std::string());
+    ss.clear();
+
+    auto &ref = sqm.multiple_logs[base];
+    auto A = ref.db.timed_dataless_exists("a", NoneLeaf);
+    const auto &V = ref.db.act_table_by_act_id.getTraceLengths();
+
+    SECTION("untimed") {
+        Result globally1, globally2;
+        global_fast_untimed(A, globally1, V);
+        polydl_global_untimed(A, globally2, V);
+        EXPECT_EQ(globally1, globally2);
+        EXPECT_EQ(globally2.size(), 5);
+    }
+
+    SECTION("timed") {
+        Result globally1, globally2;
+        global_fast_timed(A, globally1, V);
+        polydl_global_timed(A, globally2, V);
+        for (size_t i = 0, N = std::min(globally2.size(), globally1.size()); i<N; i++) {
+            if (globally1.at(i) != globally2.at(i)) {
+                REQUIRE(false);
+            }
+        }
+        EXPECT_EQ(globally1, globally2);
     }
 }

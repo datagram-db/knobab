@@ -15,7 +15,7 @@ inline void and_next(const Result &lhsOperand,
                                  const KnowledgeBase& kb,
                                  const AtomizingPipeline* ap,
                                  const std::set<std::string>& rhs_atoms,
-                                 const PredicateManager* correlation = nullptr) {
+                                 const PredicateManager* correlation = nullptr,bool polyadic = true) {
     std::unordered_set<std::string> cache;
     act_t right_activity;
     bool right_predicate;
@@ -42,21 +42,15 @@ inline void and_next(const Result &lhsOperand,
     for (const auto& x : lhsOperand) {
         if (cp.first[x.first.first].id.parts.event_id == 0) continue;
         auto L =(kb.act_table_by_act_id.getTraceLength(x.first.first));
-        if (((L-1) == (x.first.second)) || (x.first.second+x.second.first>=L))
+        if (((L-1) == (x.first.second)) || (x.first.second+(polyadic?x.second.first:1)>=L))
             continue;
         const auto& right_offsets = kb.act_table_by_act_id.getBuilder().trace_id_to_event_id_to_offset.at(x.first.first).at(x.first.second+x.second.first);
         bool found = right_offsets.find(right_activity) != right_offsets.end();
-//        for (const auto right_offset : right_offsets) {
-//            if ((kb.act_table_by_act_id.table.at(right_offset).entry.id.parts.act == right_activity)) {
-//                found = true;
-//                break;
-//            }
-//        }
         if (!found) continue;
         bool rightMatch = true;
         if (right_predicate) {
             const auto& table_offsets_map =
-                    kb.act_table_by_act_id.getBuilder().trace_id_to_event_id_to_offset.at(x.first.first).at(x.first.second+x.second.first);
+                    kb.act_table_by_act_id.getBuilder().trace_id_to_event_id_to_offset.at(x.first.first).at(x.first.second+(polyadic?x.second.first:1));
             for(const auto& pred_withConj : rhs_atoms){
                 bool result = true;
                 for (const auto& predDummy : ap->atom_to_conjunctedPredicates.at(pred_withConj)) {

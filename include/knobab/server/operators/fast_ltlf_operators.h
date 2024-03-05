@@ -312,19 +312,7 @@ inline void and_fast_timed(const Result& lhs, const Result& rhs, Result& out, co
                     }
                 }
             } else {
-                hasMatch |= (for_each_if(first1->second.second.begin(), first1->second.second.end(),
-                            [hasMatch](const marked_event& elem) {
-                    return (!hasMatch) && (!IS_MARKED_EVENT_ACTIVATION(elem));
-                },
-                [first2,&hasMatch](const marked_event& elem) {
-                    size_t c = for_each_if(first2->second.second.begin(), first2->second.second.end(),
-                    [hasMatch](const marked_event& elem) {
-                        return (!hasMatch) && (!IS_MARKED_EVENT_TARGET(elem));
-                    },[&hasMatch,elem](const marked_event& elem1) {
-                                hasMatch = true;
-                    });
-                    if (c==0) hasMatch= true;
-                }) == 0);
+                hasMatch = true;
                 if (hasMatch) {
                     result.second.second.insert(result.second.second.end(), first1->second.second.begin(), first1->second.second.end());
                     result.second.second.insert(result.second.second.end(), first2->second.second.begin(), first2->second.second.end());
@@ -470,8 +458,6 @@ inline void future_fast_untimed(const Result &section, Result& result, const std
 
 
 inline void global_fast_timed(const Result &section, Result& result, const std::vector<size_t>& lengths) {
-
-
     result.clear();
     auto lower = section.begin(), upper = section.begin();
     auto end = section.end();
