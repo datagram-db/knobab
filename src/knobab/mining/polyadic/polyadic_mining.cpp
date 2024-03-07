@@ -104,7 +104,7 @@ std::pair<double,double> polyadic_dataless_mining_and_refinement(double mining_s
         simple_declare PSD_SX, PSD_DX;
         constexpr size_t PAR_LEN = length("§");
         for (auto& [pair, map] : rvs) {
-            std::cout << pair << std::endl;
+//            std::cout << pair << std::endl;
             std::vector<std::pair<std::string, std::__cxx11::list<std::tuple<std::string,std::string,std::string>>>> vector_pairs;
             for (auto& [log1, list1] : map) {
                 vector_pairs.emplace_back(log1, list1);

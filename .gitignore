@@ -1,4 +1,5 @@
 #Removing the target classes from the commit
+output_model_healthcare/*
 data_exp_health/
 scripts/log_scripts/serializationless_results.csv
 src/knobab/knobab-gui-java/target/*

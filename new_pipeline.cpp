@@ -5,6 +5,52 @@
 #include <knobab/mining/polyadic/polyadic_loading.h>
 #include <knobab/mining/polyadic/polyadic_mining.h>
 
+#define COUNT_N(_1, _2, _3, _4, _5, _6, _7, _8, _9, _10, N, ...)    N
+#define COUNT(...)   COUNT_N(__VA_ARGS__, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1)
+// Warning: COUNT() return 1 (as COUNT(A)) :-/
+
+#define IDENTITY(N) N
+#define APPLY(macro, ...) IDENTITY(macro(__VA_ARGS__))
+
+#define STRINGIFY_1(a) #a
+#define STRINGIFY_2(a, b) #a "," #b
+#define STRINGIFY_3(a, b, c) #a "," #b "," #c
+#define STRINGIFY_4(a, b, c, d) #a "," #b "," #c "," #d
+#define STRINGIFY_5(a, b, c, d, e) #a "," #b "," #c "," #d "," #e
+#define STRINGIFY_6(a, b, c, d, e, f) #a "," #b "," #c "," #d "," #e "," #f
+#define STRINGIFY_7(a, b, c, d, e, f, g) #a "," #b "," #c "," #d "," #e "," #f "," #g
+#define STRINGIFY_8(a, b, c, d, e, f, g, h) #a "," #b "," #c "," #d "," #e "," #f "," #g "," #h
+#define STRINGIFY_9(a, b, c, d, e, f, g, h, i) #a "," #b "," #c "," #d "," #e "," #f "," #g "," #h "," #i
+#define STRINGIFY_10(a, b, c, d, e, f, g, h, i, j) #a "," #b "," #c "," #d "," #e "," #f "," #g "," #h "," #i "," #j
+#define BESTIA_1(a) a
+#define BESTIA_2(a, b) a << "," <<  b
+#define BESTIA_3(a, b, c) a << "," <<  b << "," <<  c
+#define BESTIA_4(a, b, c, d) a << "," <<  b << "," <<  c << "," <<  d
+#define BESTIA_5(a, b, c, d, e) a << "," <<  b << "," <<  c << "," <<  d << "," <<  e
+#define BESTIA_6(a, b, c, d, e, f) a << "," <<  b << "," <<  c << "," <<  d << "," <<  e << "," <<  f
+#define BESTIA_7(a, b, c, d, e, f, g) a << "," <<  b << "," <<  c << "," <<  d << "," <<  e << "," <<  f << "," <<  g
+#define BESTIA_8(a, b, c, d, e, f, g, h) a << "," <<  b << "," <<  c << "," <<  d << "," <<  e << "," <<  f << "," <<  g << "," <<  h
+#define BESTIA_9(a, b, c, d, e, f, g, h, i) a << "," <<  b << "," <<  c << "," <<  d << "," <<  e << "," <<  f << "," <<  g << "," <<  h << "," <<  i
+#define BESTIA_10(a, b, c, d, e, f, g, h, i, j) a << "," <<  b << "," <<  c << "," <<  d << "," <<  e << "," <<  f << "," <<  g << "," <<  h << "," <<  i << "," <<  j
+#define US_1(a) a
+#define US_2(a, b) a << "_" <<  b
+#define US_3(a, b, c) a << "_" <<  b << "_" <<  c
+#define US_4(a, b, c, d) a << "_" <<  b << "_" <<  c << "_" <<  d
+#define US_5(a, b, c, d, e) a << "_" <<  b << "_" <<  c << "_" <<  d << "_" <<  e
+#define US_6(a, b, c, d, e, f) a << "_" <<  b << "_" <<  c << "_" <<  d << "_" <<  e << "_" <<  f
+#define US_7(a, b, c, d, e, f, g) a << "_" <<  b << "_" <<  c << "_" <<  d << "_" <<  e << "_" <<  f << "_" <<  g
+#define US_8(a, b, c, d, e, f, g, h) a << "_" <<  b << "_" <<  c << "_" <<  d << "_" <<  e << "_" <<  f << "_" <<  g << "_" <<  h
+#define US_9(a, b, c, d, e, f, g, h, i) a << "_" <<  b << "_" <<  c << "_" <<  d << "_" <<  e << "_" <<  f << "_" <<  g << "_" <<  h << "_" <<  i
+#define US_10(a, b, c, d, e, f, g, h, i, j) a << "_" <<  b << "_" <<  c << "_" <<  d << "_" <<  e << "_" <<  f << "_" <<  g << "_" <<  h << "_" <<  i << "_" <<  j
+
+#define DISPATCH_S(N) STRINGIFY_ ## N
+#define DISPATCH_B(N) BESTIA_ ## N
+#define DISPATCH_U(N) US_ ## N
+
+#define STRINGIFY(...) IDENTITY(APPLY(DISPATCH_S, COUNT(__VA_ARGS__)))(__VA_ARGS__)
+#define BESTIA(...) IDENTITY(APPLY(DISPATCH_B, COUNT(__VA_ARGS__)))(__VA_ARGS__)
+#define UNDERSCORED(...) IDENTITY(APPLY(DISPATCH_U, COUNT(__VA_ARGS__)))(__VA_ARGS__)
+
 struct benchmarking {
     // parameters
     std::string filename_polyadic;
@@ -17,11 +63,51 @@ struct benchmarking {
     // Outcomes
     double cpp_preprocess, loading, indexing, mining, refining;
     std::map<std::string, size_t> mined_model_size;
+
+    std::string get_log_name(const std::string& name) const {
+        std::stringstream ss;
+        ss << UNDERSCORED(filename_polyadic,mining_supp,reduction,isFilenamePolyadic,reclassify);
+        ss << "_clazz=" << name <<".txt";
+        auto s = ss.str();
+        return s;
+    }
+
+    std::ostream& header_csv(std::ostream& os) const {
+        return os << STRINGIFY(filename_polyadic,mining_supp,reduction,reclassify,isFilenamePolyadic,cpp_preprocess,loading,indexing,mining,refining) << std::endl;
+    }
+    std::ostream& values_csv(std::ostream& os) const {
+        return os << BESTIA(filename_polyadic,mining_supp,reduction,reclassify,isFilenamePolyadic,cpp_preprocess,loading,indexing,mining,refining) << std::endl;
+    }
+    template <typename MAP>
+    std::ostream& header_polyadic(std::ostream& os, const MAP& field) const {
+        os << STRINGIFY(filename_polyadic,mining_supp,reduction,reclassify,isFilenamePolyadic,cpp_preprocess,loading,indexing,mining,refining);
+        for (const auto& [k,v] : field) {
+            os << "," << k;
+        }
+        return os << std::endl;
+    }
+
+    template <typename MAP>
+    std::ostream& values_polyadic(std::ostream& os, const MAP& field) const {
+        os << BESTIA(filename_polyadic,mining_supp,reduction,reclassify,isFilenamePolyadic,cpp_preprocess,loading,indexing,mining,refining);
+        for (const auto& [k,v] : field) {
+            os << "," << v;
+        }
+        return os << std::endl;
+    }
 };
 
 #include <args.hxx>
+#include <filesystem>
 
 int main(int argc, char **argv) {
+
+    // CyberSecurity configuration:
+    // -s 0.8 --nonPoly=tab --nonPoly=tab --nonPoly=tab --nonPoly=tab --nonPoly=tab --nonPoly=tab --nonPoly=tab --nonPoly=tab /home/giacomo/Scaricati/classes/Adware.tab_100.tab /home/giacomo/Scaricati/classes/Backdoor.tab_100.tab /home/giacomo/Scaricati/classes/Downloader.tab_100.tab /home/giacomo/Scaricati/classes/Dropper.tab_100.tab /home/giacomo/Scaricati/classes/Spyware.tab_100.tab /home/giacomo/Scaricati/classes/Trojan.tab_100.tab /home/giacomo/Scaricati/classes/Virus.tab_100.tab /home/giacomo/Scaricati/classes/Worms.tab_100.tab
+
+    // Polyadic mining configuration
+    // -s 1.0 -d user -i day -i span -i "__class" -i "__label" -i time -i fulltime -p /home/giacomo/projects/sdd-processing/sdd-processing/log_weekly.json
+
     struct benchmarking result;
     result.filename_polyadic = "/home/giacomo/projects/sdd-processing/sdd-processing/log_weekly.json";
     std::string traceDistinguisher = "user";
@@ -30,6 +116,7 @@ int main(int argc, char **argv) {
     result.mining_supp = 1.0;
     result.reduction = false;
     result.reclassify = false;
+
 
     args::ArgumentParser parser("Polyadic Mining", "This is the main entry point for the benchmarking ");
     args::HelpFlag help(parser, "help", "Display this help menu", {'h', "help"});
@@ -40,6 +127,7 @@ int main(int argc, char **argv) {
     args::Flag rec(group, "reclassify", "Run a re-classification, thus further distiguishing each class via decision-tree induced sub-classes", {'s', "subclass"});
     args::ValueFlagList<std::string> characters(parser, "ignore keys", "The payload's keys to be ignored within the loading and classification task", {'i', "ignore"});
     args::ValueFlag<std::string> polyadicJSON(parser, "polyadic JSON", "The polyadic traces represented as a json file", {'p', "polyadic"});
+    args::Flag polyadicMine(parser, "usual mining", "Uses the standard linear behaviour from declarative mining, where traces are not grouped in hierarchy", {'l', "nonPolyMining"});
 
     std::unordered_map<std::string, log_data_format> map{
             {"hrf", log_data_format::HUMAN_READABLE_YAUCL},
@@ -85,14 +173,17 @@ int main(int argc, char **argv) {
 
     ServerQueryManager sqm;
     if (polyadicJSON) {
-        result.isFilenamePolyadic = true;
+        if (polyadicMine) {
+            result.isFilenamePolyadic = false;
+        } else {
+            result.isFilenamePolyadic = true;
+        }
         std::tie(result.cpp_preprocess, result.loading, result.indexing) = polyadic_loader(ignore_keys,
                                                                                            traceDistinguisher,
                                                                                            result.filename_polyadic,
                                                                                            result.reclassify,
                                                                                            sqm);
     } else {
-        result.isFilenamePolyadic = false;
         if ((worlds_file_to_load.size() == worlds_file_to_load.size()) && (!worlds_file_to_load.empty())) {
             result.cpp_preprocess = 0;
             result.indexing = 0;
@@ -126,10 +217,24 @@ int main(int argc, char **argv) {
     std::cout << "Mining (min_support=" << result.mining_supp << ") : " << result.mining << " (ms)" << std::endl;
     std::cout << "Refining: " << result.refining << " (ms)" << std::endl;
 
+    {
+        std::filesystem::path benchmark_file{"benchmark_poly.csv"};
+        bool writeHeader = false;
+        if (!exists(benchmark_file)) {
+            writeHeader = true;
+        }
+        std::ofstream file{benchmark_file, std::ios_base::app};
+        if (writeHeader)
+            result.header_csv(file);
+        result.values_csv(file);
+    }
+
+
     // Serialization of the model
     for (const auto& [log_name, set] : diff) {
         result.mined_model_size[log_name] = set.size();
-        std::ofstream file{log_name+"_clazz.txt"};
+
+        std::ofstream file{result.get_log_name(log_name)};
         for (const auto& cl : set) {
             auto right = std::get<2>(cl);
             if (right.empty())
@@ -137,6 +242,18 @@ int main(int argc, char **argv) {
             else
                  file << std::get<0>(cl) << "(" << std::get<1>(cl) << "," << right << ")"<< std::endl;
         }
+    }
+
+    {
+        std::filesystem::path benchmark_file{"benchmark_model_size.csv"};
+        bool writeHeader = false;
+        if (!exists(benchmark_file)) {
+            writeHeader = true;
+        }
+        std::ofstream file{benchmark_file, std::ios_base::app};
+        if (writeHeader)
+            result.header_polyadic(file, result.mined_model_size);
+        result.values_polyadic(file, result.mined_model_size);
     }
 
     return 0;
