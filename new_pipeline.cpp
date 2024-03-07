@@ -99,6 +99,7 @@ struct benchmarking {
 
 #include <args.hxx>
 #include <filesystem>
+#include <yaucl/strings/string_utils.h>
 
 int main(int argc, char **argv) {
 
@@ -124,7 +125,8 @@ int main(int argc, char **argv) {
     args::ValueFlag<double>  supportVal(group, "Support Value", "If present, specifies the support value (default 1.0)", {'s', "support"});
     args::ValueFlag<std::string>  distinguisher(group, "Trace Distinguisher", "Trace payload field allowing to distinguish different users within polyadic traces", {'d', "distinguisher"});
     args::Flag red(group, "reduction", "Run the model reduction for removing mutually implying clauses", {'r', "red"});
-    args::Flag rec(group, "reclassify", "Run a re-classification, thus further distiguishing each class via decision-tree induced sub-classes", {'s', "subclass"});
+    args::Flag rec(group, "reclassify", "Run a re-classification, thus further distiguishing each class via decision-tree induced sub-classes", {'k', "subclass"});
+    args::ValueFlag<std::string> fastSat(group, "reclassify", "Performs a fast SAT given specific configuration files within a specific folder", {'f', "fastSat"});
     args::ValueFlagList<std::string> characters(parser, "ignore keys", "The payload's keys to be ignored within the loading and classification task", {'i', "ignore"});
     args::ValueFlag<std::string> polyadicJSON(parser, "polyadic JSON", "The polyadic traces represented as a json file", {'p', "polyadic"});
     args::Flag polyadicMine(parser, "usual mining", "Uses the standard linear behaviour from declarative mining, where traces are not grouped in hierarchy", {'l', "nonPolyMining"});
@@ -150,6 +152,7 @@ int main(int argc, char **argv) {
         std::cerr << parser;
         return 1;
     }
+
     if (supportVal) {
         result.mining_supp = args::get(supportVal);
     }
@@ -212,49 +215,128 @@ int main(int argc, char **argv) {
     std::cout << "Loading and parsing: " << result.loading << " (ms)" << std::endl;
     std::cout << "Indexing: " << result.indexing << " (ms)" << std::endl;
 
-    std::unordered_map<std::string, std::set<std::tuple<std::string,std::string,std::string>>> diff;
-    std::tie(result.mining, result.refining) = polyadic_dataless_mining_and_refinement(result.mining_supp, result.isFilenamePolyadic, result.reduction, sqm, diff);
-    std::cout << "Mining (min_support=" << result.mining_supp << ") : " << result.mining << " (ms)" << std::endl;
-    std::cout << "Refining: " << result.refining << " (ms)" << std::endl;
-
-    {
-        std::filesystem::path benchmark_file{"benchmark_poly.csv"};
-        bool writeHeader = false;
-        if (!exists(benchmark_file)) {
-            writeHeader = true;
+    if (fastSat) {
+        std::filesystem::path folder = args::get(fastSat);
+        if (!exists(folder)) {
+            std::cout << "ERROR, the current path does not exist: " << folder;
+            exit(1);
         }
-        std::ofstream file{benchmark_file, std::ios_base::app};
-        if (writeHeader)
-            result.header_csv(file);
-        result.values_csv(file);
+        if (!is_directory(folder)) {
+            std::cout << "ERROR, the current path should be a directory: " << folder;
+        }
+        std::filesystem::path all_acts = folder / "acts.txt";
+        if (!exists(all_acts)) {
+            std::cout << "ERROR: the activity file does not exists: " << all_acts;
+            exit(1);
+        }
+
+        // Loading all the activity files
+        std::unordered_set<std::string> acts;
+        {
+            std::ifstream instream{all_acts};
+            std::string line;
+            while (std::getline(instream, line)) {
+                acts.insert(line);
+            }
+        }
+        std::unordered_map<std::string, std::vector<size_t>> exists_cl, absence_cl;
+        {
+            std::filesystem::path exists_f = folder / "exists.txt";
+            if (exists(exists_f)) {
+                std::ifstream instream{exists_f};
+                std::string input;
+                while (std::getline(instream, input)) {
+                    std::string act;
+                    size_t len, id;
+                    std::istringstream istream(input);
+                    istream >> len;
+                    std::vector<size_t> elements;
+                    for (size_t i = 0; i<len; i++) {
+                        istream >> id;
+                        elements.emplace_back(id);
+                    }
+                    // here we extract a copy of the "remainder"
+                    std::string rem(istream.str().substr(istream.tellg()));
+                    yaucl::strings::trim(rem);
+                    exists_cl.emplace(rem, std::move(elements));
+                }
+            }
+        }
+        {
+            std::filesystem::path exists_f = folder / "absences.txt";
+            if (exists(exists_f)) {
+                std::ifstream instream{exists_f};
+                std::string input;
+                while (std::getline(instream, input)) {
+                    std::string act;
+                    size_t len, id;
+                    std::istringstream istream(input);
+                    istream >> len;
+                    std::vector<size_t> elements;
+                    for (size_t i = 0; i<len; i++) {
+                        istream >> id;
+                        elements.emplace_back(id);
+                    }
+                    // here we extract a copy of the "remainder"
+                    std::string rem(istream.str().substr(istream.tellg()));
+                    yaucl::strings::trim(rem);
+                    absence_cl.emplace(rem, std::move(elements));
+                }
+            }
+        }
+
+        for (const auto& [log_name, kb] : sqm.multiple_logs) {
+            std::filesystem::path out_path = folder / ("output_csv_"+log_name+".csv");
+            std::ofstream  file{out_path};
+            polyadic_bolt g;
+            g.fast_check_and_collector_dataless(result.isFilenamePolyadic; &kb, acts,exists_cl, absence_cl, file);
+        }
+    } else {
+        std::unordered_map<std::string, std::set<std::tuple<std::string,std::string,std::string>>> diff;
+        std::tie(result.mining, result.refining) = polyadic_dataless_mining_and_refinement(result.mining_supp, result.isFilenamePolyadic, result.reduction, sqm, diff);
+        std::cout << "Mining (min_support=" << result.mining_supp << ") : " << result.mining << " (ms)" << std::endl;
+        std::cout << "Refining: " << result.refining << " (ms)" << std::endl;
+
+        {
+            std::filesystem::path benchmark_file{"benchmark_poly.csv"};
+            bool writeHeader = false;
+            if (!exists(benchmark_file)) {
+                writeHeader = true;
+            }
+            std::ofstream file{benchmark_file, std::ios_base::app};
+            if (writeHeader)
+                result.header_csv(file);
+            result.values_csv(file);
+        }
+
+
+        // Serialization of the model
+        for (const auto& [log_name, set] : diff) {
+            result.mined_model_size[log_name] = set.size();
+
+            std::ofstream file{result.get_log_name(log_name)};
+            for (const auto& cl : set) {
+                auto right = std::get<2>(cl);
+                if (right.empty())
+                    file << std::get<0>(cl) << "(" << std::get<1>(cl) << ")" << std::endl;
+                else
+                    file << std::get<0>(cl) << "(" << std::get<1>(cl) << "," << right << ")"<< std::endl;
+            }
+        }
+
+        {
+            std::filesystem::path benchmark_file{"benchmark_model_size.csv"};
+            bool writeHeader = false;
+            if (!exists(benchmark_file)) {
+                writeHeader = true;
+            }
+            std::ofstream file{benchmark_file, std::ios_base::app};
+            if (writeHeader)
+                result.header_polyadic(file, result.mined_model_size);
+            result.values_polyadic(file, result.mined_model_size);
+        }
     }
 
-
-    // Serialization of the model
-    for (const auto& [log_name, set] : diff) {
-        result.mined_model_size[log_name] = set.size();
-
-        std::ofstream file{result.get_log_name(log_name)};
-        for (const auto& cl : set) {
-            auto right = std::get<2>(cl);
-            if (right.empty())
-                file << std::get<0>(cl) << "(" << std::get<1>(cl) << ")" << std::endl;
-            else
-                 file << std::get<0>(cl) << "(" << std::get<1>(cl) << "," << right << ")"<< std::endl;
-        }
-    }
-
-    {
-        std::filesystem::path benchmark_file{"benchmark_model_size.csv"};
-        bool writeHeader = false;
-        if (!exists(benchmark_file)) {
-            writeHeader = true;
-        }
-        std::ofstream file{benchmark_file, std::ios_base::app};
-        if (writeHeader)
-            result.header_polyadic(file, result.mined_model_size);
-        result.values_polyadic(file, result.mined_model_size);
-    }
 
     return 0;
 }
