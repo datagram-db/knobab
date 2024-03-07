@@ -537,7 +537,7 @@ struct polyadic_bolt {
 //            }
 
             if ((b_beginend.first != b_beginend.second) && (a_beginend.first != a_beginend.second) &&
-                    (b_beginend.first->entry.id.parts.event_id > a_beginend.first->entry.id.parts.event_id)) { // L.39
+                    (b_beginend.first->entry.id.parts.event_id >= a_beginend.first->entry.id.parts.event_id)) { // L.39
                 decrease_support_X(*kb, expected_support, alles_precedence, alles_not_precedence);
                 TRACE_SET_ADD(viol_p[flip], a_trace_id);
 //                if (left_branch) {
@@ -742,6 +742,60 @@ struct polyadic_bolt {
             auto B_label = resolveLabelCache.at(B);
             if ((A_label == "__missing") || (B_label == "__missing"))
                 continue;
+#if 1
+            if (((A_label == "DecreaseRapidly(Mean Stance Time_a)") || (A_label == "DecreaseRapidly(Mean Step Length_a)")) && ((B_label == "DecreaseRapidly(Mean Stance Time_a)") || (B_label == "DecreaseRapidly(Mean Step Length_a)"))) {
+                std::map<size_t, std::map<size_t, std::vector<std::pair<std::string,size_t>>>>  reconstructor;
+//                std::cout << "FOR: " << A_label << std::endl;
+                auto a_beginend = kb->timed_dataless_exists(A);
+                bool first = true;
+                trace_t traceId = 0;
+                event_t eventId = 0;
+                while (a_beginend.first != a_beginend.second) {
+                    reconstructor[a_beginend.first->entry.id.parts.trace_id][a_beginend.first->entry.id.parts.event_id].emplace_back(A_label, a_beginend.first->span);
+//                    if (first || (a_beginend.first->entry.id.parts.trace_id != traceId)) {
+//                        first = false;
+//                        traceId = a_beginend.first->entry.id.parts.trace_id;
+//                        eventId= a_beginend.first->entry.id.parts.event_id;
+//                        std::cout << "TRACE #" << traceId << std::endl;
+//                    }
+//                    if (eventId != a_beginend.first->entry.id.parts.event_id) {
+//                        std::cout << "- Event #" << traceId  << std::endl;
+//                    }
+//                    std::cout << "   with span = " << a_beginend.first->span  << std::endl;
+                    a_beginend.first++;
+                }
+//                std::cout << "FOR: " << B_label << std::endl;
+                auto b_beginend = kb->timed_dataless_exists(B);
+                while (b_beginend.first != b_beginend.second) {
+                    reconstructor[b_beginend.first->entry.id.parts.trace_id][b_beginend.first->entry.id.parts.event_id].emplace_back(B_label, b_beginend.first->span);
+//
+//                    if (first || (b_beginend.first->entry.id.parts.trace_id != traceId)) {
+//                        first = false;
+//                        traceId = b_beginend.first->entry.id.parts.trace_id;
+//                        eventId= b_beginend.first->entry.id.parts.event_id;
+//                        std::cout << "TRACE #" << traceId << std::endl;
+//                    }
+//                    if (eventId != b_beginend.first->entry.id.parts.event_id) {
+//                        std::cout << "- Event #" << traceId  << std::endl;
+//                    }
+//                    std::cout << "   with span = " << b_beginend.first->span  << std::endl;
+                    b_beginend.first++;
+                }
+                first = true;
+                traceId = 0;
+                for (const auto& [trace_id, trace] : reconstructor) {
+                    std::cout << "TRACE #" << trace_id << std::endl;
+                    for (const auto& [event_id, content] : trace) {
+                        std::cout << "- Event #" << event_id  << std::endl;
+                        for (const auto& [label,span] : content) {
+                            std::cout << "    " << label << " with span = " << span << std::endl;
+                        }
+                    }
+                    std::cout << std::endl << std::endl << std::endl;
+                }
+                exit(2);
+            }
+#endif
             unsigned char hasCoExistence = association_rules_for_declare(support, binary_pattern, A, B);
 
             /* We want to force a branch if the Bs ever occur at the start of the trace and occur only once.
