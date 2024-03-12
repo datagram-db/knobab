@@ -24,18 +24,21 @@ void declare_lattice_node::set(const std::vector<size_t>& SAT, const std::vector
 //    this->rconf = rconf;
     isVisited = true;
     std::vector<size_t> nosat_or_vac;
-    sat.clear();
-    no_sat.clear();
-    vac.clear();
-    nosat_or_vac.clear();
-    std::set_union(VAC.begin(), VAC.end(), UNSAT.begin(), UNSAT.end(), std::back_inserter(nosat_or_vac));
-    std::set_difference(SAT.begin(), SAT.end(), nosat_or_vac.begin(), nosat_or_vac.end(), std::back_inserter(sat));
-
-    nosat_or_vac.clear();
-    std::set_union(SAT.begin(), SAT.end(), VAC.begin(), VAC.end(), std::back_inserter(nosat_or_vac));
-    std::set_difference(UNSAT.begin(), UNSAT.end(), nosat_or_vac.begin(), nosat_or_vac.end(), std::back_inserter(no_sat));
-
-    nosat_or_vac.clear();
-    std::set_difference(VAC.begin(), VAC.end(), UNSAT.begin(), UNSAT.end(), std::back_inserter(nosat_or_vac));
-    std::set_difference(nosat_or_vac.begin(), nosat_or_vac.end(), sat.begin(), sat.end(), std::back_inserter(vac));
+    sat = SAT;
+    no_sat = UNSAT;
+    vac = VAC;
+//    sat.clear();
+//    no_sat.clear();
+//    vac.clear();
+//    nosat_or_vac.clear();
+//    std::set_union(VAC.begin(), VAC.end(), UNSAT.begin(), UNSAT.end(), std::back_inserter(nosat_or_vac));
+//    std::set_difference(SAT.begin(), SAT.end(), nosat_or_vac.begin(), nosat_or_vac.end(), std::back_inserter(sat));
+//
+//    nosat_or_vac.clear();
+//    std::set_union(SAT.begin(), SAT.end(), VAC.begin(), VAC.end(), std::back_inserter(nosat_or_vac));
+//    std::set_difference(UNSAT.begin(), UNSAT.end(), nosat_or_vac.begin(), nosat_or_vac.end(), std::back_inserter(no_sat));
+//
+//    nosat_or_vac.clear();
+//    std::set_difference(VAC.begin(), VAC.end(), UNSAT.begin(), UNSAT.end(), std::back_inserter(nosat_or_vac));
+//    std::set_difference(nosat_or_vac.begin(), nosat_or_vac.end(), sat.begin(), sat.end(), std::back_inserter(vac));
 }

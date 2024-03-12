@@ -231,7 +231,7 @@ int main(int argc, char **argv) {
         }
 
         // Loading all the activity files
-        std::unordered_set<std::string> acts;
+        std::set<std::string> acts;
         {
             std::ifstream instream{all_acts};
             std::string line;
@@ -239,7 +239,7 @@ int main(int argc, char **argv) {
                 acts.insert(line);
             }
         }
-        std::unordered_map<std::string, std::vector<size_t>> exists_cl, absence_cl;
+        std::unordered_map<std::string, std::vector<event_t>> exists_cl, absence_cl;
         {
             std::filesystem::path exists_f = folder / "exists.txt";
             if (exists(exists_f)) {
@@ -250,7 +250,7 @@ int main(int argc, char **argv) {
                     size_t len, id;
                     std::istringstream istream(input);
                     istream >> len;
-                    std::vector<size_t> elements;
+                    std::vector<event_t> elements;
                     for (size_t i = 0; i<len; i++) {
                         istream >> id;
                         elements.emplace_back(id);
@@ -272,7 +272,7 @@ int main(int argc, char **argv) {
                     size_t len, id;
                     std::istringstream istream(input);
                     istream >> len;
-                    std::vector<size_t> elements;
+                    std::vector<event_t> elements;
                     for (size_t i = 0; i<len; i++) {
                         istream >> id;
                         elements.emplace_back(id);
@@ -285,11 +285,11 @@ int main(int argc, char **argv) {
             }
         }
 
-        for (const auto& [log_name, kb] : sqm.multiple_logs) {
+        for (auto& [log_name, kb] : sqm.multiple_logs) {
             std::filesystem::path out_path = folder / ("output_csv_"+log_name+".csv");
             std::ofstream  file{out_path};
             polyadic_bolt g;
-            g.fast_check_and_collector_dataless(result.isFilenamePolyadic; &kb, acts,exists_cl, absence_cl, file);
+            g.fast_check_and_collector_dataless(result.isFilenamePolyadic, &kb.db, acts, exists_cl, absence_cl, file);
         }
     } else {
         std::unordered_map<std::string, std::set<std::tuple<std::string,std::string,std::string>>> diff;
