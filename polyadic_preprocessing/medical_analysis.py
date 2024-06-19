@@ -23,7 +23,7 @@ from timeseries.Log import Log, Event, EventPayload
 from timeseries.MultiTraceIndexing import MultiTraceIndexing
 from timeseries.SequentialPatternMining import SequentialPatternMining, MiningConfiguration
 from timeseries.TimeSeriesMining import mine_binary_growth_patterns
-from prefixspan import PrefixSpan
+# from prefixspan import PrefixSpan
 
 def extendDictionaryWithTime(d):
     t = d.log.projectProperties("time", lambda l: min(filter(lambda x : isinstance(x, str), l)))

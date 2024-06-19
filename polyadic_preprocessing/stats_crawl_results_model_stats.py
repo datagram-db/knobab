@@ -4,10 +4,10 @@ from pathlib import Path
 import pandas
 import math
 
-supps = set()
-reds = set()
-poly = set()
-rec = set()
+# supps = set()
+# reds = set()
+# poly = set()
+# rec = set()
 filename_fileds = ["mining_supp","reduction","isFilenamePolyadic","reclassify"]
 S = set(["Choice", "RespExistence", "Response", "ChainResponse", "Precedence", "ChainPrecedence", "CoExistence", "Succession", "ChainSuccession", "Init", "End", "Exists", "Absence", "Choice", "ExclChoice"])
 root_dir = "/home/giacomo/projects/knobab2_loggen/output_model_healthcare/"

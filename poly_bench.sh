@@ -10,3 +10,7 @@ done
 ./cmake-build-release/knobab_json -s 0.9 -d user -i day -i span -i "__class" -i "__label" -i time -i fulltime -p /home/giacomo/projects/sdd-processing/sdd-processing/log_weekly.json
 ./cmake-build-release/knobab_json -s 0.9 -d user -i day -i span -i "__class" -i "__label" -i time -i fulltime -r -l -p  /home/giacomo/projects/sdd-processing/sdd-processing/log_weekly.json
 ./cmake-build-release/knobab_json -s 0.9 -d user -i day -i span -i "__class" -i "__label" -i time -i fulltime -l -p /home/giacomo/projects/sdd-processing/sdd-processing/log_weekly.json
+./cmake-build-release/knobab_json -s 0.0 -d user -i day -i span -i "__class" -i "__label" -i time -i fulltime -r -p /home/giacomo/projects/sdd-processing/sdd-processing/log_weekly.json
+./cmake-build-release/knobab_json -s 0.0 -d user -i day -i span -i "__class" -i "__label" -i time -i fulltime -p /home/giacomo/projects/sdd-processing/sdd-processing/log_weekly.json
+./cmake-build-release/knobab_json -s 0.0 -d user -i day -i span -i "__class" -i "__label" -i time -i fulltime -r -l -p  /home/giacomo/projects/sdd-processing/sdd-processing/log_weekly.json
+./cmake-build-release/knobab_json -s 0.0 -d user -i day -i span -i "__class" -i "__label" -i time -i fulltime -l -p /home/giacomo/projects/sdd-processing/sdd-processing/log_weekly.json

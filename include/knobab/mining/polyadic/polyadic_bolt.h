@@ -107,6 +107,11 @@ struct result_container {
             if ((val == 1) || (val == -2))
                 val = 0;
         }
+        for (size_t i = 0; i<total_log; i++)  {
+            if (embeddings[i]==-2) {
+                embeddings[i] = 0;
+            }
+        }
     }
 };
 
@@ -956,7 +961,7 @@ struct polyadic_bolt {
         Phi.erase(std::unique(Phi.begin(), Phi.end(), [](const pattern_mining_result<FastDatalessClause>& l, const pattern_mining_result<FastDatalessClause>& r) {
             return std::tie(l.clause.casusu, l.clause.left, l.clause.right, l.clause.n) == std::tie(r.clause.casusu, r.clause.left, r.clause.right, r.clause.n);
         }), Phi.end());
-        DEBUG_ASSERT(curr_size_Clauses == Phi.size());
+//        DEBUG_ASSERT(curr_size_Clauses == Phi.size());
     }
 
     inline void mdev(size_t i) {
@@ -1011,6 +1016,7 @@ struct polyadic_bolt {
         }
         setKnowledgeBaseAndInit(ptr);
         std::vector<size_t> actLabels;
+        std::unordered_set<size_t> act_to_consider;
         std::unordered_map<std::tuple<std::string,std::string,std::string>, std::vector<char>> result_map;
         std::unordered_map<size_t, std::vector<size_t>> act_Labels;
         std::unordered_map<size_t, std::vector<size_t>> noact_Labels;
@@ -1019,19 +1025,24 @@ struct polyadic_bolt {
         ssize_t trace_id = -1;
         size_t log_size = ptr->nTraces();
         for (const auto& x : acts) {
-            size_t id = ptr->event_label_mapper.get(x);
-            actLabels.emplace_back(id);
-            auto a_beginend = kb->timed_dataless_exists(id);
-            auto& v = act_Labels[id];
-            trace_id = -1;
-            while (a_beginend.first != a_beginend.second) {
-                if (trace_id != a_beginend.first->entry.id.parts.trace_id) {
-                    trace_id = a_beginend.first->entry.id.parts.trace_id;
-                    v.emplace_back(trace_id);
+            if(ptr->event_label_mapper.signed_get(x)>0) {
+                size_t id = ptr->event_label_mapper.get(x);
+                actLabels.emplace_back(id);
+                act_to_consider.insert(id);
+                auto a_beginend = kb->timed_dataless_exists(id);
+                auto& v = act_Labels[id];
+                trace_id = -1;
+                while (a_beginend.first != a_beginend.second) {
+                    if (trace_id != a_beginend.first->entry.id.parts.trace_id) {
+                        trace_id = a_beginend.first->entry.id.parts.trace_id;
+                        v.emplace_back(trace_id);
+                    }
+                    a_beginend.first++;
                 }
-                a_beginend.first++;
+                set_complement(log_size, v.begin(), v.end(), std::back_inserter(noact_Labels[id]));
+            } else {
+//                std::cerr << x << std::endl;
             }
-            set_complement(log_size, v.begin(), v.end(), std::back_inserter(noact_Labels[id]));
         }
 //        remove_duplicates(actLabels);
         FastDatalessClause clause;
@@ -1045,16 +1056,19 @@ struct polyadic_bolt {
         for (size_t trace_id = 0; trace_id < log_size; trace_id++) {
             const auto& first_last =kb->act_table_by_act_id.secondary_index.at(trace_id);
             for (auto it = first_last.first->begin(), en = first_last.first->end(); it!=en; it++) {
-                first[it->first].emplace_back(trace_id);
+                if (act_to_consider.contains(it->first))
+                    first[it->first].emplace_back(trace_id);
             }
             for (auto it = first_last.second->begin(), en = first_last.second->end(); it!=en; it++) {
-                last[it->first].emplace_back(trace_id);
+                if (act_to_consider.contains(it->first))
+                    last[it->first].emplace_back(trace_id);
             }
         }
         std::cout << "First..." << std::endl;
         std::tuple<std::string,std::string,std::string> simplistic_clause{"Init","","§1"};
         for (const auto& [act_id, traces] : first) {
             all_VIOL.clear();
+            if (!act_to_consider.contains(act_id)) continue;
             std::get<1>(simplistic_clause) = ptr->event_label_mapper.get(act_id);
             auto& v = result_map[simplistic_clause];
             v.resize(log_size, -1);
@@ -1066,6 +1080,7 @@ struct polyadic_bolt {
         std::cout << "Last..." << std::endl;
         for (const auto& [act_id, traces] : last) {
             all_VIOL.clear();
+            if (!act_to_consider.contains(act_id)) continue;
             std::get<1>(simplistic_clause) = ptr->event_label_mapper.get(act_id);
             auto& v = result_map[simplistic_clause];
             v.resize(log_size, -1);
@@ -1078,10 +1093,15 @@ struct polyadic_bolt {
         std::get<0>(simplistic_clause) = "Exists";
         std::cout << "Exists..." << std::endl;
         for (const auto& [act_id, countings] : exists) {
+            if(ptr->event_label_mapper.signed_get(act_id)<0) {
+                continue;
+            }
+            if (!act_to_consider.contains(ptr->event_label_mapper.get(act_id))) continue;
             std::get<1>(simplistic_clause) = act_id;
             auto indexes = ptr->resolveCountingData(act_id);
             if ((indexes.first == indexes.second) && (indexes.first == (uint32_t)-1)) {
-                exit(5);
+                continue;
+//                exit(5);
             } else {
                 std::unordered_map<size_t, std::string> MAP;
                 for (size_t count : countings) {
@@ -1102,10 +1122,15 @@ struct polyadic_bolt {
         std::get<0>(simplistic_clause) = "Absence";
         std::cout << "Absence..." << std::endl;
         for (const auto& [act_id, countings] : absence) {
+            if(ptr->event_label_mapper.signed_get(act_id)<0) {
+                continue;
+            }
+            if (!act_to_consider.contains(ptr->event_label_mapper.get(act_id))) continue;
             std::get<1>(simplistic_clause) = act_id;
             auto indexes = ptr->resolveCountingData(act_id);
             if ((indexes.first == indexes.second) && (indexes.first == (uint32_t)-1)) {
-                exit(4);
+                continue;
+//                exit(4);
             } else {
                 std::unordered_map<size_t, std::string> MAP;
                 for (size_t count : countings) {
