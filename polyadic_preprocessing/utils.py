@@ -19,6 +19,42 @@ def time_in_range(start, delta, x):
         return start <= x or x <= end
 
 
+class ForParsing:
+    def __init__(self, root_dir, filename_fileds=None, S=None, untimed=None):
+        self.filename_fileds = filename_fileds
+        self.root_dir = root_dir
+        if self.filename_fileds is None:
+            self.filename_fileds = ["mining_supp", "reduction", "isFilenamePolyadic", "reclassify"]
+        else:
+            self.filename_fileds = list(self.filename_fileds)
+        self.S = S
+        if self.S is None:
+            self.S = {"Choice", "RespExistence", "Response", "ChainResponse", "Precedence", "ChainPrecedence", "CoExistence",
+             "Succession", "ChainSuccession", "Init", "End", "Exists", "Absence", "Choice", "ExclChoice"}
+        else:
+            self.S = set(self.S)
+        self.untimed = untimed
+        if self.untimed is None:
+            self.untimed = {"Choice", "RespExistence", "CoExistence", "Choice", "ExclChoice"}
+        else:
+            self.untimed = set(self.untimed)
+
+    def yielder(self, ff):
+        import glob
+        from pathlib import Path
+        for filename in glob.iglob(self.root_dir + '**/*.txt', recursive=True):
+            with open(filename, 'r') as f:
+                stem = Path(filename).stem.split("_")
+                clazz = stem[-1].replace("clazz=", "")
+                stem = stem[:-1]
+                d = dict(zip(self.filename_fileds, stem[-len(self.filename_fileds):]))
+                # dtmp = dict()
+                d["class"] = clazz
+                d["filename"] = "_".join(stem[:-len(self.filename_fileds)])
+                key = tuple(stem[-len(self.filename_fileds):])
+                ff(filename, key, d)
+
+
 
 def export_text2(decision_tree, feature_names=None,
                 spacing=3, decimals=5, show_weights=False):
