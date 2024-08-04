@@ -177,6 +177,7 @@ int main(int argc, char **argv) {
 
     ServerQueryManager sqm;
     if (polyadicJSON) {
+        result.filename_polyadic = args::get(polyadicJSON);
         if (polyadicMine) {
             result.isFilenamePolyadic = false;
         } else {
@@ -315,6 +316,7 @@ int main(int argc, char **argv) {
         for (const auto& [log_name, set] : diff) {
             result.mined_model_size[log_name] = set.size();
 
+            std::cout << result.get_log_name(log_name) << std::endl;
             std::ofstream file{result.get_log_name(log_name)};
             for (const auto& cl : set) {
                 auto right = std::get<2>(cl);

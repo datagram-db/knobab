@@ -1,5 +1,5 @@
-from prefixspan import PrefixSpan
-from pycspade.helpers import spade, print_result
+# from prefixspan import PrefixSpan
+# from pycspade.helpers import spade, print_result
 
 from timeseries.DatalessDeclareEmbedding import DeclareDevMining
 from timeseries.Log import Log
@@ -167,7 +167,7 @@ class SequentialPatternMining:
     #         return self.declare_dataless(conf)
 
     def prefixSpanMining(self, conf:MiningConfiguration):
-        self.prefixSpan = PrefixSpan(self.db)
+        # self.prefixSpan = PrefixSpan(self.db)
         N = len(self.db)
         self.prefixSpan.maxlen = conf.maxlen
         localResult = []
@@ -208,8 +208,9 @@ class SequentialPatternMining:
         for i, ls in enumerate(self.db):
             for j, event in enumerate(ls):
                 data.append([i, j, list(map(lambda x: stringToNumber[x], event))])
-        internal_data = spade(data=data, support=conf.support, maxlen=conf.maxlen, mingap=conf.mingap, maxsize=conf.maxsize)
+        # internal_data = spade(data=data, support=conf.support, maxlen=conf.maxlen, mingap=conf.mingap, maxsize=conf.maxsize)
         result = []
+        internal_data = {} ###
         # print_result(internal_data)
         nseqs = internal_data['nsequences']
         for mined_object in internal_data["mined_objects"]:
@@ -236,8 +237,9 @@ class SequentialPatternMining:
                     count = count+1
                 else:
                     data.append([i,j, [stringToNumber[item]]])
-        internal_data = spade(data=data, support=conf.support, maxlen=conf.maxlen, mingap=conf.mingap, maxsize=conf.maxsize)
+        # internal_data = spade(data=data, support=conf.support, maxlen=conf.maxlen, mingap=conf.mingap, maxsize=conf.maxsize)
         result = []
+        internal_data = {} ####
         nseqs = internal_data['nsequences']
         for mined_object in internal_data["mined_objects"]:
             L = []

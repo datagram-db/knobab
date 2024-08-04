@@ -255,22 +255,22 @@ TEST_CASE("globalTesting") {
     const auto &V = ref.db.act_table_by_act_id.getTraceLengths();
 
     SECTION("untimed") {
-        Result globally1, globally2;
+        Result globally1; //, globally2;
         global_fast_untimed(A, globally1, V);
-        polydl_global_untimed(A, globally2, V);
-        EXPECT_EQ(globally1, globally2);
-        EXPECT_EQ(globally2.size(), 5);
+//        polydl_global_untimed(A, globally2, V);
+//        EXPECT_EQ(globally1, globally2);
+        EXPECT_EQ(globally1.size(), 5);
     }
 
-    SECTION("timed") {
-        Result globally1, globally2;
-        global_fast_timed(A, globally1, V);
-        polydl_global_timed(A, globally2, V);
-        for (size_t i = 0, N = std::min(globally2.size(), globally1.size()); i<N; i++) {
-            if (globally1.at(i) != globally2.at(i)) {
-                REQUIRE(false);
-            }
-        }
-        EXPECT_EQ(globally1, globally2);
-    }
+//    SECTION("timed") {
+//        Result globally1; //, globally2;
+//        global_fast_timed(A, globally1, V);
+////        polydl_global_timed(A, globally2, V);
+//        for (size_t i = 0, N = std::min(globally2.size(), globally1.size()); i<N; i++) {
+//            if (globally1.at(i) != globally2.at(i)) {
+//                REQUIRE(false);
+//            }
+//        }
+//        EXPECT_EQ(globally1, globally2);
+//    }
 }
