@@ -249,12 +249,14 @@ class Event:
     def getActivityLabel(self):
         return self.activityLabel
 
-    def getValueType(self, key):
+    def getValueType(self, key, forceNone=False):
         if self.eventpayload is None:
             return "continuous"
         elif key in self.eventpayload.trace_data:
             return self.eventpayload.attribute_type[key]
         else:
+            if forceNone:
+                return None
             return "continuous"
 
     def getValue(self, key):
@@ -439,7 +441,7 @@ class TracePositional:
         for k in self.keys:
             typeInferOf = {type: 0 for type in types}
             for e in self.events:
-                if e.getValueType(k) is not None:
+                if e.getValueType(k, True) is not None:
                     typeInferOf[e.getValueType(k)] = typeInferOf[e.getValueType(k)] + 1
             self.keyType[k] =  max(typeInferOf, key=typeInferOf.get)
 

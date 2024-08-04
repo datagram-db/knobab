@@ -67,6 +67,11 @@ public:
     size_t enterTrace(const std::string &trace_label) override;
     void exitTrace(size_t traceId) override;
     size_t enterEvent(size_t chronos_tick, const std::string &event_label) override;
+
+    virtual size_t enterEvent(size_t chronos_tick, const std::string &event_label, size_t consecutivePolyadicEvent, uint16_t span) override {
+        throw std::runtime_error("ERROR: this old version does not support polyadic traces");
+        return 1;
+    }
     void exitEvent(size_t event_id) override;
     void enterData_part(bool isEvent) override;
     void exitData_part(bool isEvent) override;

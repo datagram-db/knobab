@@ -218,7 +218,7 @@ void loading_model_from_file(ServerQueryManager& sqm, const std::filesystem::pat
                 std::getline(iss, token, '\t');
                 ref.restrictive_confidence_plus_declarative_pattern = stod(token);
                 std::getline(iss, token, '\t');
-                ref.restrictive_support_declarative_pattern = stod(token);
+//                ref.restrictive_support_declarative_pattern = stod(token);
                 idx++;
             }
         }
@@ -278,7 +278,7 @@ initialiseModelsWithRewriting(yaucl::structures::any_to_uint_bimap<std::string> 
             // If this has not to undergo a rewriting, then directly inserting the clause with its name
             clauses_names_to_consider.insert(c.clause.casusu);
             all_clauses_set.emplace(c.clause);
-            model_actual_repr[model_name][c.clause] = {std::make_tuple(c.support_declarative_pattern, c.restrictive_confidence_plus_declarative_pattern, c.restrictive_support_declarative_pattern)};
+            model_actual_repr[model_name][c.clause] = {std::make_tuple(c.support_declarative_pattern, c.restrictive_confidence_plus_declarative_pattern, c.support_declarative_pattern)};
         } else {
             // Otherwise, I have to rewrite it into something else
             // Setting up the original score associated to the original clause
@@ -294,7 +294,7 @@ initialiseModelsWithRewriting(yaucl::structures::any_to_uint_bimap<std::string> 
                     fdc.right = c.clause.right;
                 }
                 all_clauses_set.emplace(fdc);
-                model_actual_repr[model_name][fdc] = {std::make_tuple(c.support_declarative_pattern, c.restrictive_confidence_plus_declarative_pattern, c.restrictive_support_declarative_pattern)};
+                model_actual_repr[model_name][fdc] = {std::make_tuple(c.support_declarative_pattern, c.restrictive_confidence_plus_declarative_pattern, c.support_declarative_pattern)};
             }
         }
     }
