@@ -97,10 +97,10 @@ class PatternType:
         return ls
 
 
-    def asTraceEvent(self, d):
+    def asTraceEvent(self, d, timefield):
             row = dict()
             row['span'] = self.length
-            row['time'] = min(map(datetime.datetime.fromisoformat, self.collectStringsForKey('time'))).isoformat()
+            row[timefield] = datetime.datetime.fromisoformat(min(map(datetime.datetime.fromisoformat, self.collectStringsForKey(timefield))).isoformat())
             action = self.action
             if action.startswith("N") or action.startswith("Y"):
                 action = action[1:]

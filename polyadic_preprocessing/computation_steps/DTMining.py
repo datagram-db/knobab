@@ -42,15 +42,17 @@ class DTMining:
         self.environments = dict()
         self.folder = folder
         for file in glob.glob(os.path.join(folder, "*.csv")):
-            self.environments[Path(file).stem] = pandas.read_csv(file)
-            # print(file)
+            df = pandas.read_csv(file, parse_dates=True)
+            df[time_field] = pandas.to_datetime(df[time_field])
+            self.environments[Path(file).stem] = df
+            print(file)
 
-    def transform(self, cache=True):
+    def transform(self, cached=True):
         p = os.path.join(self.folder, "log_weekly.json")
-        if (not cache) or (not os.path.isfile(p)):
+        if (not cached) or (not os.path.isfile(p)):
             UserLog = Log()
             for pat in self.environments:
-                ls = self._perEnvironment(pat)
+                ls = self._perEnvironment(pat, self.time_field)
                 UserLog.addTracePositional(ls, withData=True, isTab=True,
                                                           withExplicitPayloadMap={"user":pat})
             UserLog.indexing()
@@ -58,7 +60,7 @@ class DTMining:
                 json.dump(UserLog.toJSONObject(), outfile, indent=4)
         return p
 
-    def _perEnvironment(self, envName):
+    def _perEnvironment(self, envName, timedim):
         x = envName
         logger.info("Performining the continuous analysis for "+x)
         logger.trace("1. Data Pre-Processing")
@@ -78,7 +80,7 @@ class DTMining:
         for idx, row in enumerate(tmp.traces[0].events):
             row.setValue("__class", row.activityLabel)
             row.activityLabel = "__raw_data"
-            assert row["fulltime"] == row["time"]
+            # assert row["fulltime"] == row["time"]
             originalChunks[datetime.datetime.fromisoformat(row[self.time_field])] = [row]
         logger.trace("2. Weekly data separation into immediate previous and immediate afterwards+mining")
         ewl_idx = MultiTraceIndexing(EntireTimeLog)
@@ -91,7 +93,7 @@ class DTMining:
         # TimeSeriesLogOff = Log()
         # TimeSeriesLogOk = Log()
         for idx, analysis in enumerate(time_continuous_analysis):
-            polyL = performMiningOverAnalysedLog(analysis.log, None, self.toExtendWithTime, None, None)
+            polyL = performMiningOverAnalysedLog(analysis.log, None, self.toExtendWithTime, None, None, timedim)
             for i in range(len(polyL)):
                 if len(polyL[i]) > 0:
                     t = min(

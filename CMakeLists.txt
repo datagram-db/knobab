@@ -202,14 +202,14 @@ pybind11_add_module(knobab_emeritate_support
 target_link_libraries(knobab_emeritate_support PRIVATE pybind11::headers pybind11::module Threads::Threads antlr4_static yaucl_hashing yaucl_bpm yaucl_structures
         yaucl_numeric yaucl_data yaucl_graph  yaucl_data yaucl_bpm knobab  knobab_ndp   yaucl_learning  knobab_mining)
 
-add_executable(knobab_json new_pipeline.cpp src/knobab/v30/EMeriTAte.cpp
-        src/knobab/mining/polyadic/polyadic_learning.cpp
-        include/knobab/mining/polyadic/polyadic_learning.h
-        src/knobab/mining/polyadic/polyadic_mining.cpp
-        include/knobab/mining/polyadic/polyadic_loading.h
-        include/knobab/mining/polyadic/polyadic_mining.h)
-target_link_libraries(knobab_json Threads::Threads antlr4_static yaucl_hashing yaucl_bpm yaucl_structures
-        yaucl_numeric yaucl_data yaucl_graph  yaucl_data yaucl_bpm knobab  knobab_ndp   yaucl_learning  knobab_mining)
+#add_executable(knobab_json new_pipeline.cpp src/knobab/v30/EMeriTAte.cpp
+#        src/knobab/mining/polyadic/polyadic_learning.cpp
+#        include/knobab/mining/polyadic/polyadic_learning.h
+#        src/knobab/mining/polyadic/polyadic_mining.cpp
+#        include/knobab/mining/polyadic/polyadic_loading.h
+#        include/knobab/mining/polyadic/polyadic_mining.h)
+#target_link_libraries(knobab_json Threads::Threads antlr4_static yaucl_hashing yaucl_bpm yaucl_structures
+#        yaucl_numeric yaucl_data yaucl_graph  yaucl_data yaucl_bpm knobab  knobab_ndp   yaucl_learning  knobab_mining)
 
 install(TARGETS knobab_emeritate_support LIBRARY DESTINATION .)
 

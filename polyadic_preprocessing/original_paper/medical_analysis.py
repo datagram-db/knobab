@@ -112,7 +112,7 @@ def pair_analysis(x, y):
     pass
 
 
-def performMiningOverAnalysedLog(analysis_log, conf, toPertainYesEvents, toDiscardEvents, D):
+def performMiningOverAnalysedLog(analysis_log, conf, toPertainYesEvents, toDiscardEvents, D, timefield):
         L = BuonaGiornata(lambda x: x.startswith("day"))
         Osmeh = dict()
         for idx2, trace in enumerate(analysis_log.log):
@@ -154,7 +154,7 @@ def performMiningOverAnalysedLog(analysis_log, conf, toPertainYesEvents, toDisca
                 # assert trace.trace_name is not None
                 #analysis.outcome_mining[trace.trace_name] =
                 mine_binary_growth_patterns(trace, trace.length, pos, neg, actione, conf, L)
-        finalised = L.finalise()
+        finalised = L.finalise(timefield)
         if (len(finalised)>0):
             for itemo in Osmeh.values():
                 for elemento in itemo:

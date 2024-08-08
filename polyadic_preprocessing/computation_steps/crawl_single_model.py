@@ -37,7 +37,7 @@ class ProcessClasses:
                 [" ".join([str(len(self.d_exists[act]))] + [str(x) for x in self.d_exists[act]] + [act]) for act in self.d_exists]))
         with open(os.path.join(path.absolute(), "absences.txt"), "w") as fp:
             fp.write(os.linesep.join(
-                [" ".join([str(len(self.d_exists[act]))] + [str(x) for x in self.d_exists[act]] + [act]) for act in self.d_absences]))
+                [" ".join([str(len(self.d_absences[act]))] + [str(x) for x in self.d_absences[act]] + [act]) for act in self.d_absences]))
 
     def process(self, file):
         with open(file, "r") as f:

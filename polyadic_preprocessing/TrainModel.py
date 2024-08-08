@@ -70,19 +70,20 @@ class EMeriTAte:
         print(self.__run(path)) #orig:self.__args(path)
 
     def run(self):
-        self.file = DTMining(self.folder,
-             self.class_field,
-             self.time_field,
-                             self.epsilon,self.maxval,
-             self.ignore,
-             self.replace,
-             self.conversion,
-                   self.toExtendWithTime).transform()
+        self.file = "/home/giacomo/projects/knobab2_loggen/polyadic_preprocessing/raw_data/log_weekly.json"
+        # self.file = DTMining(self.folder,
+        #      self.class_field,
+        #      self.time_field,
+        #                      self.epsilon,self.maxval,
+        #      self.ignore,
+        #      self.replace,
+        #      self.conversion,
+        #            self.toExtendWithTime).transform()
         self.json_path = Path(self.file)
-        self.knobab = KnobabEmeritateSupport(self.support, self.environment_field, self.file, self.ignorable_fields)
-
-        # 02. Bolt2 Specification Mining
-        self._02_run_preliminary_mining()
+        # self.knobab = KnobabEmeritateSupport(self.support, self.environment_field, self.file, self.ignorable_fields)
+        #
+        # # 02. Bolt2 Specification Mining
+        # self._02_run_preliminary_mining()
         #     Dumping the txt files
         iterable = list(dump_txt_files(str(self.json_path.parent.absolute())))
         assert len(iterable) == 1
@@ -100,19 +101,19 @@ if __name__ == "__main__":
     logger.remove(0)
     f = sys.stdout
     logger.add(f, level="TRACE")
-    replace = {"fulltime":"time"}
+    # replace = {"fulltime"}
     conversion = ["Ok", "Off"]
     e = EMeriTAte(#"/home/giacomo/projects/knobab2_loggen/cmake-build-release/knobab_json",
                   "user",
                   "/home/giacomo/projects/knobab2_loggen/polyadic_preprocessing/raw_data",
         "event",
-        "time",
+        "fulltime",
                   0.01,
                   10000000000000.0,
                   {'amantadine', 'day', 'madopar 50', 'madopar CR', 'rotigotine', 'span', 'stalevo', 'stanek'},
-                  replace,
+                  None,
                   conversion,
                   {'amantadine', 'madopar 50', 'madopar CR', 'rotigotine', 'stalevo', 'stanek'},
-                  ["day", "span", "__class", "__label","time","fulltime"],
+                  ["day", "span", "__class", "__label","fulltime"],
                   0.0)
     e.run()

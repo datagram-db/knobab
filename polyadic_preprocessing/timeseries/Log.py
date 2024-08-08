@@ -596,9 +596,12 @@ class TracePositional:
         else:
             return len(self.positional_events[label])
 
-    def getValueType(self, k):
+    def getValueType(self, k, forceContinuous=False):
         if k not in self.keyType:
-            return "continuous"
+            if forceContinuous:
+                return "continuous"
+            else:
+                return None
         else:
             return self.keyType[k]
 
@@ -738,7 +741,7 @@ class Log:
             typeInferOf = {type: 0 for type in types}
             value_is_found = False
             for e in self.traces:
-                t = e.getValueType(k)
+                t = e.getValueType(k, False)
                 if t is not None:
                     typeInferOf[t] = typeInferOf[t] + 1
                     value_is_found = True

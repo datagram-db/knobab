@@ -13,11 +13,11 @@ def meteorology(HV1, IS1, sortedActionSet, lenX):
     return HVR
 
 class Indexing:
-    def asListForTraces(self, L):
+    def asListForTraces(self, L, timefield):
         for entry in self.sortedActionSet.values():
             for ls in entry:
                 for x in ls:
-                    L = x.asTraceEvent(L)
+                    L = x.asTraceEvent(L, timefield)
         return L
 
     def __init__(self, lenX, start_time, fromBuonaGiornataAndKey):
@@ -72,11 +72,11 @@ class BuonaGiornata:
         else:
             self.toDiscard = toDiscard
 
-    def finalise(self):
+    def finalise(self, timefield):
         L = [list() for _ in range(self.len)]
         for k in self.d:
             idx = Indexing(self.len, self.start_time, self.d[k])
-            L = idx.asListForTraces(L)
+            L = idx.asListForTraces(L, timefield)
             self.d[k] = idx
         return L
 
