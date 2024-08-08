@@ -2,14 +2,7 @@ cmake_minimum_required(VERSION 3.20)
 project(knobab_server)
 set(CMAKE_CXX_STANDARD 20)
 set(WITH_DEMO false)
-set(CMAKE_POSITION_INDEPENDENT_CODE ON)
-set(PYBIND11_NEWPYTHON ON)
-set(PYBIND11_PYTHON_VERSION 3.8 CACHE STRING "")
-set(PYBIND11_PYTHON_VERSION 3)
-set(PYBIND11_FINDPYTHON ON)
-find_package(PythonInterp REQUIRED)
-include_directories(${PYTHON_INCLUDE_DIRS})
-
+add_definitions(-DNO_PYBIND)
 include_directories(include/knobab/server/query_manager)
 include_directories(include)
 include_directories(submodules/yaucl/submodules/eigen)
@@ -32,29 +25,24 @@ find_package(Threads REQUIRED)
 
 include(FetchContent)
 # Also requires one of: libbfd (gnu binutils), libdwarf, libdw (elfutils)
-#FetchContent_Declare(backward
-#        GIT_REPOSITORY https://github.com/bombela/backward-cpp
-#        GIT_TAG v1.6  # or a version tag, such as v1.6
-#        #SYSTEM          # optional, the Backward include directory will be treated as system directory
-#        )
-#FetchContent_MakeAvailable(backward)
-#include_directories(${backward_SOURCE_DIR})
+FetchContent_Declare(backward
+        GIT_REPOSITORY https://github.com/bombela/backward-cpp
+        GIT_TAG v1.6  # or a version tag, such as v1.6
+        #SYSTEM          # optional, the Backward include directory will be treated as system directory
+        )
+FetchContent_MakeAvailable(backward)
+include_directories(${backward_SOURCE_DIR})
 
-#message(WARNING "Compiling in optimized mode. Level=2")
-set(CMAKE_CXX_FLAGS_RELEASE "-O2")
+IF(CMAKE_BUILD_TYPE MATCHES Debug)
+    message(WARNING "Compiling in debug mode")
+    add_compile_definitions(DEBUG)
+    set(CMAKE_CXX_FLAGS_DEBUG "-g")
+else()
+    message(WARNING "Compiling in optimized mode. Level=2")
+    set(CMAKE_CXX_FLAGS_RELEASE "-O2")
+ENDIF(CMAKE_BUILD_TYPE MATCHES Debug)
 
-add_subdirectory(submodules/pybind11)
-
-#IF(CMAKE_BUILD_TYPE MATCHES Debug)
-#    message(WARNING "Compiling in debug mode")
-#    add_compile_definitions(DEBUG)
-#    set(CMAKE_CXX_FLAGS_DEBUG "-g")
-#else()
-#    message(WARNING "Compiling in optimized mode. Level=2")
-#    set(CMAKE_CXX_FLAGS_RELEASE "-O2")
-#ENDIF(CMAKE_BUILD_TYPE MATCHES Debug)
-
-#add_executable(knobab_client src/knobab/client/client.cpp)
+add_executable(knobab_client src/knobab/client/client.cpp)
 
 add_library(knobab OBJECT
         src/knobab/server/algorithms/atomization/AtomizingPipeline.cpp #Legacy atomisation
@@ -97,8 +85,8 @@ add_library(knobab OBJECT
         src/knobab/server/algorithms/querymanager/LTLfQuery.cpp src/knobab/server/algorithms/dfa_generator/GenerateGraphFromAtomisedClause.cpp include/knobab/server/algorithms/dfa_generator/GenerateGraphFromAtomisedClause.h src/knobab/server/algorithms/dfa_generator/GenerateGraphFromEnvironment.cpp include/knobab/server/algorithms/dfa_generator/GenerateGraphFromEnvironment.h src/knobab/server/dataStructures/knobab_data_loader.cpp include/knobab/server/dataStructures/knobab_data_loader.h
         include/knobab/v30/EMeriTAte.h)
 
-#add_executable(knobab_server src/knobab/server/server.cpp)
-#add_executable(tests_main src/knobab/tests/main.cpp)
+add_executable(knobab_server src/knobab/server/server.cpp)
+add_executable(tests_main src/knobab/tests/main.cpp)
 
 add_library(knobab_ndp
         src/knobab/server/ndp/count_table_rcx.cpp
@@ -120,17 +108,17 @@ add_library(knobab_mining
         src/knobab/dataStructures/polyadic/myParser.cpp include/knobab/server/dataStructures/polyadic/myParser.h include/knobab/server/dataStructures/polyadic.h src/knobab/mining/polyadic/polyadic_loading.cpp include/knobab/mining/polyadic/polyadic_loading.h src/knobab/mining/polyadic/polyadic_bolt.cpp include/knobab/mining/polyadic/polyadic_bolt.h include/knobab/mining/polyadic/lattice.h
         )
 
-#add_executable(benchmarking benchmarking/benchmarking.cpp benchmarking/benchmarking.cpp) #${BACKWARD_ENABLE})
-#
-#add_executable(mining
-#        src/knobab/mining/mining.cpp
-#)
+add_executable(benchmarking benchmarking/benchmarking.cpp benchmarking/benchmarking.cpp) #${BACKWARD_ENABLE})
+
+add_executable(mining
+        src/knobab/mining/mining.cpp
+)
 
 # TODO: refinery
 
-#add_executable(log_generator generate_traces.cpp)
-#add_executable(multimodel_mining src/knobab/mining/refinery.cpp)
-#add_executable(knobab2-benchmarking src/knobab/server/benchmarking_binary.cpp)
+add_executable(log_generator generate_traces.cpp)
+add_executable(multimodel_mining src/knobab/mining/refinery.cpp)
+add_executable(knobab2-benchmarking src/knobab/server/benchmarking_binary.cpp)
 
 
 #add_executable(old_log_generator src/knobab/old_log_generator.cpp)
@@ -138,117 +126,101 @@ add_library(knobab_mining
 #        yaucl_numeric yaucl_data yaucl_graph  yaucl_data yaucl_bpm knobab  knobab_ndp)
 
 
-#if(MSVC OR MSYS OR MINGW)
-##    target_link_libraries(knobab_server Threads::Threads antlr4_shared yaucl_hashing yaucl_bpm yaucl_structures
-##            yaucl_numeric yaucl_data yaucl_graph  yaucl_data yaucl_bpm knobab  knobab_ndp)
-##    target_link_libraries(tests_main antlr4_shared yaucl_bpm yaucl_structures
-##            yaucl_numeric yaucl_data yaucl_graph yaucl_hashing yaucl_data yaucl_bpm knobab  knobab_ndp)
-##    target_link_libraries(benchmarking knobab antlr4_shared yaucl_hashing yaucl_data knobab_ndp
-##            yaucl_stringutils yaucl_numeric  yaucl_data yaucl_bpm yaucl_graph yaucl_structures)
-##    target_link_libraries(mining Threads::Threads knobab antlr4_shared yaucl_hashing
-##            yaucl_stringutils yaucl_numeric  yaucl_data yaucl_bpm yaucl_graph yaucl_structures yaucl_data knobab_ndp yaucl_learning knobab_mining)
-##    target_link_libraries(multimodel_mining Threads::Threads knobab antlr4_shared yaucl_hashing
-##            yaucl_stringutils yaucl_numeric  yaucl_data yaucl_bpm yaucl_graph yaucl_structures yaucl_data knobab_ndp yaucl_learning knobab_mining)
-##    target_link_libraries(knobab2-benchmarking Threads::Threads antlr4_shared yaucl_hashing yaucl_bpm yaucl_structures
-##            yaucl_numeric yaucl_data yaucl_graph  yaucl_data yaucl_bpm knobab  knobab_ndp)
-#else()
-##    target_link_libraries(knobab_server Threads::Threads antlr4_static yaucl_hashing yaucl_bpm yaucl_structures
-##            yaucl_numeric yaucl_data yaucl_graph  yaucl_data yaucl_bpm knobab  knobab_ndp)
-##    target_link_libraries(log_generator Threads::Threads antlr4_static yaucl_hashing yaucl_bpm yaucl_structures
-##            yaucl_numeric yaucl_data yaucl_graph  yaucl_data yaucl_bpm knobab  knobab_ndp)
-##    target_link_libraries(tests_main antlr4_static yaucl_hashing yaucl_bpm yaucl_structures
-##            yaucl_numeric yaucl_data yaucl_graph  yaucl_data yaucl_bpm knobab  knobab_ndp)
-##    target_link_libraries(mining Threads::Threads knobab antlr4_static yaucl_hashing
-##            yaucl_stringutils yaucl_numeric  yaucl_data yaucl_bpm yaucl_graph yaucl_structures yaucl_data knobab_ndp yaucl_learning knobab_mining)
-##    target_link_libraries(benchmarking knobab antlr4_static yaucl_hashing yaucl_data knobab_ndp
-##            yaucl_stringutils yaucl_numeric  yaucl_data yaucl_bpm yaucl_graph yaucl_structures)
-##    target_link_libraries(multimodel_mining Threads::Threads knobab antlr4_static yaucl_hashing
-##            yaucl_stringutils yaucl_numeric  yaucl_data yaucl_bpm yaucl_graph yaucl_structures yaucl_data knobab_ndp yaucl_learning knobab_mining)
-##    target_link_libraries(knobab2-benchmarking Threads::Threads antlr4_shared yaucl_hashing yaucl_bpm yaucl_structures
-##            yaucl_numeric yaucl_data yaucl_graph  yaucl_data yaucl_bpm knobab  knobab_ndp)
-#endif()
+if(MSVC OR MSYS OR MINGW)
+    target_link_libraries(knobab_server Threads::Threads antlr4_shared yaucl_hashing yaucl_bpm yaucl_structures
+            yaucl_numeric yaucl_data yaucl_graph  yaucl_data yaucl_bpm knobab  knobab_ndp)
+    target_link_libraries(tests_main antlr4_shared yaucl_bpm yaucl_structures
+            yaucl_numeric yaucl_data yaucl_graph yaucl_hashing yaucl_data yaucl_bpm knobab  knobab_ndp)
+    target_link_libraries(benchmarking knobab antlr4_shared yaucl_hashing yaucl_data knobab_ndp
+            yaucl_stringutils yaucl_numeric  yaucl_data yaucl_bpm yaucl_graph yaucl_structures)
+    target_link_libraries(mining Threads::Threads knobab antlr4_shared yaucl_hashing
+            yaucl_stringutils yaucl_numeric  yaucl_data yaucl_bpm yaucl_graph yaucl_structures yaucl_data knobab_ndp yaucl_learning knobab_mining)
+    target_link_libraries(multimodel_mining Threads::Threads knobab antlr4_shared yaucl_hashing
+            yaucl_stringutils yaucl_numeric  yaucl_data yaucl_bpm yaucl_graph yaucl_structures yaucl_data knobab_ndp yaucl_learning knobab_mining)
+    target_link_libraries(knobab2-benchmarking Threads::Threads antlr4_shared yaucl_hashing yaucl_bpm yaucl_structures
+            yaucl_numeric yaucl_data yaucl_graph  yaucl_data yaucl_bpm knobab  knobab_ndp)
+else()
+    target_link_libraries(knobab_server Threads::Threads antlr4_static yaucl_hashing yaucl_bpm yaucl_structures
+            yaucl_numeric yaucl_data yaucl_graph  yaucl_data yaucl_bpm knobab  knobab_ndp)
+    target_link_libraries(log_generator Threads::Threads antlr4_static yaucl_hashing yaucl_bpm yaucl_structures
+            yaucl_numeric yaucl_data yaucl_graph  yaucl_data yaucl_bpm knobab  knobab_ndp)
+    target_link_libraries(tests_main antlr4_static yaucl_hashing yaucl_bpm yaucl_structures
+            yaucl_numeric yaucl_data yaucl_graph  yaucl_data yaucl_bpm knobab  knobab_ndp)
+    target_link_libraries(mining Threads::Threads knobab antlr4_static yaucl_hashing
+            yaucl_stringutils yaucl_numeric  yaucl_data yaucl_bpm yaucl_graph yaucl_structures yaucl_data knobab_ndp yaucl_learning knobab_mining)
+    target_link_libraries(benchmarking knobab antlr4_static yaucl_hashing yaucl_data knobab_ndp
+            yaucl_stringutils yaucl_numeric  yaucl_data yaucl_bpm yaucl_graph yaucl_structures)
+    target_link_libraries(multimodel_mining Threads::Threads knobab antlr4_static yaucl_hashing
+            yaucl_stringutils yaucl_numeric  yaucl_data yaucl_bpm yaucl_graph yaucl_structures yaucl_data knobab_ndp yaucl_learning knobab_mining)
+    target_link_libraries(knobab2-benchmarking Threads::Threads antlr4_shared yaucl_hashing yaucl_bpm yaucl_structures
+            yaucl_numeric yaucl_data yaucl_graph  yaucl_data yaucl_bpm knobab  knobab_ndp)
+endif()
 
-#add_executable(refinery refinery.cpp)
-#target_link_libraries(refinery Threads::Threads yaml-cpp antlr4_static ${CppPythonBindings}
-#        yaucl_stringutils yaucl_numeric yaucl_hashing yaucl_data yaucl_bpm yaucl_graph knobab_flloat yaucl_structures yaucl_learning knobab)
-
-#enable_testing ()
-#include(FetchContent)
-#FetchContent_Declare(
-#        googletest
-#        URL https://github.com/google/googletest/archive/58b71c9ea2fa52a7412e2267895d016abe14a971.zip
-#)
+enable_testing ()
+include(FetchContent)
+FetchContent_Declare(
+        googletest
+        URL https://github.com/google/googletest/archive/58b71c9ea2fa52a7412e2267895d016abe14a971.zip
+)
 # For Windows: Prevent overriding the parent project's compiler/linker settings
-#set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
-#FetchContent_MakeAvailable(googletest)
-#link_directories(${CMAKE_CURRENT_BINARY_DIR}/lib)
-#include_directories(${gtest_SOURCE_DIR}/include ${gtest_SOURCE_DIR})
+set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+FetchContent_MakeAvailable(googletest)
+link_directories(${CMAKE_CURRENT_BINARY_DIR}/lib)
+include_directories(${gtest_SOURCE_DIR}/include ${gtest_SOURCE_DIR})
 
-#Include(FetchContent)
-#
-#FetchContent_Declare(
-#        Catch2
-#        GIT_REPOSITORY https://github.com/catchorg/Catch2.git
-#        GIT_TAG        v3.0.1 # or a later release
-#)
+Include(FetchContent)
 
-pybind11_add_module(knobab_emeritate_support
-        src/knobab/v30/EMeriTAte.cpp
+FetchContent_Declare(
+        Catch2
+        GIT_REPOSITORY https://github.com/catchorg/Catch2.git
+        GIT_TAG        v3.0.1 # or a later release
+)
+
+add_executable(knobab_json new_pipeline.cpp src/knobab/v30/EMeriTAte.cpp
         src/knobab/mining/polyadic/polyadic_learning.cpp
         include/knobab/mining/polyadic/polyadic_learning.h
         src/knobab/mining/polyadic/polyadic_mining.cpp
+        include/knobab/mining/polyadic/polyadic_loading.h
         include/knobab/mining/polyadic/polyadic_mining.h)
-
-target_link_libraries(knobab_emeritate_support PRIVATE pybind11::headers pybind11::module Threads::Threads antlr4_static yaucl_hashing yaucl_bpm yaucl_structures
+target_link_libraries(knobab_json Threads::Threads antlr4_static yaucl_hashing yaucl_bpm yaucl_structures
         yaucl_numeric yaucl_data yaucl_graph  yaucl_data yaucl_bpm knobab  knobab_ndp   yaucl_learning  knobab_mining)
 
-#add_executable(knobab_json new_pipeline.cpp src/knobab/v30/EMeriTAte.cpp
-#        src/knobab/mining/polyadic/polyadic_learning.cpp
-#        include/knobab/mining/polyadic/polyadic_learning.h
-#        src/knobab/mining/polyadic/polyadic_mining.cpp
-#        include/knobab/mining/polyadic/polyadic_loading.h
-#        include/knobab/mining/polyadic/polyadic_mining.h)
-#target_link_libraries(knobab_json Threads::Threads antlr4_static yaucl_hashing yaucl_bpm yaucl_structures
-#        yaucl_numeric yaucl_data yaucl_graph  yaucl_data yaucl_bpm knobab  knobab_ndp   yaucl_learning  knobab_mining)
+FetchContent_MakeAvailable(Catch2)
+list(APPEND CMAKE_MODULE_PATH ${catch2_SOURCE_DIR}/extras)
+include(CTest)
+include(Catch)
 
-install(TARGETS knobab_emeritate_support LIBRARY DESTINATION .)
 
-#FetchContent_MakeAvailable(Catch2)
-#list(APPEND CMAKE_MODULE_PATH ${catch2_SOURCE_DIR}/extras)
-#include(CTest)
-#include(Catch)
-#
-#
-#add_executable(mining_tests src/knobab/tests/mining_tests.cpp )
-#target_link_libraries(mining_tests Catch2::Catch2WithMain Threads::Threads knobab antlr4_static yaucl_hashing
-#        yaucl_stringutils yaucl_numeric  yaucl_data yaucl_bpm yaucl_graph yaucl_structures yaucl_data knobab_ndp yaucl_learning knobab_mining)
-#
-#add_executable(polyadic_mining_tests src/knobab/tests/polyadic_mining_tests.cpp )
-#target_link_libraries(polyadic_mining_tests Catch2::Catch2WithMain Threads::Threads knobab antlr4_static yaucl_hashing
-#        yaucl_stringutils yaucl_numeric  yaucl_data yaucl_bpm yaucl_graph yaucl_structures yaucl_data knobab_ndp yaucl_learning knobab_mining )
-#
-#
-#add_executable(until_tests src/knobab/tests/until_tests.cpp)
-#target_link_libraries(until_tests Catch2::Catch2WithMain Threads::Threads knobab antlr4_static yaucl_hashing
-#        yaucl_stringutils yaucl_numeric  yaucl_data yaucl_bpm yaucl_graph yaucl_structures yaucl_data knobab_ndp yaucl_learning knobab_mining)
-#
-#add_executable(complete_response src/knobab/tests/complete_response.cpp)
-#target_link_libraries(complete_response Catch2::Catch2WithMain Threads::Threads knobab antlr4_static yaucl_hashing
-#        yaucl_stringutils yaucl_numeric  yaucl_data yaucl_bpm yaucl_graph yaucl_structures yaucl_data knobab_ndp yaucl_learning knobab_mining)
-#
-#add_executable(basic_operators_testing src/knobab/tests/basic_operators_testing.cpp include/knobab/server/dataStructures/polyadic/basic_polyadic.h)
-#target_link_libraries(basic_operators_testing Catch2::Catch2WithMain Threads::Threads knobab antlr4_static yaucl_hashing
-#        yaucl_stringutils yaucl_numeric  yaucl_data yaucl_bpm yaucl_graph yaucl_structures yaucl_data knobab_ndp yaucl_learning knobab_mining)
-#
-#
-#add_executable(knobab2-edbt24-benchmarking benchmarking/edbt24.cpp)
-#target_link_libraries(knobab2-edbt24-benchmarking Threads::Threads antlr4_shared yaucl_hashing yaucl_bpm yaucl_structures
-#        yaucl_numeric yaucl_data yaucl_graph  yaucl_data yaucl_bpm knobab  knobab_ndp)
-#
-#
-#
-#catch_discover_tests(mining_tests)
-#catch_discover_tests(until_tests)
-#catch_discover_tests(complete_response)
-#catch_discover_tests(basic_operators_testing)
-#catch_discover_tests(polyadic_mining_tests)add_library(KnoBAB_EMeriTAte include/knobab/v30/EMeriTAte.h)
+add_executable(mining_tests src/knobab/tests/mining_tests.cpp )
+target_link_libraries(mining_tests Catch2::Catch2WithMain Threads::Threads knobab antlr4_static yaucl_hashing
+        yaucl_stringutils yaucl_numeric  yaucl_data yaucl_bpm yaucl_graph yaucl_structures yaucl_data knobab_ndp yaucl_learning knobab_mining)
+
+add_executable(polyadic_mining_tests src/knobab/tests/polyadic_mining_tests.cpp )
+target_link_libraries(polyadic_mining_tests Catch2::Catch2WithMain Threads::Threads knobab antlr4_static yaucl_hashing
+        yaucl_stringutils yaucl_numeric  yaucl_data yaucl_bpm yaucl_graph yaucl_structures yaucl_data knobab_ndp yaucl_learning knobab_mining )
+
+
+add_executable(until_tests src/knobab/tests/until_tests.cpp)
+target_link_libraries(until_tests Catch2::Catch2WithMain Threads::Threads knobab antlr4_static yaucl_hashing
+        yaucl_stringutils yaucl_numeric  yaucl_data yaucl_bpm yaucl_graph yaucl_structures yaucl_data knobab_ndp yaucl_learning knobab_mining)
+
+add_executable(complete_response src/knobab/tests/complete_response.cpp)
+target_link_libraries(complete_response Catch2::Catch2WithMain Threads::Threads knobab antlr4_static yaucl_hashing
+        yaucl_stringutils yaucl_numeric  yaucl_data yaucl_bpm yaucl_graph yaucl_structures yaucl_data knobab_ndp yaucl_learning knobab_mining)
+
+add_executable(basic_operators_testing src/knobab/tests/basic_operators_testing.cpp include/knobab/server/dataStructures/polyadic/basic_polyadic.h)
+target_link_libraries(basic_operators_testing Catch2::Catch2WithMain Threads::Threads knobab antlr4_static yaucl_hashing
+        yaucl_stringutils yaucl_numeric  yaucl_data yaucl_bpm yaucl_graph yaucl_structures yaucl_data knobab_ndp yaucl_learning knobab_mining)
+
+
+add_executable(knobab2-edbt24-benchmarking benchmarking/edbt24.cpp)
+target_link_libraries(knobab2-edbt24-benchmarking Threads::Threads antlr4_shared yaucl_hashing yaucl_bpm yaucl_structures
+        yaucl_numeric yaucl_data yaucl_graph  yaucl_data yaucl_bpm knobab  knobab_ndp)
+
+
+
+catch_discover_tests(mining_tests)
+catch_discover_tests(until_tests)
+catch_discover_tests(complete_response)
+catch_discover_tests(basic_operators_testing)
+catch_discover_tests(polyadic_mining_tests)
