@@ -1,0 +1,11 @@
+epsilon: 0.01
+maxval: 10000000000000.0
+singlePatient: "038"
+doMining: no
+allPatients: yes
+doTimeContinuous: yes
+logging_level: "TRACE"
+logging_file: null
+doDailyBasis: yes
+patients: ["038", "024"]
+folder: "/home/giacomo/Scaricati/AI and Robotics meeting - timeseries analysis - link/analysis/"

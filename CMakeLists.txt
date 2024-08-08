@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.20)
 project(knobab_server)
 set(CMAKE_CXX_STANDARD 20)
 set(WITH_DEMO false)
+add_definitions(-DNO_PYBIND)
 include_directories(include/knobab/server/query_manager)
 include_directories(include)
 include_directories(submodules/yaucl/submodules/eigen)
@@ -82,7 +83,9 @@ add_library(knobab OBJECT
         include/knobab/server/algorithms/querymanager/DataQuery.h
         src/knobab/server/algorithms/querymanager/DataQuery.cpp
         include/knobab/server/algorithms/querymanager/LTLfQuery.h
-        src/knobab/server/algorithms/querymanager/LTLfQuery.cpp src/knobab/server/algorithms/dfa_generator/GenerateGraphFromAtomisedClause.cpp include/knobab/server/algorithms/dfa_generator/GenerateGraphFromAtomisedClause.h src/knobab/server/algorithms/dfa_generator/GenerateGraphFromEnvironment.cpp include/knobab/server/algorithms/dfa_generator/GenerateGraphFromEnvironment.h src/knobab/server/dataStructures/knobab_data_loader.cpp include/knobab/server/dataStructures/knobab_data_loader.h)
+        src/knobab/server/algorithms/querymanager/LTLfQuery.cpp src/knobab/server/algorithms/dfa_generator/GenerateGraphFromAtomisedClause.cpp include/knobab/server/algorithms/dfa_generator/GenerateGraphFromAtomisedClause.h src/knobab/server/algorithms/dfa_generator/GenerateGraphFromEnvironment.cpp include/knobab/server/algorithms/dfa_generator/GenerateGraphFromEnvironment.h src/knobab/server/dataStructures/knobab_data_loader.cpp include/knobab/server/dataStructures/knobab_data_loader.h
+        include/knobab/v30/EMeriTAte.h)
+
 
 add_executable(knobab_server src/knobab/server/server.cpp)
 add_executable(tests_main src/knobab/tests/main.cpp)
@@ -120,11 +123,6 @@ add_executable(multimodel_mining src/knobab/mining/refinery.cpp)
 add_executable(knobab2-benchmarking src/knobab/server/benchmarking_binary.cpp)
 
 
-add_executable(old_log_generator src/knobab/old_log_generator.cpp)
-target_link_libraries(old_log_generator Threads::Threads antlr4_shared yaucl_hashing yaucl_bpm yaucl_structures
-        yaucl_numeric yaucl_data yaucl_graph  yaucl_data yaucl_bpm knobab  knobab_ndp)
-
-
 if(MSVC OR MSYS OR MINGW)
     target_link_libraries(knobab_server Threads::Threads antlr4_shared yaucl_hashing yaucl_bpm yaucl_structures
             yaucl_numeric yaucl_data yaucl_graph  yaucl_data yaucl_bpm knobab  knobab_ndp)
@@ -155,9 +153,7 @@ else()
             yaucl_numeric yaucl_data yaucl_graph  yaucl_data yaucl_bpm knobab  knobab_ndp)
 endif()
 
-#add_executable(refinery refinery.cpp)
-#target_link_libraries(refinery Threads::Threads yaml-cpp antlr4_static ${CppPythonBindings}
-#        yaucl_stringutils yaucl_numeric yaucl_hashing yaucl_data yaucl_bpm yaucl_graph knobab_flloat yaucl_structures yaucl_learning knobab)
+
 
 enable_testing ()
 #include(FetchContent)
@@ -171,6 +167,7 @@ enable_testing ()
 #link_directories(${CMAKE_CURRENT_BINARY_DIR}/lib)
 #include_directories(${gtest_SOURCE_DIR}/include ${gtest_SOURCE_DIR})
 
+
 Include(FetchContent)
 
 FetchContent_Declare(
@@ -179,7 +176,13 @@ FetchContent_Declare(
         GIT_TAG        v3.0.1 # or a later release
 )
 
-add_executable(knobab_json new_pipeline.cpp src/knobab/mining/polyadic/polyadic_learning.cpp include/knobab/mining/polyadic/polyadic_learning.h src/knobab/mining/polyadic/polyadic_mining.cpp include/knobab/mining/polyadic/polyadic_mining.h)
+
+add_executable(knobab_json new_pipeline.cpp src/knobab/v30/EMeriTAte.cpp
+        src/knobab/mining/polyadic/polyadic_learning.cpp
+        include/knobab/mining/polyadic/polyadic_learning.h
+        src/knobab/mining/polyadic/polyadic_mining.cpp
+        include/knobab/mining/polyadic/polyadic_loading.h
+        include/knobab/mining/polyadic/polyadic_mining.h)
 target_link_libraries(knobab_json Threads::Threads antlr4_static yaucl_hashing yaucl_bpm yaucl_structures
         yaucl_numeric yaucl_data yaucl_graph  yaucl_data yaucl_bpm knobab  knobab_ndp   yaucl_learning  knobab_mining)
 

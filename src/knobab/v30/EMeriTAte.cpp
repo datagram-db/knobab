@@ -1,62 +1,8 @@
+//
+// Created by giacomo on 08/08/24.
+//
 
-#include <string>
-#include <unordered_set>
-
-
-#include <unordered_map>
-#include <map>
-#define NO_PYBIND
-#include "knobab/v30/EMeriTAte.h"
-
-struct benchmarking {
-    // parameters
-    std::string filename_polyadic;
-    double mining_supp;
-    bool reduction, reclassify;
-    bool isFilenamePolyadic;
-    std::unordered_map<std::string, log_data_format> nonPolyadicDataset;
-
-
-    // Outcomes
-    double cpp_preprocess, loading, indexing, mining, refining;
-    std::map<std::string, size_t> mined_model_size;
-
-    std::string get_log_name(const std::string& name) const {
-        std::stringstream ss;
-        ss << UNDERSCORED(filename_polyadic,mining_supp,reduction,isFilenamePolyadic,reclassify);
-        ss << "_clazz=" << name <<".txt";
-        auto s = ss.str();
-        return s;
-    }
-
-    std::ostream& header_csv(std::ostream& os) const {
-        return os << STRINGIFY(filename_polyadic,mining_supp,reduction,reclassify,isFilenamePolyadic,cpp_preprocess,loading,indexing,mining,refining) << std::endl;
-    }
-    std::ostream& values_csv(std::ostream& os) const {
-        return os << BESTIA(filename_polyadic,mining_supp,reduction,reclassify,isFilenamePolyadic,cpp_preprocess,loading,indexing,mining,refining) << std::endl;
-    }
-    template <typename MAP>
-    std::ostream& header_polyadic(std::ostream& os, const MAP& field) const {
-        os << STRINGIFY(filename_polyadic,mining_supp,reduction,reclassify,isFilenamePolyadic,cpp_preprocess,loading,indexing,mining,refining);
-        for (const auto& [k,v] : field) {
-            os << "," << k;
-        }
-        return os << std::endl;
-    }
-
-    template <typename MAP>
-    std::ostream& values_polyadic(std::ostream& os, const MAP& field) const {
-        os << BESTIA(filename_polyadic,mining_supp,reduction,reclassify,isFilenamePolyadic,cpp_preprocess,loading,indexing,mining,refining);
-        for (const auto& [k,v] : field) {
-            os << "," << v;
-        }
-        return os << std::endl;
-    }
-};
-
-#include <args.hxx>
-#include <filesystem>
-#include <yaucl/strings/string_utils.h>
+#include <knobab/v30/EMeriTAte.h>
 
 void  original_main_entrypoint(bool reclassify,
                                bool reduction,
@@ -65,10 +11,12 @@ void  original_main_entrypoint(bool reclassify,
                                const std::string &traceDistinguisher,
                                const std::string &filename_polyadic,
                                const std::unordered_set<std::string> &ignore_keys,
-                               const std::vector<std::string> &log_parse_format_type, bool isFastSat,
+                               bool isFastSat,
                                const std::vector<log_data_format> &worlds_format_to_load,
                                const std::vector<std::string> &worlds_file_to_load,
                                std::filesystem::path &folder) {
+
+    std::vector<std::string> log_parse_format_type{"HRF", "XES", "TAB"};
     ServerQueryManager sqm;
     double cpp_preprocess, loading, indexing, mining, refining;
     if (!filename_polyadic.empty()) {
@@ -251,103 +199,53 @@ void  original_main_entrypoint(bool reclassify,
     }
 }
 
-
-int main(int argc, char **argv) {
-    // Phases 01 (mining the models from the data) and 03 (deriving the decision tree structure)
-
-    // CyberSecurity configuration:
-    // -s 0.8 --nonPoly=tab --nonPoly=tab --nonPoly=tab --nonPoly=tab --nonPoly=tab --nonPoly=tab --nonPoly=tab --nonPoly=tab /home/giacomo/Scaricati/classes/Adware.tab_100.tab /home/giacomo/Scaricati/classes/Backdoor.tab_100.tab /home/giacomo/Scaricati/classes/Downloader.tab_100.tab /home/giacomo/Scaricati/classes/Dropper.tab_100.tab /home/giacomo/Scaricati/classes/Spyware.tab_100.tab /home/giacomo/Scaricati/classes/Trojan.tab_100.tab /home/giacomo/Scaricati/classes/Virus.tab_100.tab /home/giacomo/Scaricati/classes/Worms.tab_100.tab
-
-    // Polyadic mining configuration
-    // -s 1.0 -d user -i day -i span -i "__class" -i "__label" -i time -i fulltime -p /home/giacomo/projects/sdd-processing/sdd-processing/log_weekly.json
-
-    struct benchmarking result;
-    result.filename_polyadic = "/home/giacomo/projects/sdd-processing/sdd-processing/log_weekly.json";
-    std::string traceDistinguisher = "user";
-    std::unordered_set<std::string> ignore_keys{"day","span","__class","__label","time","fulltime"};
-    result.mining_supp = 1.0;
-    result.reduction = false;
-    result.reclassify = false;
-
-
-    args::ArgumentParser parser("Polyadic Mining", "This is the main entry point for the benchmarking ");
-    args::HelpFlag help(parser, "help", "Display this help menu", {'h', "help"});
-    args::Group group(parser, "You can use the following parameters", args::Group::Validators::DontCare, args::Options::Global);
-    args::ValueFlag<double>  supportVal(group, "Support Value", "If present, specifies the support value (default 1.0)", {'s', "support"});
-    args::ValueFlag<std::string>  distinguisher(group, "Trace Distinguisher", "Trace payload field allowing to distinguish different users within polyadic traces", {'d', "distinguisher"});
-    args::Flag red(group, "reduction", "Run the model reduction for removing mutually implying clauses", {'r', "red"});
-    args::Flag rec(group, "reclassify", "Run a re-classification, thus further distiguishing each class via decision-tree induced sub-classes", {'k', "subclass"});
-    args::ValueFlag<std::string> fastSat(group, "reclassify", "Performs a fast SAT given specific configuration files within a specific folder", {'f', "fastSat"});
-    args::ValueFlagList<std::string> characters(parser, "ignore keys", "The payload's keys to be ignored within the loading and classification task", {'i', "ignore"});
-    args::ValueFlag<std::string> polyadicJSON(parser, "polyadic JSON", "The polyadic traces represented as a json file", {'p', "polyadic"});
-    args::Flag polyadicMine(parser, "usual mining", "Uses the standard linear behaviour from declarative mining, where traces are not grouped in hierarchy", {'l', "nonPolyMining"});
-
-    std::unordered_map<std::string, log_data_format> map{
-            {"hrf", log_data_format::HUMAN_READABLE_YAUCL},
-            {"xes", log_data_format::XES1},
-            {"tab", log_data_format::TAB_SEPARATED_EVENTS}};
-    args::MapFlagList<std::string, log_data_format> use_confidence_for_clustering(parser, "nonPolyadic", "For non polyadic datasets, define the format to be associated to each file", {'n', "nonPoly"}, map);
-    args::PositionalList<std::string> files(parser, "files", "non polyadic Files associated to the specific worlds");
-
-    try {
-        parser.ParseCLI(argc, argv);
-    } catch (args::Help) {
-        std::cout << parser;
-        return 0;
-    } catch (args::ParseError e) {
-        std::cerr << e.what() << std::endl;
-        std::cerr << parser;
-        return 1;
-    } catch (args::ValidationError e) {
-        std::cerr << e.what() << std::endl;
-        std::cerr << parser;
-        return 1;
-    }
-
-    bool isFastSat = (bool)(fastSat);
-    if (supportVal) {
-        result.mining_supp = args::get(supportVal);
-    }
-    if (distinguisher) {
-        traceDistinguisher = args::get(distinguisher);
-    }
-    if (red) {
-        result.reduction = true;
-    }
-    if (rec) {
-        result.reclassify = true;
-    }
-    if (characters) {
-        ignore_keys.clear();
-        for (const std::string& key : args::get(characters)) {
-            ignore_keys.insert(key);
+void  python_main_entrypoint(bool reclassify,
+                             bool reduction,
+                             double mining_supp,
+                             bool isFilenamePolyadic,
+                             const std::string &traceDistinguisher,
+                             const std::string &filename_polyadic,
+                             const std::vector<std::string> &ignore_keys,
+                             bool isFastSat,
+                             const std::vector<std::string> &worlds_format_to_load,
+                             const std::vector<std::string> &worlds_file_to_load,
+                             const std::string &folder) {
+    std::vector<log_data_format> orig_worlds_format_to_load;
+    orig_worlds_format_to_load.reserve(worlds_format_to_load.size());
+    for (const auto& x : worlds_format_to_load) {
+        if (x == "TAB") {
+            orig_worlds_format_to_load.emplace_back(TAB_SEPARATED_EVENTS);
+        } else if (x == "XES") {
+            orig_worlds_format_to_load.emplace_back(XES1);
+        } else {
+            orig_worlds_format_to_load.emplace_back(HUMAN_READABLE_YAUCL);
         }
     }
-    std::vector<log_data_format> worlds_format_to_load = args::get(use_confidence_for_clustering);
-    std::vector<std::string>     worlds_file_to_load = args::get(files);
-    result.filename_polyadic.clear();
-    if (polyadicJSON) {
-        result.filename_polyadic = args::get(polyadicJSON);
-    }
-    if (polyadicMine) {
-        result.isFilenamePolyadic = false;
-    } else {
-        result.isFilenamePolyadic = true;
-    }
-    std::filesystem::path folder = args::get(fastSat);
-
-    original_main_entrypoint(result.reclassify,
-                             result.reduction,
-                             result.mining_supp,
-                             result.isFilenamePolyadic,
+    std::filesystem::path orig_folder;
+    if (!folder.empty())
+        orig_folder = folder;
+    original_main_entrypoint(reclassify,
+                             reduction,
+                             mining_supp,
+                             isFilenamePolyadic,
                              traceDistinguisher,
-                             result.filename_polyadic,
-                             ignore_keys,
-                             isFastSat,worlds_format_to_load,
-                             worlds_file_to_load,
-                             folder
-    );
+                             filename_polyadic,
+                             {ignore_keys.begin(), ignore_keys.end()},
 
-    return 0;
+                             isFastSat,
+                             orig_worlds_format_to_load,
+                             worlds_file_to_load,
+                             orig_folder
+                             );
 }
 
+
+#ifdef NO_PYBIND
+#else
+namespace py = pybind11;
+PYBIND11_MODULE(knobab_emeritate_support, m) {
+    m.doc() = "C++ support to the EMeriTAte algorithm"; // optional module docstring
+
+    m.def("knobab_for_emeritate", &python_main_entrypoint, "Mimicking the C++ entrypoint from the original version of the code");
+}
+#endif

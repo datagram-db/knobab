@@ -6,15 +6,7 @@
 ## Authors
 
 *  Giacomo Bergami (2020-)
-*  Samuel "Sam" Appleby (2022-)
-
-## Log Generator
-
-See the following branch: [loggen2](https://github.com/datagram-db/knobab/tree/loggen2)
-
-## Mining+Inference Algorithm
-
-See the following main entry point: src/knobab/mining/mining.cpp
+*  Samuel "Sam" Appleby (2022-2023)
 
 ## Cloning this branch
 
@@ -22,15 +14,6 @@ The suggested command to clone this project alongside its submodules and depende
 
     git clone --recurse-submodules -j8 --branch loggen git@github.com:datagram-db/knobab.git knobab2
 
-## Results' Reproducibility (Latest Version)
+## Results' Reproducibility (Legacy Versions)
 
-This repository is associated with a Dockerfile. Therefore, a possible way to start in from a Linux environment is the following:
-
-```bash
-docker build -t "conference:DockerConference" .
-docker run -it "conference:DockerConference" bash
-```
-
-The docker file will also automatically run the tests associated to the programs. As suggested in the paper, please also consider running the
-given code using the dataset and scripts provided online via OSF anonymous submission: [https://osf.io/6y8cv/?view_only=3b8c01761fcf4941ad726aba4101151e](https://osf.io/6y8cv/?view_only=3b8c01761fcf4941ad726aba4101151e)
-
+Please refer to the [complete list](https://github.com/datagram-db/knobab/releases) of releases for any older version, chronologically ordered and associated to the appropriate paper name.
