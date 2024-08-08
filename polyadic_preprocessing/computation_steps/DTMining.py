@@ -43,18 +43,19 @@ class DTMining:
         self.folder = folder
         for file in glob.glob(os.path.join(folder, "*.csv")):
             self.environments[Path(file).stem] = pandas.read_csv(file)
-            print(file)
+            # print(file)
 
-    def transform(self):
-        UserLog = Log()
-        for pat in self.environments:
-            ls = self._perEnvironment(pat)
-            UserLog.addTracePositional(ls, withData=True, isTab=True,
-                                                      withExplicitPayloadMap={"user":pat})
-        UserLog.indexing()
+    def transform(self, cache=True):
         p = os.path.join(self.folder, "log_weekly.json")
-        with open(p, "w") as outfile:
-            json.dump(UserLog.toJSONObject(), outfile, indent=4)
+        if (not cache) or (not os.path.isfile(p)):
+            UserLog = Log()
+            for pat in self.environments:
+                ls = self._perEnvironment(pat)
+                UserLog.addTracePositional(ls, withData=True, isTab=True,
+                                                          withExplicitPayloadMap={"user":pat})
+            UserLog.indexing()
+            with open(p, "w") as outfile:
+                json.dump(UserLog.toJSONObject(), outfile, indent=4)
         return p
 
     def _perEnvironment(self, envName):
