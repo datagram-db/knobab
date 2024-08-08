@@ -55,13 +55,13 @@ class EMeriTAte:
         return tuple(LS)
 
     def __run(self, path=None): #args):
-        # self.knobab.call_interface(path)
-        print(path)
-        LS = list(self.__args(path))
-        LS.insert(0, "/home/giacomo/projects/knobab2_loggen/cmake-build-release/knobab_json")
-        popen = subprocess.Popen(tuple(LS), stdout=subprocess.PIPE)
-        popen.wait()
-        return popen.stdout.read()
+        self.knobab.call_interface(path)
+        # print(path)
+        # LS = list(self.__args(path))
+        # LS.insert(0, "/home/giacomo/projects/knobab2_loggen/cmake-build-release/knobab_json")
+        # popen = subprocess.Popen(tuple(LS), stdout=subprocess.PIPE)
+        # popen.wait()
+        # return popen.stdout.read()
 
     def _02_run_preliminary_mining(self):
         print(self.__run())
@@ -80,19 +80,20 @@ class EMeriTAte:
         #      self.conversion,
         #            self.toExtendWithTime).transform()
         self.json_path = Path(self.file)
-        # self.knobab = KnobabEmeritateSupport(self.support, self.environment_field, self.file, self.ignorable_fields)
+        self.knobab = KnobabEmeritateSupport(self.support, self.environment_field, self.file, self.ignorable_fields)
         #
         # # 02. Bolt2 Specification Mining
         # self._02_run_preliminary_mining()
         #     Dumping the txt files
-        iterable = list(dump_txt_files(str(self.json_path.parent.absolute())))
-        assert len(iterable) == 1
+        # iterable = list(dump_txt_files(str(self.json_path.parent.absolute())))
+        # assert len(iterable) == 1
 
         # 04. Deviance Learning
-        path = iterable[0]
-        self._04_run_fastSAT(path)
+        # path = iterable[0]
+        # self._04_run_fastSAT(path)
+        path = "/home/giacomo/projects/knobab2_loggen/polyadic_preprocessing/raw_data/poly_s0_0"
         model = LearnRepresentation(str(path), self.clazz, self.spec, self.criterion, self.max_depth, self.split)
-        model.train()
+        model.test()
         self.Model = model.rf
 
 
@@ -113,7 +114,7 @@ if __name__ == "__main__":
                   {'amantadine', 'day', 'madopar 50', 'madopar CR', 'rotigotine', 'span', 'stalevo', 'stanek'},
                   None,
                   conversion,
-                  {'amantadine', 'madopar 50', 'madopar CR', 'rotigotine', 'stalevo', 'stanek'},
+                  None,
                   ["day", "span", "__class", "__label","fulltime"],
                   0.0)
     e.run()
