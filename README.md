@@ -1,7 +1,7 @@
 
-![KnoBAB: Making Logic Fast](knobab.png)
+# <img src="Wordpress.png" style="height:80px; width: auto;" /> KnoBAB
 
-# KNOwledge Base for Alignments and Business process modelling
+KNOwledge Base for Alignments and Business process modelling
 
 ## Authors
 
