@@ -17,3 +17,8 @@ The suggested command to clone this project alongside its submodules and depende
 ## Results' Reproducibility (Legacy Versions)
 
 Please refer to the [complete list](https://github.com/datagram-db/knobab/releases) of releases for any older version, chronologically ordered and associated to the appropriate paper name.
+
+## Invited Talks & Presentations
+
+* Giacomo Bergami. "[KnoBAB: Making Logic Fast](https://github.com/datagram-db/knobab/blob/v3.x/InvitedTalks/AAAI23-SSS.pdf)" [LTբ@AAAI-SSS](https://ltlf-symposium.github.io/program/), 29ᵗʰ of March, 2023
+* Giacomo Bergami. "[KnoBAB: Fast Business Process Management with Temporal Reasoning](https://github.com/datagram-db/knobab/blob/v3.x/InvitedTalks/MeetUp23.pdf)" [North East Data Scientist MeetUp](https://www.techdiary.co.uk/event/7393b4f3-01aa-4627-9d03-e2ae9fa1a345/visit), 16ᵗʰ of March, 2023
