@@ -32,3 +32,5 @@ __pycache__/*
 /EMeriTAte/japanese_vowels/
 /EMeriTAte/load_basic_motions/
 /EMeriTAte/osuleaf/
+/EMeriTAte/*.txt
+/EMeriTAte/venv/
