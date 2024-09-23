@@ -465,7 +465,7 @@ template<typename TableSection> inline
 Result negateUntimed(TableSection &data_untimed, const std::vector<size_t> &lengths, bool preserveNegatedFacts = true) {
     Result result;
     size_t first1 = 0, last1 = lengths.size();
-    ResultRecord rc{{0, 0}, {1.0, {}}};
+    ResultRecord rc{{0, 0}, {1, {}}};
     auto first2 = data_untimed.begin(), last2 = data_untimed.end();
     for (; first1 != last1; ) {
         if (first2 == last2) {

@@ -28,3 +28,7 @@ query_compiler/.vscode/*
 /data/benchmarking
 __pycache__
 __pycache__/*
+/EMeriTAte/italy_power_demand/
+/EMeriTAte/japanese_vowels/
+/EMeriTAte/load_basic_motions/
+/EMeriTAte/osuleaf/

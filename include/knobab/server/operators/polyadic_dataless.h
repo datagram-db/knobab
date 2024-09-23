@@ -19,7 +19,7 @@ inline void polydl_sameroot_and_fast_timed(const Result& lhs, const Result& rhs,
             last1 = lhs.end(), last2 = rhs.end();
 //    env e1, e2;
     ResultIndex pair, pair1;
-    ResultRecord result{{0, 0}, {1.0, {}}};
+    ResultRecord result{{0, 0}, {1, {}}};
     bool hasMatch;
     marked_event join = marked_event::join(0,0);
     std::unordered_set<std::string> cache;
@@ -88,9 +88,9 @@ inline void polydl_sameroot_global_untimed(const Result &section, Result &result
     result.clear();
 
     ResultIndex first_g{0, 0};
-    ResultRecordSemantics second_g{1.0, {}};
+    ResultRecordSemantics second_g{1, {}};
     ResultRecord cp_g{{0,   0},
-                      {1.0, {}}};
+                      {1, {}}};
     std::vector<size_t> S;
     size_t count;
     while (upper != end) {
@@ -130,7 +130,7 @@ inline void polydl_sameroot_global_timed(const Result &section, Result &result, 
     ResultIndex first_g;
     ResultRecordSemantics second_g{1.0, 0.0};
     ResultRecord cp_g{{0,   0},
-                      {1.0, {}}};
+                      {1, {}}};
     std::unordered_set<event_t> S;
     event_t count, dist;
 
@@ -199,11 +199,11 @@ inline void polydl_sameroot_until_logic_untimed(const Result &aSection, const Re
     ResultRecord cpAIt{{0, 0},
                        {0, {}}};
     ResultRecord cpLocalUpper{{0,   0},
-                              {1.0, {}}};
+                              {1, {}}};
     ResultRecord cpAEn{{0,   0},
                        {1.0, maxVec}};
     ResultRecord cpResult{{0,   0},
-                          {1.0, {}}};
+                          {1, {}}};
 
     env e1, e2;
     std::pair<uint32_t, uint16_t> Fut, Prev;
@@ -293,7 +293,7 @@ inline void polydl_sameroot_until_logic_timed(const Result &aSection, const Resu
     event_t dst = 0;
 
 
-    ResultRecordSemantics semein{1.0, {}};
+    ResultRecordSemantics semein{1, {}};
     ResultRecordSemantics semeinMax{1.0, maxVec};
     ResultRecord cp_bLocalUpper{{0, 0}, semeinMax};
     ResultRecord cp_aLocalLower{{0, 0}, semein};

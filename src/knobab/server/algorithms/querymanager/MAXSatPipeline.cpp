@@ -1004,7 +1004,7 @@ static inline void untimed_exists_for_data_queries(LTLfQuery* formula,
 
 
 static inline void import_from_partial_results(LTLfQuery* formula, size_t offset, const std::vector<std::pair<DataQuery, PartialResult>>& data_accessing) {
-    ResultRecordSemantics R{1.0, {}};
+    ResultRecordSemantics R{1, {}};
     bool isActivation = false;
     bool isTarget = false;
     if (formula->isLeaf == ActivationLeaf) {

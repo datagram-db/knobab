@@ -687,7 +687,7 @@ Result KnowledgeBase::timed_dataless_exists(const std::string &act, LeafType lea
         return foundData;
     }
 
-    ResultRecord result{{0,0}, {1.0, {}}};
+    ResultRecord result{{0,0}, {1, {}}};
 //    std::pair<uint32_t, uint16_t> timePair;
 //    std::pair<double, std::vector<uint16_t>> dataPair{1.0, {}};
 
@@ -1001,7 +1001,7 @@ KnowledgeBase::initOrEnds(const std::string &act, bool beginOrEnd, bool doExtrac
     }
 
     ResultIndex eventPair;
-    ResultRecordSemantics dataPair{1.0, {}};
+    ResultRecordSemantics dataPair{1, {}};
     if (doExtractEvent) dataPair.second.emplace_back(marked_event::left(0));
     std::pair<const uint32_t , const uint32_t> indexes = act_table_by_act_id.resolve_index(mappedVal);
 
@@ -1128,7 +1128,7 @@ void KnowledgeBase::dump_for_sqlminer(std::ostream &log, std::ostream &payload, 
 
 PartialResult KnowledgeBase::getFirstLastOtherwise(const bool isFirst) const {
     PartialResult elems{};
-    PartialResultRecord traceEventPair{{0,0}, 1.0};
+    PartialResultRecord traceEventPair{{0,0}, 1};
     for (size_t traceId = 0, N = act_table_by_act_id.secondary_index.size(); traceId<N; traceId++) {
         traceEventPair.first.first = traceId;
         const auto &rec = act_table_by_act_id.secondary_index.at(traceId);

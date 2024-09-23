@@ -108,6 +108,7 @@ struct myParser {
 
     // called when null is parsed
     bool null() {
+        return false;
     }
 
 // called when a boolean is parsed; value is passed
@@ -223,6 +224,7 @@ struct myParser {
     }
 // called when a binary value is parsed; value is passed and can be safely moved away
     bool binary(nlohmann::json::binary_t& val) {
+        return false;
     }
 
 // called when an object or array begins or ends, resp. The number of elements is passed (or -1 if not known)
@@ -446,6 +448,7 @@ struct myParser {
 // called when a parse error occurs; byte position, the last token, and an exception is passed
     bool parse_error(std::size_t position, const std::string& last_token, const nlohmann::json::exception& ex) {
         std::cerr << "Error at " << position << " near to " << last_token << ": " << ex.what() << std::endl;
+        return false;
     }
 };
 

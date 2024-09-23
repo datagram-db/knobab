@@ -32,7 +32,7 @@ inline void or_fast_timed(const Result& lhs, const Result& rhs, Result& out, con
             last1 = lhs.end(), last2 = rhs.end();
     ResultIndex pair, pair1;
     bool hasMatch;
-    ResultRecord result{{0, 0}, {0.0, {}}};
+    ResultRecord result{{0, 0}, {0, {}}};
     auto join = marked_event::join(0,0);
     std::unordered_set<std::string> cache;
 
@@ -117,8 +117,8 @@ inline void or_fast_untimed(const Result& lhs, const Result& rhs, Result& out, c
             last1 = lhs.end(), last2 = rhs.end();
 //    env e1, e2;
     size_t localTrace = 0;
-    ResultRecord result{{0, 0}, {0.0, {}}};
-    ResultRecord idx{{0, 0}, {0.0, {}}};
+    ResultRecord result{{0, 0}, {0, {}}};
+    ResultRecord idx{{0, 0}, {0, {}}};
     ResultIndex pair, pair1;
     std::unordered_set<std::string> cache;
     bool hasMatch, completeInsertionRight;
@@ -126,7 +126,7 @@ inline void or_fast_untimed(const Result& lhs, const Result& rhs, Result& out, c
     while (first1 != last1) {
         if (first2 == last2) {
             result.first.second = 0;
-            result.second.first = 0.0;
+            result.second.first = 0;
             while (first1 != last1){
                 auto dx = first1;
                 localTrace = first1->first.first;
@@ -236,7 +236,7 @@ inline void or_fast_untimed(const Result& lhs, const Result& rhs, Result& out, c
         }
     }
     result.first.second = 0;
-    result.second.first = 0.0;
+    result.second.first = 0;
     while (first2 != last2){
         auto dx = first2;
         localTrace = first2->first.first;
@@ -267,7 +267,7 @@ inline void and_fast_timed(const Result& lhs, const Result& rhs, Result& out, co
             last1 = lhs.end(), last2 = rhs.end();
 //    env e1, e2;
     ResultIndex pair, pair1;
-    ResultRecord result{{0, 0}, {1.0, {}}};
+    ResultRecord result{{0, 0}, {1, {}}};
     bool hasMatch;
     marked_event join = marked_event::join(0,0);
     std::unordered_set<std::string> cache;
@@ -344,8 +344,8 @@ inline void and_fast_untimed(const Result& lhs, const Result& rhs, Result& out, 
     auto first1 = lhs.begin(), first2 = rhs.begin(),
             last1 = lhs.end(), last2 = rhs.end();
 //    env e1, e2;
-    ResultRecord result{{0, 0}, {0.0, {}}};
-    ResultRecord idx{{0, 0}, {0.0, {}}};
+    ResultRecord result{{0, 0}, {0, {}}};
+    ResultRecord idx{{0, 0}, {0, {}}};
     ResultIndex pair, pair1;
     auto join = marked_event::join(0, 0);
     bool hasMatch, completeInsertionRight;
@@ -463,9 +463,9 @@ inline void global_fast_timed(const Result &section, Result& result, const std::
     auto end = section.end();
 
     ResultIndex first;
-    ResultRecordSemantics second{1.0, 0.0};
+    ResultRecordSemantics second{1, 0.0};
     ResultRecord cp{{0,   0},
-                    {1.0, {}}};
+                    {1, {}}};
 
     while (upper != end) {
         uint32_t currentTraceId = upper->first.first;
@@ -509,9 +509,9 @@ inline void global_fast_untimed(const Result &section, Result& result, const std
     result.clear();
 
     ResultIndex first{0, 0};
-    ResultRecordSemantics second{1.0, {}};
+    ResultRecordSemantics second{1, {}};
     ResultRecord cp{{0,   0},
-                    {1.0, {}}};
+                    {1, {}}};
 
     while (upper != end) {
         uint32_t currentTraceId = upper->first.first;
@@ -536,7 +536,7 @@ inline void global_fast_untimed(const Result &section, Result& result, const std
 
 inline void negated_fast_untimed(const Result &section, Result& result, const std::vector<size_t>& lengths) {
     size_t first1 = 0, last1 = lengths.size();
-    ResultRecord rc{{0, 0}, {1.0, {}}};
+    ResultRecord rc{{0, 0}, {1, {}}};
     auto first2 = section.begin(), last2 = section.end();
     for (; first1 != last1; ) {
         if (first2 == last2) {
@@ -560,7 +560,7 @@ inline void negated_fast_untimed(const Result &section, Result& result, const st
 
 inline void negated_fast_timed(const Result &section, Result& result, const std::vector<size_t>& lengths) {
     ResultIndex last1{lengths.size(), 0};
-    ResultRecord rc{{0, 0}, {1.0, {}}};
+    ResultRecord rc{{0, 0}, {1, {}}};
     auto first2 = section.begin(), last2 = section.end();
     for (; rc.first != last1; ) {
         if (first2 == last2) {
@@ -622,10 +622,10 @@ inline void aAndFutureB_timed_variant_2(const Result& a, const Result& b,Result&
     Result toRevert;
 
     ResultIndex first_g{0, 0};
-    ResultRecordSemantics second_g{1.0, {}};
+    ResultRecordSemantics second_g{1, {}};
     ResultRecord cp_ub_g{{0,   0},
-                         {1.0, {}}}, cp_lb_g{{0,   0},
-                                             {1.0, {}}};
+                         {1, {}}}, cp_lb_g{{0,   0},
+                                             {1, {}}};
     second_g.second.reserve(max_len);
     cp_ub_g.second.second.reserve(max_len);
     cp_lb_g.second.second.reserve(max_len);
@@ -642,7 +642,7 @@ inline void aAndFutureB_timed_variant_2(const Result& a, const Result& b,Result&
             cp_lb_g.first.first = bCurrent->first.first;
             aCurrent = std::lower_bound(aCurrent, aEnd, cp_lb_g);
         } else {
-            rcx.second.first = 1.0;
+            rcx.second.first = 1;
             if (bCurrent == bEnd) return;
             toRevert.clear();
             if (current_trace != aCurrent->first.first) {
@@ -667,7 +667,7 @@ inline void aAndFutureB_timed_variant_2(const Result& a, const Result& b,Result&
             auto aIter = aMax; aIter--;
 
             first_g.second = 0;
-            second_g.first = 0.0;
+            second_g.first = 0;
             second_g.second.clear();
             auto lower = bBeforeScan;
             auto it = (lower == bCurrent) ? (lower-1) : (lower + std::distance(lower, bCurrent) - 1);
@@ -707,7 +707,7 @@ inline void aAndFutureB_timed_variant_2(const Result& a, const Result& b,Result&
                                 for (const auto& e1 : e1V) {
                                     if (manager->checkValidity(e1, current_trace, join.id.parts.right)) {
                                         rcx.second.second.push_back(join);
-//                                        rcx.second.first *= (1.0 - std::min(aIter->second.first, second_g.first));
+//                                        rcx.second.first *= (1 - std::min(aIter->second.first, second_g.first));
                                         hasMatch = true;
                                         break;
                                     }
@@ -716,7 +716,7 @@ inline void aAndFutureB_timed_variant_2(const Result& a, const Result& b,Result&
                         }
                         if (hasMatch) {
                             rcx.first.second = i;
-                            rcx.second.first = 1.0 - rcx.second.first;
+                            rcx.second.first = 1 - rcx.second.first;
                             remove_duplicates(rcx.second.second);
                             toRevert.emplace_back(rcx);
                         }
@@ -797,7 +797,7 @@ inline void aAndFutureB_timed_variant_1(const Result& aResult, const Result& bRe
             auto newItr = bCurrent;
             rcx.first = aCurrent->first;
             rcx.second.second.clear();
-            rcx.second.first = 1.0;
+            rcx.second.first = 1;
             hasMatch = false;
 
             while (newItr != bEnd) {
@@ -825,7 +825,7 @@ inline void aAndFutureB_timed_variant_1(const Result& aResult, const Result& bRe
                                 if (manager->checkValidity(e1, newItr->first.first, join.id.parts.right)) {
                                     hasMatch = true;
                                     rcx.second.second.push_back(join);
-//                                    rcx.second.first *= (1.0 - std::min(aCurrent->second.first, newItr->second.first));
+//                                    rcx.second.first *= (1 - std::min(aCurrent->second.first, newItr->second.first));
                                     break;
                                 }
                             }
@@ -859,7 +859,7 @@ inline void aAndFutureB_timed_variant_1(const Result& aResult, const Result& bRe
             if (hasMatch) {
                 if (!manager) rcx.second.second.insert(rcx.second.second.end(), aCurrent->second.second.begin(), aCurrent->second.second.end());
                 remove_duplicates(rcx.second.second);
-                if (manager) rcx.second.first = 1.0 - rcx.second.first;
+                if (manager) rcx.second.first = 1 - rcx.second.first;
 //                std::cout << rcx << std::endl;
                 result.emplace_back(rcx);
             }
@@ -907,7 +907,7 @@ inline void aAndNextGloballyB_timed(const Result& a, const Result& b,Result& res
             auto newItr = bCurrent;
             rcx.first = aCurrent->first;
             rcx.second.second.clear();
-            rcx.second.first = 1.0;
+            rcx.second.first = 1;
             hasMatch = false;
 
             if(newItr->first == aCurrent->first){
@@ -944,7 +944,7 @@ inline void aAndNextGloballyB_timed(const Result& a, const Result& b,Result& res
                                 for (const auto& e1 : e1V) {
                                     if (manager->checkValidity(e1, newItr->first.first, join.id.parts.right)) {
                                         rcx.second.second.push_back(join);
-//                                        rcx.second.first *= (1.0 - std::min(aCurrent->second.first, newItr->second.first));
+//                                        rcx.second.first *= (1 - std::min(aCurrent->second.first, newItr->second.first));
                                         count++;
                                         hasMatch = true;
                                         break;
@@ -987,7 +987,7 @@ inline void aAndNextGloballyB_timed(const Result& a, const Result& b,Result& res
             if (hasMatch) {
                 if (!manager) rcx.second.second.insert(rcx.second.second.end(), aCurrent->second.second.begin(), aCurrent->second.second.end());
                 remove_duplicates(rcx.second.second);
-                if (manager) rcx.second.first = 1.0 - rcx.second.first;
+                if (manager) rcx.second.first = 1 - rcx.second.first;
                 result.emplace_back(rcx);
             }
 
@@ -1039,7 +1039,7 @@ inline void aAndNextGloballyB_timed(const Result& a, const Result& b,Result& res
 //            if (bCurrent == bEnd) break;
 //        } else {
 //            rcx.second.second.clear();
-//            rcx.second.first = 1.0;
+//            rcx.second.first = 1;
 //            if (bCurrent == bEnd) return;
 //            toRevert.clear();
 //            Replay.clear();
@@ -1081,7 +1081,7 @@ inline void aAndNextGloballyB_timed(const Result& a, const Result& b,Result& res
 //
 //                                if (manager->checkValidity(e1, currentIterIForB->first.first, join.id.parts.right)) {
 //                                    rcx.second.second.push_back(join);
-//                                    rcx.second.first *= (1.0 - std::min(Replay.at(i).first->second.first, currentIterIForB->second.first));
+//                                    rcx.second.first *= (1 - std::min(Replay.at(i).first->second.first, currentIterIForB->second.first));
 //                                    count++;
 //                                    hasLocalMatch = true;
 //                                }
@@ -1098,7 +1098,7 @@ inline void aAndNextGloballyB_timed(const Result& a, const Result& b,Result& res
 //
 //                if (count == lengths.at(current_trace) - Replay.at(i).second->first.second) {
 //                    if (!manager) rcx.second.second.insert(rcx.second.second.end(), Replay.at(i).first->second.second.begin(), Replay.at(i).first->second.second.end());
-//                    if (manager) rcx.second.first = 1.0 - rcx.second.first;
+//                    if (manager) rcx.second.first = 1 - rcx.second.first;
 //                    toRevert.emplace_back(rcx);
 //                } else {
 //                    break;
@@ -1145,9 +1145,9 @@ inline void aAndGloballyB_timed_variant_2(const Result& a, const Result& b,Resul
     Result toRevert;
 
     ResultIndex first_g{0, 0};
-    ResultRecordSemantics second_g{1.0, {}};
+    ResultRecordSemantics second_g{1, {}};
     ResultRecord cp_g{{0,   0},
-                      {1.0, {}}};
+                      {1, {}}};
     std::vector<std::pair<ResultIndex, Result::iterator>> toBeReversed;
 
     for (auto aCurrent = a.begin(), aEnd = a.end(); aCurrent != aEnd; ) {
@@ -1157,7 +1157,7 @@ inline void aAndGloballyB_timed_variant_2(const Result& a, const Result& b,Resul
             if (bCurrent == bEnd) break;
         } else {
             rcx.second.second.clear();
-            rcx.second.first = 1.0;
+            rcx.second.first = 1;
             if (bCurrent == bEnd) return;
             toRevert.clear();
             if (current_trace != aCurrent->first.first) {
@@ -1175,7 +1175,7 @@ inline void aAndGloballyB_timed_variant_2(const Result& a, const Result& b,Resul
             auto aIter = aMax; aIter--;
 
             first_g.second = 0;
-            second_g.first = 1.0;
+            second_g.first = 1;
             second_g.second.clear();
             auto lower = bBeforeScan;
 //            std::cout << *lower << " vs. " << *bCurrent << std::endl;
@@ -1223,7 +1223,7 @@ inline void aAndGloballyB_timed_variant_2(const Result& a, const Result& b,Resul
                                 for (const auto& e1 : e1V) {
                                     if (manager->checkValidity(e1, current_trace, join.id.parts.right)) {
                                         rcx.second.second.push_back(join);
-//                                        rcx.second.first *= (1.0 - std::min(aIter->second.first, second_g.first));
+//                                        rcx.second.first *= (1 - std::min(aIter->second.first, second_g.first));
                                         hasMatch = true;
                                         break;
                                     }
@@ -1256,7 +1256,7 @@ inline void aAndGloballyB_timed_variant_2(const Result& a, const Result& b,Resul
                     if (hasMatch) {
                         rcx.first.second = i;
                         remove_duplicates(rcx.second.second);
-//                        if (manager) rcx.second.first = 1.0 - rcx.second.first;
+//                        if (manager) rcx.second.first = 1 - rcx.second.first;
                         toRevert.emplace_back(rcx);
                     }
                 }
@@ -1303,7 +1303,7 @@ inline void aAndGloballyB_timed_variant_1(const Result& a, const Result& b,Resul
             auto newItr = bCurrent;
             rcx.first = aCurrent->first;
             rcx.second.second.clear();
-            rcx.second.first = 1.0;
+            rcx.second.first = 1;
             hasMatch = false;
 
             if (newItr == bEnd) return;
@@ -1335,7 +1335,7 @@ inline void aAndGloballyB_timed_variant_1(const Result& a, const Result& b,Resul
                                 for (const auto& e1: e1V) {
                                     if (manager->checkValidity(e1, newItr->first.first, join.id.parts.right)) {
                                         rcx.second.second.push_back(join);
-//                                        rcx.second.first *= (1.0 - std::min(aCurrent->second.first, newItr->second.first));
+//                                        rcx.second.first *= (1 - std::min(aCurrent->second.first, newItr->second.first));
                                         count++;
                                         hasMatch = true;
                                         break;
@@ -1376,7 +1376,7 @@ inline void aAndGloballyB_timed_variant_1(const Result& a, const Result& b,Resul
             if (hasMatch) {
                 if (!manager) rcx.second.second.insert(rcx.second.second.end(), aCurrent->second.second.begin(), aCurrent->second.second.end());
                 remove_duplicates(rcx.second.second);
-                if (manager) rcx.second.first = 1.0 - rcx.second.first;
+                if (manager) rcx.second.first = 1 - rcx.second.first;
                 result.emplace_back(rcx);
             }
 
@@ -1408,11 +1408,11 @@ inline void until_fast_untimed(const Result &aSection, const Result &bSection, R
     ResultRecord cpAIt{{0, 0},
                        {0, {}}};
     ResultRecord cpLocalUpper{{0,   0},
-                              {1.0, {}}};
+                              {1, {}}};
     ResultRecord cpAEn{{0,   0},
-                       {1.0, maxVec}};
+                       {1, maxVec}};
     ResultRecord cpResult{{0,   0},
-                          {1.0, {}}};
+                          {1, {}}};
 
 //    env e1, e2;
     std::pair<uint32_t, uint16_t> Fut, Prev;

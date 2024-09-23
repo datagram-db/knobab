@@ -25,7 +25,7 @@ inline void or_logic_timed(const Result &lhs, const Result &rhs, Result &out, co
     ResultIndex pair, pair1;
     bool hasMatch;
     ResultRecord result{{0,   0},
-                        {0.0, {}}};
+                        {0, {}}};
 
     while (first1 != last1) {
         if (first2 == last2) {
@@ -128,7 +128,7 @@ inline void or_logic_untimed(const Result &lhs, const Result &rhs,
     auto start1 = group1.begin(), end1 = group1.end();
     auto start2 = group2.begin(), end2 = group2.end();
     ResultRecord result{{0,   0},
-                        {0.0, {}}};
+                        {0, {}}};
     bool hasMatch;
     size_t localTrace = 0;
 
@@ -136,7 +136,7 @@ inline void or_logic_untimed(const Result &lhs, const Result &rhs,
         if (start2 == end2) {
             while (start1 != end1) {
                 localTrace = start1->first;
-                result.second.first = 0.0;
+                result.second.first = 0;
                 result.first.first = localTrace;
                 result.first.second = 0;
                 result.second.second.clear();
@@ -152,7 +152,7 @@ inline void or_logic_untimed(const Result &lhs, const Result &rhs,
             return;
         } else if (start1->first > start2->first) {
             localTrace = start2->first;
-            result.second.first = 0.0;
+            result.second.first = 0;
             result.first.first = localTrace;
             result.first.second = 0;
             result.second.second.clear();
@@ -168,7 +168,7 @@ inline void or_logic_untimed(const Result &lhs, const Result &rhs,
         } else if (start1->first < start2->first) {
             //std::copy(start1->second.begin(), start1->second.end(), std::back_inserter(out));
             localTrace = start1->first;
-            result.second.first = 0.0;
+            result.second.first = 0;
             result.first.first = localTrace;
             result.first.second = 0;
             result.second.second.clear();
@@ -182,7 +182,7 @@ inline void or_logic_untimed(const Result &lhs, const Result &rhs,
             start1++;
         } else {
             result.first.first = pair.first = start1->first;
-            result.second.first = 0.0;
+            result.second.first = 0;
             result.second.second.clear();
             pair1.first = start2->first;
             hasMatch = false;
@@ -233,7 +233,7 @@ inline void or_logic_untimed(const Result &lhs, const Result &rhs,
     }
     while (start2 != end2) {
         localTrace = start2->first;
-        result.second.first = 0.0;
+        result.second.first = 0;
         result.first.first = localTrace;
         result.first.second = 0;
         result.second.second.clear();
@@ -264,7 +264,7 @@ inline void and_logic_timed(const Result &lhs, const Result &rhs,
     env e1, e2;
     ResultIndex pair, pair1;
     ResultRecord result{{0,   0},
-                        {1.0, {}}};
+                        {1, {}}};
     bool hasMatch;
 
     while (first1 != last1) {
@@ -361,7 +361,7 @@ inline void and_logic_untimed(const Result &lhs, const Result &rhs,
     auto start2 = group2.begin(), end2 = group2.end();
     bool hasMatch;
     ResultRecord result{{0,   0},
-                        {1.0, {}}};
+                        {1, {}}};
 
     while (start1 != end1) {
         if (start2 == end2) {
@@ -372,7 +372,7 @@ inline void and_logic_untimed(const Result &lhs, const Result &rhs,
             start1++;
         } else {
             result.first.first = pair.first = start1->first;
-            result.second.first = 1.0;
+            result.second.first = 1;
             result.second.second.clear();
             pair1.first = start2->first;
             hasMatch = false;
@@ -460,9 +460,9 @@ inline void future_logic_timed(const Result &section, Result &result, const std:
     auto end = section.end();
 
     ResultIndex first;
-    ResultRecordSemantics second{0.0, 0.0};
+    ResultRecordSemantics second{0, 0.0};
     ResultRecord cp{{0,   0},
-                    {1.0, {}}};
+                    {1, {}}};
 
     while (upper != end) {
         uint32_t currentTraceId = upper->first.first;
@@ -513,16 +513,16 @@ inline void future_logic_untimed(const Result &section, Result &result, const st
     auto end = section.end();
 
     ResultIndex first{0, 0};
-    ResultRecordSemantics second{0.0, {}};
+    ResultRecordSemantics second{0, {}};
     ResultRecord cp{{0,   0},
-                    {1.0, {}}};
+                    {1, {}}};
 
     while (upper != end) {
         uint32_t currentTraceId = upper->first.first;
         first.first = cp.first.first = currentTraceId;
         cp.first.second = lengths.at(currentTraceId);
         second.second.clear();
-        second.first = 0.0;
+        second.first = 0;
 
         lower = upper;
         upper = std::upper_bound(lower, section.end(), cp);
@@ -550,9 +550,9 @@ inline void global_logic_timed(const Result &section, Result &result, const std:
     auto end = section.end();
 
     ResultIndex first_g;
-    ResultRecordSemantics second_g{1.0, 0.0};
+    ResultRecordSemantics second_g{1, 0};
     ResultRecord cp_g{{0,   0},
-                      {1.0, {}}};
+                      {1, {}}};
 
     while (upper != end) {
         uint32_t currentTraceId = upper->first.first;
@@ -604,9 +604,9 @@ inline void global_logic_untimed(const Result &section, Result &result, const st
     result.clear();
 
     ResultIndex first_g{0, 0};
-    ResultRecordSemantics second_g{1.0, {}};
+    ResultRecordSemantics second_g{1, {}};
     ResultRecord cp_g{{0,   0},
-                      {1.0, {}}};
+                      {1, {}}};
     while (upper != end) {
         uint32_t currentTraceId = upper->first.first;
         first_g.first = cp_g.first.first = currentTraceId;
@@ -648,8 +648,8 @@ inline void until_logic_timed(const Result &aSection, const Result &bSection, Re
     auto aUpper = aSection.end();
 
 
-    ResultRecordSemantics semein{1.0, {}};
-    ResultRecordSemantics semeinMax{1.0, maxVec};
+    ResultRecordSemantics semein{1, {}};
+    ResultRecordSemantics semeinMax{1, maxVec};
     ResultRecord cp_bLocalUpper{{0, 0}, semeinMax};
     ResultRecord cp_aLocalLower{{0, 0}, semein};
     ResultRecord cp_aLocalUpper{{0, 0}, semeinMax};
@@ -815,11 +815,11 @@ inline void until_logic_untimed(const Result &aSection, const Result &bSection, 
     ResultRecord cpAIt{{0, 0},
                        {0, {}}};
     ResultRecord cpLocalUpper{{0,   0},
-                              {1.0, {}}};
+                              {1, {}}};
     ResultRecord cpAEn{{0,   0},
-                       {1.0, maxVec}};
+                       {1, maxVec}};
     ResultRecord cpResult{{0,   0},
-                          {1.0, {}}};
+                          {1, {}}};
 
     env e1, e2;
     std::pair<uint32_t, uint16_t> Fut, Prev;
@@ -930,7 +930,7 @@ inline void negated_logic_untimed(const Result &section, Result &result, const s
                 return p.first.first;
             });
     ResultRecord rcx{{0,   0},
-                     {1.0, {}}};
+                     {1, {}}};
     for (trace_t i = 0; i < lengths.size(); i++) {
         if (!group1.contains(i)) {
             rcx.first.first = i;
@@ -948,7 +948,7 @@ inline void negated_logic_timed(const Result &section, Result &result, const std
                 return p.first;
             });
     ResultRecord rcx{{0,   0},
-                     {1.0, {}}};
+                     {1, {}}};
     for (trace_t i = 0; i < lengths.size(); i++) {
         rcx.first.first = i;
         for (event_t j = 0, N = lengths.at(i); j < N; j++) {
