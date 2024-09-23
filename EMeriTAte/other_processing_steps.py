@@ -5,6 +5,8 @@ from pathlib import Path
 import pandas
 from sktime.datasets import load_italy_power_demand, load_osuleaf, load_japanese_vowels, load_basic_motions
 
+from EMeriTAte import EMeriTAte
+
 
 def convert_format_to_csv_folder(ipd, clazz_name, timedim_name, foldername, index_acc=0):
     Path(foldername).mkdir(parents=True, exist_ok=True)
@@ -64,24 +66,37 @@ from loguru import logger
 import sys
 
 if __name__ == "__main__":
-    path = "italy_power_demand"
-    loader = load_italy_power_demand
-    extract_dataset_for_EMeriTAte(path, loader)
+    # path = "italy_power_demand"
+    # loader = load_italy_power_demand
+    # extract_dataset_for_EMeriTAte(path, loader)
     logger.remove(0)
     f = sys.stdout
     logger.add(f, level="TRACE")
     # replace = {"fulltime"}
-    conversion = ["Ok", "Off"]
-    e = EMeriTAte("user",  # Collective name for the environment types
+
+
+    # path = "osuleaf"
+    # loader = load_osuleaf
+    # extract_dataset_for_EMeriTAte(path, loader)
+    #
+    # path = "japanese_vowels"
+    # loader = load_japanese_vowels
+    # extract_dataset_for_EMeriTAte(path, loader)
+    #
+    # path = "load_basic_motions"
+    # loader = load_basic_motions
+    # extract_dataset_for_EMeriTAte(path, loader)
+    conversion = ["0", "1"]
+    e = EMeriTAte("trace",  # Collective name for the environment types
                   # Folder containing only .csv files, which file name is the environment
                   #  name
-                  "/home/giacomo/projects/knobab2_loggen/polyadic_preprocessing/raw_data",
+                 "/home/giacomo/projects/knobab2_loggen/EMeriTAte/italy_power_demand", #"/home/giacomo/projects/polyadic_processing/raw_data",
                   # CSV column containing the class information [0,1]
-                  "event",
+                  "class",
                   # CSV column containing the timestamp information
-                  "fulltime",
+                  "time",
                   # \epsilon parameter
-                  0.01,
+                  0.00000001,
                   # Arbitrary large number
                   10000000000000.0,
                   # Fields not to be considered for the mining
@@ -95,15 +110,3 @@ if __name__ == "__main__":
                   # Support mining
                   0.0)
     e.run()
-
-    path = "osuleaf"
-    loader = load_osuleaf
-    extract_dataset_for_EMeriTAte(path, loader)
-
-    path = "japanese_vowels"
-    loader = load_japanese_vowels
-    extract_dataset_for_EMeriTAte(path, loader)
-
-    path = "load_basic_motions"
-    loader = load_basic_motions
-    extract_dataset_for_EMeriTAte(path, loader)

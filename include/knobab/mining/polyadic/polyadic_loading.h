@@ -18,7 +18,8 @@ std::tuple<double,double,double> polyadic_loader(const std::unordered_set<std::s
                      const std::string& traceDistinguisher,
                      const std::string& path,
                      bool reclassify,
-                     ServerQueryManager& sqm);
+                     ServerQueryManager& sqm,
+                                                 const std::string& fulltime);
 
 
 #endif //KNOBAB_SERVER_POLYADIC_LOADING_H

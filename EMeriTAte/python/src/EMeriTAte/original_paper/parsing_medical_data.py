@@ -170,11 +170,11 @@ def asTrace_2(data, name, class_field, replace=None, conversion=None):
     L = list()
     if replace is None:
         replace = dict()
-    for index, row in data.iterrows():
+    for index, row in enumerate(data.to_dict(orient="records")):
         for k,v in replace.items():
             row[v] = row[k]
         if conversion is not None:
-            label = conversion[row[class_field]]
+            label = conversion[int(row[class_field])]
         else:
             label = row[class_field]
         # row["__class"] = label

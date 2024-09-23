@@ -14,7 +14,8 @@ void  original_main_entrypoint(bool reclassify,
                                bool isFastSat,
                                const std::vector<log_data_format> &worlds_format_to_load,
                                const std::vector<std::string> &worlds_file_to_load,
-                               std::filesystem::path &folder) {
+                               std::filesystem::path &folder,
+                               const std::string& fulltime) {
 
     std::vector<std::string> log_parse_format_type{"HRF", "XES", "TAB"};
     ServerQueryManager sqm;
@@ -26,7 +27,8 @@ void  original_main_entrypoint(bool reclassify,
                                                                       traceDistinguisher,
                                                                       filename_polyadic,
                                                                       reclassify,
-                                                                      sqm);
+                                                                      sqm,
+                                                                      fulltime);
     } else {
         if ((worlds_file_to_load.size() == worlds_file_to_load.size()) && (!worlds_file_to_load.empty())) {
             cpp_preprocess = 0;
@@ -197,6 +199,11 @@ void  original_main_entrypoint(bool reclassify,
             file << std::endl;
         }
     }
+    for (auto& [k,v]: sqm.multiple_logs) {
+        v.clear();
+        v.clearModel();
+    }
+    std::cout << "EBF"<<std::endl;
 }
 
 void  python_main_entrypoint(bool reclassify,
@@ -209,7 +216,8 @@ void  python_main_entrypoint(bool reclassify,
                              bool isFastSat,
                              const std::vector<std::string> &worlds_format_to_load,
                              const std::vector<std::string> &worlds_file_to_load,
-                             const std::string &folder) {
+                             const std::string &folder,
+                             const std::string &fulltime) {
     std::vector<log_data_format> orig_worlds_format_to_load;
     orig_worlds_format_to_load.reserve(worlds_format_to_load.size());
     for (const auto& x : worlds_format_to_load) {
@@ -235,7 +243,8 @@ void  python_main_entrypoint(bool reclassify,
                              isFastSat,
                              orig_worlds_format_to_load,
                              worlds_file_to_load,
-                             orig_folder
+                             orig_folder,
+                             fulltime
                              );
 }
 

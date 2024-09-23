@@ -83,7 +83,8 @@ void  original_main_entrypoint(bool reclassify,
                                bool isFastSat,
                                const std::vector<log_data_format> &worlds_format_to_load,
                                const std::vector<std::string> &worlds_file_to_load,
-                               std::filesystem::path &folder);
+                               std::filesystem::path &folder,
+                               const std::string& fulltime);
 
 void  python_main_entrypoint(bool reclassify,
                                bool reduction,
@@ -95,6 +96,7 @@ void  python_main_entrypoint(bool reclassify,
                                bool isFastSat,
                                const std::vector<std::string> &worlds_format_to_load,
                                const std::vector<std::string> &worlds_file_to_load,
-                               const std::string &folder);
+                               const std::string &folder,
+                               const std::string& fulltime);
 
 #endif //KNOBAB_SERVER_EMERITATE_H

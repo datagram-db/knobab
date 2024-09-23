@@ -55,13 +55,7 @@ class EMeriTAte:
         return tuple(LS)
 
     def __run(self, path=None): #args):
-        self.knobab.call_interface(path)
-        # print(path)
-        # LS = list(self.__args(path))
-        # LS.insert(0, "/home/giacomo/projects/knobab2_loggen/cmake-build-release/knobab_json")
-        # popen = subprocess.Popen(tuple(LS), stdout=subprocess.PIPE)
-        # popen.wait()
-        # return popen.stdout.read()
+        self.knobab.call_interface(self.time_field, path)
 
     def _02_run_preliminary_mining(self):
         print(self.__run())
@@ -81,6 +75,7 @@ class EMeriTAte:
                    self.toExtendWithTime).transform()
         self.json_path = Path(self.file)
         self.knobab = KnobabEmeritateSupport(self.support, self.environment_field, self.file, self.ignorable_fields)
+        exit(101)
         #
         # # 02. Bolt2 Specification Mining
         self._02_run_preliminary_mining()

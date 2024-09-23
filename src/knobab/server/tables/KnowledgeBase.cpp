@@ -450,6 +450,8 @@ void KnowledgeBase::collectValuesAmongTraces(
 
 void KnowledgeBase::clear() {
     status = FinishParsing;
+    for (auto& [k,v ]: attribute_name_to_table)
+        v.clear();
     source.clear();
     name.clear();
     noTraces = 0;

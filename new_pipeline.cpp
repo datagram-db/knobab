@@ -68,7 +68,8 @@ void  original_main_entrypoint(bool reclassify,
                                const std::vector<std::string> &log_parse_format_type, bool isFastSat,
                                const std::vector<log_data_format> &worlds_format_to_load,
                                const std::vector<std::string> &worlds_file_to_load,
-                               std::filesystem::path &folder) {
+                               std::filesystem::path &folder,
+                               const std::string& fulltime) {
     ServerQueryManager sqm;
     double cpp_preprocess, loading, indexing, mining, refining;
     if (!filename_polyadic.empty()) {
@@ -78,7 +79,8 @@ void  original_main_entrypoint(bool reclassify,
                                                                       traceDistinguisher,
                                                                       filename_polyadic,
                                                                       reclassify,
-                                                                      sqm);
+                                                                      sqm,
+                                                                      fulltime);
     } else {
         if ((worlds_file_to_load.size() == worlds_file_to_load.size()) && (!worlds_file_to_load.empty())) {
             cpp_preprocess = 0;
@@ -93,7 +95,7 @@ void  original_main_entrypoint(bool reclassify,
                    << std::quoted(worlds_file_to_load.at(i))
                    <<  " no stats as " // no stats with data as
                    << std::quoted(model_name);
-                std::cout << ss.str() << std::endl;
+//                std::cout << ss.str() << std::endl;
                 auto tmp = sqm.runQuery(ss.str());
                 indexing += sqm.multiple_logs[model_name].experiment_logger.log_indexing_ms;
                 loading += sqm.multiple_logs[model_name].experiment_logger.log_loading_and_parsing_ms;
@@ -254,13 +256,14 @@ void  original_main_entrypoint(bool reclassify,
 
 int main(int argc, char **argv) {
     // Phases 01 (mining the models from the data) and 03 (deriving the decision tree structure)
-
+    // Prev -f "/home/giacomo/projects/polyadic_processing/raw_data/nopoly_s0_0/" -s 0.0 -d user -i day -i span -i "__class" -i "__label" -i time -i fulltime -l -p /home/giacomo/projects/knobab2_loggen/polyadic_preprocessing/raw_data/log_weekly.json
     // CyberSecurity configuration:
     // -s 0.8 --nonPoly=tab --nonPoly=tab --nonPoly=tab --nonPoly=tab --nonPoly=tab --nonPoly=tab --nonPoly=tab --nonPoly=tab /home/giacomo/Scaricati/classes/Adware.tab_100.tab /home/giacomo/Scaricati/classes/Backdoor.tab_100.tab /home/giacomo/Scaricati/classes/Downloader.tab_100.tab /home/giacomo/Scaricati/classes/Dropper.tab_100.tab /home/giacomo/Scaricati/classes/Spyware.tab_100.tab /home/giacomo/Scaricati/classes/Trojan.tab_100.tab /home/giacomo/Scaricati/classes/Virus.tab_100.tab /home/giacomo/Scaricati/classes/Worms.tab_100.tab
 
     // Polyadic mining configuration
     // -s 1.0 -d user -i day -i span -i "__class" -i "__label" -i time -i fulltime -p /home/giacomo/projects/sdd-processing/sdd-processing/log_weekly.json
 
+    //
     struct benchmarking result;
     result.filename_polyadic = "/home/giacomo/projects/sdd-processing/sdd-processing/log_weekly.json";
     std::string traceDistinguisher = "user";
@@ -281,6 +284,7 @@ int main(int argc, char **argv) {
     args::ValueFlagList<std::string> characters(parser, "ignore keys", "The payload's keys to be ignored within the loading and classification task", {'i', "ignore"});
     args::ValueFlag<std::string> polyadicJSON(parser, "polyadic JSON", "The polyadic traces represented as a json file", {'p', "polyadic"});
     args::Flag polyadicMine(parser, "usual mining", "Uses the standard linear behaviour from declarative mining, where traces are not grouped in hierarchy", {'l', "nonPolyMining"});
+    args::ValueFlag<std::string> fulltimeFlag(parser, "fullTime", "The default payload value associated to the timestamp", {'t', "fullTime"});
 
     std::unordered_map<std::string, log_data_format> map{
             {"hrf", log_data_format::HUMAN_READABLE_YAUCL},
@@ -335,6 +339,10 @@ int main(int argc, char **argv) {
         result.isFilenamePolyadic = true;
     }
     std::filesystem::path folder = args::get(fastSat);
+    std::string fulltime = "fulltime";
+    if (fulltimeFlag) {
+        fulltime = args::get(fulltimeFlag);
+    }
 
     original_main_entrypoint(result.reclassify,
                              result.reduction,
@@ -345,7 +353,8 @@ int main(int argc, char **argv) {
                              ignore_keys,
                              isFastSat,worlds_format_to_load,
                              worlds_file_to_load,
-                             folder
+                             folder,
+                             fulltime
     );
 
     return 0;

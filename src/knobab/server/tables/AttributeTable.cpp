@@ -35,7 +35,7 @@ static inline double similarityFunction(const union_type& lhs, const union_type&
     } else if (std::holds_alternative<long long>(lhs)) {
         return 1.0 / ( (std::abs((double)std::get<long long>(lhs)- (double)std::get<long long>(rhs)))/c + 1.0);
     }
-
+    throw std::runtime_error("ERROR! Unexpected case");
 }
 
 union_type AttributeTable::resolve(const AttributeTable::record &x) const {
@@ -136,7 +136,8 @@ void AttributeTable::index(const std::vector<std::vector<std::unordered_map<act_
                     if (type == StringAtt)
                         string_offset_mapping[current_string].emplace_back(table.size());
                     for (const auto idx : refx) {
-                        secondary_index[idx] = table.size();
+                        secondary_index.emplace(idx, table.size());
+//                        secondary_index[idx] = table.size();
                         table.emplace_back(act_id, val, idx);
                     }
                 }

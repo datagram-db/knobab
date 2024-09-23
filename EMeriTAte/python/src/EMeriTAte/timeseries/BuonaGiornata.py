@@ -1,15 +1,21 @@
 from sortedcontainers import SortedDict
 
-def meteorology(HV1, IS1, sortedActionSet, lenX):
+def discard_overlapping_lessSpecific(HV1, IS1, sortedActionSet, lenX):#meteorology
     HVR = []
     if HV1 in sortedActionSet and IS1 in sortedActionSet:
         for idx in range(lenX):
             if len(sortedActionSet[HV1][idx]) > 0 and len(sortedActionSet[IS1][idx]) > 0:
-                assert len(sortedActionSet[HV1][idx]) == 1
-                assert len(sortedActionSet[IS1][idx]) == 1
-                if all(map(lambda z: z[0] == z[1], zip(sortedActionSet[HV1][idx][0].composite,
-                                                       sortedActionSet[IS1][idx][0].composite))):
+                for rightie in sortedActionSet[IS1][idx]:
+                    discard_leftie = list()
+                    for lidx, leftie in enumerate(sortedActionSet[HV1][idx]):
+                        if (((leftie.start_time == rightie.start_time) and (leftie.length == rightie.length))): # or all(map(lambda z: z[0] == z[1], zip(leftie.composite, rightie.composite)))):
+                            discard_leftie.append(lidx)
+                    indexes = list(discard_leftie)
+                    for index in sorted(indexes, reverse=True):
+                        del sortedActionSet[HV1][idx][index]
+                if len(sortedActionSet[HV1][idx])==0:
                     HVR.append(idx)
+
     return HVR
 
 class Indexing:
@@ -32,7 +38,7 @@ class Indexing:
             for length, ls in d1.items():
                 for pt in ls:
                     self.actionSet.add(pt.name)
-        self.sortedActionSet = {k: [[] for _ in range(self.len)] for k in self.actionSet}
+        self.sortedActionSet = {k: [list() for _ in range(self.len)] for k in self.actionSet}
         for start_time, d1 in fromBuonaGiornataAndKey.items():
             for length, ls in d1.items():
                 for pt in ls:
@@ -55,9 +61,9 @@ class Indexing:
         ## 2. Second refinement: across all the elements having both HV1&IS1 and HV2&DS2 at the same running time,
         ##    keep the most specific one (IS1 or DS2) of the two if the constituents for both are the same (as they might
         ##    describe the same patter, we just prefer one among the two).
-        for j in meteorology(HV1, IS1, self.sortedActionSet, self.len):
+        for j in discard_overlapping_lessSpecific(HV1, IS1, self.sortedActionSet, self.len):
             self.sortedActionSet[HV1][j].clear()
-        for j in meteorology(HV2, DS2, self.sortedActionSet, self.len):
+        for j in discard_overlapping_lessSpecific(HV2, DS2, self.sortedActionSet, self.len):
             self.sortedActionSet[HV2][j].clear()
 
 

@@ -39,6 +39,16 @@ struct AttributeTable {
     AttributeTableType type;
     std::unordered_map<std::string, std::vector<size_t>> string_offset_mapping;
 
+    void clear() {
+        secondary_index.clear();
+        attr_name.clear();
+        ptr.clear();
+        string_offset_mapping.clear();
+        table.clear();
+        primary_index.clear();
+        elements.clear();
+    }
+
     struct record {
         act_t act;
         size_t value;
@@ -127,7 +137,7 @@ struct AttributeTable {
      * A within a given trace/run, to an offset within the current table, thus stating that there exists an attribute
      * A.attr_name in the payload
      */
-    std::unordered_map<size_t, size_t> secondary_index;
+    std::map<size_t, size_t> secondary_index; // GCC13 error: if you use std::unordered_map, this gives issues, despite being that preferrable to an ordered map.
 
     AttributeTable() : attr_name(""), type{BoolAtt} {}
 

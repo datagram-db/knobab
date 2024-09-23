@@ -26,6 +26,9 @@ class PatternType:
             self.min = None
             self.max = None
 
+    def __hash__(self):
+        return hash((self.name, self.length, self.max, self.min, self.action, self.start_time))
+
     def __eq__(self, other):
         if self.start_time != other.start_time:
             return False
@@ -100,7 +103,10 @@ class PatternType:
     def asTraceEvent(self, d, timefield):
             row = dict()
             row['span'] = self.length
-            row[timefield] = datetime.datetime.fromisoformat(min(map(datetime.datetime.fromisoformat, self.collectStringsForKey(timefield))).isoformat())
+            try:
+                row[timefield] = str(min(map(int, self.collectStringsForKey(timefield))))
+            except:
+                row[timefield] = datetime.datetime.fromisoformat(min(map(datetime.datetime.fromisoformat, self.collectStringsForKey(timefield))).isoformat())
             action = self.action
             if action.startswith("N") or action.startswith("Y"):
                 action = action[1:]
@@ -175,8 +181,6 @@ def sub_mining(action,
                     if length not in peFinal[start_time]:
                         peFinal[start_time][length] = list()
                     patt = PatternType.fromConstituentPattern(constantly_ok, action, x)
-                    # assert patt.length == length
-                    # assert patt.min == start_time
                     peFinal[start_time][length].append(patt)
                     if opposingPattern is not None:
                         for prev_start_time in range(x.min):
@@ -193,8 +197,6 @@ def sub_mining(action,
                                         if lengthPrev+x.length not in volatileOneComposition[prev_start_time]:
                                             volatileOneComposition[prev_start_time][lengthPrev+x.length] = list()
                                         patt = PatternType.fromConstituentPatternList(volatile_one, action, [y, x])
-                                        # assert patt.length == lengthPrev+x.length
-                                        # assert patt.min == prev_start_time
                                         peFinal[prev_start_time][lengthPrev+x.length].append(patt)
                                         volatileOneComposition[prev_start_time][lengthPrev+x.length].append(patt)
                     if opposingPattern is not None:
@@ -207,8 +209,6 @@ def sub_mining(action,
                                         if length+1 not in peFinal[prev_time]:
                                             peFinal[prev_time][length+1] = list()
                                         patt =  PatternType.fromConstituentPatternList(one_hiccup,action,  [y,x])
-                                        # assert patt.length == length+1
-                                        # assert patt.min == prev_time
                                         peFinal[prev_time][length+1].append(patt)
                                         if next_time < maxLen:
                                             if next_time in opposingPattern:
@@ -217,8 +217,6 @@ def sub_mining(action,
                                                         if length + 2 not in peFinal[prev_time]:
                                                             peFinal[prev_time][length + 2] = list()
                                                         patt = PatternType.fromConstituentPatternList(volatile_two, action, [y,x,z])
-                                                        # assert patt.length == length + 2
-                                                        # assert patt.min == prev_time
                                                         peFinal[prev_time][length + 2].append(patt)
                                         if prev_prev_time > 0:
                                             if prev_prev_time in currPattern:
@@ -230,8 +228,6 @@ def sub_mining(action,
                                                             peFinal[prev_prev_time][length + 2] = list()
                                                         patt = PatternType.fromConstituentPatternList(two_hiccups,action,
                                                                                                    [z, y, x])
-                                                        # assert patt.length == length + 2
-                                                        # assert patt.min == prev_prev_time
                                                         peFinal[prev_prev_time][length+2].append(patt)
                         if next_time < maxLen:
                             if next_time in opposingPattern:
@@ -240,8 +236,6 @@ def sub_mining(action,
                                         if length+1 not in peFinal[start_time]:
                                             peFinal[start_time][length+1] = list()
                                         patt = PatternType.fromConstituentPatternList(one_hiccup_next,action,  [x,y])
-                                        # assert patt.length == length + 1
-                                        # assert patt.min == start_time
                                         peFinal[start_time][length+1].append(patt)
                                         if next_next_time < maxLen:
                                             if next_next_time in currPattern:
@@ -251,8 +245,6 @@ def sub_mining(action,
                                                             peFinal[start_time][length + 2] = list()
                                                         patt = PatternType.fromConstituentPatternList(two_hiccups_next,action,
                                                                                                    [x,y,z])
-                                                        # assert patt.length == length + 2
-                                                        # assert patt.min == start_time
                                                         peFinal[start_time][length+2].append(patt)
     if len(volatileOneComposition)> 0:
         skipKey = min(volatileOneComposition.keys())
@@ -260,9 +252,9 @@ def sub_mining(action,
             if startTime == skipKey:
                 continue
             for ll, vals in volatileOneComposition[startTime].items():
+                set.union(*map(lambda x: set(range(x.min)), vals))
                 for x in vals:
-                    for prev_start_time in range(x.min):
-                        if prev_start_time in volatileOneComposition:
+                    for prev_start_time in set(volatileOneComposition.keys()).intersection(range(x.min)):
                             lengthPrev = x.min - prev_start_time
                             if lengthPrev in volatileOneComposition[prev_start_time]:
                                 for y in volatileOneComposition[prev_start_time][lengthPrev]:
@@ -301,7 +293,7 @@ def mine_binary_growth_patterns(trace, maxLen, pos, neg, actione, conf, L):
                     start_time = sList[0]
                     length = len(sList)
                     action = action
-                    payloadMapIterable = map(lambda x: trace[x].eventpayload.trace_data, sList)
+                    payloadMapIterable = map(lambda x: {} if trace[x].eventpayload is None else trace[x].eventpayload.trace_data, sList)
                     pt = PatternType(start_time, length, action, sList, payloadMapIterable=payloadMapIterable)
                     if start_time not in pad:
                         pad[start_time] = dict()
@@ -341,34 +333,6 @@ def mine_binary_growth_patterns(trace, maxLen, pos, neg, actione, conf, L):
                peFinal)
 
     L.addMinedDictionaryByActionType(peFinal)
-    # algo = None
-    # if conf.doMining:
-    #     # multiset = dict()
-    #     result = []
-    #     if conf.algorithm.startswith("polyadic_"):
-    #         none = "."
-    #         l = [set() for i in range(maxLen)]
-    #         for start_time, d in peFinal.items():
-    #             for length, v in d.items():
-    #                 for x in v:
-    #                     l[start_time].add(x.name)
-    #         l = list(map(lambda x: list(x), l))
-    #         algo = l
-    #     elif conf.algorithm != "episodical":
-    #         linearised = []
-    #         db = []
-    #         for start_time, d in peFinal.items():
-    #             for length, v in d.items():
-    #                 rec_visit(peFinal, v, list(), linearised)
-    #         # if compact:
-    #         #     db = list(map(lambda x: list(x), set([tuple(map(lambda y: y.name, x)) for x in linearised])))
-    #         # else:
-    #         db = [list(map(lambda y: y.name, x)) for x in linearised]
-    #         algo = SequentialPatternMining(db)
-    #     else:
-    #         conf.maxLen = maxLen
-    #         algo = SequentialPatternMining(peFinal)
-    # return algo
 
 
 

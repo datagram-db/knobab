@@ -101,7 +101,8 @@ std::tuple<double,double,double> polyadic_loader(const std::unordered_set<std::s
                      const std::string& traceDistinguisher,
                      const std::string& path,
                      bool reclassify,
-                     ServerQueryManager& sqm) {
+                     ServerQueryManager& sqm,
+                                                 const std::string& fulltime) {
     myParser sax;
     sax.ignore_keys = ignore_keys;
     sax.traceDistinguisher = traceDistinguisher;
@@ -193,16 +194,16 @@ std::tuple<double,double,double> polyadic_loader(const std::unordered_set<std::s
         // No reclassification, so precision = 1.0
     }
 
-    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    ///////////////////////////////////\////////////////////////////////////////////////////////////////////////////
     /// 3) We can collect back the time intervals, so to eventually segment continuous events within the same class
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
     sax.isClassificationDone = true;
-    sax.timeLabel = "fulltime";
+    sax.timeLabel = fulltime;
     sax.event_coordinates_init = false;
     sax.clear();
     {
         std::ifstream f{path};
-        std::cout << nlohmann::json::sax_parse(f, &sax) << std::endl;
+        nlohmann::json::sax_parse(f, &sax);
     }
     for (size_t idx = 0, N = sax.for_preliminary_classification.size(); idx<N; idx++) {
         const auto& posToTraceInfo = sax.components.at(idx);
@@ -217,7 +218,7 @@ std::tuple<double,double,double> polyadic_loader(const std::unordered_set<std::s
     std::unordered_set<size_t> metClasses;
     counting_event_coordinates emptyPair;
     for (auto& [user_key, timestamps] : sax.clazz_to_time) {
-        std::cout << user_key << std::endl;
+//        std::cout << user_key << std::endl;
 
         for (auto& inClazz : timestamps)
             remove_duplicates(inClazz);

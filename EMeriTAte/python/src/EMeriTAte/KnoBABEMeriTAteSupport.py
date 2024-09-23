@@ -20,7 +20,8 @@ def _call_original(mining_supp:float,
                    filename_polyadic:str,
                    ignore_keys:List[str],
                    isFastSat:bool,
-                   folder:str):
+                   folder:str,
+                   time:str):
     """
     Calling the original C++ function from python
     """
@@ -34,7 +35,8 @@ def _call_original(mining_supp:float,
                    isFastSat,
                    [],
                    [],
-                   folder)
+                   folder,
+                   time)
 
 class KnobabEmeritateSupport():
 
@@ -46,8 +48,8 @@ class KnobabEmeritateSupport():
         if ignorable_fields is not None:
             self.ignore_fields = list(set(ignorable_fields))
 
-    def call_interface(self, folder = None, isPolyadicMine=True):
+    def call_interface(self, time, folder = None, isPolyadicMine=True):
         isFastSat = False
         if folder is not None:
             isFastSat = True
-        _call_original(self.support, isPolyadicMine, self.environment_field, self.json_path, self.ignore_fields, isFastSat, str(folder))
+        _call_original(self.support, isPolyadicMine, self.environment_field, self.json_path, self.ignore_fields, isFastSat, str(folder), time)

@@ -41,9 +41,16 @@ class DTMining:
         self.epsilon = epsilon
         self.environments = dict()
         self.folder = folder
+        self.inttype = True
         for file in glob.glob(os.path.join(folder, "*.csv")):
             df = pandas.read_csv(file, parse_dates=True)
-            df[time_field] = pandas.to_datetime(df[time_field])
+            try:
+                df[time_field] = pandas.to_numeric(df[time_field], downcast="integer").astype(int)
+            except:
+                self.inttype = False
+                df[time_field] = pandas.to_datetime(df[time_field])
+            if self.conversion is not None:
+                df[class_field] = pandas.to_numeric(df[class_field], downcast="integer").astype(int)
             self.environments[Path(file).stem] = df
             print(file)
 
@@ -81,7 +88,11 @@ class DTMining:
             row.setValue("__class", row.activityLabel)
             row.activityLabel = "__raw_data"
             # assert row["fulltime"] == row["time"]
-            originalChunks[datetime.datetime.fromisoformat(row[self.time_field])] = [row]
+            ttt = row[self.time_field]
+            try:
+                originalChunks[int(ttt)] = [row]
+            except:
+                originalChunks[datetime.datetime.fromisoformat(ttt)] = [row]
         logger.trace("2. Weekly data separation into immediate previous and immediate afterwards+mining")
         ewl_idx = MultiTraceIndexing(EntireTimeLog)
         time_continuous_analysis = ewl_idx.segmentByXTraceEventLabel(x + '@label')
@@ -96,10 +107,14 @@ class DTMining:
             polyL = performMiningOverAnalysedLog(analysis.log, None, self.toExtendWithTime, None, None, timedim)
             for i in range(len(polyL)):
                 if len(polyL[i]) > 0:
-                    t = min(
-                        map(lambda x: datetime.datetime.fromisoformat(str(x.getValue(self.time_field))), polyL[i]))
-                    assert all(map(lambda x: datetime.datetime.fromisoformat(str(x.getValue(self.time_field))) == t,
-                                   polyL[i]))
+                    try:
+                        t = min(
+                            map(lambda x: int(x.getValue(self.time_field)), polyL[i]))
+                        assert all(map(lambda x: int(x.getValue(self.time_field)) == t, polyL[i]))
+                    except:
+                        t = min(map(lambda x: datetime.datetime.fromisoformat(str(x.getValue(self.time_field))), polyL[i]))
+                        assert all(map(lambda x: datetime.datetime.fromisoformat(str(x.getValue(self.time_field))) == t,
+                                       polyL[i]))
                     assert t in originalChunks
                     originalChunks[t][0].setValue("__label", analysis.label)
                     originalChunks[t] = originalChunks[t] + polyL[i]

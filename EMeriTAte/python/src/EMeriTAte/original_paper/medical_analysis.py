@@ -153,6 +153,12 @@ def performMiningOverAnalysedLog(analysis_log, conf, toPertainYesEvents, toDisca
             else:
                 # assert trace.trace_name is not None
                 #analysis.outcome_mining[trace.trace_name] =
+                if (pos is None) and (neg is None):
+                    raise Exception("Unexpected situation!")
+                elif pos is None:
+                    pos = "Y"+neg[1:]
+                elif neg is None:
+                    neg = "N"+pos[1:]
                 mine_binary_growth_patterns(trace, trace.length, pos, neg, actione, conf, L)
         finalised = L.finalise(timefield)
         if (len(finalised)>0):

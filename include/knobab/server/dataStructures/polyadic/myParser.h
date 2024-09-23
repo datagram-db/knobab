@@ -188,7 +188,11 @@ struct myParser {
                     } else if (it->second == "boolean") {
                         payload[keyV] = (tolower(val[0]) == 't') ? 1.0 : 0.0;
                     } else if (it->second == "timestamp") {
-                        payload[keyV] = (double)yaucl::numeric::parse8601(val);
+                        if (std::all_of(val.begin(), val.end(), ::isdigit)) {
+                            payload[keyV] = (double)std::stoull(val);
+                        } else {
+                            payload[keyV] = (double)yaucl::numeric::parse8601(val);
+                        }
                     } else {
                         payload[keyV] = val;
                     }
@@ -261,7 +265,7 @@ struct myParser {
         } else if (state == TRACE) {
             if (tracePayloadOk) {
                 // TODO: store the event as a payload for the trace
-                std::cout << "storing trace: " << trace_id << std::endl;
+//                std::cout << "storing trace: " << trace_id << std::endl;
                 tracePayloadOk = false;
             }
         }
@@ -280,10 +284,17 @@ struct myParser {
                     } else {
                         finalClass = event_coordinates[trace_id][event_id].final_class;
                     }
-                    event_coordinates[trace_id][event_id].specific_time = std::get<double>(payload.at(timeLabel));
+                    auto& prudenza = payload.at(timeLabel);
+                    double panza = 0.0;
+                    if (std::holds_alternative<std::string>(prudenza)) {
+                        panza = (double)std::stoull(std::get<std::string>(prudenza));
+                    } else {
+                        panza = std::get<double>(prudenza);
+                    }
+                    event_coordinates[trace_id][event_id].specific_time = panza;
                     while (clazz_to_time[traceDistinguisherValue].size() <= finalClass)
                         clazz_to_time[traceDistinguisherValue].emplace_back();
-                    clazz_to_time[traceDistinguisherValue][finalClass].emplace_back(std::get<double>(payload.at(timeLabel)));
+                    clazz_to_time[traceDistinguisherValue][finalClass].emplace_back(panza);
                 }
                 payload.erase("__class");
                 for (const auto& [k,v] : payload) {
