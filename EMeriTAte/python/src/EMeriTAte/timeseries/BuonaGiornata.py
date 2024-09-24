@@ -91,6 +91,7 @@ class BuonaGiornata:
             for length, ls in d1.items():
                 for pt in ls:
                     self.addPattern(start_time, length, pt)
+
     def addPattern(self, start_time, length, pt, selector=None):
         if selector is None:
             selector = pt.action

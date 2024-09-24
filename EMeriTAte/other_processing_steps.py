@@ -69,11 +69,90 @@ if __name__ == "__main__":
     # path = "italy_power_demand"
     # loader = load_italy_power_demand
     # extract_dataset_for_EMeriTAte(path, loader)
+    # replace = {"fulltime"}
     logger.remove(0)
     f = sys.stdout
     logger.add(f, level="TRACE")
-    # replace = {"fulltime"}
+    # conversion = ["0", "1"]
+    ignore = {'amantadine', 'day', 'madopar 50', 'madopar CR', 'rotigotine', 'span', 'stalevo', 'stanek'}
+    ignorable = ["day", "span", "__class", "__label", "fulltime"]
 
+    e = None
+    if len(sys.argv)<8:
+        if len(sys.argv)<4:
+            print(f"{sys.argv[0]} path:str class:str numclasses:int [time:str support:float red:bool polymine:bool]")
+            exit(1)
+        else:
+            path = str(sys.argv[1])
+            clazz = str(sys.argv[2])
+            numclazzes = int(sys.argv[3])
+            conversion = [str(x) for x in range(numclazzes)]
+            timef = ""
+            support = None
+            red = None
+            polymine = None
+            logger.info(f"{path} {clazz} {timef}")
+            e = EMeriTAte("trace",  # Collective name for the environment types
+                          # Folder containing only .csv files, which file name is the environment
+                          #  name
+                          path,
+                          # "/home/giacomo/projects/polyadic_processing/raw_data",
+                          # CSV column containing the class information [0,1]
+                          clazz,
+                          # CSV column containing the timestamp information
+                          timef,
+                          # \epsilon parameter
+                          0.00000001,
+                          # Arbitrary large number
+                          10000000000000.0,
+                          # Fields not to be considered for the mining
+                          ignore,
+                          None,
+                          # Converts the number from the CSV classes into labels
+                          conversion,
+                          None,
+                          # Fields to be ignored while loading the data
+                          ignorable,
+                          # Support mining
+                          support,  # Problem with 1
+                          red=red,
+                          polymine=polymine)
+            e.run_phase2(20)
+    else:
+        path = str(sys.argv[1])
+        clazz = str(sys.argv[2])
+        numclazzes = int(sys.argv[3])
+        conversion = [str(x) for x in range(numclazzes)]
+        timef = str(sys.argv[4])
+        x = float(sys.argv[5])
+        y = eval(sys.argv[6])
+        z = eval(sys.argv[7])
+        e = EMeriTAte("trace",  # Collective name for the environment types
+                      # Folder containing only .csv files, which file name is the environment
+                      #  name
+                      path,
+                      # "/home/giacomo/projects/polyadic_processing/raw_data",
+                      # CSV column containing the class information [0,1]
+                      clazz,
+                      # CSV column containing the timestamp information
+                      timef,
+                      # \epsilon parameter
+                      0.00000001,
+                      # Arbitrary large number
+                      10000000000000.0,
+                      # Fields not to be considered for the mining
+                      ignore,
+                      None,
+                      # Converts the number from the CSV classes into labels
+                      conversion,
+                      None,
+                      # Fields to be ignored while loading the data
+                      ignorable,
+                      # Support mining
+                      x,  # Problem with 1
+                      red=y,
+                      polymine=z)
+        e.run_phase1()
 
     # path = "osuleaf"
     # loader = load_osuleaf
@@ -86,27 +165,3 @@ if __name__ == "__main__":
     # path = "load_basic_motions"
     # loader = load_basic_motions
     # extract_dataset_for_EMeriTAte(path, loader)
-    conversion = ["0", "1"]
-    e = EMeriTAte("trace",  # Collective name for the environment types
-                  # Folder containing only .csv files, which file name is the environment
-                  #  name
-                 "/home/giacomo/projects/knobab2_loggen/EMeriTAte/italy_power_demand", #"/home/giacomo/projects/polyadic_processing/raw_data",
-                  # CSV column containing the class information [0,1]
-                  "class",
-                  # CSV column containing the timestamp information
-                  "time",
-                  # \epsilon parameter
-                  0.00000001,
-                  # Arbitrary large number
-                  10000000000000.0,
-                  # Fields not to be considered for the mining
-                  {'amantadine', 'day', 'madopar 50', 'madopar CR', 'rotigotine', 'span', 'stalevo', 'stanek'},
-                  None,
-                  # Converts the number from the CSV classes into labels
-                  conversion,
-                  None,
-                  # Fields to be ignored while loading the data
-                  ["day", "span", "__class", "__label", "fulltime"],
-                  # Support mining
-                  0.0)
-    e.run()

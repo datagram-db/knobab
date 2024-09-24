@@ -1,5 +1,9 @@
+import os.path
 import sys
 from pathlib import Path
+from typing import List
+
+import pandas
 
 from .computation_steps.DTMining import DTMining
 from .computation_steps.crawl_single_model import dump_txt_files
@@ -11,11 +15,18 @@ from EMeriTAte.KnoBABEMeriTAteSupport import KnobabEmeritateSupport
 
 class EMeriTAte:
 
-    def __init__(self, #cpp_binary,
+    def __init__(self,  #cpp_binary,
                  environment_field,
                  folder, class_field, time_field, epsilon=0.01, maxval=10000000000000.0, ignore=None, replace=None,
                  conversion=None, toExtendWithTime=None,
-                 ignorable_fields=None, support=0.0, clazz="class", spec=None, criterion="gini", max_depth=5, split=0.3):
+                 ignorable_fields=None, support:float|List[float]=0.0, clazz="class", spec=None, criterion="gini", max_depth=5, split=0.3,
+                 red=None, polymine=None):
+        if polymine is None:
+            polymine = True
+        if red is None:
+            red = False
+        self.red = red
+        self.polymine = polymine
         self.toExtendWithTime = toExtendWithTime
         self.conversion = conversion
         self.replace = replace
@@ -36,8 +47,9 @@ class EMeriTAte:
         if ignorable_fields is None:
             ignorable_fields = []
         self.ignorable_fields = ignorable_fields
-
-
+        self.Model = None
+        self.resF = os.path.join(self.folder, "__results")
+        Path(self.resF).mkdir(parents=True, exist_ok=True)
 
 
     def __args(self, folder=None):
@@ -55,7 +67,7 @@ class EMeriTAte:
         return tuple(LS)
 
     def __run(self, path=None): #args):
-        self.knobab.call_interface(self.time_field, path)
+        self.knobab.call_interface(self.time_field, path, self.polymine, self.red)
 
     def _02_run_preliminary_mining(self):
         print(self.__run())
@@ -63,8 +75,11 @@ class EMeriTAte:
     def _04_run_fastSAT(self, path):
         print(self.__run(path)) #orig:self.__args(path)
 
-    def run(self):
+    def run_phase1(self):
+        import datetime
         #self.file = "/home/giacomo/projects/knobab2_loggen/polyadic_preprocessing/raw_data/log_weekly.json"
+        start = datetime.datetime.now()
+        logger.trace("A. Specification Mining Phase: TS->json Polyadic Trace")
         self.file = DTMining(self.folder,
              self.class_field,
              self.time_field,
@@ -75,22 +90,61 @@ class EMeriTAte:
                    self.toExtendWithTime).transform()
         self.json_path = Path(self.file)
         self.knobab = KnobabEmeritateSupport(self.support, self.environment_field, self.file, self.ignorable_fields)
+        mining_and_json_ser_ts = datetime.datetime.now()
+        mining_and_json_ser = mining_and_json_ser_ts - start
+        mining_and_json_ser = mining_and_json_ser.total_seconds() * 1000
+        with open(os.path.join(self.resF, "mining_and_join_time.csv"), "a") as f:
+            f.write(str(mining_and_json_ser)+os.linesep)
         exit(101)
         #
         # # 02. Bolt2 Specification Mining
+        logger.trace("B. Specification Mining Phase: json Polyadic Trace->DECLAREd Specifications")
         self._02_run_preliminary_mining()
+
+        for path, supp, poly, red in dump_txt_files(str(self.json_path.parent.absolute())):
+            poly = True if poly == "1" else False
+            red = True if red == "1" else False
+            supp = float(supp)
+            if (supp == self.support) and (poly == self.polymine) and (self.red == red):
+                logger.trace(f"C. Specification Mining Phase: DECLAREd Specifications->SAT supp={supp}, poly={poly}, red={red}")
+                self._04_run_fastSAT(path)
+
+    def run(self, runs=1):
+        self.run_phase1()
+        self.run_phase2(runs)
+
+    def run_phase2(self, runs=1):
+        import datetime
+        f1 = -10000000000000000000000000
         #     Dumping the txt files
-        iterable = list(dump_txt_files(str(self.json_path.parent.absolute())))
-        assert len(iterable) == 1
+        totalResults = []
+        self.file = os.path.join(self.folder, "log_weekly.json")
+        self.json_path = Path(self.file)
+        if self.json_path.exists():
+            for path, supp, poly, red in dump_txt_files(str(self.json_path.parent.absolute())):
+                before_load_data = datetime.datetime.now()
 
-        # 04. Deviance Learning
-        path = iterable[0]
-        self._04_run_fastSAT(path)
-        #path = "/home/giacomo/projects/knobab2_loggen/polyadic_preprocessing/raw_data/poly_s0_0"
-        model = LearnRepresentation(str(path), self.clazz, self.spec, self.criterion, self.max_depth, self.split)
-        model.test()
-        self.Model = model.rf
+                logger.trace("D. Data loading in python")
+                model = LearnRepresentation(str(path), self.clazz, self.spec, self.criterion, self.max_depth, self.split)
+                load_data = datetime.datetime.now() - before_load_data
+                load_data = load_data.total_seconds() * 1000
 
+                for _ in range(runs):
+
+                    logger.trace( "E. Ad Hoc explanation+Post Hoc (scores+whitebox)")
+                    before_testing = datetime.datetime.now()
+                    d = model.test(poly=poly, supp=supp, red=red)
+                    testing = datetime.datetime.now() - before_testing
+                    testing = testing.total_seconds() * 1000
+                    if d is not None:
+                        print(d)
+                        totalResults.append(d)
+                        f1 = max(d["f1"], f1)
+                        d["load_data"] = load_data
+            self.Model = [d for d in totalResults if d["f1"]==f1]
+            pandas.DataFrame(totalResults).to_csv(os.path.join(self.resF, "results_proposed.csv"), index=False, mode='a')
+        else:
+            logger.error("ERROR: the polyadic file doesn't exist")
 
 
 if __name__ == "__main__":

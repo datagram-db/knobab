@@ -3,18 +3,18 @@ import sys
 from collections import defaultdict
 
 import pandas
-from sklearn.metrics import accuracy_score, precision_score
+from sklearn.metrics import accuracy_score, precision_score, recall_score, roc_curve, f1_score
 from sklearn.model_selection import train_test_split
 from sklearn.tree import DecisionTreeClassifier
 
 from EMeriTAte.utils import export_text2
 
 from pathlib import Path
-folder = "/home/giacomo/projects/knobab2_loggen/output_model_healthcare/debugged/nopoly_s0_1/"
-class0 = os.path.join(folder, "output_csv_0.csv")
-class1 = os.path.join(folder, "output_csv_1.csv")
-spec = None#"/home/giacomo/projects/knobab2_loggen/output_model_healthcare/debugged/log_weekly.json_0.2_0_0_0_clazz=1.txt"
-modelfile = Path(folder).name + ".txt"
+# folder = "/home/giacomo/projects/knobab2_loggen/output_model_healthcare/debugged/nopoly_s0_1/"
+# class0 = os.path.join(folder, "output_csv_0.csv")
+# class1 = os.path.join(folder, "output_csv_1.csv")
+# spec = None#"/home/giacomo/projects/knobab2_loggen/output_model_healthcare/debugged/log_weekly.json_0.2_0_0_0_clazz=1.txt"
+# modelfile = Path(folder).name + ".txt"
 
 def loadDataset(class0, class1):
     df0 = pandas.read_csv(class0, index_col=0, header=None).transpose()
@@ -57,13 +57,15 @@ class LearnRepresentation:
         self.criterion = criterion
         self.class0 = os.path.join(folder, "output_csv_0.csv")
         self.class1 = os.path.join(folder, "output_csv_1.csv")
+        print(self.class0)
+        print(self.class1)
         self.spec = spec  # "/home/giacomo/projects/knobab2_loggen/output_model_healthcare/debugged/log_weekly.json_0.2_0_0_0_clazz=1.txt"
         self.modelfile = Path(folder).name + ".txt"
-        self.dict_list = loadDataset(class0, class1)
+        self.dict_list = loadDataset(self.class0, self.class1)
         self.rf = None
-        if spec is not None:
-            S = readFileForSpec(spec)
-            dict_list = self.dict_list[list(set(self.dict_list.columns).intersection(S)) + [self.clazz]]
+        # if spec is not None:
+        #     S = readFileForSpec(spec)
+        #     dict_list = self.dict_list[list(set(self.dict_list.columns).intersection(S)) + [self.clazz]]
 
     def train(self):
         if self.dict_list.empty or (len(set(self.dict_list.columns)) == 1 and (self.clazz in set(self.dict_list.columns))):
@@ -77,9 +79,10 @@ class LearnRepresentation:
             self.rf.fit(X_train, y_train)
 
 
-    def test(self, poly=False, supp=0.0, red=False, outcomes=None):
+    def test(self, poly=False, supp=0.0, red=False):
         if self.dict_list.empty or (len(set(self.dict_list.columns)) == 1 and ("class" in set(self.dict_list.columns))):
-            print("No data")
+            print("No data: cannot run the prediction!")
+            # return dict()
         else:
             X = self.dict_list.drop(labels=['class'], axis=1)
             y = self.dict_list['class']
@@ -87,11 +90,25 @@ class LearnRepresentation:
             rf = DecisionTreeClassifier(criterion="gini", max_depth=5)
             rf.fit(X_train, y_train)
             y_pred = rf.predict(X_test)
+
             accuracy = accuracy_score(y_test, y_pred)
             precision = precision_score(y_test, y_pred)
-            print(f"poly: {poly}\tsupp: {supp}\tred: {red}\tacc: {accuracy}\tprec: {precision}")
-            if outcomes is not None:
-                outcomes.append({"poly": poly, "supp": supp, "red": red, "accuracy": accuracy, "precision": precision, "model":os.linesep.join(export_text2(rf, X.columns, show_weights=True))})
+            recall = recall_score(y_test, y_pred)
+            f1 = f1_score(y_test, y_pred)
+            fpr, tpr, thresholds = roc_curve(y_test, y_pred)
+
+            d = {"poly": poly,
+                 "supp": supp,
+                 "red": red,
+                 "accuracy": accuracy,
+                 "precision": precision,
+                 "recall": recall,
+                 "f1": f1,
+                 "roc": {"fpr": fpr, "tpr":tpr, "thresholds": thresholds},
+                 "model":os.linesep.join(export_text2(rf, X.columns, show_weights=True))
+                 }
+            # print(d)
+            return d
             # print("Accuracy:", accuracy)
             # with open(modelfile, "w") as file:
             #     file.write(os.linesep.join(export_text2(rf, X.columns, show_weights=True)))
@@ -102,8 +119,9 @@ def genfolder(poly, s, red):
     red = 1 if (red or (int(red) == 1)) else 0
     return f"{poly}_s{s}_{red}"
 
-outcomes = []
+
 if __name__ == "__main__":
+    outcomes = []
     path = "/home/giacomo/projects/knobab2_loggen/output_model_healthcare/debugged/"
     # name = genfolder(1, 1.0, 1)
     # abs_folder = os.path.join(path, name)
@@ -119,27 +137,6 @@ if __name__ == "__main__":
             arr[0] = 0 if arr[0] == "nopoly" else 1
             arr[1] = float(arr[1][1:])
             for _ in range(20):
-                lr.test(arr[0], arr[1], int(arr[2])==1, outcomes)
-    pandas.DataFrame(outcomes).to_csv("../results_proposed.csv", index=False)
-
-
-
-
-
-
-# if dict_list.empty or (len(set(dict_list.columns)) == 1 and ("class" in set(dict_list.columns))):
-#     print("No data")
-#     with open(modelfile, "w") as file:
-#         file.write("No data")
-# else:
-#     X = dict_list.drop(labels=['class'], axis=1)
-#     y = dict_list['class']
-#     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, stratify=y)
-#     rf = DecisionTreeClassifier(criterion="entropy")
-#     rf.fit(X_train, y_train)
-#     y_pred = rf.predict(X_test)
-#     accuracy = accuracy_score(y_test, y_pred)
-#     print("Accuracy:", accuracy)
-#     with open(modelfile, "w") as file:
-#         file.write(os.linesep.join(export_text2(rf, X.columns, show_weights=True)))
-#         file.write(os.linesep + ("Accuracy: ") + str(accuracy))
+                x = lr.test(arr[0], arr[1], int(arr[2])==1)
+                if x is not None:
+                    outcomes.append(x)

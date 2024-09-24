@@ -363,15 +363,15 @@ class TracePositional:
         #for idx in range(l+1):
         return S+os.linesep.join(map(lambda idx: "["+(" ".join(map(lambda x : x.toHRF(), self.events[self.minIndexFor[idx]:self.maxIndexFor[idx]+1])))+"]", range(l+1))) #os.linesep.join(map(lambda x: x.toHRF(), self.events))
 
-    def toJSONObject(self, additionalTraceFields=None, extendWithEvent=None):
+    def toJSONObject(self, additionalTraceFields=None):
         if additionalTraceFields is None:
             additionalTraceFields = dict()
-        traceName = self.getTraceName()
-        tpObject = None
-        if self.tracePayload is not None:
-            tpObject = self.tracePayload.toJSONObject()
-        else:
-            tpObject = {}
+        # traceName = self.getTraceName()
+        # tpObject = None
+        # if self.tracePayload is not None:
+        #     tpObject = self.tracePayload.toJSONObject()
+        # else:
+        #     tpObject = {}
         U = set(self.minIndexFor.keys()).union(set(self.maxIndexFor.keys()))
         if len(U)==0:
             return None
@@ -675,11 +675,45 @@ class TracePositional:
                             d["@count(" + k + "=" + str(value) + ")"] = 0
         return d
 
+class CollectTypeEvidence:
+        def __init__(self):
+            self.typeInferOf = defaultdict(lambda: {type: 0 for type in types})
+            self.valueIsFound = set()
+            self.keys = set()
+            self.keyType = dict()
+            self.d = defaultdict(set)
 
+        def collectEvidence(self, trace: TracePositional):
+            for k in trace.keys:
+                self.keys.add(k)
+                t = trace.getValueType(k, False)
+                if t is not None:
+                    self.typeInferOf[k][t] = self.typeInferOf[k][t] + 1
+                    self.valueIsFound.add(k)
+            for event in trace.events:
+                s = event.activityLabel
+                LPAR = s.find("(")
+                RPAR = s.rfind(")")
+                if (LPAR != -1 and RPAR != -1 and LPAR < RPAR):
+                    parentEvent = s[s.find("(") + 1:s.rfind(")")]
+                    self.d[parentEvent].add(s)
+                else:
+                    self.d[s].add(s)
+
+        def finalise(self):
+            for k in self.keys:
+                if k in self.valueIsFound:
+                    self.keyType[k] = max(self.typeInferOf[k], key=self.typeInferOf[k].get)
+            self.valueIsFound.clear()
+            self.typeInferOf.clear()
+            self.keys.clear()
+            self.deriveHierarchy = {k: list(v) for k, v in self.d.items()}
+            self.d.clear()
 
 
 class Log:
-    def __init__(self, path=None, id=0, withData=False, isTab=False, log=None, isList=False):
+    def __init__(self, path=None, id=0, withData=False, isTab=False, log=None, isList=False, careAboutUniqueEvents=True):
+        self.careAboutUniqueEvents = careAboutUniqueEvents
         self.path = path
         self.traces = []
         self.max_length = -1
@@ -724,7 +758,7 @@ class Log:
         self.reIndex()
         return {"schema": self.keyType,
                 "event_hierarchy":self.deriveHierarchy(),
-                "log":list(filter(lambda y: y is not None, map(lambda x: x.toJSONObject(additionalTraceFields, timeElements), self.traces)))
+                "log":list(filter(lambda y: y is not None, map(lambda trace: trace.toJSONObject(additionalTraceFields, timeElements), self.traces)))
                 }
 
     def toHRF(self):
@@ -740,8 +774,8 @@ class Log:
         for k in self.keys:
             typeInferOf = {type: 0 for type in types}
             value_is_found = False
-            for e in self.traces:
-                t = e.getValueType(k, False)
+            for trace in self.traces:
+                t = trace.getValueType(k, False)
                 if t is not None:
                     typeInferOf[t] = typeInferOf[t] + 1
                     value_is_found = True
@@ -750,34 +784,42 @@ class Log:
             else:
                 self.keyType[k] = "continuous"
 
+
+
     def reIndex(self):
         for t in self.traces:
             t.reIndex()
             self.keys = set.union(self.keys, t.payloadKeySet())
         self.indexing()
 
-    def addTracePositional(self, trace, withData=False, isTab=False, withExplicitPayloadMap=None):
+    def addTracePositional(self, trace, withData=False, isTab=False, withExplicitPayloadMap=None, explicitlyStoreTrace=True):
         tp = None
         if isinstance(trace, TracePositional):
             tp = trace
         else:
             tp = TracePositional(trace, withData=withData, withExplicitPayloadMap=withExplicitPayloadMap)
-        self.keys = set.union(self.keys, tp.payloadKeySet())
-        self.max_length = max(self.max_length, tp.length)
-        self.traces.append(tp)
-        for event in trace:
-            if isinstance(event, Event):
-                self.unique_events.add(event.getActivityLabel())
-            elif isTab:
-                if isinstance(event, list):
-                    for x in event:
-                        self.unique_events.add(x)
+        obj = tp.toJSONObject()
+        if explicitlyStoreTrace:
+            self.keys = set.union(self.keys, tp.payloadKeySet())
+            self.max_length = max(self.max_length, tp.length)
+            self.traces.append(tp)
+        if self.careAboutUniqueEvents:
+            for event in trace:
+                if isinstance(event, Event):
+                    self.unique_events.add(event.getActivityLabel())
+                elif isTab:
+                    if isinstance(event, list):
+                        for x in event:
+                            self.unique_events.add(x)
+                    else:
+                        self.unique_events.add(event)
                 else:
-                    self.unique_events.add(event)
-            else:
-                self.unique_events.add(extract_attributes(event)["concept:name"])
+                    self.unique_events.add(extract_attributes(event)["concept:name"])
+        return obj, tp
 
     def getEventSet(self):
+        if not self.careAboutUniqueEvents:
+            raise RuntimeError("ERROR: No events were cared for")
         return self.unique_events
 
     def getTraces(self):

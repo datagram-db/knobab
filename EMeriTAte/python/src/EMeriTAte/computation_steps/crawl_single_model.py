@@ -131,8 +131,6 @@ def yi(file, key, d):
         d.pop("filename")
         minsupp_reduction_conf[d["isFilenamePolyadic"]][d["mining_supp"]][d["reduction"]].process(file)
 
-###path = "/home/giacomo/projects/knobab2_loggen/output_model_healthcare/debugged/"
-path = "/here"
 def dump_txt_files(path):
     fp = ForParsing(path)
     fp.yielder(yi)
@@ -143,60 +141,4 @@ def dump_txt_files(path):
                 p = Path(os.path.join(path, f"{NP}_s{supp}_{red}"))
                 p.mkdir(parents=True, exist_ok=True)
                 obj.dump(p, "__missing")
-                yield p
-
-if __name__ == "__main__":
-    dump_txt_files(path)
-
-# neu()
-# print(minsupp_reduction_conf)
-# with open(file, "r") as f:
-#     for line in f.read().splitlines():
-#         if line.startswith("Exists"):
-#             firstOpen = line.find('(')
-#             lastClose = line.rfind(')')
-#             lastPar = line.rfind('§')
-#             act = line[firstOpen + 1:lastPar - 1].strip()
-#             acts.add(act)
-#             if act not in d_exists:
-#                 d_exists[act] = set()
-#             d_exists[act].add(int(line[lastPar+1:lastClose]))
-#         elif line.startswith("Absence"):
-#             firstOpen = line.find('(')
-#             lastClose = line.rfind(')')
-#             lastPar = line.rfind('§')
-#             act = line[firstOpen + 1:lastPar - 1].strip()
-#             acts.add(act)
-#             if act not in d_absences:
-#                 d_absences[act] = set()
-#             d_absences[act].add(int(line[lastPar+1:lastClose]))
-#         elif line.startswith("Init") or line.startswith("End"):
-#             firstOpen = line.find('(')
-#             lastClose = line.rfind(')')
-#             lastPar = line.rfind('§')
-#             act = line[firstOpen + 1:lastPar - 1].strip()
-#             acts.add(act)
-#         else:
-#             firstOpen = line.find('(')
-#             lastClose = line.rfind(')')
-#             comma = line.find(',')
-#             comma2 = line.rfind(',')
-#             if (comma == comma2):
-#                 act = line[firstOpen + 1:comma].strip()
-#                 acts.add(act)
-#                 act = line[comma +1:lastClose].strip()
-#                 acts.add(act)
-#             else:
-#                 sys.exit(1)
-#
-#
-# path = Path(file)
-# print("Writing acts....")
-# with open(os.path.join(path.parent.absolute(), "acts.txt"), "w") as fp:
-#     fp.write(os.linesep.join(acts))
-#
-# with open(os.path.join(path.parent.absolute(), "exists.txt"), "w") as fp:
-#     fp.write(os.linesep.join([" ".join([str(len(d_exists[act]))]+[str(x) for x in d_exists[act]]+[act]) for act in d_exists]))
-#
-# with open(os.path.join(path.parent.absolute(), "absences.txt"), "w") as fp:
-#     fp.write(os.linesep.join([" ".join([str(len(d_exists[act]))]+[str(x) for x in d_exists[act]]+[act]) for act in d_absences]))
+                yield p, supp, poly, red

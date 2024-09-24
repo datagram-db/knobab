@@ -1,5 +1,6 @@
 import copy
 import datetime
+import itertools
 import statistics
 from collections import OrderedDict, defaultdict
 
@@ -146,11 +147,13 @@ class PatternType:
                            name,
                            composite)
 def sublists(lst):
-    sublists_list = []
     for i in range(len(lst)):
         for j in range(i + 1, len(lst) + 1):
-            sublists_list.append(lst[i:j])
-    return sublists_list
+            yield map(lambda x: lst[x], range(i,min(j,len(lst)))), j-i, lst[i], lst[j-1]
+
+def extend(L1, L2):
+    L1[0:0] = L2
+    return L1
 
 def sub_mining(action,
                maxLen,
@@ -167,7 +170,7 @@ def sub_mining(action,
                peFinal):
     if currPattern is None:
         return peFinal
-    volatileOneComposition = dict()
+    volatileOneComposition = {t: defaultdict(list) for t in peFinal}
     for start_time, d in currPattern.items():
         prev_time = start_time-1
         prev_prev_time = prev_time-1
@@ -175,97 +178,45 @@ def sub_mining(action,
         next_next_time = next_time+1
         for length, ls in d.items():
             if length>1:
+                peFinal[start_time][length] = extend(peFinal[start_time][length], [PatternType.fromConstituentPattern(constantly_ok, action, x) for x in ls])
+                if opposingPattern is None:
+                    continue
                 for x in ls:
-                    if start_time not in peFinal:
-                        peFinal[start_time] = dict()
-                    if length not in peFinal[start_time]:
-                        peFinal[start_time][length] = list()
-                    patt = PatternType.fromConstituentPattern(constantly_ok, action, x)
-                    peFinal[start_time][length].append(patt)
-                    if opposingPattern is not None:
                         for prev_start_time in range(x.min):
-                            if prev_start_time in opposingPattern:
                                 lengthPrev = x.min - prev_start_time
-                                if lengthPrev in opposingPattern[prev_start_time]:
-                                    for y in opposingPattern[prev_start_time][lengthPrev]:
-                                        if prev_start_time not in peFinal:
-                                            peFinal[prev_start_time] = dict()
-                                        if lengthPrev+x.length not in peFinal[prev_start_time]:
-                                            peFinal[prev_start_time][lengthPrev+x.length] = list()
-                                        if prev_start_time not in volatileOneComposition:
-                                            volatileOneComposition[prev_start_time]  = dict()
-                                        if lengthPrev+x.length not in volatileOneComposition[prev_start_time]:
-                                            volatileOneComposition[prev_start_time][lengthPrev+x.length] = list()
-                                        patt = PatternType.fromConstituentPatternList(volatile_one, action, [y, x])
-                                        peFinal[prev_start_time][lengthPrev+x.length].append(patt)
-                                        volatileOneComposition[prev_start_time][lengthPrev+x.length].append(patt)
-                    if opposingPattern is not None:
+                                LLL = [PatternType.fromConstituentPatternList(volatile_one, action, [y, x]) for y in opposingPattern[prev_start_time][lengthPrev]]
+                                peFinal[prev_start_time][lengthPrev+x.length] = extend(peFinal[prev_start_time][lengthPrev+x.length], LLL)
+                                volatileOneComposition[prev_start_time][lengthPrev+x.length] = extend(volatileOneComposition[prev_start_time][lengthPrev+x.length], LLL)  #.append(patt2)
                         if prev_time > 0:
-                            if prev_time in opposingPattern:
-                                if 1 in opposingPattern[prev_time]:
                                     for y in opposingPattern[prev_time][1]:
-                                        if prev_time not in peFinal:
-                                            peFinal[prev_time] = dict()
-                                        if length+1 not in peFinal[prev_time]:
-                                            peFinal[prev_time][length+1] = list()
                                         patt =  PatternType.fromConstituentPatternList(one_hiccup,action,  [y,x])
-                                        peFinal[prev_time][length+1].append(patt)
+                                        peFinal[prev_time][length+1] = extend(peFinal[prev_time][length+1], [patt])
                                         if next_time < maxLen:
                                             if next_time in opposingPattern:
-                                                if 1 in opposingPattern[next_time]:
-                                                    for z in opposingPattern[next_time][1]:
-                                                        if length + 2 not in peFinal[prev_time]:
-                                                            peFinal[prev_time][length + 2] = list()
-                                                        patt = PatternType.fromConstituentPatternList(volatile_two, action, [y,x,z])
-                                                        peFinal[prev_time][length + 2].append(patt)
+                                                peFinal[prev_time][length + 2] = extend(peFinal[prev_time][length + 2], map(lambda z: PatternType.fromConstituentPatternList(volatile_two, action, [y,x,z]), opposingPattern[next_time][1]))
                                         if prev_prev_time > 0:
                                             if prev_prev_time in currPattern:
-                                                if 1 in currPattern[prev_prev_time]:
-                                                    for z in currPattern[prev_prev_time][1]:
-                                                        if prev_prev_time not in peFinal:
-                                                            peFinal[prev_prev_time] = dict()
-                                                        if length + 2 not in peFinal[prev_prev_time]:
-                                                            peFinal[prev_prev_time][length + 2] = list()
-                                                        patt = PatternType.fromConstituentPatternList(two_hiccups,action,
-                                                                                                   [z, y, x])
-                                                        peFinal[prev_prev_time][length+2].append(patt)
+                                                peFinal[prev_prev_time][length + 2] = extend(peFinal[prev_prev_time][length + 2], map(lambda z: PatternType.fromConstituentPatternList(two_hiccups,action,
+                                                                                                   [z, y, x]), currPattern[prev_prev_time][1]))
                         if next_time < maxLen:
                             if next_time in opposingPattern:
-                                if 1 in opposingPattern[next_time]:
+                                    # if 1 in opposingPattern[next_time]:
                                     for y in opposingPattern[next_time][1]:
-                                        if length+1 not in peFinal[start_time]:
-                                            peFinal[start_time][length+1] = list()
                                         patt = PatternType.fromConstituentPatternList(one_hiccup_next,action,  [x,y])
-                                        peFinal[start_time][length+1].append(patt)
+                                        peFinal[start_time][length+1] = extend(peFinal[start_time][length+1], [patt])
                                         if next_next_time < maxLen:
-                                            if next_next_time in currPattern:
-                                                if 1 in currPattern[next_next_time]:
-                                                    for z in currPattern[next_next_time][1]:
-                                                        if length + 2 not in peFinal[start_time]:
-                                                            peFinal[start_time][length + 2] = list()
-                                                        patt = PatternType.fromConstituentPatternList(two_hiccups_next,action,
-                                                                                                   [x,y,z])
-                                                        peFinal[start_time][length+2].append(patt)
+                                                peFinal[start_time][length + 2] = extend(peFinal[start_time][length + 2], map(lambda z: PatternType.fromConstituentPatternList(two_hiccups_next,action,
+                                                                                                   [x,y,z]), currPattern[next_next_time][1]))
     if len(volatileOneComposition)> 0:
         skipKey = min(volatileOneComposition.keys())
         for startTime in sorted(list(volatileOneComposition.keys())):
             if startTime == skipKey:
                 continue
             for ll, vals in volatileOneComposition[startTime].items():
-                set.union(*map(lambda x: set(range(x.min)), vals))
                 for x in vals:
                     for prev_start_time in set(volatileOneComposition.keys()).intersection(range(x.min)):
                             lengthPrev = x.min - prev_start_time
-                            if lengthPrev in volatileOneComposition[prev_start_time]:
-                                for y in volatileOneComposition[prev_start_time][lengthPrev]:
-                                    if prev_start_time not in peFinal:
-                                        peFinal[prev_start_time] = dict()
-                                    if lengthPrev+x.length not in peFinal[prev_start_time]:
-                                        peFinal[prev_start_time][lengthPrev+x.length] = list()
-                                    patt = PatternType.fromConstituentPatternList(volatile_cmp, action, [y, x])
-                                    # assert patt.length == lengthPrev + x.length
-                                    # assert patt.min == prev_start_time
-                                    peFinal[prev_start_time][lengthPrev + x.length].append(patt)
+                            peFinal[prev_start_time][lengthPrev + x.length] = extend(peFinal[prev_start_time][lengthPrev + x.length], map(lambda y: PatternType.fromConstituentPatternList(volatile_cmp, action, [y, x]), volatileOneComposition[prev_start_time][lengthPrev]))
     return peFinal
 
 
@@ -282,23 +233,15 @@ def rec_visit(peFinal, v, ls, result):
 
 
 
-def mine_binary_growth_patterns(trace, maxLen, pos, neg, actione, conf, L):
+def mine_binary_growth_patterns(trace, maxLen, pos, neg, actione, L):
     pe = {pos:None, neg:None}
     ## Determining the simple patterns
+    # print("Determining the simple patterns")
     for action, v in trace.positional_events.items():
-        pad = dict()
+        pad = {t:defaultdict(list) for t in range(trace.length)}
         for contiguous in split_contiguous(v):
-            for sList in sublists(contiguous):
-                if len(sList)>0:
-                    start_time = sList[0]
-                    length = len(sList)
-                    action = action
-                    payloadMapIterable = map(lambda x: {} if trace[x].eventpayload is None else trace[x].eventpayload.trace_data, sList)
-                    pt = PatternType(start_time, length, action, sList, payloadMapIterable=payloadMapIterable)
-                    if start_time not in pad:
-                        pad[start_time] = dict()
-                    if length not in pad[start_time]:
-                        pad[start_time][length] = list()
+            for sList, length, start_time, end_time in sublists(contiguous):
+                    pt = PatternType(start_time, length, action, [start_time,end_time], payloadMapIterable=map(lambda x: {} if trace[x].eventpayload is None else trace[x].eventpayload.trace_data, sList))
                     pad[start_time][length].append(pt)
         pe[action] = pad
 
@@ -306,6 +249,16 @@ def mine_binary_growth_patterns(trace, maxLen, pos, neg, actione, conf, L):
     # assert neg in pe
     posPattern = pe[pos]
     negPattern = pe[neg]
+
+    # print("sub_mining 1")
+    if posPattern is None and negPattern is None:
+        return
+    elif posPattern is None:
+        S = negPattern.keys()
+    elif negPattern is None:
+        S = posPattern.keys()
+    else:
+        S = set(posPattern.keys()).union(set(negPattern.keys()))
 
     peFinal = sub_mining(actione, maxLen,
                posPattern,
@@ -318,7 +271,9 @@ def mine_binary_growth_patterns(trace, maxLen, pos, neg, actione, conf, L):
                          "HighVolatilityI",
                          "HighVolatilityIII",
                          "HighVolatilityII",
-               dict())
+                         None if posPattern is None else {k: defaultdict(list) for k in S})
+
+    # print("sub_mining 2")
     peFinal = sub_mining(actione, maxLen,
                negPattern,
                posPattern,
@@ -330,8 +285,9 @@ def mine_binary_growth_patterns(trace, maxLen, pos, neg, actione, conf, L):
                          "HighVolatilityVI",
                          "HighVolatilityIV",
                          "HighVolatilityV",
-               peFinal)
+               peFinal if peFinal is not None else {k: defaultdict(list) for k in S})
 
+    # print("addMinedDictionaryByActionType")
     L.addMinedDictionaryByActionType(peFinal)
 
 

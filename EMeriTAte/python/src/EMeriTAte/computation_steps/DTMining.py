@@ -6,11 +6,11 @@ from pathlib import Path
 
 import pandas
 from loguru import logger
-from EMeriTAte.timeseries.Log import Log
+from EMeriTAte.timeseries.Log import Log, CollectTypeEvidence
 
 from EMeriTAte.original_paper.medical_analysis import performMiningOverAnalysedLog
 from EMeriTAte.original_paper.parsing_medical_data import asFinalLog, exploseTimeVariations
-from EMeriTAte.timeseries.MultiTraceIndexing import MultiTraceIndexing
+from EMeriTAte.timeseries.MultiTraceIndexing import MultiTraceIndexing, OutcomeAnalysis
 
 
 class DTMining:
@@ -52,32 +52,75 @@ class DTMining:
             if self.conversion is not None:
                 df[class_field] = pandas.to_numeric(df[class_field], downcast="integer").astype(int)
             self.environments[Path(file).stem] = df
-            print(file)
+            # print(file)
 
-    def transform(self, cached=True):
+    def transform(self, cached=True, concurrent=False):
         p = os.path.join(self.folder, "log_weekly.json")
         if (not cached) or (not os.path.isfile(p)):
-            UserLog = Log()
-            for pat in self.environments:
-                ls = self._perEnvironment(pat, self.time_field)
-                UserLog.addTracePositional(ls, withData=True, isTab=True,
-                                                          withExplicitPayloadMap={"user":pat})
-            UserLog.indexing()
-            with open(p, "w") as outfile:
-                json.dump(UserLog.toJSONObject(), outfile, indent=4)
+            fp = open(p, "w")
+            fp.write('{"log":[')
+            UserLog = Log(careAboutUniqueEvents=False)
+            cle = CollectTypeEvidence()
+            n = len(self.environments)
+            if not concurrent:
+                for idx, pat in enumerate(self.environments):
+                    ls = self._perEnvironment(pat, self.time_field)
+                    obj, tp = UserLog.addTracePositional(ls, withData=True, isTab=True,
+                                                              withExplicitPayloadMap={"user":pat},
+                                                     explicitlyStoreTrace=False)
+                    obj["__name"] = str(pat)
+                    cle.collectEvidence(tp)
+                    fp.write(json.dumps(obj))
+                    if not (idx == (n-1)):
+                        fp.write(","+os.linesep)
+                    fp.flush()
+                    del obj
+                    del tp
+                    print(f"{(idx/len(self.environments))*100.0}")
+            else:
+                import concurrent.futures
+                futures = []
+
+                with concurrent.futures.ThreadPoolExecutor() as e:
+                    futures2 = {e.submit(self._perEnvironment, pat, self.time_field): pat for pat in self.environments}
+                    idx = 0
+                    for f in concurrent.futures.as_completed(futures2):
+                        pat = futures2[f]
+                        ls = f.result()
+                        obj, tp = UserLog.addTracePositional(ls, withData=True, isTab=True,
+                                                             withExplicitPayloadMap={"user": pat},
+                                                             explicitlyStoreTrace=False)
+                        obj["__name"] = str(pat)
+                        cle.collectEvidence(tp)
+                        fp.write(json.dumps(obj))
+                        if not (idx == (n - 1)):
+                            fp.write("," + os.linesep)
+                        fp.flush()
+                        del obj
+                        del tp
+                        idx += 1
+
+
+
+            cle.finalise()
+            fp.write('],'+os.linesep+'"schema":')
+            fp.write(json.dumps(cle.keyType))
+            fp.flush()
+            fp.write(',"event_hierarchy":')
+            fp.write(json.dumps(cle.deriveHierarchy))
+            fp.write('}')
+            fp.close()
+            #UserLog.indexing()
+            #with open(p, "w") as outfile:
+            #    json.dump(UserLog.toJSONObject(), outfile, indent=4)
         return p
 
-    def _perEnvironment(self, envName, timedim):
+    def _perEnvironment(self, envName, timedim, doesLabelChangeInTime=False):
         x = envName
         logger.info("Performining the continuous analysis for "+x)
         logger.trace("1. Data Pre-Processing")
         EntireTimeLog = asFinalLog(self.environments[x], x, self.class_field, self.replace, self.conversion)
         originalChunks = dict()
-        # for _, row in self.patients_raw_data[x].iterrows():
-        #     toDict =  dict(row)
-        #     time = toDict["fulltime"]
-        #     del toDict["fulltime"]
-        #     originalChunks[time] = {k: toDict[k] for k in toDict if (not isinstance(toDict[k], float)) or (not isnan(toDict[k])) }
         tmp = EntireTimeLog
         assert len(tmp.traces)==1
         booleans, floats = exploseTimeVariations(EntireTimeLog, self.epsilon, self.maxval, self.ignore, self.time_field)
@@ -87,7 +130,6 @@ class DTMining:
         for idx, row in enumerate(tmp.traces[0].events):
             row.setValue("__class", row.activityLabel)
             row.activityLabel = "__raw_data"
-            # assert row["fulltime"] == row["time"]
             ttt = row[self.time_field]
             try:
                 originalChunks[int(ttt)] = [row]
@@ -95,28 +137,37 @@ class DTMining:
                 originalChunks[datetime.datetime.fromisoformat(ttt)] = [row]
         logger.trace("2. Weekly data separation into immediate previous and immediate afterwards+mining")
         ewl_idx = MultiTraceIndexing(EntireTimeLog)
-        time_continuous_analysis = ewl_idx.segmentByXTraceEventLabel(x + '@label')
-        # comparison = list()
-        count = 1
-        # classOff = {'__class': 'Off'}
-        # classOk = {'__class': 'Ok'}
-        # mainStream = []
-        # TimeSeriesLogOff = Log()
-        # TimeSeriesLogOk = Log()
-        for idx, analysis in enumerate(time_continuous_analysis):
-            polyL = performMiningOverAnalysedLog(analysis.log, None, self.toExtendWithTime, None, None, timedim)
-            for i in range(len(polyL)):
-                if len(polyL[i]) > 0:
-                    try:
-                        t = min(
-                            map(lambda x: int(x.getValue(self.time_field)), polyL[i]))
-                        assert all(map(lambda x: int(x.getValue(self.time_field)) == t, polyL[i]))
-                    except:
-                        t = min(map(lambda x: datetime.datetime.fromisoformat(str(x.getValue(self.time_field))), polyL[i]))
-                        assert all(map(lambda x: datetime.datetime.fromisoformat(str(x.getValue(self.time_field))) == t,
-                                       polyL[i]))
-                    assert t in originalChunks
-                    originalChunks[t][0].setValue("__label", analysis.label)
-                    originalChunks[t] = originalChunks[t] + polyL[i]
-
+        if not doesLabelChangeInTime:
+            classes = {x.activityLabel for x in ewl_idx.log.traces[0]}
+            if len(classes)>1:
+                print("ERROR: Multiple classes. Falling back to the doesLabelChangeInTime=True case")
+                self.labelDoesChangeWithTime(ewl_idx, originalChunks, timedim, x)
+            else:
+                clazz = next(iter({x.activityLabel for x in ewl_idx.log.traces[0]}))
+                analysis = OutcomeAnalysis(clazz, 0, ewl_idx, ewl_idx)
+                polyL = performMiningOverAnalysedLog(analysis.log, self.toExtendWithTime, timedim)
+                self.maximalContigualCollection(analysis, originalChunks, polyL)
+        else:
+            self.labelDoesChangeWithTime(ewl_idx, originalChunks, timedim, x)
         return [originalChunks[t] for t in sorted(originalChunks.keys())]
+
+    def labelDoesChangeWithTime(self, ewl_idx, originalChunks, timedim, x):
+        time_continuous_analysis = ewl_idx.segmentByXTraceEventLabel(x + '@label')
+        for idx, analysis in enumerate(time_continuous_analysis):
+            polyL = performMiningOverAnalysedLog(analysis.log, self.toExtendWithTime, timedim)
+            self.maximalContigualCollection(analysis, originalChunks, polyL)
+
+    def maximalContigualCollection(self, analysis, originalChunks, polyL):
+        for i in range(len(polyL)):
+            if len(polyL[i]) > 0:
+                try:
+                    t = min(
+                        map(lambda x: int(x.getValue(self.time_field)), polyL[i]))
+                    assert all(map(lambda x: int(x.getValue(self.time_field)) == t, polyL[i]))
+                except:
+                    t = min(map(lambda x: datetime.datetime.fromisoformat(str(x.getValue(self.time_field))), polyL[i]))
+                    assert all(map(lambda x: datetime.datetime.fromisoformat(str(x.getValue(self.time_field))) == t,
+                                   polyL[i]))
+                assert t in originalChunks
+                originalChunks[t][0].setValue("__label", analysis.label)
+                originalChunks[t] = originalChunks[t] + polyL[i]
