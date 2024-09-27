@@ -120,17 +120,19 @@ class EMeriTAte:
         totalResults = []
         self.file = os.path.join(self.folder, "log_weekly.json")
         self.json_path = Path(self.file)
+
         if self.json_path.exists():
+            score = "f1"
             for path, supp, poly, red in dump_txt_files(str(self.json_path.parent.absolute())):
                 before_load_data = datetime.datetime.now()
 
                 logger.trace("D. Data loading in python")
                 model = LearnRepresentation(str(path), self.clazz, self.spec, self.criterion, self.max_depth, self.split)
+                score = "f1" if model.nclasses <= 2 else "macro_f1"
                 load_data = datetime.datetime.now() - before_load_data
                 load_data = load_data.total_seconds() * 1000
 
                 for _ in range(runs):
-
                     logger.trace( "E. Ad Hoc explanation+Post Hoc (scores+whitebox)")
                     before_testing = datetime.datetime.now()
                     d = model.test(poly=poly, supp=supp, red=red)
@@ -139,9 +141,9 @@ class EMeriTAte:
                     if d is not None:
                         print(d)
                         totalResults.append(d)
-                        f1 = max(d["f1"], f1)
+                        f1 = max(d[score], f1)
                         d["load_data"] = load_data
-            self.Model = [d for d in totalResults if d["f1"]==f1]
+            self.Model = [d for d in totalResults if d[score]==f1]
             pandas.DataFrame(totalResults).to_csv(os.path.join(self.resF, "results_proposed.csv"), index=False, mode='a')
         else:
             logger.error("ERROR: the polyadic file doesn't exist")

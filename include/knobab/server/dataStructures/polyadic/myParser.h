@@ -59,8 +59,9 @@ struct myParser {
 
 //    std::vector<std::vector<size_t>> eventClassification;
     bool isClassificationDone = false;
-    std::vector<std::pair<size_t,size_t>> components;
-    std::vector<std::pair<std::unordered_map<std::string, union_minimal>, int>> for_preliminary_classification;
+    std::vector<std::tuple<size_t,size_t, int>> components;
+//    std::vector<std::pair<std::unordered_map<std::string, union_minimal>, int>> for_preliminary_classification;
+//    std::vector<std::vector<size_t>> payload_trace_id;
 //    std::vector<size_t> classId;
 //    bool storeTimeIntervalsWithClazzez = false;
     std::unordered_map<std::string, std::vector<std::vector<double>>> clazz_to_time;
@@ -84,6 +85,10 @@ struct myParser {
 //        }
 //        return false;
 //    }
+
+    std::unordered_map<std::string,std::vector<std::pair<env,int>>> tmp_event_paload_aka_rawdata;
+    std::vector<std::pair<env,int>> event_paload_aka_rawdata;
+    std::unordered_map<std::string,std::vector<std::vector<size_t>>> payload_trace_id;
 
     void clear() {
         trace_id = event_id = -1;
@@ -236,7 +241,7 @@ struct myParser {
         if ((state == LOG) && (object_stack.top()) && isSchemaOk && isEventHierarchyOk) {
             state = TRACE;
             if (filler) {
-                if ((trace_id != (size_t)-1) && ((event_id != (size_t)-1)) && (!event_coordinates_init)){
+                if ((trace_id <= (size_t)-1) && ((event_id != (size_t)-1)) && (!event_coordinates_init)){
                     const auto& zncs = event_coordinates.at(trace_id).at(event_id);
                     filler->at(zncs.get_log_name()).db.exitTrace(zncs.trace_id);
                 }
@@ -307,8 +312,14 @@ struct myParser {
                     payload.erase(k);
                 }
                 if (!isClassificationDone) {
-                    components.emplace_back(trace_id, event_id);
-                    for_preliminary_classification.emplace_back(payload, (int)classInt);
+                    components.emplace_back(trace_id, event_id, (int)classInt);
+                } else if (filler) {
+                    auto& zncs = event_coordinates.at(trace_id).at(event_id);
+                    auto& envFiller = filler->at(zncs.get_log_name()).db;
+                    if (payload_trace_id[zncs.get_log_name()].size() == zncs.trace_id)
+                        payload_trace_id[zncs.get_log_name()].emplace_back();
+                    payload_trace_id[zncs.get_log_name()][zncs.trace_id].emplace_back(tmp_event_paload_aka_rawdata[zncs.get_log_name()].size());
+                    tmp_event_paload_aka_rawdata[zncs.get_log_name()].emplace_back(payload, (int)classInt);
                 }
             } else if (filler) {
                 auto& zncs = event_coordinates.at(trace_id).at(event_id);

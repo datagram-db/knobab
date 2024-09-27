@@ -121,7 +121,6 @@ struct polyadic_bolt {
     size_t log_size{0};
     act_t max_act_id{0};
     std::vector<size_t> Beginnings, first, last;
-//    FastDatalessClause clause;
     std::vector<pattern_mining_result<FastDatalessClause>> Phi;
     std::vector<act_t> ChoiceFilter;
     std::unordered_map<std::unordered_set<act_t>, uint64_t> map_for_itemset_support_score;
@@ -354,7 +353,6 @@ struct polyadic_bolt {
                 map_for_itemset_support_score[pattern.second] = pattern.first;
             }
         }
-//        std::sort(ChoiceFilter.begin(), ChoiceFilter.end());
         remove_index(frequent_itemset_mining, indices_to_remove);
 
         clause.n = 1;
@@ -438,11 +436,9 @@ struct polyadic_bolt {
         // activation condition (that is also the premise of the rule).
         // This is still computed, as it is required for both 1) and 2)
         auto a_beginend = kb->timed_dataless_exists(A);
-//        DEBUG_ASSERT(a_beginend.first != a_beginend.second);
 
         auto b_beginend = kb->timed_dataless_exists(B);
         // As I obtained the rule, there should be some data pertaining to it!
-//        DEBUG_ASSERT(b_beginend.first != b_beginend.second);
 
         uint32_t /*a_activation_count = 0,*/ a_trace_id = a_beginend.first->entry.id.parts.trace_id, a_prev_trace_id = a_trace_id,
 
@@ -451,7 +447,6 @@ struct polyadic_bolt {
         size_t last_a_for_retain = -1;
         if(a_trace_id != 0) {
             yaucl::iterators::iota_n(std::back_inserter(vac_r[shift]), a_trace_id, 0);
-//            vac_count_r[shift] += a_trace_id;
         }
 
         while (a_beginend.first != a_beginend.second) { // (B)
@@ -470,13 +465,11 @@ struct polyadic_bolt {
 
             if ((a_trace_id != a_prev_trace_id)) { // Already visited, L12-13
                 yaucl::iterators::iota_n(std::back_inserter(vac_r[shift]), (a_trace_id - a_prev_trace_id - 1), a_prev_trace_id+1);
-//                vac_count_r[shift] += (a_trace_id - a_prev_trace_id - 1);
                 a_prev_trace_id = a_trace_id;
             }
 
             /* I. We have As on their own */
             if ((b_beginend.first == b_beginend.second) || (a_trace_id < b_trace_id)) {
-//                a_activation_count++;
                 // Problem 1)
                 // This might be a valid precedence, as nothing is stated
                 // to what should happen after the A, but I cannot exploit
@@ -490,29 +483,13 @@ struct polyadic_bolt {
                 TRACE_SET_ADD(act_p[shift], a_trace_id);
                 TRACE_SET_ADD(viol_p[flip], a_trace_id);
 
-//                if (left_branch) {
-//                    TRACE_SET_ADD(data.r_activation_traces.first, a_trace_id);
-//                    TRACE_SET_ADD(data.p_activation_traces.second, a_trace_id);
-//                    TRACE_SET_ADD(data.r_lb_violations, a_trace_id);
-//                    TRACE_SET_ADD(data.p_lb_violations, a_trace_id);
-//                } else if (right_branch) {
-//                    TRACE_SET_ADD(data.r_activation_traces.second, a_trace_id);
-//                    TRACE_SET_ADD(data.p_activation_traces.first, a_trace_id);
-//
-//                    if (!trace_set_contains(it_p_lb_violations, data.p_lb_violations, a_trace_id)) {
-//                        decrease_support_X(kb, expected_support, alles_succession_ba, alles_not_succession_ba);
-//                    }
-//                }
-
                 // Now, skipping to the next trace, as there is no more information for as
                 if (!doRetain) {
                     last_a_for_retain = a_trace_id;
                     if (b_beginend.first == b_beginend.second)
                         yaucl::iterators::iota_n(std::back_inserter(vac_p[flip]), ((log_size) - a_trace_id), a_trace_id);
-//                        vac_count_p[flip] += ((log_size) - a_trace_id);
                     else
                         yaucl::iterators::iota_n(std::back_inserter(vac_p[flip]),(b_trace_id - a_trace_id - 1), a_trace_id+1);
-//                        vac_count_p[flip] += (b_trace_id - a_trace_id - 1);
                     doRetain = true;
                 }
                 fast_forward_equals(a_trace_id, a_beginend.first, a_beginend.second);
@@ -524,19 +501,6 @@ struct polyadic_bolt {
                     TRACE_SET_ADD(act_r[flip], id);
                 }
                 TRACE_SET_ADD(act_p[flip], a_trace_id);
-
-
-//                if(left_branch) {
-//                    TRACE_SET_ADD(data.r_activation_traces.second, a_trace_id);
-//                    TRACE_SET_ADD(data.p_activation_traces.first, a_trace_id);
-//                } else if (right_branch) {
-//                    TRACE_SET_ADD(data.r_activation_traces.first, a_trace_id);
-//                    TRACE_SET_ADD(data.p_activation_traces.second, a_trace_id);
-//
-//                    if (!trace_set_contains(it_r_lb_violations, data.r_lb_violations, a_trace_id)) {
-//                        decrease_support_X(kb, expected_support, alles_succession_ab, alles_not_succession_ab);
-//                    }
-//                }
 
                 // Moving b until I find something related to b. A is kept fixed and not incremented
                 if (a_beginend.first == a_beginend.second) {
@@ -567,31 +531,15 @@ struct polyadic_bolt {
             // Still, this consideration should be performed only up until
             // the first event is visited
 
-//            a_activation_count++;
-
             TRACE_SET_ADD(act_r[shift], a_trace_id);
             TRACE_SET_ADD(act_r[flip], a_trace_id);
             TRACE_SET_ADD(act_p[shift], a_trace_id);
             TRACE_SET_ADD(act_p[flip], a_trace_id);
-//            if (left_branch) {
-//                TRACE_SET_ADD(data.r_activation_traces.first, a_trace_id);
-//                TRACE_SET_ADD(data.r_activation_traces.second, a_trace_id);
-//                TRACE_SET_ADD(data.p_activation_traces.first, a_trace_id);
-//                TRACE_SET_ADD(data.p_activation_traces.second, a_trace_id);
-//            }
 
             if ((b_beginend.first != b_beginend.second) && (a_beginend.first != a_beginend.second) &&
                     (b_beginend.first->entry.id.parts.event_id >= a_beginend.first->entry.id.parts.event_id)) { // L.39
                 decrease_support_X(*kb, expected_support, alles_precedence, alles_not_precedence);
                 TRACE_SET_ADD(viol_p[flip], a_trace_id);
-//                if (left_branch) {
-//                    TRACE_SET_ADD(data.p_lb_violations, a_trace_id);
-//                } if (right_branch) {
-//                    /* Found a case for Succession(B,A) where Precedence(B,A) is violated (e.g. B) */
-//                    if (!trace_set_contains(it_r_lb_violations, data.r_lb_violations, a_trace_id)) {
-//                        decrease_support_X(kb, expected_support, alles_succession_ba, alles_not_succession_ba);
-//                    }
-//                }
             }
 
             const size_t offset = polyadic ? a_beginend.first->span : 1;
@@ -618,14 +566,6 @@ struct polyadic_bolt {
                     // and quitting the iteration
                     decrease_support_X(*kb, expected_support, alles_response, alles_not_response);
                     TRACE_SET_ADD(viol_r[shift], a_trace_id);
-//                    if (left_branch) {
-//                        TRACE_SET_ADD(data.r_lb_violations, a_trace_id);
-//                    }
-//                    if (right_branch && !trace_set_contains(it_p_lb_violations, data.p_lb_violations, a_trace_id)) {
-//                        /* Found a case for Succession(B,A) where Response(B,A) is violated (e.g. B) */
-//                        decrease_support_X(*kb, expected_support, alles_succession_ba, alles_not_succession_ba);
-//                    }
-
                     break;
                 }
                 a_beginend.first++;
@@ -694,25 +634,12 @@ struct polyadic_bolt {
             }
 
             if ((a_beginend.first == start) || (a_beginend.first - 1)->entry.id.parts.trace_id != trace_id) {
-//                conf_next_counting++;
-
-//                if (left_branch)
-//                    TRACE_SET_ADD(data.cr_activation_traces.first, trace_id);
-//                else
-//                    TRACE_SET_ADD(data.cr_activation_traces.second, trace_id);
                 TRACE_SET_ADD(act_cr[shift], trace_id);
 
-                if ((/*a_beginend.first->prev != nullptr*/ a_beginend.first->entry.id.parts.event_id>0) || (kb->getCountTable().resolve_length(A, trace_id) > 1)) {
-//                    conf_prev_counting++;
-
-//                    if (left_branch)
-//                        TRACE_SET_ADD(data.cp_activation_traces.first, trace_id);
-//                    else
-//                        TRACE_SET_ADD(data.cp_activation_traces.second, trace_id);
+                if ((a_beginend.first->entry.id.parts.event_id>0) || (kb->getCountTable().resolve_length(A, trace_id) > 1)) {
                     TRACE_SET_ADD(act_cp[shift], trace_id);
                 }
-                else if ((/*a_beginend.first->prev == nullptr*/ a_beginend.first->entry.id.parts.event_id == 0) && (kb->getCountTable().resolve_length(A, trace_id) == 1)) {
-//                    conf_prev_not_counting++;
+                else if (( a_beginend.first->entry.id.parts.event_id == 0) && (kb->getCountTable().resolve_length(A, trace_id) == 1)) {
                     vac_cp[shift].emplace_back(trace_id);
                 }
             }
@@ -811,7 +738,6 @@ struct polyadic_bolt {
         std::unordered_map<act_t, std::string> resolveLabelCache;
         clause.n = 2;
         size_t min_int_supp_patt = std::ceil(((double)support) * (minimum_support_threshold));
-//        std::set<act_t> discarded_actions, considered_actions;
         result_container rc;
         rc.log_size = log_size;
         std::unordered_set<std::pair<act_t,act_t>> used;
@@ -829,60 +755,7 @@ struct polyadic_bolt {
             auto B_label = resolveLabelCache.at(B);
             if ((A_label == "__missing") || (B_label == "__missing"))
                 continue;
-#if 0
-            if (((A_label == "DecreaseRapidly(Mean Stance Time_a)") || (A_label == "DecreaseRapidly(Mean Step Length_a)")) && ((B_label == "DecreaseRapidly(Mean Stance Time_a)") || (B_label == "DecreaseRapidly(Mean Step Length_a)"))) {
-                std::map<size_t, std::map<size_t, std::vector<std::pair<std::string,size_t>>>>  reconstructor;
-//                std::cout << "FOR: " << A_label << std::endl;
-                auto a_beginend = kb->timed_dataless_exists(A);
-                bool first = true;
-                trace_t traceId = 0;
-                event_t eventId = 0;
-                while (a_beginend.first != a_beginend.second) {
-                    reconstructor[a_beginend.first->entry.id.parts.trace_id][a_beginend.first->entry.id.parts.event_id].emplace_back(A_label, a_beginend.first->span);
-//                    if (first || (a_beginend.first->entry.id.parts.trace_id != traceId)) {
-//                        first = false;
-//                        traceId = a_beginend.first->entry.id.parts.trace_id;
-//                        eventId= a_beginend.first->entry.id.parts.event_id;
-//                        std::cout << "TRACE #" << traceId << std::endl;
-//                    }
-//                    if (eventId != a_beginend.first->entry.id.parts.event_id) {
-//                        std::cout << "- Event #" << traceId  << std::endl;
-//                    }
-//                    std::cout << "   with span = " << a_beginend.first->span  << std::endl;
-                    a_beginend.first++;
-                }
-//                std::cout << "FOR: " << B_label << std::endl;
-                auto b_beginend = kb->timed_dataless_exists(B);
-                while (b_beginend.first != b_beginend.second) {
-                    reconstructor[b_beginend.first->entry.id.parts.trace_id][b_beginend.first->entry.id.parts.event_id].emplace_back(B_label, b_beginend.first->span);
-//
-//                    if (first || (b_beginend.first->entry.id.parts.trace_id != traceId)) {
-//                        first = false;
-//                        traceId = b_beginend.first->entry.id.parts.trace_id;
-//                        eventId= b_beginend.first->entry.id.parts.event_id;
-//                        std::cout << "TRACE #" << traceId << std::endl;
-//                    }
-//                    if (eventId != b_beginend.first->entry.id.parts.event_id) {
-//                        std::cout << "- Event #" << traceId  << std::endl;
-//                    }
-//                    std::cout << "   with span = " << b_beginend.first->span  << std::endl;
-                    b_beginend.first++;
-                }
-                first = true;
-                traceId = 0;
-                for (const auto& [trace_id, trace] : reconstructor) {
-                    std::cout << "TRACE #" << trace_id << std::endl;
-                    for (const auto& [event_id, content] : trace) {
-                        std::cout << "- Event #" << event_id  << std::endl;
-                        for (const auto& [label,span] : content) {
-                            std::cout << "    " << label << " with span = " << span << std::endl;
-                        }
-                    }
-                    std::cout << std::endl << std::endl << std::endl;
-                }
-                exit(2);
-            }
-#endif
+
             unsigned char hasCoExistence = association_rules_for_declare(support, binary_pattern, A, B);
 
             /* We want to force a branch if the Bs ever occur at the start of the trace and occur only once.
@@ -908,7 +781,7 @@ struct polyadic_bolt {
                 }
             }
         }
-//        std::set_difference(discarded_actions.begin(), discarded_actions.end(), considered_actions.begin(), considered_actions.end(), std::back_inserter(ChoiceFilter));
+
         if (ChoiceFilter.empty()) {
             ChoiceFilter.reserve(max_act_id);
             for (auto act_id = 0; act_id<max_act_id; act_id++) {
@@ -947,9 +820,7 @@ struct polyadic_bolt {
                 for (auto& clauseX : it_1->second) {
                     cp.first = kb->event_label_mapper.get(clauseX.clause.left);
                     cp.second = kb->event_label_mapper.get(clauseX.clause.right);
-//                    if (considered.insert(cp).second) {
                         Phi.emplace_back(std::move(clauseX));
-//                    }
                 }
                 it_1++;
             }
@@ -961,7 +832,6 @@ struct polyadic_bolt {
         Phi.erase(std::unique(Phi.begin(), Phi.end(), [](const pattern_mining_result<FastDatalessClause>& l, const pattern_mining_result<FastDatalessClause>& r) {
             return std::tie(l.clause.casusu, l.clause.left, l.clause.right, l.clause.n) == std::tie(r.clause.casusu, r.clause.left, r.clause.right, r.clause.n);
         }), Phi.end());
-//        DEBUG_ASSERT(curr_size_Clauses == Phi.size());
     }
 
     inline void mdev(size_t i) {
@@ -1101,7 +971,6 @@ struct polyadic_bolt {
             auto indexes = ptr->resolveCountingData(act_id);
             if ((indexes.first == indexes.second) && (indexes.first == (uint32_t)-1)) {
                 continue;
-//                exit(5);
             } else {
                 std::unordered_map<size_t, std::string> MAP;
                 for (size_t count : countings) {
@@ -1130,7 +999,6 @@ struct polyadic_bolt {
             auto indexes = ptr->resolveCountingData(act_id);
             if ((indexes.first == indexes.second) && (indexes.first == (uint32_t)-1)) {
                 continue;
-//                exit(4);
             } else {
                 std::unordered_map<size_t, std::string> MAP;
                 for (size_t count : countings) {
@@ -1156,11 +1024,9 @@ struct polyadic_bolt {
             std::string labelA = ptr->event_label_mapper.get(A);
             const auto& aAct = act_Labels[A];
             const auto& aNoAct = noact_Labels[A];
-//            std::cout << " * " << labelA << std::endl;
             for (size_t j = 0; j<i; j++) {
                 auto B = actLabels.at(j);
                 std::string labelB = ptr->event_label_mapper.get(B);
-//                std::cout << "\t\t - " << labelB << std::endl;
                 rc.B = B;
                 const auto& bAct = act_Labels[B];
                 const auto& bNoAct = noact_Labels[B];

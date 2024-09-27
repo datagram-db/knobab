@@ -38,41 +38,48 @@ def pair_analysis(x, y):
 
 def performMiningOverAnalysedLog(analysis_log, toPertainYesEvents, timefield):
         L = BuonaGiornata(lambda x: x.startswith("day"))
-        Osmeh = dict()
+        skipOsmeh = len(toPertainYesEvents) == 0
+        Osmeh = None if skipOsmeh else dict()
         for idx2, trace in enumerate(analysis_log.log):
-            WW = list(filter(lambda xyz: trace.trace_name.endswith(xyz), toPertainYesEvents))
-            if len(WW) == 1:
-                YY = list(filter(lambda abc: abc[1].activityLabel[0]=="Y", enumerate(trace.events)))
-                if len(YY)>0:
-                    Osmeh[WW[0]] = YY
+            if not skipOsmeh:
+                WW_count = 0
+                WW_curr = None
+                for xyz in toPertainYesEvents:
+                    if trace.trace_name.endswith(xyz):
+                        WW_curr = xyz
+                        WW_count += 1
+                        if WW_count >= 2:
+                            break
+                if WW_count == 1:
+                    YY = [abc for abc in toPertainYesEvents if abc[1].activityLabel[0]=="Y"]
+                    if len(YY)>0:
+                        Osmeh[WW_curr] = YY
             pos = None
             neg = None
             actione = None
             doSkip = False
-            for key in trace.positional_events.keys():
-                if key == "Start":
+            for activityLabel in trace.positional_events.keys():
+                if activityLabel == "Start":
                     continue
                 elif (pos is None) and (neg is None):
-                    if (key.startswith("N")):
-                        neg = key
-                        actione = key[1:]
-                    elif (key.startswith("Y")):
-                        pos = key
-                        actione = key[1:]
+                    if (activityLabel.startswith("N")):
+                        neg = activityLabel
+                        actione = activityLabel[1:]
+                    elif (activityLabel.startswith("Y")):
+                        pos = activityLabel
+                        actione = activityLabel[1:]
                     else:
                         doSkip = True
                         break
-                elif key.startswith("N"):
-                    neg = key
+                elif activityLabel.startswith("N"):
+                    neg = activityLabel
                     break
-                elif key.startswith("Y"):
-                    pos = key
+                elif activityLabel.startswith("Y"):
+                    pos = activityLabel
                     break
             if doSkip:
                 continue
             else:
-                # assert trace.trace_name is not None
-                #analysis.outcome_mining[trace.trace_name] =
                 if (pos is None) and (neg is None):
                     raise Exception("Unexpected situation!")
                 elif pos is None:
@@ -81,7 +88,7 @@ def performMiningOverAnalysedLog(analysis_log, toPertainYesEvents, timefield):
                     neg = "N"+pos[1:]
                 mine_binary_growth_patterns(trace, trace.length, pos, neg, actione, L)
         finalised = L.finalise(timefield)
-        if (len(finalised)>0):
+        if (not skipOsmeh) and (len(finalised)>0):
             for itemo in Osmeh.values():
                 for elemento in itemo:
                     elemento[1].activityLabel = elemento[1].activityLabel[1:]
@@ -108,8 +115,8 @@ class MedicalAnalysis:
             df.to_csv(key+".csv", index=False)
 
     def _patient_specific_time_continous_analysis(self, x):
-        logger.info("Performining the continuous analysis for "+x)
-        logger.trace("1. Data Pre-Processing")
+        # logger.info("Performining the continuous analysis for "+x)
+        # logger.trace("1. Data Pre-Processing")
         EntireWeekLog = asWeekLog([(self.environments[x], x)])
         originalChunks = dict()
         tmp = EntireWeekLog
@@ -123,7 +130,7 @@ class MedicalAnalysis:
             row.activityLabel = "__raw_data"
             originalChunks[datetime.datetime.fromisoformat(row["fulltime"])] = [row]
 
-        logger.trace("2. Weekly data separation into immediate previous and immediate afterwards+mining")
+        # logger.trace("2. Weekly data separation into immediate previous and immediate afterwards+mining")
         ewl_idx = MultiTraceIndexing(EntireWeekLog)
         time_continuous_analysis = ewl_idx.segmentByXTraceEventLabel(x + '@label')
         count = 1

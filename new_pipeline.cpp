@@ -256,7 +256,7 @@ void  original_main_entrypoint(bool reclassify,
 
 int main(int argc, char **argv) {
     // Phases 01 (mining the models from the data) and 03 (deriving the decision tree structure)
-    // Prev -f "/home/giacomo/projects/polyadic_processing/raw_data/nopoly_s0_0/" -s 0.0 -d user -i day -i span -i "__class" -i "__label" -i time -i fulltime -l -p /home/giacomo/projects/knobab2_loggen/polyadic_preprocessing/raw_data/log_weekly.json
+    // Prev -f "/home/giacomo/projects/polyadic_processing/raw_data/nopoly_s0_0/" -s 0.0 -d user -i day -i span -i "__class" -i "__label" -i time -i fulltime -l -p /home/giacomo/projects/knobab2_loggen/polyadic_preprocessing/raw_data/log_weekly.json -k
     // CyberSecurity configuration:
     // -s 0.8 --nonPoly=tab --nonPoly=tab --nonPoly=tab --nonPoly=tab --nonPoly=tab --nonPoly=tab --nonPoly=tab --nonPoly=tab /home/giacomo/Scaricati/classes/Adware.tab_100.tab /home/giacomo/Scaricati/classes/Backdoor.tab_100.tab /home/giacomo/Scaricati/classes/Downloader.tab_100.tab /home/giacomo/Scaricati/classes/Dropper.tab_100.tab /home/giacomo/Scaricati/classes/Spyware.tab_100.tab /home/giacomo/Scaricati/classes/Trojan.tab_100.tab /home/giacomo/Scaricati/classes/Virus.tab_100.tab /home/giacomo/Scaricati/classes/Worms.tab_100.tab
 
@@ -279,8 +279,8 @@ int main(int argc, char **argv) {
     args::ValueFlag<double>  supportVal(group, "Support Value", "If present, specifies the support value (default 1.0)", {'s', "support"});
     args::ValueFlag<std::string>  distinguisher(group, "Trace Distinguisher", "Trace payload field allowing to distinguish different users within polyadic traces", {'d', "distinguisher"});
     args::Flag red(group, "reduction", "Run the model reduction for removing mutually implying clauses", {'r', "red"});
-    args::Flag rec(group, "reclassify", "Run a re-classification, thus further distiguishing each class via decision-tree induced sub-classes", {'k', "subclass"});
-    args::ValueFlag<std::string> fastSat(group, "reclassify", "Performs a fast SAT given specific configuration files within a specific folder", {'f', "fastSat"});
+    args::Flag rec(group, "reclassify", "Run a re-classification, thus further distiguishing each class via decision-tree induced sub-classes", {'k', "reclassify"});
+    args::ValueFlag<std::string> fastSat(group, "fastSat", "Performs a fast SAT given specific configuration files within a specific folder", {'f', "fastSat"});
     args::ValueFlagList<std::string> characters(parser, "ignore keys", "The payload's keys to be ignored within the loading and classification task", {'i', "ignore"});
     args::ValueFlag<std::string> polyadicJSON(parser, "polyadic JSON", "The polyadic traces represented as a json file", {'p', "polyadic"});
     args::Flag polyadicMine(parser, "usual mining", "Uses the standard linear behaviour from declarative mining, where traces are not grouped in hierarchy", {'l', "nonPolyMining"});

@@ -58,10 +58,10 @@ struct ActTable {
      * Mapping the trace id to the first and last event (see the log printer from the KnowledgeBase for a usage example)
      */
     std::vector<std::pair<std::unordered_map<act_t, std::vector<ActTable::record*>>*, std::unordered_map<act_t, std::vector<ActTable::record*>>*>> secondary_index;
-    std::vector<std::vector<std::unordered_map<act_t, std::vector<ActTable::record*>>>> secondary_index_polyadic;
+    std::vector<std::vector<std::unordered_map<act_t, std::vector<ActTable::record*>>>> secondary_index_polyadic; // trace->time->act->offset
     std::vector<std::vector<std::unordered_map<act_t, std::vector<size_t>>>> trace_id_to_endTimeId_to_offset;
 
-    void load_record(trace_t id, act_t act, event_t time, event_t span = 1); // rename: loading_step (emplace_back)
+    void load_record(trace_t id, act_t act, event_t polyId, event_t span = 1); // rename: loading_step (emplace_back)
     const std::vector<std::vector<std::unordered_map<act_t, std::vector<size_t>>>> & indexing1();
     void indexing2();
     void sanityCheck();
@@ -79,10 +79,9 @@ private:
     std::vector<std::tuple<trace_t, event_t, size_t>> expectedOrdering; // TODO: remove?
 
     struct table_builder {
-        std::vector<std::vector<std::tuple<trace_t, event_t, event_t>>> act_id_to_trace_id_and_time; // M1
+        std::vector<std::vector<std::tuple<trace_t, event_t, event_t>>> act_id_to_trace_id_and_time; // M1 -- act -> [traceid, polyId, span]
         std::vector<std::vector<std::unordered_map<act_t, std::vector<size_t>>>> trace_id_to_event_id_to_offset; // M2
     };
-
     table_builder builder;
 
 public:

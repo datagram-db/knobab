@@ -1,6 +1,7 @@
 import os
 import sys
 from collections import defaultdict
+from typing import Tuple
 
 import pandas
 from sklearn.metrics import accuracy_score, precision_score, recall_score, roc_curve, f1_score
@@ -16,12 +17,21 @@ from pathlib import Path
 # spec = None#"/home/giacomo/projects/knobab2_loggen/output_model_healthcare/debugged/log_weekly.json_0.2_0_0_0_clazz=1.txt"
 # modelfile = Path(folder).name + ".txt"
 
-def loadDataset(class0, class1):
-    df0 = pandas.read_csv(class0, index_col=0, header=None).transpose()
-    df0['class'] = 0
-    df1 = pandas.read_csv(class1, index_col=0, header=None).transpose()
-    df1['class'] = 1
-    return pandas.concat([df0, df1], axis=0, ignore_index=True).fillna(-1)
+
+def load_single_file_and_append_class(t:Tuple[int,str])->pandas.DataFrame:
+    df0 = pandas.read_csv(t[1], index_col=0, header=None).transpose()
+    df0['class'] = t[0]
+    return df0
+
+def loadDataset(classls):
+    # for idx, x in enumerate(classls):
+    #     df0 = pandas.read_csv(x, index_col=0, header=None).transpose()
+    #     df0['class'] = idx
+    # df0 = pandas.read_csv(class0, index_col=0, header=None).transpose()
+    # df0['class'] = 0
+    # df1 = pandas.read_csv(class1, index_col=0, header=None).transpose()
+    # df1['class'] = 1
+    return pandas.concat(map(load_single_file_and_append_class, enumerate(classls)), axis=0, ignore_index=True).fillna(-1)
 
 def readFileForSpec(filename):
     S = set()
@@ -55,13 +65,14 @@ class LearnRepresentation:
         self.split = split
         self.max_depth = max_depth
         self.criterion = criterion
-        self.class0 = os.path.join(folder, "output_csv_0.csv")
-        self.class1 = os.path.join(folder, "output_csv_1.csv")
-        print(self.class0)
-        print(self.class1)
+        import glob
+        class_files = glob.glob(os.path.join(folder, "output_csv_*.csv"))
+        class_files = sorted(class_files, key=lambda x: int(x[x.rfind("output_csv_") + len("output_csv_"):x.rfind(".csv")]))
+        print(class_files)
+        self.nclasses = len(class_files)
         self.spec = spec  # "/home/giacomo/projects/knobab2_loggen/output_model_healthcare/debugged/log_weekly.json_0.2_0_0_0_clazz=1.txt"
         self.modelfile = Path(folder).name + ".txt"
-        self.dict_list = loadDataset(self.class0, self.class1)
+        self.dict_list = loadDataset(class_files)
         self.rf = None
         # if spec is not None:
         #     S = readFileForSpec(spec)
@@ -91,22 +102,45 @@ class LearnRepresentation:
             rf.fit(X_train, y_train)
             y_pred = rf.predict(X_test)
 
-            accuracy = accuracy_score(y_test, y_pred)
-            precision = precision_score(y_test, y_pred)
-            recall = recall_score(y_test, y_pred)
-            f1 = f1_score(y_test, y_pred)
-            fpr, tpr, thresholds = roc_curve(y_test, y_pred)
 
-            d = {"poly": poly,
-                 "supp": supp,
-                 "red": red,
-                 "accuracy": accuracy,
-                 "precision": precision,
-                 "recall": recall,
-                 "f1": f1,
-                 "roc": {"fpr": fpr, "tpr":tpr, "thresholds": thresholds},
-                 "model":os.linesep.join(export_text2(rf, X.columns, show_weights=True))
-                 }
+            if self.nclasses > 2:
+                accuracy = accuracy_score(y_test, y_pred)
+                macro_precision = precision_score(y_test, y_pred, average='macro')
+                macro_recall = recall_score(y_test, y_pred, average='macro')
+                macro_f1 = f1_score(y_test, y_pred, average='macro')
+                weighted_precision = precision_score(y_test, y_pred, average='weighted')
+                weighted_recall = recall_score(y_test, y_pred, average='weighted')
+                weighted_f1 = f1_score(y_test, y_pred, average='weighted')
+                d = {"poly": poly,
+                     "supp": supp,
+                     "red": red,
+                     "accuracy": accuracy,
+                     "macro_precision": macro_precision,
+                     "weighted_precision": weighted_precision,
+                     "macro_recall": macro_recall,
+                     "weighted_recall": weighted_recall,
+                     "macro_f1": macro_f1,
+                     "weighted_f1": weighted_f1,
+                     "model": os.linesep.join(export_text2(rf, X.columns, show_weights=True))
+                     }
+            else:
+                accuracy = accuracy_score(y_test, y_pred)
+                precision = precision_score(y_test, y_pred)
+                recall = recall_score(y_test, y_pred)
+                f1 = f1_score(y_test, y_pred)
+                fpr, tpr, thresholds = roc_curve(y_test, y_pred)
+                d = {"poly": poly,
+                     "supp": supp,
+                     "red": red,
+                     "accuracy": accuracy,
+                     "precision": precision,
+                     "recall": recall,
+                     "f1": f1,
+                     "roc": {"fpr": fpr, "tpr": tpr, "thresholds": thresholds},
+                     "model": os.linesep.join(export_text2(rf, X.columns, show_weights=True))
+                     }
+
+
             # print(d)
             return d
             # print("Accuracy:", accuracy)

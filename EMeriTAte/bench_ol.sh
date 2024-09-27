@@ -21,7 +21,7 @@ do
    # or do whatever with individual element of the array
    done
 done
-#/home/giacomo/projects/knobab2_loggen/EMeriTAte/venv/bin/python /home/giacomo/projects/knobab2_loggen/EMeriTAte/other_processing_steps.py $patho "class" "time"
+#/home/giacomo/projects/knobab2_loggen/EMeriTAte/venv/bin/python /home/giacomo/projects/knobab2_loggen/EMeriTAte/other_processing_steps.py "/home/giacomo/projects/knobab2_loggen/EMeriTAte/osuleaf/" "class" "time"
 #if [ $? -eq 0 ]
 #        then
 #          echo "Successfully finaliesd the run created file"

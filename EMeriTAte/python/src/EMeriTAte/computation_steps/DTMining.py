@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pandas
 from loguru import logger
-from EMeriTAte.timeseries.Log import Log, CollectTypeEvidence
+from EMeriTAte.timeseries.Log import Log, CollectTypeEvidence, TracePositional
 
 from EMeriTAte.original_paper.medical_analysis import performMiningOverAnalysedLog
 from EMeriTAte.original_paper.parsing_medical_data import asFinalLog, exploseTimeVariations
@@ -55,19 +55,23 @@ class DTMining:
             # print(file)
 
     def transform(self, cached=True, concurrent=False):
+        M = {"user":None}
         p = os.path.join(self.folder, "log_weekly.json")
         if (not cached) or (not os.path.isfile(p)):
             fp = open(p, "w")
             fp.write('{"log":[')
-            UserLog = Log(careAboutUniqueEvents=False)
+            # UserLog = Log(careAboutUniqueEvents=False)
             cle = CollectTypeEvidence()
             n = len(self.environments)
             if not concurrent:
                 for idx, pat in enumerate(self.environments):
+                    M["user"] = pat
                     ls = self._perEnvironment(pat, self.time_field)
-                    obj, tp = UserLog.addTracePositional(ls, withData=True, isTab=True,
-                                                              withExplicitPayloadMap={"user":pat},
-                                                     explicitlyStoreTrace=False)
+                    # obj, tp = UserLog.addTracePositional(ls, withData=True, isTab=True,
+                    #                                           withExplicitPayloadMap={"user":pat},
+                    #                                  explicitlyStoreTrace=False)
+                    tp = TracePositional(ls, withData=True, withExplicitPayloadMap=M)
+                    obj = tp.toJSONObject()
                     obj["__name"] = str(pat)
                     cle.collectEvidence(tp)
                     fp.write(json.dumps(obj))
@@ -76,7 +80,7 @@ class DTMining:
                     fp.flush()
                     del obj
                     del tp
-                    print(f"{(idx/len(self.environments))*100.0}")
+                    # print(f"{(idx/len(self.environments))*100.0}")
             else:
                 import concurrent.futures
                 futures = []
@@ -87,9 +91,8 @@ class DTMining:
                     for f in concurrent.futures.as_completed(futures2):
                         pat = futures2[f]
                         ls = f.result()
-                        obj, tp = UserLog.addTracePositional(ls, withData=True, isTab=True,
-                                                             withExplicitPayloadMap={"user": pat},
-                                                             explicitlyStoreTrace=False)
+                        tp = TracePositional(ls, withData=True, withExplicitPayloadMap=M)
+                        obj = tp.toJSONObject()
                         obj["__name"] = str(pat)
                         cle.collectEvidence(tp)
                         fp.write(json.dumps(obj))
@@ -110,15 +113,19 @@ class DTMining:
             fp.write(json.dumps(cle.deriveHierarchy))
             fp.write('}')
             fp.close()
-            #UserLog.indexing()
-            #with open(p, "w") as outfile:
+            with open(p, "r") as infile:
+                o = json.load(infile)
             #    json.dump(UserLog.toJSONObject(), outfile, indent=4)
+            tmp = {"schema": o["schema"], "event_hierarchy": o["event_hierarchy"], "log": o["log"]}
+            # UserLog.indexing()
+            with open(p, "w") as outfile:
+               json.dump(tmp, outfile, indent=4)
         return p
 
     def _perEnvironment(self, envName, timedim, doesLabelChangeInTime=False):
         x = envName
-        logger.info("Performining the continuous analysis for "+x)
-        logger.trace("1. Data Pre-Processing")
+        # logger.info("Performining the continuous analysis for "+x)
+        # logger.trace("1. Data Pre-Processing")
         EntireTimeLog = asFinalLog(self.environments[x], x, self.class_field, self.replace, self.conversion)
         originalChunks = dict()
         tmp = EntireTimeLog
@@ -135,7 +142,7 @@ class DTMining:
                 originalChunks[int(ttt)] = [row]
             except:
                 originalChunks[datetime.datetime.fromisoformat(ttt)] = [row]
-        logger.trace("2. Weekly data separation into immediate previous and immediate afterwards+mining")
+        # logger.trace("2. Weekly data separation into immediate previous and immediate afterwards+mining")
         ewl_idx = MultiTraceIndexing(EntireTimeLog)
         if not doesLabelChangeInTime:
             classes = {x.activityLabel for x in ewl_idx.log.traces[0]}

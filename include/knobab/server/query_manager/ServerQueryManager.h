@@ -125,7 +125,9 @@ public:
     std::any visitNext_and_B(KnoBABQueryParser::Next_and_BContext *ctx) override;
 
     trace_visitor* tv = nullptr;
+
     std::unordered_map<std::string, Environment> multiple_logs;
+    // TODO: (unnecessary at the moment): on-line function to get, from envname, trace number, and event-id, the event payload offset in event_paload_aka_rawdata
 
     /// DECLARE DATA AWARE PARSING
     std::any visitData_aware_declare(KnoBABQueryParser::Data_aware_declareContext *context) override;

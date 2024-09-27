@@ -43,15 +43,15 @@ bool ActTable::record::operator!=(const ActTable::record &rhs) const {
 #include <yaucl/functional/assert.h>
 #include <iostream>
 
-void ActTable::load_record(trace_t id, act_t act, event_t time, event_t span) {
+void ActTable::load_record(trace_t id, act_t act, event_t polyId, event_t span) {
     {
         const size_t N = builder.act_id_to_trace_id_and_time.size();
         //DEBUG_ASSERT(N >= act);
         if (N == act) {
-            builder.act_id_to_trace_id_and_time.emplace_back().emplace_back(id, time, span);
+            builder.act_id_to_trace_id_and_time.emplace_back().emplace_back(id, polyId, span);
         } else if (N > act){
             //DEBUG_ASSERT(builder.act_id_to_trace_id_and_time.size() > act);
-            builder.act_id_to_trace_id_and_time[act].emplace_back(id, time, span);
+            builder.act_id_to_trace_id_and_time[act].emplace_back(id, polyId, span);// act -> [traceid, polyId, span]
         }
     }
     {
@@ -74,7 +74,7 @@ void ActTable::load_record(trace_t id, act_t act, event_t time, event_t span) {
                 trace_length[id]++;
             }
         }
-        if (time == builder.trace_id_to_event_id_to_offset[id].size()) {
+        if (polyId == builder.trace_id_to_event_id_to_offset[id].size()) {
             builder.trace_id_to_event_id_to_offset[id].emplace_back();
             trace_id_to_endTimeId_to_offset[id].emplace_back();
             secondary_index_polyadic[id].emplace_back();

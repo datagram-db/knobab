@@ -112,6 +112,12 @@ namespace std {
     };
 }
 
+using env = std::unordered_map<std::string, union_minimal>;
+
+
+
+
+
 class KnowledgeBase : public trace_visitor {
     CountTemplate                                   count_table;
     SimplifiedFuzzyStringMatching                   string_values;
@@ -139,6 +145,24 @@ public:
     static constexpr bool      default_bool     = false;
     static std::string         default_string;//= "";
     static double    maximum_reliability_for_insertion;
+    std::vector<size_t> EMPTY_INT_VECTOR;
+
+    const std::vector<size_t>& getConstituentOffsets(size_t trace_id, size_t event_id, const std::string& act) {
+        std::vector<env> result;
+        env environment;
+        const auto& offsets_map = act_table_by_act_id.getBuilder().trace_id_to_event_id_to_offset.at(trace_id).at(event_id);
+        auto act_id = event_label_mapper.signed_get(act);
+        if (act_id> 0) {
+            auto it = offsets_map.find(act_id);
+            if(it != offsets_map.end()) {
+                return it->second;
+            } else {
+                return EMPTY_INT_VECTOR;
+            }
+        } else {
+            return EMPTY_INT_VECTOR;
+        }
+    }
 
     size_t doTraceCounting(const std::vector<size_t>& toTest) {
         std::unordered_map<std::vector<size_t>, size_t> result;
@@ -175,7 +199,9 @@ public:
         return Result;
     }
 
-
+//    std::vector<std::pair<env,int>> event_paload_aka_rawdata;
+//    std::vector<std::vector<size_t>> payload_trace_id;
+    // TODO: (unnecessary at the moment): on-line function to get, from envname, trace number, and event-id, the event payload offset in event_paload_aka_rawdata
     ActTable                                        act_table_by_act_id;
     yaucl::structures::any_to_uint_bimap<std::string> event_label_mapper;
     std::unordered_map<size_t, size_t> counting_reference;
@@ -408,5 +434,64 @@ private:
 
 
 
+struct hasRecord {
+    std::unordered_map<size_t, std::unordered_map<std::string, const AttributeTable::record*>> offsets;
+    hasRecord(const std::vector<size_t>& offsets, const KnowledgeBase& kb) {
+        for (const auto offset : offsets) {
+            auto& ref = this->offsets[offset];
+            for(const auto& p : kb.attribute_name_to_table){
+                auto ptr  = p.second.resolve_record_if_exists(offset);
+                if( ptr != nullptr ) {
+                    ref[p.first] = ptr;
+                }
+            }
+        }
+    }
+
+    inline bool testOverOneSingleOffset(size_t offset,
+                                        const std::unordered_map<std::string, AttributeTable>& map,
+                                        const DataPredicate& dp) {
+        auto it = offsets.find(offset);
+        if (it == offsets.end())
+            return false;
+        DEBUG_ASSERT(map.contains(dp.var));
+        auto it2 = it->second.find(dp.var);
+        if (it2 == it->second.end())
+            return false;
+        auto& table = map.at(dp.var);
+        switch (table.type) {
+            case DoubleAtt:
+                return dp.testOverSingleVariable( (*(double*)(&it2->second->value)));
+            case LongAtt:
+                return dp.testOverSingleVariable( (*(long long*)(&it2->second->value)));
+            case StringAtt:
+                return dp.testOverSingleVariable(table.ptr.get(it2->second->value));
+            case BoolAtt:
+                return dp.testOverSingleVariable((it2->second->value != 0) ? 1.0 : 0.0);
+            default:
+                return dp.testOverSingleVariable(it2->second->value);
+        }
+    }
+
+    inline int test_single_conjunction(const std::vector<std::vector<std::pair<double,std::unordered_map<std::string, DataPredicate>>>> & model,
+                                                                size_t offset,
+                                                                const std::unordered_map<std::string, AttributeTable>& map) {
+        for (size_t clazz = 0, N = model.size(); clazz<N; clazz++) {
+            const auto& disj = model.at(clazz);
+            for (const auto& [score,map2] : disj) {
+                bool found = false;
+                for (const auto& [k,v] : map2) {
+                    found = testOverOneSingleOffset(offset, map, v);
+                    if (!found)
+                        break;
+                }
+                if (found) {
+                    return clazz;
+                }
+            }
+        }
+        return -1;
+    }
+};
 
 #endif //BZDB_SMALLDATABASE_H

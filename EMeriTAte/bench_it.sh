@@ -1,5 +1,5 @@
 declare -a arr=("True" "False")
-export patho="/home/giacomo/projects/knobab2_loggen/EMeriTAte/japanese_vowels"
+export patho="/home/giacomo/projects/knobab2_loggen/EMeriTAte/italy_power_demand/"
 echo "Concerning ${patho}" >> errors.log
 ## now loop through the above array
 for i in "${arr[@]}"

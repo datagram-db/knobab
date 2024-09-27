@@ -53,6 +53,9 @@ class PolyadicTrace:
     def add(self, label, offset):
         self.d[label].add(offset)
 
+    def __contains__(self, item):
+        return item in self.d
+
     def __iter__(self):
         return iter(self.d)
 
