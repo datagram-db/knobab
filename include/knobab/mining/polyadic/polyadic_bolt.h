@@ -731,69 +731,54 @@ struct polyadic_bolt {
         }
     }
 
-    inline void binary_clauses_mining(double support, size_t minimum_support_threshold, bool polyadic,
-                                      std::vector<std::pair<size_t, std::unordered_set<act_t>>>& frequent_itemset_mining) {
-        act_t A, B;
-        FastDatalessClause clause;
-        std::unordered_map<act_t, std::string> resolveLabelCache;
-        clause.n = 2;
-        size_t min_int_supp_patt = std::ceil(((double)support) * (minimum_support_threshold));
-        result_container rc;
-        rc.log_size = log_size;
-        std::unordered_set<std::pair<act_t,act_t>> used;
-        for (const auto& binary_pattern : frequent_itemset_mining) {
-            rc.result.clear();
-            clearResultsVector();
-            std::vector<unsigned short> AB{binary_pattern.second.begin(), binary_pattern.second.end()};
-            rc.A = A = AB[0];
-            rc.B = B = AB[1];
-            resolveLabelCache.clear();
-            resolveLabelCache.emplace(A, kb->event_label_mapper.get(A));
-            resolveLabelCache.emplace(B, kb->event_label_mapper.get(B));
+    inline void mine_for_AB_clauses(double support,
+                                    bool polyadic,
+                                    act_t A, act_t B, FastDatalessClause &cache_clause,
+                                          std::unordered_map<act_t, std::string> &resolveLabelCache,
+                                          size_t min_int_supp_patt,
+                                          result_container &rc,
+                                          std::unordered_set<std::pair<act_t, act_t>> &used,
+                                          const std::pair<size_t, std::unordered_set<act_t>> &binary_pattern) {
+        unsigned char hasCoExistence = association_rules_for_declare(support, binary_pattern, A, B);
 
-            auto A_label = resolveLabelCache.at(A);
-            auto B_label = resolveLabelCache.at(B);
-            if ((A_label == "__missing") || (B_label == "__missing"))
-                continue;
+        /* We want to force a branch if the Bs ever occur at the start of the trace and occur only once.
+     * This is due to ChainPrecedence, which has an activation of X(A), and we want to mine a potential
+     * ChainPrecedence(A,B) */
+        bool branch = (hasCoExistence==2) || (Beginnings.at(B) > 0); // Algorithm 7, L. 15
 
-            unsigned char hasCoExistence = association_rules_for_declare(support, binary_pattern, A, B);
-
-            /* We want to force a branch if the Bs ever occur at the start of the trace and occur only once.
-             * This is due to ChainPrecedence, which has an activation of X(A), and we want to mine a potential
-             * ChainPrecedence(A,B) */
-            bool branch = (hasCoExistence==2) || (Beginnings.at(B) > 0); // Algorithm 7, L. 15
-
-            extractPatternsForcibly(polyadic, A, B, clause, min_int_supp_patt,
-                                    hasCoExistence, branch, true, false);
-            QM_DECLARE Q{&graph, min_int_supp_patt};
-            graph.visit<QM_DECLARE, result_container>(choiceAB_BA, Q, rc);
-            if (!rc.result.empty()) {
-                for (const auto& res : rc.result) {
-                    clause.casusu = res.name;
-                    clause.left = resolveLabelCache.at(res.A);
-                    clause.right = resolveLabelCache.at(res.B);
-                    Phi.emplace_back(clause, -1.0, res.support, res.rconf, -1.0);
-                }
-                if (A<B) {
-                    used.emplace(A,B);
-                } else {
-                    used.emplace(B,A);
-                }
+        extractPatternsForcibly(polyadic, A, B, cache_clause, min_int_supp_patt,
+                                hasCoExistence, branch, true, false);
+        QM_DECLARE Q{&graph, min_int_supp_patt};
+        graph.visit<QM_DECLARE, result_container>(choiceAB_BA, Q, rc);
+        if (!rc.result.empty()) {
+            for (const auto& res : rc.result) {
+                cache_clause.casusu = res.name;
+                cache_clause.left = resolveLabelCache.at(res.A);
+                cache_clause.right = resolveLabelCache.at(res.B);
+                Phi.emplace_back(cache_clause, -1.0, res.support, res.rconf, -1.0);
+            }
+            if (A<B) {
+                used.emplace(A,B);
+            } else {
+                used.emplace(B,A);
             }
         }
+//        return rc;
+    }
 
+    void finalise_run(size_t minimum_support_threshold, const std::unordered_set<std::pair<act_t, act_t>> &used) {
         if (ChoiceFilter.empty()) {
             ChoiceFilter.reserve(max_act_id);
-            for (auto act_id = 0; act_id<max_act_id; act_id++) {
+            for (auto act_id = 0; act_id < max_act_id; act_id++) {
                 ChoiceFilter.emplace_back(act_id);
             }
         }
         remove_duplicates(ChoiceFilter);
         std::pair<act_t, act_t> cp;
         std::unordered_map<act_t, retain_choice> map_for_retain;
-        for (size_t act_id_offset = 0; act_id_offset<ChoiceFilter.size(); act_id_offset++) {
+        for (size_t act_id_offset = 0; act_id_offset < ChoiceFilter.size(); act_id_offset++) {
             cp.first = ChoiceFilter.at(act_id_offset);
-            for (size_t act_idB_offset = act_id_offset+1; act_idB_offset<ChoiceFilter.size(); act_idB_offset++) {
+            for (size_t act_idB_offset = act_id_offset+1; act_idB_offset < ChoiceFilter.size(); act_idB_offset++) {
                 cp.second = ChoiceFilter.at(act_idB_offset);
                 if (!used.contains(cp)) {
                     choice_exclchoice(cp.first, cp.second,
@@ -832,6 +817,38 @@ struct polyadic_bolt {
         Phi.erase(std::unique(Phi.begin(), Phi.end(), [](const pattern_mining_result<FastDatalessClause>& l, const pattern_mining_result<FastDatalessClause>& r) {
             return std::tie(l.clause.casusu, l.clause.left, l.clause.right, l.clause.n) == std::tie(r.clause.casusu, r.clause.left, r.clause.right, r.clause.n);
         }), Phi.end());
+    }
+
+    inline void binary_clauses_mining(double support, size_t minimum_support_threshold, bool polyadic,
+                                      std::vector<std::pair<size_t, std::unordered_set<act_t>>>& frequent_itemset_mining) {
+        act_t A, B;
+        FastDatalessClause clause;
+        std::unordered_map<act_t, std::string> resolveLabelCache;
+        clause.n = 2;
+        size_t min_int_supp_patt = std::ceil(((double)support) * (minimum_support_threshold));
+        result_container rc;
+        rc.log_size = log_size;
+        std::unordered_set<std::pair<act_t,act_t>> used;
+        for (const auto& binary_pattern : frequent_itemset_mining) {
+            rc.result.clear();
+            clearResultsVector();
+            std::vector<unsigned short> AB{binary_pattern.second.begin(), binary_pattern.second.end()};
+            rc.A = A = AB[0];
+            rc.B = B = AB[1];
+            resolveLabelCache.clear();
+            resolveLabelCache.emplace(A, kb->event_label_mapper.get(A));
+            resolveLabelCache.emplace(B, kb->event_label_mapper.get(B));
+
+            auto A_label = resolveLabelCache.at(A);
+            auto B_label = resolveLabelCache.at(B);
+            if ((A_label == "__missing") || (B_label == "__missing"))
+                continue;
+
+            mine_for_AB_clauses(support, polyadic, A, B, clause, resolveLabelCache, min_int_supp_patt, rc, used,
+                                     binary_pattern);
+        }
+
+        finalise_run(minimum_support_threshold, used);
     }
 
     inline void mdev(size_t i) {
@@ -1079,6 +1096,25 @@ struct polyadic_bolt {
         }
     }
 
+    inline uint64_t run1(double support, bool polyadic, const KnowledgeBase* ptr, std::vector<std::pair<size_t, std::unordered_set<act_t>>>& fpt_result) {
+        if (!ptr) return -1;
+        clear();
+        setKnowledgeBaseAndInit(ptr);
+
+        support = std::max(std::min(support, 1.0), 0.0);
+        uint64_t minimum_support_threshold = std::min((uint64_t)std::ceil((double)log_size * support), log_size);
+
+        // Algorithm 4. Generate Frequent Itemsets
+        {
+            std::vector<std::pair<act_t, size_t>> final_element_for_scan;
+            fpt_result = std::move(fpgrowth(*count_table, max_act_id, final_element_for_scan, minimum_support_threshold, 2));
+        }
+
+        // Algorithm 5. Generate Unary clauses
+        generate_unary_clauses(fpt_result);
+        return minimum_support_threshold;
+    }
+
     void run(double support, bool polyadic, const KnowledgeBase* ptr) {
         if (!ptr) return;
         clear();
@@ -1089,13 +1125,7 @@ struct polyadic_bolt {
 
         // Algorithm 4. Generate Frequent Itemsets
         std::vector<std::pair<size_t, std::unordered_set<act_t>>> fpt_result;
-        {
-            std::vector<std::pair<act_t, size_t>> final_element_for_scan;
-            fpt_result = std::move(fpgrowth(*count_table, max_act_id, final_element_for_scan, minimum_support_threshold, 2));
-        }
-
-        // Algorithm 5. Generate Unary clauses
-        generate_unary_clauses(fpt_result);
+        run1( support,  polyadic, ptr,fpt_result);
 
         // Algorithm 6. Binary Clauses Mining
         binary_clauses_mining(support, minimum_support_threshold, polyadic, fpt_result);

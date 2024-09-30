@@ -37,6 +37,7 @@
 #define STRINGIFY_8(a, b, c, d, e, f, g, h) #a "," #b "," #c "," #d "," #e "," #f "," #g "," #h
 #define STRINGIFY_9(a, b, c, d, e, f, g, h, i) #a "," #b "," #c "," #d "," #e "," #f "," #g "," #h "," #i
 #define STRINGIFY_10(a, b, c, d, e, f, g, h, i, j) #a "," #b "," #c "," #d "," #e "," #f "," #g "," #h "," #i "," #j
+#define STRINGIFY_11(a, b, c, d, e, f, g, h, i, j,k) #a "," #b "," #c "," #d "," #e "," #f "," #g "," #h "," #i "," #j "," #k
 #define BESTIA_1(a) a
 #define BESTIA_2(a, b) a << "," <<  b
 #define BESTIA_3(a, b, c) a << "," <<  b << "," <<  c
@@ -47,6 +48,7 @@
 #define BESTIA_8(a, b, c, d, e, f, g, h) a << "," <<  b << "," <<  c << "," <<  d << "," <<  e << "," <<  f << "," <<  g << "," <<  h
 #define BESTIA_9(a, b, c, d, e, f, g, h, i) a << "," <<  b << "," <<  c << "," <<  d << "," <<  e << "," <<  f << "," <<  g << "," <<  h << "," <<  i
 #define BESTIA_10(a, b, c, d, e, f, g, h, i, j) a << "," <<  b << "," <<  c << "," <<  d << "," <<  e << "," <<  f << "," <<  g << "," <<  h << "," <<  i << "," <<  j
+#define BESTIA_11(a, b, c, d, e, f, g, h, i, j,k) a << "," <<  b << "," <<  c << "," <<  d << "," <<  e << "," <<  f << "," <<  g << "," <<  h << "," <<  i << "," <<  j << "," <<  k
 #define US_1(a) a
 #define US_2(a, b) a << "_" <<  b
 #define US_3(a, b, c) a << "_" <<  b << "_" <<  c
@@ -57,6 +59,7 @@
 #define US_8(a, b, c, d, e, f, g, h) a << "_" <<  b << "_" <<  c << "_" <<  d << "_" <<  e << "_" <<  f << "_" <<  g << "_" <<  h
 #define US_9(a, b, c, d, e, f, g, h, i) a << "_" <<  b << "_" <<  c << "_" <<  d << "_" <<  e << "_" <<  f << "_" <<  g << "_" <<  h << "_" <<  i
 #define US_10(a, b, c, d, e, f, g, h, i, j) a << "_" <<  b << "_" <<  c << "_" <<  d << "_" <<  e << "_" <<  f << "_" <<  g << "_" <<  h << "_" <<  i << "_" <<  j
+#define US_11(a, b, c, d, e, f, g, h, i, j,k) a << "_" <<  b << "_" <<  c << "_" <<  d << "_" <<  e << "_" <<  f << "_" <<  g << "_" <<  h << "_" <<  i << "_" <<  j << "_" <<  k
 
 #define DISPATCH_S(N) STRINGIFY_ ## N
 #define DISPATCH_B(N) BESTIA_ ## N

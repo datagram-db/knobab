@@ -405,6 +405,12 @@ std::optional<union_minimal> AttributeTable::resolve_record_if_exists2(size_t ac
     else return {resolveUnionMinimal(*this, *ptr)};
 }
 
+void AttributeTable::resolve_record_if_exists2(size_t actTableOffset, std::unordered_map<std::string, union_minimal >& m) const {
+    const AttributeTable::record * ptr;
+    if (ptr = resolve_record_if_exists(actTableOffset))
+        m[attr_name] = resolveUnionMinimal(*this, *ptr);
+}
+
 
 AttributeTable::record::record(act_t act, size_t value, size_t actTableOffset) : act(act), value(value),
                                                                                  act_table_offset(actTableOffset) {}

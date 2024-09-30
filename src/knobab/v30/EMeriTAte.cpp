@@ -19,11 +19,9 @@ void  original_main_entrypoint(bool reclassify,
 
     std::vector<std::string> log_parse_format_type{"HRF", "XES", "TAB"};
     ServerQueryManager sqm;
-    double cpp_preprocess, loading, indexing, mining, refining;
+    double cpp_preprocess, loading, indexing, mining, refining, payloading;
     if (!filename_polyadic.empty()) {
-//        result.filename_polyadic = args::get(polyadicJSON);
-
-        std::tie(cpp_preprocess, loading, indexing) = polyadic_loader(ignore_keys,
+        std::tie(cpp_preprocess, loading, indexing, payloading) = polyadic_loader(ignore_keys,
                                                                       traceDistinguisher,
                                                                       filename_polyadic,
                                                                       reclassify,
@@ -136,7 +134,12 @@ void  original_main_entrypoint(bool reclassify,
         }
     } else {
         std::unordered_map<std::string, std::set<std::tuple<std::string,std::string,std::string>>> diff;
-        std::tie(mining, refining) = polyadic_dataless_mining_and_refinement(mining_supp, isFilenamePolyadic, reduction, sqm, diff);
+        algorithmic_strategy cunctator{sqm};
+        if (reclassify) {
+            std::tie(mining, refining) = cunctator.polyadic_dataful_mining_and_refinement(mining_supp, isFilenamePolyadic, reduction, sqm, diff);
+        } else {
+            std::tie(mining, refining) = cunctator.polyadic_dataless_mining_and_refinement(mining_supp, isFilenamePolyadic, reduction, sqm, diff);
+        }
         std::cout << "Mining (min_support=" << mining_supp << ") : " << mining << " (ms)" << std::endl;
         std::cout << "Refining: " << refining << " (ms)" << std::endl;
 
@@ -152,7 +155,6 @@ void  original_main_entrypoint(bool reclassify,
             }
             file << BESTIA(filename_polyadic,mining_supp,reduction,reclassify,isFilenamePolyadic,cpp_preprocess,loading,indexing,mining,refining) << std::endl;
         }
-
 
         std::map<std::string, size_t> mined_model_size;
         // Serialization of the model
@@ -184,15 +186,13 @@ void  original_main_entrypoint(bool reclassify,
             }
             std::ofstream file{benchmark_file, std::ios_base::app};
             if (writeHeader) {
-                file << STRINGIFY(filename_polyadic,mining_supp,reduction,reclassify,isFilenamePolyadic,cpp_preprocess,loading,indexing,mining,refining);
+                file << STRINGIFY(filename_polyadic,mining_supp,reduction,reclassify,isFilenamePolyadic,cpp_preprocess,loading,indexing,mining,refining)<<",payloading";
                 for (const auto& [k,v] : mined_model_size) {
                     file << "," << k;
                 }
-//                return
                 file << std::endl;
             }
-//            result.values_polyadic(file, result.mined_model_size);
-            file << BESTIA(filename_polyadic,mining_supp,reduction,reclassify,isFilenamePolyadic,cpp_preprocess,loading,indexing,mining,refining);
+            file << BESTIA(filename_polyadic,mining_supp,reduction,reclassify,isFilenamePolyadic,cpp_preprocess,loading,indexing,mining,refining)<<","<<payloading;
             for (const auto& [k,v] : mined_model_size) {
                 file << "," << v;
             }
@@ -203,7 +203,6 @@ void  original_main_entrypoint(bool reclassify,
         v.clear();
         v.clearModel();
     }
-    std::cout << "EBF"<<std::endl;
 }
 
 void  python_main_entrypoint(bool reclassify,

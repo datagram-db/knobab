@@ -5,178 +5,62 @@
 #include "knobab/mining/polyadic/polyadic_loading.h"
 #include "knobab/server/dataStructures/polyadic/myParser.h"
 
-static inline void actualClauseRefine(std::vector<std::pair<double,std::unordered_map<std::string, DataPredicate>>> &result,
-                                      const std::pair<int, std::vector<std::pair<double,std::vector<dt_predicate>>>> &pair) {
-//    DeclareDataAware c = clause;
-    for(const std::pair<double,std::vector<dt_predicate>>& cond : pair.second){
-        std::unordered_map<std::string, DataPredicate> current_conds;
-        bool hasAFalse = false;
 
-        for(const dt_predicate& dt_p : cond.second){
-            DataPredicate p;
-            p.is_left_for_activation = false;
-            p.var = dt_p.field;
-            switch (dt_p.pred) {
-                case dt_predicate::LEQ_THAN:
-                    p.casusu = LEQ;
-                    break;
-                case dt_predicate::G_THAN:
-                    p.casusu = GT;
-                    break;
-                case dt_predicate::GEQ_THAN:
-                    p.casusu = GEQ;
-                    break;
-                case dt_predicate::IN_SET:
-                    p.casusu = EQ;
-                    break;
-                case dt_predicate::NOT_IN_SET:
-                    p.casusu = NEQ;
-                    break;
-            }
-
-            if(!dt_p.categoric_set.empty()){
-                DEBUG_ASSERT(dt_p.categoric_set.size() == 1);
-                p.value = *dt_p.categoric_set.begin();
-            } else{
-                p.value = dt_p.value;
-            }
-
-            auto found = current_conds.find(p.var);
-
-            if(found != current_conds.end()){
-                // Our path has two conditions on the same var, perform intersection
-//                p.intersect_with(found->second);
-                if (!found->second.intersect_with(p)) {
-                    found->second.casusu = FFALSE;
-                    hasAFalse = true;
-                    break;
-                }
-            }
-            else{
-                current_conds.insert({p.var, p});
-            }
-        }
-        if (hasAFalse) {
-            current_conds.clear();
-        } else {
-            result.emplace_back(pair.first, current_conds);
-        }
-    }
-}
 
 //□
 
-static inline void print_rawpayload_csv_header(std::ostream& os, const std::vector<std::vector<std::pair<double,std::unordered_map<std::string, DataPredicate>>>> & model) {
-    for (size_t clazz = 0, N = model.size(); clazz<N; clazz++) {
-        const auto& disj = model.at(clazz);
-        const auto M = disj.size();
-        size_t idx = 0;
-        for (const auto& [score,map] : disj) {
-            os << "\"□(";
-            size_t idxj = 0, idxM = map.size();
-            for (const auto& [k,v] : map) {
-                os << "__raw_payload." << v;
-                idxj++;
-                if (idxj != (idxM)) os << "∧";
-            }
-            os << ")\",\"◇(";
-            idxj = 0;
-            for (const auto& [k,v] : map) {
-                os << "__raw_payload." << v;
-                idxj++;
-                if (idxj != (idxM)) os << "∧";
-            }
-            idx++;
-            if ((idx == M) && (clazz == (N-1)))
-                os << "\"";
-            else os << "\", ";
-        }
-    }
 
-}
 
-static inline void collect_rawpayload_csv_results_row(std::vector<size_t>& results,
-                                                      const std::vector<std::vector<std::pair<double,std::unordered_map<std::string, DataPredicate>>>> & model,
-                                                      const std::unordered_map<std::string, union_minimal>& payload) {
-    size_t global_idx = 0;
-    for (size_t clazz = 0, N = model.size(); clazz<N; clazz++) {
-        const auto& disj = model.at(clazz);
-        const auto M = disj.size();
-//        size_t idx = 0;
-        for (const auto& [score,map] : disj) {
-            bool found = true;
-            std::stringstream ss;
-            for (const auto& [k,v] : map) {
-                auto it = payload.find(k);
-                if ((it == payload.end()) ? v.testOverSingleVariable(0.0) : v.testOverSingleVariable(it->second)) {
+//static inline std::pair<int,size_t> print_rawpayload_csv_row(const std::vector<std::vector<std::pair<double,std::unordered_map<std::string, DataPredicate>>>> & model,
+//                                                            const std::unordered_map<std::string, union_minimal>& payload) {
+//    size_t sub_class = 0;
+//    for (size_t clazz = 0, N = model.size(); clazz<N; clazz++) {
+//        const auto& disj = model.at(clazz);
+//        for (const auto& [score,map] : disj) {
+//            bool found = false;
+//            std::stringstream ss;
+//            for (const auto& [k,v] : map) {
+//                auto it = payload.find(k);
+//                if ((it == payload.end()) ? v.testOverSingleVariable(0.0) : v.testOverSingleVariable(it->second)) {
+//                    found = true;
+//                } else {
+//                    found = false;
+//                    break;
+//                }
+//            }
+//            if (found) {
+//                return {clazz, sub_class};
+//            }
+//            sub_class++;
+//        }
+//    }
+//    return {-1, 0};
+//}
 
-                } else {
-                    found = false;
-                    break;
-                }
-            }
-            if (found) {
-                DEBUG_ASSERT(global_idx<results.size());
-                results[global_idx]++;
-//                os << 1; //score;
-            }
-            global_idx++;
-//            idx ++;
-//            if ((idx != M) && ((clazz != (N-1)))) os << ", ";
-        }
-    }
-}
-
-static inline std::pair<int,size_t> print_rawpayload_csv_row(const std::vector<std::vector<std::pair<double,std::unordered_map<std::string, DataPredicate>>>> & model,
-                                                            const std::unordered_map<std::string, union_minimal>& payload) {
-    size_t sub_class = 0;
-    for (size_t clazz = 0, N = model.size(); clazz<N; clazz++) {
-        const auto& disj = model.at(clazz);
-        for (const auto& [score,map] : disj) {
-            bool found = false;
-            std::stringstream ss;
-            for (const auto& [k,v] : map) {
-                auto it = payload.find(k);
-                if ((it == payload.end()) ? v.testOverSingleVariable(0.0) : v.testOverSingleVariable(it->second)) {
-                    found = true;
-                } else {
-                    found = false;
-                    break;
-                }
-            }
-            if (found) {
-                return {clazz, sub_class};
-            }
-            sub_class++;
-        }
-    }
-    return {-1, 0};
-}
-
-static inline std::pair<int,size_t> test_single_conjunction(const std::vector<std::vector<std::pair<double,std::unordered_map<std::string, DataPredicate>>>> & model,
-                                                            const std::unordered_map<std::string, union_minimal>& payload) {
-    size_t sub_class = 0;
-    for (size_t clazz = 0, N = model.size(); clazz<N; clazz++) {
-        const auto& disj = model.at(clazz);
-        for (const auto& [score,map] : disj) {
-            bool found = false;
-            for (const auto& [k,v] : map) {
-                auto it = payload.find(k);
-                if ((it == payload.end()) ? v.testOverSingleVariable(0.0) : v.testOverSingleVariable(it->second)) {
-                    found = true;
-                } else {
-                    found = false;
-                    break;
-                }
-            }
-            if (found) {
-                return {clazz, sub_class};
-            }
-            sub_class++;
-        }
-    }
-    return {-1, 0};
-}
+//static inline std::pair<int,size_t> test_single_conjunction(const std::vector<std::vector<std::pair<double,std::unordered_map<std::string, DataPredicate>>>> & model,
+//                                                            const std::unordered_map<std::string, union_minimal>& payload) {
+//    size_t sub_class = 0;
+//    for (size_t clazz = 0, N = model.size(); clazz<N; clazz++) {
+//        const auto& disj = model.at(clazz);
+//        for (const auto& [score,map] : disj) {
+//            bool found = false;
+//            for (const auto& [k,v] : map) {
+//                auto it = payload.find(k);
+//                if ((it == payload.end()) ? v.testOverSingleVariable(0.0) : v.testOverSingleVariable(it->second)) {
+//                    found = true;
+//                } else {
+//                    found = false;
+//                    break;
+//                }
+//            }
+//            if (found) {
+//                return {clazz, sub_class};
+//            }
+//            sub_class++;
+//        }
+//    }
+//    return {-1, 0};
+//}
 
 struct comparator {
     constexpr
@@ -186,12 +70,14 @@ struct comparator {
     }
 };
 
-std::tuple<double,double,double> polyadic_loader(const std::unordered_set<std::string>& ignore_keys,
-                     const std::string& traceDistinguisher,
-                     const std::string& path,
-                     bool reclassify,
-                     ServerQueryManager& sqm,
-                                                 const std::string& fulltime) {
+
+
+std::tuple<double,double,double,double> polyadic_loader(const std::unordered_set<std::string>& ignore_keys,
+                                                        const std::string& traceDistinguisher,
+                                                        const std::string& path,
+                                                        bool data_aware,
+                                                        ServerQueryManager& sqm,
+                                                        const std::string& fulltime) {
     myParser sax;
     sax.ignore_keys = ignore_keys;
     sax.traceDistinguisher = traceDistinguisher;
@@ -210,20 +96,10 @@ std::tuple<double,double,double> polyadic_loader(const std::unordered_set<std::s
 
         if (!nlohmann::json::sax_parse(f, &sax)) {
             std::cerr << "ERROR while parsing the file: " << path << std::endl;
-            return {-1,-1,-1};
+            return {-1,-1,-1, -1};
         }
     }
 
-//    ssize_t maxClassId = -1;
-    // Keeping the same original classes for each event
-//    for (size_t idx = 0, N = sax.for_preliminary_classification.size(); idx<N; idx++) {
-//        const auto& posToTraceInfo = sax.components.at(idx);
-//        const auto& elements = sax.for_preliminary_classification.at(idx);
-//        maxClassId = std::max((ssize_t)maxClassId, (ssize_t)elements.second);
-//        sax.event_coordinates[posToTraceInfo.first][posToTraceInfo.second].final_class = elements.second;
-////            forComparison.insert(sax.event_coordinates[posToTraceInfo.first][posToTraceInfo.second].get_log_name());
-//    }
-    // No reclassification, so precision = 1.0
 
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////
     /// 2) Re-classifying the single raw events in terms of traditional machine learning, into different
@@ -234,10 +110,8 @@ std::tuple<double,double,double> polyadic_loader(const std::unordered_set<std::s
     for (size_t idx = 0, N = sax.components.size(); idx<N; idx++) {
         const auto& posToTraceInfo = sax.components.at(idx);
         int clazz = std::get<2>(posToTraceInfo);
-//        const auto& elements = sax.for_preliminary_classification.at(idx);
         maxClassId = std::max((ssize_t)maxClassId, (ssize_t)clazz);
         sax.event_coordinates[std::get<0>(posToTraceInfo)][std::get<1>(posToTraceInfo)].final_class = clazz;
-//            forComparison.insert(sax.event_coordinates[posToTraceInfo.first][posToTraceInfo.second].get_log_name());
     }
 
     ///////////////////////////////////\////////////////////////////////////////////////////////////////////////////
@@ -251,10 +125,6 @@ std::tuple<double,double,double> polyadic_loader(const std::unordered_set<std::s
         std::ifstream f{path};
         nlohmann::json::sax_parse(f, &sax);
     }
-//    for (size_t idx = 0, N = sax.for_preliminary_classification.size(); idx<N; idx++) {
-//        const auto& posToTraceInfo = sax.components.at(idx);
-//        forComparison.insert(sax.event_coordinates[posToTraceInfo.first][posToTraceInfo.second].get_log_name());
-//    }
 
     //////////////////////////////////////////////////////////////////
     /// 4) Defining the time intervals within the events are happening
@@ -264,14 +134,10 @@ std::tuple<double,double,double> polyadic_loader(const std::unordered_set<std::s
     std::unordered_set<size_t> metClasses;
     counting_event_coordinates emptyPair;
     for (auto& [user_key, timestamps] : sax.clazz_to_time) {
-//        std::cout << user_key << std::endl;
-
         for (auto& inClazz : timestamps)
             remove_duplicates(inClazz);
         intervals.clear();
         intervals.resize(timestamps.size());
-//        std::vector<std::vector<std::pair<double,double>>>& intervals = sax.clazz_to_time_intervals[user_key];
-//        intervals.resize(sax.clazz_to_time.size());
         std::priority_queue<std::pair<std::vector<double>::iterator,size_t>, std::vector<std::pair<std::vector<double>::iterator,size_t>>, comparator> minheap;
         int k = timestamps.size();
         int i;
@@ -292,7 +158,6 @@ std::tuple<double,double,double> polyadic_loader(const std::unordered_set<std::s
             // Get the minimum element and store it in output file
             std::pair<std::vector<double>::iterator,size_t> x = minheap.top();
             metClasses.insert(x.second);
-//            std::cout << *x.first << "@" << x.second << std::endl;
             int fileid = x.second;
             if (current == -1) {
                 current = x.second;
@@ -316,18 +181,10 @@ std::tuple<double,double,double> polyadic_loader(const std::unordered_set<std::s
             }
         }
 
-//        auto& userIntervalMap = sax.userName_to_intervals_to_class[user_key];
-//        for (size_t classId = 0, N = intervals.size(); classId<N; classId++) {
-//            for (const auto& interval : intervals.at(classId)) {
-//                if (userIntervalMap.emplace(interval, classId).second)
-//                    DEBUG_ASSERT(false);
-//            }
-//        }
 
     }
     for (const auto& clazz : metClasses) {
         auto newLogName = /*user_key+ "_"+*/ std::to_string(clazz);
-//            gotFromActual.insert(newLogName);
         sax.log_name_to_traceIdEventId.emplace(std::make_pair(newLogName,clazz), emptyPair);
         if (sqm.multiple_logs.contains(newLogName)) {
             sqm.multiple_logs.erase(newLogName);
@@ -339,8 +196,6 @@ std::tuple<double,double,double> polyadic_loader(const std::unordered_set<std::s
         env.experiment_logger.log_filename = filename;
     }
     intervals.clear();
-//    std::cout << gotFromActual << std::endl;
-//    std::cout << forComparison << std::endl;
 
     std::pair<std::string,size_t> cp;
     for (size_t global_trace_id = 0, N = sax.event_coordinates.size(); global_trace_id<N; global_trace_id++ ) {
@@ -382,17 +237,11 @@ std::tuple<double,double,double> polyadic_loader(const std::unordered_set<std::s
     // 5) As the traces are temporally ordered, we can freely assume that those are contiguous in time
     //    Therefore, we only need to check
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-    bool oldLoading = true;
-    bool load_also_data = true;
-    bool doStats = false;
     bool index_missing_data = false;
-//        std::string env_name = "test1";
     log_data_format format;
 
 
-    double log_loading_and_parsing_ms = 0, log_indexing_ms = 0;
-
+    double log_loading_and_parsing_ms = 0, log_indexing_ms = 0, payload_extraction = 0;
     {
         auto t1 = high_resolution_clock::now();
         sax.filler = &sqm.multiple_logs;
@@ -439,151 +288,26 @@ std::tuple<double,double,double> polyadic_loader(const std::unordered_set<std::s
         log_indexing_ms = ms_double.count();
     }
 
-    /// TODO: farlo assieme alla parte di caricamento
-    if (reclassify) {
+    if (data_aware) {
+        auto t1 = high_resolution_clock::now();
+//        std::vector<std::vector<std::vector<size_t>>> traces_info(sqm.multiple_logs.size()); // class -> trace_id -> offsets
 
-        std::vector<std::vector<std::vector<size_t>>> traces_info(sqm.multiple_logs.size()); // class -> trace_id -> offsets
-//        std::vector<std::pair<std::unordered_map<std::string, union_minimal>, int>> higgins;
-//        env tmp;
+        std::unordered_map<std::string,std::vector<std::vector<size_t>>> & sax_pyload_trace_id = sax.payload_trace_id;
+        const std::string& this_path = path;
+        std::vector<std::pair<env,int>>& payload_row = sax.event_paload_aka_rawdata;
+        std::string all = "□";
+        std::string some = "◇";
+        bool raw = true;
+        size_t n_classes = sax.class_to_int.size();
+        const std::unordered_set<std::string>& numerical = sax.numerical;
+        const std::unordered_set<std::string>& categorical = {};
 
+        train_and_dump_to_csv(sqm.multiple_logs, sax_pyload_trace_id, this_path, payload_row, all, some, raw, n_classes,numerical, categorical );
 
-
-        // Using the sub-cases identified within the decision tree to target different sub-classes or cases
-//        auto higgins = sax.for_preliminary_classification;
-        auto it = sax.event_paload_aka_rawdata.begin();
-        auto en = sax.event_paload_aka_rawdata.end();
-
-        DecisionTree<std::unordered_map<std::string, union_minimal>> dt(it,
-                                                                        en,
-                                                                        sax.class_to_int.size(),
-                                                                        [](const auto& map, const std::string& key) {
-                                                                            auto it = map.find(key);
-                                                                            if (it == map.end())
-                                                                                return (union_minimal)0.0;
-                                                                            else
-                                                                                return it->second;
-                                                                        },
-                                                                        sax.numerical,
-                                                                        {},
-                                                                        ForTheWin::gain_measures::Gini,
-                                                                        0.97,
-                                                                        1,
-                                                                        1,
-                                                                        1,
-                                                                        false,
-                                                                        nullptr,
-                                                                        nullptr,
-                                                                        5);
-
-
-
-        std::vector<std::vector<std::pair<double,std::unordered_map<std::string, DataPredicate>>>> model(sax.class_to_int.size());
-        size_t number_rows = 0;
-        {
-            std::unordered_map<int, std::vector<std::pair<double,std::vector<dt_predicate>>>> result;
-            dt.populate_children_predicates2(result);
-            for (const auto& kv : result) {
-                std::vector<std::pair<double,std::unordered_map<std::string, DataPredicate>>> current_conds;
-                actualClauseRefine(current_conds, kv);
-                number_rows += current_conds.size();
-                model[kv.first] = std::move(current_conds);
-            }
-        }
-
-
-
-        double ok = 0;
-        size_t current_trace_id = 0;
-        bool begin = true;
-        std::vector<size_t> resultsVector(number_rows, 0);
-        size_t vlen = 0;
-
-        size_t count_traces;
-        for (auto& [log, env] : sqm.multiple_logs) {
-            std::ofstream payload_out{path+"_payload_"+log+".csv"};
-            print_rawpayload_csv_header(payload_out, model);
-            payload_out << std::endl;
-            count_traces = 0;
-            const std::vector<std::vector<size_t>>& traces = sax.payload_trace_id[log];
-            auto classid = std::stoull(log);
-//            size_t raw_payload_act = env.db.event_label_mapper.get("__raw_data");
-//            auto& trace_offset_record = traces_info[classid];
-            DEBUG_ASSERT(env.db.nTraces() == traces.size());
-//            trace_offset_record.resize(env.db.nTraces());
-//            DEBUG_ASSERT(!trace_offset_record.empty());
-            for (uint32_t sigma_id = 0, n = env.db.nTraces(); sigma_id < n; sigma_id++) {
-                vlen = traces.at(sigma_id).size();
-                for (auto& dim_count : resultsVector) dim_count = 0; // Re-initialization
-//                tmp.clear();
-                for (const auto& offset : traces.at(sigma_id)) {
-
-//                    DEBUG_ASSERT(events_offsets.contains(raw_payload_act));
-//                    for (size_t offset: events_offsets.at(raw_payload_act)) {
-                    collect_rawpayload_csv_results_row(resultsVector, model, sax.event_paload_aka_rawdata.at(offset).first);
-
-
-//                        for(const auto& [var, table] : env.db.attribute_name_to_table){
-//                            auto ptr  = table.resolve_record_if_exists(offset);
-//                            if( ptr != nullptr ) {
-//                                switch (table.type) {
-//                                    case DoubleAtt:
-//                                        tmp[var] = *(double*)(&ptr->value);
-//                                    case LongAtt:
-//                                        tmp[var] = (double)(*(long long*)(&ptr->value));
-//                                    case StringAtt:
-//                                        tmp[var] = table.ptr.get(ptr->value);
-//                                    case BoolAtt:
-//                                        tmp[var] = ((ptr->value != 0) ? 1.0 : 0.0);
-//                                        //case SizeTAtt:
-//                                    default:
-//                                        tmp[var] = (double)(ptr->value);
-//                                }
-//                            }
-//                        }
-
-//                    }
-                }
-                payload_out << std::accumulate(
-                        resultsVector.begin(),
-                        resultsVector.end(),
-                        std::string(),
-                        [&vlen](std::string a, size_t b) {
-                            return  a + (a.empty() ? "" : ",") + std::to_string(b == vlen ? 1 : 0) + "," + std::to_string(b >0 ? 1 : 0);
-                        }
-                );
-                if (sigma_id != (n-1))
-                    payload_out << std::endl;
-//                if (!tmp.empty()) {
-//                    count_traces++;
-//                    trace_offset_record[sigma_id].emplace_back(higgins.size());
-//                    higgins.emplace_back(tmp, classid);
-//                }
-            }
-//            DEBUG_ASSERT(env.db.nTraces()  == count_traces);
-        }
-
-//        for (size_t class_id = 0, N = traces_info.size(); class_id<N; class_id++) {
-//
-//            const auto& traces = traces_info.at(class_id);
-//            for (size_t sigma_id = 0, M = traces.size(); sigma_id<M; sigma_id++) {
-//
-//
-//            }
-//            payload_out.close();
-//        }
-//        for (size_t idx = 0, N = sax.for_preliminary_classification.size(); idx<N; idx++) {
-//            const auto& posToTraceInfo = sax.components.at(idx);
-//            const auto& elements = sax.for_preliminary_classification.at(idx);
-//            auto cp = test_single_conjunction(actual_result, elements.first);
-//            maxClassId = std::max((ssize_t)maxClassId, (ssize_t)cp.second);
-////            std::cout << posToTraceInfo.first<< "," << posToTraceInfo.second << ":" << cp.second << std::endl;
-////            Re-Classification: sax.event_coordinates[posToTraceInfo.first][posToTraceInfo.second].final_class = cp.second;
-//            if (std::get<1>(elements) == cp.first) {
-//                ok++;
-//            }
-//        }
-
+        auto t2 = high_resolution_clock::now();
+        duration<double, std::milli> pe_double = t2 - t1;
+        payload_extraction = pe_double.count();
     }
 
-    return {log_cpp_preprocessing, log_loading_and_parsing_ms, log_indexing_ms};
+    return {log_cpp_preprocessing, log_loading_and_parsing_ms, log_indexing_ms, payload_extraction};
 }

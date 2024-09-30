@@ -1,4 +1,5 @@
 #Removing the target classes from the commit
+japanese_vowels.csv
 benchmark_model_size.csv
 benchmark_poly.csv
 output_model_healthcare/*
@@ -36,3 +37,9 @@ __pycache__/*
 /EMeriTAte/osuleaf/
 /EMeriTAte/*.txt
 /EMeriTAte/venv/
+/EMeriTAte/first_osuleaf.csv
+/EMeriTAte/italy_power_demand.csv
+/EMeriTAte/basic_motions.csv
+/EMeriTAte/.Rhistory
+/EMeriTAte/italy_test/
+/EMeriTAte/errors.log

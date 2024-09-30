@@ -154,6 +154,7 @@ struct AttributeTable {
 
     const record *resolve_record_if_exists(size_t actTableOffset) const;
     std::optional<union_minimal> resolve_record_if_exists2(size_t actTableOffset) const;
+    void resolve_record_if_exists2(size_t actTableOffset, std::unordered_map<std::string, union_minimal >& m) const;
 
     std::ostream &resolve_and_print(std::ostream &os, const AttributeTable::record &x) const;
 

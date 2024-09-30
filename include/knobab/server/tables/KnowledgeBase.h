@@ -434,64 +434,64 @@ private:
 
 
 
-struct hasRecord {
-    std::unordered_map<size_t, std::unordered_map<std::string, const AttributeTable::record*>> offsets;
-    hasRecord(const std::vector<size_t>& offsets, const KnowledgeBase& kb) {
-        for (const auto offset : offsets) {
-            auto& ref = this->offsets[offset];
-            for(const auto& p : kb.attribute_name_to_table){
-                auto ptr  = p.second.resolve_record_if_exists(offset);
-                if( ptr != nullptr ) {
-                    ref[p.first] = ptr;
-                }
-            }
-        }
-    }
-
-    inline bool testOverOneSingleOffset(size_t offset,
-                                        const std::unordered_map<std::string, AttributeTable>& map,
-                                        const DataPredicate& dp) {
-        auto it = offsets.find(offset);
-        if (it == offsets.end())
-            return false;
-        DEBUG_ASSERT(map.contains(dp.var));
-        auto it2 = it->second.find(dp.var);
-        if (it2 == it->second.end())
-            return false;
-        auto& table = map.at(dp.var);
-        switch (table.type) {
-            case DoubleAtt:
-                return dp.testOverSingleVariable( (*(double*)(&it2->second->value)));
-            case LongAtt:
-                return dp.testOverSingleVariable( (*(long long*)(&it2->second->value)));
-            case StringAtt:
-                return dp.testOverSingleVariable(table.ptr.get(it2->second->value));
-            case BoolAtt:
-                return dp.testOverSingleVariable((it2->second->value != 0) ? 1.0 : 0.0);
-            default:
-                return dp.testOverSingleVariable(it2->second->value);
-        }
-    }
-
-    inline int test_single_conjunction(const std::vector<std::vector<std::pair<double,std::unordered_map<std::string, DataPredicate>>>> & model,
-                                                                size_t offset,
-                                                                const std::unordered_map<std::string, AttributeTable>& map) {
-        for (size_t clazz = 0, N = model.size(); clazz<N; clazz++) {
-            const auto& disj = model.at(clazz);
-            for (const auto& [score,map2] : disj) {
-                bool found = false;
-                for (const auto& [k,v] : map2) {
-                    found = testOverOneSingleOffset(offset, map, v);
-                    if (!found)
-                        break;
-                }
-                if (found) {
-                    return clazz;
-                }
-            }
-        }
-        return -1;
-    }
-};
+//struct hasRecord {
+//    std::unordered_map<size_t, std::unordered_map<std::string, const AttributeTable::record*>> offsets;
+//    hasRecord(const std::vector<size_t>& offsets, const KnowledgeBase& kb) {
+//        for (const auto offset : offsets) {
+//            auto& ref = this->offsets[offset];
+//            for(const auto& p : kb.attribute_name_to_table){
+//                auto ptr  = p.second.resolve_record_if_exists(offset);
+//                if( ptr != nullptr ) {
+//                    ref[p.first] = ptr;
+//                }
+//            }
+//        }
+//    }
+//
+//    inline bool testOverOneSingleOffset(size_t offset,
+//                                        const std::unordered_map<std::string, AttributeTable>& map,
+//                                        const DataPredicate& dp) {
+//        auto it = offsets.find(offset);
+//        if (it == offsets.end())
+//            return false;
+//        DEBUG_ASSERT(map.contains(dp.var));
+//        auto it2 = it->second.find(dp.var);
+//        if (it2 == it->second.end())
+//            return false;
+//        auto& table = map.at(dp.var);
+//        switch (table.type) {
+//            case DoubleAtt:
+//                return dp.testOverSingleVariable( (*(double*)(&it2->second->value)));
+//            case LongAtt:
+//                return dp.testOverSingleVariable( (*(long long*)(&it2->second->value)));
+//            case StringAtt:
+//                return dp.testOverSingleVariable(table.ptr.get(it2->second->value));
+//            case BoolAtt:
+//                return dp.testOverSingleVariable((it2->second->value != 0) ? 1.0 : 0.0);
+//            default:
+//                return dp.testOverSingleVariable(it2->second->value);
+//        }
+//    }
+//
+//    inline int test_single_conjunction(const std::vector<std::vector<std::pair<double,std::unordered_map<std::string, DataPredicate>>>> & model,
+//                                                                size_t offset,
+//                                                                const std::unordered_map<std::string, AttributeTable>& map) {
+//        for (size_t clazz = 0, N = model.size(); clazz<N; clazz++) {
+//            const auto& disj = model.at(clazz);
+//            for (const auto& [score,map2] : disj) {
+//                bool found = false;
+//                for (const auto& [k,v] : map2) {
+//                    found = testOverOneSingleOffset(offset, map, v);
+//                    if (!found)
+//                        break;
+//                }
+//                if (found) {
+//                    return clazz;
+//                }
+//            }
+//        }
+//        return -1;
+//    }
+//};
 
 #endif //BZDB_SMALLDATABASE_H

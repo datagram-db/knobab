@@ -182,7 +182,8 @@ add_executable(knobab_json new_pipeline.cpp src/knobab/v30/EMeriTAte.cpp
         include/knobab/mining/polyadic/polyadic_learning.h
         src/knobab/mining/polyadic/polyadic_mining.cpp
         include/knobab/mining/polyadic/polyadic_loading.h
-        include/knobab/mining/polyadic/polyadic_mining.h)
+        include/knobab/mining/polyadic/polyadic_mining.h
+        include/knobab/mining/polyadic/commons.h)
 target_link_libraries(knobab_json Threads::Threads antlr4_static yaucl_hashing yaucl_bpm yaucl_structures
         yaucl_numeric yaucl_data yaucl_graph  yaucl_data yaucl_bpm knobab  knobab_ndp   yaucl_learning  knobab_mining)
 

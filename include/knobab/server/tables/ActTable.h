@@ -57,7 +57,10 @@ struct ActTable {
     /**
      * Mapping the trace id to the first and last event (see the log printer from the KnowledgeBase for a usage example)
      */
-    std::vector<std::pair<std::unordered_map<act_t, std::vector<ActTable::record*>>*, std::unordered_map<act_t, std::vector<ActTable::record*>>*>> secondary_index;
+    std::vector<std::pair<std::unordered_map<act_t, std::vector<ActTable::record*>>*,
+                          std::unordered_map<act_t, std::vector<ActTable::record*>>*
+                         >
+               > secondary_index;
     std::vector<std::vector<std::unordered_map<act_t, std::vector<ActTable::record*>>>> secondary_index_polyadic; // trace->time->act->offset
     std::vector<std::vector<std::unordered_map<act_t, std::vector<size_t>>>> trace_id_to_endTimeId_to_offset;
 
