@@ -270,7 +270,7 @@ struct polyadic_bolt {
         first.clear();
         last.clear();
         for (int i = 0; i<max_act_id; i++) {
-            event_to_root.emplace_back(-1);
+            event_to_root.emplace_back((size_t)-1);
             Beginnings.emplace_back(0);
             first.emplace_back(0);
             last.emplace_back(0);
