@@ -66,14 +66,14 @@ class EMeriTAte:
         LS.append(str(self.json_path.absolute()))
         return tuple(LS)
 
-    def __run(self, path=None): #args):
-        self.knobab.call_interface(self.time_field, path, self.polymine, self.red)
+    def __run(self, isFastSat, path): #args):
+        self.knobab.call_interface(self.time_field, isFastSat, path, self.polymine, self.red)
 
-    def _02_run_preliminary_mining(self):
-        print(self.__run())
+    def _02_run_preliminary_mining(self, path):
+        print(self.__run(False, path))
 
     def _04_run_fastSAT(self, path):
-        print(self.__run(path)) #orig:self.__args(path)
+        print(self.__run(True, path)) #orig:self.__args(path)
 
     def run_phase1(self):
         import datetime

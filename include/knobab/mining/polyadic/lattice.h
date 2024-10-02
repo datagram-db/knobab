@@ -107,10 +107,39 @@ struct lattice {
     void visit(const URI& root, const QualityMeasure& Q, R& output) {
         visited_uris.clear();
         visit_rec(root, Q, output);
+        std::reverse(topo_sorted_nodes.begin(), topo_sorted_nodes.end());
+        for (const URI& x : topo_sorted_nodes) {
+            auto it = traversal.find(x);
+            if (it != traversal.end()) {
+                std::set<URI> S;
+                for (const auto& ancestor : it->second) {
+                    auto it3 = traversal.find(ancestor);
+                    if (it3 != traversal.end()) {
+                        for (const auto& preAncestor : it3->second) {
+                            if (!it->second.contains(preAncestor))
+                                S.emplace(preAncestor);
+                        }
+                    }
+                }
+                it->second.insert(S.begin(), S.end());
+            }
+        }
+    }
+
+    const std::set<URI>& generalise(const URI& x) const {
+        auto it = traversal.find(x);
+        if (it == traversal.end())
+            return empty_set;
+        else
+            return it->second;
     }
 
 private:
     std::map<URI, bool> visited_uris;
+    std::vector<URI> topo_sorted_nodes;
+    std::map<URI, std::set<URI>> traversal;
+    std::set<URI> empty_set;
+
     template <typename QualityMeasure, typename R>
     bool visit_rec(const URI& x, const QualityMeasure& Q, R& output) {
         auto f = visited_uris.find(x);
@@ -124,20 +153,24 @@ private:
             return false;
         } else if (isLeaf(x)) {
             output(x, it->second);
+            topo_sorted_nodes.emplace_back(x);
+            traversal[x].emplace(x);
             visited_uris[x] = true;
             return true;
         } else {
             bool all = false;
+            topo_sorted_nodes.emplace_back(x);
+            traversal[x].emplace(x);
             if (node_to_children_refiners.find(x) != node_to_children_refiners.end()) {
                 for (const auto &child: node_to_children_refiners.at(x)) {
                     bool testOutcome = visit_rec(child, Q, output);
+                    if (testOutcome)
+                        traversal[child].emplace(x);
                     all = all || testOutcome;
                 }
             }
-//            } else {
-//                all = false;
-//            }
             if (all) {
+                traversal[x].emplace(x);
                 visited_uris[x] = true;
                 return true;
             }
@@ -145,6 +178,7 @@ private:
             if (node_to_children_totallers.find(x) != node_to_children_totallers.end()) {
                 for (const auto& child : node_to_children_totallers.at(x)) {
                     if (visit_rec(child, Q, output)) {
+                        traversal[child].emplace(x);
                         some = true;
                     }
                 }
@@ -159,7 +193,6 @@ private:
             }
         }
     }
-    std::set<URI> empty_set;
     T empty;
 };
 

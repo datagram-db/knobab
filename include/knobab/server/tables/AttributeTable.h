@@ -154,7 +154,7 @@ struct AttributeTable {
 
     const record *resolve_record_if_exists(size_t actTableOffset) const;
     std::optional<union_minimal> resolve_record_if_exists2(size_t actTableOffset) const;
-    void resolve_record_if_exists2(size_t actTableOffset, std::unordered_map<std::string, union_minimal >& m) const;
+    void resolve_record_if_exists2(size_t actTableOffset, std::map<std::string, union_minimal >& m) const;
 
     std::ostream &resolve_and_print(std::ostream &os, const AttributeTable::record &x) const;
 
@@ -193,6 +193,41 @@ struct AttributeTable {
     std::vector<std::vector<std::pair<const record *, const record *>>>
     exact_range_query(const std::vector<std::pair<size_t, std::vector<DataQuery*>>>& propList) const;
 
+
+    inline void resolve_record_if_exists3(size_t actTableOffset, std::vector<std::pair<std::string,union_minimal>>& m) const {
+        const AttributeTable::record *loc;
+        loc = resolve_record_if_exists(actTableOffset);
+        double val = 0.0; std::string sval;
+        if (loc) {
+//        auto value = resolveUnionMinimal(*this, *ptr);
+            switch (type) {
+                case DoubleAtt:
+                    val = *(double*)(&loc->value);
+                    m.emplace_back(attr_name, val);
+                    break;
+                case LongAtt:
+                    val = (double)(*(long long*)(&loc->value));
+                    m.emplace_back(attr_name, val);
+                    break;
+                case StringAtt:
+                    sval = this->ptr.get(loc->value);
+                    m.emplace_back(attr_name, sval);
+                    break;
+                case BoolAtt:
+                    val =  (loc->value != 0 ? 0.0 : 1.0);
+                    m.emplace_back(attr_name, val);
+                    break;
+                    //case SizeTAtt:
+                default:
+                    // TODO: hierarchical types!, https://dl.acm.org/doi/10.1145/3410566.3410583
+                    val = (double)loc->value;
+                    m.emplace_back(attr_name, val);
+                    break;
+            }
+//        m[attr_name] = value;
+//        m.emplace(attr_name, value);
+        }
+    }
 
 private:
     std::vector<std::map<union_type, std::vector<std::pair<trace_t, event_t>>>> elements;

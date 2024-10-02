@@ -294,7 +294,7 @@ std::tuple<double,double,double,double> polyadic_loader(const std::unordered_set
 
         std::unordered_map<std::string,std::vector<std::vector<size_t>>> & sax_pyload_trace_id = sax.payload_trace_id;
         const std::string& this_path = path;
-        std::vector<std::pair<env,int>>& payload_row = sax.event_paload_aka_rawdata;
+        std::vector<std::pair<env2,int>>& payload_row = sax.event_paload_aka_rawdata;
         std::string all = "□";
         std::string some = "◇";
         bool raw = true;
@@ -302,7 +302,7 @@ std::tuple<double,double,double,double> polyadic_loader(const std::unordered_set
         const std::unordered_set<std::string>& numerical = sax.numerical;
         const std::unordered_set<std::string>& categorical = {};
 
-        train_and_dump_to_csv(sqm.multiple_logs, sax_pyload_trace_id, this_path, payload_row, all, some, raw, n_classes,numerical, categorical );
+        train_and_dump_to_csv2(sqm.multiple_logs, sax_pyload_trace_id, this_path, payload_row, all, some, raw, n_classes,numerical, categorical );
 
         auto t2 = high_resolution_clock::now();
         duration<double, std::milli> pe_double = t2 - t1;

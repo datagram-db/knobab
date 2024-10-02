@@ -55,12 +55,12 @@ struct QM_DECLARE {
 using trace_set2 =  std::vector<trace_t>;
 
 struct SimpleDeclare {
-    std::string name;
+    const simple_declare& name;
     u_int16_t A, B;
     double support;
     double rconf;
 
-    SimpleDeclare(const std::string &name, u_int16_t a, u_int16_t b, double support, double rconf) : name(name), A(a),
+    SimpleDeclare(const simple_declare&name, u_int16_t a, u_int16_t b, double support, double rconf) : name(name), A(a),
                                                                                                      B(b),
                                                                                                      support(support),
                                                                                                      rconf(rconf) {}
@@ -69,19 +69,22 @@ struct SimpleDeclare {
     SimpleDeclare(SimpleDeclare&&) = default;
     SimpleDeclare& operator=(const SimpleDeclare&) = default;
     SimpleDeclare& operator=(SimpleDeclare&&) = default;
+
 };
+
+
 
 struct result_container {
     u_int16_t A, B;
     double log_size;
-    std::vector<SimpleDeclare> result;
+    std::vector<SimpleDeclare> boundary_result;
 
     void operator()(const simple_declare& x, const declare_lattice_node& node) {
         DEBUG_ASSERT((((double)node.log_support)/log_size)<=1);
         if (x.second) {
-            result.emplace_back(x.first, A, B, ((double)node.log_support)/log_size, node.rconf);
+            boundary_result.emplace_back(x, A, B, ((double)node.log_support)/log_size, node.rconf);
         } else {
-            result.emplace_back(x.first, B, A, ((double)node.log_support)/log_size, node.rconf);
+            boundary_result.emplace_back(x, B, A, ((double)node.log_support)/log_size, node.rconf);
         }
     }
     void complex_operator(const simple_declare& x, const declare_lattice_node& node, const std::string&A, const std::string& B, const size_t total_log, std::unordered_map<std::tuple<std::string,std::string,std::string>, std::vector<char>>& result_map) {
@@ -91,8 +94,10 @@ struct result_container {
         } else {
             simple_clause = {x.first, B, A};
         }
-        if (result_map.contains(simple_clause))
+        if (result_map.contains(simple_clause)){
+            std::cerr << "ERROR: result_map already contains the clause" << std::endl;
             exit(3);
+        }
         auto& embeddings = result_map[simple_clause];
         embeddings.resize(total_log, -2);
 
@@ -273,8 +278,9 @@ struct polyadic_bolt {
         }
         for (const auto& [root, children]: ptr->hierarchy_def) {
             for (const auto& child : children) {
-                if (kb->event_label_mapper.signed_get(child)!=-1) {
+                if ((kb->event_label_mapper.signed_get(child)!=-1) && (child != "__raw_data") && (child != "__trace_payload")) {
                     DEBUG_ASSERT(kb->event_label_mapper.signed_get(root) != -1);
+                    DEBUG_ASSERT(kb->event_label_mapper.get(child) < event_to_root.size());
                     event_to_root[kb->event_label_mapper.get(child)] = kb->event_label_mapper.get(root);
                 }
             }
@@ -731,28 +737,15 @@ struct polyadic_bolt {
         }
     }
 
-    inline void mine_for_AB_clauses(double support,
-                                    bool polyadic,
-                                    act_t A, act_t B, FastDatalessClause &cache_clause,
-                                          std::unordered_map<act_t, std::string> &resolveLabelCache,
-                                          size_t min_int_supp_patt,
-                                          result_container &rc,
-                                          std::unordered_set<std::pair<act_t, act_t>> &used,
-                                          const std::pair<size_t, std::unordered_set<act_t>> &binary_pattern) {
-        unsigned char hasCoExistence = association_rules_for_declare(support, binary_pattern, A, B);
-
-        /* We want to force a branch if the Bs ever occur at the start of the trace and occur only once.
-     * This is due to ChainPrecedence, which has an activation of X(A), and we want to mine a potential
-     * ChainPrecedence(A,B) */
-        bool branch = (hasCoExistence==2) || (Beginnings.at(B) > 0); // Algorithm 7, L. 15
-
-        extractPatternsForcibly(polyadic, A, B, cache_clause, min_int_supp_patt,
-                                hasCoExistence, branch, true, false);
+    inline void storeMinedClausesFromItemset(act_t A, act_t B, FastDatalessClause &cache_clause,
+                                       std::unordered_map<act_t, std::string> &resolveLabelCache,
+                                       size_t min_int_supp_patt,
+                                       result_container &rc, std::unordered_set<std::pair<act_t, act_t>> &used) {
         QM_DECLARE Q{&graph, min_int_supp_patt};
         graph.visit<QM_DECLARE, result_container>(choiceAB_BA, Q, rc);
-        if (!rc.result.empty()) {
-            for (const auto& res : rc.result) {
-                cache_clause.casusu = res.name;
+        if (!rc.boundary_result.empty()) {
+            for (const auto& res : rc.boundary_result) {
+                cache_clause.casusu = res.name.first;
                 cache_clause.left = resolveLabelCache.at(res.A);
                 cache_clause.right = resolveLabelCache.at(res.B);
                 Phi.emplace_back(cache_clause, -1.0, res.support, res.rconf, -1.0);
@@ -763,10 +756,36 @@ struct polyadic_bolt {
                 used.emplace(B,A);
             }
         }
-//        return rc;
     }
 
-    void finalise_run(size_t minimum_support_threshold, const std::unordered_set<std::pair<act_t, act_t>> &used) {
+    inline void mine_for_AB_clauses(double support,
+                                    bool polyadic,
+                                    act_t A, act_t B, FastDatalessClause &cache_clause,
+                                    std::unordered_map<act_t, std::string> &resolveLabelCache,
+                                    size_t min_int_supp_patt,
+                                    result_container &rc,
+                                    std::unordered_set<std::pair<act_t, act_t>> &used,
+                                    const std::pair<size_t, std::unordered_set<act_t>> &binary_pattern,
+                                    bool finalise_clause_insertion = true) {
+        rc.boundary_result.clear();
+        clearResultsVector();
+        rc.A = A;
+        rc.B = B;
+        unsigned char hasCoExistence = association_rules_for_declare(support, binary_pattern, A, B);
+
+        /* We want to force a branch if the Bs ever occur at the start of the trace and occur only once.
+     * This is due to ChainPrecedence, which has an activation of X(A), and we want to mine a potential
+     * ChainPrecedence(A,B) */
+        bool branch = (hasCoExistence==2) || (Beginnings.at(B) > 0); // Algorithm 7, L. 15
+
+        extractPatternsForcibly(polyadic, A, B, cache_clause, min_int_supp_patt,
+                                hasCoExistence, branch, true, false);
+
+        if (finalise_clause_insertion)
+            storeMinedClausesFromItemset(A, B, cache_clause, resolveLabelCache, min_int_supp_patt, rc, used);
+    }
+
+    inline void finalise_run(size_t minimum_support_threshold, const std::unordered_set<std::pair<act_t, act_t>> &used) {
         if (ChoiceFilter.empty()) {
             ChoiceFilter.reserve(max_act_id);
             for (auto act_id = 0; act_id < max_act_id; act_id++) {
@@ -820,7 +839,8 @@ struct polyadic_bolt {
     }
 
     inline void binary_clauses_mining(double support, size_t minimum_support_threshold, bool polyadic,
-                                      std::vector<std::pair<size_t, std::unordered_set<act_t>>>& frequent_itemset_mining) {
+                                      std::vector<std::pair<size_t, std::unordered_set<act_t>>>& frequent_itemset_mining,
+                                      bool finalise_clause_insertion = true) {
         act_t A, B;
         FastDatalessClause clause;
         std::unordered_map<act_t, std::string> resolveLabelCache;
@@ -830,22 +850,26 @@ struct polyadic_bolt {
         rc.log_size = log_size;
         std::unordered_set<std::pair<act_t,act_t>> used;
         for (const auto& binary_pattern : frequent_itemset_mining) {
-            rc.result.clear();
-            clearResultsVector();
+            if (binary_pattern.second.size() != 2)
+                continue;
             std::vector<unsigned short> AB{binary_pattern.second.begin(), binary_pattern.second.end()};
-            rc.A = A = AB[0];
-            rc.B = B = AB[1];
+            A = AB[0];
+            B = AB[1];
+
+            auto A_label = resolveLabelCache.at(A);
+            auto B_label = resolveLabelCache.at(B);
+            if ((A_label == "__missing") || (B_label == "__missing") ||
+                (A_label == "__raw_data") || (B_label == "__raw_data") ||
+                (A_label == "__trace_payload") || (B_label == "__trace_payload"))
+                continue;
+
+
             resolveLabelCache.clear();
             resolveLabelCache.emplace(A, kb->event_label_mapper.get(A));
             resolveLabelCache.emplace(B, kb->event_label_mapper.get(B));
 
-            auto A_label = resolveLabelCache.at(A);
-            auto B_label = resolveLabelCache.at(B);
-            if ((A_label == "__missing") || (B_label == "__missing"))
-                continue;
-
             mine_for_AB_clauses(support, polyadic, A, B, clause, resolveLabelCache, min_int_supp_patt, rc, used,
-                                     binary_pattern);
+                                     binary_pattern, finalise_clause_insertion);
         }
 
         finalise_run(minimum_support_threshold, used);

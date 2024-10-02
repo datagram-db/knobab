@@ -58,6 +58,7 @@ struct benchmarking {
 #include <filesystem>
 #include <yaucl/strings/string_utils.h>
 
+#if 0
 void  original_main_entrypoint(bool reclassify,
                                bool reduction,
                                double mining_supp,
@@ -71,11 +72,11 @@ void  original_main_entrypoint(bool reclassify,
                                std::filesystem::path &folder,
                                const std::string& fulltime) {
     ServerQueryManager sqm;
-    double cpp_preprocess, loading, indexing, mining, refining;
+    double cpp_preprocess, loading, indexing, mining, refining, payload_extraction;
     if (!filename_polyadic.empty()) {
 //        result.filename_polyadic = args::get(polyadicJSON);
 
-        std::tie(cpp_preprocess, loading, indexing) = polyadic_loader(ignore_keys,
+        std::tie(cpp_preprocess, loading, indexing, payload_extraction) = polyadic_loader(ignore_keys,
                                                                       traceDistinguisher,
                                                                       filename_polyadic,
                                                                       reclassify,
@@ -188,7 +189,7 @@ void  original_main_entrypoint(bool reclassify,
         }
     } else {
         std::unordered_map<std::string, std::set<std::tuple<std::string,std::string,std::string>>> diff;
-        std::tie(mining, refining) = polyadic_dataless_mining_and_refinement(mining_supp, isFilenamePolyadic, reduction, sqm, diff);
+        std::tie(mining, refining) = polyadic_dataless_mining_and_refinement(folder, mining_supp, isFilenamePolyadic, reduction, sqm, diff);
         std::cout << "Mining (min_support=" << mining_supp << ") : " << mining << " (ms)" << std::endl;
         std::cout << "Refining: " << refining << " (ms)" << std::endl;
 
@@ -200,9 +201,9 @@ void  original_main_entrypoint(bool reclassify,
             }
             std::ofstream file{benchmark_file, std::ios_base::app};
             if (writeHeader) {
-                file << STRINGIFY(filename_polyadic,mining_supp,reduction,reclassify,isFilenamePolyadic,cpp_preprocess,loading,indexing,mining,refining) << std::endl;
+                file << STRINGIFY(filename_polyadic,mining_supp,reduction,reclassify,isFilenamePolyadic,cpp_preprocess,loading,indexing,mining,refining) << ",payload_extraction" << std::endl;
             }
-            file << BESTIA(filename_polyadic,mining_supp,reduction,reclassify,isFilenamePolyadic,cpp_preprocess,loading,indexing,mining,refining) << std::endl;
+            file << BESTIA(filename_polyadic,mining_supp,reduction,reclassify,isFilenamePolyadic,cpp_preprocess,loading,indexing,mining,refining) << "," << payload_extraction << std::endl;
         }
 
 
@@ -236,7 +237,7 @@ void  original_main_entrypoint(bool reclassify,
             }
             std::ofstream file{benchmark_file, std::ios_base::app};
             if (writeHeader) {
-                file << STRINGIFY(filename_polyadic,mining_supp,reduction,reclassify,isFilenamePolyadic,cpp_preprocess,loading,indexing,mining,refining);
+                file << STRINGIFY(filename_polyadic,mining_supp,reduction,reclassify,isFilenamePolyadic,cpp_preprocess,loading,indexing,mining,refining) <<",payload_extraction";
                 for (const auto& [k,v] : mined_model_size) {
                     file << "," << k;
                 }
@@ -244,7 +245,7 @@ void  original_main_entrypoint(bool reclassify,
                 file << std::endl;
             }
 //            result.values_polyadic(file, result.mined_model_size);
-            file << BESTIA(filename_polyadic,mining_supp,reduction,reclassify,isFilenamePolyadic,cpp_preprocess,loading,indexing,mining,refining);
+            file << BESTIA(filename_polyadic,mining_supp,reduction,reclassify,isFilenamePolyadic,cpp_preprocess,loading,indexing,mining,refining)<<","<<payload_extraction;
             for (const auto& [k,v] : mined_model_size) {
                 file << "," << v;
             }
@@ -252,6 +253,7 @@ void  original_main_entrypoint(bool reclassify,
         }
     }
 }
+#endif
 
 
 int main(int argc, char **argv) {
@@ -280,7 +282,8 @@ int main(int argc, char **argv) {
     args::ValueFlag<std::string>  distinguisher(group, "Trace Distinguisher", "Trace payload field allowing to distinguish different users within polyadic traces", {'d', "distinguisher"});
     args::Flag red(group, "reduction", "Run the model reduction for removing mutually implying clauses", {'r', "red"});
     args::Flag rec(group, "reclassify", "Run a re-classification, thus further distiguishing each class via decision-tree induced sub-classes", {'k', "reclassify"});
-    args::ValueFlag<std::string> fastSat(group, "fastSat", "Performs a fast SAT given specific configuration files within a specific folder", {'f', "fastSat"});
+    args::Flag fastSatFlag(group, "fastSat", "Performs a fast SAT given specific configuration files within a specific folder", {'f', "fastSat"});
+    args::ValueFlag<std::string> directory(group, "Directory", "Directory where to dump either refinement intermediate files as well as ", {'E', "directory"});
     args::ValueFlagList<std::string> characters(parser, "ignore keys", "The payload's keys to be ignored within the loading and classification task", {'i', "ignore"});
     args::ValueFlag<std::string> polyadicJSON(parser, "polyadic JSON", "The polyadic traces represented as a json file", {'p', "polyadic"});
     args::Flag polyadicMine(parser, "usual mining", "Uses the standard linear behaviour from declarative mining, where traces are not grouped in hierarchy", {'l', "nonPolyMining"});
@@ -308,7 +311,7 @@ int main(int argc, char **argv) {
         return 1;
     }
 
-    bool isFastSat = (bool)(fastSat);
+    bool isFastSat = (bool)(fastSatFlag);
     if (supportVal) {
         result.mining_supp = args::get(supportVal);
     }
@@ -338,7 +341,7 @@ int main(int argc, char **argv) {
     } else {
         result.isFilenamePolyadic = true;
     }
-    std::filesystem::path folder = args::get(fastSat);
+    std::filesystem::path folder = args::get(directory);
     std::string fulltime = "fulltime";
     if (fulltimeFlag) {
         fulltime = args::get(fulltimeFlag);

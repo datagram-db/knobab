@@ -49,7 +49,7 @@ struct myParser {
     std::string traceName;
     bool traceNameOk = false;
     bool tracePayloadOk = false;
-    std::unordered_map<std::string, union_minimal> payload;
+    std::map<std::string, union_minimal> payload;
     std::string eventLabel;
     size_t trace_id = -1;
     size_t event_id = -1;
@@ -86,8 +86,8 @@ struct myParser {
 //        return false;
 //    }
 
-    std::unordered_map<std::string,std::vector<std::pair<env,int>>> tmp_event_paload_aka_rawdata;
-    std::vector<std::pair<env,int>> event_paload_aka_rawdata;
+    std::unordered_map<std::string,std::vector<std::pair<std::map<std::string, union_minimal>,int>>> tmp_event_paload_aka_rawdata;
+    std::vector<std::pair<std::map<std::string, union_minimal>,int>> event_paload_aka_rawdata;
     std::unordered_map<std::string,std::vector<std::vector<size_t>>> payload_trace_id;
 
     void clear() {

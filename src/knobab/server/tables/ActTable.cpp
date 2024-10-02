@@ -96,13 +96,18 @@ const std::vector<std::vector<std::unordered_map<act_t, std::vector<size_t>>>> &
     // Phase 1
     for (size_t k = 0, N = builder.act_id_to_trace_id_and_time.size(); k < N; k++) {
         primary_index.emplace_back(offset);
+        DEBUG_ASSERT(k <= builder.act_id_to_trace_id_and_time.size());
         auto& ref = builder.act_id_to_trace_id_and_time[k];
         for (const std::tuple<trace_t, event_t, event_t>& cp : ref) {
             table.emplace_back(k,
                                std::get<0>(cp),
                                std::get<1>(cp),
                                std::get<2>(cp));
+            DEBUG_ASSERT(std::get<0>(cp) < builder.trace_id_to_event_id_to_offset.size());
+            DEBUG_ASSERT(std::get<1>(cp) < builder.trace_id_to_event_id_to_offset[std::get<0>(cp)].size());
             builder.trace_id_to_event_id_to_offset[std::get<0>(cp)][std::get<1>(cp)][k].emplace_back(offset);
+            DEBUG_ASSERT(std::get<0>(cp) < trace_id_to_endTimeId_to_offset.size());
+            DEBUG_ASSERT(std::get<1>(cp)+std::get<2>(cp)-1 < trace_id_to_endTimeId_to_offset[std::get<0>(cp)].size());
             trace_id_to_endTimeId_to_offset[std::get<0>(cp)][std::get<1>(cp)+std::get<2>(cp)-1][k].emplace_back(offset);
             offset++;
         }
@@ -115,17 +120,23 @@ const std::vector<std::vector<std::unordered_map<act_t, std::vector<size_t>>>> &
 
 void ActTable::indexing2() { // todo: rename as indexing, and remove expectedOrdering from emplace_back, instead, put in
     for (size_t sigma_id = 0, M = builder.trace_id_to_event_id_to_offset.size(); sigma_id < M ; sigma_id++) {
+        DEBUG_ASSERT(sigma_id < builder.trace_id_to_event_id_to_offset.size());
         auto& ref = builder.trace_id_to_event_id_to_offset[sigma_id];
+        DEBUG_ASSERT(0 < secondary_index_polyadic[sigma_id].size());
+        DEBUG_ASSERT(ref.size()-1 < secondary_index_polyadic[sigma_id].size());
         secondary_index.emplace_back(&secondary_index_polyadic[sigma_id][0], &secondary_index_polyadic[sigma_id][ref.size()-1]);
         for (size_t time = 0, T = ref.size(); time < T; time++) {
             for (const auto& [act, offsets] : ref[time]) {
                 for (size_t offset : offsets) {
+                    DEBUG_ASSERT(offset < table.size());
                     secondary_index_polyadic[sigma_id][time][act].emplace_back(table.data()+offset);
                     auto& real_ref = table[offset];
                     if (time < T-1) {
+                        DEBUG_ASSERT(time+1 < secondary_index_polyadic[sigma_id].size());
                         real_ref.next = &secondary_index_polyadic[sigma_id][time+1];
                     }
                     if (time > 0) {
+                        DEBUG_ASSERT(time-1 < secondary_index_polyadic[sigma_id].size());
                         real_ref.prev = &secondary_index_polyadic[sigma_id][time-1];
                     }
                 }

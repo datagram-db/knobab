@@ -115,16 +115,20 @@ void AttributeTable::index(const std::vector<std::vector<std::unordered_map<act_
             std::map<union_type, std::vector<std::vector<size_t>>> valueToOffsetInTable;
             for (const auto& val_offset : ref) {
                 for (const auto& traceid_eventid : val_offset.second) {
+                    DEBUG_ASSERT(traceid_eventid.first < trace_id_to_event_id_to_offset.size());
+                    DEBUG_ASSERT(traceid_eventid.second < trace_id_to_event_id_to_offset[traceid_eventid.first].size());
                     const auto& offsets_map =
                             trace_id_to_event_id_to_offset.at(traceid_eventid.first).at(traceid_eventid.second);
                     auto& OBJ = valueToOffsetInTable[val_offset.first].emplace_back();
                     for (const auto& [act, offsets] : offsets_map) {
-                        for (const auto idx : offsets)
+                        for (const auto idx : offsets) {
+                            DEBUG_ASSERT(idx < act_table.size());
                             if (act_table.at(idx).entry.id.parts.act == act_id) {
                                 OBJ.emplace_back(idx);
                             }
                         }
                     }
+                }
             }
             for (auto it = valueToOffsetInTable.begin(); it != valueToOffsetInTable.end(); it++) {
                 std::sort(it->second.begin(), it->second.end());
@@ -405,10 +409,39 @@ std::optional<union_minimal> AttributeTable::resolve_record_if_exists2(size_t ac
     else return {resolveUnionMinimal(*this, *ptr)};
 }
 
-void AttributeTable::resolve_record_if_exists2(size_t actTableOffset, std::unordered_map<std::string, union_minimal >& m) const {
-    const AttributeTable::record * ptr;
-    if (ptr = resolve_record_if_exists(actTableOffset))
-        m[attr_name] = resolveUnionMinimal(*this, *ptr);
+void AttributeTable::resolve_record_if_exists2(size_t actTableOffset, std::map<std::string, union_minimal >& m) const {
+    const AttributeTable::record *loc;
+    loc = resolve_record_if_exists(actTableOffset);
+    double val = 0.0; std::string sval;
+    if (loc) {
+//        auto value = resolveUnionMinimal(*this, *ptr);
+        switch (type) {
+            case DoubleAtt:
+                val = *(double*)(&loc->value);
+                m.emplace(attr_name, val);
+                break;
+            case LongAtt:
+                val = (double)(*(long long*)(&loc->value));
+                m.emplace(attr_name, val);
+                break;
+            case StringAtt:
+                sval = this->ptr.get(loc->value);
+                m.emplace(attr_name, sval);
+                break;
+            case BoolAtt:
+                val =  (loc->value != 0 ? 0.0 : 1.0);
+                m.emplace(attr_name, val);
+                break;
+                //case SizeTAtt:
+            default:
+                // TODO: hierarchical types!, https://dl.acm.org/doi/10.1145/3410566.3410583
+                val = (double)loc->value;
+                m.emplace(attr_name, val);
+                break;
+        }
+//        m[attr_name] = value;
+//        m.emplace(attr_name, value);
+    }
 }
 
 

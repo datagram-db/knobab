@@ -24,16 +24,21 @@ std::pair<double,double> algorithmic_strategy::polyadic_dataful_mining_and_refin
     std::unordered_map<std::string, std::vector<std::string>> act_to_log_name;
     std::pair<std::string,std::string> cp_acts;
     std::unordered_map<std::pair<std::string,std::string>, std::vector<std::pair<std::string,size_t>>> elements;
-    std::unordered_map<std::string, std::vector<size_t>> indices_to_remove;
+    std::unordered_map<std::string, std::unordered_set<size_t>> indices_to_remove;
     std::unordered_map<std::string, std::unordered_map<act_t, std::string> > forAllLogsCacheMap;
     std::unordered_map<std::string, result_container> rcv;
     std::unordered_map<std::string,  std::unordered_set<std::pair<act_t,act_t>>> usedv;
+    std::unordered_map<std::string, uint32_t> minimum_support_thresholds;
+    std::unordered_map<std::string, size_t> min_int_supp_patts;
 
 
     for (const auto& [log_name, kb] : sqm.multiple_logs) {
         auto& g = gv[log_name];
         auto& ref = frequent_itemsets[log_name];
         auto& currentCache = forAllLogsCacheMap[log_name];
+        minimum_support_thresholds[log_name] = std::min((uint32_t)std::ceil((double)(sqm.multiple_logs[log_name].db.nTraces()) * mining_supp), (sqm.multiple_logs[log_name].db.nTraces()));
+        min_int_supp_patts[log_name] = std::ceil(((double)mining_supp) * (minimum_support_thresholds[log_name]));
+
         // Mining just the unary clauses
         support.emplace_back(g.run1(mining_supp, polyadic, &kb.db, ref));
 
@@ -52,11 +57,11 @@ std::pair<double,double> algorithmic_strategy::polyadic_dataful_mining_and_refin
                 currentCache.emplace(*it, cp_acts.second);
 
                 if ((cp_acts.first == "__missing")) {
-                    indices_to_remove[log_name].emplace_back(idx);
+                    indices_to_remove[log_name].emplace(idx);
                     continue;
                 }
                 if ((cp_acts.second == "__missing"))  {
-                    indices_to_remove[log_name].emplace_back(idx);
+                    indices_to_remove[log_name].emplace(idx);
                     continue;
                 }
                 if (cp_acts.first > cp_acts.second)
@@ -66,25 +71,11 @@ std::pair<double,double> algorithmic_strategy::polyadic_dataful_mining_and_refin
                 auto it = itemset.begin();
                 const auto& ref2 = kb.db.event_label_mapper.get(*it);
                 currentCache.emplace(*it, ref2);
+                indices_to_remove[log_name].emplace(idx);
             }
         }
     }
-    for (auto it = elements.begin(); it != elements.end();  ) {
-        if (it->second.size() == 1) {
-            it = elements.erase(it); // Using the joing mining, so, I can remove this from the set
-        } else {
-            for (const auto& ref : it->second) {
-                indices_to_remove[ref.first].emplace_back(ref.second);  // Not using directly the frequent itemsets for mining the shared clauses
-            }
-            it++;
-        }
-    }
-    for (auto& [k,v] : indices_to_remove) {
-        remove_duplicates(v);
-        remove_index(frequent_itemsets[k], v); // Removing the shared frequent itemset by index, so that those can be handled joinly along the elements of the map.
-        // Also, removing all the  patterns with __missing
-    }
-    indices_to_remove.clear();
+
 
 
     // Retaining only the clauses that are shared across at least two logs
@@ -125,108 +116,254 @@ std::pair<double,double> algorithmic_strategy::polyadic_dataful_mining_and_refin
     cvnc.clear();
 
 
-    std::unordered_set<std::string> categorical, numerical;
+    std::unordered_set<std::string> categorical{"__label"}, numerical;
     if (refine_init || refine_ends || refine_existentials) {
         for (const auto& [log, env] : sqm.multiple_logs) {
             for (const auto &[key, table]: env.db.attribute_name_to_table) {
-                if (table.type == StringAtt)
-                    categorical.emplace(key);
-                else
+                if (table.type != StringAtt)
+//                    categorical.emplace(key);
+//                else
                     numerical.emplace(key);
             }
         }
     }
 
     if (refine_init || refine_ends) {
-        std::vector<std::pair<env, int>> begins, ends;
-        std::unordered_map<std::string, union_minimal > tuple;
-
-
+        std::vector<std::pair<std::vector<std::pair<std::string,union_minimal>>, int>> begins, ends;
         std::unordered_map<std::string, std::vector<std::vector<size_t>>> W1, W2;
+
+        size_t bs = 0, es = 0;
         for (const auto& [log, env] : sqm.multiple_logs) {
-            for (const auto& [key, table] : env.db.attribute_name_to_table) {
-                if (table.type == StringAtt)
-                    categorical.emplace(key);
-                else
-                    numerical.emplace(key);
-            }
-            int clazz = std::stoi(log);
             if (refine_init) W1[log].resize(env.db.act_table_by_act_id.secondary_index.size());
             if (refine_ends) W2[log].resize(env.db.act_table_by_act_id.secondary_index.size());
-            for (size_t trace_id = 0, N = env.db.act_table_by_act_id.secondary_index.size(); trace_id < N; trace_id++) {
-                const auto& IDX = env.db.act_table_by_act_id.secondary_index.at(trace_id);
-                if (refine_init) {
-                    for (const auto& [act, event_record_ls] : *IDX.first) {
-                        for (const auto& record : event_record_ls) {
-                            tuple.clear();
-                            size_t offset = record - env.db.act_table_by_act_id.table.data();
-                            tuple["__label"] = env.db.event_label_mapper.get(act);
-                            for (const auto& [key, table] : env.db.attribute_name_to_table) {
-                                table.resolve_record_if_exists2(offset, tuple);
-                            }
-                            W1[log][trace_id].emplace_back(begins.size());
-                            begins.emplace_back(tuple, clazz);
+            for (const auto &[key, table]: env.db.attribute_name_to_table) {
+                for (size_t trace_id = 0, N = env.db.act_table_by_act_id.secondary_index.size(); trace_id < N; trace_id++) {
+                    const auto& IDX = env.db.act_table_by_act_id.secondary_index.at(trace_id);
+                    if (refine_init) {
+                        for (const auto& [act, event_record_ls] : *IDX.first) {
+                            bs += event_record_ls.size();
                         }
                     }
-                } else if (refine_ends) {
-                    for (const auto& [act, event_record_ls] : *IDX.second) {
-                        for (const auto& record : event_record_ls) {
-                            tuple.clear();
-                            size_t offset = record - env.db.act_table_by_act_id.table.data();
-                            tuple["__label"] = env.db.event_label_mapper.get(act);
-                            for (const auto& [key, table] : env.db.attribute_name_to_table) {
-                                table.resolve_record_if_exists2(offset, tuple);
+                    if (refine_ends) {
+                        for (const auto& [act, event_record_ls] : *IDX.second) {
+                            for (const auto& record : event_record_ls) {
+                                es += event_record_ls.size();
                             }
-                            W2[log][trace_id].emplace_back(ends.size());
-                            ends.emplace_back(tuple, clazz);
                         }
                     }
                 }
             }
         }
+
+        begins.resize(bs);
+        ends.resize(es);
+        bs = 0, es = 0;
+
+        for (const auto& [log, env] : sqm.multiple_logs) {
+            for (const auto& [key, table] : env.db.attribute_name_to_table) {
+                if (table.type != StringAtt)
+//                    categorical.emplace(key);
+//                else
+                    numerical.emplace(key);
+            }
+            int clazz = std::stoi(log);
+
+            for (size_t trace_id = 0, N = env.db.act_table_by_act_id.secondary_index.size(); trace_id < N; trace_id++) {
+                const auto& IDX = env.db.act_table_by_act_id.secondary_index.at(trace_id);
+                if (refine_init) {
+                    for (const auto& [act, event_record_ls] : *IDX.first) {
+                        for (const auto& record : event_record_ls) {
+//                            std::vector<std::pair<std::string,union_minimal>>/*&*/ tuple; //= begins[bs].first;
+//                            tuple.reserve(env.db.attribute_name_to_table.size()+1);
+                            size_t offset = record - env.db.act_table_by_act_id.table.data();
+                            begins[bs].first.reserve(env.db.attribute_name_to_table.size());
+                            begins[bs].first.emplace_back("__label", env.db.event_label_mapper.get(act));
+                            for (const auto& [key, table] : env.db.attribute_name_to_table) {
+                                table.resolve_record_if_exists3(offset, begins[bs].first);
+//                                table.resolve_record_if_exists2(offset, tuple);
+                            }
+                            DEBUG_ASSERT(trace_id < W1[log].size());
+                            W1[log][trace_id].emplace_back(bs);
+                            std::sort(begins[bs].first.begin(), begins[bs].first.end());
+                            begins[bs].second = clazz;
+//                            std::swap(begins[bs].first, tuple);
+//                            begins.emplace_back(tuple, clazz);
+                            bs++;
+                        }
+                    }
+                }
+//                if (refine_ends) {
+//                    for (const auto& [act, event_record_ls] : *IDX.second) {
+//                        for (const auto& record : event_record_ls) {
+////                            std::vector<std::pair<std::string,union_minimal>>/*&*/ tuple;// = ends[es].first;
+//                            size_t offset = record - env.db.act_table_by_act_id.table.data();
+//                            ends[es].first.reserve(env.db.attribute_name_to_table.size());
+//                            ends[es].first.emplace_back("__label", env.db.event_label_mapper.get(act));
+////                            tuple["__label"] = env.db.event_label_mapper.get(act);
+//                            for (const auto& [key, table] : env.db.attribute_name_to_table) {
+//                                table.resolve_record_if_exists3(offset, ends[es].first);
+////                                table.resolve_record_if_exists2(offset, tuple);
+//                            }
+//                            DEBUG_ASSERT(trace_id < W2[log].size());
+//                            W2[log][trace_id].emplace_back(ends.size());
+//                            std::sort(ends[es].first.begin(), ends[es].first.end());
+//                            ends[es].second = clazz;
+////                            std::swap(ends[es].first, tuple);
+////                            ends.emplace_back(tuple, clazz);
+//                            es++;
+//                        }
+//                    }
+//                }
+            }
+        }
         if (refine_init) {
-            train_and_dump_to_csv(sqm.multiple_logs, W1, ser_path+"_Refinement_init", begins, "InitAll", "InitSome", false, sqm.multiple_logs.size(),numerical, categorical );
+            train_and_dump_to_csv3(sqm.multiple_logs, W1, ser_path+"_Refinement_init", begins, "InitAll", "InitSome", false, sqm.multiple_logs.size(),numerical, categorical );
+            begins.clear();
         }
         if (refine_ends) {
-            train_and_dump_to_csv(sqm.multiple_logs, W1, ser_path+"_Refinement_end", ends, "EndAll", "EndSome", false, sqm.multiple_logs.size(),numerical, categorical );
+            for (const auto& [log, env] : sqm.multiple_logs) {
+                int clazz = std::stoi(log);
+                for (size_t trace_id = 0, N = env.db.act_table_by_act_id.secondary_index.size();
+                     trace_id < N; trace_id++) {
+                    const auto &IDX = env.db.act_table_by_act_id.secondary_index.at(trace_id);
+                    if (refine_init) {
+                        for (const auto &[act, event_record_ls]: *IDX.second) {
+                            for (const auto &record: event_record_ls) {
+                                size_t offset = record - env.db.act_table_by_act_id.table.data();
+                                ends[es].first.reserve(env.db.attribute_name_to_table.size());
+                                ends[es].first.emplace_back("__label", env.db.event_label_mapper.get(act));
+                                for (const auto &[key, table]: env.db.attribute_name_to_table) {
+                                    table.resolve_record_if_exists3(offset, ends[es].first);
+                                }
+                                DEBUG_ASSERT(trace_id < W2[log].size());
+                                W2[log][trace_id].emplace_back(es);
+                                std::sort(ends[es].first.begin(), ends[es].first.end());
+                                ends[bs].second = clazz;
+                                es++;
+                            }
+                        }
+                    }
+                }
+            }
+            train_and_dump_to_csv3(sqm.multiple_logs, W1, ser_path+"_Refinement_end", ends, "EndAll", "EndSome", false, sqm.multiple_logs.size(),numerical, categorical );
         }
     }
 
+    bool keepFirstEvent = true;
     if (refine_existentials) {
-        std::unordered_map<std::string, union_minimal > tuple;
+        std::map<std::string, union_minimal > tuple;
         for (const auto& [act, kb_ids] : act_to_log_name) {
             if (kb_ids.size() > 1) {
                 // Actually performing the refinement
                 std::unordered_map<std::string, std::vector<std::vector<size_t>>> W1;
-                std::vector<std::pair<env, int>> begins;
+                std::vector<std::pair<env2, int>> begins;
                 for (const auto& [log, env] : sqm.multiple_logs) {
                     int clazz = std::stoi(log);
                     auto A = env.db.event_label_mapper.get(act);
                     auto cp = env.db.timed_dataless_exists(A);
                     W1[log].resize(env.db.act_table_by_act_id.secondary_index.size());
                     while (cp.first != cp.second) {
-                        tuple.clear();
-                        size_t offset = cp.first - env.db.act_table_by_act_id.table.data();
-                        for (const auto& [key, table] : env.db.attribute_name_to_table) {
-                            table.resolve_record_if_exists2(offset, tuple);
+                        if ((keepFirstEvent) || (cp.first->entry.id.parts.trace_id != 0)) {
+                            tuple.clear();
+                            size_t offset = cp.first - env.db.act_table_by_act_id.table.data();
+                            for (const auto& [key, table] : env.db.attribute_name_to_table) {
+                                table.resolve_record_if_exists2(offset, tuple);
+                            }
+                            W1[log][cp.first->entry.id.parts.trace_id].emplace_back(begins.size());
+                            begins.emplace_back(tuple, clazz);
                         }
-                        W1[log][cp.first->entry.id.parts.trace_id].emplace_back(begins.size());
-                        begins.emplace_back(tuple, clazz);
+                        cp.first++;
                     }
                 }
-                train_and_dump_to_csv(sqm.multiple_logs, W1, ser_path+"_Refinement_Exists_"+act, begins, "Exists", "Absence", true, sqm.multiple_logs.size(),numerical, categorical, act );
+                train_and_dump_to_csv2(sqm.multiple_logs, W1, ser_path+"_Refinement_Exists_"+act, begins, "Exists", "", true, sqm.multiple_logs.size(),numerical, categorical, act ,
+                                      false);
             }
         }
     }
 
     // Now, going for the binary patterns.
-    // First, we are mining the binary patterns that binary and not shared across the logs
+    // 1. Mining jointly the shared clauses, so to pertain the information of which traces satisfy or not specific
+    //    activation conditions
     FastDatalessClause cache_clause;
     cache_clause.n = 2;
+    for (const auto& [pair, entries] : elements) {
+        std::unordered_set<std::string> logs;
+        if (entries.size() > 1) {
+            for (const auto& [log_name, offset] : entries) {
+                bool firstInsertion = logs.insert(log_name).second;
+                DEBUG_ASSERT(firstInsertion);
+                DEBUG_ASSERT(frequent_itemsets[log_name].size() > offset);
+                auto& g = gv[log_name];
+                const auto& binary_pattern = frequent_itemsets[log_name][offset];
+                auto& rc = rcv[log_name];
+                auto& used = usedv[log_name];
+                auto it = binary_pattern.second.begin();
+                auto A = *it;
+                it++;
+                auto B = *it;
+                const auto& cA = forAllLogsCacheMap[log_name].at(A);;
+                const auto& cB = forAllLogsCacheMap[log_name].at(B);
+                if (cB > cA)
+                    std::swap(A, B);
+                // False: do not finalise the clause insertion in phi!
+                g.mine_for_AB_clauses(mining_supp, polyadic, A, B, cache_clause, forAllLogsCacheMap[log_name], min_int_supp_patts[log_name], rc, used, binary_pattern, false);
+            }
+            std::unordered_map<simple_declare, std::unordered_map<std::string,const SimpleDeclare*>> matchedClausesFromBoundary;
+            for (const auto& log_name : logs) {
+                auto& rc = rcv[log_name];
+                auto& map = forAllLogsCacheMap[log_name];
+                for (const auto& fast_clause : rc.boundary_result) {
+                    cache_clause.left = map.at(fast_clause.A);
+                    cache_clause.right = map.at(fast_clause.B);
+                    cache_clause.casusu = fast_clause.name.first;
+                    simple_declare fc = fast_clause.name;
+                    matchedClausesFromBoundary[fc].emplace(log_name, &fast_clause);
+                }
+            }
+            for (const auto&  [scl, mp] : matchedClausesFromBoundary) {
+                if (mp.size() == 1) {
+                    // This is the single instance of the clause
+                    auto it = mp.begin();
+                    for (const auto& [log_name, v] : gv) {
+                        if (log_name != it->first) {
+                            const auto& genOrSelf = v.graph.generalise(scl);
+                            if (!genOrSelf.empty()) {
+
+                            }
+                        }
+                    }
+                } else if (mp.size() == entries.size()) {
+                    // This clause is present at all levels of the refinements
+                } else {
+
+                }
+            }
+        }
+
+    }
+
+
+    // 2. Mining for the non-shared clauses
+    // 2a) Marking as to remove the items that are binary and already handled in the previous phase, that is, the ones having
+    // more than one other log containing those
+    for (auto it = elements.begin(); it != elements.end();  ) {
+        if ((it->second.size() != 1)) {
+            for (const auto &ref: it->second) {
+                indices_to_remove[ref.first].emplace(
+                        ref.second);  // Not using directly the frequent itemsets for mining the shared clauses
+            }
+            it++;
+        }
+    }
+    elements.clear();
+    for (auto& [k,v] : indices_to_remove) {
+        remove_index(frequent_itemsets[k], std::vector<size_t>(v.begin(), v.end())); // Removing the shared frequent itemset by index, so that those can be handled joinly along the elements of the map.
+        // Also, removing all the  patterns with __missing
+    }
+
+    // 2b) Last, we are mining the binary patterns that binary and not shared across the logs
     for (const auto& [log_name, fis] : frequent_itemsets) {
         auto& g = gv[log_name];
-        uint64_t minimum_support_threshold = std::min((uint32_t)std::ceil((double)(sqm.multiple_logs[log_name].db.nTraces()) * mining_supp), (sqm.multiple_logs[log_name].db.nTraces()));
-        size_t min_int_supp_patt = std::ceil(((double)mining_supp) * (minimum_support_threshold));
         auto& rc = rcv[log_name];
         auto& used = usedv[log_name];
 
@@ -235,16 +372,17 @@ std::pair<double,double> algorithmic_strategy::polyadic_dataful_mining_and_refin
             auto A = *it;
             it++;
             auto B = *it;
-            g.mine_for_AB_clauses(mining_supp, polyadic, A, B, cache_clause, forAllLogsCacheMap[log_name], min_int_supp_patt, rc, used, binary_pattern);
+            g.mine_for_AB_clauses(mining_supp, polyadic, A, B, cache_clause, forAllLogsCacheMap[log_name], min_int_supp_patts[log_name], rc, used, binary_pattern);
         }
     }
 
-    // TODO: mining for the remaining parts
 
+    // 3. Last, finalising the collection of the patterns in Phi for each log
     for (auto& [log_name, g]: gv) {
-        uint64_t minimum_support_threshold = std::min((uint32_t)std::ceil((double)(sqm.multiple_logs[log_name].db.nTraces()) * mining_supp), (sqm.multiple_logs[log_name].db.nTraces()));
-        g.finalise_run(minimum_support_threshold, usedv[log_name]);
+        g.finalise_run(minimum_support_thresholds[log_name], usedv[log_name]);
     }
+
+    exit(200);
 
     return  {-1,-1};
 }

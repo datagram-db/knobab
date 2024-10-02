@@ -51,12 +51,11 @@ class KnobabEmeritateSupport():
         if ignorable_fields is not None:
             self.ignore_fields = list(set(ignorable_fields))
 
-    def call_interface(self, time, folder = None, isPolyadicMine=True, reduction=False):
-        isFastSat = False
-        if folder is not None:
-            isFastSat = True
-        else:
-            folder = ""
+    def call_interface(self, time, isFastSat, folder, isPolyadicMine=True, reduction=False):
+        # if folder is not None:
+        #     isFastSat = True
+        # else:
+        #     folder = ""
         _call_original(self.support, isPolyadicMine, self.environment_field, self.json_path, self.ignore_fields, isFastSat, str(folder), time, reduction)
 
 
