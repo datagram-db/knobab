@@ -1,0 +1,18 @@
+@0xdbb9ad1f14bf0b36;
+
+
+
+  struct PayloadEntry {
+    key @0 :Text;
+    value @1 :Float64;
+  }
+
+
+struct Constituent {
+    label @0 :Text;
+    clazz @1 :Text;
+    span @2 :Int64;
+    disctime @3 :Int64;
+    payload @4 :List(PayloadEntry);
+}
+
