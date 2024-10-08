@@ -13,3 +13,6 @@
 [submodule "submodules/cpp-lru-cache"]
 	path = submodules/cpp-lru-cache
 	url = https://github.com/lamerman/cpp-lru-cache
+[submodule "submodules/json"]
+	path = submodules/json
+	url = https://github.com/nlohmann/json

@@ -1,0 +1,12 @@
+CapnProto: Doesn't have a paper.
+           It is used within a technical report.
+
+Parimi, Dinesh (2019). "Datacenter Tax Cuts: Improving WSC Efficiency Through Protocol Buffer Acceleration" (PDF). Archived (PDF) from the original on 2020-09-06. Retrieved 2020-09-05.
+https://people.eecs.berkeley.edu/~kubitron/courses/cs262a-F19/projects/reports/project4_report_ver2.pdf
+
+Catch24: https://link.springer.com/article/10.1007/s10618-019-00647-x
+
+Nell'articolo, dovrai descrivere per esteso il nuovo modello dei dati, e descrivere la nuova serializzazione poliadica,
+e dire perché questa è necessaria, e quali sono i limiti di XES. (non supporta più di un evento concorrente nativamente,
+e de facto vengono considerati tutti eventi distinti e conseguenti, senza badare all'informazione temporale).
+

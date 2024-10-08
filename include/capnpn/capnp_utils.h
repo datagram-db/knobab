@@ -2,11 +2,15 @@
 // Created by giacomo on 07/10/24.
 //
 
-#ifndef DTMINING_UTILS_H
-#define DTMINING_UTILS_H
+#ifndef DTMINING_UTILS2_H
+#define DTMINING_UTILS2_H
 
 #include <capnp/message.h>
 #include <capnp/serialize-packed.h>
+
+extern "C" {
+#include <unistd.h>
+};
 
 template <typename T>
 struct capnp_message_builder  {
@@ -73,6 +77,7 @@ size_t filesize(const std::filesystem::path& filename)
 }
 
 #include "lrucache.hpp"
+#include <mutex>
 
 template <typename T, typename K>
         struct capnp_message_serializer {

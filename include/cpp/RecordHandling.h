@@ -5,8 +5,24 @@
 #ifndef DTMINING_RECORDHANDLING_H
 #define DTMINING_RECORDHANDLING_H
 
+#include <utils.h>
 #include <vector>
 using Group = std::tuple<size_t, size_t, size_t>;
+
+#define GRP_START(x)                    (std::get<0>(x))
+#define GRP_STARTS_AT(x,time)           (GRP_START(x) == time)
+#define GRP_FINISH(x)                   (std::get<1>(x))
+#define GRP_FINISHES_AT(x,time)         (GRP_FINISH(x) == time)
+#define GRP_INT_DURATION(x)             (std::get<2>(x))
+#define GRP_IS_SINGLET(x)               (std::get<2>(x)==1)
+#define HAS_PREV_ARROW(x)               (((x))>0)
+#define ARROW_NEXT(x)                   (((x)) + 1)
+#define ARROW_NEXT_NEXT(x)              (((x)) + 2)
+#define ARROW_NEXT_NEXT_NEXT(x)         (((x)) + 3)
+#define HAS_ARROW_NEXT(x,n)             (ARROW_NEXT(x) < (n))
+#define HAS_ARROW_NEXT_NEXT(x,n)        (ARROW_NEXT_NEXT(x) < (n))
+#define HAS_ARROW_NEXT_NEXT_NEXT(x,n)   (ARROW_NEXT_NEXT_NEXT(x) < (n))
+
 #include <array>
 #include <string>
 #include <fish.h>
@@ -21,15 +37,15 @@ std::optional<Group> inIntervalTree(const std::vector<Group>& ls, size_t x) {
     }
     auto it = std::lower_bound(ls.begin(), ls.end(), x,
                                [](const Group& interval, size_t value) {
-                                   return std::get<0>(interval) < value;
+                                   return GRP_START(interval) < value;
                                });
     if (it == ls.end()) {
         return {};
     }
-    if ((std::get<0>(*it) > x)) {
+    if ((GRP_START(*it) > x)) {
         if (it != ls.begin()) {
             it--;
-            if (!((std::get<0>(*it)<= x) && (x <= std::get<1>(*it))))
+            if (!((GRP_START(*it)<= x) && (x <= GRP_FINISH(*it))))
                 return {};
             else
                 return {*it};
@@ -38,7 +54,7 @@ std::optional<Group> inIntervalTree(const std::vector<Group>& ls, size_t x) {
         }
     }
 
-    if (!((std::get<0>(*it)<= x) && (x <= std::get<1>(*it))))
+    if (!((GRP_START(*it)<= x) && (x <= GRP_FINISH(*it))))
         return {*it};
     else {
         return {};
@@ -48,18 +64,20 @@ std::optional<Group> inIntervalTree(const std::vector<Group>& ls, size_t x) {
 #include <set>
 #include <span>
 
+
+
 struct RecordHandling {
-    std::vector<std::pair<unsigned char, size_t>> arrow_of_time;
-    std::array<std::vector<Group>, 2> groups;
+    std::vector<std::pair<unsigned char, size_t>> arrow_of_time;    // Determining whether the pattern is positive/negative and at which offset of the group is holden
+    std::array<std::vector<Group>, 2> groups;                       //
     std::vector<size_t> linear_time;
     std::array<std::string, 2> straight{"DecreaseRapidly","IncreaseRapidly"};
-    std::array<std::string, 2> V1      {"HighVolatility6","HighVolatility1"};
-    std::array<std::string, 2> V2      {"HighVolatility4","HighVolatility3"};
-    std::array<std::string, 2> Vcmp      {"HighVolatility5","HighVolatility2"};
-    std::array<std::string, 2> _1H      {"DecreaseSlowly4","IncreaseSlowly1"};
-    std::array<std::string, 2> _2H      {"DecreaseSlowly3","IncreaseSlowly2"};
-    std::array<std::string, 2> _1HN      {"DecreaseSlowly2","IncreaseSlowly3"};
-    std::array<std::string, 2> _2HN      {"DecreaseSlowly1","IncreaseSlowly4"};
+    std::array<std::string, 2> HV6_1      {"HighVolatility6", "HighVolatility1"};
+    std::array<std::string, 2> HV4_3      {"HighVolatility4", "HighVolatility3"};
+    std::array<std::string, 2> HV5_2      {"HighVolatility5", "HighVolatility2"};
+    std::array<std::string, 2> OneHiccup_S41      {"DecreaseSlowly4", "IncreaseSlowly1"};
+    std::array<std::string, 2> TwoHiccups_S32      {"DecreaseSlowly3", "IncreaseSlowly2"};
+    std::array<std::string, 2> EndHiccup_S23      {"DecreaseSlowly2","IncreaseSlowly3"};
+    std::array<std::string, 2> End2Hiccups_S14      {"DecreaseSlowly1","IncreaseSlowly4"};
     std::vector<BasicRecord> ls;
     std::span<double> orig;
     std::span<double> time;
@@ -88,47 +106,79 @@ struct RecordHandling {
     inline void Algorithm3(ThreadPool& pool,
                            std::vector<std::future<std::tuple<std::string, std::unordered_map<std::string,double>,size_t>>>& futures,
                            size_t time) const {
-        auto arrow_idx = linear_time.at(time);
-        const auto& arrow = arrow_of_time.at(arrow_idx);
-        const auto& group_type = arrow.first;
-        const auto& group_offset = arrow.second;
-        const auto& groupRange = groups.at(group_type).at(group_offset);
-        // TODO: some cases are missing
-        int n = arrow_of_time.size();
-        int flip = (group_type + 1) % 2;
-//        std::cout << time << std::endl;
+        auto arrow_idx = VAT(linear_time,time);                  // Pointer to the current positive/negative group is present
+        const auto& group_idx = VAT(arrow_of_time,arrow_idx);   // Retrieving the positive/negative and #group information
+        const auto& group_type = group_idx.first;
+        const auto& group_offset = group_idx.second;
+        const auto& groupRange = VAT(VAT(groups,group_type),group_offset); // Retrieving the group
 
-        for (int end_time = time; end_time <= std::get<1>(groupRange); ++end_time) {
-            int span = end_time - time + 1;
-            if (span > 1) {
-                push_task(pool, futures, straight[group_type], time, end_time); //
+        // TODO: some cases are missing
+        int total_groups = arrow_of_time.size();
+        int flip = (group_type + 1) % 2;
+        //  0: begin, 1: end (inclusive), 2: span
+
+        for (int end_time = time; end_time <= GRP_FINISH(groupRange); ++end_time) { // Iterating over all the possible event lengths starting from here
+            int current_span = end_time - time + 1;                                         // Duration of the current event according to the novel ending time
+            if (current_span > 1) {
+                push_task(pool, futures, straight[group_type], time, end_time);     // Adding a straight increase/decrease event for all possible spans
             }
-            if ((arrow_idx + 1) < n && end_time == std::get<1>(groupRange)) {
-                const auto& next_ref = arrow_of_time.at(arrow_idx + 1);
-                const auto& next = groups.at(flip).at(next_ref.second);
-                if (span == 1) {
-                    for (auto next_time = std::get<0>(next)+1;
-                         next_time<std::get<1>(next)+1;
-                         next_time++) {
-                        push_task(pool, futures, _1H[flip], time, next_time); // genPureInterval(_1H[flip], time, next_time)
+            if (HAS_ARROW_NEXT(arrow_idx, total_groups) && (GRP_FINISHES_AT(groupRange, end_time))) { // If you have a next event and you reached the end of this group
+                const auto& next_ref = VAT(arrow_of_time, ARROW_NEXT(arrow_idx));
+                const auto& next = VAT(VAT(groups, flip), next_ref.second);
+                if (current_span == 1) {
+                    push_task(pool, futures, HV6_1[flip], time, GRP_START(next));
+                    if ((GRP_IS_SINGLET(next)) && (HAS_ARROW_NEXT_NEXT(arrow_idx, total_groups)) && (HAS_ARROW_NEXT_NEXT_NEXT(arrow_idx, total_groups))) {
+                        const auto& nextnext_ref = VAT(arrow_of_time, ARROW_NEXT_NEXT(arrow_idx));
+                        const auto& nextnext = VAT( VAT(groups,group_type), nextnext_ref.second);
+                        if (GRP_IS_SINGLET(nextnext)) {
+                            push_task(pool, futures, OneHiccup_S41[flip], time, time+4);
+                        }
+                    } else {
+                        for (auto next_time = GRP_START(next)+1;
+                             next_time <=GRP_FINISH(next);
+                             next_time++ ) {
+                            push_task(pool, futures, OneHiccup_S41[flip], time, next_time);
+                        }
                     }
 
-                    if (arrow_idx + 2 < n) {
-                        if (std::get<2>(next) > 1) {
-                            push_task(pool, futures, V2[flip], time, std::get<1>(next) + 1); //
+                    if (HAS_ARROW_NEXT_NEXT(arrow_idx, total_groups)) {
+                        if (GRP_INT_DURATION(next) > 1) {
+                            push_task(pool, futures, HV4_3[flip], time, GRP_FINISH(next) + 1); //
                         } else {
-                            const auto& nextnext = groups.at(flip).at(next_ref.second);
-                            for (auto nextnext_time = std::get<0>(nextnext)+1;
-                                 nextnext_time<std::get<1>(nextnext)+1;
+                            const auto& nextnext_ref = VAT(arrow_of_time, ARROW_NEXT_NEXT(arrow_idx));
+                            const auto& nextnext = VAT( VAT(groups,group_type), nextnext_ref.second);
+                            for (auto nextnext_time = GRP_START(nextnext)+1;
+                                 nextnext_time< GRP_FINISH(nextnext)+1;
                                  nextnext_time++) {
-                                push_task(pool, futures, _2H[group_type], time, nextnext_time);
+                                push_task(pool, futures, TwoHiccups_S32[group_type], time, nextnext_time);
                             }
                         }
                     }
                 } else {
-                    push_task(pool, futures, _1HN[group_type], time, std::get<1>(groupRange) + 1); //
-                    if ((std::get<2>(next) == 1) && (arrow_idx + 2 < n)) {
-                        push_task(pool, futures, _2HN[group_type], time, std::get<1>(groupRange) + 2);
+                    if (current_span <= GRP_INT_DURATION(next)) {
+                        for (auto next_time = GRP_START(next)+current_span-1;
+                             next_time <=GRP_FINISH(next);
+                             next_time++ ) {
+                            push_task(pool, futures, HV6_1[flip], time, next_time);
+                            if (HAS_ARROW_NEXT_NEXT(arrow_idx, total_groups) && HAS_ARROW_NEXT_NEXT_NEXT(arrow_idx, total_groups)) {
+                                const auto& nextnext_ref = VAT(arrow_of_time, ARROW_NEXT_NEXT(arrow_idx));
+                                const auto& nextnext = VAT( VAT(groups,group_type), nextnext_ref.second);
+                                if (GRP_INT_DURATION(nextnext) <= current_span) {
+                                    const auto& next3_ref = VAT(arrow_of_time, ARROW_NEXT_NEXT_NEXT(arrow_idx));
+                                    const auto& next3 = VAT( VAT(groups,group_type), next3_ref.second);
+                                    for (auto next3_time = GRP_START(next3)+current_span-1;
+                                         next3_time <=GRP_FINISH(next3);
+                                         next3_time++ ) {
+                                        push_task(pool, futures, HV5_2[flip], time, next_time);
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    push_task(pool, futures, End2Hiccups_S14[group_type], time, GRP_FINISH(groupRange) + 1); //
+                    if ((GRP_IS_SINGLET(next)) && (HAS_ARROW_NEXT_NEXT(arrow_idx, total_groups))) {
+                        push_task(pool, futures, EndHiccup_S23[group_type], time, GRP_FINISH(groupRange) + 2);
                     }
                 }
             }
@@ -151,48 +201,47 @@ private:
 //        std::vector<Event> result;
 
         int flip = (group_type + 1) % 2;
-        for (size_t current_span = 1; current_span <= std::get<2>(x); ++current_span) {
-//            std::cout << current_span - 1 << std::endl;
-            for (size_t start = std::get<0>(x); start<std::get<1>(x)-current_span+2; start++) {
-                if (start + current_span - 1 > std::get<1>(x)) {
+        for (size_t current_span = 1; current_span <= GRP_INT_DURATION(x); ++current_span) {
+            for (size_t start = GRP_START(x); start <= (GRP_FINISH(x)-current_span+1); start++) {
+                if (start + current_span - 1 > GRP_FINISH(x)) {
                     continue;
                 }
                 push_task(pool, futures, straight[group_type], start, start + current_span - 1);
                 std::optional<Group> Inext;
-                if (start == std::get<1>(x)) {
-                    Inext = inIntervalTree(groups[flip], std::get<1>(x) + 1);
+                if (GRP_FINISHES_AT(x, start)) {
+                    Inext = inIntervalTree(groups[flip], GRP_FINISH(x) + 1);
                 }
-                if (start == std::get<0>(x)) {
+                if (GRP_STARTS_AT(x, start)) {
                     auto Iprev = inIntervalTree(groups[flip], start - 1);
                     if (Iprev.has_value()) {
-                        push_task(pool, futures, _1H[group_type], start - 1, start + current_span - 1);
+                        push_task(pool, futures, OneHiccup_S41[group_type], start - 1, start + current_span - 1);
                         if (Inext.has_value()) {
-                            push_task(pool, futures, V2[group_type], start - 1, start + current_span);
+                            push_task(pool, futures, HV4_3[group_type], start - 1, start + current_span);
                         }
-                        if (std::get<2>(Iprev.value())) {
+                        if (GRP_INT_DURATION(Iprev.value())) {
                             auto Iprevprev = inIntervalTree(groups[group_type], start - 2);
                             if (Iprevprev.has_value()) {
-                                push_task(pool, futures, _2H[group_type], start - 2, start + current_span - 1);
+                                push_task(pool, futures, TwoHiccups_S32[group_type], start - 2, start + current_span - 1);
                             }
                         } else {
-                            for (int prev_start = std::get<0>(Iprev.value());
-                                 prev_start < std::get<1>(Iprev.value())+1;
-                                 prev_start++) {
+                            for (int prev_start = GRP_START(Iprev.value());
+                                     prev_start <= GRP_FINISH(Iprev.value());
+                                     prev_start++) {
                                 if (prev_start == start - 1) {
                                     continue;
                                 }
-                                push_task(pool, futures, V1[group_type], prev_start, start + current_span - 1);
+                                push_task(pool, futures, HV6_1[group_type], prev_start, start + current_span - 1);
                                 begin_match[prev_start].insert(start + current_span - 1);
                             }
                         }
                     }
                 }
-                if ((start + current_span - 1 == std::get<1>(x)) && (Inext.has_value())) {
-                    push_task(pool, futures, _1HN[group_type], start, start + current_span - 1);
-                    if (std::get<2>(Inext.value()) == 1) {
-                        auto Inextnext = inIntervalTree(groups[group_type], std::get<1>(x) + 2);
+                if ((GRP_FINISHES_AT(x, start + current_span - 1)) && (Inext.has_value())) {
+                    push_task(pool, futures, End2Hiccups_S14[group_type], start, start + current_span - 1);
+                    if (GRP_IS_SINGLET(Inext.value())) {
+                        auto Inextnext = inIntervalTree(groups[group_type], GRP_FINISH(x) + 2);
                         if (Inextnext.has_value()) {
-                            push_task(pool, futures, _2HN[group_type], start, start + current_span);
+                            push_task(pool, futures, EndHiccup_S23[group_type], start, start + current_span);
                         }
                     }
                 }
@@ -202,7 +251,7 @@ private:
             for (int end : ends) {
                 if (begin_match.find(end + 1) != begin_match.end()) {
                     for (int new_end_time : begin_match[end + 1]) {
-                        push_task(pool, futures, Vcmp[group_type], begin, new_end_time);
+                        push_task(pool, futures, HV5_2[group_type], begin, new_end_time);
                     }
                 }
             }

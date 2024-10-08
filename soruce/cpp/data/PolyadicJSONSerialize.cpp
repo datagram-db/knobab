@@ -28,42 +28,42 @@ hierarchy["__payload"].emplace("__payload");
 
 #include <capnp_utils.h>
 
-size_t capnp_serialize_raw_data(int fd, const std::vector<std::string>& dimNames,
-                 const std::vector<std::vector<double>>& allDimensions,
-                 size_t timeOfInterest,
-                 const std::string& clazz) {
-    capnp_message_builder<Constituent> builder(fd);
-    size_t offset = builder.get_current_offset();
-    builder().setLabel("__raw_data");
-    builder().setClazz(clazz);
-    builder().setSpan(1);
-    builder().setDisctime(timeOfInterest);
-    auto payload = builder().initPayload(dimNames.size());
-    for (size_t idx = 0, N = dimNames.size(); idx<N; idx++) {
-        payload[idx].setKey(dimNames.at(idx));
-        payload[idx].setValue(allDimensions[idx][timeOfInterest]);
-    }
-    return offset;
-}
+//size_t capnp_serialize_raw_data(int fd, const std::vector<std::string>& dimNames,
+//                 const std::vector<std::vector<double>>& allDimensions,
+//                 size_t timeOfInterest,
+//                 const std::string& clazz) {
+//    capnp_message_builder<Constituent> builder(fd);
+//    size_t offset = builder.get_current_offset();
+//    builder().setLabel("__raw_data");
+//    builder().setClazz(clazz);
+//    builder().setSpan(1);
+//    builder().setDisctime(timeOfInterest);
+//    auto payload = builder().initPayload(dimNames.size());
+//    for (size_t idx = 0, N = dimNames.size(); idx<N; idx++) {
+//        payload[idx].setKey(dimNames.at(idx));
+//        payload[idx].setValue(allDimensions[idx][timeOfInterest]);
+//    }
+//    return offset;
+//}
 
-size_t capnp_serialize_event_data_data(int fd, const std::string& dt_pattern_name,
-                                const std::string& dimension_name,
-                                size_t span,
-                                size_t timeOfInterest,
-                                const std::unordered_map<std::string,double>& payload) {
-    capnp_message_builder<Constituent> builder(fd);
-    size_t offset = builder.get_current_offset();
-    auto label = dt_pattern_name + "(" + dimension_name +")";
-    builder().setLabel(label);
-    builder().setClazz("");
-    builder().setSpan(span);
-    builder().setDisctime(timeOfInterest);
-    auto payload_ = builder().initPayload(payload.size());
-    size_t idx = 0;
-    for (const auto&  [k,v] : payload) {
-        payload_[idx].setKey(k);
-        payload_[idx].setValue(v);
-        idx++;
-    }
-    return offset;
-}
+//size_t capnp_serialize_event_data_data(int fd, const std::string& dt_pattern_name,
+//                                const std::string& dimension_name,
+//                                size_t span,
+//                                size_t timeOfInterest,
+//                                const std::unordered_map<std::string,double>& payload) {
+//    capnp_message_builder<Constituent> builder(fd);
+//    size_t offset = builder.get_current_offset();
+//    auto label = dt_pattern_name + "(" + dimension_name +")";
+//    builder().setLabel(label);
+//    builder().setClazz("");
+//    builder().setSpan(span);
+//    builder().setDisctime(timeOfInterest);
+//    auto payload_ = builder().initPayload(payload.size());
+//    size_t idx = 0;
+//    for (const auto&  [k,v] : payload) {
+//        payload_[idx].setKey(k);
+//        payload_[idx].setValue(v);
+//        idx++;
+//    }
+//    return offset;
+//}

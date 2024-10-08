@@ -11,6 +11,7 @@
 #include <capnp_utils.h>
 #include "schema.propo.h"
 #include <data/CacheConstituent.h>
+#include <lrucache.hpp>
 
 struct capnp_constituent_serializer {
     capnp_constituent_serializer(const std::string& filename, size_t cache_size=1000) : cache(cache_size), filename{filename}, moved_for_read{false}{

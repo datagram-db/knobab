@@ -1,6 +1,15 @@
 cmake_minimum_required(VERSION 3.28)
 project(DTMining)
 
+IF(CMAKE_BUILD_TYPE MATCHES Debug)
+    message(WARNING "Compiling in debug mode")
+    add_compile_definitions(DEBUG)
+    set(CMAKE_CXX_FLAGS_DEBUG "-g")
+else()
+    message(WARNING "Compiling in optimized mode. Level=2")
+    set(CMAKE_CXX_FLAGS_RELEASE "-O2")
+ENDIF(CMAKE_BUILD_TYPE MATCHES Debug)
+
 set(CMAKE_SYSTEM_NAME Linux)
 set(WITH_DEMO false)
 include_directories(/usr/include/c++/13/)
@@ -63,6 +72,7 @@ submodules/jsonwriter/include/json_writer.hpp)
 include_directories(submodules/jsonwriter/include)
 include_directories(submodules/date/include)
 include_directories(submodules/cpp-lru-cache/include)
+include_directories(submodules/json/include)
 add_subdirectory(submodules/capnproto)
 
 include_directories(submodules/thread_pool)

@@ -41,7 +41,7 @@ public:
         serialize_hierarchy();
     }
 
-    void set_up_hierarchy(const std::string& label) {
+    inline void set_up_hierarchy(const std::string& label) {
         auto begin_offset = label.find_first_of("(");
         auto end_offset = label.find_last_of(")");
         if ((begin_offset != std::string::npos) && (end_offset != std::string::npos)) {
@@ -50,7 +50,7 @@ public:
             hierarchy[label].insert(label);
         }
     }
-    void set_up_numeric_variables(const std::string& numeric) {
+    inline void set_up_numeric_variables(const std::string& numeric) {
         types.emplace(numeric, XES_Continuous);
     }
 
