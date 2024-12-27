@@ -253,7 +253,6 @@ std::pair<double,double> algorithmic_strategy::polyadic_dataful_mining_and_refin
 
     bool keepFirstEvent = true;
     if (refine_existentials) {
-//        std::map<std::string, union_minimal > tuple;
         for (const auto& [act, kb_ids] : act_to_log_name) {
             if (kb_ids.size() > 1) {
                 // Actually performing the refinement
@@ -269,14 +268,12 @@ std::pair<double,double> algorithmic_strategy::polyadic_dataful_mining_and_refin
                     while (cp.first != cp.second) {
                         if ((keepFirstEvent) || (cp.first->entry.id.parts.trace_id != 0)) {
                             auto& tuple = beginsX.emplace_back();
-//                            tuple.clear();
                             size_t offset = cp.first - env.db.act_table_by_act_id.table.data();
                             for (const auto& [key, table] : env.db.attribute_name_to_table) {
                                 table.resolve_record_if_exists3(offset, tuple);
                             }
-                            W1[log][cp.first->entry.id.parts.trace_id].emplace_back(beginsX.size());
+                            W1[log][cp.first->entry.id.parts.trace_id].emplace_back(beginsY.size());
                             beginsY.emplace_back(clazz);
-//                            beginsX.emplace_back(tuple);
                         }
                         cp.first++;
                     }
@@ -328,13 +325,13 @@ std::pair<double,double> algorithmic_strategy::polyadic_dataful_mining_and_refin
             }
             for (const auto&  [scl, mp] : matchedClausesFromBoundary) {
                 if (mp.size() == 1) {
-                    // This is the single instance of the clause
+                    // This is the sole instance of the clause, and appears in only one log
                     auto it = mp.begin();
                     for (const auto& [log_name, v] : gv) {
                         if (log_name != it->first) {
                             const auto& genOrSelf = v.graph.generalise(scl);
                             if (!genOrSelf.empty()) {
-
+                                // ???
                             }
                         }
                     }

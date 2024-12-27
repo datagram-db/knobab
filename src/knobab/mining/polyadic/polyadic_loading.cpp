@@ -258,9 +258,14 @@ std::tuple<double,double,double,double> polyadic_loader(const std::unordered_set
         {
             for (auto& [k, v]: sax.tmp_event_paload_aka_rawdata) {
                 size_t vsize = v.size();
-                sax.event_paload_aka_rawdata.insert(sax.event_paload_aka_rawdata.end(),
-                                                        std::make_move_iterator(v.begin()),
-                                                        std::make_move_iterator(v.end()));
+                for (auto& ref : v) {
+                    sax.event_paload_aka_rawdataX.emplace_back(std::move(ref.first));
+                    sax.event_paload_aka_rawdataY.emplace_back(ref.second);
+                }
+
+//                sax.event_paload_aka_rawdata.insert(sax.event_paload_aka_rawdata.end(),
+//                                                        std::make_move_iterator(v.begin()),
+//                                                        std::make_move_iterator(v.end()));
                 v.clear();
                 if (offset != 0) {
                     for (auto& ref : sax.payload_trace_id[k]) {
@@ -294,7 +299,7 @@ std::tuple<double,double,double,double> polyadic_loader(const std::unordered_set
 
         std::unordered_map<std::string,std::vector<std::vector<size_t>>> & sax_pyload_trace_id = sax.payload_trace_id;
         const std::string& this_path = path;
-        std::vector<std::pair<env2,int>>& payload_row = sax.event_paload_aka_rawdata;
+//        std::vector<std::pair<env2,int>>& payload_row = sax.event_paload_aka_rawdata;
         std::string all = "□";
         std::string some = "◇";
         bool raw = true;
@@ -302,7 +307,7 @@ std::tuple<double,double,double,double> polyadic_loader(const std::unordered_set
         const std::unordered_set<std::string>& numerical = sax.numerical;
         const std::unordered_set<std::string>& categorical = {};
 
-        train_and_dump_to_csv2(sqm.multiple_logs, sax_pyload_trace_id, this_path, payload_row, all, some, raw, n_classes,numerical, categorical );
+        train_and_dump_to_csv2(sqm.multiple_logs, sax_pyload_trace_id, this_path, sax.event_paload_aka_rawdataX, sax.event_paload_aka_rawdataY, all, some, raw, n_classes,numerical, categorical );
 
         auto t2 = high_resolution_clock::now();
         duration<double, std::milli> pe_double = t2 - t1;

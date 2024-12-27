@@ -86,8 +86,9 @@ struct myParser {
 //        return false;
 //    }
 
-    std::unordered_map<std::string,std::vector<std::pair<std::map<std::string, union_minimal>,int>>> tmp_event_paload_aka_rawdata;
-    std::vector<std::pair<std::map<std::string, union_minimal>,int>> event_paload_aka_rawdata;
+    std::unordered_map<std::string,std::vector<std::pair<std::vector<std::pair<std::string, union_minimal>>,int>>> tmp_event_paload_aka_rawdata;
+    std::vector<std::vector<std::pair<std::string, union_minimal>>> event_paload_aka_rawdataX;
+    std::vector<int> event_paload_aka_rawdataY;
     std::unordered_map<std::string,std::vector<std::vector<size_t>>> payload_trace_id;
 
     void clear() {
@@ -319,7 +320,9 @@ struct myParser {
                     if (payload_trace_id[zncs.get_log_name()].size() == zncs.trace_id)
                         payload_trace_id[zncs.get_log_name()].emplace_back();
                     payload_trace_id[zncs.get_log_name()][zncs.trace_id].emplace_back(tmp_event_paload_aka_rawdata[zncs.get_log_name()].size());
-                    tmp_event_paload_aka_rawdata[zncs.get_log_name()].emplace_back(payload, (int)classInt);
+                    auto& ref = tmp_event_paload_aka_rawdata[zncs.get_log_name()].emplace_back(std::vector<std::pair<std::string, union_minimal>>{}, (int)classInt).first;
+                    for (const auto&[k,v] : payload)
+                        ref.emplace_back(k, v);
                 }
             } else if (filler) {
                 auto& zncs = event_coordinates.at(trace_id).at(event_id);
