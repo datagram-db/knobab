@@ -2,7 +2,7 @@
 // Created by giacomo on 07/10/24.
 //
 
-#include "data/TemporaryCapnpnConstituentSerializer.h"
+#include "dt_mining/data/TemporaryCapnpnConstituentSerializer.h"
 #include <capnp_utils.h>
 
 void capnp_serialize_raw_data(Constituent::Builder& builder,  const std::unordered_map<std::string,double>& payload,

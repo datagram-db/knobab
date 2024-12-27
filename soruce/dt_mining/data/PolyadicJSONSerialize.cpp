@@ -2,7 +2,7 @@
 // Created by giacomo on 05/10/24.
 //
 
-#include "data/PolyadicJSONSerialize.h"
+#include "dt_mining/data/PolyadicJSONSerialize.h"
 
 PolyadicJSONSerialize::PolyadicJSONSerialize(std::ostream& os): jw{os, JsonWriter::flags::F_AUTO_CLOSE | JsonWriter::flags::F_STRICT | JsonWriter::flags::F_VERIFY_ON_EXIT} {
 conversion_recto["literal"] = XES_Literal;

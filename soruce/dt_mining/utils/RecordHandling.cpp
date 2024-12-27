@@ -2,7 +2,7 @@
 // Created by giacomo on 05/10/24.
 //
 
-#include "RecordHandling.h"
+#include "dt_mining/utils/RecordHandling.h"
 
 RecordHandling::RecordHandling(const std::string& dimension,
                const std::span<double>& orig,

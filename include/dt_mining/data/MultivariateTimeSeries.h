@@ -9,7 +9,7 @@
 #include <span>
 #include <string>
 #include <unordered_map>
-#include <RecordHandling.h>
+#include <dt_mining/utils/RecordHandling.h>
 
 
 struct ClassSegment {
@@ -46,9 +46,9 @@ struct ClassSegment {
 };
 
 #include <filesystem>
-#include <parser.hpp>
+#include <dt_mining/utils/parser.hpp>
 #include <unordered_map>
-#include "RecordHandling.h"
+#include "dt_mining/utils/RecordHandling.h"
 
 
 struct MultivariateTimeSeries {

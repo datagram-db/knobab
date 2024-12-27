@@ -10,7 +10,7 @@
 #include <fstream>
 #include <capnp_utils.h>
 #include "schema.propo.h"
-#include <data/CacheConstituent.h>
+#include <dt_mining/data/CacheConstituent.h>
 #include <lrucache.hpp>
 
 struct capnp_constituent_serializer {

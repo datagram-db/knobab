@@ -5,7 +5,7 @@
 #ifndef DTMINING_RECORDHANDLING_H
 #define DTMINING_RECORDHANDLING_H
 
-#include <utils.h>
+#include <dt_mining/utils/utils.h>
 #include <vector>
 using Group = std::tuple<size_t, size_t, size_t>;
 
@@ -25,8 +25,8 @@ using Group = std::tuple<size_t, size_t, size_t>;
 
 #include <array>
 #include <string>
-#include <fish.h>
-#include <BasicRecord.h>
+#include <dt_mining/utils/fish.h>
+#include <dt_mining/utils/BasicRecord.h>
 #include <ThreadPool.h>
 #include <optional>
 

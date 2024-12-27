@@ -84,6 +84,9 @@ ForwardIt my_min_element(ForwardIt first, ForwardIt last)
 
 #define SPAN        ("_____span")
 
+/**
+ * This class is the one performing the catch24 mining using the imported code
+ */
 class fish {
     std::unordered_map<std::string, catch24fun > funmap;
 public:

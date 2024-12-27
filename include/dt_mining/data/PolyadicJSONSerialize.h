@@ -9,7 +9,7 @@
 #include <unordered_set>
 #include "json_writer.hpp"
 #include "schema.propo.h"
-#include <data/CacheConstituent.h>
+#include <dt_mining/data/CacheConstituent.h>
 
 enum XESTypes {
     XES_Literal,

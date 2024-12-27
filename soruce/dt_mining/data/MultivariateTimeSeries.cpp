@@ -2,9 +2,9 @@
 // Created by giacomo on 05/10/24.
 //
 
-#include "data/MultivariateTimeSeries.h"
+#include "dt_mining/data/MultivariateTimeSeries.h"
 #include <unordered_set>
-#include "data/dateparse.h"
+#include "dt_mining/data/dateparse.h"
 
 MultivariateTimeSeries::MultivariateTimeSeries(const std::string& environment, aria::csv::CsvParser& parser,
                                                const double epsilon,

@@ -13,8 +13,8 @@ ENDIF(CMAKE_BUILD_TYPE MATCHES Debug)
 set(CMAKE_SYSTEM_NAME Linux)
 set(WITH_DEMO false)
 include_directories(/usr/include/c++/13/)
-set(CMAKE_C_COMPILER clang-17 CACHE INTERNAL "C compiler")
-set(CMAKE_CXX_COMPILER clang++-17 CACHE INTERNAL "C++ compiler")
+set(CMAKE_C_COMPILER clang-19 CACHE INTERNAL "C compiler")
+set(CMAKE_CXX_COMPILER clang++-19 CACHE INTERNAL "C++ compiler")
 set(CMAKE_CXX_STANDARD 23)
 
 add_library(catch24 OBJECT
@@ -63,6 +63,8 @@ add_library(catch24 OBJECT
         submodules/catch24/C/DN_HistogramMode_5.h
         submodules/catch24/C/DN_OutlierInclude.cpp
         submodules/catch24/C/SB_MotifThree.cpp
+        include/dt_mining/benchmarking/SegmentStats.h
+        include/dt_mining/benchmarking/TraceStats.h
 )
 
 add_library(json_writer OBJECT
@@ -77,17 +79,25 @@ add_subdirectory(submodules/capnproto)
 
 include_directories(submodules/thread_pool)
 include_directories(submodules/catch24/)
-include_directories(include/cpp)
+include_directories(include/)
 include_directories(include/capnpn)
 add_executable(DTMining main.cpp
-        soruce/cpp/fish.cpp
-        soruce/cpp/BasicRecord.cpp
-        soruce/cpp/RecordHandling.cpp
-        soruce/cpp/data/PolyadicJSONSerialize.cpp
-        soruce/cpp/data/dateparse.cpp
-        soruce/cpp/data/MultivariateTimeSeries.cpp
+        soruce/dt_mining/utils/fish.cpp
+        soruce/dt_mining/utils/BasicRecord.cpp
+        soruce/dt_mining/utils/RecordHandling.cpp
+        soruce/dt_mining/data/PolyadicJSONSerialize.cpp
+        soruce/dt_mining/data/dateparse.cpp
+        soruce/dt_mining/data/MultivariateTimeSeries.cpp
         soruce/capnpn/schema.propo.c++
         submodules/jsonwriter/src/json_writer.cpp
-        soruce/cpp/data/TemporaryCapnpnConstituentSerializer.cpp)
+        soruce/dt_mining/data/TemporaryCapnpnConstituentSerializer.cpp
+        soruce/dt_mining/benchmarking/FineGrainedStats.cpp
+        soruce/dt_mining/benchmarking/SegmentStats.cpp
+        soruce/dt_mining/benchmarking/TraceStats.cpp
+        include/dt_mining/benchmarking/DatasetStats.h
+        soruce/dt_mining/benchmarking/DatasetStats.cpp
+        include/dt_mining/dt_mining.h
+        soruce/dt_mining/dt_mining.cpp
+)
 target_link_libraries(DTMining  PRIVATE catch24 CapnProto::kj CapnProto::capnp )
 #target_link_libraries(DTMining /usr/lib/gcc/x86_64-linux-gnu/11/ /usr/lib/x86_64-linux-gnu/)

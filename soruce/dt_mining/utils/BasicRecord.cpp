@@ -2,7 +2,7 @@
 // Created by giacomo on 05/10/24.
 //
 
-#include "BasicRecord.h"
+#include "dt_mining/utils/BasicRecord.h"
 
 BasicRecord::BasicRecord(bool t, int ts, double rp, double a)
         : type(t), time_spot(ts), raw_payload(rp), additional(a) {}
