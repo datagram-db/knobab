@@ -33,6 +33,7 @@ void DTMining::dt_mine_and_ts_to_polyadic(const std::string& benchmark_result_fi
     ds.precision = precision;
     ds.max_val = max_val;
     ds.isAlgo3 = isAlgo3;
+    ds.isDataless = isDataless;
     nlohmann::json dom;
     if (std::filesystem::exists(benchmark_result_file)) {
         std::ifstream f(benchmark_result_file);

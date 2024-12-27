@@ -49,7 +49,7 @@ MultivariateTimeSeries::MultivariateTimeSeries(bool isDataless,
             }
             if (countNone < nDimensions) {
                 auto currentClazz = std::stoi(row[nDimensions]);
-                timestamp.emplace_back(parse8601(row[nDimensions+1]));
+                timestamp.emplace_back(yaucl::numeric::parse8601(row[nDimensions+1]));
                 for (size_t missingReplace : missing_elements)
                     dimensions[missingReplace].emplace_back(0.0);
                 if (firstData) {

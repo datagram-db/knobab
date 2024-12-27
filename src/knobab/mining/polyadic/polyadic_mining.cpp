@@ -129,7 +129,9 @@ std::pair<double,double> algorithmic_strategy::polyadic_dataful_mining_and_refin
     }
 
     if (refine_init || refine_ends) {
-        std::vector<std::pair<std::vector<std::pair<std::string,union_minimal>>, int>> begins, ends;
+        std::vector<int> beginsY, endsY;
+        std::vector<std::vector<std::pair<std::string,union_minimal>>> beginsX, endsX;
+//        std::vector<std::pair<std::vector<std::pair<std::string,union_minimal>>, int>> begins, ends;
         std::unordered_map<std::string, std::vector<std::vector<size_t>>> W1, W2;
 
         size_t bs = 0, es = 0;
@@ -155,8 +157,8 @@ std::pair<double,double> algorithmic_strategy::polyadic_dataful_mining_and_refin
             }
         }
 
-        begins.resize(bs);
-        ends.resize(es);
+        beginsX.resize(bs); beginsY.resize(bs);
+        endsX.resize(es); endsY.resize(bs);
         bs = 0, es = 0;
 
         for (const auto& [log, env] : sqm.multiple_logs) {
@@ -176,16 +178,16 @@ std::pair<double,double> algorithmic_strategy::polyadic_dataful_mining_and_refin
 //                            std::vector<std::pair<std::string,union_minimal>>/*&*/ tuple; //= begins[bs].first;
 //                            tuple.reserve(env.db.attribute_name_to_table.size()+1);
                             size_t offset = record - env.db.act_table_by_act_id.table.data();
-                            begins[bs].first.reserve(env.db.attribute_name_to_table.size());
-                            begins[bs].first.emplace_back("__label", env.db.event_label_mapper.get(act));
+                            beginsX[bs].reserve(env.db.attribute_name_to_table.size());
+                            beginsX[bs].emplace_back("__label", env.db.event_label_mapper.get(act));
                             for (const auto& [key, table] : env.db.attribute_name_to_table) {
-                                table.resolve_record_if_exists3(offset, begins[bs].first);
+                                table.resolve_record_if_exists3(offset, beginsX[bs]);
 //                                table.resolve_record_if_exists2(offset, tuple);
                             }
                             DEBUG_ASSERT(trace_id < W1[log].size());
                             W1[log][trace_id].emplace_back(bs);
-                            std::sort(begins[bs].first.begin(), begins[bs].first.end());
-                            begins[bs].second = clazz;
+                            std::sort(beginsX[bs].begin(), beginsX[bs].end());
+                            beginsY[bs] = clazz;
 //                            std::swap(begins[bs].first, tuple);
 //                            begins.emplace_back(tuple, clazz);
                             bs++;
@@ -217,8 +219,8 @@ std::pair<double,double> algorithmic_strategy::polyadic_dataful_mining_and_refin
             }
         }
         if (refine_init) {
-            train_and_dump_to_csv3(sqm.multiple_logs, W1, ser_path+"_Refinement_init", begins, "InitAll", "InitSome", false, sqm.multiple_logs.size(),numerical, categorical );
-            begins.clear();
+            train_and_dump_to_csv3(sqm.multiple_logs, W1, ser_path+"_Refinement_init", beginsX,beginsY, "InitAll", "InitSome", false, sqm.multiple_logs.size(),numerical, categorical );
+            beginsX.clear();
         }
         if (refine_ends) {
             for (const auto& [log, env] : sqm.multiple_logs) {
@@ -230,33 +232,35 @@ std::pair<double,double> algorithmic_strategy::polyadic_dataful_mining_and_refin
                         for (const auto &[act, event_record_ls]: *IDX.second) {
                             for (const auto &record: event_record_ls) {
                                 size_t offset = record - env.db.act_table_by_act_id.table.data();
-                                ends[es].first.reserve(env.db.attribute_name_to_table.size());
-                                ends[es].first.emplace_back("__label", env.db.event_label_mapper.get(act));
+                                endsX[es].reserve(env.db.attribute_name_to_table.size());
+                                endsX[es].emplace_back("__label", env.db.event_label_mapper.get(act));
                                 for (const auto &[key, table]: env.db.attribute_name_to_table) {
-                                    table.resolve_record_if_exists3(offset, ends[es].first);
+                                    table.resolve_record_if_exists3(offset, endsX[es]);
                                 }
                                 DEBUG_ASSERT(trace_id < W2[log].size());
                                 W2[log][trace_id].emplace_back(es);
-                                std::sort(ends[es].first.begin(), ends[es].first.end());
-                                ends[bs].second = clazz;
+                                std::sort(endsX[es].begin(), endsX[es].end());
+                                endsY[bs] = clazz;
                                 es++;
                             }
                         }
                     }
                 }
             }
-            train_and_dump_to_csv3(sqm.multiple_logs, W1, ser_path+"_Refinement_end", ends, "EndAll", "EndSome", false, sqm.multiple_logs.size(),numerical, categorical );
+            train_and_dump_to_csv3(sqm.multiple_logs, W1, ser_path+"_Refinement_end", endsX,endsY, "EndAll", "EndSome", false, sqm.multiple_logs.size(),numerical, categorical );
         }
     }
 
     bool keepFirstEvent = true;
     if (refine_existentials) {
-        std::map<std::string, union_minimal > tuple;
+//        std::map<std::string, union_minimal > tuple;
         for (const auto& [act, kb_ids] : act_to_log_name) {
             if (kb_ids.size() > 1) {
                 // Actually performing the refinement
                 std::unordered_map<std::string, std::vector<std::vector<size_t>>> W1;
-                std::vector<std::pair<env2, int>> begins;
+
+                std::vector<int> beginsY;
+                std::vector<std::vector<std::pair<std::string,union_minimal>>> beginsX;
                 for (const auto& [log, env] : sqm.multiple_logs) {
                     int clazz = std::stoi(log);
                     auto A = env.db.event_label_mapper.get(act);
@@ -264,18 +268,20 @@ std::pair<double,double> algorithmic_strategy::polyadic_dataful_mining_and_refin
                     W1[log].resize(env.db.act_table_by_act_id.secondary_index.size());
                     while (cp.first != cp.second) {
                         if ((keepFirstEvent) || (cp.first->entry.id.parts.trace_id != 0)) {
-                            tuple.clear();
+                            auto& tuple = beginsX.emplace_back();
+//                            tuple.clear();
                             size_t offset = cp.first - env.db.act_table_by_act_id.table.data();
                             for (const auto& [key, table] : env.db.attribute_name_to_table) {
-                                table.resolve_record_if_exists2(offset, tuple);
+                                table.resolve_record_if_exists3(offset, tuple);
                             }
-                            W1[log][cp.first->entry.id.parts.trace_id].emplace_back(begins.size());
-                            begins.emplace_back(tuple, clazz);
+                            W1[log][cp.first->entry.id.parts.trace_id].emplace_back(beginsX.size());
+                            beginsY.emplace_back(clazz);
+//                            beginsX.emplace_back(tuple);
                         }
                         cp.first++;
                     }
                 }
-                train_and_dump_to_csv2(sqm.multiple_logs, W1, ser_path+"_Refinement_Exists_"+act, begins, "Exists", "", true, sqm.multiple_logs.size(),numerical, categorical, act ,
+                train_and_dump_to_csv2(sqm.multiple_logs, W1, ser_path+"_Refinement_Exists_"+act, beginsX,beginsY, "Exists", "", true, sqm.multiple_logs.size(),numerical, categorical, act ,
                                       false);
             }
         }

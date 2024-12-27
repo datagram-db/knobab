@@ -254,7 +254,6 @@ add_executable(DTMining dt_mine_main.cpp
         src/dt_mining/utils/BasicRecord.cpp
         src/dt_mining/utils/RecordHandling.cpp
         src/dt_mining/data/PolyadicJSONSerialize.cpp
-        src/dt_mining/data/dateparse.cpp
         src/dt_mining/data/MultivariateTimeSeries.cpp
         src/capnpn/schema.propo.c++
         submodules/jsonwriter/src/json_writer.cpp

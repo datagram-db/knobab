@@ -16,6 +16,7 @@ namespace DTMining {
         double loading;
         double serial;
         bool   isAlgo3;
+        bool   isDataless;
         size_t nProcessors;
         std::vector<TraceStats> all_stats;
 

@@ -233,168 +233,129 @@ static inline void actualClauseRefine(std::vector<std::pair<double,std::unordere
 
 inline void train_and_dump_to_csv2(std::unordered_map<std::string, Environment> &sqmenv,
                                    const std::unordered_map<std::string, std::vector<std::vector<size_t>>> &sax_pyload_trace_id,
-                                   const std::string &this_path, std::vector<std::pair<env2, int>> &payload_row,
+                                   const std::string &this_path,
+                                   const std::vector<std::vector<std::pair<std::string,union_minimal>>>& X,
+                                   const  std::vector<int>& y,
                                    const std::string &all, const std::string &some, bool raw, size_t n_classes,
-                                   const std::unordered_set<std::string> &numerical,
-                                   const std::unordered_set<std::string> &categorical,
+                                   const std::unordered_set<std::string> &N,
+                                   const std::unordered_set<std::string> &C,
                                    const std::string& actual_label = "__raw_payload",
                                    const bool do_some = true) {
-//    auto it = payload_row.begin();
-//    auto en = payload_row.end();
-//    DecisionTree<env2> dt(it,
-//                          en,
-//                          n_classes,
-//                          [](const auto& map, const std::string& key) {
-//                              std::pair<std::string,union_minimal> wd{key, 0.0}, ws{key, ""};
-////                              auto it = std::lower_bound(map.begin(), map.end(), std::min(wd, ws));
-//                                                                        auto it = map.find(key);
-//                              if (it == map.end())
-//                                  return (union_minimal)0.0;
-//                              else
-//                                  return it->second;
-//                          },
-//                          numerical,
-//                          categorical,
-//                          ForTheWin::Gini,
-//                          0.97,
-//                          1,
-//                          payload_row.size(),
-//                          1,
-//                          false,
-//                          nullptr,
-//                          nullptr,
-//                          5);
-//    if ((dt.goodness <= 0.5) || (dt.isLeafNode())) {
-//        std::cerr << "Avoiding specification as goodness is below 70% or because it is a leaf node: " << dt.goodness << std::endl;
-//        return;
-//    } else {
-//
-//    }
-//
-//    std::vector<std::vector<std::pair<double,std::unordered_map<std::string, DataPredicate>>>> model(n_classes);
-//    size_t number_rows = 0;
-//    {
-//        std::unordered_map<int, std::vector<std::pair<double,std::vector<dt_predicate>>>> result;
-//        dt.populate_children_predicates2(result);
-//        for (const auto& kv : result) {
-//            std::vector<std::pair<double,std::unordered_map<std::string, DataPredicate>>> current_conds;
-//            actualClauseRefine(current_conds, kv);
-//            number_rows += (current_conds.size()+(1));
-//            model[kv.first] = std::move(current_conds);
-//        }
-//    }
-//
-//    std::vector<size_t> resultsVector(number_rows, 0);
-//    size_t vlen = 0;
-//
-//    for (auto& [log, env] : sqmenv) {
-//        std::ofstream payload_out{this_path+"_payload_"+log+".csv"};
-//        print_rawpayload_csv_header(payload_out, model, all, some, raw, actual_label, do_some);
-//        payload_out << std::endl;
-//        const std::vector<std::vector<size_t>>& traces = sax_pyload_trace_id.at(log);
-//        DEBUG_ASSERT(env.db.nTraces() == traces.size());
-//        for (uint32_t sigma_id = 0, n = env.db.nTraces(); sigma_id < n; sigma_id++) {
-//            vlen = traces.at(sigma_id).size();
-//            for (auto& dim_count : resultsVector) dim_count = 0; // Re-initialization
-//
-//            for (const auto& offset : traces.at(sigma_id)) {
-//                // Collecting the information associated to the payloads of the events
-//                collect_rawpayload_csv_results_row2(resultsVector, model, payload_row.at(offset).first);
-//            }
-//            payload_out << std::accumulate(
-//                    resultsVector.begin(),
-//                    resultsVector.end(),
-//                    std::string(),
-//                    [&vlen,do_some](const std::string& a, size_t b) {
-//                        return  a + (a.empty() ? "" : ",") + std::to_string(b == vlen ? 1 : 0) + (do_some ? ("," + std::to_string(b >0 ? 1 : 0)) : "");
-//                    }
-//            );
-//            if (sigma_id != (n-1))
-//                payload_out << std::endl;
-//        }
-//    }
+    DecisionTree dt{X,y, N, C, 5};
+    dt.splitTree();
+
+    if ((dt.goodness <= 0.5) || (dt.children.size() == 1)) {
+        std::cerr << "Avoiding specification as goodness is below 50% or is a leaf node: " << dt.goodness << std::endl;
+        return;
+    }
+
+
+
+    std::vector<std::vector<std::pair<double,std::unordered_map<std::string, DataPredicate>>>> model(n_classes);
+    size_t number_rows = 0;
+    {
+        std::unordered_map<int, std::vector<std::pair<double,std::vector<dt_predicate>>>> result;
+        dt.populate_children_predicates2(result);
+        for (const auto& kv : result) {
+            std::vector<std::pair<double,std::unordered_map<std::string, DataPredicate>>> current_conds;
+            actualClauseRefine(current_conds, kv);
+            number_rows += (current_conds.size()+(1));
+            model[kv.first] = std::move(current_conds);
+        }
+    }
+
+    std::vector<size_t> resultsVector(number_rows, 0);
+    size_t vlen = 0;
+
+    for (auto& [log, env] : sqmenv) {
+        std::ofstream payload_out{this_path+"_payload_"+log+".csv"};
+        print_rawpayload_csv_header(payload_out, model, all, some, raw, actual_label, do_some);
+        payload_out << std::endl;
+        const std::vector<std::vector<size_t>>& traces = sax_pyload_trace_id.at(log);
+        DEBUG_ASSERT(env.db.nTraces() == traces.size());
+        for (uint32_t sigma_id = 0, n = env.db.nTraces(); sigma_id < n; sigma_id++) {
+            vlen = traces.at(sigma_id).size();
+            for (auto& dim_count : resultsVector) dim_count = 0; // Re-initialization
+
+            for (const auto& offset : traces.at(sigma_id)) {
+                // Collecting the information associated to the payloads of the events
+                collect_rawpayload_csv_results_row3(resultsVector, model, X.at(offset));
+            }
+            payload_out << std::accumulate(
+                    resultsVector.begin(),
+                    resultsVector.end(),
+                    std::string(),
+                    [&vlen,do_some](const std::string& a, size_t b) {
+                        return  a + (a.empty() ? "" : ",") + std::to_string(b == vlen ? 1 : 0) + (do_some ? ("," + std::to_string(b >0 ? 1 : 0)) : "");
+                    }
+            );
+            if (sigma_id != (n-1))
+                payload_out << std::endl;
+        }
+    }
 }
 
 inline void train_and_dump_to_csv3(std::unordered_map<std::string, Environment> &sqmenv,
                            const std::unordered_map<std::string, std::vector<std::vector<size_t>>> &sax_pyload_trace_id,
-                           const std::string &this_path, std::vector<std::pair<env3, int>> &payload_row,
+                           const std::string &this_path,
+const std::vector<std::vector<std::pair<std::string,union_minimal>>>& X,
+                                   const  std::vector<int>& y,
                            const std::string &all, const std::string &some, bool raw, size_t n_classes,
-                           const std::unordered_set<std::string> &numerical,
-                           const std::unordered_set<std::string> &categorical,
+                           const std::unordered_set<std::string> &N,
+                           const std::unordered_set<std::string> &C,
                            const std::string& actual_label = "__raw_payload",
                            const bool do_some = true) {
-//    auto it = payload_row.begin();
-//    auto en = payload_row.end();
-//    DecisionTree<env3> dt(it,
-//                                                                    en,
-//                                                                    n_classes,
-//                                                                    [](const auto& map, const std::string& key) {
-//                                                                        std::pair<std::string,union_minimal> wd{key, 0.0}, ws{key, ""};
-//                                                                        auto it = std::lower_bound(map.begin(), map.end(), std::min(wd, ws));
-////                                                                        auto it = map.find(key);
-//                                                                        if (it == map.end())
-//                                                                            return (union_minimal)0.0;
-//                                                                        else
-//                                                                            return it->second;
-//                                                                    },
-//                                                                    numerical,
-//                                                                    categorical,
-//                                                                    ForTheWin::Gini,
-//                                                                    1.0,
-//                                                                    1,
-//                          payload_row.size(),
-//                                                                    1,
-//                                                                    false,
-//                                                                    nullptr,
-//                                                                    nullptr,
-//                                                                    5);
-//    if ((dt.goodness <= 0.5) || (dt.isLeafNode())) {
-//        std::cerr << "Avoiding specification as goodness is below 70% or is a leaf node: " << dt.goodness << std::endl;
-//        return;
-//    }
-//
-//    std::vector<std::vector<std::pair<double,std::unordered_map<std::string, DataPredicate>>>> model(n_classes);
-//    size_t number_rows = 0;
-//    {
-//        std::unordered_map<int, std::vector<std::pair<double,std::vector<dt_predicate>>>> result;
-//        dt.populate_children_predicates2(result);
-//        for (const auto& kv : result) {
-//            std::vector<std::pair<double,std::unordered_map<std::string, DataPredicate>>> current_conds;
-//            actualClauseRefine(current_conds, kv);
-//            number_rows += (current_conds.size()+(1));
-//            model[kv.first] = std::move(current_conds);
-//        }
-//    }
-//
-//    std::vector<size_t> resultsVector(number_rows, 0);
-//    size_t vlen = 0;
-//
-//    for (auto& [log, env] : sqmenv) {
-//        std::ofstream payload_out{this_path+"_payload_"+log+".csv"};
-//        print_rawpayload_csv_header(payload_out, model, all, some, raw, actual_label, do_some);
-//        payload_out << std::endl;
-//        const std::vector<std::vector<size_t>>& traces = sax_pyload_trace_id.at(log);
-//        DEBUG_ASSERT(env.db.nTraces() == traces.size());
-//        for (uint32_t sigma_id = 0, n = env.db.nTraces(); sigma_id < n; sigma_id++) {
-//            vlen = traces.at(sigma_id).size();
-//            for (auto& dim_count : resultsVector) dim_count = 0; // Re-initialization
-//
-//            for (const auto& offset : traces.at(sigma_id)) {
-//                // Collecting the information associated to the payloads of the events
-//                collect_rawpayload_csv_results_row3(resultsVector, model, payload_row.at(offset).first);
-//            }
-//            payload_out << std::accumulate(
-//                    resultsVector.begin(),
-//                    resultsVector.end(),
-//                    std::string(),
-//                    [&vlen,do_some](const std::string& a, size_t b) {
-//                        return  a + (a.empty() ? "" : ",") + std::to_string(b == vlen ? 1 : 0) + (do_some ? ("," + std::to_string(b >0 ? 1 : 0)) : "");
-//                    }
-//            );
-//            if (sigma_id != (n-1))
-//                payload_out << std::endl;
-//        }
-//    }
+
+    DecisionTree dt{X,y, N, C, 5};
+    dt.splitTree();
+
+    if ((dt.goodness <= 0.5) || (dt.children.size() == 1)) {
+        std::cerr << "Avoiding specification as goodness is below 50% or is a leaf node: " << dt.goodness << std::endl;
+        return;
+    }
+
+    std::vector<std::vector<std::pair<double,std::unordered_map<std::string, DataPredicate>>>> model(n_classes);
+    size_t number_rows = 0;
+    {
+        std::unordered_map<int, std::vector<std::pair<double,std::vector<dt_predicate>>>> results;
+        dt.populate_children_predicates2(results);
+        for (const auto& kv : results) {
+            std::vector<std::pair<double,std::unordered_map<std::string, DataPredicate>>> current_conds;
+            actualClauseRefine(current_conds, kv);
+            number_rows += (current_conds.size()+(1));
+            model[kv.first] = std::move(current_conds);
+        }
+    }
+
+    std::vector<size_t> resultsVector(number_rows, 0);
+    size_t vlen = 0;
+
+    for (auto& [log, env] : sqmenv) {
+        std::ofstream payload_out{this_path+"_payload_"+log+".csv"};
+        print_rawpayload_csv_header(payload_out, model, all, some, raw, actual_label, do_some);
+        payload_out << std::endl;
+        const std::vector<std::vector<size_t>>& traces = sax_pyload_trace_id.at(log);
+        DEBUG_ASSERT(env.db.nTraces() == traces.size());
+        for (uint32_t sigma_id = 0, n = env.db.nTraces(); sigma_id < n; sigma_id++) {
+            vlen = traces.at(sigma_id).size();
+            for (auto& dim_count : resultsVector) dim_count = 0; // Re-initialization
+
+            for (const auto& offset : traces.at(sigma_id)) {
+                // Collecting the information associated to the payloads of the events
+                collect_rawpayload_csv_results_row3(resultsVector, model, X.at(offset));
+            }
+            payload_out << std::accumulate(
+                    resultsVector.begin(),
+                    resultsVector.end(),
+                    std::string(),
+                    [&vlen,do_some](const std::string& a, size_t b) {
+                        return  a + (a.empty() ? "" : ",") + std::to_string(b == vlen ? 1 : 0) + (do_some ? ("," + std::to_string(b >0 ? 1 : 0)) : "");
+                    }
+            );
+            if (sigma_id != (n-1))
+                payload_out << std::endl;
+        }
+    }
 }
 
 #endif //KNOBAB_SERVER_COMMONS_H

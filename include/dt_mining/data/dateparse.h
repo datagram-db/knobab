@@ -6,7 +6,7 @@
 #define DTMINING_DATEPARSE_H
 
 #include <string>
-
-long long int parse8601(const std::string &save);
+#include <yaucl/numeric/numeric_base.h>
+//long long int parse8601(const std::string &save);
 
 #endif //DTMINING_DATEPARSE_H

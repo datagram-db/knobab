@@ -64,7 +64,7 @@ int main() {
     double max_val = 1000000000.0;
     bool isAlgo3 = true;
 
-    DTMining::dt_mine_and_ts_to_polyadic(benchmark_result_file, folder, precision, max_val, isAlgo3);
+    DTMining::dt_mine_and_ts_to_polyadic(benchmark_result_file, folder, precision, max_val, isAlgo3, true);
 
     // Function
 
