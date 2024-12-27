@@ -21,8 +21,8 @@ from EMeriTAte.timeseries.BuonaGiornata import BuonaGiornata
 from EMeriTAte.timeseries.DrugHalfLifeSimulator import Chemists
 from EMeriTAte.timeseries.Log import Log, Event, EventPayload
 from EMeriTAte.timeseries.MultiTraceIndexing import MultiTraceIndexing
-from EMeriTAte.timeseries.SequentialPatternMining import SequentialPatternMining, MiningConfiguration
-from EMeriTAte.timeseries.TimeSeriesMining import mine_binary_growth_patterns
+# from EMeriTAte.timeseries.SequentialPatternMining import SequentialPatternMining, MiningConfiguration
+from EMeriTAte.timeseries.DTMining import mine_binary_growth_patterns
 # from prefixspan import PrefixSpan
 
 def extendDictionaryWithTime(d):

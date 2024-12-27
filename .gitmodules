@@ -25,3 +25,12 @@
 [submodule "submodules/pybind11"]
 	path = submodules/pybind11
 	url = https://github.com/pybind/pybind11
+[submodule "submodules/jsonwriter"]
+	path = submodules/jsonwriter
+	url = https://github.com/dmishin/json-stream-writer
+[submodule "submodules/thread_pool"]
+	path = submodules/thread_pool
+	url = https://github.com/progschj/ThreadPool/
+[submodule "submodules/cpp-lru-cache"]
+	path = submodules/cpp-lru-cache
+	url = https://github.com/lamerman/cpp-lru-cache

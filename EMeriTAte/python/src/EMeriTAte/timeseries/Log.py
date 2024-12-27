@@ -101,7 +101,9 @@ class EventPayload:
             toExclude = {"concept:name", "Label", "lifecycle:transition"}
         self.toExclude = toExclude
         if attributes is None:
-            attributes = dict()
+            attributes = dict().items()
+        elif isinstance(attributes, dict):
+            attributes = attributes.items()
         for key, val in attributes:
             self.put(key, val)
         self.keys = set(self.trace_data.keys())

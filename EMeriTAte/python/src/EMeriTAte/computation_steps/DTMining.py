@@ -124,7 +124,7 @@ class DTMining:
 
     def _perEnvironment(self, envName, timedim, doesLabelChangeInTime=False):
         x = envName
-        # logger.info("Performining the continuous analysis for "+x)
+        logger.info("Performining the continuous analysis for "+x)
         # logger.trace("1. Data Pre-Processing")
         EntireTimeLog = asFinalLog(self.environments[x], x, self.class_field, self.replace, self.conversion)
         originalChunks = dict()

@@ -3,6 +3,12 @@ import math
 import sys
 
 from EMeriTAte.timeseries.Log import TracePositional
+
+"""
+Why this module is called Bepi?
+https://www.youtube.com/watch?v=_BhahP5wstQ
+"""
+
 def defineIntervals(t:TracePositional,timeField, epsilon=0.0001, maxval=sys.float_info.max, ignorable=None):
     """
     This function provides the discretisation of the time series into increase, variation, and absence events, thus
