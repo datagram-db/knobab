@@ -84,10 +84,15 @@ struct RecordHandling {
     std::string dimension;
     fish f;
 
+    void setDataless(){
+        f.setDataless();
+    }
+
     RecordHandling() = default;
     RecordHandling(const RecordHandling&) = default;
     RecordHandling& operator=(const RecordHandling&) = default;
-    RecordHandling(const std::string& dimension,
+    RecordHandling(bool isDataless,
+                   const std::string& dimension,
                    const std::span<double>& orig,
                    const std::span<double>& time,
                    std::vector<BasicRecord>&& list);
@@ -272,7 +277,7 @@ private:
 
 
 static inline
-std::tuple<RecordHandling,RecordHandling,RecordHandling,RecordHandling> transform_series(const std::string& dim,
+std::tuple<RecordHandling,RecordHandling,RecordHandling,RecordHandling> transform_series(bool isDataless, const std::string& dim,
                                                                                          const std::span<double>& ls,
                                                                                          std::span<double>& timespan,
                                                                                          const double epsilon = 0.0001,
@@ -300,10 +305,10 @@ std::tuple<RecordHandling,RecordHandling,RecordHandling,RecordHandling> transfor
         variability_list.emplace_back(variation_gen(epsilon, maxval, idx,*currPtr, *nextPtr));
         idx++;
     }
-    return {{dim+"_i", ls,timespan, std::move(increase_list)},
-            {dim+"_a", ls,timespan, std::move(absence_list)},
-            {dim+"_s",ls,timespan,std::move(stationary_list)},
-            {dim+"_v",ls,timespan,std::move(variability_list)}
+    return {{isDataless, dim+"_i", ls,timespan, std::move(increase_list)},
+            {isDataless, dim+"_a", ls,timespan, std::move(absence_list)},
+            {isDataless, dim+"_s",ls,timespan,std::move(stationary_list)},
+            {isDataless, dim+"_v",ls,timespan,std::move(variability_list)}
     };
 }
 

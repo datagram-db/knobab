@@ -12,7 +12,8 @@
                                      const std::string& folder,
                                      double precision,
                                      double max_val,
-                                     bool isAlgo3);
+                                     bool isAlgo3,
+                                     bool isDataless);
 }
 
 #endif //DTMINING_DT_MINING_H

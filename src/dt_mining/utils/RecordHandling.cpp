@@ -4,7 +4,8 @@
 
 #include "dt_mining/utils/RecordHandling.h"
 
-RecordHandling::RecordHandling(const std::string& dimension,
+RecordHandling::RecordHandling(bool isDataless,
+                               const std::string& dimension,
                const std::span<double>& orig,
                                const std::span<double>& time,
                std::vector<BasicRecord>&& list) : dimension{dimension}, ls{std::move(list)}, orig{orig}, time{time} {
@@ -36,7 +37,9 @@ RecordHandling::RecordHandling(const std::string& dimension,
         for (size_t idx = init_curr_value; idx<=N-1; idx++)
             linear_time[idx] = aotoff;
     }
-
+    if (isDataless) {
+        setDataless();
+    }
 }
 
 std::pair<std::string, std::unordered_map<std::string,double>> RecordHandling::genPureInterval(const std::string &action, size_t begin, size_t end) const {

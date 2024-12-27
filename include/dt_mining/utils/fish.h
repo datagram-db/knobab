@@ -89,8 +89,14 @@ ForwardIt my_min_element(ForwardIt first, ForwardIt last)
  */
 class fish {
     std::unordered_map<std::string, catch24fun > funmap;
+    bool isDataless{false};
 public:
     fish();
+
+    void setDataless() {
+        funmap.clear();
+        isDataless = true;
+    }
 
     inline statistics_payload eval(const std::span<double>& dim_values,
                                    const std::span<double>& time_values,
@@ -105,14 +111,16 @@ public:
         for (const auto&[k,f] : funmap) {
             m.emplace("time_"+k, call_c_function(time_values, begin, end, f));
         }
-        m.emplace("values_acf_first_min", call_c_int_function(dim_values, begin, end, CO_FirstMin_ac));
-        m.emplace("values_periodicity", call_c_int_function(dim_values, begin, end, PD_PeriodicityWang_th0_01));
-        m.emplace("values_max", *my_max_element(dim_values.begin() + begin, dim_values.begin() + (end + 1)));
-        m.emplace("values_min", *my_min_element(dim_values.begin() + begin, dim_values.begin() + (end + 1)));
-        m.emplace("time_acf_first_min", call_c_int_function(time_values, begin, end, CO_FirstMin_ac));
-        m.emplace("time_periodicity", call_c_int_function(time_values, begin, end, PD_PeriodicityWang_th0_01));
-        m.emplace("time_max", *my_max_element(time_values.begin() + begin, time_values.begin() + (end + 1)));
-        m.emplace("time_min", *my_min_element(time_values.begin() + begin, time_values.begin() + (end + 1)));
+        if (!isDataless) {
+            m.emplace("values_acf_first_min", call_c_int_function(dim_values, begin, end, CO_FirstMin_ac));
+            m.emplace("values_periodicity", call_c_int_function(dim_values, begin, end, PD_PeriodicityWang_th0_01));
+            m.emplace("values_max", *my_max_element(dim_values.begin() + begin, dim_values.begin() + (end + 1)));
+            m.emplace("values_min", *my_min_element(dim_values.begin() + begin, dim_values.begin() + (end + 1)));
+            m.emplace("time_acf_first_min", call_c_int_function(time_values, begin, end, CO_FirstMin_ac));
+            m.emplace("time_periodicity", call_c_int_function(time_values, begin, end, PD_PeriodicityWang_th0_01));
+            m.emplace("time_max", *my_max_element(time_values.begin() + begin, time_values.begin() + (end + 1)));
+            m.emplace("time_min", *my_min_element(time_values.begin() + begin, time_values.begin() + (end + 1)));
+        }
         return m;
     }
 

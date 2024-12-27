@@ -6,8 +6,8 @@ set(WITH_DEMO false)
 
 
 include_directories(/usr/include/c++/14/)
-set(CMAKE_C_COMPILER clang-19 CACHE INTERNAL "C compiler")
-set(CMAKE_CXX_COMPILER clang++-19 CACHE INTERNAL "C++ compiler")
+#set(CMAKE_C_COMPILER clang-19 CACHE INTERNAL "C compiler")
+#set(CMAKE_CXX_COMPILER clang++-19 CACHE INTERNAL "C++ compiler")
 set(CMAKE_CXX_STANDARD 23)
 set(WITH_DEMO false)
 add_definitions(-DNO_PYBIND)
@@ -94,13 +94,11 @@ add_library(json_writer OBJECT
         submodules/jsonwriter/include/json_writer.hpp)
 
 include_directories(submodules/jsonwriter/include)
-#include_directories(submodules/date/include)
 include_directories(submodules/cpp-lru-cache/include)
 include_directories(submodules/json/include)
 add_subdirectory(submodules/capnproto)
 include_directories(submodules/thread_pool)
 include_directories(submodules/catch24/)
-#include_directories(include/)
 include_directories(include/capnpn)
 
 IF(CMAKE_BUILD_TYPE MATCHES Debug)
@@ -251,25 +249,25 @@ add_executable(knobab_json new_pipeline.cpp src/knobab/v30/EMeriTAte.cpp
 target_link_libraries(knobab_json antlr4_static yaucl_hashing yaucl_bpm yaucl_structures
         yaucl_numeric yaucl_data yaucl_graph  yaucl_data yaucl_bpm knobab  knobab_ndp   yaucl_learning  knobab_mining)
 
-#add_executable(DTMining main.cpp
-#        src/dt_mining/utils/fish.cpp
-#        src/dt_mining/utils/BasicRecord.cpp
-#        src/dt_mining/utils/RecordHandling.cpp
-#        src/dt_mining/data/PolyadicJSONSerialize.cpp
-#        src/dt_mining/data/dateparse.cpp
-#        src/dt_mining/data/MultivariateTimeSeries.cpp
-#        src/capnpn/schema.propo.c++
-#        submodules/jsonwriter/src/json_writer.cpp
-#        src/dt_mining/data/TemporaryCapnpnConstituentSerializer.cpp
-#        src/dt_mining/benchmarking/FineGrainedStats.cpp
-#        src/dt_mining/benchmarking/SegmentStats.cpp
-#        src/dt_mining/benchmarking/TraceStats.cpp
-#        include/dt_mining/benchmarking/DatasetStats.h
-#        src/dt_mining/benchmarking/DatasetStats.cpp
-#        include/dt_mining/dt_mining.h
-#        src/dt_mining/dt_mining.cpp
-#)
-#target_link_libraries(DTMining  PRIVATE catch24 CapnProto::kj CapnProto::capnp )
+add_executable(DTMining dt_mine_main.cpp
+        src/dt_mining/utils/fish.cpp
+        src/dt_mining/utils/BasicRecord.cpp
+        src/dt_mining/utils/RecordHandling.cpp
+        src/dt_mining/data/PolyadicJSONSerialize.cpp
+        src/dt_mining/data/dateparse.cpp
+        src/dt_mining/data/MultivariateTimeSeries.cpp
+        src/capnpn/schema.propo.c++
+        submodules/jsonwriter/src/json_writer.cpp
+        src/dt_mining/data/TemporaryCapnpnConstituentSerializer.cpp
+        src/dt_mining/benchmarking/FineGrainedStats.cpp
+        src/dt_mining/benchmarking/SegmentStats.cpp
+        src/dt_mining/benchmarking/TraceStats.cpp
+        include/dt_mining/benchmarking/DatasetStats.h
+        src/dt_mining/benchmarking/DatasetStats.cpp
+        include/dt_mining/dt_mining.h
+        src/dt_mining/dt_mining.cpp
+)
+target_link_libraries(DTMining  PRIVATE catch24 CapnProto::kj CapnProto::capnp )
 
 #FetchContent_MakeAvailable(Catch2)
 #list(APPEND CMAKE_MODULE_PATH ${catch2_SOURCE_DIR}/extras)

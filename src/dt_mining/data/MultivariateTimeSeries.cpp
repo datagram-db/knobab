@@ -6,7 +6,8 @@
 #include <unordered_set>
 #include "dt_mining/data/dateparse.h"
 
-MultivariateTimeSeries::MultivariateTimeSeries(const std::string& environment, aria::csv::CsvParser& parser,
+MultivariateTimeSeries::MultivariateTimeSeries(bool isDataless,
+                                               const std::string& environment, aria::csv::CsvParser& parser,
                                                const double epsilon,
                                                const double maxval) : envName{environment}{
     size_t nDimensions = 0;
@@ -56,7 +57,7 @@ MultivariateTimeSeries::MultivariateTimeSeries(const std::string& environment, a
                     prevClazz = currentClazz;
                     latestDataOffset = len;
                 } else if (prevClazz != currentClazz) {
-                    classSegments.emplace_back(dimName, prevClazz, dimensions, timestamp, latestDataOffset, len-1, epsilon,maxval);
+                    classSegments.emplace_back(isDataless, dimName, prevClazz, dimensions, timestamp, latestDataOffset, len-1, epsilon,maxval);
                     prevClazz = currentClazz;
                     latestDataOffset = len;
                 }
@@ -64,10 +65,11 @@ MultivariateTimeSeries::MultivariateTimeSeries(const std::string& environment, a
             }
         }
     }
-    classSegments.emplace_back(dimName, prevClazz, dimensions, timestamp, latestDataOffset, len-1, epsilon,maxval);
+    classSegments.emplace_back(isDataless, dimName, prevClazz, dimensions, timestamp, latestDataOffset, len-1, epsilon,maxval);
 }
 
-ClassSegment::ClassSegment(std::vector<std::string>& dim_name,
+ClassSegment::ClassSegment(bool isDataless,
+                           std::vector<std::string>& dim_name,
              int withClass,
              std::vector<std::vector<double>>& values,
              std::vector<double>& timestamps_vals,
@@ -76,7 +78,8 @@ ClassSegment::ClassSegment(std::vector<std::string>& dim_name,
              const double maxval) : withClass{withClass}, timestamps{timestamps_vals.begin()+begin,end-begin+1}, dimNames{dim_name.begin()+0, dim_name.size()} {
     for (size_t idx = 0, N = values.size(); idx<N; idx++) {
         std::span<double> SIDX{values[idx].begin()+begin, end-begin+1};
-        dimensions.emplace_back(transform_series(dim_name[idx],
+        dimensions.emplace_back(transform_series(isDataless,
+                                                 dim_name[idx],
                                                  SIDX,
                                                  timestamps,
                                                  epsilon,

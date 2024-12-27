@@ -18,7 +18,8 @@ struct ClassSegment {
     std::span<double> timestamps;
     std::span<std::string> dimNames;
 
-    ClassSegment(std::vector<std::string>& dim_name,
+    ClassSegment(bool isDataclass,
+                 std::vector<std::string>& dim_name,
                  int withClass,
                  std::vector<std::vector<double>>& values,
                  std::vector<double>& timestamps_vals,
@@ -83,7 +84,8 @@ struct MultivariateTimeSeries {
      * @param path  The CSV file containing the multivariate time series.
      * @return  The multivariate timeseries loaded from the CSV file
      */
-    static inline MultivariateTimeSeries fromFile(const std::filesystem::path &path,
+    static inline MultivariateTimeSeries fromFile(bool isDataless,
+                                                  const std::filesystem::path &path,
                                                   const double epsilon,
                                                   const double maxval) {
         auto env = path.stem().string();
@@ -91,7 +93,7 @@ struct MultivariateTimeSeries {
         {
             std::ifstream input_file(path);
             aria::csv::CsvParser parser = aria::csv::CsvParser(input_file);
-            result = {env, parser, epsilon, maxval};
+            result = {isDataless, env, parser, epsilon, maxval};
         }
         return result;
     }
@@ -103,7 +105,7 @@ struct MultivariateTimeSeries {
      * @param folder
      * @return      A map associating the environment name (filename without extension) to the environment itself
      */
-    static inline std::unordered_map<std::string, MultivariateTimeSeries> fromDirectory(const std::filesystem::path& folder,
+    static inline std::unordered_map<std::string, MultivariateTimeSeries> fromDirectory(bool isDataless,const std::filesystem::path& folder,
     const double epsilon,
     const double maxval,
     double& runtime) {
@@ -118,7 +120,7 @@ struct MultivariateTimeSeries {
         for (auto &p : std::filesystem::directory_iterator(folder))
         {
             if (p.path().extension() == ext) {
-                auto f = fromFile(p, epsilon, maxval);
+                auto f = fromFile(isDataless, p, epsilon, maxval);
                 result.emplace(f.envName, std::move(f));
             }
         }
@@ -130,7 +132,7 @@ struct MultivariateTimeSeries {
         return result;
     }
 
-    MultivariateTimeSeries(const std::string& environment, aria::csv::CsvParser& parser,
+    MultivariateTimeSeries(bool isDataless, const std::string& environment, aria::csv::CsvParser& parser,
     const double epsilon,
     const double maxval);
 };

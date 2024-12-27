@@ -20,7 +20,8 @@ void DTMining::dt_mine_and_ts_to_polyadic(const std::string& benchmark_result_fi
                                 const std::string& folder,
                                 double precision,
                                 double max_val,
-                                bool isAlgo3) {
+                                bool isAlgo3,
+                                          bool isDataless) {
     //    MultivariateTimeSeries mts;
     using std::chrono::high_resolution_clock;
     using std::chrono::duration_cast;
@@ -56,7 +57,7 @@ void DTMining::dt_mine_and_ts_to_polyadic(const std::string& benchmark_result_fi
     std::cout << "Mining Algorithm: " << (ds.isAlgo3 ? 3 : 2) << std::endl;
 
     // Loading the multivariate time series represented singluarly per CSV file
-    auto mts = MultivariateTimeSeries::fromDirectory(ds.folder, ds.precision, ds.max_val, ds.loading);
+    auto mts = MultivariateTimeSeries::fromDirectory(isDataless, ds.folder, ds.precision, ds.max_val, ds.loading);
     std::unordered_map<std::string, size_t> env_name_to_offset;
     std::unordered_map<std::string, std::map<size_t, std::map<size_t, size_t>>> envtrace_event_constituent_to_offset;
 
