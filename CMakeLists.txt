@@ -1,6 +1,13 @@
 cmake_minimum_required(VERSION 3.20)
 project(knobab_server)
-set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_SYSTEM_NAME Linux)
+set(WITH_DEMO false)
+
+
+include_directories(/usr/include/c++/14/)
+set(CMAKE_C_COMPILER clang-19 CACHE INTERNAL "C compiler")
+set(CMAKE_CXX_COMPILER clang++-19 CACHE INTERNAL "C++ compiler")
+set(CMAKE_CXX_STANDARD 23)
 set(WITH_DEMO false)
 add_definitions(-DNO_PYBIND)
 include_directories(include/knobab/server/query_manager)
@@ -24,15 +31,76 @@ include_directories(submodules/args)
 #find_package(Threads REQUIRED)
 
 include(FetchContent)
-# Also requires one of: libbfd (gnu binutils), libdwarf, libdw (elfutils)
-FetchContent_Declare(backward
-        GIT_REPOSITORY https://github.com/bombela/backward-cpp
-        GIT_TAG v1.6  # or a version tag, such as v1.6
-        #SYSTEM          # optional, the Backward include directory will be treated as system directory
-        )
-FetchContent_MakeAvailable(backward)
-include_directories(${backward_SOURCE_DIR})
+## Also requires one of: libbfd (gnu binutils), libdwarf, libdw (elfutils)
+#FetchContent_Declare(backward
+#        GIT_REPOSITORY https://github.com/bombela/backward-cpp
+#        GIT_TAG v1.6  # or a version tag, such as v1.6
+#        #SYSTEM          # optional, the Backward include directory will be treated as system directory
+#        )
+#FetchContent_MakeAvailable(backward)
+#include_directories(${backward_SOURCE_DIR})
 
+add_library(catch24 OBJECT
+        submodules/catch24/C/SP_Summaries.cpp
+        submodules/catch24/C/DN_Spread_Std.h
+        submodules/catch24/C/DN_HistogramMode_10.cpp
+        submodules/catch24/C/SC_FluctAnal.cpp
+        submodules/catch24/C/SB_CoarseGrain.cpp
+        submodules/catch24/C/splinefit.h
+        submodules/catch24/C/SB_CoarseGrain.h
+        submodules/catch24/C/fft.cpp
+        submodules/catch24/C/SC_FluctAnal.h
+        submodules/catch24/C/SB_MotifThree.h
+        submodules/catch24/C/helper_functions.h
+        submodules/catch24/C/fft.h
+        submodules/catch24/C/SP_Summaries.h
+        submodules/catch24/C/IN_AutoMutualInfoStats.h
+        submodules/catch24/C/stats.cpp
+        submodules/catch24/C/FC_LocalSimple.cpp
+        submodules/catch24/C/CO_AutoCorr.h
+        submodules/catch24/C/PD_PeriodicityWang.h
+        submodules/catch24/C/CO_AutoCorr.cpp
+        submodules/catch24/C/butterworth.cpp
+        submodules/catch24/C/IN_AutoMutualInfoStats.cpp
+        submodules/catch24/C/SB_TransitionMatrix.h
+        submodules/catch24/C/PD_PeriodicityWang.cpp
+        submodules/catch24/C/MD_hrv.cpp
+        submodules/catch24/C/DN_OutlierInclude.h
+        submodules/catch24/C/SB_BinaryStats.cpp
+        submodules/catch24/C/helper_functions.cpp
+        submodules/catch24/C/runAllTS.sh
+        submodules/catch24/C/DN_HistogramMode_10.h
+        submodules/catch24/C/DN_HistogramMode_5.cpp
+        submodules/catch24/C/MD_hrv.h
+        submodules/catch24/C/DN_Mean.cpp
+        submodules/catch24/C/stats.h
+        submodules/catch24/C/SB_TransitionMatrix.cpp
+        submodules/catch24/C/FC_LocalSimple.h
+        submodules/catch24/C/splinefit.cpp
+        submodules/catch24/C/DN_Mean.h
+        submodules/catch24/C/SB_BinaryStats.h
+        submodules/catch24/C/DN_Spread_Std.cpp
+        submodules/catch24/C/histcounts.cpp
+        submodules/catch24/C/histcounts.h
+        submodules/catch24/C/butterworth.h
+        submodules/catch24/C/DN_HistogramMode_5.h
+        submodules/catch24/C/DN_OutlierInclude.cpp
+        submodules/catch24/C/SB_MotifThree.cpp
+)
+
+add_library(json_writer OBJECT
+        submodules/jsonwriter/src/json_writer.cpp
+        submodules/jsonwriter/include/json_writer.hpp)
+
+include_directories(submodules/jsonwriter/include)
+#include_directories(submodules/date/include)
+include_directories(submodules/cpp-lru-cache/include)
+include_directories(submodules/json/include)
+add_subdirectory(submodules/capnproto)
+include_directories(submodules/thread_pool)
+include_directories(submodules/catch24/)
+#include_directories(include/)
+include_directories(include/capnpn)
 
 IF(CMAKE_BUILD_TYPE MATCHES Debug)
     message(WARNING "Compiling in debug mode")
@@ -110,19 +178,17 @@ add_library(knobab_mining
         src/knobab/dataStructures/polyadic/myParser.cpp include/knobab/server/dataStructures/polyadic/myParser.h include/knobab/server/dataStructures/polyadic.h src/knobab/mining/polyadic/polyadic_loading.cpp include/knobab/mining/polyadic/polyadic_loading.h src/knobab/mining/polyadic/polyadic_bolt.cpp include/knobab/mining/polyadic/polyadic_bolt.h include/knobab/mining/polyadic/lattice.h
         )
 
+
 #add_executable(benchmarking benchmarking/benchmarking.cpp benchmarking/benchmarking.cpp) #${BACKWARD_ENABLE})
 #
 #add_executable(mining
 #        src/knobab/mining/mining.cpp
 #)
-
-# TODO: refinery
-
+#
+#
 #add_executable(log_generator generate_traces.cpp)
 #add_executable(multimodel_mining src/knobab/mining/refinery.cpp)
 #add_executable(knobab2-benchmarking src/knobab/server/benchmarking_binary.cpp)
-
-
 #if(MSVC OR MSYS OR MINGW)
 #    target_link_libraries(knobab_server Threads::Threads antlr4_shared yaucl_hashing yaucl_bpm yaucl_structures
 #            yaucl_numeric yaucl_data yaucl_graph  yaucl_data yaucl_bpm knobab  knobab_ndp)
@@ -152,9 +218,6 @@ add_library(knobab_mining
 ##    target_link_libraries(knobab2-benchmarking Threads::Threads antlr4_shared yaucl_hashing yaucl_bpm yaucl_structures
 ##            yaucl_numeric yaucl_data yaucl_graph  yaucl_data yaucl_bpm knobab  knobab_ndp)
 #endif()
-
-
-
 enable_testing ()
 #include(FetchContent)
 #FetchContent_Declare(
@@ -166,7 +229,7 @@ enable_testing ()
 #FetchContent_MakeAvailable(googletest)
 #link_directories(${CMAKE_CURRENT_BINARY_DIR}/lib)
 #include_directories(${gtest_SOURCE_DIR}/include ${gtest_SOURCE_DIR})
-
+#
 #
 #Include(FetchContent)
 #
@@ -176,7 +239,6 @@ enable_testing ()
 #        GIT_TAG        v3.5.2 # or a later release
 #)
 
-
 add_executable(knobab_json new_pipeline.cpp src/knobab/v30/EMeriTAte.cpp
         src/knobab/mining/polyadic/polyadic_learning.cpp
         include/knobab/mining/polyadic/polyadic_learning.h
@@ -184,19 +246,39 @@ add_executable(knobab_json new_pipeline.cpp src/knobab/v30/EMeriTAte.cpp
         include/knobab/mining/polyadic/polyadic_loading.h
         include/knobab/mining/polyadic/polyadic_mining.h
         include/knobab/mining/polyadic/commons.h)
+
 target_link_libraries(knobab_json antlr4_static yaucl_hashing yaucl_bpm yaucl_structures
         yaucl_numeric yaucl_data yaucl_graph  yaucl_data yaucl_bpm knobab  knobab_ndp   yaucl_learning  knobab_mining)
+
+#add_executable(DTMining main.cpp
+#        src/dt_mining/utils/fish.cpp
+#        src/dt_mining/utils/BasicRecord.cpp
+#        src/dt_mining/utils/RecordHandling.cpp
+#        src/dt_mining/data/PolyadicJSONSerialize.cpp
+#        src/dt_mining/data/dateparse.cpp
+#        src/dt_mining/data/MultivariateTimeSeries.cpp
+#        src/capnpn/schema.propo.c++
+#        submodules/jsonwriter/src/json_writer.cpp
+#        src/dt_mining/data/TemporaryCapnpnConstituentSerializer.cpp
+#        src/dt_mining/benchmarking/FineGrainedStats.cpp
+#        src/dt_mining/benchmarking/SegmentStats.cpp
+#        src/dt_mining/benchmarking/TraceStats.cpp
+#        include/dt_mining/benchmarking/DatasetStats.h
+#        src/dt_mining/benchmarking/DatasetStats.cpp
+#        include/dt_mining/dt_mining.h
+#        src/dt_mining/dt_mining.cpp
+#)
+#target_link_libraries(DTMining  PRIVATE catch24 CapnProto::kj CapnProto::capnp )
 
 #FetchContent_MakeAvailable(Catch2)
 #list(APPEND CMAKE_MODULE_PATH ${catch2_SOURCE_DIR}/extras)
 #include(CTest)
 #include(Catch)
-
-
+#
 #add_executable(mining_tests src/knobab/tests/mining_tests.cpp )
 #target_link_libraries(mining_tests Catch2::Catch2WithMain Threads::Threads knobab antlr4_static yaucl_hashing
 #        yaucl_stringutils yaucl_numeric  yaucl_data yaucl_bpm yaucl_graph yaucl_structures yaucl_data knobab_ndp yaucl_learning knobab_mining)
-
+#
 #add_executable(polyadic_mining_tests src/knobab/tests/polyadic_mining_tests.cpp )
 #target_link_libraries(polyadic_mining_tests Catch2::Catch2WithMain Threads::Threads knobab antlr4_static yaucl_hashing
 #        yaucl_stringutils yaucl_numeric  yaucl_data yaucl_bpm yaucl_graph yaucl_structures yaucl_data knobab_ndp yaucl_learning knobab_mining )
@@ -218,9 +300,9 @@ target_link_libraries(knobab_json antlr4_static yaucl_hashing yaucl_bpm yaucl_st
 #add_executable(knobab2-edbt24-benchmarking benchmarking/edbt24.cpp)
 #target_link_libraries(knobab2-edbt24-benchmarking Threads::Threads antlr4_shared yaucl_hashing yaucl_bpm yaucl_structures
 #        yaucl_numeric yaucl_data yaucl_graph  yaucl_data yaucl_bpm knobab  knobab_ndp)
-
-
-
+#
+#
+#
 #catch_discover_tests(mining_tests)
 #catch_discover_tests(until_tests)
 #catch_discover_tests(complete_response)
