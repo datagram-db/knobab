@@ -10,6 +10,7 @@
 
 using trace_t = uint32_t;
 using event_t = uint16_t;
+using constituent_t = std::size_t;
 using act_t    = uint16_t;
 using monotone_hash_t = uint_least64_t;
 

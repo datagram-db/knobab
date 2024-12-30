@@ -10,6 +10,7 @@
 #include "knobab/server/declare/DeclareDataAware.h"
 #include "knobab/mining/bolt_commons.h"
 #include <knobab/mining/polyadic/lattice.h>
+#include <knobab/mining/polyadic/payload_act_tracker.h>
 
 
 
@@ -78,34 +79,48 @@ struct result_container {
     u_int16_t A, B;
     double log_size;
     std::vector<SimpleDeclare> boundary_result;
+    std::vector<simple_declare> for_is_clause_present;
+    std::vector<bool> is_clause_present;
+
+    void is_clause_present_init(size_t N) {
+        is_clause_present.resize(N, false);
+    }
 
     void operator()(const simple_declare& x, const declare_lattice_node& node) {
         DEBUG_ASSERT((((double)node.log_support)/log_size)<=1);
+        DEBUG_ASSERT((!node.sat.empty()) || (!node.vac.empty()) || (! node.no_sat.empty()));
         if (x.second) {
             boundary_result.emplace_back(x, A, B, ((double)node.log_support)/log_size, node.rconf);
         } else {
             boundary_result.emplace_back(x, B, A, ((double)node.log_support)/log_size, node.rconf);
         }
+        for_is_clause_present.emplace_back(x);
     }
-    void complex_operator(const simple_declare& x, const declare_lattice_node& node, const std::string&A, const std::string& B, const size_t total_log, std::unordered_map<std::tuple<std::string,std::string,std::string>, std::vector<char>>& result_map) {
-        std::tuple<std::string,std::string,std::string> simple_clause;
+
+    static inline std::tuple<std::string,std::string,std::string> get_simple_ternary_clause(const simple_declare& x, const std::string&A, const std::string& B) {
         if (x.second) {
-            simple_clause = {x.first, A, B};
+            return {x.first, A, B};
         } else {
-            simple_clause = {x.first, B, A};
+            return {x.first, B, A};
         }
+    }
+
+    size_t complex_operator(const simple_declare& x, const declare_lattice_node& node, const std::string&A, const std::string& B, const size_t total_log, std::unordered_map<std::tuple<std::string,std::string,std::string>, std::vector<char>>& result_map) {
+        std::tuple<std::string,std::string,std::string> simple_clause = get_simple_ternary_clause(x, A, B);
         if (result_map.contains(simple_clause)){
             std::cerr << "ERROR: result_map already contains the clause" << std::endl;
             exit(3);
         }
         auto& embeddings = result_map[simple_clause];
         embeddings.resize(total_log, -2);
+        size_t unsat = 0;
 
         for (size_t trace : node.sat) {
             embeddings[trace] = 1;
         }
         for (size_t trace : node.no_sat) {
             embeddings[trace] = -1;
+            unsat++;
         }
         for (size_t trace : node.vac) {
             auto& val = embeddings[trace];
@@ -117,6 +132,7 @@ struct result_container {
                 embeddings[i] = 0;
             }
         }
+        return total_log - unsat;
     }
 };
 
@@ -151,61 +167,69 @@ struct polyadic_bolt {
     simple_declare cprecBA{"ChainPrecedence", false};
     simple_declare csuccAB{"ChainSuccession", true};
     simple_declare csuccBA{"ChainSuccession", false};
+    yaucl::structures::any_to_uint_bimap<simple_declare> references;
+    std::vector<simple_declare> extra_mining;
+
+    inline void add_node(const simple_declare& x) {
+        graph.add_node(x);
+        references.put(x);
+    }
 
     polyadic_bolt() {
+        extra_mining = {resp_existenceAB, resp_existenceBA, coexistenceAB_BA, choiceAB_BA, exclchoiceAB_BA};
         // ~~ Initialisation of the lattice data structure
-        graph.add_node(choiceAB_BA);
-        graph.add_node(resp_existenceAB);
+        add_node(choiceAB_BA);
+        add_node(resp_existenceAB);
         graph.add_edge(choiceAB_BA, resp_existenceAB, true);
 
-        graph.add_node(respAB);
+        add_node(respAB);
         graph.add_edge(resp_existenceAB, respAB);
 
-        graph.add_node(crespAB);
+        add_node(crespAB);
         graph.add_edge(respAB, crespAB);
 
-        graph.add_node(precBA);
+        add_node(precBA);
         graph.add_edge(resp_existenceAB, precBA);
 
-        graph.add_node(cprecAB);
+        add_node(cprecAB);
         graph.add_edge(choiceAB_BA, cprecAB, true);
 
-        graph.add_node(resp_existenceBA);
+        add_node(resp_existenceBA);
         graph.add_edge(choiceAB_BA, resp_existenceBA, true);
 
-        graph.add_node(coexistenceAB_BA);
+        add_node(coexistenceAB_BA);
         graph.add_edge(resp_existenceBA, coexistenceAB_BA, true);
         graph.add_edge(resp_existenceAB, coexistenceAB_BA, true);
 
-        graph.add_node(respBA);
+        add_node(respBA);
         graph.add_edge(resp_existenceBA, respBA);
 
-        graph.add_node(crespBA);
+        add_node(crespBA);
         graph.add_edge(respBA, crespBA);
 
-        graph.add_node(precAB);
+        add_node(precAB);
         graph.add_edge(resp_existenceBA, precAB);
 
-        graph.add_node(succAB);
+        add_node(succAB);
         graph.add_edge(respAB, succAB);
         graph.add_edge(precAB, succAB);
 
-        graph.add_node(succBA);
+        add_node(succBA);
         graph.add_edge(respBA, succBA);
         graph.add_edge(precBA, succBA);
 
-        graph.add_node(cprecBA);
+        add_node(cprecBA);
         graph.add_edge(choiceAB_BA, cprecBA, true);
 
-        graph.add_node(csuccAB);
+        add_node(csuccAB);
         graph.add_edge(cprecBA, csuccAB, true);
         graph.add_edge(crespAB, csuccAB, true);
 
-        graph.add_node(csuccBA);
+        add_node(csuccBA);
         graph.add_edge(cprecAB, csuccBA, true);
         graph.add_edge(crespBA, csuccBA, true);
 
-        graph.add_node(exclchoiceAB_BA);
+        add_node(exclchoiceAB_BA);
     }
 
     // O: always, *(A,B). 1: always, *(B,A)
@@ -671,12 +695,11 @@ struct polyadic_bolt {
             graph.get(flip ? respAB : respBA).set(sat_r[shift], vac_r[shift], viol_r[shift]);
             graph.get(flip ? precBA : precAB).set(sat_p[shift], vac_p[shift], viol_p[shift]);
             graph.get(flip ? cprecAB : cprecBA).set(sat_cp[shift], vac_cp[shift], viol_cp[shift]);
-        } else {
-            graph.get(flip ? crespAB : crespBA).set(sat_cr[shift].size(), ((double)yaucl::iterators::ratio_intersection(sat_cr[shift], act_cr[shift]))/((double)yaucl::iterators::ratio_union(act_cr[shift], viol_cr[shift])));
-            graph.get(flip ? respAB : respBA).set(sat_r[shift].size(), ((double)yaucl::iterators::ratio_intersection(sat_r[shift], act_r[shift]))/((double)yaucl::iterators::ratio_union(act_r[shift], viol_r[shift])));
-            graph.get(flip ? precBA : precAB).set(sat_p[flip].size(), ((double)yaucl::iterators::ratio_intersection(sat_p[flip], act_p[flip]))/((double)yaucl::iterators::ratio_union(act_p[flip], viol_p[flip])));
-            graph.get(flip ? cprecAB : cprecBA).set(sat_cp[shift].size(), ((double)yaucl::iterators::ratio_intersection(sat_cp[shift], act_cp[shift]))/((double)yaucl::iterators::ratio_union(act_cp[shift], viol_cp[shift])));
         }
+        graph.get(flip ? crespAB : crespBA).set(sat_cr[shift].size(), ((double)yaucl::iterators::ratio_intersection(sat_cr[shift], act_cr[shift]))/((double)yaucl::iterators::ratio_union(act_cr[shift], viol_cr[shift])));
+        graph.get(flip ? respAB : respBA).set(sat_r[shift].size(), ((double)yaucl::iterators::ratio_intersection(sat_r[shift], act_r[shift]))/((double)yaucl::iterators::ratio_union(act_r[shift], viol_r[shift])));
+        graph.get(flip ? precBA : precAB).set(sat_p[flip].size(), ((double)yaucl::iterators::ratio_intersection(sat_p[flip], act_p[flip]))/((double)yaucl::iterators::ratio_union(act_p[flip], viol_p[flip])));
+        graph.get(flip ? cprecAB : cprecBA).set(sat_cp[shift].size(), ((double)yaucl::iterators::ratio_intersection(sat_cp[shift], act_cp[shift]))/((double)yaucl::iterators::ratio_union(act_cp[shift], viol_cp[shift])));
 
     }
 
@@ -705,15 +728,14 @@ struct polyadic_bolt {
             graph.get(csuccBA).set(sat_cs1, vac_cs1, viol_cs1);
             graph.get(succAB).set(sat_s0, vac_s0, viol_s0);
             graph.get(succBA).set(sat_s1, vac_s1, viol_s1);
-        } else {
-            graph.get(csuccAB).set(sat_cs0.size(), ((double)yaucl::iterators::ratio_intersection(sat_cs0, act_cs0))/((double)yaucl::iterators::ratio_union(act_cs0, viol_cs0)));
-            graph.get(csuccBA).set(sat_cs1.size(), ((double)yaucl::iterators::ratio_intersection(sat_cs1, act_cs1))/((double)yaucl::iterators::ratio_union(act_cs1, viol_cs1)));
-            graph.get(succAB).set(sat_s0.size(), ((double)yaucl::iterators::ratio_intersection(sat_s0, act_s0))/((double)yaucl::iterators::ratio_union(act_s0, viol_s0)));
-            graph.get(succBA).set(sat_s1.size(), ((double)yaucl::iterators::ratio_intersection(sat_s1, act_s1))/((double)yaucl::iterators::ratio_union(act_s1, viol_s1)));
         }
+        graph.get(csuccAB).set(sat_cs0.size(), ((double)yaucl::iterators::ratio_intersection(sat_cs0, act_cs0))/((double)yaucl::iterators::ratio_union(act_cs0, viol_cs0)));
+        graph.get(csuccBA).set(sat_cs1.size(), ((double)yaucl::iterators::ratio_intersection(sat_cs1, act_cs1))/((double)yaucl::iterators::ratio_union(act_cs1, viol_cs1)));
+        graph.get(succAB).set(sat_s0.size(), ((double)yaucl::iterators::ratio_intersection(sat_s0, act_s0))/((double)yaucl::iterators::ratio_union(act_s0, viol_s0)));
+        graph.get(succBA).set(sat_s1.size(), ((double)yaucl::iterators::ratio_intersection(sat_s1, act_s1))/((double)yaucl::iterators::ratio_union(act_s1, viol_s1)));
     }
 
-    void extractPatternsForcibly(bool polyadic, act_t A, act_t B, FastDatalessClause &clause,
+    void extractPatternsForcibly(bool polyadic, act_t A, act_t B,
                                   size_t min_int_supp_patt,
                                  unsigned char hasCoExistence, bool branch, bool stopWithThreshold,  bool collectAllEvidence) {
         if (branch) {
@@ -744,7 +766,10 @@ struct polyadic_bolt {
         QM_DECLARE Q{&graph, min_int_supp_patt};
         graph.visit<QM_DECLARE, result_container>(choiceAB_BA, Q, rc);
         if (!rc.boundary_result.empty()) {
-            for (const auto& res : rc.boundary_result) {
+            for (size_t idx = 0, N = rc.boundary_result.size(); idx<N; idx++) {
+                const auto& res = rc.boundary_result[idx];
+                const auto& fff = rc.for_is_clause_present[idx];
+                rc.is_clause_present[references.getKey(fff)] = true;
                 cache_clause.casusu = res.name.first;
                 cache_clause.left = resolveLabelCache.at(res.A);
                 cache_clause.right = resolveLabelCache.at(res.B);
@@ -778,11 +803,56 @@ struct polyadic_bolt {
      * ChainPrecedence(A,B) */
         bool branch = (hasCoExistence==2) || (Beginnings.at(B) > 0); // Algorithm 7, L. 15
 
-        extractPatternsForcibly(polyadic, A, B, cache_clause, min_int_supp_patt,
+        extractPatternsForcibly(polyadic, A, B,  min_int_supp_patt,
                                 hasCoExistence, branch, true, false);
 
         if (finalise_clause_insertion)
             storeMinedClausesFromItemset(A, B, cache_clause, resolveLabelCache, min_int_supp_patt, rc, used);
+    }
+
+    inline void finalise_binary_run(size_t minimum_support_threshold,
+                                    const std::unordered_set<std::pair<act_t, act_t>> &used, act_t A, act_t B) {
+        if (A != B) {
+            std::pair<act_t, act_t> cp{A,B}, cp2{B,A};
+            std::unordered_map<act_t, retain_choice> map_for_retain;
+            if ((!used.contains(cp)) && (!used.contains(cp2))) {
+                choice_exclchoice(((A<B) ? cp : cp2).first, ((A<B) ? cp : cp2).second,
+                                  log_size,
+                                  minimum_support_threshold,
+                                  *kb,
+                                  inv_map,
+                                  map_for_retain,
+                                  map_for_itemset_support_score);
+            }
+            for (auto& [act_id, ref_act] : map_for_retain) {
+                auto it_1 = ref_act.maps.begin();
+                auto it_2 = ref_act.maps.find(1.0);
+                if(it_2 != ref_act.maps.end()) {
+                    it_1 = it_2;
+                    it_2++;
+                }
+                else {
+                    it_2 = ref_act.maps.end();
+                }
+                while(it_1 != it_2) {
+                    for (auto& clauseX : it_1->second) {
+                        cp.first = kb->event_label_mapper.get(clauseX.clause.left);
+                        cp.second = kb->event_label_mapper.get(clauseX.clause.right);
+                        Phi.emplace_back(std::move(clauseX));
+                    }
+                    it_1++;
+                }
+            }
+            size_t curr_size_Clauses = Phi.size();
+            std::sort(Phi.begin(), Phi.end(), [](const pattern_mining_result<FastDatalessClause>& l, const pattern_mining_result<FastDatalessClause>& r) {
+                return std::tie(l.clause.casusu, l.clause.left, l.clause.right, l.clause.n, l.restrictive_confidence_plus_declarative_pattern, l.support_declarative_pattern) > std::tie(r.clause.casusu, r.clause.left, r.clause.right, r.clause.n, r.restrictive_confidence_plus_declarative_pattern, r.support_declarative_pattern);
+            });
+            Phi.erase(std::unique(Phi.begin(), Phi.end(), [](const pattern_mining_result<FastDatalessClause>& l, const pattern_mining_result<FastDatalessClause>& r) {
+                return std::tie(l.clause.casusu, l.clause.left, l.clause.right, l.clause.n) == std::tie(r.clause.casusu, r.clause.left, r.clause.right, r.clause.n);
+            }), Phi.end());
+        }
+
+
     }
 
     inline void finalise_run(size_t minimum_support_threshold, const std::unordered_set<std::pair<act_t, act_t>> &used) {
@@ -891,7 +961,8 @@ struct polyadic_bolt {
         set_complement(log_size, viol_cp[i].begin(), viol_cp[i].end(), std::back_inserter(sat_cp[i]));
     }
 
-    inline void serialize_to_file(std::unordered_map<std::tuple<std::string,std::string,std::string>, std::vector<char>>& map, std::ostream& file) {
+
+    static inline void serialize_to_file(std::unordered_map<std::tuple<std::string,std::string,std::string>, std::vector<char>>& map, std::ostream& file) {
         for (const auto& [triplet, vector] : map) {
             if (std::get<2>(triplet).empty()) {
                 file << "\"" << std::get<0>(triplet) << "(" << std::get<1>(triplet) << ")\"";
@@ -901,18 +972,41 @@ struct polyadic_bolt {
             }
             for (size_t i = 0, N = vector.size(); i<N; i++) {
                 short tmp = (short)vector.at(i);
-                if (tmp==-2) {
-                    std::vector<size_t> result1, result0;
-                    set_complement(log_size, viol_cp[0].begin(), viol_cp[0].end(), std::back_inserter(result0));
-                    set_complement(log_size, viol_cp[1].begin(), viol_cp[1].end(), std::back_inserter(result1));
-                    std::cerr << std::get<0>(triplet) << std::endl;
-                }
+//                if (tmp==-2) {
+//                    std::vector<size_t> result1, result0;
+//                    set_complement(log_size, viol_cp[0].begin(), viol_cp[0].end(), std::back_inserter(result0));
+//                    set_complement(log_size, viol_cp[1].begin(), viol_cp[1].end(), std::back_inserter(result1));
+//                    std::cerr << std::get<0>(triplet) << std::endl;
+//                }
                 file << "," << (short)tmp;
             }
             file << std::endl;
             file.flush();
         }
         map.clear();
+    }
+
+    void collect_activity_existance(KnowledgeBase* ptr,
+                                    const std::string& x,
+                                    std::unordered_map<size_t, std::vector<size_t>> act_Labels,
+                                    std::unordered_map<size_t, std::vector<size_t>> noact_Labels) {
+        size_t trace_id;
+//        for (const auto& x : acts) {
+            if(ptr->event_label_mapper.signed_get(x)>0) {
+                size_t id = ptr->event_label_mapper.get(x);
+                auto a_beginend = kb->timed_dataless_exists(id);
+                auto& v = act_Labels[id];
+                trace_id = -1;
+                while (a_beginend.first != a_beginend.second) {
+                    if (trace_id != a_beginend.first->entry.id.parts.trace_id) {
+                        trace_id = a_beginend.first->entry.id.parts.trace_id;
+                        v.emplace_back(trace_id);
+                    }
+                    a_beginend.first++;
+                }
+                set_complement(log_size, v.begin(), v.end(), std::back_inserter(noact_Labels[id]));
+            }
+        //}
     }
 
     void fast_check_and_collector_dataless(bool polyadic, KnowledgeBase* ptr,
@@ -922,6 +1016,7 @@ struct polyadic_bolt {
                                            std::ostream& file) {
 
         std::cout << "Initalization..." << std::endl;
+        payload_act_tracker pat;
         for (const auto& [root, children]: ptr->hierarchy_def) {
             ptr->event_label_mapper.put(root);
         }
@@ -957,10 +1052,8 @@ struct polyadic_bolt {
         }
 //        remove_duplicates(actLabels);
         FastDatalessClause clause;
-        result_container rc;
-        std::vector<size_t> act, viol, vac;
-        std::vector<size_t> A_and_B, A_or_B, neither_ACT;
-        std::vector<size_t> A_not_B, B_not_A, all_VIOL, excl_OCC;
+//        std::vector<size_t> act, viol, vac;
+
 
         // Unary Clauses
         std::cout << "Init/End..." << std::endl;
@@ -978,7 +1071,7 @@ struct polyadic_bolt {
         std::cout << "First..." << std::endl;
         std::tuple<std::string,std::string,std::string> simplistic_clause{"Init","","§1"};
         for (const auto& [act_id, traces] : first) {
-            all_VIOL.clear();
+            pat.all_VIOL.clear();
             if (!act_to_consider.contains(act_id)) continue;
             std::get<1>(simplistic_clause) = ptr->event_label_mapper.get(act_id);
             auto& v = result_map[simplistic_clause];
@@ -986,11 +1079,11 @@ struct polyadic_bolt {
             for (size_t trace_id : traces)
                 v[trace_id] = 1;
         }
-        all_VIOL.clear();
+        pat.all_VIOL.clear();
         std::get<0>(simplistic_clause) = "End";
         std::cout << "Last..." << std::endl;
         for (const auto& [act_id, traces] : last) {
-            all_VIOL.clear();
+            pat.all_VIOL.clear();
             if (!act_to_consider.contains(act_id)) continue;
             std::get<1>(simplistic_clause) = ptr->event_label_mapper.get(act_id);
             auto& v = result_map[simplistic_clause];
@@ -998,7 +1091,7 @@ struct polyadic_bolt {
             for (size_t trace_id : traces)
                 v[trace_id] = 1;
         }
-        all_VIOL.clear();
+        pat.all_VIOL.clear();
         serialize_to_file(result_map, file);
 
         std::get<0>(simplistic_clause) = "Exists";
@@ -1061,63 +1154,84 @@ struct polyadic_bolt {
 
         for (size_t i = 0, N= actLabels.size(); i<N; i++) {
             auto A = actLabels.at(i);
-            rc.A = A;
+
             std::string labelA = ptr->event_label_mapper.get(A);
             const auto& aAct = act_Labels[A];
             const auto& aNoAct = noact_Labels[A];
             for (size_t j = 0; j<i; j++) {
                 auto B = actLabels.at(j);
                 std::string labelB = ptr->event_label_mapper.get(B);
-                rc.B = B;
                 const auto& bAct = act_Labels[B];
                 const auto& bNoAct = noact_Labels[B];
-                A_and_B.clear();
-                A_or_B.clear();
-                neither_ACT.clear();
-                A_not_B.clear();
-                B_not_A.clear();
-                all_VIOL.clear();
-                excl_OCC.clear();
-
-                clearResultsVector();
-                extractPatternsForcibly(polyadic, A, B, clause, 0, true, true, false, true);
-
-                rc.complex_operator(crespAB, graph.get(crespAB), labelA, labelB, log_size, result_map);
-                rc.complex_operator(crespBA, graph.get(crespBA), labelA, labelB, log_size, result_map);
-                rc.complex_operator(respAB, graph.get(respAB), labelA, labelB, log_size, result_map);
-                rc.complex_operator(respBA, graph.get(respBA), labelA, labelB, log_size, result_map);
-                rc.complex_operator(precAB, graph.get(precAB), labelA, labelB, log_size, result_map);
-                rc.complex_operator(precBA, graph.get(precBA), labelA, labelB, log_size, result_map);
-                rc.complex_operator(cprecAB, graph.get(cprecAB), labelA, labelB, log_size, result_map);
-                rc.complex_operator(cprecBA, graph.get(cprecBA), labelA, labelB, log_size, result_map);
-                rc.complex_operator(csuccAB, graph.get(csuccAB), labelA, labelB, log_size, result_map);
-                rc.complex_operator(csuccBA, graph.get(csuccBA), labelA, labelB, log_size, result_map);
-                rc.complex_operator(succAB, graph.get(succAB), labelA, labelB, log_size, result_map);
-                rc.complex_operator(succBA, graph.get(succBA), labelA, labelB, log_size, result_map);
-
-                std::set_intersection(aAct.begin(), aAct.end(), bAct.begin(), bAct.end(), std::back_inserter(A_and_B));
-                std::set_union(aAct.begin(), aAct.end(), bAct.begin(), bAct.end(), std::back_inserter(A_or_B));
-                std::set_intersection(aNoAct.begin(), aNoAct.end(), bNoAct.begin(), bNoAct.end(), std::back_inserter(neither_ACT));
-                std::set_difference(aAct.begin(), aAct.end(), bAct.begin(), bAct.end(), std::back_inserter(A_not_B));
-                std::set_difference(bAct.begin(), bAct.end(), aAct.begin(), aAct.end(), std::back_inserter(B_not_A));
-                std::set_intersection(A_not_B.begin(), A_not_B.end(), B_not_A.begin(), B_not_A.end(), std::back_inserter(excl_OCC));
-
-                graph.get(resp_existenceAB).set(A_and_B, aNoAct, A_not_B);
-                graph.get(resp_existenceBA).set(A_and_B, bNoAct, B_not_A);
-                graph.get(coexistenceAB_BA).set(A_and_B, neither_ACT, excl_OCC);
-                graph.get(choiceAB_BA).set(A_or_B, neither_ACT, neither_ACT);
-                std::vector<size_t> tmp;
-                std::set_union(neither_ACT.begin(), neither_ACT.end(), A_and_B.begin(), A_and_B.end(), std::back_inserter(tmp));
-                graph.get(exclchoiceAB_BA).set(excl_OCC, tmp, tmp);
-
-                rc.complex_operator(resp_existenceAB, graph.get(resp_existenceAB), labelA, labelB, log_size, result_map);
-                rc.complex_operator(resp_existenceBA, graph.get(resp_existenceBA), labelA, labelB, log_size, result_map);
-                rc.complex_operator(coexistenceAB_BA, graph.get(coexistenceAB_BA), labelA, labelB, log_size, result_map);
-                rc.complex_operator(choiceAB_BA, graph.get(choiceAB_BA), labelA, labelB, log_size, result_map);
-                rc.complex_operator(exclchoiceAB_BA, graph.get(exclchoiceAB_BA), labelA, labelB, log_size, result_map);
-                serialize_to_file(result_map, file);
+                result_container rc;
+                collect_dataless_information(labelA, A, aAct, aNoAct,
+                                             labelB, B, bAct, bNoAct,
+                                             polyadic,
+                                             rc,
+                                             pat,file,result_map);
             }
         }
+    }
+
+    inline void set_complex_operator(result_container& rc, const simple_declare& x, const std::string& labelA, const std::string& labelB, std::unordered_map<std::tuple<std::string,std::string,std::string>, std::vector<char>>& result_map) {
+        auto& node = graph.get(x);
+        auto log_support = rc.complex_operator(x, graph.get(x), labelA, labelB, log_size, result_map);
+        if (log_support > 0) {
+            rc.is_clause_present[references.getKey(x)] = true;
+        }
+    }
+
+
+    void collect_dataless_information(const std::string& labelA, act_t A, const std::vector<size_t>& aAct, const std::vector<size_t>& aNoAct,
+                                      const std::string& labelB, act_t B, const std::vector<size_t>& bAct, const std::vector<size_t>& bNoAct,
+
+                                      bool polyadic,
+                                      result_container& rc,
+                                      payload_act_tracker& pat,
+                                      std::ostream& file,
+                                      std::unordered_map<std::tuple<std::string,std::string,std::string>, std::vector<char>>& result_map) {
+
+        rc.A = A;
+        rc.B = B;
+
+        clearResultsVector();
+        extractPatternsForcibly(polyadic, A, B,  0, true, true, false, true);
+        pat.clear();
+
+        set_complex_operator(rc, crespBA, labelA, labelB,  result_map);
+        set_complex_operator(rc, respAB, labelA, labelB,  result_map);
+        set_complex_operator(rc, respBA, labelA, labelB,  result_map);
+        set_complex_operator(rc, precAB, labelA, labelB,  result_map);
+        set_complex_operator(rc, precBA, labelA, labelB,  result_map);
+        set_complex_operator(rc, cprecAB, labelA, labelB,  result_map);
+        set_complex_operator(rc, cprecBA, labelA, labelB,  result_map);
+        set_complex_operator(rc, csuccAB, labelA, labelB,  result_map);
+        set_complex_operator(rc, csuccBA, labelA, labelB,  result_map);
+        set_complex_operator(rc, succAB, labelA, labelB,  result_map);
+        set_complex_operator(rc, succBA, labelA, labelB,  result_map);
+
+        std::set_intersection(aAct.begin(), aAct.end(), bAct.begin(), bAct.end(), std::back_inserter(pat.A_and_B));
+        std::set_union(aAct.begin(), aAct.end(), bAct.begin(), bAct.end(), std::back_inserter(pat.A_or_B));
+        std::set_intersection(aNoAct.begin(), aNoAct.end(), bNoAct.begin(), bNoAct.end(), std::back_inserter(pat.neither_ACT));
+        std::set_difference(aAct.begin(), aAct.end(), bAct.begin(), bAct.end(), std::back_inserter(pat.A_not_B));
+        std::set_difference(bAct.begin(), bAct.end(), aAct.begin(), aAct.end(), std::back_inserter(pat.B_not_A));
+        std::set_intersection(pat.A_not_B.begin(), pat.A_not_B.end(), pat.B_not_A.begin(), pat.B_not_A.end(), std::back_inserter(pat.excl_OCC));
+
+        graph.get(resp_existenceAB).set(pat.A_and_B, aNoAct, pat.A_not_B);
+        graph.get(resp_existenceBA).set(pat.A_and_B, bNoAct, pat.B_not_A);
+        graph.get(coexistenceAB_BA).set(pat.A_and_B, pat.neither_ACT, pat.excl_OCC);
+        graph.get(choiceAB_BA).set(pat.A_or_B, pat.neither_ACT, pat.neither_ACT);
+        std::vector<size_t> tmp;
+        std::set_union(pat.neither_ACT.begin(), pat.neither_ACT.end(), pat.A_and_B.begin(), pat.A_and_B.end(), std::back_inserter(tmp));
+        graph.get(exclchoiceAB_BA).set(pat.excl_OCC, tmp, tmp);
+
+
+        set_complex_operator(rc, resp_existenceAB,  labelA, labelB,  result_map);
+        set_complex_operator(rc, resp_existenceBA,  labelA, labelB, result_map);
+        set_complex_operator(rc, coexistenceAB_BA, labelA, labelB,  result_map);
+        set_complex_operator(rc, choiceAB_BA,  labelA, labelB, result_map);
+        set_complex_operator(rc, exclchoiceAB_BA,  labelA, labelB, result_map);
+        serialize_to_file(result_map, file);
     }
 
     inline uint64_t run1(double support, bool polyadic, const KnowledgeBase* ptr, std::vector<std::pair<size_t, std::unordered_set<act_t>>>& fpt_result) {
@@ -1154,13 +1268,14 @@ struct polyadic_bolt {
         // Algorithm 6. Binary Clauses Mining
         binary_clauses_mining(support, minimum_support_threshold, polyadic, fpt_result);
     }
-
-private:
-    const KnowledgeBase* kb{nullptr};
     void clear() {
         ChoiceFilter.clear();
         map_for_itemset_support_score.clear();
     }
+
+private:
+    const KnowledgeBase* kb{nullptr};
+
 };
 
 

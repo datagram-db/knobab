@@ -33,7 +33,7 @@ struct algorithmic_strategy {
         }
     }
 
-std::pair<double,double> polyadic_dataful_mining_and_refinement(const std::string& ser_path, double mining_supp, bool polyadic, bool reduction, ServerQueryManager &sqm,
+std::pair<double,double> polyadic_dataful_mining_and_refinement(const std::filesystem::path& ser_path, double mining_supp, bool polyadic, bool reduction, ServerQueryManager &sqm,
                                                                  std::unordered_map<std::string, std::set<std::tuple<std::string, std::string, std::string>>> &diff);
 
 std::pair<double,double> polyadic_dataless_mining_and_refinement(double mining_supp, bool polyadic, bool reduction, ServerQueryManager &sqm,

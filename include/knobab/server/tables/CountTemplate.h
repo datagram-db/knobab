@@ -29,13 +29,13 @@ struct CountTemplate {
         return (actId < maxAct) && (traceId <= maxTraceId) ? table.at(
                 (maxTraceId + 1) * actId + traceId).id.parts.event_id : 0;
     }
-    std::vector<size_t> actCounting() {
+    std::vector<size_t> actCounting() const {
         std::vector<size_t> result(maxAct, 0);
         for (const auto& ref : table)
             result[ref.id.parts.act] += ref.id.parts.event_id;
         return result;
     }
-    std::vector<size_t> traceCounting() {
+    std::vector<size_t> traceCounting() const {
         std::vector<size_t> result(maxAct, 0);
         for (const auto& ref : table)
             result[ref.id.parts.act] += (ref.id.parts.event_id > 0 ? 1 : 0);

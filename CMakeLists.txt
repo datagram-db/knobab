@@ -175,7 +175,8 @@ add_library(knobab_mining
         include/knobab/mining/apriori.h
 #        include/knobab/mining/refinery.h
         src/knobab/dataStructures/polyadic/myParser.cpp include/knobab/server/dataStructures/polyadic/myParser.h include/knobab/server/dataStructures/polyadic.h src/knobab/mining/polyadic/polyadic_loading.cpp include/knobab/mining/polyadic/polyadic_loading.h src/knobab/mining/polyadic/polyadic_bolt.cpp include/knobab/mining/polyadic/polyadic_bolt.h include/knobab/mining/polyadic/lattice.h
-        )
+        include/knobab/mining/polyadic/payload_act_tracker.h
+)
 
 
 #add_executable(benchmarking benchmarking/benchmarking.cpp benchmarking/benchmarking.cpp) #${BACKWARD_ENABLE})
@@ -244,7 +245,10 @@ add_executable(knobab_json new_pipeline.cpp src/knobab/v30/EMeriTAte.cpp
         src/knobab/mining/polyadic/polyadic_mining.cpp
         include/knobab/mining/polyadic/polyadic_loading.h
         include/knobab/mining/polyadic/polyadic_mining.h
-        include/knobab/mining/polyadic/commons.h)
+        include/knobab/mining/polyadic/commons.h
+        include/knobab/mining/polyadic/payload_preserver.h
+        src/knobab/mining/polyadic/payload_preserver.cpp
+        src/knobab/mining/polyadic/payload_act_tracker.cpp)
 
 target_link_libraries(knobab_json antlr4_static yaucl_hashing yaucl_bpm yaucl_structures
         yaucl_numeric yaucl_data yaucl_graph  yaucl_data yaucl_bpm knobab  knobab_ndp   yaucl_learning  knobab_mining)

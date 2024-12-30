@@ -182,7 +182,11 @@ public:
         return count;
     }
 
-    std::multimap<size_t, std::string> doActCounting() {
+    std::vector<size_t> actCounting() const {
+        return count_table.actCounting();
+    }
+
+    std::multimap<size_t, std::string> doActCounting() const {
         auto res = count_table.actCounting();
         std::multimap<size_t, std::string> Result;
         for (size_t i = 0, N = res.size(); i<N; i++)

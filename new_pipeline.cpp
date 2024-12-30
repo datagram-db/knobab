@@ -182,7 +182,7 @@ void  original_main_entrypoint(bool reclassify,
         }
 
         for (auto& [log_name, kb] : sqm.multiple_logs) {
-            std::filesystem::path out_path = folder / ("output_csv_"+log_name+".csv");
+            std::filesystem::path out_path = folder / ("output_csv_"+log_name+"_dataless.csv");
             std::ofstream  file{out_path};
             polyadic_bolt g;
             g.fast_check_and_collector_dataless(isFilenamePolyadic, &kb.db, acts, exists_cl, absence_cl, file);
