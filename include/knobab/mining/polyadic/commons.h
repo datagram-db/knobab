@@ -249,8 +249,6 @@ inline void train_and_dump_to_csv2(std::unordered_map<std::string, Environment> 
         return;
     }
 
-
-
     std::vector<std::vector<std::pair<double,std::unordered_map<std::string, DataPredicate>>>> model(n_classes);
     size_t number_rows = 0;
     {

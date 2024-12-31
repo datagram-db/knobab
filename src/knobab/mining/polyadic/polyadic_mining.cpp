@@ -296,6 +296,7 @@ std::pair<double,double> algorithmic_strategy::polyadic_dataful_mining_and_refin
                     }
                 }
 
+                // TODO: provide a refinement based upon the number of the occurrences of the activity numbers
                 auto refinement = dataful_folder / ("Refinement_exists_"+act);
                 train_and_dump_to_csv2(sqm.multiple_logs, W1, refinement.string(), beginsX,beginsY, "Exists", "", true, sqm.multiple_logs.size(),numerical, categorical, act ,
                                       false);
@@ -328,6 +329,7 @@ std::pair<double,double> algorithmic_strategy::polyadic_dataful_mining_and_refin
 
     FastDatalessClause clause;
     clause.n = 2;
+    std::unordered_map<std::string, polyadic_bolt::result_map_t> result_map;
     payload_act_tracker pat;
     for (const auto& [pair, entries] : elements) {
         if (entries.size()> 1) {
@@ -362,17 +364,17 @@ std::pair<double,double> algorithmic_strategy::polyadic_dataful_mining_and_refin
             }
             // False: do not finalise the clause insertion in phi!
             pat.clear();
+            result_map.clear();
             g.mine_for_AB_clauses(mining_supp, polyadic, A, B, clause, forAllLogsCacheMap[log_name], min_int_supp_patts[log_name], rc, used, binary_pattern, true);
             g.finalise_binary_run(std::ceil(((double)mining_supp) * (sqm.multiple_logs[log_name].db.nTraces())),
                                   used,
                                   A, B);
 
-            std::unordered_map<std::tuple<std::string,std::string,std::string>, std::vector<char>> result_map;
             for (size_t idx = 0, N = rc.is_clause_present.size(); idx<N; idx++) {
                 if (rc.is_clause_present[idx]) {
                     const auto& simple_cls = rc.for_is_clause_present[idx];
                     auto ternary = result_container::get_simple_ternary_clause(rc.for_is_clause_present[idx], cA, cB);
-                    rc.complex_operator(simple_cls, g.graph.get(simple_cls), cA, cB, g.log_size, result_map);
+                    rc.complex_operator(simple_cls, g.graph.get(simple_cls), cA, cB, g.log_size, result_map[log_name]);
                     FastDatalessClause x(std::get<0>(ternary), std::get<1>(ternary), std::get<2>(ternary), 2);
                     g.Phi.erase(
                             std::remove_if(g.Phi.begin(), g.Phi.end(),
@@ -400,20 +402,21 @@ std::pair<double,double> algorithmic_strategy::polyadic_dataful_mining_and_refin
                 for (const auto& p : g.Phi) {
                     if (p.clause == x) {
                         auto& node = g.graph.get(v);
-                        rc.complex_operator(v, node, cA, cB, g.log_size, result_map);
+                        rc.complex_operator(v, node, cA, cB, g.log_size, result_map[log_name]);
                         break;
                     }
                 }
             }
-            g.serialize_to_file(result_map, dataless_logs[log_name]);
+            polyadic_bolt::serialize_to_file(result_map[log_name], dataless_logs[log_name]);
             for ( auto& [other_log_name, log_file] : dataless_logs) {
                 if (other_log_name != log_name) {
                     size_t N = sqm.multiple_logs[other_log_name].db.nTraces();
-                    for (auto& [clause_name, sat_row] : result_map) {
+                    for (auto& [clause_name, sat_row] : result_map[log_name]) {
                         sat_row.clear();
-                        sat_row.resize(N, -2);
+                        sat_row.resize(N, -2); // Explicitly determining that this is a missing information, as
+                        // we cannot foretell the value that this is going to be associated with
                     }
-                    polyadic_bolt::serialize_to_file(result_map, log_file);
+                    polyadic_bolt::serialize_to_file(result_map[log_name], log_file);
                 }
             }
             result_map.clear();
@@ -425,20 +428,27 @@ std::pair<double,double> algorithmic_strategy::polyadic_dataful_mining_and_refin
     //    activation conditions
     FastDatalessClause cache_clause;
     cache_clause.n = 2;
+    std::unordered_map<std::string, result_container> rc_map;
+    std::unordered_map<std::string, payload_act_tracker> pat_map;
+    std::vector<std::string> logs;
+    PayloadPreserving pp;
     for (const auto& [actA, rest] : order_of_visit_for_compactness) {
         // TODO: cache the payload for a by accessing the activated for a, and store the current size, so that it can be cleared the one for B by resizing
 
         std::pair<std::string,std::string> cp;
         cp.first = actA;
+        bool isDataBeingCollected = false; // If there is no purpuse for pre-collecting the data, then this is set to false
+
         for (const auto& actB : rest) {
             cp.second = actB;
             bool hadContained = elements.contains(cp);
             if (!hadContained)
                 std::swap(cp.first, cp.second);
 
+            logs.clear();
             for (const auto& [log_name, offset]: elements[cp]) {
-                //                bool firstInsertion = logs.insert(log_name).second;
-//                DEBUG_ASSERT(firstInsertion);
+                logs.emplace_back(log_name);
+
                 DEBUG_ASSERT(frequent_itemsets[log_name].size() > offset);
                 auto& g = gv[log_name];
                 const auto& binary_pattern = frequent_itemsets[log_name][offset];
@@ -453,6 +463,56 @@ std::pair<double,double> algorithmic_strategy::polyadic_dataful_mining_and_refin
                 if (cB > cA)
                     std::swap(A, B);
 //                // False: do not finalise the clause insertion in phi!
+                pat.clear();
+                rc_map[log_name].clear(g.log_size);
+                pat_map[log_name].clear();
+                result_map.clear();
+
+                // Collecting the information for determining the clauses that are shared among the logs
+                g.collect_dataless_information(cA, A, act_Labels[log_name][A], noact_Labels[log_name][A],
+                                        cB, B, act_Labels[log_name][B], noact_Labels[log_name][B],
+                                        polyadic,
+                                        rc_map[log_name], pat_map[log_name], dataless_logs[log_name], result_map[log_name]);
+            }
+
+            // Determining which are the logs that have the clauses being really satisfied, and not just satisfying vacuously or not being represented
+            std::unordered_map<simple_declare, std::vector<std::string>> logs_with_sat_clauses;
+            /**
+             * Se la clausola senza dati non è soddisfatta, allora la sua versione raffinata potrebbe essere o vacuamente
+             * soddisfatta (in quanto il raffinamento dei dati non ne consente la attivazione) o non soddisfatta (violazione
+             * del raffinamento target o della condizione di correlazione, o comunque violata come sopra). Quindi, se devo
+             * distinguere la clausola, devo confrontare tra istanze che sono soddisfatte, in modo da distinguere possibilmente
+             * qual è la differenza tra questi.
+             */
+            for (const auto& log_name: logs) {
+                auto& g = gv[log_name];
+                auto& results = result_map[log_name];
+                for (const auto& [triple, scores]: result_map[log_name]) {
+                    // Retrieving the identifier from the triple representation
+                    const auto& node = result_container::get_simple_ternary_clause(triple, g.all_nodes, cp.first, cp.second);
+                    // Getting how many instances are absences
+                    size_t count_absences = 0;
+                    for (const auto& val : scores) {
+                        if ((val == 0) || (val == -2)) {
+                            count_absences++;
+                        } else
+                            break;
+                    }
+                    const bool is_absent = count_absences == scores.size();
+                    if (!is_absent) {
+                        // Adding only if the clause is satisfied or not satisfied
+                        logs_with_sat_clauses[node].emplace_back(log_name);
+                    }
+                }
+            }
+            for (auto it = logs_with_sat_clauses.begin(); it != logs_with_sat_clauses.end(); ) {
+                if (it->second.size() > 1) {
+                    if (!isDataBeingCollected) {
+                        pp.fill_all_activations(sqm.multiple_logs, cp.first);
+                        isDataBeingCollected = true;
+                    }
+                } // else: this is not the place for refinement, as there is only one clause with satisfiability, and
+                // we will just resort to the data-less classification
             }
 
             // TODO: cache just the results for B, and mine using collect_dataless_information

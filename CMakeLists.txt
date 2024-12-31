@@ -218,7 +218,7 @@ add_library(knobab_mining
 ##    target_link_libraries(knobab2-benchmarking Threads::Threads antlr4_shared yaucl_hashing yaucl_bpm yaucl_structures
 ##            yaucl_numeric yaucl_data yaucl_graph  yaucl_data yaucl_bpm knobab  knobab_ndp)
 #endif()
-enable_testing ()
+#enable_testing ()
 #include(FetchContent)
 #FetchContent_Declare(
 #        googletest

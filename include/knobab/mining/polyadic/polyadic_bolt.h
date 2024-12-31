@@ -6,6 +6,7 @@
 #define KNOBAB_SERVER_POLYADIC_BOLT_H
 
 #include <algorithm>
+#include "payload_preserver.h"
 #include "knobab/server/tables/KnowledgeBase.h"
 #include "knobab/server/declare/DeclareDataAware.h"
 #include "knobab/mining/bolt_commons.h"
@@ -14,7 +15,7 @@
 
 
 
-using simple_declare = std::pair<std::string, bool>; // true = AB, false = BA
+// true = AB, false = BA
 struct declare_lattice_node {
     size_t log_support = 0;
     double rconf = 0;
@@ -82,8 +83,17 @@ struct result_container {
     std::vector<simple_declare> for_is_clause_present;
     std::vector<bool> is_clause_present;
 
-    void is_clause_present_init(size_t N) {
-        is_clause_present.resize(N, false);
+    void clear(size_t N = 0) {
+        boundary_result.clear();
+        for_is_clause_present.clear();
+        is_clause_present.clear();
+        if (N > 0) {
+            is_clause_present_init(N);
+        }
+    }
+
+    inline void is_clause_present_init(size_t trace_n) {
+        is_clause_present.resize(trace_n, false);
     }
 
     void operator()(const simple_declare& x, const declare_lattice_node& node) {
@@ -97,6 +107,23 @@ struct result_container {
         for_is_clause_present.emplace_back(x);
     }
 
+    static inline const simple_declare& get_simple_ternary_clause(const std::tuple<std::string,std::string,std::string>& obj,
+                                                                                            const std::vector<simple_declare>& V,
+                                                                                            const std::string&A, const std::string& B) {
+        for (const auto& x : V) {
+            if (x.first != std::get<0>(obj))
+                continue;
+            if (x.second) {
+                if ((std::get<1>(obj) == A) && (std::get<2>(obj) == B))
+                    return x;
+            } else {
+                if ((std::get<2>(obj) == A) && (std::get<1>(obj) == A))
+                    return x;
+            }
+        }
+        throw std::runtime_error("UNMATCHED OBJECT!");
+    }
+
     static inline std::tuple<std::string,std::string,std::string> get_simple_ternary_clause(const simple_declare& x, const std::string&A, const std::string& B) {
         if (x.second) {
             return {x.first, A, B};
@@ -105,7 +132,36 @@ struct result_container {
         }
     }
 
-    size_t complex_operator(const simple_declare& x, const declare_lattice_node& node, const std::string&A, const std::string& B, const size_t total_log, std::unordered_map<std::tuple<std::string,std::string,std::string>, std::vector<char>>& result_map) {
+    static void complex_operator(const simple_declare& x, const declare_lattice_node& node, const size_t total_log, std::unordered_map<simple_declare, std::vector<char>>& result_map) {
+//        std::tuple<std::string,std::string,std::string> simple_clause = get_simple_ternary_clause(x, A, B);
+//        if (result_map.contains(simple_clause)){
+//            std::cerr << "ERROR: result_map already contains the clause" << std::endl;
+//            exit(3);
+//        }
+        auto& embeddings = result_map[x];
+        embeddings.resize(total_log, -2);
+        size_t unsat = 0;
+
+        for (size_t trace : node.sat) {
+            embeddings[trace] = 1;
+        }
+        for (size_t trace : node.no_sat) {
+            embeddings[trace] = -1;
+            unsat++;
+        }
+        for (size_t trace : node.vac) {
+            auto& val = embeddings[trace];
+            if ((val == 1) || (val == -2))
+                val = 0;
+        }
+        for (size_t i = 0; i<total_log; i++)  {
+            if (embeddings[i]==-2) {
+                embeddings[i] = 0;
+            }
+        };
+    }
+
+    static size_t complex_operator(const simple_declare& x, const declare_lattice_node& node, const std::string&A, const std::string& B, const size_t total_log, std::unordered_map<std::tuple<std::string,std::string,std::string>, std::vector<char>>& result_map) {
         std::tuple<std::string,std::string,std::string> simple_clause = get_simple_ternary_clause(x, A, B);
         if (result_map.contains(simple_clause)){
             std::cerr << "ERROR: result_map already contains the clause" << std::endl;
@@ -148,8 +204,10 @@ struct polyadic_bolt {
     Rule<act_t> lr, rl;
     DataMiningMetrics counter;
     std::vector<std::vector<trace_t>> inv_map;
+    using result_map_t = std::unordered_map<std::tuple<std::string,std::string,std::string>, std::vector<char>>;
 
     lattice<simple_declare , declare_lattice_node> graph;
+
     simple_declare choiceAB_BA{"Choice", true};
     simple_declare exclchoiceAB_BA{"ExclChoice", true};
     simple_declare resp_existenceAB{"RespExistence", true};
@@ -168,7 +226,10 @@ struct polyadic_bolt {
     simple_declare csuccAB{"ChainSuccession", true};
     simple_declare csuccBA{"ChainSuccession", false};
     yaucl::structures::any_to_uint_bimap<simple_declare> references;
-    std::vector<simple_declare> extra_mining;
+    std::vector<simple_declare> extra_mining, all_nodes;
+    PayloadPreserving* pp{nullptr};
+
+    // Initialization functions
 
     inline void add_node(const simple_declare& x) {
         graph.add_node(x);
@@ -177,6 +238,7 @@ struct polyadic_bolt {
 
     polyadic_bolt() {
         extra_mining = {resp_existenceAB, resp_existenceBA, coexistenceAB_BA, choiceAB_BA, exclchoiceAB_BA};
+        all_nodes = {choiceAB_BA,exclchoiceAB_BA,resp_existenceAB,respAB,crespAB,precBA,cprecAB,resp_existenceBA,coexistenceAB_BA,respBA,crespBA,precAB,succAB,succBA,cprecBA,csuccAB,csuccBA};
         // ~~ Initialisation of the lattice data structure
         add_node(choiceAB_BA);
         add_node(resp_existenceAB);
@@ -232,6 +294,8 @@ struct polyadic_bolt {
         add_node(exclchoiceAB_BA);
     }
 
+
+
     // O: always, *(A,B). 1: always, *(B,A)
     std::array<std::vector<size_t>, 2> act_r, sat_r, viol_r, act_p, sat_p, viol_p, act_cr, sat_cr,  viol_cr, act_cp, sat_cp, viol_cp,  vac_r, vac_p, vac_cr, vac_cp;
     std::vector<size_t> act_cs0, act_cs1, sat_cs0, sat_cs1, viol_cs0, viol_cs1, vac_cs0, vac_cs1,
@@ -277,12 +341,14 @@ struct polyadic_bolt {
     std::vector<size_t> event_to_root;
 
     inline void setKnowledgeBaseAndInit(const KnowledgeBase* ptr) {
+        if (kb == ptr)
+            return; // Avoiding a re-initialization on the same premises
         kb = ptr;
         clearResultsVector();
         event_to_root.clear();
+        //The remaining parts will only consider changing data only pertaining to the KB and not to the specific
+        //frequent itemset
 
-
-        Phi.clear();
         count_table = &kb->getCountTable();
         counter.reset(count_table);
 
@@ -322,10 +388,8 @@ struct polyadic_bolt {
                 last[it->first]++;
             }
         }
+        // Clearing everything that is also frequent-itemset dependent
         clear();
-        graph.reset([](declare_lattice_node& x ) {
-            x.reset();
-        });
     }
 
     /**
@@ -611,6 +675,9 @@ struct polyadic_bolt {
 
     inline void chain_precedence_response(act_t A, act_t B, size_t minimum_support_threshold, unsigned char shift, const bool polyadic, bool stopWithThreshold) {
         auto flip = shift ^ 0x1;
+        const auto& resp_node = shift ? crespBA : crespAB;
+        const auto& prec_node = shift ? cprecBA : cprecAB;
+
         bool forward_response = false, forward_precedence = false;
         bool alles_next = true, alles_prev = true;
         size_t alles_not_next = 0, alles_not_prev = 0;
@@ -634,47 +701,86 @@ struct polyadic_bolt {
                 a_prev_trace_id = trace_id;
             }
 
-            bool test;
+            bool test_failure;
             if (polyadic && (event_to_root.at(A) == event_to_root.at(B))) {
                 const auto& V = kb->act_table_by_act_id.secondary_index_polyadic.at(trace_id);
                 size_t offset = a_beginend.first->entry.id.parts.event_id+a_beginend.first->span;
-                test = (V.size() <= offset) || (V.at(offset).find(B) == V.at(offset).end());
+                test_failure = (V.size() <= offset) || (V.at(offset).find(B) == V.at(offset).end());
             } else {
-                test = ((a_beginend.first->next == nullptr) || (a_beginend.first->next->find(B) == a_beginend.first->next->end()));
+                test_failure = ((a_beginend.first->next == nullptr) || (a_beginend.first->next->find(B) == a_beginend.first->next->end()));
             }
-            if (!forward_response && (test)) {
+            if (!forward_response && (test_failure)) {
                 decrease_support_X(*kb, expected_support, alles_next, alles_not_next);
                 TRACE_SET_ADD(viol_cr[shift], ((trace_t)a_beginend.first->entry.id.parts.trace_id));
                 forward_response = true;
             }
+            // At this stage, there are no targets actually, so there are no correspondences to record.
 
             if (a_beginend.first->prev == nullptr) {
-                test = false;
+                test_failure = false;
             } else if (polyadic && (event_to_root.at(A) == event_to_root.at(B))) {
                 const auto& V = kb->act_table_by_act_id.trace_id_to_endTimeId_to_offset.at(trace_id);
                 size_t offset = a_beginend.first->entry.id.parts.event_id-1;
-                test = V.at(offset).find(B) == V.at(offset).end();
+                test_failure = V.at(offset).find(B) == V.at(offset).end();
             } else {
-                test = ( (a_beginend.first->prev->find(B) == a_beginend.first->prev->end()));
+                test_failure = ( (a_beginend.first->prev->find(B) == a_beginend.first->prev->end()));
             }
-            if (!forward_precedence && (test)) {
+            if (!forward_precedence && (test_failure)) {
                 decrease_support_X(*kb, expected_support, alles_prev, alles_not_prev);
                 TRACE_SET_ADD(viol_cp[shift], (trace_t)(a_beginend.first->entry.id.parts.trace_id));
                 forward_precedence = true;
             }
+            // At this stage, there are no targets actually, so there are no correspondences to record.
 
+            // Here, on the other hand, we record the activations and targets
             if ((a_beginend.first == start) || (a_beginend.first - 1)->entry.id.parts.trace_id != trace_id) {
                 TRACE_SET_ADD(act_cr[shift], trace_id);
+                if (pp) {
+                    const std::vector<ActTable::record*>* records = nullptr;
+                    if (polyadic && (event_to_root.at(A) == event_to_root.at(B))) {
+                        const auto& V = kb->act_table_by_act_id.secondary_index_polyadic.at(trace_id);
+                        size_t offset = a_beginend.first->entry.id.parts.event_id+a_beginend.first->span;
+                        records = &V.at(offset).find(B)->second;
+                    } else {
+                        // Normal payload collection
+                        records = &a_beginend.first->next->find(B)->second;
+                    }
+                    DEBUG_ASSERT(records != nullptr);
+                    for (const auto& target_conditions : *records) {
+                        pp->add_activation_with_target(a_beginend.first, resp_node, log_size, target_conditions);
+                    }
+                }
 
                 if ((a_beginend.first->entry.id.parts.event_id>0) || (kb->getCountTable().resolve_length(A, trace_id) > 1)) {
                     TRACE_SET_ADD(act_cp[shift], trace_id);
+                    if (pp) {
+                        if (a_beginend.first->prev == nullptr) {
+                            pp->add_activation_without_target(a_beginend.first, prec_node, log_size);
+                        } else {
+                            const std::vector<ActTable::record*>* records = nullptr;
+                            if (polyadic && (event_to_root.at(A) == event_to_root.at(B))) {
+                                const auto& V = kb->act_table_by_act_id.trace_id_to_endTimeId_to_offset.at(trace_id);
+                                size_t offset = a_beginend.first->entry.id.parts.event_id-1;
+                                for (const size_t offset : V.at(offset).find(B)->second) {
+                                    auto* target_conditions = (ActTable::record*)&kb->act_table_by_act_id.table[offset];
+                                    pp->add_activation_with_target(a_beginend.first, resp_node, log_size, target_conditions);
+                                }
+                            } else {
+                                // Normal payload collection
+                                for (const auto& target_conditions : a_beginend.first->prev->find(B)->second) {
+                                    pp->add_activation_with_target(a_beginend.first, resp_node, log_size, target_conditions);
+                                }
+                            }
+                            DEBUG_ASSERT(records != nullptr);
+                        }
+                    }
                 }
                 else if (( a_beginend.first->entry.id.parts.event_id == 0) && (kb->getCountTable().resolve_length(A, trace_id) == 1)) {
                     vac_cp[shift].emplace_back(trace_id);
                 }
             }
 
-            if (forward_response && forward_precedence) {
+            if (forward_response && forward_precedence && (!pp)) { // Fast forwarding only if I do not need to collect all the payloads via pp
                 fast_forward_equals(trace_id, a_beginend.first, a_beginend.second);
             }
             else {
@@ -962,7 +1068,7 @@ struct polyadic_bolt {
     }
 
 
-    static inline void serialize_to_file(std::unordered_map<std::tuple<std::string,std::string,std::string>, std::vector<char>>& map, std::ostream& file) {
+    static inline void serialize_to_file(result_map_t & map, std::ostream& file) {
         for (const auto& [triplet, vector] : map) {
             if (std::get<2>(triplet).empty()) {
                 file << "\"" << std::get<0>(triplet) << "(" << std::get<1>(triplet) << ")\"";
@@ -1023,7 +1129,7 @@ struct polyadic_bolt {
         setKnowledgeBaseAndInit(ptr);
         std::vector<size_t> actLabels;
         std::unordered_set<size_t> act_to_consider;
-        std::unordered_map<std::tuple<std::string,std::string,std::string>, std::vector<char>> result_map;
+        result_map_t result_map;
         std::unordered_map<size_t, std::vector<size_t>> act_Labels;
         std::unordered_map<size_t, std::vector<size_t>> noact_Labels;
         std::unordered_map<size_t, std::vector<size_t>> first;
@@ -1173,9 +1279,9 @@ struct polyadic_bolt {
         }
     }
 
-    inline void set_complex_operator(result_container& rc, const simple_declare& x, const std::string& labelA, const std::string& labelB, std::unordered_map<std::tuple<std::string,std::string,std::string>, std::vector<char>>& result_map) {
+    inline void set_complex_operator(result_container& rc, const simple_declare& x, const std::string& labelA, const std::string& labelB, result_map_t& result_map) {
         auto& node = graph.get(x);
-        auto log_support = rc.complex_operator(x, graph.get(x), labelA, labelB, log_size, result_map);
+        auto log_support = result_container::complex_operator(x, graph.get(x), labelA, labelB, log_size, result_map);
         if (log_support > 0) {
             rc.is_clause_present[references.getKey(x)] = true;
         }
@@ -1189,7 +1295,7 @@ struct polyadic_bolt {
                                       result_container& rc,
                                       payload_act_tracker& pat,
                                       std::ostream& file,
-                                      std::unordered_map<std::tuple<std::string,std::string,std::string>, std::vector<char>>& result_map) {
+                                      result_map_t& result_map) {
 
         rc.A = A;
         rc.B = B;
@@ -1269,6 +1375,10 @@ struct polyadic_bolt {
         binary_clauses_mining(support, minimum_support_threshold, polyadic, fpt_result);
     }
     void clear() {
+        Phi.clear();
+        graph.reset([](declare_lattice_node& x ) {
+            x.reset();
+        });
         ChoiceFilter.clear();
         map_for_itemset_support_score.clear();
     }
