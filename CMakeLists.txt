@@ -270,7 +270,7 @@ add_executable(DTMining dt_mine_main.cpp
         include/dt_mining/dt_mining.h
         src/dt_mining/dt_mining.cpp
 )
-target_link_libraries(DTMining  PRIVATE catch24 CapnProto::kj CapnProto::capnp )
+target_link_libraries(DTMining  PRIVATE catch24 CapnProto::kj CapnProto::capnp yaucl_numeric)
 
 #FetchContent_MakeAvailable(Catch2)
 #list(APPEND CMAKE_MODULE_PATH ${catch2_SOURCE_DIR}/extras)
