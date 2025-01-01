@@ -227,7 +227,7 @@ struct polyadic_bolt {
     simple_declare csuccBA{"ChainSuccession", false};
     yaucl::structures::any_to_uint_bimap<simple_declare> references;
     std::vector<simple_declare> extra_mining, all_nodes;
-    PayloadPreserving* pp{nullptr};
+    std::array<act_target_correlation_preserver*, 2> pp{nullptr,nullptr};
 
     // Initialization functions
 
@@ -735,7 +735,7 @@ struct polyadic_bolt {
             // Here, on the other hand, we record the activations and targets
             if ((a_beginend.first == start) || (a_beginend.first - 1)->entry.id.parts.trace_id != trace_id) {
                 TRACE_SET_ADD(act_cr[shift], trace_id);
-                if (pp) {
+                if (pp[shift]) {
                     const std::vector<ActTable::record*>* records = nullptr;
                     if (polyadic && (event_to_root.at(A) == event_to_root.at(B))) {
                         const auto& V = kb->act_table_by_act_id.secondary_index_polyadic.at(trace_id);
@@ -747,15 +747,15 @@ struct polyadic_bolt {
                     }
                     DEBUG_ASSERT(records != nullptr);
                     for (const auto& target_conditions : *records) {
-                        pp->add_activation_with_target(a_beginend.first, resp_node, log_size, target_conditions);
+                        pp[shift]->add_activation_with_target(a_beginend.first, resp_node, log_size, target_conditions);
                     }
                 }
 
                 if ((a_beginend.first->entry.id.parts.event_id>0) || (kb->getCountTable().resolve_length(A, trace_id) > 1)) {
                     TRACE_SET_ADD(act_cp[shift], trace_id);
-                    if (pp) {
+                    if (pp[shift]) {
                         if (a_beginend.first->prev == nullptr) {
-                            pp->add_activation_without_target(a_beginend.first, prec_node, log_size);
+                            pp[shift]->add_activation_without_target(a_beginend.first, prec_node, log_size);
                         } else {
                             const std::vector<ActTable::record*>* records = nullptr;
                             if (polyadic && (event_to_root.at(A) == event_to_root.at(B))) {
@@ -763,12 +763,12 @@ struct polyadic_bolt {
                                 size_t offset = a_beginend.first->entry.id.parts.event_id-1;
                                 for (const size_t offset : V.at(offset).find(B)->second) {
                                     auto* target_conditions = (ActTable::record*)&kb->act_table_by_act_id.table[offset];
-                                    pp->add_activation_with_target(a_beginend.first, resp_node, log_size, target_conditions);
+                                    pp[shift]->add_activation_with_target(a_beginend.first, resp_node, log_size, target_conditions);
                                 }
                             } else {
                                 // Normal payload collection
                                 for (const auto& target_conditions : a_beginend.first->prev->find(B)->second) {
-                                    pp->add_activation_with_target(a_beginend.first, resp_node, log_size, target_conditions);
+                                    pp[shift]->add_activation_with_target(a_beginend.first, resp_node, log_size, target_conditions);
                                 }
                             }
                             DEBUG_ASSERT(records != nullptr);
