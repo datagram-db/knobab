@@ -18,7 +18,7 @@ using Result = std::vector<ResultRecord>;
 using PartialResultRecord = std::pair<ResultIndex, event_t>;
 using PartialResult = std::vector<PartialResultRecord>;
 
-#define RESULT_RECORD_MIN(name, tid, eid)         ResultRecord name{{tid, eid}, {0.0, {}}}
-#define RESULT_RECORD_MAX(name, tid, eid)         ResultRecord name{{tid, eid}, {1.0, maxVec}}
+#define RESULT_RECORD_MIN(name, tid, eid)         ResultRecord name{{tid, eid}, {0, {}}}
+#define RESULT_RECORD_MAX(name, tid, eid)         ResultRecord name{{tid, eid}, {1, maxVec}}
 
 #endif //KNOBAB_SERVER_TRACEDATA_H

@@ -1,4 +1,5 @@
 import json, os
+import knobab_emeritate_support
 from datetime import datetime
 from dataclasses import dataclass, field
 

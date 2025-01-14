@@ -98,9 +98,9 @@ add_library(json_writer OBJECT
 include_directories(submodules/jsonwriter/include)
 include_directories(submodules/cpp-lru-cache/include)
 include_directories(submodules/json/include)
-add_subdirectory(submodules/capnproto)
 include_directories(submodules/thread_pool)
 include_directories(submodules/catch24/)
+add_subdirectory(submodules/capnproto)
 include_directories(include/capnpn)
 
 IF(CMAKE_BUILD_TYPE MATCHES Debug)

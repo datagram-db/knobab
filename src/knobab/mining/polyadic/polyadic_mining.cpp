@@ -652,7 +652,7 @@ std::pair<double,double> algorithmic_strategy::polyadic_dataful_mining_and_refin
                             }
                         }
                     }
-                    
+
 
                     //// XXX: end copy
 

@@ -31,12 +31,39 @@ using Group = std::tuple<size_t, size_t, size_t>;
 #include <optional>
 #include <yaucl/functional/assert.h>
 
+// This function is not supported by all major C++ libraries!// https://en.cppreference.com/w/cpp/algorithm/lower_bound
+template<class ForwardIt, class T = typename std::iterator_traits<ForwardIt>::value_type,
+        class Compare>
+ForwardIt lower_bound2(ForwardIt first, ForwardIt last, const T& value, Compare comp)
+{
+    ForwardIt it;
+    typename std::iterator_traits<ForwardIt>::difference_type count, step;
+    count = std::distance(first, last);
+
+    while (count > 0)
+    {
+        it = first;
+        step = count / 2;
+        std::advance(it, step);
+
+        if (comp(*it, value))
+        {
+            first = ++it;
+            count -= step + 1;
+        }
+        else
+            count = step;
+    }
+
+    return first;
+}
+
 static inline
 std::optional<Group> inIntervalTree(const std::vector<Group>& ls, size_t x) {
     if (ls.empty()) {
         return {};
     }
-    auto it = std::lower_bound(ls.begin(), ls.end(), x,
+    auto it = lower_bound2(ls.begin(), ls.end(), x,
                                [](const Group& interval, size_t value) {
                                    return GRP_START(interval) < value;
                                });
