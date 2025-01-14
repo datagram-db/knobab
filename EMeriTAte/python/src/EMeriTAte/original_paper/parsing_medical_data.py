@@ -13,9 +13,9 @@ from sklearn.model_selection import train_test_split
 from sklearn.tree import DecisionTreeClassifier
 
 from EMeriTAte.timeseries.Bepi import defineIntervals
-from EMeriTAte.timeseries.DrugHalfLifeSimulator import SubstanceOrActiveInData, Chemists
+from EMeriTAte.timeseries.DrugHalfLifeSimulator import SubstanceOrActiveInData
 from EMeriTAte.timeseries.Log import Event, EventPayload, TracePositional, Log
-from EMeriTAte.utils import export_text2, convo, time_in_range
+from EMeriTAte.utilities.utils import export_text2, convo, time_in_range
 
 
 def parse_meds(filename, idCol, timeCol, toRemove=None, day=None, days=None,  label=None, peculiar=None, dump=None, dictionary=None):

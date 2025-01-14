@@ -83,7 +83,11 @@ struct act_target_correlation_preserver {
         DEBUG_ASSERT(ref.empty());
     }
 
-    inline void add_activation_with_target(const log_id& log_name, /*trace_t trace_id, event_t event_id,*/ constituent_t constituent_id, const binary_clause& clause, size_t total_traces_val, /*event_t target_event,*/ constituent_t target_constituent) {
+    inline void add_activation_with_target(const log_id& log_name, /*trace_t trace_id, event_t event_id,*/
+                                           constituent_t constituent_id,
+                                           const binary_clause& clause,
+                                           size_t total_traces_val, /*event_t target_event,*/
+                                           constituent_t target_constituent) {
         auto& clauses = payload_map[clause][log_name];
         if (clauses.size() != total_traces_val)
             clauses.resize(total_traces_val);

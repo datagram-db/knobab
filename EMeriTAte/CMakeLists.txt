@@ -9,7 +9,9 @@ set(PYBIND11_PYTHON_VERSION 3)
 set(PYBIND11_FINDPYTHON ON)
 find_package(PythonInterp REQUIRED)
 include_directories(${PYTHON_INCLUDE_DIRS})
-
+set(USE_COROUTINES OFF)
+set(IGNORE_ROCKS_DB ON)
+include_directories(../submodules/yaucl/submodules/l-bfgs-b/include)
 include_directories(../include/knobab/server/query_manager)
 include_directories(../include)
 include_directories(../submodules/yaucl/submodules/eigen)
@@ -91,10 +93,6 @@ add_library(knobab_ndp
 
 
 add_library(knobab_mining
-        ../src/knobab/mining/bolt2.cpp
-        ../src/knobab/mining/bolt1.cpp
-        ../include/knobab/mining/bolt2.h
-        ../include/knobab/mining/bolt1.h
         ../src/knobab/mining/CountTableFPTree.cpp
         ../src/knobab/mining/apriori.cpp
         ../include/knobab/mining/apriori.h

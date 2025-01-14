@@ -50,20 +50,3 @@ std::tuple<size_t, std::string, std::unordered_map<std::string,double>> RecordHa
     return {begin, dimension+"("+action+")", f.eval(orig, time, begin, end)};
 }
 
-void RecordHandling::push_task(ThreadPool& pool, std::vector<std::future<std::tuple<std::string, std::unordered_map<std::string,double>,size_t>>>& futures,
-               const std::string &action,
-               size_t begin,
-               size_t end) const {
-    futures.push_back(pool.enqueue([this](const std::string &action, size_t begin, size_t end){
-        return  std::tuple<std::string, std::unordered_map<std::string,double>,size_t>{dimension+"("+action+")", f.eval(orig, time, begin, end), end-begin+1};
-    }, action, begin, end));
-}
-
-void RecordHandling::push_task(ThreadPool& pool, std::vector<std::future<std::tuple<size_t, std::string, std::unordered_map<std::string,double>, size_t>>>& futures,
-                               const std::string &action,
-                               size_t begin,
-                               size_t end) const {
-    futures.push_back(pool.enqueue([this](const std::string &action, size_t begin, size_t end){
-        return std::tuple<size_t, std::string, std::unordered_map<std::string,double>, size_t>{begin, dimension+"("+action+")", f.eval(orig, time, begin, end), end-begin+1};
-    }, action, begin, end));
-}

@@ -8,7 +8,7 @@
 
 #include "commons.h"
 #include <fstream>
-#include "yaucl/learning/decision_tree/dt_predicate.h"
+#include  "yaucl/learning/dt/dt_predicate.h"
 #include "yaucl/bpm/structures/commons/DataPredicate.h"
 #include "yaucl/learning/DecisionTree.h"
 #include "ServerQueryManager.h"

@@ -8,7 +8,7 @@
 #include <string>
 
  namespace DTMining {
-     void dt_mine_and_ts_to_polyadic(const std::string& benchmark_result_file,
+     std::string dt_mine_and_ts_to_polyadic(const std::string& benchmark_result_file,
                                      const std::string& folder,
                                      double precision,
                                      double max_val,

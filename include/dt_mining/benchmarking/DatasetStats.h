@@ -15,6 +15,9 @@ namespace DTMining {
         double max_val;
         double loading;
         double serial;
+        double total_time_mining;
+        double total_event_time_serial;
+        double total_time;
         bool   isAlgo3;
         bool   isDataless;
         size_t nProcessors;

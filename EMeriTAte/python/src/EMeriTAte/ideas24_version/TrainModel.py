@@ -5,11 +5,11 @@ from typing import List
 
 import pandas
 
-from .computation_steps.DTMining import DTMining
-from .computation_steps.crawl_single_model import dump_txt_files
+from EMeriTAte.computation_steps.DTMining import DTMining
+from EMeriTAte.computation_steps.crawl_single_model import dump_txt_files
 import subprocess
 from loguru import logger
-from .computation_steps.learn_from_cpp_csvs import LearnRepresentation
+from EMeriTAte.computation_steps.learn_from_cpp_csvs import LearnRepresentation
 
 from EMeriTAte.KnoBABEMeriTAteSupport import KnobabEmeritateSupport
 

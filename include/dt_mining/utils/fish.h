@@ -98,6 +98,10 @@ public:
         isDataless = true;
     }
 
+    inline const bool dataless() const {
+        return isDataless;
+    }
+
     inline statistics_payload eval(const std::span<double>& dim_values,
                                    const std::span<double>& time_values,
                                    size_t begin, size_t end) const {

@@ -4,7 +4,7 @@ import sys
 from collections import defaultdict
 from pathlib import Path
 
-from EMeriTAte.utils import ForParsing
+from EMeriTAte.utilities.utils import ForParsing
 
 
 class ProcessClasses:

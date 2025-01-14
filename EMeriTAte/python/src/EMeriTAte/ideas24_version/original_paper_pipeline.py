@@ -1,12 +1,12 @@
 import types
 
 import yaml
-from .original_paper.medical_analysis import MedicalAnalysis
+from EMeriTAte.original_paper.medical_analysis import MedicalAnalysis
 from yaml.loader import SafeLoader
 
 if __name__ == '__main__':
     conf = None
-    with open("Configuration.yaml", "r") as f:
+    with open("../Configuration.yaml", "r") as f:
         conf = yaml.load(f, Loader=SafeLoader)
         conf = types.SimpleNamespace(**conf)
     app = MedicalAnalysis(conf)

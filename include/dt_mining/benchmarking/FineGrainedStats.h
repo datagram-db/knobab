@@ -6,6 +6,8 @@
 #define DTMINING_FINEGRAINEDSTATS_H
 
 #include <nlohmann/json.hpp>
+#include "dt_mining/data/TemporaryCapnpnConstituentSerializer.h"
+#include "dt_mining/data/PolyadicJSONSerialize.h"
 
 namespace DTMining {
 
@@ -20,6 +22,7 @@ namespace DTMining {
 
         nlohmann::json asJson() const;
     };
+
 
 } // DTMining
 

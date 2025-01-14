@@ -29,6 +29,7 @@ using Group = std::tuple<size_t, size_t, size_t>;
 #include <dt_mining/utils/BasicRecord.h>
 #include <ThreadPool.h>
 #include <optional>
+#include <yaucl/functional/assert.h>
 
 static inline
 std::optional<Group> inIntervalTree(const std::vector<Group>& ls, size_t x) {
@@ -64,7 +65,58 @@ std::optional<Group> inIntervalTree(const std::vector<Group>& ls, size_t x) {
 #include <set>
 #include <span>
 
+class conditional_structure {
+    bool is_future{false};
+    bool is_int_prefix{false};
+    void* data{nullptr};
 
+public:
+    void set(std::vector<std::future<std::tuple<size_t, std::string, std::unordered_map<std::string,double>,size_t>>>* obj)  {
+        data = (void*)obj;
+        is_future = is_int_prefix = true;
+    }
+    void set(std::vector<std::tuple<size_t, std::string, std::unordered_map<std::string,double>,size_t>>* obj)  {
+        data = (void*)obj;
+        is_future = false;
+        is_int_prefix = true;
+    }
+    void set(std::vector<std::future<std::tuple<std::string, std::unordered_map<std::string,double>,size_t>>>* obj) {
+        data = (void*)obj;
+        is_future = true;
+        is_int_prefix = false;
+    }
+    void set(std::vector<std::tuple<std::string, std::unordered_map<std::string,double>,size_t>>* obj)  {
+        data = (void*)obj;
+        is_future = false;
+        is_int_prefix = false;
+    }
+
+
+
+    const bool is_future_based() const { return is_future; }
+    const bool has_int_prefix() const { return is_int_prefix; }
+    std::vector<std::future<std::tuple<size_t, std::string, std::unordered_map<std::string,double>,size_t>>>& get_int_future() {
+        return *(std::vector<std::future<std::tuple<size_t, std::string, std::unordered_map<std::string,double>,size_t>>>*)data;
+    }
+    std::vector<std::tuple<size_t, std::string, std::unordered_map<std::string,double>,size_t>>& get_int_tradition() {
+        return *(std::vector<std::tuple<size_t, std::string, std::unordered_map<std::string,double>,size_t>>*)data;
+    }
+    std::vector<std::future<std::tuple<std::string, std::unordered_map<std::string,double>,size_t>>>& get_future() {
+        return *(std::vector<std::future<std::tuple<std::string, std::unordered_map<std::string,double>,size_t>>>*)data;
+    }
+    std::vector<std::tuple<std::string, std::unordered_map<std::string,double>,size_t>>& get_tradition() {
+        return *(std::vector<std::tuple<std::string, std::unordered_map<std::string,double>,size_t>>*)data;
+    }
+};
+
+//using conditional_structure = std::variant<std::vector<std::future<std::tuple<size_t, std::string, std::unordered_map<std::string,double>,size_t>>>,
+//                                           std::vector<std::tuple<size_t, std::string, std::unordered_map<std::string,double>,size_t>>
+//                                          >;
+
+#define IS_FUTURE_BASED(x)          (std::holds_alternative<std::vector<std::future<std::tuple<size_t, std::string, std::unordered_map<std::string,double>,size_t>>>>(x))
+#define GET_FUTURE(x)               (std::get<std::vector<std::future<std::tuple<size_t, std::string, std::unordered_map<std::string,double>,size_t>>>>(x))
+#define IS_DATA_BASED(x)            (std::holds_alternative<std::vector<std::tuple<size_t, std::string, std::unordered_map<std::string,double>,size_t>>>(x))
+#define GET_TRADITION(x)            (std::get<std::vector<std::tuple<size_t, std::string, std::unordered_map<std::string,double>,size_t>>>(x))
 
 struct RecordHandling {
     std::vector<std::pair<unsigned char, size_t>> arrow_of_time;    // Determining whether the pattern is positive/negative and at which offset of the group is holden
@@ -84,8 +136,12 @@ struct RecordHandling {
     std::string dimension;
     fish f;
 
-    void setDataless(){
+    inline void setDataless(){
         f.setDataless();
+    }
+
+    inline const bool dataless() const {
+        return f.dataless();
     }
 
     RecordHandling() = default;
@@ -99,7 +155,7 @@ struct RecordHandling {
 
 
     void Algorithm2(ThreadPool& pool,
-                    std::vector<std::future<std::tuple<size_t, std::string, std::unordered_map<std::string,double>,size_t>>>& futures) const {
+                    conditional_structure& futures) const {
         for (const auto& group :this->groups[0]) {
             Algorithm2(pool, futures, group, 0);
         }
@@ -109,7 +165,7 @@ struct RecordHandling {
     }
 
     inline void Algorithm3(ThreadPool& pool,
-                           std::vector<std::future<std::tuple<std::string, std::unordered_map<std::string,double>,size_t>>>& futures,
+                           conditional_structure& futures,
                            size_t time) const {
         auto arrow_idx = VAT(linear_time,time);                  // Pointer to the current positive/negative group is present
         const auto& group_idx = VAT(arrow_of_time,arrow_idx);   // Retrieving the positive/negative and #group information
@@ -158,6 +214,7 @@ struct RecordHandling {
                                 push_task(pool, futures, TwoHiccups_S32[group_type], time, nextnext_time);
                             }
                         }
+
                     }
                 } else {
                     if (current_span <= GRP_INT_DURATION(next)) {
@@ -193,7 +250,7 @@ struct RecordHandling {
 
 private:
     void Algorithm2(ThreadPool& pool,
-                    std::vector<std::future<std::tuple<size_t, std::string, std::unordered_map<std::string,double>,size_t>>>& futures,
+                    conditional_structure& futures,
                     const Group& x,
                     int group_type) const {
         /*
@@ -203,7 +260,6 @@ private:
         @return:            A vector of events, not being sorted by time
         */
         std::unordered_map<int, std::set<int>> begin_match;
-//        std::vector<Event> result;
 
         int flip = (group_type + 1) % 2;
         for (size_t current_span = 1; current_span <= GRP_INT_DURATION(x); ++current_span) {
@@ -265,14 +321,58 @@ private:
     std::pair<std::string, std::unordered_map<std::string,double>> genPureInterval(const std::string &action, size_t begin, size_t end) const;
     std::tuple<size_t, std::string, std::unordered_map<std::string,double>> genInterval(const std::string &action, size_t begin, size_t end) const;
 
-    void push_task(ThreadPool& pool, std::vector<std::future<std::tuple<std::string, std::unordered_map<std::string,double>,size_t>>>& futures,
-                   const std::string &action,
-                   size_t begin,
-                   size_t end) const;
-    void push_task(ThreadPool& pool, std::vector<std::future<std::tuple<size_t, std::string, std::unordered_map<std::string,double>,size_t>>>& futures,
-                   const std::string &action,
-                   size_t begin,
-                   size_t end) const;
+
+    inline void push_task(ThreadPool& pool, conditional_structure& fut, const std::string& action, size_t begin, size_t end) const {
+        if (fut.has_int_prefix()) {
+            if (fut.is_future_based()) {
+                fut.get_int_future().push_back(pool.enqueue([this](const std::string &action, size_t begin, size_t end){
+                    return std::tuple<size_t, std::string, std::unordered_map<std::string,double>, size_t>{begin, dimension+"("+action+")", f.eval(orig, time, begin, end), end-begin+1};
+                }, action, begin, end));
+            } else {
+                DEBUG_ASSERT(f.dataless());
+                fut.get_tradition().emplace_back(dimension+"("+action+")", f.eval(orig, time, begin, end), end-begin+1);
+            }
+        } else {
+            if (fut.is_future_based()) {
+                fut.get_future().push_back(pool.enqueue([this](const std::string &action, size_t begin, size_t end){
+                    return  std::tuple<std::string, std::unordered_map<std::string,double>,size_t>{dimension+"("+action+")", f.eval(orig, time, begin, end), end-begin+1};
+                }, action, begin, end));
+            } else {
+                DEBUG_ASSERT(f.dataless());
+                fut.get_tradition().emplace_back(dimension+"("+action+")", f.eval(orig, time, begin, end), end-begin+1);
+            }
+        }
+    }
+
+//    inline void push_task(ThreadPool& pool, std::vector<std::future<std::tuple<std::string, std::unordered_map<std::string,double>,size_t>>>& futures,
+//                                   const std::string &action,
+//                                   size_t begin,
+//                                   size_t end) const {
+//        futures.push_back(pool.enqueue([this](const std::string &action, size_t begin, size_t end){
+//            return  std::tuple<std::string, std::unordered_map<std::string,double>,size_t>{dimension+"("+action+")", f.eval(orig, time, begin, end), end-begin+1};
+//        }, action, begin, end));
+//    }
+
+//    inline void push_task(ThreadPool& pool, std::vector<std::tuple<std::string, std::unordered_map<std::string,double>,size_t>>& futures,
+//                          const std::string &action,
+//                          size_t begin,
+//                          size_t end) const {
+//        futures
+//    }
+//
+//    inline void push_task(ThreadPool& pool, std::vector<std::future<std::tuple<size_t, std::string, std::unordered_map<std::string,double>, size_t>>>& futures,
+//                                   const std::string &action,
+//                                   size_t begin,
+//                                   size_t end) const {
+//
+//    }
+//
+//    inline void push_task(ThreadPool& pool, std::vector<std::tuple<size_t, std::string, std::unordered_map<std::string,double>, size_t>>& futures,
+//                          const std::string &action,
+//                          size_t begin,
+//                          size_t end) const {
+//        futures.emplace_back(begin, dimension+"("+action+")", f.eval(orig, time, begin, end), end-begin+1);
+//    }
 };
 
 

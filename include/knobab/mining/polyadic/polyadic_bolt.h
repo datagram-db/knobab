@@ -205,6 +205,7 @@ struct polyadic_bolt {
     DataMiningMetrics counter;
     std::vector<std::vector<trace_t>> inv_map;
     using result_map_t = std::unordered_map<std::tuple<std::string,std::string,std::string>, std::vector<char>>;
+    const std::string& log_name;
 
     lattice<simple_declare , declare_lattice_node> graph;
 
@@ -236,7 +237,7 @@ struct polyadic_bolt {
         references.put(x);
     }
 
-    polyadic_bolt() {
+    polyadic_bolt(const std::string& log_name) : log_name{log_name} {
         extra_mining = {resp_existenceAB, resp_existenceBA, coexistenceAB_BA, choiceAB_BA, exclchoiceAB_BA};
         all_nodes = {choiceAB_BA,exclchoiceAB_BA,resp_existenceAB,respAB,crespAB,precBA,cprecAB,resp_existenceBA,coexistenceAB_BA,respBA,crespBA,precAB,succAB,succBA,cprecBA,csuccAB,csuccBA};
         // ~~ Initialisation of the lattice data structure
@@ -747,7 +748,7 @@ struct polyadic_bolt {
                     }
                     DEBUG_ASSERT(records != nullptr);
                     for (const auto& target_conditions : *records) {
-                        pp[shift]->add_activation_with_target(a_beginend.first, resp_node, log_size, target_conditions);
+                        pp[shift]->add_activation_with_target(log_name, a_beginend.first, resp_node, log_size, target_conditions);
                     }
                 }
 
@@ -755,7 +756,7 @@ struct polyadic_bolt {
                     TRACE_SET_ADD(act_cp[shift], trace_id);
                     if (pp[shift]) {
                         if (a_beginend.first->prev == nullptr) {
-                            pp[shift]->add_activation_without_target(a_beginend.first, prec_node, log_size);
+                            pp[shift]->add_activation_without_target(log_name, a_beginend.first, prec_node, log_size);
                         } else {
                             const std::vector<ActTable::record*>* records = nullptr;
                             if (polyadic && (event_to_root.at(A) == event_to_root.at(B))) {
@@ -763,12 +764,12 @@ struct polyadic_bolt {
                                 size_t offset = a_beginend.first->entry.id.parts.event_id-1;
                                 for (const size_t offset : V.at(offset).find(B)->second) {
                                     auto* target_conditions = (ActTable::record*)&kb->act_table_by_act_id.table[offset];
-                                    pp[shift]->add_activation_with_target(a_beginend.first, resp_node, log_size, target_conditions);
+                                    pp[shift]->add_activation_with_target(log_name, a_beginend.first, resp_node, log_size, target_conditions);
                                 }
                             } else {
                                 // Normal payload collection
                                 for (const auto& target_conditions : a_beginend.first->prev->find(B)->second) {
-                                    pp[shift]->add_activation_with_target(a_beginend.first, resp_node, log_size, target_conditions);
+                                    pp[shift]->add_activation_with_target(log_name, a_beginend.first, resp_node, log_size, target_conditions);
                                 }
                             }
                             DEBUG_ASSERT(records != nullptr);
@@ -780,7 +781,7 @@ struct polyadic_bolt {
                 }
             }
 
-            if (forward_response && forward_precedence && (!pp)) { // Fast forwarding only if I do not need to collect all the payloads via pp
+            if (forward_response && forward_precedence && (!pp[shift])) { // Fast forwarding only if I do not need to collect all the payloads via pp
                 fast_forward_equals(trace_id, a_beginend.first, a_beginend.second);
             }
             else {

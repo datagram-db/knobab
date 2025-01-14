@@ -1,6 +1,5 @@
 import os
 import sys
-from collections import defaultdict
 from typing import Tuple
 
 import pandas
@@ -8,7 +7,7 @@ from sklearn.metrics import accuracy_score, precision_score, recall_score, roc_c
 from sklearn.model_selection import train_test_split
 from sklearn.tree import DecisionTreeClassifier
 
-from EMeriTAte.utils import export_text2
+from EMeriTAte.utilities.utils import export_text2
 
 from pathlib import Path
 # folder = "/home/giacomo/projects/knobab2_loggen/output_model_healthcare/debugged/nopoly_s0_1/"

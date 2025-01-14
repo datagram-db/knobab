@@ -129,7 +129,7 @@ void  original_main_entrypoint(bool reclassify,
         for (auto& [log_name, kb] : sqm.multiple_logs) {
             std::filesystem::path out_path = folder / ("output_csv_"+log_name+".csv");
             std::ofstream  file{out_path};
-            polyadic_bolt g;
+            polyadic_bolt g{log_name};
             g.fast_check_and_collector_dataless(isFilenamePolyadic, &kb.db, acts, exists_cl, absence_cl, file);
         }
     } else {
@@ -250,10 +250,14 @@ void  python_main_entrypoint(bool reclassify,
 
 #ifdef NO_PYBIND
 #else
+
+#include <dt_mining/dt_mining.h>
+
 namespace py = pybind11;
 PYBIND11_MODULE(knobab_emeritate_support, m) {
     m.doc() = "C++ support to the EMeriTAte algorithm"; // optional module docstring
 
     m.def("knobab_for_emeritate", &python_main_entrypoint, "Mimicking the C++ entrypoint from the original version of the code");
+    m.def("dt_mine_and_ts_to_polyadic", &DTMining::dt_mine_and_ts_to_polyadic, "Providing the new mining algorithm, being both dataful and dataless");
 }
 #endif

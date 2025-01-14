@@ -42,6 +42,9 @@ class DTMining:
         self.environments = dict()
         self.folder = folder
         self.inttype = True
+
+        ## Total loading time
+        start = datetime.datetime.now()
         for file in glob.glob(os.path.join(folder, "*.csv")):
             df = pandas.read_csv(file, parse_dates=True)
             try:
@@ -53,59 +56,90 @@ class DTMining:
                 df[class_field] = pandas.to_numeric(df[class_field], downcast="integer").astype(int)
             self.environments[Path(file).stem] = df
             # print(file)
+        fini = datetime.datetime.now()
+        mining_and_json_ser = fini - start
 
-    def transform(self, cached=True, concurrent=False):
+        self.loading_time = mining_and_json_ser.total_seconds() * 1000.0
+        self.serial_time = 0.0
+        self.mine_time = 0.0
+        self.event_serial_time = 0.0
+
+    def transform(self, filename=None): #, cached=True, concurrent=False):
+        ## time reset
+        self.serial_time = 0.0
+        self.mine_time = 0.0
+        self.event_serial_time = 0.0
+
+        if filename is None:
+            filename = "log_weekly.json"
         M = {"user":None}
-        p = os.path.join(self.folder, "log_weekly.json")
-        if (not cached) or (not os.path.isfile(p)):
+        p = os.path.join(self.folder, filename)
+        if True: #(not cached) or (not os.path.isfile(p)): ~~ Always performing the algorithm, no matter what. It would be the higher level to impede this, but mainly for debugging purposes
+            start_serial = datetime.datetime.now()
             fp = open(p, "w")
             fp.write('{"log":[')
+            end_serial = datetime.datetime.now()
+            self.event_serial_time += ((end_serial - start_serial).total_seconds() * 1000.0)
             # UserLog = Log(careAboutUniqueEvents=False)
+
+            start_mining = datetime.datetime.now()
             cle = CollectTypeEvidence()
             n = len(self.environments)
-            if not concurrent:
-                for idx, pat in enumerate(self.environments):
-                    M["user"] = pat
-                    ls = self._perEnvironment(pat, self.time_field)
-                    # obj, tp = UserLog.addTracePositional(ls, withData=True, isTab=True,
-                    #                                           withExplicitPayloadMap={"user":pat},
-                    #                                  explicitlyStoreTrace=False)
-                    tp = TracePositional(ls, withData=True, withExplicitPayloadMap=M)
-                    obj = tp.toJSONObject()
-                    obj["__name"] = str(pat)
-                    cle.collectEvidence(tp)
-                    fp.write(json.dumps(obj))
-                    if not (idx == (n-1)):
-                        fp.write(","+os.linesep)
-                    fp.flush()
-                    del obj
-                    del tp
-                    # print(f"{(idx/len(self.environments))*100.0}")
-            else:
-                import concurrent.futures
-                futures = []
+            for idx, pat in enumerate(self.environments):
+                M["user"] = pat
+                ls = self._perEnvironment(pat, self.time_field)
+                # obj, tp = UserLog.addTracePositional(ls, withData=True, isTab=True,
+                #                                           withExplicitPayloadMap={"user":pat},
+                #                                  explicitlyStoreTrace=False)
+                tp = TracePositional(ls, withData=True, withExplicitPayloadMap=M)
 
-                with concurrent.futures.ThreadPoolExecutor() as e:
-                    futures2 = {e.submit(self._perEnvironment, pat, self.time_field): pat for pat in self.environments}
-                    idx = 0
-                    for f in concurrent.futures.as_completed(futures2):
-                        pat = futures2[f]
-                        ls = f.result()
-                        tp = TracePositional(ls, withData=True, withExplicitPayloadMap=M)
-                        obj = tp.toJSONObject()
-                        obj["__name"] = str(pat)
-                        cle.collectEvidence(tp)
-                        fp.write(json.dumps(obj))
-                        if not (idx == (n - 1)):
-                            fp.write("," + os.linesep)
-                        fp.flush()
-                        del obj
-                        del tp
-                        idx += 1
+                start_serial = datetime.datetime.now()
+                obj = tp.toJSONObject()
+                obj["__name"] = str(pat)
+                cle.collectEvidence(tp)
+                fp.write(json.dumps(obj))
+                if not (idx == (n - 1)):
+                    fp.write("," + os.linesep)
+                fp.flush()
+                end_serial = datetime.datetime.now()
+                self.event_serial_time += ((end_serial - start_serial).total_seconds() * 1000.0)
+
+                del obj
+                del tp
+                # print(f"{(idx/len(self.environments))*100.0}")
+
+
+            # if not concurrent:
+            #
+            # else:
+            #     import concurrent.futures
+            #     futures = []
+            #
+            #     with concurrent.futures.ThreadPoolExecutor() as e:
+            #         futures2 = {e.submit(self._perEnvironment, pat, self.time_field): pat for pat in self.environments}
+            #         idx = 0
+            #         for f in concurrent.futures.as_completed(futures2):
+            #             pat = futures2[f]
+            #             ls = f.result()
+            #             tp = TracePositional(ls, withData=True, withExplicitPayloadMap=M)
+            #             obj = tp.toJSONObject()
+            #             obj["__name"] = str(pat)
+            #             cle.collectEvidence(tp)
+            #             fp.write(json.dumps(obj))
+            #             if not (idx == (n - 1)):
+            #                 fp.write("," + os.linesep)
+            #             fp.flush()
+            #             del obj
+            #             del tp
+            #             idx += 1
 
 
 
             cle.finalise()
+            end_mining = datetime.datetime.now()
+            self.mine_time += (((end_mining - start_mining) * 1000.0).total_seconds() - self.event_serial_time)
+
+            start_serial = datetime.datetime.now()
             fp.write('],'+os.linesep+'"schema":')
             fp.write(json.dumps(cle.keyType))
             fp.flush()
@@ -113,6 +147,10 @@ class DTMining:
             fp.write(json.dumps(cle.deriveHierarchy))
             fp.write('}')
             fp.close()
+            end_serial = datetime.datetime.now()
+            self.event_serial_time += ((end_serial - start_serial).total_seconds() * 1000)
+
+            start_serial = datetime.datetime.now()
             with open(p, "r") as infile:
                 o = json.load(infile)
             #    json.dump(UserLog.toJSONObject(), outfile, indent=4)
@@ -120,6 +158,8 @@ class DTMining:
             # UserLog.indexing()
             with open(p, "w") as outfile:
                json.dump(tmp, outfile, indent=4)
+            end_serial = datetime.datetime.now()
+            self.serial_time = ((end_serial - start_serial).total_seconds() * 1000)
         return p
 
     def _perEnvironment(self, envName, timedim, doesLabelChangeInTime=False):

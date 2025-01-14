@@ -1,25 +1,16 @@
 import datetime
-import itertools
 import json
 import sys
-from collections import OrderedDict, defaultdict
-from math import isnan
 
 import ciso8601
 import pandas
-from intervaltree import IntervalTree
 from loguru import logger
-from sklearn.metrics import accuracy_score
-from sklearn.model_selection import train_test_split
-from sklearn.tree import DecisionTreeClassifier
 
-import EMeriTAte.timeseries.Utils
-import EMeriTAte.utils
 from EMeriTAte.original_paper.parsing_medical_data import compute, getFolder, asWeekLog, exploseTimeVariations, \
     correlate_event_with_numerical_vars
 from EMeriTAte.timeseries.BuonaGiornata import BuonaGiornata
 from EMeriTAte.timeseries.DrugHalfLifeSimulator import Chemists
-from EMeriTAte.timeseries.Log import Log, Event, EventPayload
+from EMeriTAte.timeseries.Log import Log
 from EMeriTAte.timeseries.MultiTraceIndexing import MultiTraceIndexing
 # from EMeriTAte.timeseries.SequentialPatternMining import SequentialPatternMining, MiningConfiguration
 from EMeriTAte.timeseries.DTMining import mine_binary_growth_patterns

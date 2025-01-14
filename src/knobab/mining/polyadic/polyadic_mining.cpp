@@ -47,7 +47,7 @@ std::pair<double,double> algorithmic_strategy::polyadic_dataful_mining_and_refin
         dataful_logs.emplace(log_name,
                               (dataful_folder / ("output_csv_"+log_name+"_dataful_.csv")).string());
 //        activities.insert(kb.db.event_label_mapper.int_to_T.begin(), kb.db.event_label_mapper.int_to_T.end());
-        auto& g = gv[log_name];
+        auto& g = gv.emplace(log_name, log_name).first->second;
         auto& ref = frequent_itemsets[log_name];
         auto& currentCache = forAllLogsCacheMap[log_name];
         minimum_support_thresholds[log_name] = std::min((uint32_t)std::ceil((double)(sqm.multiple_logs[log_name].db.nTraces()) * mining_supp), (sqm.multiple_logs[log_name].db.nTraces()));
@@ -348,7 +348,7 @@ std::pair<double,double> algorithmic_strategy::polyadic_dataful_mining_and_refin
             size_t offset;
             std::tie(log_name, offset) = *entries.begin();
             DEBUG_ASSERT(frequent_itemsets[log_name].size() > offset);
-            auto& g = gv[log_name];
+            auto& g = gv.find(log_name)->second;
             g.clear();
             g.setKnowledgeBaseAndInit(&sqm.multiple_logs[log_name].db); // also, Phi clear
 
@@ -456,6 +456,7 @@ std::pair<double,double> algorithmic_strategy::polyadic_dataful_mining_and_refin
     double sampling_probability = 1.0;
     std::unordered_map<int, std::vector<std::pair<double,std::vector<dt_predicate>>>> model;
     std::unordered_map<std::string, std::unordered_map<std::vector<dt_predicate>, std::vector<std::unordered_set<ActivationCases>>>> results_for_serialization;
+    std::unordered_set<std::vector<dt_predicate>> all_predicates_of_interest;
 
     for (auto it = activities.rbegin(), en = activities.rend(); it != en; ) {
         const auto& actA = *it;
@@ -479,7 +480,7 @@ std::pair<double,double> algorithmic_strategy::polyadic_dataful_mining_and_refin
                 logs.emplace(log_name);
 
                 DEBUG_ASSERT(frequent_itemsets[log_name].size() > offset);
-                auto& g = gv[log_name];
+                auto& g = gv.find(log_name)->second;
                 const auto& binary_pattern = frequent_itemsets[log_name][offset];
                 auto& rc = rcv[log_name];
                 auto& used = usedv[log_name];
@@ -515,7 +516,7 @@ std::pair<double,double> algorithmic_strategy::polyadic_dataful_mining_and_refin
              * qual è la differenza tra questi.
              */
             for (const auto& log_name: logs) {
-                auto& g = gv[log_name];
+                auto& g = gv.find(log_name)->second;
                 auto& results = result_map[log_name];
                 for (const auto& [triple, scores]: result_map[log_name]) {
                     // Retrieving the identifier from the triple representation
@@ -555,6 +556,7 @@ std::pair<double,double> algorithmic_strategy::polyadic_dataful_mining_and_refin
                     y.clear();
                     correspondences.clear();
                     model.clear();
+                    all_predicates_of_interest.clear();
 
                     Apayloads.load_activation_with_policy(it->first,
                                                           current->payload_map,
@@ -585,15 +587,18 @@ std::pair<double,double> algorithmic_strategy::polyadic_dataful_mining_and_refin
 
                                 for (const auto& [_, disjunctions] : model) {
                                     for (const auto& [score, alternative] : disjunctions) {
+                                        if (trace_id == 0) {
+                                            all_predicates_of_interest.emplace(alternative);
+                                        }
                                         auto& results = for_log[alternative];
                                         if (results.empty())
                                             results.resize(N);
                                         bool test = dt_predicate::test_conjunctive_predicate(alternative, *payload);
-                                        for (const auto& [cases, S] : map_) {
-                                            switch (cases) {
+                                        for (const auto& [cases_, S] : map_) {
+                                            switch (cases_) {
                                                 case ActivationIsViolated:
                                                     if (test) {
-                                                        results[trace_id].emplace(cases);
+                                                        results[trace_id].emplace(cases_);
                                                     } else {
                                                         results[trace_id].emplace(Vacuity);
                                                     }
@@ -614,31 +619,41 @@ std::pair<double,double> algorithmic_strategy::polyadic_dataful_mining_and_refin
                             }
                         }
                     }
-                    for (auto& [log_name, dataful] : dataful_logs) {
-                        size_t N = sqm.multiple_logs[log_name].db.nTraces();
-                        auto it2 = results_for_serialization.find(log_name);
-                        dataful << "\"" << std::get<0>(ternary) << "(" << std::get<1>(ternary) << "," << std::get<2>(ternary) << ") act " << dt_predicate::conjunction_to_string(dt) << "\",";
-                        if (it2 == results_for_serialization.end()) {
-                            for (size_t ntrace = 0; ntrace<N; ntrace++) {
-                                dataful << -2;
-                                if (ntrace != (N-1)) dataful << ",";
-                            }
-                        } else {
-                            for (const auto& [dt, trace_to_set] :results_for_serialization[log_name] ) {
+                    for (const auto& dt : all_predicates_of_interest) {
+                        for (auto& [log_name, dataful] : dataful_logs) {
+                            size_t N = sqm.multiple_logs[log_name].db.nTraces();
+                            auto it2 = results_for_serialization.find(log_name);
+                            dataful << "\"" << std::get<0>(ternary) << "(" << std::get<1>(ternary) << "," << std::get<2>(ternary) << ") act " << dt_predicate::conjunction_to_string(dt) << "\",";
+                            if (it2 == results_for_serialization.end()) {
                                 for (size_t ntrace = 0; ntrace<N; ntrace++) {
-                                    const auto& set = trace_to_set[ntrace];
-                                    if (set.empty() || ((set.size() == 1) && set.contains(Vacuity))) {
-                                        dataful << 0;
-                                    } else if (set.contains(ActivationIsViolated)) {
-                                        dataful << -1;
-                                    } else {
-                                        dataful << 1;
-                                    }
+                                    dataful << -2;
                                     if (ntrace != (N-1)) dataful << ",";
+                                }
+                            } else {
+                                auto it3 = it2->second.find(dt);
+                                if (it3 == it2->second.end()) {
+                                    for (size_t ntrace = 0; ntrace<N; ntrace++) {
+                                        dataful << -2;
+                                        if (ntrace != (N-1)) dataful << ",";
+                                    }
+                                } else {
+                                    for (size_t ntrace = 0; ntrace<N; ntrace++) {
+                                        const auto& set = it3->second[ntrace];
+                                        if (set.empty() || ((set.size() == 1) && set.contains(Vacuity))) {
+                                            dataful << 0;
+                                        } else if (set.contains(ActivationIsViolated)) {
+                                            dataful << -1;
+                                        } else {
+                                            dataful << 1;
+                                        }
+                                        if (ntrace != (N-1)) dataful << ",";
+                                    }
                                 }
                             }
                         }
                     }
+                    
+
                     //// XXX: end copy
 
                     // We are collecting target conditions only if the classification outcome from the activation is not good enough
@@ -653,6 +668,7 @@ std::pair<double,double> algorithmic_strategy::polyadic_dataful_mining_and_refin
                         y.clear();
                         correspondences.clear();
                         model.clear();
+                        all_predicates_of_interest.clear();
 
                         Apayloads.load_target_with_policy(it->first,
                                                               current->payload_map,
@@ -685,6 +701,9 @@ std::pair<double,double> algorithmic_strategy::polyadic_dataful_mining_and_refin
 
                                             for (const auto& [_, disjunctions] : model) {
                                                 for (const auto& [score, alternative] : disjunctions) {
+                                                    if (trace_id == 0) {
+                                                        all_predicates_of_interest.emplace(alternative);
+                                                    }
                                                     auto& results = for_log[alternative];
                                                     if (results.empty())
                                                         results.resize(N);
@@ -716,31 +735,41 @@ std::pair<double,double> algorithmic_strategy::polyadic_dataful_mining_and_refin
                                 }
                             }
                         }
-                        for (auto& [log_name, dataful] : dataful_logs) {
-                            size_t N = sqm.multiple_logs[log_name].db.nTraces();
-                            auto it2 = results_for_serialization.find(log_name);
-                            dataful << "\"" << std::get<0>(ternary) << "(" << std::get<1>(ternary) << "," << std::get<2>(ternary) << ") tgt " << dt_predicate::conjunction_to_string(dt) << "\",";
-                            if (it2 == results_for_serialization.end()) {
-                                for (size_t ntrace = 0; ntrace<N; ntrace++) {
-                                    dataful << -2;
-                                    if (ntrace != (N-1)) dataful << ",";
-                                }
-                            } else {
-                                for (const auto& [dt, trace_to_set] :results_for_serialization[log_name] ) {
+                        for (const auto& dt : all_predicates_of_interest) {
+                            for (auto& [log_name, dataful] : dataful_logs) {
+                                size_t N = sqm.multiple_logs[log_name].db.nTraces();
+                                auto it2 = results_for_serialization.find(log_name);
+                                dataful << "\"" << std::get<0>(ternary) << "(" << std::get<1>(ternary) << "," << std::get<2>(ternary) << ") tgt " << dt_predicate::conjunction_to_string(dt) << "\",";
+                                if (it2 == results_for_serialization.end()) {
                                     for (size_t ntrace = 0; ntrace<N; ntrace++) {
-                                        const auto& set = trace_to_set[ntrace];
-                                        if (set.empty() || ((set.size() == 1) && set.contains(Vacuity))) {
-                                            dataful << 0;
-                                        } else if (set.contains(ActivationIsViolated)) {
-                                            dataful << -1;
-                                        } else {
-                                            dataful << 1;
-                                        }
+                                        dataful << -2;
                                         if (ntrace != (N-1)) dataful << ",";
+                                    }
+                                } else {
+                                    auto it3 = it2->second.find(dt);
+                                    if (it3 == it2->second.end()) {
+                                        for (size_t ntrace = 0; ntrace<N; ntrace++) {
+                                            dataful << -2;
+                                            if (ntrace != (N-1)) dataful << ",";
+                                        }
+                                    } else {
+                                        for (size_t ntrace = 0; ntrace<N; ntrace++) {
+                                            const auto& set = it3->second[ntrace];
+                                            if (set.empty() || ((set.size() == 1) && set.contains(Vacuity))) {
+                                                dataful << 0;
+                                            } else if (set.contains(ActivationIsViolated)) {
+                                                dataful << -1;
+                                            } else {
+                                                dataful << 1;
+                                            }
+                                            if (ntrace != (N-1)) dataful << ",";
+                                        }
                                     }
                                 }
                             }
                         }
+
+
                         /// XXX: end paste
                     }
 
@@ -887,7 +916,7 @@ std::pair<double,double> algorithmic_strategy::polyadic_dataless_mining_and_refi
     using std::chrono::milliseconds;
 
     for (const auto& [log_name, kb] : sqm.multiple_logs) {
-        polyadic_bolt g;
+        polyadic_bolt g{log_name};
         g.run(mining_supp, polyadic, &kb.db);
         for (const auto& clause : g.Phi) {
             if (clause.clause.casusu == "Choice" || clause.clause.casusu == "CoExistence" || clause.clause.casusu == "ExclChoice") {
@@ -955,7 +984,8 @@ std::pair<double,double> algorithmic_strategy::polyadic_dataless_mining_and_refi
     }
     if (reduction) {
         auto r_reduction_in_for = high_resolution_clock::now();
-        polyadic_bolt bsrl_pd;
+        std::string bogus;
+        polyadic_bolt bsrl_pd{bogus}; // bogus model, just to query the graph for correlations
         simple_declare PSD_SX, PSD_DX;
         constexpr size_t PAR_LEN = length("§");
         for (auto& [pair, map] : rvs) {
