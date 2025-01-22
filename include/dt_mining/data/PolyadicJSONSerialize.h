@@ -177,7 +177,7 @@ private:
             jw.name(k);
             jw.begin_array();
             for (const auto& x : S) {
-                jw.value(x);
+                jw.value(x+"("+k+")");
             }
             jw.end_array();
         }

@@ -43,7 +43,7 @@ set(THREADS_PREFER_PTHREAD_FLAG TRUE)
 find_package(Threads REQUIRED)
 
 include(FetchContent)
-#set(CMAKE_CXX_FLAGS_RELEASE "-O2")
+set(CMAKE_CXX_FLAGS_RELEASE "-O2")
 
 add_subdirectory(../submodules/pybind11 binbuild/pybind11)
 

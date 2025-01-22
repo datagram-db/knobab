@@ -8,7 +8,7 @@
 #ifdef DEBUG
 #define VAT(v,x)        ((v).at(x))
 #else
-#define VAT(v,x)        ((v)[x])
+#define VAT(v,x)        ((v).at(x))
 #endif
 
 #endif //DTMINING_UTILS_H

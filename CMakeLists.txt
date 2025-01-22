@@ -4,8 +4,8 @@ project(knobab_server)
 set(CMAKE_SYSTEM_NAME Linux)
 set(WITH_DEMO false)
 
-
-include_directories(/usr/include/c++/14/)
+include_directories(submodules/tabulate/include)
+#include_directories(/usr/include/c++/14/)
 #set(CMAKE_C_COMPILER clang-19 CACHE INTERNAL "C compiler")
 #set(CMAKE_CXX_COMPILER clang++-19 CACHE INTERNAL "C++ compiler")
 set(CMAKE_CXX_STANDARD 23)

@@ -31,6 +31,12 @@ using Group = std::tuple<size_t, size_t, size_t>;
 #include <optional>
 #include <yaucl/functional/assert.h>
 
+#ifdef DEBUG
+#include <iostream>
+#include <tabulate/tabulate.hpp>
+#include <tabulate/table.hpp>
+#endif
+
 // This function is not supported by all major C++ libraries!// https://en.cppreference.com/w/cpp/algorithm/lower_bound
 template<class ForwardIt, class T = typename std::iterator_traits<ForwardIt>::value_type,
         class Compare>
@@ -163,6 +169,123 @@ struct RecordHandling {
     std::string dimension;
     fish f;
 
+#ifdef DEBUG
+    void print_indices() const {
+        std::cout << "Printing the indices:" << std::endl;
+        {
+            tabulate::Table aot_table;
+            tabulate::Table::Row_t R(arrow_of_time.size()+1);
+            {
+                R[0] = ("Index");
+                for (size_t i = 0; i<arrow_of_time.size(); i++) {
+                    R[i+1] = std::to_string(i);
+                }
+                aot_table.add_row(R);
+                R[0] = ("ArrowOfTime");
+                for (size_t i = 0; i<arrow_of_time.size(); i++) {
+                    tabulate::Table cell;
+                    cell.add_row({arrow_of_time[i].first ? "true" : "false", std::to_string(arrow_of_time[i].second)});
+                    R[i+1] = cell;
+                }
+                aot_table.add_row(R);
+            }
+            std::cout << aot_table << std::endl << std::endl ;
+        }
+        {
+            tabulate::Table aot_table;
+            tabulate::Table::Row_t R(linear_time.size()+1);
+            {
+                R[0] = ("Index");
+                for (size_t i = 0; i<linear_time.size(); i++) {
+                    R[i+1] = std::to_string(i);
+                }
+                aot_table.add_row(R);
+                R[0] = ("linear_time");
+                for (size_t i = 0; i<linear_time.size(); i++) {
+                    R[i+1] = std::to_string(linear_time[i]);
+                }
+                aot_table.add_row(R);
+            }
+            {
+                R[0] = ("Offsets");
+                for (size_t i = 0; i<linear_time.size(); i++) {
+                    R[i+1] = std::to_string(i+1);
+                }
+                aot_table.add_row(R);
+            }
+            std::cout << aot_table << std::endl << std::endl ;
+        }
+        {
+            std::cout << "Group[true]" << std::endl;
+            tabulate::Table aot_table;
+            tabulate::Table::Row_t R(groups[1].size()+1);
+            {
+                R[0] = ("Index");
+                for (size_t i = 0; i<groups[1].size(); i++) {
+                    R[i+1] = std::to_string(i);
+                }
+                aot_table.add_row(R);
+            }
+            {
+                R[0] = ("Begin");
+                for (size_t i = 0; i<groups[1].size(); i++) {
+                    R[i+1] = std::to_string(GRP_START(groups[1][i]));
+                }
+                aot_table.add_row(R);
+            }
+            {
+                R[0] = ("End");
+                for (size_t i = 0; i<groups[1].size(); i++) {
+                    R[i+1] = std::to_string(GRP_FINISH(groups[1][i]));
+                }
+                aot_table.add_row(R);
+            }
+            {
+                R[0] = ("Span/Duration/Len");
+                for (size_t i = 0; i<groups[1].size(); i++) {
+                    R[i+1] = std::to_string(GRP_INT_DURATION(groups[1][i]));
+                }
+                aot_table.add_row(R);
+            }
+            std::cout << aot_table << std::endl << std::endl ;
+        }
+        {
+            std::cout << "Group[false]" << std::endl;
+            tabulate::Table aot_table;
+            tabulate::Table::Row_t R(groups[0].size()+1);
+            {
+                R[0] = ("Index");
+                for (size_t i = 0; i<groups[0].size(); i++) {
+                    R[i+1] = std::to_string(i);
+                }
+                aot_table.add_row(R);
+            }
+            {
+                R[0] = ("Begin");
+                for (size_t i = 0; i<groups[0].size(); i++) {
+                    R[i+1] = std::to_string(GRP_START(groups[0][i]));
+                }
+                aot_table.add_row(R);
+            }
+            {
+                R[0] = ("End");
+                for (size_t i = 0; i<groups[0].size(); i++) {
+                    R[i+1] = std::to_string(GRP_FINISH(groups[0][i]));
+                }
+                aot_table.add_row(R);
+            }
+            {
+                R[0] = ("Span/Duration/Len");
+                for (size_t i = 0; i<groups[0].size(); i++) {
+                    R[i+1] = std::to_string(GRP_INT_DURATION(groups[0][i]));
+                }
+                aot_table.add_row(R);
+            }
+            std::cout << aot_table << std::endl << std::endl ;
+        }
+    }
+#endif
+
     inline void setDataless(){
         f.setDataless();
     }
@@ -205,12 +328,22 @@ struct RecordHandling {
         int flip = (group_type + 1) % 2;
         //  0: begin, 1: end (inclusive), 2: span
 
-        for (int end_time = time; end_time <= GRP_FINISH(groupRange); ++end_time) { // Iterating over all the possible event lengths starting from here
-            int current_span = end_time - time + 1;                                         // Duration of the current event according to the novel ending time
-            if (current_span > 1) {
-                push_task(pool, futures, straight[group_type], time, end_time);     // Adding a straight increase/decrease event for all possible spans
-            }
-            if (HAS_ARROW_NEXT(arrow_idx, total_groups) && (GRP_FINISHES_AT(groupRange, end_time))) { // If you have a next event and you reached the end of this group
+        // A, optimized
+        push_task(pool, futures, straight[group_type], time, GRP_FINISH(groupRange));
+
+        // Iterating over all the possible event lengths starting from here
+        for (int end_time = time; end_time <= GRP_FINISH(groupRange); ++end_time) {
+            // Duration of the current event according to the novel ending time
+            int current_span = end_time - time + 1;
+
+            // Optimization 1: for the same starting time, keeping just the longer one. (A)
+//            if (current_span > 1) {
+//                // Adding a straight increase/decrease event for all possible spans
+//                push_task(pool, futures, straight[group_type], time, end_time);
+//            }
+
+            // If you have a next event and you reached the end of this group
+            if (HAS_ARROW_NEXT(arrow_idx, total_groups) && (GRP_FINISHES_AT(groupRange, end_time))) {
                 const auto& next_ref = VAT(arrow_of_time, ARROW_NEXT(arrow_idx));
                 const auto& next = VAT(VAT(groups, flip), next_ref.second);
                 if (current_span == 1) {
@@ -222,11 +355,13 @@ struct RecordHandling {
                             push_task(pool, futures, OneHiccup_S41[flip], time, time+4);
                         }
                     } else {
-                        for (auto next_time = GRP_START(next)+1;
-                             next_time <=GRP_FINISH(next);
-                             next_time++ ) {
-                            push_task(pool, futures, OneHiccup_S41[flip], time, next_time);
-                        }
+                        push_task(pool, futures, OneHiccup_S41[flip], time, GRP_FINISH(next)); //B, optimized
+                        // Optimization 1: for the same starting time, keeping just the longer one. (B)
+//                        for (auto next_time = GRP_START(next)+1;
+//                             next_time <=GRP_FINISH(next);
+//                             next_time++ ) {
+//                            push_task(pool, futures, OneHiccup_S41[flip], time, next_time);
+//                        }
                     }
 
                     if (HAS_ARROW_NEXT_NEXT(arrow_idx, total_groups)) {
@@ -235,11 +370,14 @@ struct RecordHandling {
                         } else {
                             const auto& nextnext_ref = VAT(arrow_of_time, ARROW_NEXT_NEXT(arrow_idx));
                             const auto& nextnext = VAT( VAT(groups,group_type), nextnext_ref.second);
-                            for (auto nextnext_time = GRP_START(nextnext)+1;
-                                 nextnext_time< GRP_FINISH(nextnext)+1;
-                                 nextnext_time++) {
-                                push_task(pool, futures, TwoHiccups_S32[group_type], time, nextnext_time);
-                            }
+                            push_task(pool, futures, TwoHiccups_S32[group_type], time, GRP_FINISH(nextnext)); //C, optimized
+
+                            // Optimization 1: for the same starting time, keeping just the longer one. (C)
+//                            for (auto nextnext_time = GRP_START(nextnext)+1;
+//                                 nextnext_time< GRP_FINISH(nextnext)+1;
+//                                 nextnext_time++) {
+//                                push_task(pool, futures, TwoHiccups_S32[group_type], time, nextnext_time);
+//                            }
                         }
 
                     }
@@ -254,20 +392,30 @@ struct RecordHandling {
                                 const auto& nextnext = VAT( VAT(groups,group_type), nextnext_ref.second);
                                 if (GRP_INT_DURATION(nextnext) <= current_span) {
                                     const auto& next3_ref = VAT(arrow_of_time, ARROW_NEXT_NEXT_NEXT(arrow_idx));
-                                    const auto& next3 = VAT( VAT(groups,group_type), next3_ref.second);
-                                    for (auto next3_time = GRP_START(next3)+current_span-1;
-                                         next3_time <=GRP_FINISH(next3);
-                                         next3_time++ ) {
-                                        push_task(pool, futures, HV5_2[flip], time, next_time);
-                                    }
+//#ifdef DEBUG
+//                                    if (VAT(groups,group_type).size() <= next3_ref.second) {
+//                                        print_indices();
+//                                    }
+//#endif
+                                    const auto& next3 = VAT( VAT(groups,flip), next3_ref.second);
+
+                                    push_task(pool, futures, HV5_2[flip], time, GRP_FINISH(next3)); //D, optimized
+                                    // Optimization 1: for the same starting time, keeping just the longer one. (D)
+//                                    for (auto next3_time = GRP_START(next3)+current_span-1;
+//                                         next3_time <=GRP_FINISH(next3);
+//                                         next3_time++ ) {
+//                                        push_task(pool, futures, HV5_2[flip], time, next_time);
+//                                    }
                                 }
                             }
                         }
                     }
 
-                    push_task(pool, futures, End2Hiccups_S14[group_type], time, GRP_FINISH(groupRange) + 1); //
+                    // E, Original position of (before the if statement, and not in the else branch).
                     if ((GRP_IS_SINGLET(next)) && (HAS_ARROW_NEXT_NEXT(arrow_idx, total_groups))) {
                         push_task(pool, futures, EndHiccup_S23[group_type], time, GRP_FINISH(groupRange) + 2);
+                    } else {
+                        push_task(pool, futures, End2Hiccups_S14[group_type], time, GRP_FINISH(groupRange) + 1); // Originally in E
                     }
                 }
             }
@@ -357,7 +505,7 @@ private:
                 }, action, begin, end));
             } else {
                 DEBUG_ASSERT(f.dataless());
-                fut.get_tradition().emplace_back(dimension+"("+action+")", f.eval(orig, time, begin, end), end-begin+1);
+                fut.get_int_tradition().emplace_back(begin, action+"("+dimension+")", f.eval(orig, time, begin, end), end-begin+1);
             }
         } else {
             if (fut.is_future_based()) {
@@ -366,7 +514,7 @@ private:
                 }, action, begin, end));
             } else {
                 DEBUG_ASSERT(f.dataless());
-                fut.get_tradition().emplace_back(dimension+"("+action+")", f.eval(orig, time, begin, end), end-begin+1);
+                fut.get_tradition().emplace_back( action+"("+dimension+")", f.eval(orig, time, begin, end), end-begin+1);
             }
         }
     }

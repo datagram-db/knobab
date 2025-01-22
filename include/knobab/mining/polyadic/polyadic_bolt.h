@@ -13,6 +13,17 @@
 #include <knobab/mining/polyadic/lattice.h>
 #include <knobab/mining/polyadic/payload_act_tracker.h>
 
+#define PBSTR "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+#define PBWIDTH 60
+
+static inline void printProgress(size_t current, size_t total) {
+    double percentage = ((double)current)/((double)total);
+    int val = (int) (percentage * 100);
+    int lpad = (int) (percentage * PBWIDTH);
+    int rpad = PBWIDTH - lpad;
+    printf("\r%3d%% [%.*s%*s] (%d/%d)", val, lpad, PBSTR, rpad, "", current, total);
+    fflush(stdout);
+}
 
 
 // true = AB, false = BA
@@ -21,6 +32,9 @@ struct declare_lattice_node {
     double rconf = 0;
     bool isVisited = false;
     std::vector<size_t> sat,vac,no_sat;
+#ifdef DEBUG
+    bool set_case;
+#endif
 
     declare_lattice_node() {};
     declare_lattice_node(const declare_lattice_node&) = default;
@@ -31,6 +45,9 @@ struct declare_lattice_node {
         this->log_support = log_support;
         this->rconf = rconf;
         isVisited = true;
+#ifdef DEBUG
+        set_case = false;
+#endif
     }
     void set(const std::vector<size_t>& SAT, const std::vector<size_t>& VAC, const std::vector<size_t>& UNSAT);
 
@@ -98,7 +115,7 @@ struct result_container {
 
     void operator()(const simple_declare& x, const declare_lattice_node& node) {
         DEBUG_ASSERT((((double)node.log_support)/log_size)<=1);
-        DEBUG_ASSERT((!node.sat.empty()) || (!node.vac.empty()) || (! node.no_sat.empty()));
+        DEBUG_ASSERT((!node.set_case) || ((!node.sat.empty()) || (!node.vac.empty()) || (! node.no_sat.empty())));
         if (x.second) {
             boundary_result.emplace_back(x, A, B, ((double)node.log_support)/log_size, node.rconf);
         } else {
@@ -714,6 +731,9 @@ struct polyadic_bolt {
                 decrease_support_X(*kb, expected_support, alles_next, alles_not_next);
                 TRACE_SET_ADD(viol_cr[shift], ((trace_t)a_beginend.first->entry.id.parts.trace_id));
                 forward_response = true;
+                if (pp[shift]) {
+                    pp[shift]->add_activation_with_target_violation(log_name, a_beginend.first,resp_node, log_size);
+                }
             }
             // At this stage, there are no targets actually, so there are no correspondences to record.
 
@@ -730,6 +750,9 @@ struct polyadic_bolt {
                 decrease_support_X(*kb, expected_support, alles_prev, alles_not_prev);
                 TRACE_SET_ADD(viol_cp[shift], (trace_t)(a_beginend.first->entry.id.parts.trace_id));
                 forward_precedence = true;
+                if (pp[shift]) {
+                    pp[shift]->add_activation_with_target_violation(log_name, a_beginend.first,prec_node, log_size);
+                }
             }
             // At this stage, there are no targets actually, so there are no correspondences to record.
 
@@ -869,14 +892,17 @@ struct polyadic_bolt {
     inline void storeMinedClausesFromItemset(act_t A, act_t B, FastDatalessClause &cache_clause,
                                        std::unordered_map<act_t, std::string> &resolveLabelCache,
                                        size_t min_int_supp_patt,
-                                       result_container &rc, std::unordered_set<std::pair<act_t, act_t>> &used) {
+                                       result_container &rc, std::unordered_set<std::pair<act_t, act_t>> &used,
+                                       bool store_extra_rc_data = true) {
         QM_DECLARE Q{&graph, min_int_supp_patt};
         graph.visit<QM_DECLARE, result_container>(choiceAB_BA, Q, rc);
         if (!rc.boundary_result.empty()) {
             for (size_t idx = 0, N = rc.boundary_result.size(); idx<N; idx++) {
                 const auto& res = rc.boundary_result[idx];
-                const auto& fff = rc.for_is_clause_present[idx];
-                rc.is_clause_present[references.getKey(fff)] = true;
+                if (store_extra_rc_data) {
+                    const auto& fff = rc.for_is_clause_present[idx];
+                    rc.is_clause_present[references.getKey(fff)] = true;
+                }
                 cache_clause.casusu = res.name.first;
                 cache_clause.left = resolveLabelCache.at(res.A);
                 cache_clause.right = resolveLabelCache.at(res.B);
@@ -898,8 +924,9 @@ struct polyadic_bolt {
                                     result_container &rc,
                                     std::unordered_set<std::pair<act_t, act_t>> &used,
                                     const std::pair<size_t, std::unordered_set<act_t>> &binary_pattern,
-                                    bool finalise_clause_insertion = true) {
-        rc.boundary_result.clear();
+                                    bool finalise_clause_insertion = true,
+                                    bool extra_rc_operation = true) {
+        rc.clear(references.size());
         clearResultsVector();
         rc.A = A;
         rc.B = B;
@@ -1015,9 +1042,12 @@ struct polyadic_bolt {
         }), Phi.end());
     }
 
-    inline void binary_clauses_mining(double support, size_t minimum_support_threshold, bool polyadic,
+    inline void binary_clauses_mining(double support,
+                                      size_t minimum_support_threshold,
+                                      bool polyadic,
                                       std::vector<std::pair<size_t, std::unordered_set<act_t>>>& frequent_itemset_mining,
-                                      bool finalise_clause_insertion = true) {
+                                      bool finalise_clause_insertion = true,
+                                      bool extra_rc_operation = true) {
         act_t A, B;
         FastDatalessClause clause;
         std::unordered_map<act_t, std::string> resolveLabelCache;
@@ -1026,13 +1056,20 @@ struct polyadic_bolt {
         result_container rc;
         rc.log_size = log_size;
         std::unordered_set<std::pair<act_t,act_t>> used;
+        size_t i = 0;
         for (const auto& binary_pattern : frequent_itemset_mining) {
+            printProgress((++i),frequent_itemset_mining.size());
+            rc.clear(references.size());
             if (binary_pattern.second.size() != 2)
                 continue;
             std::vector<unsigned short> AB{binary_pattern.second.begin(), binary_pattern.second.end()};
             A = AB[0];
             B = AB[1];
 
+            resolveLabelCache.clear();
+            resolveLabelCache.emplace(A, kb->event_label_mapper.get(A));
+            resolveLabelCache.emplace(B, kb->event_label_mapper.get(B));
+//            std::cout << kb->event_label_mapper.get(A) << "," << kb->event_label_mapper.get(B) << std::endl;
             auto A_label = resolveLabelCache.at(A);
             auto B_label = resolveLabelCache.at(B);
             if ((A_label == "__missing") || (B_label == "__missing") ||
@@ -1040,13 +1077,8 @@ struct polyadic_bolt {
                 (A_label == "__trace_payload") || (B_label == "__trace_payload"))
                 continue;
 
-
-            resolveLabelCache.clear();
-            resolveLabelCache.emplace(A, kb->event_label_mapper.get(A));
-            resolveLabelCache.emplace(B, kb->event_label_mapper.get(B));
-
             mine_for_AB_clauses(support, polyadic, A, B, clause, resolveLabelCache, min_int_supp_patt, rc, used,
-                                     binary_pattern, finalise_clause_insertion);
+                                     binary_pattern, finalise_clause_insertion, extra_rc_operation);
         }
 
         finalise_run(minimum_support_threshold, used);
@@ -1283,7 +1315,7 @@ struct polyadic_bolt {
     inline void set_complex_operator(result_container& rc, const simple_declare& x, const std::string& labelA, const std::string& labelB, result_map_t& result_map) {
         auto& node = graph.get(x);
         auto log_support = result_container::complex_operator(x, graph.get(x), labelA, labelB, log_size, result_map);
-        if (log_support > 0) {
+        if ((log_support > 0) && (!rc.is_clause_present.empty())) {
             rc.is_clause_present[references.getKey(x)] = true;
         }
     }
@@ -1373,7 +1405,7 @@ struct polyadic_bolt {
         run1( support,  polyadic, ptr,fpt_result);
 
         // Algorithm 6. Binary Clauses Mining
-        binary_clauses_mining(support, minimum_support_threshold, polyadic, fpt_result);
+        binary_clauses_mining(support, minimum_support_threshold, polyadic, fpt_result, true, false);
     }
     void clear() {
         Phi.clear();

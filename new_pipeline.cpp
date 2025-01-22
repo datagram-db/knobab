@@ -262,9 +262,12 @@ int main(int argc, char **argv) {
     // CyberSecurity configuration:
     // -s 0.8 --nonPoly=tab --nonPoly=tab --nonPoly=tab --nonPoly=tab --nonPoly=tab --nonPoly=tab --nonPoly=tab --nonPoly=tab /home/giacomo/Scaricati/classes/Adware.tab_100.tab /home/giacomo/Scaricati/classes/Backdoor.tab_100.tab /home/giacomo/Scaricati/classes/Downloader.tab_100.tab /home/giacomo/Scaricati/classes/Dropper.tab_100.tab /home/giacomo/Scaricati/classes/Spyware.tab_100.tab /home/giacomo/Scaricati/classes/Trojan.tab_100.tab /home/giacomo/Scaricati/classes/Virus.tab_100.tab /home/giacomo/Scaricati/classes/Worms.tab_100.tab
 
+    // -s 0.0 -d user -i span -i "__class" -i "__label" -i time -i fulltime -l -p "/home/giacomo/projects/knobab2_loggen/EMeriTAte/italy_test/log_weekly.json" -t time -k -E "/home/giacomo/projects/knobab2_loggen/EMeriTAte/italy_test/output"
     // Polyadic mining configuration
     // -s 1.0 -d user -i day -i span -i "__class" -i "__label" -i time -i fulltime -p /home/giacomo/projects/sdd-processing/sdd-processing/log_weekly.json
 
+
+    // -s 0.1 -d user -i day -i span -i "__class" -i "__label" -i time -i fulltime -p"/home/giacomo/projects/knobab2_loggen/EMeriTAte/dyskinetic/polyadic_Algo1_dataless_algo4/polyadic_Algo1_dataless.json"
     //
     struct benchmarking result;
     result.filename_polyadic = "/home/giacomo/projects/sdd-processing/sdd-processing/log_weekly.json";

@@ -56,15 +56,17 @@ void  original_main_entrypoint(bool reclassify,
     std::cout << "Loading and parsing: " << loading << " (ms)" << std::endl;
     std::cout << "Indexing: " << indexing << " (ms)" << std::endl;
     std::cout << "Payloading: " << payloading << " (ms)" << std::endl;
-    if (!exists(folder)) {
-        std::cout << "ERROR, the current path does not exist: " << folder;
-        exit(1);
-    }
-    if (!is_directory(folder)) {
-        std::cout << "ERROR, the current path should be a directory: " << folder;
-    }
+
 
     if (isFastSat) {
+        if (!exists(folder)) {
+            std::cout << "ERROR, the current path does not exist: " << folder;
+            exit(1);
+        }
+        if (!is_directory(folder)) {
+            std::cout << "ERROR, the current path should be a directory: " << folder;
+            exit(1);
+        }
         std::filesystem::path all_acts = folder / "acts.txt";
         if (!exists(all_acts)) {
             std::cout << "ERROR: the activity file does not exists: " << all_acts;
@@ -135,9 +137,8 @@ void  original_main_entrypoint(bool reclassify,
     } else {
         std::unordered_map<std::string, std::set<std::tuple<std::string,std::string,std::string>>> diff;
         algorithmic_strategy cunctator{sqm};
-        if (reclassify) {
-            std::tie(mining, refining) = cunctator.polyadic_dataful_mining_and_refinement(folder, mining_supp, isFilenamePolyadic, reduction, sqm, diff);
-        } else {
+
+        {
             std::tie(mining, refining) = cunctator.polyadic_dataless_mining_and_refinement(mining_supp, isFilenamePolyadic, reduction, sqm, diff);
         }
         std::cout << "Mining (min_support=" << mining_supp << ") : " << mining << " (ms)" << std::endl;

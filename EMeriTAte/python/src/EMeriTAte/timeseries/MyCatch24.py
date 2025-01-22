@@ -58,19 +58,19 @@ def my_catch24(dimension_name, subseries, payload_dictionary):
         'SD'
     ]
 
-    for f, s in zip(features,features_short):
-        if s == "embedding_dist": ## The implementation of this gives segmentation fault
-            continue
-        featureFun = getattr(catch22_C, f)
-        try:
-            # print(f"Doing {data} over {s}")
-            payload_dictionary[dimension_name + "_catch24_" + s] = featureFun(subseries)
-            # print("OK")
-        except:
-            print(f"ERROR: {s}")
+    # for f, s in zip(features,features_short):
+    #     if s == "embedding_dist": ## The implementation of this gives segmentation fault
+    #         continue
+    #     featureFun = getattr(catch22_C, f)
+    #     try:
+    #         # print(f"Doing {data} over {s}")
+    #         payload_dictionary[dimension_name + "_catch24_" + s] = featureFun(subseries)
+    #         # print("OK")
+    #     except:
+    #         print(f"ERROR: {s}")
     payload_dictionary[dimension_name + "_max"] = max(subseries)
     payload_dictionary[dimension_name + "_min"] = min(subseries)
     payload_dictionary[dimension_name + "_mean"] = sum(subseries) / len(subseries)
-    payload_dictionary[dimension_name + "_var"] = statistics.variance(subseries) if len(subseries)>=2 else sys.float_info.max
+    payload_dictionary[dimension_name + "_var"] = statistics.variance(subseries) if len(subseries)>=2 else 0.0
     payload_dictionary[dimension_name + "_med"] = statistics.median(subseries)
     payload_dictionary[dimension_name + "_stdev"] = statistics.stdev(subseries) if len(subseries)>=2 else sys.float_info.max

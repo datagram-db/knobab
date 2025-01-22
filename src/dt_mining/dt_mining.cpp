@@ -117,6 +117,10 @@ std::string DTMining::dt_mine_and_ts_to_polyadic(const std::string& benchmark_re
         std::unordered_set<std::string> pe;
         std::unordered_set<std::string> GUEL;
         conditional_structure cs;
+        std::vector<std::future<std::tuple<std::string, std::unordered_map<std::string,double>,size_t>>> futures;
+        std::vector<std::tuple<std::string, std::unordered_map<std::string,double>,size_t>> data;
+        std::vector<std::future<std::tuple<size_t, std::string, std::unordered_map<std::string,double>,size_t>>> futures_2;
+        std::vector<std::tuple<size_t, std::string, std::unordered_map<std::string,double>,size_t>> data_2;
 
         for (const auto& [trace_name_or_env, trace] : mts) {
             std::cout << "Trace #" << trace_name_or_env << std::endl;
@@ -167,12 +171,13 @@ std::string DTMining::dt_mine_and_ts_to_polyadic(const std::string& benchmark_re
 
                             // START: mining
                             auto t1_mining = high_resolution_clock::now();
-                            std::vector<std::future<std::tuple<std::string, std::unordered_map<std::string,double>,size_t>>> futures;
-                            std::vector<std::tuple<std::string, std::unordered_map<std::string,double>,size_t>> data;
-                            if (isDataless)
+                            if (!isDataless) {
                                 cs.set(&futures);
-                            else
+                                futures.clear();
+                            } else {
+                                data.clear();
                                 cs.set(&data);
+                            }
 
                             std::get<0>(j5).Algorithm3(pool, cs, event_id);
                             std::get<1>(j5).Algorithm3(pool, cs, event_id);
@@ -184,19 +189,39 @@ std::string DTMining::dt_mine_and_ts_to_polyadic(const std::string& benchmark_re
                             auto time_only_mining = ms_double.count();
                             // END: mining
 
-                            if (isDataless) {
-                                for (auto& val :data) {
-                                    algo_3_serialization(ccs, incrObjId, pjs, pe, discreteEventOffset, event_id,
-                                                         constituent_map, constCounter, val);
-                                }
-                            } else {
+                            std::unordered_map<std::string, std::pair<size_t,size_t>> act_name_to_beging_to_cpLongestAndOffsetid;
+                            if (!isDataless) {
                                 for (auto& ref : futures) {
                                     auto val = ref.get();
-                                    algo_3_serialization(ccs, incrObjId, pjs, pe, discreteEventOffset, event_id,
-                                                         constituent_map, constCounter, val);
+                                    data.emplace_back(val);
+//                                alog_2_serialization(pjs,unique_event_label,M, val);
+                                }
+                            }
+                            futures.clear();
+                            for (size_t i = 0, N = data.size(); i<N; i++) {
+                                const auto& val = data.at(i);
+                                auto& II = act_name_to_beging_to_cpLongestAndOffsetid[std::get<0>(val)];
+                                if ((II.first == 0) || (II.first < std::get<2>(val))) {
+                                    II = {std::get<2>(val), i};
                                 }
                             }
 
+//                            if (isDataless) {
+//                                for (auto& val :data) {
+//                                    algo_3_serialization(ccs, incrObjId, pjs, pe, discreteEventOffset, event_id,
+//                                                         constituent_map, constCounter, val);
+//                                }
+//                            } else {
+//                                for (auto& ref : futures) {
+//                                    auto val = ref.get();
+//                                    algo_3_serialization(ccs, incrObjId, pjs, pe, discreteEventOffset, event_id,
+//                                                         constituent_map, constCounter, val);
+//                                }
+//                            }
+                            for (const auto& [_, result] : act_name_to_beging_to_cpLongestAndOffsetid) {
+                                algo_3_serialization(ccs, incrObjId, pjs, pe, discreteEventOffset, event_id,
+                                                     constituent_map, constCounter, data[result.second]);
+                            }
 
                             auto t2_cpserial = high_resolution_clock::now();
                             /* Getting number of milliseconds as a double. */
@@ -219,20 +244,23 @@ std::string DTMining::dt_mine_and_ts_to_polyadic(const std::string& benchmark_re
                             per_trace_stats.totalConstituents += futures.size();
                             unique_event_label.insert(pe.begin(), pe.end());
                         }
+//                        std::cout << "MINER3" << std::endl;
                     } else {
                         // MINING TIME
                         auto t1_mining = high_resolution_clock::now();
-                        std::vector<std::future<std::tuple<size_t, std::string, std::unordered_map<std::string,double>,size_t>>> futures;
-                        std::vector<std::tuple<size_t, std::string, std::unordered_map<std::string,double>,size_t>> data;
-                        if (isDataless)
-                            cs.set(&futures);
-                        else
-                            cs.set(&data);
+                        if (!isDataless) {
+                            futures_2.clear();
+                            cs.set(&futures_2);
+                        } else {
+                            data_2.clear();
+                            cs.set(&data_2);
+                        }
 
                         std::get<0>(j5).Algorithm2(pool, cs);
                         std::get<1>(j5).Algorithm2(pool, cs);
                         std::get<2>(j5).Algorithm2(pool, cs);
                         std::get<3>(j5).Algorithm2(pool, cs);
+//                        std::cout << "MINER2" << std::endl;
 
                         auto t2_mining = high_resolution_clock::now();
                         /* Getting number of milliseconds as a double. */
@@ -240,21 +268,36 @@ std::string DTMining::dt_mine_and_ts_to_polyadic(const std::string& benchmark_re
                         auto count1 = ms_double.count();
                         per_segment_stats.event_wise_mine_time += count1;
                         per_trace_stats.event_wise_mine_time += count1;
-                        per_segment_stats.nConstituents += futures.size();
-                        per_trace_stats.totalConstituents += futures.size();
+                        per_segment_stats.nConstituents += futures_2.size();
+                        per_trace_stats.totalConstituents += futures_2.size();
                         ds.total_time_mining += count1;
 
                         // SERIALIZATION TIME
                         auto t1_cpserial = high_resolution_clock::now();
                         std::unordered_map<size_t, std::vector<std::pair<std::string, std::pair<size_t,std::unordered_map<std::string,double>>>>> M;
-                        if (isDataless) {
-                            for (auto& val : data) {
-                                alog_2_serialization(pjs,unique_event_label,M, val);
-                            }
-                        } else {
-                            for (auto& ref : futures) {
+                        std::unordered_map<std::string, std::unordered_map<size_t, std::pair<size_t,size_t>>> act_name_to_beging_to_cpLongestAndOffsetid;
+                        if (!isDataless) {
+                            for (auto& ref : futures_2) {
                                 auto val = ref.get();
-                                alog_2_serialization(pjs,unique_event_label,M, val);
+                                data_2.emplace_back(val);
+//                                alog_2_serialization(pjs,unique_event_label,M, val);
+                            }
+                        }
+                        futures_2.clear();
+                        // Optimization 1, before serializing data:
+                        for (size_t i = 0, N = data_2.size(); i < N; i++) {
+                            const auto& val = data_2.at(i);
+                            auto& II = act_name_to_beging_to_cpLongestAndOffsetid[std::get<1>(val)][std::get<0>(val)];
+                            if ((II.first == 0) || (II.first < std::get<3>(val))) {
+                                II = {std::get<3>(val), i};
+                            } else if (II.first == std::get<3>(val)) {
+                                DEBUG_ASSERT(false);
+                            }
+                        }
+
+                        for (const auto& [_, MM] : act_name_to_beging_to_cpLongestAndOffsetid) {
+                            for (const auto& [_, result] : MM) {
+                                alog_2_serialization(pjs, unique_event_label, M, data_2[result.second]);
                             }
                         }
 

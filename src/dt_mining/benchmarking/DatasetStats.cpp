@@ -16,6 +16,7 @@ nlohmann::json DTMining::DatasetStats::asJson() const {
     dom["total_time_mining"] = total_time_mining;
     dom["total_event_time_serial"] = (total_event_time_serial);
     dom["total_time"] = total_time;
+    dom["isDataless"] = isDataless;
     auto fs = nlohmann::json::array();
     for (const auto& item : all_stats) {
         fs.emplace_back(item.asJson());

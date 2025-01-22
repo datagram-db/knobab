@@ -1,3 +1,0 @@
-Train: 39
-Test: 40
-Total: 79

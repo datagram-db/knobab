@@ -4,8 +4,9 @@ import json
 import os
 from pathlib import Path
 
+import loguru
 import pandas
-from loguru import logger
+# from loguru import logger
 from EMeriTAte.timeseries.Log import Log, CollectTypeEvidence, TracePositional
 
 from EMeriTAte.original_paper.medical_analysis import performMiningOverAnalysedLog
@@ -86,6 +87,7 @@ class DTMining:
             cle = CollectTypeEvidence()
             n = len(self.environments)
             for idx, pat in enumerate(self.environments):
+                # loguru.logger.info(idx)
                 M["user"] = pat
                 ls = self._perEnvironment(pat, self.time_field)
                 # obj, tp = UserLog.addTracePositional(ls, withData=True, isTab=True,
@@ -164,7 +166,7 @@ class DTMining:
 
     def _perEnvironment(self, envName, timedim, doesLabelChangeInTime=False):
         x = envName
-        logger.info("Performining the continuous analysis for "+x)
+        # logger.info("Performining the continuous analysis for "+x)
         # logger.trace("1. Data Pre-Processing")
         EntireTimeLog = asFinalLog(self.environments[x], x, self.class_field, self.replace, self.conversion)
         originalChunks = dict()
@@ -191,7 +193,7 @@ class DTMining:
                 self.labelDoesChangeWithTime(ewl_idx, originalChunks, timedim, x)
             else:
                 clazz = next(iter({x.activityLabel for x in ewl_idx.log.traces[0]}))
-                analysis = OutcomeAnalysis(clazz, 0, ewl_idx, ewl_idx)
+                analysis = OutpythcomeAnalysis(clazz, 0, ewl_idx, ewl_idx)
                 polyL = performMiningOverAnalysedLog(analysis.log, self.toExtendWithTime, timedim)
                 self.maximalContigualCollection(analysis, originalChunks, polyL)
         else:

@@ -293,7 +293,7 @@ std::tuple<double,double,double,double> polyadic_loader(const std::unordered_set
         log_indexing_ms = ms_double.count();
     }
 
-    if (data_aware) {
+    if (data_aware) { // TODO: true
         auto t1 = high_resolution_clock::now();
 //        std::vector<std::vector<std::vector<size_t>>> traces_info(sqm.multiple_logs.size()); // class -> trace_id -> offsets
 

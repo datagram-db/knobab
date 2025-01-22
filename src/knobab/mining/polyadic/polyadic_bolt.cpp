@@ -27,4 +27,7 @@ void declare_lattice_node::set(const std::vector<size_t>& SAT, const std::vector
     sat = SAT;
     no_sat = UNSAT;
     vac = VAC;
+#ifdef DEBUG
+    set_case = true;
+#endif
 }

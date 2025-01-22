@@ -17,12 +17,12 @@ from pathlib import Path
 # modelfile = Path(folder).name + ".txt"
 
 
-def load_single_file_and_append_class(t:Tuple[int,str])->pandas.DataFrame:
+def load_single_file_and_append_class(t:Tuple[int,str], clazz='class')->pandas.DataFrame:
     df0 = pandas.read_csv(t[1], index_col=0, header=None).transpose()
-    df0['class'] = t[0]
+    df0[clazz] = t[0]
     return df0
 
-def loadDataset(classls):
+def loadDataset(classls, clazz='class'):
     # for idx, x in enumerate(classls):
     #     df0 = pandas.read_csv(x, index_col=0, header=None).transpose()
     #     df0['class'] = idx
@@ -30,7 +30,7 @@ def loadDataset(classls):
     # df0['class'] = 0
     # df1 = pandas.read_csv(class1, index_col=0, header=None).transpose()
     # df1['class'] = 1
-    return pandas.concat(map(load_single_file_and_append_class, enumerate(classls)), axis=0, ignore_index=True).fillna(-1)
+    return pandas.concat(map(lambda x: load_single_file_and_append_class(x,clazz), classls), axis=0, ignore_index=True).fillna(-1)
 
 def readFileForSpec(filename):
     S = set()

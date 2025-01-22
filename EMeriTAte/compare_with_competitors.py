@@ -1,3 +1,7 @@
+import warnings
+from sklearn.exceptions import UndefinedMetricWarning
+warnings.simplefilter(action='ignore', category=FutureWarning)
+warnings.simplefilter(action='ignore', category=UndefinedMetricWarning)
 import csv
 import datetime
 import json
@@ -89,8 +93,10 @@ def test_over_sktime_dataset(dataset_loader, filename, nclasses=2, ranges=10, be
         print("Loading the previously-saved split between training and testing (for reproducibility purposes).")
         with open(f"{filename}_train_test_split.json", "r") as f:
             L = json.load(f)
-            assert len(L) == ranges
-            for train_test in L:
+            # assert len(L) == ranges
+            for idx, train_test in enumerate(L):
+                if idx >= ranges:
+                    break
                 train, test = train_test[0], train_test[1]
                 X_train, X_test = xL.iloc[train], xL.iloc[test]
                 X_trainls.append(X_train)
@@ -157,19 +163,28 @@ def test_over_sktime_dataset(dataset_loader, filename, nclasses=2, ranges=10, be
                      })
                 csv_file.flush()
                 print(f"{name} accuracy: {accuracy} with training {training_ms} and testing {testing_ms}")
-                if (name=="TapNet") and (idx==1):
-                    break
+                # if (name=="TapNet") and (idx==1):
+                #     break
     csv_file.close()
 
 
 if __name__ == "__main__":
     import os
-
     os.environ['CUDA_VISIBLE_DEVICES'] = "0"
 
-    # test_over_sktime_dataset(lambda :load_italy_power_demand(),"italy_power_demand", nclasses=2, clazz=['EuclideanKNN', 'Rocket', 'CanonicalIntervalForest', 'ShapeletTransformClassifier'])
-    test_over_sktime_dataset(lambda: load_osuleaf(), "osuleaf", nclasses=4, clazz=['EuclideanKNN', 'Rocket', 'CanonicalIntervalForest', 'ShapeletTransformClassifier'])
+    test_over_sktime_dataset(lambda: csv_loader("dyskinetic"), "dyskinetic", nclasses=2, clazz=['TapNet'],
+                             ranges=10)
+
     # test_over_sktime_dataset(lambda: load_basic_motions(), "load_basic_motions", nclasses=4, clazz=['EuclideanKNN', 'Rocket', 'CanonicalIntervalForest', 'ShapeletTransformClassifier'])
+    # test_over_sktime_dataset(lambda: load_basic_motions(), "load_basic_motions", nclasses=4,
+    #                          clazz=[ 'CanonicalIntervalForest', 'ShapeletTransformClassifier'])#'EuclideanKNN', 'Rocket',
+    # test_over_sktime_dataset(lambda: load_basic_motions(), "load_basic_motions", nclasses=4,
+    #                          clazz=['TapNet'], ranges=2)
+    # test_over_sktime_dataset(lambda :load_italy_power_demand(),"italy_power_demand", nclasses=2, clazz=['TapNet'], ranges=2) #['EuclideanKNN', 'Rocket', 'CanonicalIntervalForest', 'ShapeletTransformClassifier'])
+    # test_over_sktime_dataset(lambda: load_osuleaf(), "osuleaf", nclasses=4, clazz=['CanonicalIntervalForest', 'ShapeletTransformClassifier'])
+    # test_over_sktime_dataset(lambda: load_osuleaf(), "osuleaf", nclasses=4, clazz=['TapNet'], ranges=2) #['EuclideanKNN', 'Rocket', 'CanonicalIntervalForest', 'ShapeletTransformClassifier'])
+    # test_over_sktime_dataset(lambda: csv_loader("japanese_vowels"), "japanese_vowels", nclasses=6, clazz=['TapNet'],
+    #                          ranges=2)
+
 
     # TODO: this is not considering equal-length time series. Thus, it is deemed important that we are splitting the dataset in here.
-    # test_over_sktime_dataset(lambda :csv_loader("japanese_vowels"),"japanese_vowels", nclasses=6, clazz=['TapNet'])

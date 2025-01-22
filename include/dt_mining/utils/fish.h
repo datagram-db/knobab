@@ -82,6 +82,56 @@ ForwardIt my_min_element(ForwardIt first, ForwardIt last)
     return smallest;
 }
 
+#include <algorithm>
+#include <numeric>
+
+template<typename ForwardIt>
+std::pair<double,double> my_mean_variance(ForwardIt first, ForwardIt last) {
+    auto sz = std::distance(first, last);
+    if (sz <= 1) {
+        return {0.0,0.0};
+    }
+
+    // Calculate the mean
+    const auto mean = std::accumulate(first, last, 0.0) / sz;
+
+    // Now calculate the variance
+    auto variance_func = [&mean, &sz](auto accumulator, const auto& val) {
+        return accumulator + ((val - mean)*(val - mean) / (sz - 1));
+    };
+
+    return {mean,std::accumulate(first, last, 0.0, variance_func)};
+}
+
+
+#include <ranges>
+
+template<typename ForwardIt>
+double my_median(ForwardIt first, ForwardIt last) {
+    auto sz = std::distance(first, last);
+    if (sz <= 0) {
+        return 0.0;
+    } else if (sz == 1) {
+        return *first;
+    } else if (sz == 2) {
+        return ((*first) + (*(first+1)))/2.0;
+    }
+
+    static std::vector<std::size_t> indexes;
+    if (indexes.size() < sz)
+        indexes.resize(sz, 0);
+    std::iota(indexes.begin(), indexes.end(), 0); // 0z in C++23
+
+    auto proj = [&first](std::size_t i) -> double { return *((first)+i); };
+    std::ranges::sort(indexes, std::less<>{}, proj);
+    if ((sz % 2) == 1) {
+        return *(first + (sz/2));
+    } else {
+        auto i = sz / 2;
+        return (*(first + (i - 1)) + *(first + (i))) / 2.0;
+    }
+}
+
 #define SPAN        ("_____span")
 
 /**
@@ -106,25 +156,42 @@ public:
                                    const std::span<double>& time_values,
                                    size_t begin, size_t end) const {
         statistics_payload m;
-        for (const auto&[k,f] : funmap) {
-            auto tmp = call_c_function(dim_values, begin, end, f);
-            if (!std::isnan(tmp)) {
-                m.emplace("values_"+k, tmp);
-            }
-        }
-        for (const auto&[k,f] : funmap) {
-            m.emplace("time_"+k, call_c_function(time_values, begin, end, f));
-        }
+
+        auto itv = dim_values.begin() + begin;
+        auto itt = time_values.begin() + begin;
+        auto env = dim_values.begin() + (end + 1);
+        auto ent = time_values.begin() + (end + 1);
+
         if (!isDataless) {
+            for (const auto&[k,f] : funmap) {
+                auto tmp = call_c_function(dim_values, begin, end, f);
+                if (!std::isnan(tmp)) {
+                    m.emplace("values_"+k, tmp);
+                }
+            }
+            for (const auto&[k,f] : funmap) {
+                m.emplace("time_"+k, call_c_function(time_values, begin, end, f));
+            }
             m.emplace("values_acf_first_min", call_c_int_function(dim_values, begin, end, CO_FirstMin_ac));
             m.emplace("values_periodicity", call_c_int_function(dim_values, begin, end, PD_PeriodicityWang_th0_01));
-            m.emplace("values_max", *my_max_element(dim_values.begin() + begin, dim_values.begin() + (end + 1)));
-            m.emplace("values_min", *my_min_element(dim_values.begin() + begin, dim_values.begin() + (end + 1)));
             m.emplace("time_acf_first_min", call_c_int_function(time_values, begin, end, CO_FirstMin_ac));
             m.emplace("time_periodicity", call_c_int_function(time_values, begin, end, PD_PeriodicityWang_th0_01));
-            m.emplace("time_max", *my_max_element(time_values.begin() + begin, time_values.begin() + (end + 1)));
-            m.emplace("time_min", *my_min_element(time_values.begin() + begin, time_values.begin() + (end + 1)));
+        } else {
+            auto cp = my_mean_variance(itv, env);
+            m.emplace("values_mean", cp.first);
+            m.emplace("values_var", cp.second);
+            m.emplace("values_stdev", std::sqrt(cp.second));
+            m.emplace("values_median", my_median(itv, env));
+            cp = my_mean_variance(itt, ent);
+            m.emplace("time_mean", cp.first);
+            m.emplace("time_var", cp.second);
+            m.emplace("time_stdev", std::sqrt(cp.second));
+            m.emplace("time_median", my_median(itt, ent));
         }
+        m.emplace("values_max", *my_max_element(itv, env));
+        m.emplace("values_min", *my_min_element(itv, env));
+        m.emplace("time_max", *my_max_element(itt, ent));
+        m.emplace("time_min", *my_min_element(itt, ent));
         return m;
     }
 
