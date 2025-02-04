@@ -132,8 +132,10 @@ std::string DTMining::dt_mine_and_ts_to_polyadic(const std::string& benchmark_re
         std::vector<std::tuple<std::string, std::unordered_map<std::string,double>,size_t>> data;
         std::vector<std::future<std::tuple<size_t, std::string, std::unordered_map<std::string,double>,size_t>>> futures_2;
         std::vector<std::tuple<size_t, std::string, std::unordered_map<std::string,double>,size_t>> data_2;
+        std::unordered_map<std::string, size_t> trace_size;
+        trace_size.reserve(mts.size());
 
-        for (const auto& [trace_name_or_env, trace] : mts) {
+        for (/*const*/ auto& [trace_name_or_env, trace] : mts) {
             std::cout << "Trace #" << trace_name_or_env << std::endl;
             size_t off = env_name_to_offset.size();
 //            tmp_constituents.clear();
@@ -157,7 +159,7 @@ std::string DTMining::dt_mine_and_ts_to_polyadic(const std::string& benchmark_re
                 total_events += obj.size();
             std::vector<std::map<size_t, std::vector<CacheConstituent>>> polyadic_events(total_events);
 
-            for (const auto& clazz_segment : trace.classSegments) {
+            for (/*const*/ auto& clazz_segment : trace.classSegments) {
                 std::unordered_set<std::string> unique_event_label;
                 SegmentStats& per_segment_stats = per_trace_stats.stats_vector.emplace_back();
                 per_segment_stats.experiment_number = ds.experiment_number;
@@ -174,7 +176,7 @@ std::string DTMining::dt_mine_and_ts_to_polyadic(const std::string& benchmark_re
                     polyadic_events[discreteEventOffset+event_id][1].emplace_back(capnp_constituent_serializer::build(0, raw_payload, discreteEventOffset+event_id, clazs));
                 }
 
-                for (const auto& j5 : clazz_segment.dimensions) {
+                for (/*const*/ auto& j5 : clazz_segment.dimensions) {
                     if (ds.isAlgo3) {
                         for (size_t event_id = 0; event_id < per_segment_stats.clazzSegmentSize; event_id++) {
                             pe.clear();
@@ -257,13 +259,19 @@ std::string DTMining::dt_mine_and_ts_to_polyadic(const std::string& benchmark_re
                     } else {
                         // MINING TIME
                         auto t1_mining = high_resolution_clock::now();
+                        data_2.clear();
                         if (!isDataless) {
                             futures_2.clear();
                             cs.set(&futures_2);
                         } else {
-                            data_2.clear();
                             cs.set(&data_2);
                         }
+
+#ifdef DEBUG
+                        if (trace_name_or_env == "576")
+                            std::cerr << "BREAK_HERE" << std::endl;
+                        std::get<0>(j5).algorithm_element = std::get<1>(j5).algorithm_element = std::get<2>(j5).algorithm_element = std::get<3>(j5).algorithm_element = trace_name_or_env;
+#endif
 
                         std::get<0>(j5).Algorithm2(pool, cs);
                         std::get<1>(j5).Algorithm2(pool, cs);
@@ -281,22 +289,10 @@ std::string DTMining::dt_mine_and_ts_to_polyadic(const std::string& benchmark_re
                         // Optimization 1, before serializing data:
                         for (size_t i = 0, N = data_2.size(); i < N; i++) {
                             const auto& val = data_2.at(i);
-
+                            size_t span = std::get<3>(val);
+                            DEBUG_ASSERT((trace_name_or_env != "576") || (span != 18));
                             alog_2_serialization(discreteEventOffset,polyadic_events, pjs,unique_event_label, val);
-//                            auto& II = act_name_to_beging_to_cpLongestAndOffsetid[std::get<1>(val)][std::get<0>(val)];
-//                            if ((II.first == 0) || (II.first < std::get<3>(val))) {
-//                                II = {std::get<3>(val), i};
-//                            }
-//                            else if (II.first == std::get<3>(val)) {
-//                                DEBUG_ASSERT(false);
-//                            }
                         }
-
-//                        for (const auto& [_, MM] : act_name_to_beging_to_cpLongestAndOffsetid) {
-//                            for (const auto& [_, result] : MM) {
-//                                alog_2_serialization(discreteEventOffset,polyadic_events, pjs,unique_event_label, data_2[result.second]);
-//                            }
-//                        }
 
                         auto t2_mining = high_resolution_clock::now();
                         /* Getting number of milliseconds as a double. */
@@ -307,23 +303,13 @@ std::string DTMining::dt_mine_and_ts_to_polyadic(const std::string& benchmark_re
                         per_segment_stats.nConstituents += futures_2.size();
                         per_trace_stats.totalConstituents += futures_2.size();
                         ds.total_time_mining += count1;
-
-                        // SERIALIZATION TIME
-//                        auto t1_cpserial = high_resolution_clock::now();
-//                        std::unordered_map<size_t, std::vector<std::pair<std::string, std::pair<size_t,std::unordered_map<std::string,double>>>>> M;
-
-//                        auto t2_cpserial = high_resolution_clock::now();
-                        /* Getting number of milliseconds as a double. */
-//                        duration<double, std::milli> ms_double_cpserial = t2_cpserial - t1_cpserial;
-//                        auto count2 = ms_double_cpserial.count();
-
-
                     }
                 }
                 per_segment_stats.unique_event_label = unique_event_label.size();
                 discreteEventOffset += per_segment_stats.clazzSegmentSize;
                 GUEL.insert(unique_event_label.begin(), unique_event_label.end());
             }
+            const size_t total_trace_size = per_trace_stats.avgSegmentSize;
             per_trace_stats.avgSegmentSize = per_trace_stats.avgSegmentSize / trace.classSegments.size();
             per_trace_stats.unique_event_label = GUEL.size();
 
@@ -335,14 +321,6 @@ std::string DTMining::dt_mine_and_ts_to_polyadic(const std::string& benchmark_re
                 std::unordered_map<std::string,size_t> act_level_max_span;
                 std::unordered_map<std::string,std::vector<CacheConstituent>> CC;
                 std::unordered_map<std::string,std::unordered_map<std::string, std::vector<CacheConstituent>>> CCC;
-//                size_t constCounter = 0;
-//                const auto& elements = M[event_id];
-////                            auto& constituent_map = rest[event_id];
-////                            size_t constCounter = 0;
-//                clazz_segment.retrieve_raw_data(event_id, raw_payload);
-////                            constituent_map[constCounter++] = incrObjId;
-//                pjs.json_serialize_constituent(capnp_constituent_serializer::build(constCounter++, raw_payload, discreteEventOffset+event_id, clazs));
-//                            ccs.serialize(incrObjId++, raw_payload, discreteEventOffset+event_id, clazs); //.second;
                 for (auto& [span, with_same_span] : polyadic_events[event_id]) {
                     already_met_activities.clear();
                     for (const auto& full_poly_event : with_same_span) {
@@ -383,11 +361,17 @@ std::string DTMining::dt_mine_and_ts_to_polyadic(const std::string& benchmark_re
                         }
                     }
                     map.clear();
+                    // Removing events composed of spans of 1 if other spans are present
                     if (C3.contains(1) && C3.size()>1) {
                         C3.erase(1);
                     }
                     for (const auto& [s, vv] : C3) {
                         for (auto& full_poly_event: vv) {
+
+#ifdef DEBUG
+                            const auto cond = full_poly_event.span+full_poly_event.disctime <= total_trace_size;
+#endif
+                            DEBUG_ASSERT(full_poly_event.span+full_poly_event.disctime <= total_trace_size);
                             payloads.json_serialize_constituent(full_poly_event);
                         }
                     }
@@ -441,20 +425,6 @@ std::string DTMining::dt_mine_and_ts_to_polyadic(const std::string& benchmark_re
             file << std::string_view(buffer, bytesRead);
         }
 
-//        for (const auto& [env, rest] : envtrace_event_constituent_to_offset) {
-////            pjs.start_serializing_trace_within_log(env);
-//            for (const auto& [event, constituents] : rest) {
-//                pjs.start_event();
-//                for (const auto& [constituent_id, capnpn_offset] : constituents) {
-//                    pjs.json_serialize_constituent(ccs.retrieve(capnpn_offset));
-//                }
-//                pjs.finish_event();
-//            }
-//            pjs.finish_serializing_trace_within_log();
-////#ifdef DEBUG
-////            pjs.flush();
-////#endif
-//        }
         pjs.finish();
         auto t2_jserial = high_resolution_clock::now();
         /* Getting number of milliseconds as a double. */

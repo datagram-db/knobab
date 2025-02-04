@@ -154,7 +154,8 @@ public:
 
 struct RecordHandling {
     std::vector<std::pair<unsigned char, size_t>> arrow_of_time;    // Determining whether the pattern is positive/negative and at which offset of the group is holden
-    std::array<std::vector<Group>, 2> groups;                       //
+    std::array<std::vector<Group>, 2> groups;                       // Determining two groups of contiguous information: one, for the satisfied predicates, and the other one,
+    // for the non-satisfied ones. These are mimicking the ascending and descending patterns, but also considering just not the numerical value, but also the variation and similar
     std::vector<size_t> linear_time;
     std::array<std::string, 2> straight{"DecreaseRapidly","IncreaseRapidly"};
     std::array<std::string, 2> HV6_1      {"HighVolatility6", "HighVolatility1"};
@@ -304,6 +305,9 @@ struct RecordHandling {
                    const std::span<double>& time,
                    std::vector<BasicRecord>&& list);
 
+#ifdef DEBUG
+    std::string algorithm_element;
+#endif
 
     void Algorithm2(ThreadPool& pool,
                     conditional_structure& futures) const {
@@ -393,6 +397,8 @@ struct RecordHandling {
     }
 
 private:
+
+    // Algorithm
     void Algorithm2(ThreadPool& pool,
                     conditional_structure& futures,
                     const Group& x,
@@ -406,7 +412,8 @@ private:
         std::unordered_map<int, std::set<int>> begin_match;
 
         int flip = (group_type + 1) % 2;
-        push_task(pool, futures, straight[group_type], GRP_START(x), GRP_START(x)+GRP_INT_DURATION(x)-1);
+//        DEBUG_ASSERT((GRP_START(x)+GRP_INT_DURATION(x)-1) == (GRP_INT_DURATION(x)));
+        push_task(pool, futures, straight[group_type], GRP_START(x), GRP_FINISH(x));
         for (size_t current_span = 1; current_span <= GRP_INT_DURATION(x); ++current_span) {
             for (size_t start = GRP_START(x); start <= (GRP_FINISH(x)-current_span+1); start++) {
                 if (start + current_span - 1 > GRP_FINISH(x)) {
@@ -475,9 +482,14 @@ private:
 //        if (S.insert(action).second) {
 //            std::cout << action<< std::endl;
 //        }
+
         if (fut.has_int_prefix()) {
             if (fut.is_future_based()) {
                 fut.get_int_future().push_back(pool.enqueue([this](const std::string &action, size_t begin, size_t end){
+#ifdef DEBUG
+                    if ((algorithm_element == "576") && (end-begin+1==18))
+                        std::cerr<< "HERE" <<std::endl;
+#endif
                     return std::tuple<size_t, std::string, std::unordered_map<std::string,double>, size_t>{begin, action+"("+dimension+")", f.eval(orig, time, begin, end), end-begin+1};
                 }, action, begin, end));
             } else {
@@ -487,6 +499,10 @@ private:
         } else {
             if (fut.is_future_based()) {
                 fut.get_future().push_back(pool.enqueue([this](const std::string &action, size_t begin, size_t end){
+#ifdef DEBUG
+                    if ((algorithm_element == "576") && (end-begin+1==18))
+                        std::cerr<< "HERE" <<std::endl;
+#endif
                     return  std::tuple<std::string, std::unordered_map<std::string,double>,size_t>{action+"("+dimension+")", f.eval(orig, time, begin, end), end-begin+1};
                 }, action, begin, end));
             } else {
