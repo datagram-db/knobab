@@ -196,11 +196,11 @@ std::string DTMining::dt_mine_and_ts_to_polyadic(const std::string& benchmark_re
 
                             // START: mining
                             auto t1_mining = high_resolution_clock::now();
+                            data.clear();
                             if (!isDataless) {
                                 cs.set(&futures);
                                 futures.clear();
                             } else {
-                                data.clear();
                                 cs.set(&data);
                             }
 
@@ -267,11 +267,11 @@ std::string DTMining::dt_mine_and_ts_to_polyadic(const std::string& benchmark_re
                             cs.set(&data_2);
                         }
 
-#ifdef DEBUG
-                        if (trace_name_or_env == "576")
-                            std::cerr << "BREAK_HERE" << std::endl;
-                        std::get<0>(j5).algorithm_element = std::get<1>(j5).algorithm_element = std::get<2>(j5).algorithm_element = std::get<3>(j5).algorithm_element = trace_name_or_env;
-#endif
+//#ifdef DEBUG
+////                        if (trace_name_or_env == "576")
+////                            std::cerr << "BREAK_HERE" << std::endl;
+//                        std::get<0>(j5).algorithm_element = std::get<1>(j5).algorithm_element = std::get<2>(j5).algorithm_element = std::get<3>(j5).algorithm_element = trace_name_or_env;
+//#endif
 
                         std::get<0>(j5).Algorithm2(pool, cs);
                         std::get<1>(j5).Algorithm2(pool, cs);

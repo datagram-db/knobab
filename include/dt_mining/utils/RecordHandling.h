@@ -305,9 +305,9 @@ struct RecordHandling {
                    const std::span<double>& time,
                    std::vector<BasicRecord>&& list);
 
-#ifdef DEBUG
-    std::string algorithm_element;
-#endif
+//#ifdef DEBUG
+//    std::string algorithm_element;
+//#endif
 
     void Algorithm2(ThreadPool& pool,
                     conditional_structure& futures) const {
@@ -486,10 +486,10 @@ private:
         if (fut.has_int_prefix()) {
             if (fut.is_future_based()) {
                 fut.get_int_future().push_back(pool.enqueue([this](const std::string &action, size_t begin, size_t end){
-#ifdef DEBUG
-                    if ((algorithm_element == "576") && (end-begin+1==18))
-                        std::cerr<< "HERE" <<std::endl;
-#endif
+//#ifdef DEBUG
+//                    if ((algorithm_element == "576") && (end-begin+1==18))
+//                        std::cerr<< "HERE" <<std::endl;
+//#endif
                     return std::tuple<size_t, std::string, std::unordered_map<std::string,double>, size_t>{begin, action+"("+dimension+")", f.eval(orig, time, begin, end), end-begin+1};
                 }, action, begin, end));
             } else {
@@ -499,10 +499,10 @@ private:
         } else {
             if (fut.is_future_based()) {
                 fut.get_future().push_back(pool.enqueue([this](const std::string &action, size_t begin, size_t end){
-#ifdef DEBUG
-                    if ((algorithm_element == "576") && (end-begin+1==18))
-                        std::cerr<< "HERE" <<std::endl;
-#endif
+//#ifdef DEBUG
+//                    if ((algorithm_element == "576") && (end-begin+1==18))
+//                        std::cerr<< "HERE" <<std::endl;
+//#endif
                     return  std::tuple<std::string, std::unordered_map<std::string,double>,size_t>{action+"("+dimension+")", f.eval(orig, time, begin, end), end-begin+1};
                 }, action, begin, end));
             } else {
