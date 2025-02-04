@@ -5,6 +5,7 @@
 #ifndef DTMINING_RECORDHANDLING_H
 #define DTMINING_RECORDHANDLING_H
 
+#include <unordered_set>
 #include <dt_mining/utils/utils.h>
 #include <vector>
 using Group = std::tuple<size_t, size_t, size_t>;
@@ -336,86 +337,54 @@ struct RecordHandling {
             // Duration of the current event according to the novel ending time
             int current_span = end_time - time + 1;
 
-            // Optimization 1: for the same starting time, keeping just the longer one. (A)
-//            if (current_span > 1) {
-//                // Adding a straight increase/decrease event for all possible spans
-//                push_task(pool, futures, straight[group_type], time, end_time);
-//            }
-
             // If you have a next event and you reached the end of this group
             if (HAS_ARROW_NEXT(arrow_idx, total_groups) && (GRP_FINISHES_AT(groupRange, end_time))) {
                 const auto& next_ref = VAT(arrow_of_time, ARROW_NEXT(arrow_idx));
                 const auto& next = VAT(VAT(groups, flip), next_ref.second);
+                auto has_arrow_next_next = HAS_ARROW_NEXT_NEXT(arrow_idx, total_groups);
                 if (current_span == 1) {
-                    push_task(pool, futures, HV6_1[flip], time, GRP_START(next));
-                    if ((GRP_IS_SINGLET(next)) && (HAS_ARROW_NEXT_NEXT(arrow_idx, total_groups)) && (HAS_ARROW_NEXT_NEXT_NEXT(arrow_idx, total_groups))) {
-                        const auto& nextnext_ref = VAT(arrow_of_time, ARROW_NEXT_NEXT(arrow_idx));
-                        const auto& nextnext = VAT( VAT(groups,group_type), nextnext_ref.second);
-                        if (GRP_IS_SINGLET(nextnext)) {
-                            push_task(pool, futures, OneHiccup_S41[flip], time, time+4);
-                        }
-                    } else {
-                        push_task(pool, futures, OneHiccup_S41[flip], time, GRP_FINISH(next)); //B, optimized
-                        // Optimization 1: for the same starting time, keeping just the longer one. (B)
-//                        for (auto next_time = GRP_START(next)+1;
-//                             next_time <=GRP_FINISH(next);
-//                             next_time++ ) {
-//                            push_task(pool, futures, OneHiccup_S41[flip], time, next_time);
-//                        }
-                    }
-
-                    if (HAS_ARROW_NEXT_NEXT(arrow_idx, total_groups)) {
-                        if (GRP_INT_DURATION(next) > 1) {
-                            push_task(pool, futures, HV4_3[flip], time, GRP_FINISH(next) + 1); //
-                        } else {
+                    if (has_arrow_next_next) {
+                        if (GRP_IS_SINGLET(next)) {
                             const auto& nextnext_ref = VAT(arrow_of_time, ARROW_NEXT_NEXT(arrow_idx));
                             const auto& nextnext = VAT( VAT(groups,group_type), nextnext_ref.second);
-                            push_task(pool, futures, TwoHiccups_S32[group_type], time, GRP_FINISH(nextnext)); //C, optimized
-
-                            // Optimization 1: for the same starting time, keeping just the longer one. (C)
-//                            for (auto nextnext_time = GRP_START(nextnext)+1;
-//                                 nextnext_time< GRP_FINISH(nextnext)+1;
-//                                 nextnext_time++) {
-//                                push_task(pool, futures, TwoHiccups_S32[group_type], time, nextnext_time);
-//                            }
+                            if ((HAS_ARROW_NEXT_NEXT_NEXT(arrow_idx, total_groups))) {
+                                if (GRP_IS_SINGLET(nextnext)) {
+                                    push_task(pool, futures, OneHiccup_S41[flip], time, time+4);
+                                } else {
+                                    push_task(pool, futures, TwoHiccups_S32[group_type], time, GRP_FINISH(nextnext)); //C, optimized
+                                }
+                            } else {
+                                push_task(pool, futures, OneHiccup_S41[flip], time, GRP_FINISH(next)); //B, optimized
+                            }
+                        } else {
+                            push_task(pool, futures, HV4_3[flip], time, GRP_FINISH(next) + 1); //
                         }
-
+                    } else {
+                        push_task(pool, futures, HV6_1[flip], time, GRP_START(next));
                     }
                 } else {
-                    if (current_span <= GRP_INT_DURATION(next)) {
-                        for (auto next_time = GRP_START(next)+current_span-1;
-                             next_time <=GRP_FINISH(next);
-                             next_time++ ) {
-                            push_task(pool, futures, HV6_1[flip], time, next_time);
-                            if (HAS_ARROW_NEXT_NEXT(arrow_idx, total_groups) && HAS_ARROW_NEXT_NEXT_NEXT(arrow_idx, total_groups)) {
+                    // E, Original position of (before the if statement, and not in the else branch).
+                    if ((GRP_IS_SINGLET(next)) && (has_arrow_next_next)) {
+                        push_task(pool, futures, EndHiccup_S23[group_type], time, GRP_FINISH(groupRange) + 2);
+                    } else {
+                        if (current_span <= GRP_INT_DURATION(next)) {
+                            bool inner_vol_found = false;
+                            if (has_arrow_next_next && HAS_ARROW_NEXT_NEXT_NEXT(arrow_idx, total_groups)) {
                                 const auto& nextnext_ref = VAT(arrow_of_time, ARROW_NEXT_NEXT(arrow_idx));
                                 const auto& nextnext = VAT( VAT(groups,group_type), nextnext_ref.second);
                                 if (GRP_INT_DURATION(nextnext) <= current_span) {
                                     const auto& next3_ref = VAT(arrow_of_time, ARROW_NEXT_NEXT_NEXT(arrow_idx));
-//#ifdef DEBUG
-//                                    if (VAT(groups,group_type).size() <= next3_ref.second) {
-//                                        print_indices();
-//                                    }
-//#endif
                                     const auto& next3 = VAT( VAT(groups,flip), next3_ref.second);
-
                                     push_task(pool, futures, HV5_2[flip], time, GRP_FINISH(next3)); //D, optimized
-                                    // Optimization 1: for the same starting time, keeping just the longer one. (D)
-//                                    for (auto next3_time = GRP_START(next3)+current_span-1;
-//                                         next3_time <=GRP_FINISH(next3);
-//                                         next3_time++ ) {
-//                                        push_task(pool, futures, HV5_2[flip], time, next_time);
-//                                    }
+                                    inner_vol_found = true;
                                 }
                             }
+                            if (!inner_vol_found) {
+                                push_task(pool, futures, HV6_1[flip], time, GRP_FINISH(next)); // Optimization, only longest one
+                            }
+                        } else {
+                            push_task(pool, futures, End2Hiccups_S14[group_type], time, GRP_FINISH(groupRange) + 1); // Originally in E
                         }
-                    }
-
-                    // E, Original position of (before the if statement, and not in the else branch).
-                    if ((GRP_IS_SINGLET(next)) && (HAS_ARROW_NEXT_NEXT(arrow_idx, total_groups))) {
-                        push_task(pool, futures, EndHiccup_S23[group_type], time, GRP_FINISH(groupRange) + 2);
-                    } else {
-                        push_task(pool, futures, End2Hiccups_S14[group_type], time, GRP_FINISH(groupRange) + 1); // Originally in E
                     }
                 }
             }
@@ -437,12 +406,12 @@ private:
         std::unordered_map<int, std::set<int>> begin_match;
 
         int flip = (group_type + 1) % 2;
+        push_task(pool, futures, straight[group_type], GRP_START(x), GRP_START(x)+GRP_INT_DURATION(x)-1);
         for (size_t current_span = 1; current_span <= GRP_INT_DURATION(x); ++current_span) {
             for (size_t start = GRP_START(x); start <= (GRP_FINISH(x)-current_span+1); start++) {
                 if (start + current_span - 1 > GRP_FINISH(x)) {
                     continue;
                 }
-                push_task(pool, futures, straight[group_type], start, start + current_span - 1);
                 std::optional<Group> Inext;
                 if (GRP_FINISHES_AT(x, start)) {
                     Inext = inIntervalTree(groups[flip], GRP_FINISH(x) + 1);
@@ -473,12 +442,16 @@ private:
                     }
                 }
                 if ((GRP_FINISHES_AT(x, start + current_span - 1)) && (Inext.has_value())) {
-                    push_task(pool, futures, End2Hiccups_S14[group_type], start, start + current_span - 1);
+                    bool found = false;
                     if (GRP_IS_SINGLET(Inext.value())) {
                         auto Inextnext = inIntervalTree(groups[group_type], GRP_FINISH(x) + 2);
                         if (Inextnext.has_value()) {
+                            found = true;
                             push_task(pool, futures, EndHiccup_S23[group_type], start, start + current_span);
                         }
+                    }
+                    if (!found) {
+                        push_task(pool, futures, End2Hiccups_S14[group_type], start, start + current_span - 1);
                     }
                 }
             }
@@ -498,10 +471,14 @@ private:
 
 
     inline void push_task(ThreadPool& pool, conditional_structure& fut, const std::string& action, size_t begin, size_t end) const {
+//        static std::unordered_set<std::string> S;
+//        if (S.insert(action).second) {
+//            std::cout << action<< std::endl;
+//        }
         if (fut.has_int_prefix()) {
             if (fut.is_future_based()) {
                 fut.get_int_future().push_back(pool.enqueue([this](const std::string &action, size_t begin, size_t end){
-                    return std::tuple<size_t, std::string, std::unordered_map<std::string,double>, size_t>{begin, dimension+"("+action+")", f.eval(orig, time, begin, end), end-begin+1};
+                    return std::tuple<size_t, std::string, std::unordered_map<std::string,double>, size_t>{begin, action+"("+dimension+")", f.eval(orig, time, begin, end), end-begin+1};
                 }, action, begin, end));
             } else {
                 DEBUG_ASSERT(f.dataless());
@@ -510,7 +487,7 @@ private:
         } else {
             if (fut.is_future_based()) {
                 fut.get_future().push_back(pool.enqueue([this](const std::string &action, size_t begin, size_t end){
-                    return  std::tuple<std::string, std::unordered_map<std::string,double>,size_t>{dimension+"("+action+")", f.eval(orig, time, begin, end), end-begin+1};
+                    return  std::tuple<std::string, std::unordered_map<std::string,double>,size_t>{action+"("+dimension+")", f.eval(orig, time, begin, end), end-begin+1};
                 }, action, begin, end));
             } else {
                 DEBUG_ASSERT(f.dataless());

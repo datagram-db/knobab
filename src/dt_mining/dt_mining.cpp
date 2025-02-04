@@ -16,10 +16,12 @@
 
 #include <dt_mining/dt_mining.h>
 
-inline void algo_3_serialization(capnp_constituent_serializer &ccs, size_t& incrObjId, PolyadicJSONSerialize &pjs,
-                          std::unordered_set<std::string> &pe, size_t discreteEventOffset, size_t event_id,
-                          std::map<size_t, size_t> &constituent_map, size_t constCounter,
-                          const std::tuple<std::string, std::unordered_map<std::string, double>, size_t> &val) {
+inline void algo_3_serialization(std::vector<std::map<size_t, std::vector<CacheConstituent>>>& vv,
+                                 PolyadicJSONSerialize &pjs,
+                                 std::unordered_set<std::string> &pe,
+                                 size_t discreteEventOffset,
+                                 size_t event_id,
+                                 const std::tuple<std::string, std::unordered_map<std::string, double>, size_t> &val) {
     const auto& activity_label = std::get<0>(val);
     pjs.set_up_hierarchy(activity_label);
     pe.emplace(activity_label);
@@ -28,20 +30,26 @@ inline void algo_3_serialization(capnp_constituent_serializer &ccs, size_t& incr
     for (const auto& [k,v] : payload) {
         pjs.set_up_numeric_variables(k);
     }
-    constituent_map[constCounter++] = incrObjId;
-    ccs.serialize(incrObjId++, activity_label, span, discreteEventOffset+event_id, payload); //.second;
+    vv[discreteEventOffset+event_id][span].emplace_back(capnp_constituent_serializer::build(vv.size(), activity_label, span, discreteEventOffset+event_id, payload)); //.second;
 }
 
-inline void alog_2_serialization(PolyadicJSONSerialize &pjs,
+
+inline void alog_2_serialization(size_t discreteEventOffset,
+                                 std::vector<std::map<size_t, std::vector<CacheConstituent>>>& vv,
+                                 PolyadicJSONSerialize &pjs,
                                  std::unordered_set<std::string>& unique_event_label,
-                                 std::unordered_map<size_t, std::vector<std::pair<std::string, std::pair<size_t,std::unordered_map<std::string,double>>>>>& M,
+//                                 std::unordered_map<size_t, std::vector<std::pair<std::string, std::pair<size_t,std::unordered_map<std::string,double>>>>>& M,
         const std::tuple<size_t, std::string, std::unordered_map<std::string, double>, size_t> &val) {
-    const auto& event_id = std::get<0>(val);
+    size_t event_id = std::get<0>(val);
     const auto& activity_label = std::get<1>(val);
     pjs.set_up_hierarchy(activity_label);
     unique_event_label.emplace(activity_label);
     const auto& payload = std::get<2>(val);
-    M[event_id].emplace_back(activity_label, std::make_pair(std::get<3>(val),std::get<2>(val)));
+    size_t span = std::get<3>(val);
+    while (vv.size()<=discreteEventOffset+event_id)
+        vv.emplace_back();
+    auto& v = vv[discreteEventOffset+event_id];
+    v[span].emplace_back(capnp_constituent_serializer::build(vv.size(), activity_label, span, discreteEventOffset+event_id, payload)); //.second;
 }
 
 std::string DTMining::dt_mine_and_ts_to_polyadic(const std::string& benchmark_result_file,
@@ -55,7 +63,7 @@ std::string DTMining::dt_mine_and_ts_to_polyadic(const std::string& benchmark_re
     using std::chrono::duration_cast;
     using std::chrono::duration;
     using std::chrono::milliseconds;
-
+    std::unordered_set<std::string> already_met_activities;
     DatasetStats ds;
     ds.folder = folder;
     ds.precision = precision;
@@ -74,7 +82,7 @@ std::string DTMining::dt_mine_and_ts_to_polyadic(const std::string& benchmark_re
     // Derived parameters
     ds.loading = ds.serial = ds.total_event_time_serial = ds.total_time = ds.total_time_mining = 0;
     // polyadic_Algo1_dataless.json
-    ds.nProcessors = (std::thread::hardware_concurrency()*2)/3;
+    ds.nProcessors = (std::thread::hardware_concurrency()*4)/5;
     std::string file_premise = "polyadic_Algo";
     if (isAlgo3) {
         file_premise+="3_data";
@@ -92,6 +100,7 @@ std::string DTMining::dt_mine_and_ts_to_polyadic(const std::string& benchmark_re
     std::filesystem::remove(polyadic_file);
     std::filesystem::remove(polyadic_tmp_file);
     std::filesystem::remove(polyadic_map_file);
+//    std::vector<CacheConstituent> tmp_constituents;
 
     {
         std::cout << "# of processors: " << ds.nProcessors << std::endl;
@@ -104,11 +113,13 @@ std::string DTMining::dt_mine_and_ts_to_polyadic(const std::string& benchmark_re
 
         ThreadPool pool(ds.nProcessors);
         std::unordered_map<std::string,double> raw_payload;
-        capnp_constituent_serializer ccs{polyadic_tmp_file};
-        size_t incrObjId = 0;
-        std::ofstream file{polyadic_file};
+//        capnp_constituent_serializer ccs{polyadic_tmp_file};
+//        size_t incrObjId = 0;
+        std::ofstream file{polyadic_file}, payload{polyadic_tmp_file};
         size_t nDimensions = mts.begin()->second.dimensions.size();
-        PolyadicJSONSerialize pjs{file};
+        PolyadicJSONSerialize pjs{file}, payloads{payload};
+        payloads.start();
+        payloads.start_serializing_log_within_object();
 
         std::cout << "Dataset Loading Time: " << ds.loading << " (ms)" << std::endl;
         std::cout << "# of traces/environments: " << mts.size() << std::endl;
@@ -125,8 +136,9 @@ std::string DTMining::dt_mine_and_ts_to_polyadic(const std::string& benchmark_re
         for (const auto& [trace_name_or_env, trace] : mts) {
             std::cout << "Trace #" << trace_name_or_env << std::endl;
             size_t off = env_name_to_offset.size();
+//            tmp_constituents.clear();
             env_name_to_offset.emplace(trace_name_or_env, off);
-            auto& event_constituent_to_offset = envtrace_event_constituent_to_offset[trace_name_or_env];
+            auto& rest = envtrace_event_constituent_to_offset[trace_name_or_env];
             size_t discreteEventOffset = 0;
             auto& per_trace_stats = ds.all_stats.emplace_back();
             per_trace_stats.experiment_number = ds.experiment_number;
@@ -139,7 +151,11 @@ std::string DTMining::dt_mine_and_ts_to_polyadic(const std::string& benchmark_re
             }
             per_trace_stats.avgSegmentSize = per_trace_stats.event_wise_mine_time = per_trace_stats.event_wise_serial_time =  0;
             GUEL.clear();
-
+            auto& seg_ref = trace.classSegments[0];
+            size_t total_events = 0;
+            for (const auto& obj : trace.classSegments)
+                total_events += obj.size();
+            std::vector<std::map<size_t, std::vector<CacheConstituent>>> polyadic_events(total_events);
 
             for (const auto& clazz_segment : trace.classSegments) {
                 std::unordered_set<std::string> unique_event_label;
@@ -150,7 +166,13 @@ std::string DTMining::dt_mine_and_ts_to_polyadic(const std::string& benchmark_re
                 per_trace_stats.avgSegmentSize += per_segment_stats.clazzSegmentSize;
                 per_segment_stats.event_wise_serial_time = per_segment_stats.event_wise_mine_time = per_segment_stats.nConstituents = 0.0;
                 const int& clazz = clazz_segment.withClass;
-                std::string clazs = std::to_string(clazz);
+                std::string clazs = std::to_string(seg_ref.withClass);
+
+                // writing the initial event payloads as the first constituents for the event
+                for (size_t event_id = 0; event_id<total_events; event_id++) {
+                    seg_ref.retrieve_raw_data(event_id, raw_payload);
+                    polyadic_events[discreteEventOffset+event_id][1].emplace_back(capnp_constituent_serializer::build(0, raw_payload, discreteEventOffset+event_id, clazs));
+                }
 
                 for (const auto& j5 : clazz_segment.dimensions) {
                     if (ds.isAlgo3) {
@@ -162,12 +184,13 @@ std::string DTMining::dt_mine_and_ts_to_polyadic(const std::string& benchmark_re
                             per_event_stats.experiment_number = ds.experiment_number;
 
                             // START: mining+serial
-                            auto t1_cpserial = high_resolution_clock::now();
-                            auto& constituent_map = event_constituent_to_offset[event_id];
-                            clazz_segment.retrieve_raw_data(event_id, raw_payload);
+//                            auto t1_cpserial = high_resolution_clock::now();
+                            auto& constituent_map = rest[event_id];
                             size_t constCounter = 0;
-                            constituent_map[constCounter++] = incrObjId;
-                            ccs.serialize(incrObjId++, raw_payload, discreteEventOffset+event_id, clazs); //.second;
+//                            const size_t element = tmp_constituents.size();
+//                            constituent_map[constCounter++] = tmp_constituents.size();
+
+//                            ccs.serialize(incrObjId++, raw_payload, discreteEventOffset+event_id, clazs); //.second;
 
                             // START: mining
                             auto t1_mining = high_resolution_clock::now();
@@ -183,18 +206,12 @@ std::string DTMining::dt_mine_and_ts_to_polyadic(const std::string& benchmark_re
                             std::get<1>(j5).Algorithm3(pool, cs, event_id);
                             std::get<2>(j5).Algorithm3(pool, cs, event_id);
                             std::get<3>(j5).Algorithm3(pool, cs, event_id);
-                            auto t2_mining = high_resolution_clock::now();
-                            /* Getting number of milliseconds as a double. */
-                            duration<double, std::milli> ms_double = t2_mining - t1_mining;
-                            auto time_only_mining = ms_double.count();
-                            // END: mining
 
                             std::unordered_map<std::string, std::pair<size_t,size_t>> act_name_to_beging_to_cpLongestAndOffsetid;
                             if (!isDataless) {
                                 for (auto& ref : futures) {
                                     auto val = ref.get();
                                     data.emplace_back(val);
-//                                alog_2_serialization(pjs,unique_event_label,M, val);
                                 }
                             }
                             futures.clear();
@@ -206,33 +223,25 @@ std::string DTMining::dt_mine_and_ts_to_polyadic(const std::string& benchmark_re
                                 }
                             }
 
-//                            if (isDataless) {
-//                                for (auto& val :data) {
-//                                    algo_3_serialization(ccs, incrObjId, pjs, pe, discreteEventOffset, event_id,
-//                                                         constituent_map, constCounter, val);
-//                                }
-//                            } else {
-//                                for (auto& ref : futures) {
-//                                    auto val = ref.get();
-//                                    algo_3_serialization(ccs, incrObjId, pjs, pe, discreteEventOffset, event_id,
-//                                                         constituent_map, constCounter, val);
-//                                }
-//                            }
                             for (const auto& [_, result] : act_name_to_beging_to_cpLongestAndOffsetid) {
-                                algo_3_serialization(ccs, incrObjId, pjs, pe, discreteEventOffset, event_id,
-                                                     constituent_map, constCounter, data[result.second]);
+                                algo_3_serialization(polyadic_events, pjs, pe, discreteEventOffset, event_id,
+                                                     data[result.second]);
                             }
+                            auto t2_mining = high_resolution_clock::now();
+                            /* Getting number of milliseconds as a double. */
+                            duration<double, std::milli> ms_double = t2_mining - t1_mining;
+                            auto time_only_mining = ms_double.count();
+                            // END: mining
+
 
                             auto t2_cpserial = high_resolution_clock::now();
                             /* Getting number of milliseconds as a double. */
-                            duration<double, std::milli> ms_double_cpserial = t2_cpserial - t1_cpserial;
+//                            duration<double, std::milli> ms_double_cpserial = t2_cpserial - t1_cpserial;
                             // END: mining+serial
 
-                            auto count = ms_double_cpserial.count();
+//                            auto count = ms_double_cpserial.count();
                             ds.total_time_mining += time_only_mining;
-                            per_event_stats.event_wise_serial_time = (count - time_only_mining);
-                            ds.total_event_time_serial += per_event_stats.event_wise_serial_time;
-                            ds.total_event_time_serial += per_event_stats.event_wise_serial_time;
+                            per_event_stats.event_wise_serial_time = 0;
                             per_segment_stats.event_wise_serial_time += per_event_stats.event_wise_serial_time;
                             per_trace_stats.event_wise_serial_time += per_event_stats.event_wise_serial_time;
 
@@ -261,6 +270,33 @@ std::string DTMining::dt_mine_and_ts_to_polyadic(const std::string& benchmark_re
                         std::get<2>(j5).Algorithm2(pool, cs);
                         std::get<3>(j5).Algorithm2(pool, cs);
 //                        std::cout << "MINER2" << std::endl;
+                        std::unordered_map<std::string, std::unordered_map<size_t, std::pair<size_t,size_t>>> act_name_to_beging_to_cpLongestAndOffsetid;
+                        if (!isDataless) {
+                            for (auto& ref : futures_2) {
+                                auto val = ref.get();
+                                data_2.emplace_back(val);
+                            }
+                        }
+                        futures_2.clear();
+                        // Optimization 1, before serializing data:
+                        for (size_t i = 0, N = data_2.size(); i < N; i++) {
+                            const auto& val = data_2.at(i);
+
+                            alog_2_serialization(discreteEventOffset,polyadic_events, pjs,unique_event_label, val);
+//                            auto& II = act_name_to_beging_to_cpLongestAndOffsetid[std::get<1>(val)][std::get<0>(val)];
+//                            if ((II.first == 0) || (II.first < std::get<3>(val))) {
+//                                II = {std::get<3>(val), i};
+//                            }
+//                            else if (II.first == std::get<3>(val)) {
+//                                DEBUG_ASSERT(false);
+//                            }
+                        }
+
+//                        for (const auto& [_, MM] : act_name_to_beging_to_cpLongestAndOffsetid) {
+//                            for (const auto& [_, result] : MM) {
+//                                alog_2_serialization(discreteEventOffset,polyadic_events, pjs,unique_event_label, data_2[result.second]);
+//                            }
+//                        }
 
                         auto t2_mining = high_resolution_clock::now();
                         /* Getting number of milliseconds as a double. */
@@ -273,58 +309,15 @@ std::string DTMining::dt_mine_and_ts_to_polyadic(const std::string& benchmark_re
                         ds.total_time_mining += count1;
 
                         // SERIALIZATION TIME
-                        auto t1_cpserial = high_resolution_clock::now();
-                        std::unordered_map<size_t, std::vector<std::pair<std::string, std::pair<size_t,std::unordered_map<std::string,double>>>>> M;
-                        std::unordered_map<std::string, std::unordered_map<size_t, std::pair<size_t,size_t>>> act_name_to_beging_to_cpLongestAndOffsetid;
-                        if (!isDataless) {
-                            for (auto& ref : futures_2) {
-                                auto val = ref.get();
-                                data_2.emplace_back(val);
-//                                alog_2_serialization(pjs,unique_event_label,M, val);
-                            }
-                        }
-                        futures_2.clear();
-                        // Optimization 1, before serializing data:
-                        for (size_t i = 0, N = data_2.size(); i < N; i++) {
-                            const auto& val = data_2.at(i);
-                            auto& II = act_name_to_beging_to_cpLongestAndOffsetid[std::get<1>(val)][std::get<0>(val)];
-                            if ((II.first == 0) || (II.first < std::get<3>(val))) {
-                                II = {std::get<3>(val), i};
-                            } else if (II.first == std::get<3>(val)) {
-                                DEBUG_ASSERT(false);
-                            }
-                        }
+//                        auto t1_cpserial = high_resolution_clock::now();
+//                        std::unordered_map<size_t, std::vector<std::pair<std::string, std::pair<size_t,std::unordered_map<std::string,double>>>>> M;
 
-                        for (const auto& [_, MM] : act_name_to_beging_to_cpLongestAndOffsetid) {
-                            for (const auto& [_, result] : MM) {
-                                alog_2_serialization(pjs, unique_event_label, M, data_2[result.second]);
-                            }
-                        }
-
-                        for (size_t event_id = 0; event_id < per_segment_stats.clazzSegmentSize; event_id++) {
-//                        std::cout << "Event #" << event_id << std::endl;
-                            const auto& elements = M[event_id];
-                            auto& constituent_map = event_constituent_to_offset[event_id];
-                            size_t constCounter = 0;
-                            clazz_segment.retrieve_raw_data(event_id, raw_payload);
-                            constituent_map[constCounter++] = incrObjId;
-                            ccs.serialize(incrObjId++, raw_payload, discreteEventOffset+event_id, clazs); //.second;
-                            for (auto& [activity_label, span_and_durative_payload] : elements) {
-                                for (const auto& [k,v] : span_and_durative_payload.second) {
-                                    pjs.set_up_numeric_variables(k);
-                                }
-                                constituent_map[constCounter++] = incrObjId;
-                                ccs.serialize(incrObjId++, activity_label, span_and_durative_payload.first, discreteEventOffset+event_id, span_and_durative_payload.second); //.second;
-                            }
-                        }
-                        auto t2_cpserial = high_resolution_clock::now();
+//                        auto t2_cpserial = high_resolution_clock::now();
                         /* Getting number of milliseconds as a double. */
-                        duration<double, std::milli> ms_double_cpserial = t2_cpserial - t1_cpserial;
-                        auto count2 = ms_double_cpserial.count();
+//                        duration<double, std::milli> ms_double_cpserial = t2_cpserial - t1_cpserial;
+//                        auto count2 = ms_double_cpserial.count();
 
-                        ds.total_event_time_serial += count2;
-                        per_segment_stats.event_wise_serial_time += (count2);
-                        per_trace_stats.event_wise_serial_time += (count2);
+
                     }
                 }
                 per_segment_stats.unique_event_label = unique_event_label.size();
@@ -333,25 +326,135 @@ std::string DTMining::dt_mine_and_ts_to_polyadic(const std::string& benchmark_re
             }
             per_trace_stats.avgSegmentSize = per_trace_stats.avgSegmentSize / trace.classSegments.size();
             per_trace_stats.unique_event_label = GUEL.size();
+
+            auto t1_cpserial = high_resolution_clock::now();
+            payloads.start_serializing_trace_within_log(trace_name_or_env);
+            for (size_t event_id = 0; event_id < polyadic_events.size(); event_id++) {
+//                        std::cout << "Event #" << event_id << std::endl;
+                payloads.start_event();
+                std::unordered_map<std::string,size_t> act_level_max_span;
+                std::unordered_map<std::string,std::vector<CacheConstituent>> CC;
+                std::unordered_map<std::string,std::unordered_map<std::string, std::vector<CacheConstituent>>> CCC;
+//                size_t constCounter = 0;
+//                const auto& elements = M[event_id];
+////                            auto& constituent_map = rest[event_id];
+////                            size_t constCounter = 0;
+//                clazz_segment.retrieve_raw_data(event_id, raw_payload);
+////                            constituent_map[constCounter++] = incrObjId;
+//                pjs.json_serialize_constituent(capnp_constituent_serializer::build(constCounter++, raw_payload, discreteEventOffset+event_id, clazs));
+//                            ccs.serialize(incrObjId++, raw_payload, discreteEventOffset+event_id, clazs); //.second;
+                for (auto& [span, with_same_span] : polyadic_events[event_id]) {
+                    already_met_activities.clear();
+                    for (const auto& full_poly_event : with_same_span) {
+                        if (already_met_activities.emplace(full_poly_event.label).second) {
+                            for (const auto& [k,v] : full_poly_event.payload) {
+                                payloads.set_up_numeric_variables(k);
+                            }
+                            auto att1 = act_level_max_span.emplace(full_poly_event.label, full_poly_event.span);
+                            if (att1.second || ((!att1.second) && (att1.first->second <= full_poly_event.span))) {
+                                if (att1.first->second < full_poly_event.span) {
+                                    att1.first->second = full_poly_event.span;
+                                    CC[full_poly_event.label].clear();
+                                }
+                                CC[full_poly_event.label].emplace_back(full_poly_event);
+                            }
+                        }
+                    }
+
+//                                constituent_map[constCounter++] = incrObjId;
+//                    payloads.json_serialize_constituent(capnp_constituent_serializer::build(constCounter++, activity_label, span_and_durative_payload.first, discreteEventOffset+event_id, span_and_durative_payload.second)); //.second;
+                }
+                for (auto& [label, vals] : CC) {
+                    for (auto& full_poly_event : vals) {
+                        auto begin_offset = label.find_first_of("(");
+                        auto end_offset = label.find_last_of(")");
+                        auto variable = label.substr(begin_offset+1, end_offset-begin_offset-1);
+                        auto cond = label.substr(0, begin_offset);
+                        CCC[variable][cond].emplace_back(std::move(full_poly_event));
+                    }
+                    vals.clear();
+                }
+                CC.clear();
+                for (auto& [var, map] : CCC) {
+                    std::unordered_map<size_t, std::vector<CacheConstituent>> C3;
+                    for (auto& [cond, objs] : map ) {
+                        for (auto& full_poly_event: objs) {
+                            C3[full_poly_event.span].emplace_back(std::move(full_poly_event));
+                        }
+                    }
+                    map.clear();
+                    if (C3.contains(1) && C3.size()>1) {
+                        C3.erase(1);
+                    }
+                    for (const auto& [s, vv] : C3) {
+                        for (auto& full_poly_event: vv) {
+                            payloads.json_serialize_constituent(full_poly_event);
+                        }
+                    }
+                }
+                CCC.clear();
+                payloads.finish_event();
+            }
+            payloads.finish_serializing_trace_within_log();
+            auto t2_cpserial = high_resolution_clock::now();
+            duration<double, std::milli> ms_double_cpserial = t2_cpserial - t1_cpserial;
+            auto count2 = ms_double_cpserial.count();
+            ds.total_event_time_serial += count2;
+            per_trace_stats.event_wise_serial_time = count2;
+
+#ifdef DEBUG
+            payload.flush();
+#endif
         }
+        payloads.end_serializing_log_within_object();
+        payloads.finish();
+        payload.flush();
+        payload.close();
+//        payload.close();
+
+
+
 
         std::cout << "Starting to json-serialize..." << std::endl;
         auto t1_jserial = high_resolution_clock::now();
         pjs.start();
         pjs.heading();
-        pjs.start_serializing_log_within_object();
-        for (const auto& [env, rest] : envtrace_event_constituent_to_offset) {
-            pjs.start_serializing_trace_within_log(env);
-            for (const auto& [event, constituents] : rest) {
-                pjs.start_event();
-                for (const auto& [constituent_id, capnpn_offset] : constituents) {
-                    pjs.json_serialize_constituent(ccs.retrieve(capnpn_offset));
-                }
-                pjs.finish_event();
+        std::fstream payload_read{polyadic_tmp_file};
+        char openPar;
+        payload_read >> openPar;
+        DEBUG_ASSERT(openPar == '{');
+        file << ",";
+        size_t bufferSize = sysconf(_SC_PAGE_SIZE);
+        char buffer[bufferSize];
+        while (payload_read)
+        {
+            payload_read.read(buffer, bufferSize);
+            auto bytesRead = payload_read.gcount();
+            if (bytesRead == 0) {
+                // EOF
+                break;
+            } else if (bytesRead < bufferSize) {
+                file << std::string_view(buffer, bytesRead-1);
+                break;
             }
-            pjs.finish_serializing_trace_within_log();
+            // print the buffer data
+            file << std::string_view(buffer, bytesRead);
         }
-        pjs.end_serializing_log_within_object();
+
+//        for (const auto& [env, rest] : envtrace_event_constituent_to_offset) {
+////            pjs.start_serializing_trace_within_log(env);
+//            for (const auto& [event, constituents] : rest) {
+//                pjs.start_event();
+//                for (const auto& [constituent_id, capnpn_offset] : constituents) {
+//                    pjs.json_serialize_constituent(ccs.retrieve(capnpn_offset));
+//                }
+//                pjs.finish_event();
+//            }
+//            pjs.finish_serializing_trace_within_log();
+////#ifdef DEBUG
+////            pjs.flush();
+////#endif
+//        }
         pjs.finish();
         auto t2_jserial = high_resolution_clock::now();
         /* Getting number of milliseconds as a double. */
@@ -368,6 +471,8 @@ std::string DTMining::dt_mine_and_ts_to_polyadic(const std::string& benchmark_re
             std::ofstream ofs{benchmark_result_file};
             ofs << dom;
         }
+
+        std::filesystem::remove(polyadic_tmp_file);
 
         // closing the ccs capnp_constituent_serializer, so that we can eventually remove the mapped file on disk after serialization
     }

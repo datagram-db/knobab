@@ -102,12 +102,13 @@ choice_exclchoice(act_t a, act_t b,
                   std::vector<std::vector<trace_t>>& inv_map,
                   std::unordered_map<act_t, retain_choice>& map_for_retain,
                   std::unordered_map<std::unordered_set<act_t>, uint64_t>& mapper) {
+    static std::vector<trace_t> static_trace_vector;
     const std::unordered_set<act_t> lS{a,b};
 //    curr_pair.second = inv_pair.first = b;
 //    if (unary && ((!visited_pairs.emplace(curr_pair).second) ||
 //        (!visited_pairs.emplace(inv_pair).second))) return false;
-    const auto& aSet = inv_map.at(a);
-    const auto& bSet = inv_map.at(b);
+    const auto& aSet = (a!=((act_t)-1)) ? inv_map.at(a) : static_trace_vector;
+    const auto& bSet = (b!=((act_t)-1)) ? inv_map.at(b) : static_trace_vector;
     std::pair<size_t, size_t> ratio = yaucl::iterators::ratio(aSet.begin(), aSet.end(), bSet.begin(), bSet.end());
     double local_support = ((double)(ratio.first)) / ((double)log_size);
     static FastDatalessClause clause;

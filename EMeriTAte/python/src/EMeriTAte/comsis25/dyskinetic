@@ -1,0 +1,21 @@
+FirstPhaseAlgo,SecondPhaseAlgo,poly,supp,red,accuracy,precision,recall,f1,roc,model
+1,4,True,1.0,False,1.0,1.0,1.0,1.0,"{'fpr': array([0., 0., 1.]), 'tpr': array([0., 1., 1.]), 'thresholds': array([inf,  1.,  0.])}","(RespExistence(IncreaseSlowlyII(SD Step Velocity_s),IncreaseRapidly(Step Velocity Asy_s)) <= -0.50000) => Label=0 (0/0)
+(RespExistence(IncreaseSlowlyII(SD Step Velocity_s),IncreaseRapidly(Step Velocity Asy_s)) >  -0.50000) => Label=1 (0/0)"
+1,4,True,1.0,False,1.0,1.0,1.0,1.0,"{'fpr': array([0., 0., 1.]), 'tpr': array([0., 1., 1.]), 'thresholds': array([inf,  1.,  0.])}","(CoExistence(DecreaseSlowlyIV(Step Time Asy_s),DecreaseRapidly(SD Stride Time_s)) <= -0.50000) => Label=1 (0/0)
+(CoExistence(DecreaseSlowlyIV(Step Time Asy_s),DecreaseRapidly(SD Stride Time_s)) >  -0.50000) => Label=0 (0/0)"
+1,4,True,1.0,False,1.0,1.0,1.0,1.0,"{'fpr': array([0., 0., 1.]), 'tpr': array([0., 1., 1.]), 'thresholds': array([inf,  1.,  0.])}","(Response(IncreaseRapidly(SD Stride Time_a),DecreaseRapidly(SD Stride Time_s)) <= -0.50000) => Label=1 (0/0)
+(Response(IncreaseRapidly(SD Stride Time_a),DecreaseRapidly(SD Stride Time_s)) >  -0.50000) => Label=0 (0/0)"
+1,4,True,1.0,False,0.8571428571428571,1.0,0.7142857142857143,0.8333333333333334,"{'fpr': array([0., 0., 1.]), 'tpr': array([0.        , 0.71428571, 1.        ]), 'thresholds': array([inf,  1.,  0.])}","(ChainResponse(HighVolatilityI(Step Time Asy_a),HighVolatilityII(Step Velocity Asy_i)) <= 0.50000) => Label=0 (0/0)
+(ChainResponse(HighVolatilityI(Step Time Asy_a),HighVolatilityII(Step Velocity Asy_i)) >  0.50000) => Label=1 (0/0)"
+1,4,True,1.0,False,1.0,1.0,1.0,1.0,"{'fpr': array([0., 0., 1.]), 'tpr': array([0., 1., 1.]), 'thresholds': array([inf,  1.,  0.])}","(ChainPrecedence(HighVolatilityI(Step Time Asy_a),IncreaseSlowlyII(SD Step Velocity_s)) <= -0.50000) => Label=0 (0/0)
+(ChainPrecedence(HighVolatilityI(Step Time Asy_a),IncreaseSlowlyII(SD Step Velocity_s)) >  -0.50000) => Label=1 (0/0)"
+1,4,True,1.0,False,1.0,1.0,1.0,1.0,"{'fpr': array([0., 0., 1.]), 'tpr': array([0., 1., 1.]), 'thresholds': array([inf,  1.,  0.])}","(RespExistence(IncreaseSlowlyII(SD Step Velocity_s),DecreaseSlowlyIV(Mean Stance Time_i)) <= -0.50000) => Label=0 (0/0)
+(RespExistence(IncreaseSlowlyII(SD Step Velocity_s),DecreaseSlowlyIV(Mean Stance Time_i)) >  -0.50000) => Label=1 (0/0)"
+1,4,True,1.0,False,1.0,1.0,1.0,1.0,"{'fpr': array([0., 0., 1.]), 'tpr': array([0., 1., 1.]), 'thresholds': array([inf,  1.,  0.])}","(RespExistence(IncreaseRapidly(carbidopa_c_s),DecreaseRapidly(SD Stride Time_s)) <= -0.50000) => Label=1 (0/0)
+(RespExistence(IncreaseRapidly(carbidopa_c_s),DecreaseRapidly(SD Stride Time_s)) >  -0.50000) => Label=0 (0/0)"
+1,4,True,1.0,False,1.0,1.0,1.0,1.0,"{'fpr': array([0., 0., 1.]), 'tpr': array([0., 1., 1.]), 'thresholds': array([inf,  1.,  0.])}","(RespExistence(IncreaseRapidly(Step Time Asy_a),DecreaseRapidly(SD Stride Time_s)) <= -0.50000) => Label=1 (0/0)
+(RespExistence(IncreaseRapidly(Step Time Asy_a),DecreaseRapidly(SD Stride Time_s)) >  -0.50000) => Label=0 (0/0)"
+1,4,True,1.0,False,1.0,1.0,1.0,1.0,"{'fpr': array([0., 0., 1.]), 'tpr': array([0., 1., 1.]), 'thresholds': array([inf,  1.,  0.])}","(CoExistence(DecreaseRapidly(levodopa_c_s),DecreaseRapidly(SD Stride Time_s)) <= -0.50000) => Label=1 (0/0)
+(CoExistence(DecreaseRapidly(levodopa_c_s),DecreaseRapidly(SD Stride Time_s)) >  -0.50000) => Label=0 (0/0)"
+1,4,True,1.0,False,1.0,1.0,1.0,1.0,"{'fpr': array([0., 0., 1.]), 'tpr': array([0., 1., 1.]), 'thresholds': array([inf,  1.,  0.])}","(RespExistence(IncreaseSlowlyII(SD Step Velocity_s),DecreaseSlowlyIV(Alpha_i)) <= -0.50000) => Label=0 (0/0)
+(RespExistence(IncreaseSlowlyII(SD Step Velocity_s),DecreaseSlowlyIV(Alpha_i)) >  -0.50000) => Label=1 (0/0)"

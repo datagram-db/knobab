@@ -22,7 +22,8 @@ def _call_original(mining_supp:float,
                    isFastSat:bool,
                    folder:str,
                    time:str,
-                   reduction:bool=False):
+                   reduction:bool=False,
+                   data_aware:bool=False):
     """
     Calling the original C++ function from python
     """
@@ -43,11 +44,12 @@ from collections.abc import Iterable
 
 class KnobabEmeritateSupport():
 
-    def __init__(self, support:float, environment_field:str, polyadic_file:str, ignorable_fields=None):
+    def __init__(self, support:float, environment_field:str, polyadic_file:str, ignorable_fields=None, data_aware:bool=False):
         self.json_path = str(polyadic_file)
         self.environment_field = str(environment_field)
         self.support = float(support)
         self.ignore_fields = []
+        self.data_aware = data_aware
         if ignorable_fields is not None:
             self.ignore_fields = list(set(ignorable_fields))
 
@@ -56,6 +58,6 @@ class KnobabEmeritateSupport():
         #     isFastSat = True
         # else:
         #     folder = ""
-        _call_original(self.support, isPolyadicMine, self.environment_field, self.json_path, self.ignore_fields, isFastSat, str(folder), time, reduction)
+        _call_original(self.support, isPolyadicMine, self.environment_field, self.json_path, self.ignore_fields, isFastSat, str(folder), time, reduction, self.data_aware)
 
 

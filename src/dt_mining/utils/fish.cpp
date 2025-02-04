@@ -18,8 +18,8 @@ fish::fish() {
     funmap["embedding_dist"] = CO_Embed2_Dist_tau_d_expfit_meandiff;
     funmap["ami_timescale"] = IN_AutoMutualInfoStats_40_gaussian_fmmi;
     funmap["whiten_timescale"] = FC_LocalSimple_mean1_tauresrat;
-    funmap["outlier_timing_pos"] = DN_OutlierInclude_p_001_mdrmd;
-    funmap["outlier_timing_neg"] = DN_OutlierInclude_n_001_mdrmd;
+//    funmap["outlier_timing_pos"] = DN_OutlierInclude_p_001_mdrmd;
+//    funmap["outlier_timing_neg"] = DN_OutlierInclude_n_001_mdrmd;
     funmap["centroid_freq"] = SP_Summaries_welch_rect_area_5_1;
     funmap["stretch_decreasing"] = SB_BinaryStats_diff_longstretch0;
     funmap["entropy_pairs"] = SB_MotifThree_quantile_hh;

@@ -34,8 +34,10 @@ static inline double call_c_function(const std::span<double>& cppV, size_t begin
         return 0.0;
     else if (begin == end)
         return cppV[begin];
-    else
+    else {
+
         return (*f)(cppV.data()+begin, end-begin+1);
+    }
 }
 
 static inline double call_c_int_function(const std::span<double>& cppV, size_t begin, size_t end, catch24intfun f) {
@@ -43,8 +45,9 @@ static inline double call_c_int_function(const std::span<double>& cppV, size_t b
         return 0.0;
     else if (begin == end)
         return cppV[begin];
-    else
+    else {
         return (*f)(cppV.data()+begin, end-begin+1);
+    }
 }
 
 #include <unordered_map>
@@ -152,6 +155,7 @@ public:
         return isDataless;
     }
 
+
     inline statistics_payload eval(const std::span<double>& dim_values,
                                    const std::span<double>& time_values,
                                    size_t begin, size_t end) const {
@@ -161,37 +165,62 @@ public:
         auto itt = time_values.begin() + begin;
         auto env = dim_values.begin() + (end + 1);
         auto ent = time_values.begin() + (end + 1);
-
+        constexpr double eps = 2.220446049250313080847e-16;
         if (!isDataless) {
             for (const auto&[k,f] : funmap) {
                 auto tmp = call_c_function(dim_values, begin, end, f);
-                if (!std::isnan(tmp)) {
+                if ((!std::isnan(tmp)) && (std::abs(tmp)>eps)) {
                     m.emplace("values_"+k, tmp);
                 }
             }
-            for (const auto&[k,f] : funmap) {
-                m.emplace("time_"+k, call_c_function(time_values, begin, end, f));
-            }
-            m.emplace("values_acf_first_min", call_c_int_function(dim_values, begin, end, CO_FirstMin_ac));
-            m.emplace("values_periodicity", call_c_int_function(dim_values, begin, end, PD_PeriodicityWang_th0_01));
-            m.emplace("time_acf_first_min", call_c_int_function(time_values, begin, end, CO_FirstMin_ac));
-            m.emplace("time_periodicity", call_c_int_function(time_values, begin, end, PD_PeriodicityWang_th0_01));
+//            for (const auto&[k,f] : funmap) {
+//                auto tmp = call_c_function(time_values, begin, end, f);
+//                if ((!std::isnan(tmp)) && (std::abs(tmp)>eps)) {
+//                    m.emplace("time_"+k, tmp);
+//                }
+//            }
+            auto val = call_c_int_function(dim_values, begin, end, CO_FirstMin_ac);
+            if ((!std::isnan(val)) && (std::abs(val)>eps))
+                m.emplace("values_acf_first_min", val);
+            val = call_c_int_function(dim_values, begin, end, PD_PeriodicityWang_th0_01);
+            if ((!std::isnan(val)) && (std::abs(val)>eps))
+                m.emplace("values_periodicity", val);
+//            val = call_c_int_function(time_values, begin, end, CO_FirstMin_ac);
+//            if ((!std::isnan(val)) && (std::abs(val)>eps))
+//                m.emplace("time_acf_first_min", val);
+//            val = call_c_int_function(time_values, begin, end, PD_PeriodicityWang_th0_01);
+//            if ((!std::isnan(val)) && (std::abs(val)>eps))
+//            m.emplace("time_periodicity", val);
         } else {
             auto cp = my_mean_variance(itv, env);
-            m.emplace("values_mean", cp.first);
-            m.emplace("values_var", cp.second);
-            m.emplace("values_stdev", std::sqrt(cp.second));
+            if (std::abs(cp.first)>eps)
+                m.emplace("values_mean", cp.first);
+            if (std::abs(cp.second)>eps) {
+                m.emplace("values_var", cp.second);
+                m.emplace("values_stdev", std::sqrt(cp.second));
+            }
             m.emplace("values_median", my_median(itv, env));
-            cp = my_mean_variance(itt, ent);
-            m.emplace("time_mean", cp.first);
-            m.emplace("time_var", cp.second);
-            m.emplace("time_stdev", std::sqrt(cp.second));
-            m.emplace("time_median", my_median(itt, ent));
+//            cp = my_mean_variance(itt, ent);
+//            if (std::abs(cp.first)>eps)
+//                m.emplace("time_mean", cp.first);
+//            if (std::abs(cp.second)>eps) {
+//                m.emplace("time_var", cp.second);
+//                m.emplace("time_stdev", std::sqrt(cp.second));
+//            }
+//            m.emplace("time_median", my_median(itt, ent));
         }
-        m.emplace("values_max", *my_max_element(itv, env));
-        m.emplace("values_min", *my_min_element(itv, env));
-        m.emplace("time_max", *my_max_element(itt, ent));
-        m.emplace("time_min", *my_min_element(itt, ent));
+        auto val = *my_max_element(itv, env);
+        if ((!std::isnan(val)) && (std::abs(val)>eps))
+            m.emplace("values_max", val);
+        val = *my_min_element(itv, env);
+        if ((!std::isnan(val)) && (std::abs(val)>eps))
+            m.emplace("values_min", val);
+        val = *my_max_element(itt, ent);
+        if ((!std::isnan(val)) && (std::abs(val)>eps))
+            m.emplace("time_max", val);
+        val = *my_min_element(itt, ent);
+        if ((!std::isnan(val)) && (std::abs(val)>eps))
+            m.emplace("time_min", val);
         return m;
     }
 

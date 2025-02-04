@@ -171,7 +171,7 @@ struct payload_preserving {
      * @param casus
      * @param sampling_probability
      */
-    void load_activation_with_policy(const act_target_correlation_preserver::binary_clause& clause,
+    bool load_activation_with_policy(const act_target_correlation_preserver::binary_clause& clause,
                           const act_target_correlation_preserver::M& map,
                           std::vector<payload_t>& X,
                           std::vector<int>& y,
@@ -180,11 +180,12 @@ struct payload_preserving {
                           double sampling_probability= 1.0) {
         X.clear();
         y.clear();
+        std::unordered_set<int> S;
         std::mt19937 engine;
         std::uniform_real_distribution<double> dist(0.0, 1.0);
         auto it = map.find(clause);
         if (it == map.end())
-            return;
+            return true;
 
         for (const auto& [log_name, all_traces] : it->second) {
             for (const auto& trace : all_traces) {
@@ -206,6 +207,7 @@ struct payload_preserving {
                             if (dist(engine) <= sampling_probability) {
                                 X.emplace_back(*payload);
                                 y.emplace_back(clazz);
+                                S.emplace(clazz);
                                 redundantXCorrespondences.emplace_back(key.offset);
                             }
                         }
@@ -213,6 +215,8 @@ struct payload_preserving {
                 }
             }
         }
+        DEBUG_ASSERT(S.size()> 1);
+        return S.size() > 1;
     }
 
     /**
@@ -223,7 +227,7 @@ struct payload_preserving {
  * @param casus
  * @param sampling_probability
  */
-    void load_target_with_policy(const act_target_correlation_preserver::binary_clause& clause,
+    bool load_target_with_policy(const act_target_correlation_preserver::binary_clause& clause,
                               const act_target_correlation_preserver::M& map,
                               std::vector<payload_t>& X,
                               std::vector<int>& y,
@@ -232,11 +236,12 @@ struct payload_preserving {
                               double sampling_probability= 1.0) {
         X.clear();
         y.clear();
+        std::unordered_set<int> S;
         std::mt19937 engine;
         std::uniform_real_distribution<double> dist(0.0, 1.0);
         auto it = map.find(clause);
         if (it == map.end())
-            return;
+            return true;
 
         for (const auto& [log_name, all_traces] : it->second) {
             for (const auto &trace: all_traces) {
@@ -272,6 +277,8 @@ struct payload_preserving {
                 }
             }
         }
+        DEBUG_ASSERT(S.size()> 1);
+        return S.size() > 1;
     }
 
     // TODO: correlation condition between activation and target

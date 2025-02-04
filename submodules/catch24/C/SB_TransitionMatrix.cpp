@@ -33,6 +33,8 @@ double SB_TransitionMatrix_3ac_sumdiagcov(const double y[], const int size)
     const int numGroups = 3;
     
     int tau = co_firstzero(y, size, size);
+    if (tau == 0)
+        return NAN; // Bugfix
     
     double * yFilt = (double * )malloc(size * sizeof(double));
     
@@ -87,6 +89,8 @@ double SB_TransitionMatrix_3ac_sumdiagcov(const double y[], const int size)
     
     // more efficient way of doing the below 
     for(int j = 0; j < nDown-1; j++){
+        if ((yCG[j]-1>3) || (yCG[j+1]-1>3))
+            return NAN; // Bugfix
         T[yCG[j]-1][yCG[j+1]-1] += 1;
     }
     

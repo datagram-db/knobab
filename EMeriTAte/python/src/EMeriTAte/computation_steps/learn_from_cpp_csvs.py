@@ -18,7 +18,14 @@ from pathlib import Path
 
 
 def load_single_file_and_append_class(t:Tuple[int,str], clazz='class')->pandas.DataFrame:
-    df0 = pandas.read_csv(t[1], index_col=0, header=None).transpose()
+    obj = None
+    if isinstance(t[1], str):
+        obj = pandas.read_csv(t[1], index_col=0, header=None)
+    elif isinstance(t[1], pandas.DataFrame):
+        obj = t[1]
+    else:
+        raise TypeError("ERROR: expecting either a string or pandas.DataFrame")
+    df0 = obj.transpose()
     df0[clazz] = t[0]
     return df0
 

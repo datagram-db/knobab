@@ -138,6 +138,9 @@ struct myParser {
                 payload[keyV] = (double)val;
                 return true;
             }
+        } else {
+            std::string x = std::to_string(val);
+            return string(x);
         }
         return false;
     }
@@ -150,6 +153,9 @@ struct myParser {
                 payload[keyV] = (double)val;
                 return true;
             }
+        } else {
+            std::string x = std::to_string(val);
+            return string(x);
         }
         return false;
     }
@@ -164,6 +170,9 @@ struct myParser {
                 payload[keyV] = (double)val;
                 return true;
             }
+        } else {
+            std::string x = std::to_string(val);
+            return string(x);
         }
         return false;
     }

@@ -259,6 +259,7 @@ std::tuple<double,double,double,double> polyadic_loader(const std::unordered_set
             for (auto& [k, v]: sax.tmp_event_paload_aka_rawdata) {
                 size_t vsize = v.size();
                 for (auto& ref : v) {
+                    std::sort(ref.first.begin(), ref.first.end());
                     sax.event_paload_aka_rawdataX.emplace_back(std::move(ref.first));
                     sax.event_paload_aka_rawdataY.emplace_back(ref.second);
                 }

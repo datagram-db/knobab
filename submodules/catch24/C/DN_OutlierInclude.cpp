@@ -57,7 +57,7 @@ double DN_OutlierInclude_np_001_mdrmd(const double y[], const int size, const in
     int nThresh = maxVal/inc + 1;
     
     // save the indices where y > threshold
-    double * r = (double * ) malloc(size * sizeof * r);
+    double * r = (double * ) malloc(size * sizeof(double));
     
     // save the median over indices with absolute value > threshold
     double * msDti1 = (double * )malloc(nThresh * sizeof(double));

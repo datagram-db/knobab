@@ -10,6 +10,92 @@
 #include <list>
 #include "knobab/mining/polyadic/commons.h"
 
+static INLINE void mine_a_b(std::unordered_map<std::string, std::ofstream>& dataless_logs,
+                            std::unordered_map<std::string, polyadic_bolt>& gv,
+                            ServerQueryManager &sqm,
+                            std::unordered_map<std::string, std::unordered_map<act_t, std::string> >& forAllLogsCacheMap,
+                            std::unordered_map<std::string, result_container>& rcv,
+                            std::unordered_map<std::string,  std::unordered_set<std::pair<act_t,act_t>>>& usedv,
+                            payload_act_tracker& pat,
+                            std::unordered_map<std::string, polyadic_bolt::result_map_t>& result_map,
+                            std::unordered_map<std::string, std::unordered_map<size_t, std::vector<size_t>>>& act_Labels,
+                            std::unordered_map<std::string, std::unordered_map<size_t, std::vector<size_t>>>& noact_Labels,
+                            std::unordered_map<std::string, size_t>& min_int_supp_patts,
+                            double mining_supp,
+                            bool polyadic,
+                            FastDatalessClause& clause,
+                            const std::string& cA,
+                            const std::string& cB) {
+    act_t A = -1, B = -1;
+    for (auto& [log_name, g] : gv) {
+        const auto& env = sqm.multiple_logs[log_name];
+        ssize_t actA = env.db.event_label_mapper.signed_get(cA);
+        if (actA >= 0) {
+            forAllLogsCacheMap[log_name].emplace(actA, cA);
+            A = actA;
+        } else {
+            A = -1;
+        }
+        ssize_t actB = env.db.event_label_mapper.signed_get(cB);
+        if (actB >= 0) {
+            forAllLogsCacheMap[log_name].emplace(actB, cB);
+            B = actB;
+        } else {
+            B = -1;
+        }
+        auto& rc = rcv[log_name];
+        auto& used = usedv[log_name];
+        g.clear();
+        g.setKnowledgeBaseAndInit(&sqm.multiple_logs[log_name].db); // also, Phi clear
+        // False: do not finalise the clause insertion in phi!
+        pat.clear();
+        result_map.clear();
+        rc.log_size = g.log_size;
+
+        g.mine_for_AB_clauses(mining_supp, polyadic, A, B, clause, forAllLogsCacheMap[log_name], min_int_supp_patts[log_name], rc, used, binary_pattern, true);
+        g.finalise_binary_run(std::ceil(((double)mining_supp) * (sqm.multiple_logs[log_name].db.nTraces())),
+                              used,
+                              A, B);
+
+        for (const auto& simple_cls: rc.for_is_clause_present) {
+            auto ternary = result_container::get_simple_ternary_clause(simple_cls, cA, cB);
+            rc.complex_operator(simple_cls, g.graph.get(simple_cls), cA, cB, g.log_size, result_map[log_name]);
+            FastDatalessClause x(std::get<0>(ternary), std::get<1>(ternary), std::get<2>(ternary), 2);
+            g.Phi.erase(
+                    std::remove_if(g.Phi.begin(), g.Phi.end(),
+                                   [&x](const pattern_mining_result<FastDatalessClause> & o) { return o.clause == x; }),
+                    g.Phi.end());
+        }
+
+        const auto& aAct = act_Labels[log_name][A];
+        const auto& bAct = act_Labels[log_name][B];
+        const auto& aNoAct = noact_Labels[log_name][A];
+        const auto& bNoAct = noact_Labels[log_name][B];
+        std::set_intersection(aAct.begin(), aAct.end(), bAct.begin(), bAct.end(), std::back_inserter(pat.A_and_B));
+        std::set_union(aAct.begin(), aAct.end(), bAct.begin(), bAct.end(), std::back_inserter(pat.A_or_B));
+        std::set_intersection(aNoAct.begin(), aNoAct.end(), bNoAct.begin(), bNoAct.end(), std::back_inserter(pat.neither_ACT));
+        std::set_difference(aAct.begin(), aAct.end(), bAct.begin(), bAct.end(), std::back_inserter(pat.A_not_B));
+        std::set_difference(bAct.begin(), bAct.end(), aAct.begin(), aAct.end(), std::back_inserter(pat.B_not_A));
+        std::set_intersection(pat.A_not_B.begin(), pat.A_not_B.end(), pat.B_not_A.begin(), pat.B_not_A.end(), std::back_inserter(pat.excl_OCC));
+        std::vector<size_t> tmp;
+        std::set_union(pat.neither_ACT.begin(), pat.neither_ACT.end(), pat.A_and_B.begin(), pat.A_and_B.end(), std::back_inserter(tmp));
+
+        for (const auto& v : g.extra_mining) {
+            auto ternary = result_container::get_simple_ternary_clause(v, cA, cB);
+            FastDatalessClause x(std::get<0>(ternary), std::get<1>(ternary), std::get<2>(ternary), 2);
+            for (const auto& p : g.Phi) {
+                if (p.clause == x) {
+                    auto& node = g.graph.get(v);
+                    rc.complex_operator(v, node, cA, cB, g.log_size, result_map[log_name]);
+                    break;
+                }
+            }
+        }
+        polyadic_bolt::serialize_to_file(result_map[log_name], dataless_logs[log_name]);
+    }
+}
+
+
 std::pair<double,double> algorithmic_strategy::polyadic_dataful_mining_and_refinement(const std::filesystem::path& folder, double mining_supp, bool polyadic, bool reduction, ServerQueryManager &sqm,
                                                                  std::unordered_map<std::string, std::set<std::tuple<std::string, std::string, std::string>>> &diff) {
     using std::chrono::high_resolution_clock;
@@ -41,15 +127,17 @@ std::pair<double,double> algorithmic_strategy::polyadic_dataful_mining_and_refin
 
     std::unordered_map<std::string, std::ofstream> dataless_logs;
     std::unordered_map<std::string, std::ofstream> dataful_logs;
+    DEBUG_ASSERT(!sqm.multiple_logs.empty());
     for (const auto& [log_name, kb] : sqm.multiple_logs) {
         dataless_logs.emplace(log_name,
-                              (folder / ("output_csv_"+log_name+".csv")).string());
+                              (dataful_folder / ("output_csv_"+log_name+".csv")).string());
         dataful_logs.emplace(log_name,
                               (dataful_folder / ("output_csv_"+log_name+"_dataful_.csv")).string());
 //        activities.insert(kb.db.event_label_mapper.int_to_T.begin(), kb.db.event_label_mapper.int_to_T.end());
         auto& g = gv.emplace(log_name, log_name).first->second;
         auto& ref = frequent_itemsets[log_name];
         auto& currentCache = forAllLogsCacheMap[log_name];
+        DEBUG_ASSERT(!sqm.multiple_logs.empty());
         minimum_support_thresholds[log_name] = std::min((uint32_t)std::ceil((double)(sqm.multiple_logs[log_name].db.nTraces()) * mining_supp), (sqm.multiple_logs[log_name].db.nTraces()));
         min_int_supp_patts[log_name] = std::ceil(((double)mining_supp) * (minimum_support_thresholds[log_name]));
 
@@ -58,7 +146,7 @@ std::pair<double,double> algorithmic_strategy::polyadic_dataful_mining_and_refin
 
         // Determining which itemsets can be computed non in-tandem
         // 1) Determining which itemsets are shared and which are not
-        size_t count_idx = 0;
+//        size_t count_idx = 0;
         for (size_t idx = 0, N = ref.size(); idx<N; idx++) {
             const auto& count = ref.at(idx).first;
             const auto& itemset = ref.at(idx).second;
@@ -66,25 +154,61 @@ std::pair<double,double> algorithmic_strategy::polyadic_dataful_mining_and_refin
                 auto it = itemset.begin();
 
                 cp_acts.first = kb.db.event_label_mapper.get(*it);
-                activities.emplace_back(cp_acts.first);
-                currentCache.emplace(*it, cp_acts.first);
+                auto first_skippable = (cp_acts.first == "__missing") || (cp_acts.first == "__raw_data") || (cp_acts.first == "__trace_payload");
+                if (!first_skippable)  {
+                    activities.emplace_back(cp_acts.first);
+                    currentCache.emplace(*it, cp_acts.first);
+                }
                 it++;
                 cp_acts.second = kb.db.event_label_mapper.get(*it);
-                activities.emplace_back(cp_acts.second);
-                currentCache.emplace(*it, cp_acts.second);
+                auto second_skippable = ((cp_acts.second == "__missing") || (cp_acts.second == "__raw_data") || (cp_acts.second == "__trace_payload"));
+                if (!second_skippable) {
+                    activities.emplace_back(cp_acts.second);
+                    currentCache.emplace(*it, cp_acts.second);
+                }
 
-                if ((cp_acts.first == "__missing")) {
+
+                if (first_skippable) {
                     indices_to_remove[log_name].emplace(idx);
                     continue;
                 }
-                if ((cp_acts.second == "__missing"))  {
+                if (second_skippable)  {
                     indices_to_remove[log_name].emplace(idx);
                     continue;
                 }
+
                 if (cp_acts.first > cp_acts.second)
                     std::swap(cp_acts.first, cp_acts.second);
-                elements[cp_acts].emplace_back(log_name, count_idx);
-                count_idx++;
+
+                if (elements[cp_acts].empty()) {
+                    std::cerr << "#" << idx << " = " << cp_acts << std::endl;
+                    // Some of the frequent patterns might be duplicated, as starting to expand from the same activity label
+                    // So, I am only considering one pair once per activity label
+                    elements[cp_acts].emplace_back(log_name, idx);
+#ifdef DEBUG
+                    {
+                        std::unordered_map<std::string, size_t> allLogsIn;
+                        for (const auto& pair : elements[cp_acts]) {
+                            auto it = allLogsIn.emplace(pair.first, pair.second);
+                            const auto& first = ref[pair.second];
+                            const auto& previous = ref[it.first->second];
+                            {
+                                auto it2 = first.second.begin();
+                                std::cerr << kb.db.event_label_mapper.get(*it2++) <<","<< kb.db.event_label_mapper.get(*it2++)<<std::endl;
+                            }
+                            {
+                                auto it2 = previous.second.begin();
+                                std::cerr << kb.db.event_label_mapper.get(*it2++) <<","<< kb.db.event_label_mapper.get(*it2++)<<std::endl;
+                            }
+                            DEBUG_ASSERT(it.second);
+                        }
+                    };
+
+#endif
+                } else {
+                    indices_to_remove[log_name].emplace(idx);
+                }
+
             } else {
                 auto it = itemset.begin();
                 const auto& ref2 = kb.db.event_label_mapper.get(*it);
@@ -135,11 +259,10 @@ std::pair<double,double> algorithmic_strategy::polyadic_dataful_mining_and_refin
 
     std::unordered_set<std::string> categorical{"__label"}, numerical;
     if (refine_init || refine_ends || refine_existentials) {
+        DEBUG_ASSERT(!sqm.multiple_logs.empty());
         for (const auto& [log, env] : sqm.multiple_logs) {
             for (const auto &[key, table]: env.db.attribute_name_to_table) {
                 if (table.type != StringAtt)
-//                    categorical.emplace(key);
-//                else
                     numerical.emplace(key);
             }
         }
@@ -148,10 +271,10 @@ std::pair<double,double> algorithmic_strategy::polyadic_dataful_mining_and_refin
     if (refine_init || refine_ends) {
         std::vector<int> beginsY, endsY;
         std::vector<std::vector<std::pair<std::string,union_minimal>>> beginsX, endsX;
-//        std::vector<std::pair<std::vector<std::pair<std::string,union_minimal>>, int>> begins, ends;
-        std::unordered_map<std::string, std::vector<std::vector<size_t>>> W1, W2;
+std::unordered_map<std::string, std::vector<std::vector<size_t>>> W1, W2;
 
         size_t bs = 0, es = 0;
+        DEBUG_ASSERT(!sqm.multiple_logs.empty());
         for (const auto& [log, env] : sqm.multiple_logs) {
             if (refine_init) W1[log].resize(env.db.act_table_by_act_id.secondary_index.size());
             if (refine_ends) W2[log].resize(env.db.act_table_by_act_id.secondary_index.size());
@@ -178,11 +301,10 @@ std::pair<double,double> algorithmic_strategy::polyadic_dataful_mining_and_refin
         endsX.resize(es); endsY.resize(bs);
         bs = 0, es = 0;
 
+        DEBUG_ASSERT(!sqm.multiple_logs.empty());
         for (const auto& [log, env] : sqm.multiple_logs) {
             for (const auto& [key, table] : env.db.attribute_name_to_table) {
                 if (table.type != StringAtt)
-//                    categorical.emplace(key);
-//                else
                     numerical.emplace(key);
             }
             int clazz = std::stoi(log);
@@ -192,55 +314,30 @@ std::pair<double,double> algorithmic_strategy::polyadic_dataful_mining_and_refin
                 if (refine_init) {
                     for (const auto& [act, event_record_ls] : *IDX.first) {
                         for (const auto& record : event_record_ls) {
-//                            std::vector<std::pair<std::string,union_minimal>>/*&*/ tuple; //= begins[bs].first;
-//                            tuple.reserve(env.db.attribute_name_to_table.size()+1);
                             size_t offset = record - env.db.act_table_by_act_id.table.data();
                             beginsX[bs].reserve(env.db.attribute_name_to_table.size());
                             beginsX[bs].emplace_back("__label", env.db.event_label_mapper.get(act));
                             for (const auto& [key, table] : env.db.attribute_name_to_table) {
                                 table.resolve_record_if_exists3(offset, beginsX[bs]);
-//                                table.resolve_record_if_exists2(offset, tuple);
                             }
                             DEBUG_ASSERT(trace_id < W1[log].size());
                             W1[log][trace_id].emplace_back(bs);
                             std::sort(beginsX[bs].begin(), beginsX[bs].end());
                             beginsY[bs] = clazz;
-//                            std::swap(begins[bs].first, tuple);
-//                            begins.emplace_back(tuple, clazz);
                             bs++;
                         }
                     }
                 }
-//                if (refine_ends) {
-//                    for (const auto& [act, event_record_ls] : *IDX.second) {
-//                        for (const auto& record : event_record_ls) {
-////                            std::vector<std::pair<std::string,union_minimal>>/*&*/ tuple;// = ends[es].first;
-//                            size_t offset = record - env.db.act_table_by_act_id.table.data();
-//                            ends[es].first.reserve(env.db.attribute_name_to_table.size());
-//                            ends[es].first.emplace_back("__label", env.db.event_label_mapper.get(act));
-////                            tuple["__label"] = env.db.event_label_mapper.get(act);
-//                            for (const auto& [key, table] : env.db.attribute_name_to_table) {
-//                                table.resolve_record_if_exists3(offset, ends[es].first);
-////                                table.resolve_record_if_exists2(offset, tuple);
-//                            }
-//                            DEBUG_ASSERT(trace_id < W2[log].size());
-//                            W2[log][trace_id].emplace_back(ends.size());
-//                            std::sort(ends[es].first.begin(), ends[es].first.end());
-//                            ends[es].second = clazz;
-////                            std::swap(ends[es].first, tuple);
-////                            ends.emplace_back(tuple, clazz);
-//                            es++;
-//                        }
-//                    }
-//                }
             }
         }
         if (refine_init) {
             auto refinement = dataful_folder / "Refinement_init";
+            DEBUG_ASSERT(!sqm.multiple_logs.empty());
             train_and_dump_to_csv3(sqm.multiple_logs, W1, refinement.string(), beginsX,beginsY, "InitAll", "InitSome", false, sqm.multiple_logs.size(),numerical, categorical );
             beginsX.clear();
         }
         if (refine_ends) {
+            DEBUG_ASSERT(!sqm.multiple_logs.empty());
             for (const auto& [log, env] : sqm.multiple_logs) {
                 int clazz = std::stoi(log);
                 for (size_t trace_id = 0, N = env.db.act_table_by_act_id.secondary_index.size();
@@ -267,19 +364,25 @@ std::pair<double,double> algorithmic_strategy::polyadic_dataful_mining_and_refin
             }
 
             auto refinement = dataful_folder / "Refinement_end";
+            DEBUG_ASSERT(!sqm.multiple_logs.empty());
             train_and_dump_to_csv3(sqm.multiple_logs, W1, refinement.string(), endsX,endsY, "EndAll", "EndSome", false, sqm.multiple_logs.size(),numerical, categorical );
         }
     }
 
     bool keepFirstEvent = true;
     if (refine_existentials) {
+        // (A) This is the old refinement based upon common Declare convention.
+        // This means, I try to get this information being temporal anywhere.
+        // Still, this does not address the specificity of the temporal traces,
+        // requiring as in CIF to determine the best elements to be differentiated by payload
         for (const auto& [act, kb_ids] : act_to_log_name) {
             if (kb_ids.size() > 1) {
                 // Actually performing the refinement
                 std::unordered_map<std::string, std::vector<std::vector<size_t>>> W1;
 
-                std::vector<int> beginsY;
-                std::vector<std::vector<std::pair<std::string,union_minimal>>> beginsX;
+                std::vector<int> beginsY;                                               // (A)
+                std::vector<std::vector<std::pair<std::string,union_minimal>>> beginsX; // (A)
+                DEBUG_ASSERT(!sqm.multiple_logs.empty());
                 for (const auto& [log, env] : sqm.multiple_logs) {
                     int clazz = std::stoi(log);
                     auto A = env.db.event_label_mapper.get(act);
@@ -292,6 +395,7 @@ std::pair<double,double> algorithmic_strategy::polyadic_dataful_mining_and_refin
                             for (const auto& [key, table] : env.db.attribute_name_to_table) {
                                 table.resolve_record_if_exists3(offset, tuple);
                             }
+                            std::sort(tuple.begin(), tuple.end());
                             W1[log][cp.first->entry.id.parts.trace_id].emplace_back(beginsY.size());
                             beginsY.emplace_back(clazz);
                         }
@@ -299,13 +403,16 @@ std::pair<double,double> algorithmic_strategy::polyadic_dataful_mining_and_refin
                     }
                 }
 
+                DEBUG_ASSERT(!sqm.multiple_logs.empty());
                 // TODO: provide a refinement based upon the number of the occurrences of the activity numbers
                 auto refinement = dataful_folder / ("Refinement_exists_"+act);
-                train_and_dump_to_csv2(sqm.multiple_logs, W1, refinement.string(), beginsX,beginsY, "Exists", "", true, sqm.multiple_logs.size(),numerical, categorical, act ,
+                train_and_dump_to_csv2(sqm.multiple_logs, W1, refinement.string(), beginsX,beginsY, "Exists", "", true, sqm.multiple_logs.size(),numerical,
+                                       {}, act ,
                                       false);
             }
         }
     }
+//    exit(200);
 
     // Now, going for the binary patterns.
     // 0. Initalising the same components from fast SAT
@@ -313,14 +420,17 @@ std::pair<double,double> algorithmic_strategy::polyadic_dataful_mining_and_refin
     std::vector<std::string> final_act_order;
     std::unordered_map<std::string, std::unordered_map<size_t, std::vector<size_t>>> act_Labels, noact_Labels;
     for (auto& [log_name, g] : gv) {
+        DEBUG_ASSERT(!sqm.multiple_logs.empty());
         auto* kb = &sqm.multiple_logs[log_name].db;
         auto& refAct = act_Labels[log_name];
         auto& refNoAct = noact_Labels[log_name];
         auto v = kb->actCounting();
         for (const auto& x : activities) {
-            auto activity_id = kb->event_label_mapper.get(x);
-            total_act_counting[x] += v[activity_id];
-            g.collect_activity_existance(kb, x, refAct, refNoAct);
+            auto activity_id = kb->event_label_mapper.signed_get(x);
+            if (activity_id>=0) {
+                total_act_counting[x] += v[activity_id];
+                g.collect_activity_existance(kb, x, refAct, refNoAct);
+            }
         }
     }
     std::sort(activities.begin(), activities.end(), [&total_act_counting](const std::string& lhs, const std::string& rhs) {
@@ -342,87 +452,27 @@ std::pair<double,double> algorithmic_strategy::polyadic_dataful_mining_and_refin
                 order_of_visit_for_compactness[pair.second].emplace_back(pair.first);
             }
         } else {
+            DEBUG_ASSERT(!sqm.multiple_logs.empty());
             // Running the dataless mining over the single log containing the pair
             // and falling back to the old mining algorithm, using the lattice search (Bolt2 w lattice)
-            std::string log_name;
+            std::string orig_log_name;
             size_t offset;
-            std::tie(log_name, offset) = *entries.begin();
-            DEBUG_ASSERT(frequent_itemsets[log_name].size() > offset);
-            auto& g = gv.find(log_name)->second;
-            g.clear();
-            g.setKnowledgeBaseAndInit(&sqm.multiple_logs[log_name].db); // also, Phi clear
-
-            const auto& binary_pattern = frequent_itemsets[log_name][offset];
-            auto& rc = rcv[log_name];
-            auto& used = usedv[log_name];
+            std::tie(orig_log_name, offset) = *entries.begin();
+            DEBUG_ASSERT(frequent_itemsets[orig_log_name].size() > offset);
+            const auto& binary_pattern = frequent_itemsets[orig_log_name][offset];
             auto it = binary_pattern.second.begin();
             auto A = *it;
             it++;
             auto B = *it;
-             std::string cA = forAllLogsCacheMap[log_name].at(A);;
-            std::string cB = forAllLogsCacheMap[log_name].at(B);
+            std::string cA = forAllLogsCacheMap[orig_log_name].at(A);;
+            std::string cB = forAllLogsCacheMap[orig_log_name].at(B);
             if (cB > cA) {
                 std::swap(A, B);
                 std::swap(cA, cB);
             }
-            // False: do not finalise the clause insertion in phi!
-            pat.clear();
-            result_map.clear();
-            g.mine_for_AB_clauses(mining_supp, polyadic, A, B, clause, forAllLogsCacheMap[log_name], min_int_supp_patts[log_name], rc, used, binary_pattern, true);
-            g.finalise_binary_run(std::ceil(((double)mining_supp) * (sqm.multiple_logs[log_name].db.nTraces())),
-                                  used,
-                                  A, B);
 
-            for (size_t idx = 0, N = rc.is_clause_present.size(); idx<N; idx++) {
-                if (rc.is_clause_present[idx]) {
-                    const auto& simple_cls = rc.for_is_clause_present[idx];
-                    auto ternary = result_container::get_simple_ternary_clause(rc.for_is_clause_present[idx], cA, cB);
-                    rc.complex_operator(simple_cls, g.graph.get(simple_cls), cA, cB, g.log_size, result_map[log_name]);
-                    FastDatalessClause x(std::get<0>(ternary), std::get<1>(ternary), std::get<2>(ternary), 2);
-                    g.Phi.erase(
-                            std::remove_if(g.Phi.begin(), g.Phi.end(),
-                                           [&x](const pattern_mining_result<FastDatalessClause> & o) { return o.clause == x; }),
-                            g.Phi.end());
-                }
-            }
-
-            const auto& aAct = act_Labels[log_name][A];
-            const auto& bAct = act_Labels[log_name][B];
-            const auto& aNoAct = noact_Labels[log_name][A];
-            const auto& bNoAct = noact_Labels[log_name][B];
-            std::set_intersection(aAct.begin(), aAct.end(), bAct.begin(), bAct.end(), std::back_inserter(pat.A_and_B));
-            std::set_union(aAct.begin(), aAct.end(), bAct.begin(), bAct.end(), std::back_inserter(pat.A_or_B));
-            std::set_intersection(aNoAct.begin(), aNoAct.end(), bNoAct.begin(), bNoAct.end(), std::back_inserter(pat.neither_ACT));
-            std::set_difference(aAct.begin(), aAct.end(), bAct.begin(), bAct.end(), std::back_inserter(pat.A_not_B));
-            std::set_difference(bAct.begin(), bAct.end(), aAct.begin(), aAct.end(), std::back_inserter(pat.B_not_A));
-            std::set_intersection(pat.A_not_B.begin(), pat.A_not_B.end(), pat.B_not_A.begin(), pat.B_not_A.end(), std::back_inserter(pat.excl_OCC));
-            std::vector<size_t> tmp;
-            std::set_union(pat.neither_ACT.begin(), pat.neither_ACT.end(), pat.A_and_B.begin(), pat.A_and_B.end(), std::back_inserter(tmp));
-
-            for (const auto& v : g.extra_mining) {
-                auto ternary = result_container::get_simple_ternary_clause(v, cA, cB);
-                FastDatalessClause x(std::get<0>(ternary), std::get<1>(ternary), std::get<2>(ternary), 2);
-                for (const auto& p : g.Phi) {
-                    if (p.clause == x) {
-                        auto& node = g.graph.get(v);
-                        rc.complex_operator(v, node, cA, cB, g.log_size, result_map[log_name]);
-                        break;
-                    }
-                }
-            }
-            polyadic_bolt::serialize_to_file(result_map[log_name], dataless_logs[log_name]);
-            for ( auto& [other_log_name, log_file] : dataless_logs) {
-                if (other_log_name != log_name) {
-                    size_t N = sqm.multiple_logs[other_log_name].db.nTraces();
-                    for (auto& [clause_name, sat_row] : result_map[log_name]) {
-                        sat_row.clear();
-                        sat_row.resize(N, -2); // Explicitly determining that this is a missing information, as
-                        // we cannot foretell the value that this is going to be associated with
-                    }
-                    polyadic_bolt::serialize_to_file(result_map[log_name], log_file);
-                }
-            }
-            result_map.clear();
+            mine_a_b(dataless_logs, gv, sqm, forAllLogsCacheMap, rcv, usedv, pat,result_map, act_Labels, noact_Labels,
+                     min_int_supp_patts, mining_supp, polyadic, clause, cA, cB);
         }
 
     }
@@ -457,15 +507,20 @@ std::pair<double,double> algorithmic_strategy::polyadic_dataful_mining_and_refin
     std::unordered_map<int, std::vector<std::pair<double,std::vector<dt_predicate>>>> model;
     std::unordered_map<std::string, std::unordered_map<std::vector<dt_predicate>, std::vector<std::unordered_set<ActivationCases>>>> results_for_serialization;
     std::unordered_set<std::vector<dt_predicate>> all_predicates_of_interest;
-
+    std::vector<std::string> empty_vector;
     for (auto it = activities.rbegin(), en = activities.rend(); it != en; ) {
         const auto& actA = *it;
-        const auto& rest = order_of_visit_for_compactness.find(actA)->second;
+//        if (!order_of_visit_for_compactness.contains(actA))
+//            continue;
+        const auto& rest = (order_of_visit_for_compactness.contains(actA)) ? order_of_visit_for_compactness.find(actA)->second : empty_vector;
         std::pair<std::string,std::string> cp;
         cp.first = actA;
         bool isADataBeingCollected = false, isBDataBeingCollected =false; // If there is no purpuse for pre-collecting the data, then this is set to false
 
         for (const auto& actB : rest) {
+#ifdef DEBUG
+            std::cout << "(" << actA << "," << actB << ")" << std::endl;
+#endif
             isBDataBeingCollected = false;
             Bpayloads.clear();
             cp.second = actB;
@@ -488,7 +543,11 @@ std::pair<double,double> algorithmic_strategy::polyadic_dataful_mining_and_refin
                 auto A = *it;
                 it++;
                 auto B = *it;
+                if (!forAllLogsCacheMap[log_name].contains(A))
+                    continue;
                 const auto& cA = forAllLogsCacheMap[log_name].at(A);;
+                if (!forAllLogsCacheMap[log_name].contains(B))
+                    continue;
                 const auto& cB = forAllLogsCacheMap[log_name].at(B);
                 if (cB != actB)
                     std::swap(A, B);
@@ -502,7 +561,7 @@ std::pair<double,double> algorithmic_strategy::polyadic_dataful_mining_and_refin
                 g.collect_dataless_information(actA, A, act_Labels[log_name][A], noact_Labels[log_name][A],
                                                actB, B, act_Labels[log_name][B], noact_Labels[log_name][B],
                                                polyadic,
-                                               rc_map[log_name], pat_map[log_name], dataless_logs[log_name], result_map[log_name]);
+                                               rc_map[log_name], pat_map[log_name], dataless_logs[log_name], result_map[log_name], false);
             }
 
             // Determining which are the logs that have the clauses being really satisfied, and not just satisfying vacuously or not being represented
@@ -532,7 +591,24 @@ std::pair<double,double> algorithmic_strategy::polyadic_dataful_mining_and_refin
                     const bool is_absent = count_absences == scores.size();
                     if (!is_absent) {
                         // Adding only if the clause is satisfied or not satisfied
-                        logs_with_sat_clauses[node].emplace_back(log_name);
+                        if (node.first == "Succession") {
+                            if (node.second) {
+                                logs_with_sat_clauses[g.precAB].emplace_back(log_name);
+                                logs_with_sat_clauses[g.respAB].emplace_back(log_name);
+                            } else {
+                                logs_with_sat_clauses[g.precBA].emplace_back(log_name);
+                                logs_with_sat_clauses[g.respBA].emplace_back(log_name);
+                            }
+                        } else if (node.first == "ChainSuccession") {
+                            if (node.second) {
+                                logs_with_sat_clauses[g.cprecAB].emplace_back(log_name);
+                                logs_with_sat_clauses[g.crespAB].emplace_back(log_name);
+                            } else {
+                                logs_with_sat_clauses[g.cprecBA].emplace_back(log_name);
+                                logs_with_sat_clauses[g.crespBA].emplace_back(log_name);
+                            }
+                        } else
+                            logs_with_sat_clauses[node].emplace_back(log_name);
                     }
                 }
             }
@@ -558,7 +634,7 @@ std::pair<double,double> algorithmic_strategy::polyadic_dataful_mining_and_refin
                     model.clear();
                     all_predicates_of_interest.clear();
 
-                    Apayloads.load_activation_with_policy(it->first,
+                    bool result = Apayloads.load_activation_with_policy(it->first,
                                                           current->payload_map,
                                                           X,
                                                           y,
@@ -567,51 +643,91 @@ std::pair<double,double> algorithmic_strategy::polyadic_dataful_mining_and_refin
                                                           sampling_probability);
 
                     DecisionTree activations(X, y, numerical, categorical, 5);
-                    activations.populate_children_predicates2(model);
-                    results_for_serialization.clear();
 
-                    const std::unordered_map<std::string,std::vector<std::unordered_map<ActTable::record*,
-                            std::unordered_map<ActivationCases,std::unordered_set<ActTable::record*>>>>>& def2 = current->payload_map.at(it->first);
+                    if (result) {
+                        activations.splitTree(false);
+                        result = activations.goodness > 0.5;
+                        if (result) {
+                            activations.populate_children_predicates2(model);
+                            results_for_serialization.clear();
 
-                    for (const auto& [log_name, traces] : def2) {
-                        std::unordered_map<std::vector<dt_predicate>, std::vector<std::unordered_set<ActivationCases>> >& for_log = results_for_serialization[log_name];
-                        size_t N = sqm.multiple_logs[log_name].db.nTraces();
+                            const std::unordered_map<std::string,std::vector<std::unordered_map<ActTable::record*,
+                                    std::unordered_map<ActivationCases,std::unordered_set<ActTable::record*>>>>>& def2 = current->payload_map.at(it->first);
 
-                        DEBUG_ASSERT(traces.size() == N);
-                        for (size_t trace_id = 0; trace_id < N; trace_id++) {
-                            auto& events = traces[trace_id];
-                            if (events.empty()) continue;
+                            for (const auto& [log_name, traces] : def2) {
+                                std::unordered_map<std::vector<dt_predicate>, std::vector<std::unordered_set<ActivationCases>> >& for_log = results_for_serialization[log_name];
+                                size_t N = sqm.multiple_logs[log_name].db.nTraces();
 
-                            for (const auto& [record_ptr, map_] : events) {
-                                const auto* payload = Apayloads.get_payloads_from_offset(log_name, record_ptr);
+                                DEBUG_ASSERT(traces.size() == N);
+                                for (size_t trace_id = 0; trace_id < N; trace_id++) {
+                                    auto& events = traces[trace_id];
+                                    if (events.empty()) continue;
 
-                                for (const auto& [_, disjunctions] : model) {
-                                    for (const auto& [score, alternative] : disjunctions) {
-                                        if (trace_id == 0) {
-                                            all_predicates_of_interest.emplace(alternative);
+                                    for (const auto& [record_ptr, map_] : events) {
+                                        const auto* payload = Apayloads.get_payloads_from_offset(log_name, record_ptr);
+
+                                        for (const auto& [_, disjunctions] : model) {
+                                            for (const auto& [score, alternative] : disjunctions) {
+                                                if (trace_id == 0) {
+                                                    all_predicates_of_interest.emplace(alternative);
+                                                }
+                                                auto& results = for_log[alternative];
+                                                if (results.empty())
+                                                    results.resize(N);
+                                                bool test = dt_predicate::test_conjunctive_predicate(alternative, *payload);
+                                                for (const auto& [cases_, S] : map_) {
+                                                    switch (cases_) {
+                                                        case ActivationIsViolated:
+                                                            if (test) {
+                                                                results[trace_id].emplace(cases_);
+                                                            } else {
+                                                                results[trace_id].emplace(Vacuity);
+                                                            }
+                                                            break;
+
+                                                        case SATActivationWithNoTarget:
+                                                        case SATActivationWithTarget:
+                                                            if (test) {
+                                                                results[trace_id].emplace(GenericSATActivation);
+                                                            } else {
+                                                                results[trace_id].emplace(Vacuity);
+                                                            }
+                                                            break;
+                                                    }
+                                                }
+                                            }
                                         }
-                                        auto& results = for_log[alternative];
-                                        if (results.empty())
-                                            results.resize(N);
-                                        bool test = dt_predicate::test_conjunctive_predicate(alternative, *payload);
-                                        for (const auto& [cases_, S] : map_) {
-                                            switch (cases_) {
-                                                case ActivationIsViolated:
-                                                    if (test) {
-                                                        results[trace_id].emplace(cases_);
-                                                    } else {
-                                                        results[trace_id].emplace(Vacuity);
-                                                    }
-                                                    break;
-
-                                                case SATActivationWithNoTarget:
-                                                case SATActivationWithTarget:
-                                                    if (test) {
-                                                        results[trace_id].emplace(GenericSATActivation);
-                                                    } else {
-                                                        results[trace_id].emplace(Vacuity);
-                                                    }
-                                                    break;
+                                    }
+                                }
+                            }
+                            for (const auto& dt : all_predicates_of_interest) {
+                                for (auto& [log_name, dataful] : dataful_logs) {
+                                    size_t N = sqm.multiple_logs[log_name].db.nTraces();
+                                    auto it2 = results_for_serialization.find(log_name);
+                                    dataful << "\"" << std::get<0>(ternary) << "(" << std::get<1>(ternary) << "," << std::get<2>(ternary) << ") act " << dt_predicate::conjunction_to_string(dt) << "\",";
+                                    if (it2 == results_for_serialization.end()) {
+                                        for (size_t ntrace = 0; ntrace<N; ntrace++) {
+                                            dataful << -2;
+                                            if (ntrace != (N-1)) dataful << ",";
+                                        }
+                                    } else {
+                                        auto it3 = it2->second.find(dt);
+                                        if (it3 == it2->second.end()) {
+                                            for (size_t ntrace = 0; ntrace<N; ntrace++) {
+                                                dataful << -2;
+                                                if (ntrace != (N-1)) dataful << ",";
+                                            }
+                                        } else {
+                                            for (size_t ntrace = 0; ntrace<N; ntrace++) {
+                                                const auto& set = it3->second[ntrace];
+                                                if (set.empty() || ((set.size() == 1) && set.contains(Vacuity))) {
+                                                    dataful << 0;
+                                                } else if (set.contains(ActivationIsViolated)) {
+                                                    dataful << -1;
+                                                } else {
+                                                    dataful << 1;
+                                                }
+                                                if (ntrace != (N-1)) dataful << ",";
                                             }
                                         }
                                     }
@@ -619,45 +735,11 @@ std::pair<double,double> algorithmic_strategy::polyadic_dataful_mining_and_refin
                             }
                         }
                     }
-                    for (const auto& dt : all_predicates_of_interest) {
-                        for (auto& [log_name, dataful] : dataful_logs) {
-                            size_t N = sqm.multiple_logs[log_name].db.nTraces();
-                            auto it2 = results_for_serialization.find(log_name);
-                            dataful << "\"" << std::get<0>(ternary) << "(" << std::get<1>(ternary) << "," << std::get<2>(ternary) << ") act " << dt_predicate::conjunction_to_string(dt) << "\",";
-                            if (it2 == results_for_serialization.end()) {
-                                for (size_t ntrace = 0; ntrace<N; ntrace++) {
-                                    dataful << -2;
-                                    if (ntrace != (N-1)) dataful << ",";
-                                }
-                            } else {
-                                auto it3 = it2->second.find(dt);
-                                if (it3 == it2->second.end()) {
-                                    for (size_t ntrace = 0; ntrace<N; ntrace++) {
-                                        dataful << -2;
-                                        if (ntrace != (N-1)) dataful << ",";
-                                    }
-                                } else {
-                                    for (size_t ntrace = 0; ntrace<N; ntrace++) {
-                                        const auto& set = it3->second[ntrace];
-                                        if (set.empty() || ((set.size() == 1) && set.contains(Vacuity))) {
-                                            dataful << 0;
-                                        } else if (set.contains(ActivationIsViolated)) {
-                                            dataful << -1;
-                                        } else {
-                                            dataful << 1;
-                                        }
-                                        if (ntrace != (N-1)) dataful << ",";
-                                    }
-                                }
-                            }
-                        }
-                    }
-
 
                     //// XXX: end copy
-
                     // We are collecting target conditions only if the classification outcome from the activation is not good enough
-                    if (activations.goodness <= 0.5) {
+                    // TODO: fix the remaining code
+                    if (!result) {
                         if (!isBDataBeingCollected) {
                             Bpayloads.fill_all_activations(sqm.multiple_logs, cp.second); // filling in the payload from the current ones
                             isBDataBeingCollected = true;
@@ -670,7 +752,7 @@ std::pair<double,double> algorithmic_strategy::polyadic_dataful_mining_and_refin
                         model.clear();
                         all_predicates_of_interest.clear();
 
-                        Apayloads.load_target_with_policy(it->first,
+                        result = Bpayloads.load_target_with_policy(it->first,
                                                               current->payload_map,
                                                               X,
                                                               y,
@@ -678,54 +760,60 @@ std::pair<double,double> algorithmic_strategy::polyadic_dataful_mining_and_refin
                                                               fip,
                                                               sampling_probability);
 
-                        DecisionTree activations(X, y, numerical, categorical, 5);
-                        activations.populate_children_predicates2(model);
-                        results_for_serialization.clear();
+                        if (result) {
+                            DecisionTree targets(X, y, numerical, categorical, 5);
+                            targets.splitTree(false);
+                            result = activations.goodness > 0.5;
+                            if (result) {
+                                targets.populate_children_predicates2(model);
+                                results_for_serialization.clear();
 
-                        const std::unordered_map<std::string,std::vector<std::unordered_map<ActTable::record*,
-                                std::unordered_map<ActivationCases,std::unordered_set<ActTable::record*>>>>>& def2 = current->payload_map.at(it->first);
+                                const std::unordered_map<std::string,std::vector<std::unordered_map<ActTable::record*,
+                                        std::unordered_map<ActivationCases,std::unordered_set<ActTable::record*>>>>>& def2 = current->payload_map.at(it->first);
 
-                        for (const auto& [log_name, traces] : def2) {
-                            std::unordered_map<std::vector<dt_predicate>, std::vector<std::unordered_set<ActivationCases>> >& for_log = results_for_serialization[log_name];
-                            size_t N = sqm.multiple_logs[log_name].db.nTraces();
+                                for (const auto& [log_name, traces] : def2) {
+                                    std::unordered_map<std::vector<dt_predicate>, std::vector<std::unordered_set<ActivationCases>> >& for_log = results_for_serialization[log_name];
+                                    size_t N = sqm.multiple_logs[log_name].db.nTraces();
 
-                            DEBUG_ASSERT(traces.size() == N);
-                            for (size_t trace_id = 0; trace_id < N; trace_id++) {
-                                auto& events = traces[trace_id];
-                                if (events.empty()) continue;
+                                    DEBUG_ASSERT(traces.size() == N);
+                                    for (size_t trace_id = 0; trace_id < N; trace_id++) {
+                                        auto& events = traces[trace_id];
+                                        if (events.empty()) continue;
 
-                                for (const auto& [record_ptr_old, map_] : events) {
-                                    for (const auto& [_, S] : map_) {
-                                        for (const auto& record_ptr : S) {
-                                            const auto* payload = Apayloads.get_payloads_from_offset(log_name, record_ptr);
+                                        for (const auto& [record_ptr_old, map_] : events) {
+                                            for (const auto& [_, S] : map_) {
+                                                for (const auto& record_ptr : S) {
+                                                    const auto* payload = Apayloads.get_payloads_from_offset(log_name, record_ptr);
 
-                                            for (const auto& [_, disjunctions] : model) {
-                                                for (const auto& [score, alternative] : disjunctions) {
-                                                    if (trace_id == 0) {
-                                                        all_predicates_of_interest.emplace(alternative);
-                                                    }
-                                                    auto& results = for_log[alternative];
-                                                    if (results.empty())
-                                                        results.resize(N);
-                                                    bool test = dt_predicate::test_conjunctive_predicate(alternative, *payload);
-                                                    for (const auto& [cases, S] : map_) {
-                                                        switch (cases) {
-                                                            case ActivationIsViolated:
-                                                                if (test) {
-                                                                    results[trace_id].emplace(cases);
-                                                                } else {
-                                                                    results[trace_id].emplace(Vacuity);
+                                                    for (const auto& [_, disjunctions] : model) {
+                                                        for (const auto& [score, alternative] : disjunctions) {
+                                                            if (trace_id == 0) {
+                                                                all_predicates_of_interest.emplace(alternative);
+                                                            }
+                                                            auto& results = for_log[alternative];
+                                                            if (results.empty())
+                                                                results.resize(N);
+                                                            bool test = dt_predicate::test_conjunctive_predicate(alternative, *payload);
+                                                            for (const auto& [cases, S] : map_) {
+                                                                switch (cases) {
+                                                                    case ActivationIsViolated:
+                                                                        if (test) {
+                                                                            results[trace_id].emplace(cases);
+                                                                        } else {
+                                                                            results[trace_id].emplace(Vacuity);
+                                                                        }
+                                                                        break;
+
+                                                                    case SATActivationWithNoTarget:
+                                                                    case SATActivationWithTarget:
+                                                                        if (test) {
+                                                                            results[trace_id].emplace(GenericSATActivation);
+                                                                        } else {
+                                                                            results[trace_id].emplace(Vacuity);
+                                                                        }
+                                                                        break;
                                                                 }
-                                                                break;
-
-                                                            case SATActivationWithNoTarget:
-                                                            case SATActivationWithTarget:
-                                                                if (test) {
-                                                                    results[trace_id].emplace(GenericSATActivation);
-                                                                } else {
-                                                                    results[trace_id].emplace(Vacuity);
-                                                                }
-                                                                break;
+                                                            }
                                                         }
                                                     }
                                                 }
@@ -733,43 +821,53 @@ std::pair<double,double> algorithmic_strategy::polyadic_dataful_mining_and_refin
                                         }
                                     }
                                 }
-                            }
-                        }
-                        for (const auto& dt : all_predicates_of_interest) {
-                            for (auto& [log_name, dataful] : dataful_logs) {
-                                size_t N = sqm.multiple_logs[log_name].db.nTraces();
-                                auto it2 = results_for_serialization.find(log_name);
-                                dataful << "\"" << std::get<0>(ternary) << "(" << std::get<1>(ternary) << "," << std::get<2>(ternary) << ") tgt " << dt_predicate::conjunction_to_string(dt) << "\",";
-                                if (it2 == results_for_serialization.end()) {
-                                    for (size_t ntrace = 0; ntrace<N; ntrace++) {
-                                        dataful << -2;
-                                        if (ntrace != (N-1)) dataful << ",";
-                                    }
-                                } else {
-                                    auto it3 = it2->second.find(dt);
-                                    if (it3 == it2->second.end()) {
-                                        for (size_t ntrace = 0; ntrace<N; ntrace++) {
-                                            dataful << -2;
-                                            if (ntrace != (N-1)) dataful << ",";
-                                        }
-                                    } else {
-                                        for (size_t ntrace = 0; ntrace<N; ntrace++) {
-                                            const auto& set = it3->second[ntrace];
-                                            if (set.empty() || ((set.size() == 1) && set.contains(Vacuity))) {
-                                                dataful << 0;
-                                            } else if (set.contains(ActivationIsViolated)) {
-                                                dataful << -1;
-                                            } else {
-                                                dataful << 1;
+                                for (const auto& dt : all_predicates_of_interest) {
+                                    for (auto& [log_name, dataful] : dataful_logs) {
+                                        size_t N = sqm.multiple_logs[log_name].db.nTraces();
+                                        auto it2 = results_for_serialization.find(log_name);
+                                        dataful << "\"" << std::get<0>(ternary) << "(" << std::get<1>(ternary) << "," << std::get<2>(ternary) << ") tgt " << dt_predicate::conjunction_to_string(dt) << "\",";
+                                        if (it2 == results_for_serialization.end()) {
+                                            for (size_t ntrace = 0; ntrace<N; ntrace++) {
+                                                dataful << -2;
+                                                if (ntrace != (N-1)) dataful << ",";
                                             }
-                                            if (ntrace != (N-1)) dataful << ",";
+                                        } else {
+                                            auto it3 = it2->second.find(dt);
+                                            if (it3 == it2->second.end()) {
+                                                for (size_t ntrace = 0; ntrace<N; ntrace++) {
+                                                    dataful << -2;
+                                                    if (ntrace != (N-1)) dataful << ",";
+                                                }
+                                            } else {
+                                                for (size_t ntrace = 0; ntrace<N; ntrace++) {
+                                                    const auto& set = it3->second[ntrace];
+                                                    if (set.empty() || ((set.size() == 1) && set.contains(Vacuity))) {
+                                                        dataful << 0;
+                                                    } else if (set.contains(ActivationIsViolated)) {
+                                                        dataful << -1;
+                                                    } else {
+                                                        dataful << 1;
+                                                    }
+                                                    if (ntrace != (N-1)) dataful << ",";
+                                                }
+                                            }
                                         }
                                     }
                                 }
                             }
+
+                            if (!result ) {
+                                // TODO: use the correlation as the difference between the activation and the target matrix,
+                                // thus immediately achieving the learning over the A.x <= T.x + \theta
+
+                                if (!result) {
+                                    // if not even this further kind of refinement works, then we fall back to
+                                    // the full daless mining across all the element of the traces
+                                    mine_a_b(dataless_logs, gv, sqm, forAllLogsCacheMap, rcv, usedv, pat,result_map, act_Labels, noact_Labels,
+                                             min_int_supp_patts, mining_supp, polyadic, clause, actA, actB);
+                                }
+                            }
                         }
-
-
                         /// XXX: end paste
                     }
 
@@ -783,16 +881,22 @@ std::pair<double,double> algorithmic_strategy::polyadic_dataful_mining_and_refin
             if (!hadContained)
                 std::swap(cp.first, cp.second);
         }
-        const auto& lastB = *rest.rbegin();
         it++;
-        if (it == en)
-            break;
-        else if (*it == lastB) {
-            std::swap(Bpayloads, Apayloads);
-            Bpayloads.clear();
-        } else {
+        if (rest.empty()) {
             Bpayloads.clear();
             Apayloads.clear();
+        } else {
+            const auto& lastB = *rest.rbegin();
+
+            if (it == en)
+                break;
+            else if (*it == lastB) {
+                std::swap(Bpayloads, Apayloads);
+                Bpayloads.clear();
+            } else {
+                Bpayloads.clear();
+                Apayloads.clear();
+            }
         }
     }
 
@@ -900,8 +1004,6 @@ std::pair<double,double> algorithmic_strategy::polyadic_dataful_mining_and_refin
 //    for (auto& [log_name, g]: gv) {
 //        g.finalise_run(minimum_support_thresholds[log_name], usedv[log_name]);
 //    }
-
-    exit(200);
 
     return  {-1,-1};
 }

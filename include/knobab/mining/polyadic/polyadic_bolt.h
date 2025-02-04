@@ -134,7 +134,7 @@ struct result_container {
                 if ((std::get<1>(obj) == A) && (std::get<2>(obj) == B))
                     return x;
             } else {
-                if ((std::get<2>(obj) == A) && (std::get<1>(obj) == A))
+                if ((std::get<2>(obj) == A) && (std::get<1>(obj) == B))
                     return x;
             }
         }
@@ -537,6 +537,43 @@ struct polyadic_bolt {
         auto flip = shift ^ 0x1;
         bool alles_precedence = true, alles_response = true;
         size_t alles_not_precedence = 0, alles_not_response = 0;
+        const auto& resp_node = shift ? respBA : respAB;
+        const auto& prec_node = shift ? precBA : precAB;
+        const auto& fprec_node = flip ? precBA : precAB;
+        const bool hasShift = pp[shift];
+        const bool hasFlip = pp[flip];
+
+        if (A == ((act_t)-1)) {
+            // TODO: if A is -1, then all are vacuously satisfied
+            for (size_t i = 0; i<log_size; i++) {
+                vac_cr[shift].emplace_back(i);
+                vac_cp[shift].emplace_back(i);
+            }
+            return;
+        } else if (B == ((act_t)-1)) {
+            //       otherwise, if just B is -1, then precedence is always true for alla ctivations, and response is always false
+            for (size_t i = 0; i<log_size; i++) {
+                act_r[shift].emplace_back(i);
+                viol_r[shift].emplace_back(i);
+                act_p[shift].emplace_back(i);
+            }
+            if (hasShift) {
+                auto a_beginend = kb->timed_dataless_exists(A);
+                while (a_beginend.first != a_beginend.second) {
+                    if (hasShift) {
+                        pp[shift]->add_activation_with_target_violation(log_name, a_beginend.first,resp_node, log_size);
+                        pp[shift]->add_activation_without_target(log_name, a_beginend.first,prec_node, log_size);
+                    }
+                    a_beginend.first++;
+                }
+            }
+            return;
+        } // Else: business as usual
+
+        DEBUG_ASSERT((!hasShift) || hasFlip);
+        if (hasShift) stopWithThreshold = false;
+        static int count = 0;
+//        std::cerr << "NEW RUN" << std::endl;
 
         size_t expected_support = minimum_support_threshold;
 
@@ -554,7 +591,7 @@ struct polyadic_bolt {
 
         uint32_t /*a_activation_count = 0,*/ a_trace_id = a_beginend.first->entry.id.parts.trace_id, a_prev_trace_id = a_trace_id,
 
-                b_trace_id = b_beginend.first->entry.id.parts.trace_id;
+        b_trace_id = b_beginend.first->entry.id.parts.trace_id;
         bool doRetain = false;
         size_t last_a_for_retain = -1;
         if(a_trace_id != 0) {
@@ -567,6 +604,10 @@ struct polyadic_bolt {
             }
 
             a_trace_id = a_beginend.first->entry.id.parts.trace_id;
+//            if ((a_trace_id == 549) && (count == 2))
+//                std::cerr << "HERE" << std::endl;
+//            std::cerr << a_trace_id << " @ " << ((a_trace_id == 0) ? (count++) : count) <<  std::endl;
+
             if (b_beginend.first != b_beginend.second)
                 b_trace_id = b_beginend.first->entry.id.parts.trace_id;
 
@@ -575,6 +616,7 @@ struct polyadic_bolt {
                 last_a_for_retain = -1; // Redundant
             }
 
+            DEBUG_ASSERT((a_trace_id == a_prev_trace_id) || (a_trace_id>a_prev_trace_id));
             if ((a_trace_id != a_prev_trace_id)) { // Already visited, L12-13
                 yaucl::iterators::iota_n(std::back_inserter(vac_r[shift]), (a_trace_id - a_prev_trace_id - 1), a_prev_trace_id+1);
                 a_prev_trace_id = a_trace_id;
@@ -591,9 +633,16 @@ struct polyadic_bolt {
 
                 TRACE_SET_ADD(act_r[shift], a_trace_id);
                 TRACE_SET_ADD(viol_r[shift], a_trace_id);
-
                 TRACE_SET_ADD(act_p[shift], a_trace_id);
+                if (hasShift) {
+                    pp[shift]->add_activation_with_target_violation(log_name, a_beginend.first,resp_node, log_size);
+                    pp[shift]->add_activation_with_target_violation(log_name, a_beginend.first,prec_node, log_size);
+                }
+
                 TRACE_SET_ADD(viol_p[flip], a_trace_id);
+                if (hasShift) {
+                    pp[flip]->add_activation_with_target_violation(log_name, a_beginend.first,fprec_node, log_size);
+                }
 
                 // Now, skipping to the next trace, as there is no more information for as
                 if (!doRetain) {
@@ -604,8 +653,16 @@ struct polyadic_bolt {
                         yaucl::iterators::iota_n(std::back_inserter(vac_p[flip]),(b_trace_id - a_trace_id - 1), a_trace_id+1);
                     doRetain = true;
                 }
-                fast_forward_equals(a_trace_id, a_beginend.first, a_beginend.second);
-                continue;
+
+                a_prev_trace_id = a_trace_id;
+                if (hasShift) {
+                    a_beginend.first++;
+                    continue;
+                } else {
+                    fast_forward_equals(a_trace_id, a_beginend.first, a_beginend.second);
+                    continue;
+                }
+
             }
             /* II. We have B's on their own */
             if ((a_beginend.first == a_beginend.second) || a_trace_id > b_trace_id) {
@@ -613,6 +670,9 @@ struct polyadic_bolt {
                     TRACE_SET_ADD(act_r[flip], id);
                 }
                 TRACE_SET_ADD(act_p[flip], a_trace_id);
+                if (hasShift) {
+                    pp[flip]->add_activation_with_target_violation(log_name, a_beginend.first,fprec_node, log_size);
+                }
 
                 // Moving b until I find something related to b. A is kept fixed and not incremented
                 if (a_beginend.first == a_beginend.second) {
@@ -626,10 +686,16 @@ struct polyadic_bolt {
                             vac_p[flip].emplace_back(trddmn);
                     }
                 }
-                fast_forward_lower(a_trace_id, b_beginend.first, b_beginend.second);
 
-                // Not setting the current trace to be visited, as we need to fast-forward B first
-                continue;
+
+                a_prev_trace_id = a_trace_id;
+                if (hasShift) {
+                    a_beginend.first++;
+                } else {
+                    fast_forward_lower(a_trace_id, b_beginend.first, b_beginend.second);
+                    // Not setting the current trace to be visited, as we need to fast-forward B first
+                    continue;
+                }
             }
             // Please remember, we are not visiting traces, rather than
             // events associated to traces. Therefore, it is of the
@@ -652,6 +718,9 @@ struct polyadic_bolt {
                     (b_beginend.first->entry.id.parts.event_id >= a_beginend.first->entry.id.parts.event_id)) { // L.39
                 decrease_support_X(*kb, expected_support, alles_precedence, alles_not_precedence);
                 TRACE_SET_ADD(viol_p[flip], a_trace_id);
+                if (hasShift) {
+                    pp[flip]->add_activation_with_target_violation(log_name, a_beginend.first,fprec_node, log_size);
+                }
             }
 
             const size_t offset = polyadic ? a_beginend.first->span : 1;
@@ -672,16 +741,25 @@ struct polyadic_bolt {
                     (b_beginend.first->entry.id.parts.event_id +polyadic >=
                      a_beginend.first->entry.id.parts.event_id)) {
                     // Ok, I have a match!
+                    if (hasShift) {
+                        pp[shift]->add_activation_with_target(log_name, a_beginend.first, resp_node, log_size, a_beginend.first);
+                    }
                 }
                 else {
                     // If there is no match for the B event, then I'm setting this to false
                     // and quitting the iteration
                     decrease_support_X(*kb, expected_support, alles_response, alles_not_response);
                     TRACE_SET_ADD(viol_r[shift], a_trace_id);
+                    if (pp[shift]) {
+                        pp[shift]->add_activation_with_target_violation(log_name, a_beginend.first,resp_node, log_size);
+                    }
                     break;
                 }
                 a_beginend.first++;
             }
+
+
+            a_prev_trace_id = a_trace_id;
             fast_forward_equals(a_trace_id, a_beginend.first, a_beginend.second);
             fast_forward_equals(a_trace_id, b_beginend.first, b_beginend.second);
         }
@@ -695,6 +773,50 @@ struct polyadic_bolt {
         auto flip = shift ^ 0x1;
         const auto& resp_node = shift ? crespBA : crespAB;
         const auto& prec_node = shift ? cprecBA : cprecAB;
+        const bool hasShift = pp[shift];
+
+        if (A == ((act_t)-1)) {
+            // TODO: if A is -1, then all are vacuously satisfied
+            for (size_t i = 0; i<log_size; i++) {
+                vac_cr[shift].emplace_back(i);
+                vac_cp[shift].emplace_back(i);
+            }
+            return;
+        } else if (B == ((act_t)-1)) {
+            //       otherwise, if just B is -1, then all of the activations are bad ones, unless precedence starting at init, which is not accounted for
+            for (size_t i = 0; i<log_size; i++) {
+                act_cr[shift].emplace_back(i);
+                viol_cr[shift].emplace_back(i);
+            }
+
+            auto a_beginend = kb->timed_dataless_exists(A);
+            trace_t prev_trace = -1;
+            while (a_beginend.first != a_beginend.second) {
+                auto trace_id = a_beginend.first->entry.id.parts.trace_id;
+                if (a_beginend.first->entry.id.parts.event_id==0) {
+                    if (kb->getCountTable().resolve_length(A, trace_id) == 1 ) {
+                        vac_cp[shift].emplace_back(trace_id);
+                    }
+                } else {
+                    if (act_cp[shift].empty() || (*act_cp[shift].rbegin() !=trace_id)) {
+                        act_cp[shift].emplace_back(trace_id);
+                        viol_cp[shift].emplace_back(trace_id);
+
+                    }
+                    if (hasShift) {
+                        pp[shift]->add_activation_with_target_violation(log_name, a_beginend.first,prec_node, log_size);
+                    }
+                }
+                if (hasShift) {
+                    pp[shift]->add_activation_with_target_violation(log_name, a_beginend.first,resp_node, log_size);
+                }
+                prev_trace = trace_id;
+                a_beginend.first++;
+            }
+            return;
+        } // Else: business as usual
+
+        if (hasShift) stopWithThreshold = false;
 
         bool forward_response = false, forward_precedence = false;
         bool alles_next = true, alles_prev = true;
@@ -731,7 +853,7 @@ struct polyadic_bolt {
                 decrease_support_X(*kb, expected_support, alles_next, alles_not_next);
                 TRACE_SET_ADD(viol_cr[shift], ((trace_t)a_beginend.first->entry.id.parts.trace_id));
                 forward_response = true;
-                if (pp[shift]) {
+                if (hasShift) {
                     pp[shift]->add_activation_with_target_violation(log_name, a_beginend.first,resp_node, log_size);
                 }
             }
@@ -750,7 +872,7 @@ struct polyadic_bolt {
                 decrease_support_X(*kb, expected_support, alles_prev, alles_not_prev);
                 TRACE_SET_ADD(viol_cp[shift], (trace_t)(a_beginend.first->entry.id.parts.trace_id));
                 forward_precedence = true;
-                if (pp[shift]) {
+                if (hasShift) {
                     pp[shift]->add_activation_with_target_violation(log_name, a_beginend.first,prec_node, log_size);
                 }
             }
@@ -759,25 +881,32 @@ struct polyadic_bolt {
             // Here, on the other hand, we record the activations and targets
             if ((a_beginend.first == start) || (a_beginend.first - 1)->entry.id.parts.trace_id != trace_id) {
                 TRACE_SET_ADD(act_cr[shift], trace_id);
-                if (pp[shift]) {
+                if (hasShift && ((viol_cr[shift].empty()) || ((*viol_cr[shift].rbegin()) != trace_id))) {
                     const std::vector<ActTable::record*>* records = nullptr;
                     if (polyadic && (event_to_root.at(A) == event_to_root.at(B))) {
                         const auto& V = kb->act_table_by_act_id.secondary_index_polyadic.at(trace_id);
                         size_t offset = a_beginend.first->entry.id.parts.event_id+a_beginend.first->span;
-                        records = &V.at(offset).find(B)->second;
+                        auto& vat = V.at(offset);
+                        auto it = vat.find(B);
+                        if (it != vat.end())
+                            records = &V.at(offset).find(B)->second;
                     } else {
                         // Normal payload collection
-                        records = &a_beginend.first->next->find(B)->second;
+                        auto& vat = a_beginend.first->next;
+                        auto it = vat->find(B);
+                        if (it != vat->end())
+                            records = &a_beginend.first->next->find(B)->second;
                     }
-                    DEBUG_ASSERT(records != nullptr);
-                    for (const auto& target_conditions : *records) {
-                        pp[shift]->add_activation_with_target(log_name, a_beginend.first, resp_node, log_size, target_conditions);
+                    if (records) {
+                        for (const auto& target_conditions : *records) {
+                            pp[shift]->add_activation_with_target(log_name, a_beginend.first, resp_node, log_size, target_conditions);
+                        }
                     }
                 }
 
                 if ((a_beginend.first->entry.id.parts.event_id>0) || (kb->getCountTable().resolve_length(A, trace_id) > 1)) {
                     TRACE_SET_ADD(act_cp[shift], trace_id);
-                    if (pp[shift]) {
+                    if (hasShift && ((viol_cp[shift].empty()) || ((*viol_cp[shift].rbegin()) != trace_id))) {
                         if (a_beginend.first->prev == nullptr) {
                             pp[shift]->add_activation_without_target(log_name, a_beginend.first, prec_node, log_size);
                         } else {
@@ -785,17 +914,25 @@ struct polyadic_bolt {
                             if (polyadic && (event_to_root.at(A) == event_to_root.at(B))) {
                                 const auto& V = kb->act_table_by_act_id.trace_id_to_endTimeId_to_offset.at(trace_id);
                                 size_t offset = a_beginend.first->entry.id.parts.event_id-1;
-                                for (const size_t offset : V.at(offset).find(B)->second) {
-                                    auto* target_conditions = (ActTable::record*)&kb->act_table_by_act_id.table[offset];
-                                    pp[shift]->add_activation_with_target(log_name, a_beginend.first, resp_node, log_size, target_conditions);
+                                const auto& vat = V.at(offset);
+                                auto it = vat.find(B);
+                                if (it != vat.end()) {
+                                    for (const size_t offset : it->second) {
+                                        auto* target_conditions = (ActTable::record*)&kb->act_table_by_act_id.table[offset];
+                                        pp[shift]->add_activation_with_target(log_name, a_beginend.first, resp_node, log_size, target_conditions);
+                                    }
                                 }
                             } else {
                                 // Normal payload collection
-                                for (const auto& target_conditions : a_beginend.first->prev->find(B)->second) {
-                                    pp[shift]->add_activation_with_target(log_name, a_beginend.first, resp_node, log_size, target_conditions);
+                                const auto& vat = a_beginend.first->prev;
+                                auto it = vat->find(B);
+                                if (it != vat->end()) {
+                                    for (const auto& target_conditions : it->second) {
+                                        pp[shift]->add_activation_with_target(log_name, a_beginend.first, resp_node, log_size, target_conditions);
+                                    }
                                 }
                             }
-                            DEBUG_ASSERT(records != nullptr);
+//                            DEBUG_ASSERT(records != nullptr);
                         }
                     }
                 }
@@ -804,7 +941,7 @@ struct polyadic_bolt {
                 }
             }
 
-            if (forward_response && forward_precedence && (!pp[shift])) { // Fast forwarding only if I do not need to collect all the payloads via pp
+            if (forward_response && forward_precedence && (!hasShift)) { // Fast forwarding only if I do not need to collect all the payloads via pp
                 fast_forward_equals(trace_id, a_beginend.first, a_beginend.second);
             }
             else {
@@ -930,6 +1067,7 @@ struct polyadic_bolt {
         clearResultsVector();
         rc.A = A;
         rc.B = B;
+        rc.log_size = log_size;
         unsigned char hasCoExistence = association_rules_for_declare(support, binary_pattern, A, B);
 
         /* We want to force a branch if the Bs ever occur at the start of the trace and occur only once.
@@ -1101,7 +1239,7 @@ struct polyadic_bolt {
     }
 
 
-    static inline void serialize_to_file(result_map_t & map, std::ostream& file) {
+    static inline void serialize_to_file(result_map_t & map, std::ostream& file, bool do_clear_map = true) {
         for (const auto& [triplet, vector] : map) {
             if (std::get<2>(triplet).empty()) {
                 file << "\"" << std::get<0>(triplet) << "(" << std::get<1>(triplet) << ")\"";
@@ -1122,7 +1260,7 @@ struct polyadic_bolt {
             file << std::endl;
             file.flush();
         }
-        map.clear();
+        if (do_clear_map) map.clear();
     }
 
     void collect_activity_existance(KnowledgeBase* ptr,
@@ -1328,7 +1466,8 @@ struct polyadic_bolt {
                                       result_container& rc,
                                       payload_act_tracker& pat,
                                       std::ostream& file,
-                                      result_map_t& result_map) {
+                                      result_map_t& result_map,
+                                      bool do_clear_result_map = true) {
 
         rc.A = A;
         rc.B = B;
@@ -1370,7 +1509,7 @@ struct polyadic_bolt {
         set_complex_operator(rc, coexistenceAB_BA, labelA, labelB,  result_map);
         set_complex_operator(rc, choiceAB_BA,  labelA, labelB, result_map);
         set_complex_operator(rc, exclchoiceAB_BA,  labelA, labelB, result_map);
-        serialize_to_file(result_map, file);
+        serialize_to_file(result_map, file, do_clear_result_map);
     }
 
     inline uint64_t run1(double support, bool polyadic, const KnowledgeBase* ptr, std::vector<std::pair<size_t, std::unordered_set<act_t>>>& fpt_result) {

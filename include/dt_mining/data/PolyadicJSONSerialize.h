@@ -8,7 +8,7 @@
 #include <unordered_map>
 #include <unordered_set>
 #include "json_writer.hpp"
-#include "schema.propo.h"
+//#include "schema.propo.h"
 #include <dt_mining/data/CacheConstituent.h>
 
 enum XESTypes {
@@ -22,6 +22,7 @@ enum XESTypes {
 
 class PolyadicJSONSerialize {
     JsonWriter jw;
+    std::ostream& os;
     std::unordered_map<std::string,std::unordered_set<std::string>> hierarchy;
     std::unordered_map<std::string, XESTypes> types;
 
@@ -45,7 +46,8 @@ public:
         auto begin_offset = label.find_first_of("(");
         auto end_offset = label.find_last_of(")");
         if ((begin_offset != std::string::npos) && (end_offset != std::string::npos)) {
-            hierarchy[label.substr(0, begin_offset)].insert(label.substr(begin_offset+1, end_offset-begin_offset-1));
+            auto variable = label.substr(begin_offset+1, end_offset-begin_offset-1);
+            hierarchy[variable].insert(label.substr(0, begin_offset));
         } else {
             hierarchy[label].insert(label);
         }
@@ -159,6 +161,14 @@ public:
         jw.end_object();
     }
 
+    inline void close_payload_json(){
+        jw.end_object();
+    }
+
+    inline void flush() {
+        os.flush();
+    }
+
     inline void end_serializing_log_within_object() {
         jw.end_array();
     }
@@ -166,7 +176,7 @@ public:
     inline void finish() {
         jw.end_object();
         jw.close_all();
-        jw.assert_finished();
+//        jw.assert_finished();
     }
 
 private:

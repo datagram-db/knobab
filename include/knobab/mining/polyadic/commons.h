@@ -26,6 +26,8 @@ static inline void print_rawpayload_csv_header(std::ostream& os,
         size_t idx = 0;
         std::stringstream os2;
         for (const auto& [score,map] : disj) {
+            if (map.empty())
+                continue;
             os << "\"" << all_label << "(";
             size_t idxj = 0, idxM = map.size();
             for (const auto& [k,v] : map) {
@@ -150,7 +152,7 @@ static inline void collect_rawpayload_csv_results_row3(std::vector<size_t>& resu
         if (hasAMatch) {
             results[global_idx]++;
         }
-        global_idx++;
+        if (!disj.empty()) global_idx++;
     }
     DEBUG_ASSERT(global_idx == results.size());
 }
@@ -181,10 +183,14 @@ static inline void actualClauseRefine(std::vector<std::pair<double,std::unordere
                     p.casusu = GEQ;
                     break;
                 case dt_predicate::IN_SET:
-                    p.casusu = EQ;
+                    p.casusu = IN_SET;
+                    for (const auto& x : dt_p.categoric_set)
+                        p.categoric_set.emplace(x);
                     break;
                 case dt_predicate::NOT_IN_SET:
-                    p.casusu = NEQ;
+                    p.casusu = NOT_IN_SET;
+                    for (const auto& x : dt_p.categoric_set)
+                        p.categoric_set.emplace(x);
                     break;
             }
 
@@ -200,6 +206,7 @@ static inline void actualClauseRefine(std::vector<std::pair<double,std::unordere
             if(found != current_conds.end()){
                 // Our path has two conditions on the same var, perform intersection
 //                p.intersect_with(found->second);
+                // TODO: problem with string-based operations intersections
                 if (!found->second.intersect_with(p)) {
                     found->second.casusu = FFALSE;
                     hasAFalse = true;
@@ -215,8 +222,11 @@ static inline void actualClauseRefine(std::vector<std::pair<double,std::unordere
         } else {
             std::string label = "*";
             if (current_conds.contains("__label")) {
-                label = current_conds["__label"].var;
-                current_conds.erase("__label");
+                auto& current_cond = current_conds["__label"];
+                if ((current_cond.casusu == IN_SET) && (current_cond.categoric_set.size() == 1)) {
+                    label = current_cond.var;
+                    current_conds.erase("__label");
+                }
             }
             for (auto& [k,pred] : current_conds) {
                 pred.label = label;
@@ -242,7 +252,7 @@ inline void train_and_dump_to_csv2(std::unordered_map<std::string, Environment> 
                                    const std::string& actual_label = "__raw_payload",
                                    const bool do_some = true) {
     DecisionTree dt{X,y, N, C, 5};
-    dt.splitTree();
+    dt.splitTree(false);
 
     if ((dt.goodness <= 0.5) || (dt.children.size() == 1)) {
         std::cerr << "Avoiding specification as goodness is below 50% or is a leaf node: " << dt.goodness << std::endl;
@@ -304,12 +314,17 @@ const std::vector<std::vector<std::pair<std::string,union_minimal>>>& X,
                            const std::string& actual_label = "__raw_payload",
                            const bool do_some = true) {
 
-    DecisionTree dt{X,y, N, C, 5};
-    dt.splitTree();
+    int max = *std::max_element(y.begin(), y.end());
+    DecisionTree dt{X,y, N, C, ((size_t)5*(max-1))};
+    dt.splitTree(false);
 
     if ((dt.goodness <= 0.5) || (dt.children.size() == 1)) {
         std::cerr << "Avoiding specification as goodness is below 50% or is a leaf node: " << dt.goodness << std::endl;
         return;
+    } else {
+#ifdef DEBUG
+        std::cout << dt.goodness << " as goodness" << std::endl;
+#endif
     }
 
     std::vector<std::vector<std::pair<double,std::unordered_map<std::string, DataPredicate>>>> model(n_classes);

@@ -37,6 +37,10 @@ def mining(csv_folder:str,
     ## 2. First version of the algorithm, improving slightly over the first version of the algorithm. This distinguishes between dataful and dataless
     ## 3. Second version of the algorithm, allegedly requiring less memory to processing data. This distinguishes between dataful and dataless
     if (algorithm == 1):
+        path = "polyadic_Algo1_dataless.json"
+        full_json_path = os.path.join(csv_folder, path)
+        if os.path.isfile(full_json_path):
+            return full_json_path
         experiment_number = 0
         preliminary_data = []
         if os.path.exists(benchmark_json_file):
@@ -60,7 +64,7 @@ def mining(csv_folder:str,
                         ignore, None, conversion, None)
 
         start = datetime.now()
-        file = first_miner.transform("polyadic_Algo1_dataless.json")
+        file = first_miner.transform(path)
         mining_and_json_ser_ts = datetime.now()
         mining_and_json_ser = mining_and_json_ser_ts - start
         milliseconds = mining_and_json_ser.total_seconds() * 1000
@@ -70,8 +74,6 @@ def mining(csv_folder:str,
         preliminary_data.append(benchmark_result)
         with open(benchmark_json_file, "w") as json_file:
             json.dump([dataclasses.asdict(x) for x in preliminary_data], json_file)
-
-
     else:
         assert isinstance(algorithm, int) and ((algorithm == 2) or (algorithm == 3))
         import knobab_emeritate_support

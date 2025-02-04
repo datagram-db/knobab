@@ -10,7 +10,7 @@ from sklearn.tree import DecisionTreeClassifier
 from EMeriTAte.computation_steps.learn_from_cpp_csvs import loadDataset
 from EMeriTAte.utilities.utils import export_text2
 
-def training(dataset_name, dict_list, first_phase, second_phase, poly, supp, red, nranges=10, lass_field = "class", nclasses = 2):
+def training(dataset_name, dict_list, first_phase, second_phase, poly, supp, red, nranges=10, nclasses = 2, split=0.3, class_field = "class", criterion="gini", max_depth=5):
     csv_file = f'{dataset_name}'
     assert isinstance(split, float) and split > 0.0
     X = dict_list.drop(labels=[class_field], axis=1)
@@ -40,7 +40,7 @@ def training(dataset_name, dict_list, first_phase, second_phase, poly, supp, red
                 "roc",
                 "model"]
 
-    outcsv = open(csv_file, 'w')
+    outcsv = open(csv_file, 'a')
     writer = csv.DictWriter(outcsv, fieldnames=L)
     if not fileexists:
         writer.writeheader()
@@ -95,14 +95,17 @@ def training(dataset_name, dict_list, first_phase, second_phase, poly, supp, red
 
 
 if __name__ == "__main__":
-    path, elements = "/home/giacomo/projects/knobab2_loggen/EMeriTAte/osuleaf/polyadic_Algo1_dataless_algo4/poly_s0_0", "/home/giacomo/projects/knobab2_loggen/EMeriTAte/osuleaf/polyadic_Algo1_dataless_algo4/polyadic_Algo1_dataless.json_0_0_1_0_clazz={clazz}.txt"
+    dataset = "load_basic_motions"
+    nclasses = 9
+    supp = 0
+    s = 1 if supp == 1.0 else (0 if supp == 0.0 else supp)
+
     regex = r"output\_csv\_(\d)+\.csv"
     split = 0.3
     class_field = "class"
     criterion = "gini"
     max_depth = 5
-    nclasses = 2
-
+    path, elements = f"/home/giacomo/projects/knobab2_loggen/EMeriTAte/{dataset}/polyadic_Algo1_dataless_algo4/poly_s{s}_0", f"/home/giacomo/projects/knobab2_loggen/EMeriTAte/{dataset}/polyadic_Algo1_dataless_algo4/polyadic_Algo1_dataless.json_{s}_0_1_0_clazz={{clazz}}.txt"
     class_files = []
     ## Reading all of the class files that have been dumped
     for f in [f for f in listdir(path) if isfile(join(path, f))]:
@@ -115,4 +118,4 @@ if __name__ == "__main__":
     ## Loading all of the datasets belonging to that class
     dict_list = loadDataset(class_files, class_field)
 
-    training("italy_power_demand", dict_list, 1, 4, True, 0.0, True, nclasses=6)
+    training(dataset, dict_list, 1, 4, True, supp, False, nclasses=nclasses)

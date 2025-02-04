@@ -100,8 +100,8 @@ include_directories(submodules/cpp-lru-cache/include)
 include_directories(submodules/json/include)
 include_directories(submodules/thread_pool)
 include_directories(submodules/catch24/)
-add_subdirectory(submodules/capnproto)
-include_directories(include/capnpn)
+#add_subdirectory(submodules/capnproto)
+#include_directories(include/capnpn)
 
 IF(CMAKE_BUILD_TYPE MATCHES Debug)
     message(WARNING "Compiling in debug mode")
@@ -261,7 +261,7 @@ add_executable(DTMining dt_mine_main.cpp
         src/dt_mining/utils/RecordHandling.cpp
         src/dt_mining/data/PolyadicJSONSerialize.cpp
         src/dt_mining/data/MultivariateTimeSeries.cpp
-        src/capnpn/schema.propo.c++
+#        src/capnpn/schema.propo.c++
         submodules/jsonwriter/src/json_writer.cpp
         src/dt_mining/data/TemporaryCapnpnConstituentSerializer.cpp
         src/dt_mining/benchmarking/FineGrainedStats.cpp
@@ -272,7 +272,7 @@ add_executable(DTMining dt_mine_main.cpp
         include/dt_mining/dt_mining.h
         src/dt_mining/dt_mining.cpp
 )
-target_link_libraries(DTMining  PRIVATE catch24 CapnProto::kj CapnProto::capnp yaucl_numeric)
+target_link_libraries(DTMining  PRIVATE catch24  yaucl_numeric) # Removing CapnProto::kj CapnProto::capnp, as ywe are no more using this to serialize!
 
 #FetchContent_MakeAvailable(Catch2)
 #list(APPEND CMAKE_MODULE_PATH ${catch2_SOURCE_DIR}/extras)

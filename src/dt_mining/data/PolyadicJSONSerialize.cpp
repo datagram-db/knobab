@@ -4,7 +4,7 @@
 
 #include "dt_mining/data/PolyadicJSONSerialize.h"
 
-PolyadicJSONSerialize::PolyadicJSONSerialize(std::ostream& os): jw{os, JsonWriter::flags::F_AUTO_CLOSE | JsonWriter::flags::F_STRICT | JsonWriter::flags::F_VERIFY_ON_EXIT} {
+PolyadicJSONSerialize::PolyadicJSONSerialize(std::ostream& os): jw{os, JsonWriter::flags::F_AUTO_CLOSE /*| JsonWriter::flags::F_STRICT | JsonWriter::flags::F_VERIFY_ON_EXIT*/}, os{os} {
 conversion_recto["literal"] = XES_Literal;
 conversion_verso[XES_Literal] = "literal";
 
@@ -26,7 +26,7 @@ hierarchy["__payload"].emplace("__payload");
 
 }
 
-#include <capnp_utils.h>
+//#include <capnp_utils.h>
 
 //size_t capnp_serialize_raw_data(int fd, const std::vector<std::string>& dimNames,
 //                 const std::vector<std::vector<double>>& allDimensions,
