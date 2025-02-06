@@ -361,10 +361,10 @@ std::string DTMining::dt_mine_and_ts_to_polyadic(const std::string& benchmark_re
                         }
                     }
                     map.clear();
-                    // Removing events composed of spans of 1 if other spans are present
-                    if (C3.contains(1) && C3.size()>1) {
-                        C3.erase(1);
-                    }
+//                    // Removing events composed of spans of 1 if other spans are present
+//                    if (C3.contains(1) && C3.size()>1) {
+//                        C3.erase(1);
+//                    }
                     for (const auto& [s, vv] : C3) {
                         for (auto& full_poly_event: vv) {
 

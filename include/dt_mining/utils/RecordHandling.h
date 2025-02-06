@@ -319,7 +319,103 @@ struct RecordHandling {
         }
     }
 
+    void Algorithm4(ThreadPool& pool,
+                    conditional_structure& futures) const {
+        for (const auto& group :this->groups[0]) {
+            Algorithm4(pool, futures, group, 0);
+        }
+        for (const auto& group :this->groups[1]) {
+            Algorithm4(pool, futures, group, 1);
+        }
+    }
+
+    // Original version of the algorithm, with some redundancies on the generated events
     inline void Algorithm3(ThreadPool& pool,
+                           conditional_structure& futures,
+                           size_t time) const {
+        auto arrow_idx = VAT(linear_time,time);                  // Pointer to the current positive/negative group is present
+        const auto& group_idx = VAT(arrow_of_time,arrow_idx);   // Retrieving the positive/negative and #group information
+        const auto& group_type = group_idx.first;
+        const auto& group_offset = group_idx.second;
+        const auto& groupRange = VAT(VAT(groups,group_type),group_offset); // Retrieving the group
+
+        // TODO: some cases are missing
+        int total_groups = arrow_of_time.size();
+        int flip = (group_type + 1) % 2;
+        //  0: begin, 1: end (inclusive), 2: span
+
+        for (int end_time = time; end_time <= GRP_FINISH(groupRange); ++end_time) { // Iterating over all the possible event lengths starting from here
+            int current_span = end_time - time + 1;                                         // Duration of the current event according to the novel ending time
+            if (current_span > 1) {
+                push_task(pool, futures, straight[group_type], time, end_time);     // Adding a straight increase/decrease event for all possible spans
+            }
+            if (HAS_ARROW_NEXT(arrow_idx, total_groups) && (GRP_FINISHES_AT(groupRange, end_time))) { // If you have a next event and you reached the end of this group
+                const auto& next_ref = VAT(arrow_of_time, ARROW_NEXT(arrow_idx));
+                const auto& next = VAT(VAT(groups, flip), next_ref.second);
+                if (current_span == 1) {
+                    push_task(pool, futures, HV6_1[flip], time, GRP_START(next));
+                    if ((GRP_IS_SINGLET(next)) && (HAS_ARROW_NEXT_NEXT(arrow_idx, total_groups)) && (HAS_ARROW_NEXT_NEXT_NEXT(arrow_idx, total_groups))) {
+                        const auto& nextnext_ref = VAT(arrow_of_time, ARROW_NEXT_NEXT(arrow_idx));
+                        const auto& nextnext = VAT( VAT(groups,group_type), nextnext_ref.second);
+                        if (GRP_IS_SINGLET(nextnext)) {
+                            push_task(pool, futures, OneHiccup_S41[flip], time, time+4);
+                        }
+                    } else {
+                        for (auto next_time = GRP_START(next)+1;
+                             next_time <=GRP_FINISH(next);
+                             next_time++ ) {
+                            push_task(pool, futures, OneHiccup_S41[flip], time, next_time);
+                        }
+                    }
+
+                    if (HAS_ARROW_NEXT_NEXT(arrow_idx, total_groups)) {
+                        if (GRP_INT_DURATION(next) > 1) {
+                            push_task(pool, futures, HV4_3[flip], time, GRP_FINISH(next) + 1); //
+                        } else {
+                            const auto& nextnext_ref = VAT(arrow_of_time, ARROW_NEXT_NEXT(arrow_idx));
+                            const auto& nextnext = VAT( VAT(groups,group_type), nextnext_ref.second);
+                            for (auto nextnext_time = GRP_START(nextnext)+1;
+                                 nextnext_time< GRP_FINISH(nextnext)+1;
+                                 nextnext_time++) {
+                                push_task(pool, futures, TwoHiccups_S32[group_type], time, nextnext_time);
+                            }
+                        }
+
+                    }
+                } else {
+                    if (current_span <= GRP_INT_DURATION(next)) {
+                        for (auto next_time = GRP_START(next)+current_span-1;
+                             next_time <=GRP_FINISH(next);
+                             next_time++ ) {
+                            push_task(pool, futures, HV6_1[flip], time, next_time);
+                            if (HAS_ARROW_NEXT_NEXT(arrow_idx, total_groups) && HAS_ARROW_NEXT_NEXT_NEXT(arrow_idx, total_groups)) {
+                                const auto& nextnext_ref = VAT(arrow_of_time, ARROW_NEXT_NEXT(arrow_idx));
+                                const auto& nextnext = VAT( VAT(groups,group_type), nextnext_ref.second);
+                                if (GRP_INT_DURATION(nextnext) <= current_span) {
+                                    const auto& next3_ref = VAT(arrow_of_time, ARROW_NEXT_NEXT_NEXT(arrow_idx));
+                                    const auto& next3 = VAT( VAT(groups,flip), next3_ref.second);
+                                    for (auto next3_time = GRP_START(next3)+current_span-1;
+                                         next3_time <=GRP_FINISH(next3);
+                                         next3_time++ ) {
+                                        push_task(pool, futures, HV5_2[flip], time, next_time);
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    push_task(pool, futures, End2Hiccups_S14[group_type], time, GRP_FINISH(groupRange) + 1); //
+                    if ((GRP_IS_SINGLET(next)) && (HAS_ARROW_NEXT_NEXT(arrow_idx, total_groups))) {
+                        push_task(pool, futures, EndHiccup_S23[group_type], time, GRP_FINISH(groupRange) + 2);
+                    }
+                }
+            }
+        }
+
+    }
+
+    // A more reduced version of Algorithm 3
+    inline void Algorithm5(ThreadPool& pool,
                            conditional_structure& futures,
                            size_t time) const {
         auto arrow_idx = VAT(linear_time,time);                  // Pointer to the current positive/negative group is present
@@ -473,6 +569,77 @@ private:
             }
         }
     }
+
+    void Algorithm4(ThreadPool& pool,
+                    conditional_structure& futures,
+                    const Group& x,
+                    int group_type) const {
+        /*
+        This algorithm is a speedup if compared to the original IDEAS'24 paper, as we are not required to get the data
+        @param x:           The group from which we want to generate data
+        @param group_type:  The type associated with the group
+        @return:            A vector of events, not being sorted by time
+        */
+        std::unordered_map<int, std::set<int>> begin_match;
+
+        int flip = (group_type + 1) % 2;
+        for (size_t current_span = 1; current_span <= GRP_INT_DURATION(x); ++current_span) {
+            for (size_t start = GRP_START(x); start <= (GRP_FINISH(x)-current_span+1); start++) {
+                if (start + current_span - 1 > GRP_FINISH(x)) {
+                    continue;
+                }
+                push_task(pool, futures, straight[group_type], start, start + current_span - 1);
+                std::optional<Group> Inext;
+                if (GRP_FINISHES_AT(x, start)) {
+                    Inext = inIntervalTree(groups[flip], GRP_FINISH(x) + 1);
+                }
+                if (GRP_STARTS_AT(x, start)) {
+                    auto Iprev = inIntervalTree(groups[flip], start - 1);
+                    if (Iprev.has_value()) {
+                        push_task(pool, futures, OneHiccup_S41[group_type], start - 1, start + current_span - 1);
+                        if (Inext.has_value()) {
+                            push_task(pool, futures, HV4_3[group_type], start - 1, start + current_span);
+                        }
+                        if (GRP_INT_DURATION(Iprev.value())) {
+                            auto Iprevprev = inIntervalTree(groups[group_type], start - 2);
+                            if (Iprevprev.has_value()) {
+                                push_task(pool, futures, TwoHiccups_S32[group_type], start - 2, start + current_span - 1);
+                            }
+                        } else {
+                            for (int prev_start = GRP_START(Iprev.value());
+                                 prev_start <= GRP_FINISH(Iprev.value());
+                                 prev_start++) {
+                                if (prev_start == start - 1) {
+                                    continue;
+                                }
+                                push_task(pool, futures, HV6_1[group_type], prev_start, start + current_span - 1);
+                                begin_match[prev_start].insert(start + current_span - 1);
+                            }
+                        }
+                    }
+                }
+                if ((GRP_FINISHES_AT(x, start + current_span - 1)) && (Inext.has_value())) {
+                    push_task(pool, futures, End2Hiccups_S14[group_type], start, start + current_span - 1);
+                    if (GRP_IS_SINGLET(Inext.value())) {
+                        auto Inextnext = inIntervalTree(groups[group_type], GRP_FINISH(x) + 2);
+                        if (Inextnext.has_value()) {
+                            push_task(pool, futures, EndHiccup_S23[group_type], start, start + current_span);
+                        }
+                    }
+                }
+            }
+        }
+        for (const auto& [begin, ends] : begin_match) {
+            for (int end : ends) {
+                if (begin_match.find(end + 1) != begin_match.end()) {
+                    for (int new_end_time : begin_match[end + 1]) {
+                        push_task(pool, futures, HV5_2[group_type], begin, new_end_time);
+                    }
+                }
+            }
+        }
+    }
+
     std::pair<std::string, std::unordered_map<std::string,double>> genPureInterval(const std::string &action, size_t begin, size_t end) const;
     std::tuple<size_t, std::string, std::unordered_map<std::string,double>> genInterval(const std::string &action, size_t begin, size_t end) const;
 
