@@ -62,7 +62,7 @@ int main() {
     std::string folder = "/home/giacomo/projects/knobab2_loggen/EMeriTAte/japanese_vowels"; //"/home/giacomo/projects/knobab2_loggen/EMeriTAte/test";
     double precision = 0.0001;
     double max_val = 1000000000.0;
-    bool isAlgo3 = false;
+    bool isAlgo3 = true;
 
     DTMining::dt_mine_and_ts_to_polyadic(benchmark_result_file, folder, precision, max_val, isAlgo3, false);
 

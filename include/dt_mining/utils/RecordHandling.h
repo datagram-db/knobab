@@ -358,7 +358,7 @@ struct RecordHandling {
                         const auto& nextnext_ref = VAT(arrow_of_time, ARROW_NEXT_NEXT(arrow_idx));
                         const auto& nextnext = VAT( VAT(groups,group_type), nextnext_ref.second);
                         if (GRP_IS_SINGLET(nextnext)) {
-                            push_task(pool, futures, OneHiccup_S41[flip], time, time+4);
+                            push_task(pool, futures, OneHiccup_S41[flip], time, GRP_FINISH(nextnext));
                         }
                     } else {
                         for (auto next_time = GRP_START(next)+1;
