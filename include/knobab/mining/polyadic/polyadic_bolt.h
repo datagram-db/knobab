@@ -491,21 +491,24 @@ struct polyadic_bolt {
     }
 
     inline unsigned char association_rules_for_declare(double support,
-                                              const std::pair<size_t, std::unordered_set<act_t>>& pattern,
+                                              const std::unordered_set<act_t>& pattern,
                                               act_t A,
                                               act_t B) {
         unsigned char shift;
-        DEBUG_ASSERT(pattern.second.size() == 2);
-        auto it = pattern.second.begin();
+        DEBUG_ASSERT(pattern.size() == 2);
+        static std::vector<trace_t> no_traces;
+        auto it = pattern.begin();
+        DEBUG_ASSERT((*it ==A) || (*it == B));
         lr.head.clear();
         lr.tail.clear();
         rl.head.clear();
         rl.tail.clear();
-        lr.head.emplace_back(*it);
-        rl.tail.emplace_back(*it);
+        lr.head.emplace_back(A);
+        rl.tail.emplace_back(A);
         it++;
-        lr.tail.emplace_back(*it);
-        rl.head.emplace_back(*it);
+        DEBUG_ASSERT((*it ==A) || (*it == B));
+        lr.tail.emplace_back(B);
+        rl.head.emplace_back(B);
 
         double lr_conf = counter.confidence(lr);
         double rl_conf = counter.confidence(rl);
@@ -526,8 +529,8 @@ struct polyadic_bolt {
             graph.get(resp_existenceBA).set(di_rl, rl_conf);
         }
         graph.get(coexistenceAB_BA).set(counter.decl_coex_int_support(A, B, log_size), counter.decl_coex_conf(A, B));
-        const auto& aSet = inv_map.at(A);
-        const auto& bSet = inv_map.at(B);
+        const auto& aSet = (A == (act_t)-1) ? no_traces : inv_map.at(A);
+        const auto& bSet = (B == (act_t)-1) ? no_traces : inv_map.at(B);
         std::pair<size_t, size_t> ratio = yaucl::iterators::ratio(aSet.begin(), aSet.end(), bSet.begin(), bSet.end());
         graph.get(choiceAB_BA).set(ratio.first, ((double)(ratio.first)) / ((double)log_size));
         return shift;
@@ -1060,7 +1063,7 @@ struct polyadic_bolt {
                                     size_t min_int_supp_patt,
                                     result_container &rc,
                                     std::unordered_set<std::pair<act_t, act_t>> &used,
-                                    const std::pair<size_t, std::unordered_set<act_t>> &binary_pattern,
+                                    const std::unordered_set<act_t> &binary_pattern ,
                                     bool finalise_clause_insertion = true,
                                     bool extra_rc_operation = true) {
         rc.clear(references.size());
@@ -1073,7 +1076,8 @@ struct polyadic_bolt {
         /* We want to force a branch if the Bs ever occur at the start of the trace and occur only once.
      * This is due to ChainPrecedence, which has an activation of X(A), and we want to mine a potential
      * ChainPrecedence(A,B) */
-        bool branch = (hasCoExistence==2) || (Beginnings.at(B) > 0); // Algorithm 7, L. 15
+        bool branch = (hasCoExistence==2) || ((B != (act_t)-1) && (Beginnings.at(B) > 0)); // Algorithm 7, L. 15
+
 
         extractPatternsForcibly(polyadic, A, B,  min_int_supp_patt,
                                 hasCoExistence, branch, true, false);
@@ -1216,7 +1220,7 @@ struct polyadic_bolt {
                 continue;
 
             mine_for_AB_clauses(support, polyadic, A, B, clause, resolveLabelCache, min_int_supp_patt, rc, used,
-                                     binary_pattern, finalise_clause_insertion, extra_rc_operation);
+                                     binary_pattern.second, finalise_clause_insertion, extra_rc_operation);
         }
 
         finalise_run(minimum_support_threshold, used);
@@ -1265,8 +1269,8 @@ struct polyadic_bolt {
 
     void collect_activity_existance(KnowledgeBase* ptr,
                                     const std::string& x,
-                                    std::unordered_map<size_t, std::vector<size_t>> act_Labels,
-                                    std::unordered_map<size_t, std::vector<size_t>> noact_Labels) {
+                                    std::unordered_map<size_t, std::vector<size_t>>& act_Labels,
+                                    std::unordered_map<size_t, std::vector<size_t>>& noact_Labels) {
         size_t trace_id;
 //        for (const auto& x : acts) {
             if(ptr->event_label_mapper.signed_get(x)>0) {

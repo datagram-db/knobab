@@ -65,12 +65,20 @@ struct DataMiningMetrics {
         if (i.empty())
             return sumAll;
         else if (i.size() == 1)
-            return act_to_traces.at(i.at(0)).size();
+            return (i.at(0) == (act_t)-1) ? 0 : act_to_traces.at(i.at(0)).size();
         else {
-            std::vector<trace_t> orig = act_to_traces[i.at(0)];
+            act_t k = i.at(0);
+            if (k == (act_t)-1)
+                return 0;
+            std::vector<trace_t> orig = act_to_traces[k];
             std::vector<trace_t> res;
             for (size_t j = 1; j<i.size(); j++) {
-                const auto& ref = act_to_traces.at(i.at(j));
+                act_t h = i.at(j);
+                if (h == (act_t)-1) {
+                    orig.clear();
+                    break;
+                }
+                const auto& ref = act_to_traces.at(h);
                 std::set_union(orig.begin(), orig.end(), ref.begin(), ref.end(),
                                std::back_inserter(res));
                 std::swap(res, orig);
@@ -81,6 +89,8 @@ struct DataMiningMetrics {
 
     std::vector<trace_t> negate_presence(act_t a, trace_t max_abs) {
         auto range = std::views::iota((trace_t)0, max_abs);
+        if (a == (act_t)-1)
+            return {range.begin(), range.end()};
         const std::vector<trace_t>& orig = act_to_traces.at(a);
         std::vector<trace_t> res;
         std::set_difference(range.begin(), range.end(), orig.begin(), orig.end(),
@@ -93,18 +103,27 @@ struct DataMiningMetrics {
         if (i.empty())
             return sumAll;
         else if (i.size() == 1)
-            return act_to_traces.at(i.at(0)).size();
+            return (i.at(0) == (act_t)-1) ? 0 : act_to_traces.at(i.at(0)).size();
         auto it = compute_and.emplace(i, 0.0); //memoizing
         if (it.second) {
-            std::vector<trace_t> orig = act_to_traces[i.at(0)];
-            std::vector<trace_t> res;
-            for (size_t j = 1; j<i.size(); j++) {
-                const auto& ref = act_to_traces.at(i.at(j));
-                std::set_intersection(orig.begin(), orig.end(), ref.begin(), ref.end(),
-                                      std::back_inserter(res));
-                std::swap(res, orig);
+            act_t k = i.at(0);
+            if (k != (act_t)-1) {
+                std::vector<trace_t> orig = act_to_traces[i.at(0)];
+                std::vector<trace_t> res;
+                for (size_t j = 1; j<i.size(); j++) {
+                    act_t h = i.at(j);
+                    if (h == (act_t)-1) {
+                        orig.clear();
+                        break;
+                    }
+                    const auto& ref = act_to_traces.at(h);
+                    std::set_intersection(orig.begin(), orig.end(), ref.begin(), ref.end(),
+                                          std::back_inserter(res));
+                    std::swap(res, orig);
+                }
+                it.first->second =  orig.size();
             }
-            it.first->second =  orig.size();
+
         }
         return it.first->second;
     }
@@ -113,13 +132,18 @@ struct DataMiningMetrics {
         if (i.empty())
             return sumAll;
         else if (i.size() == 1)
-            return act_to_traces.at(i.at(0)).size();
+            return (i.at(0) == (act_t)-1) ? 0 : act_to_traces.at(i.at(0)).size();
         auto it = compute_or.emplace(i, 0.0); //memoizing
         if (it.second) {
-            std::vector<trace_t> orig = act_to_traces[i.at(0)];
+            act_t h = i.at(0);
+            std::vector<trace_t> orig;
+            if (h != (act_t)-1)
+                orig = act_to_traces[i.at(0)];
             std::vector<trace_t> res;
             for (size_t j = 1; j<i.size(); j++) {
-                const auto& ref = act_to_traces.at(i.at(j));
+                act_t k = i.at(j);
+                if (k == (act_t)-1) continue;
+                const auto& ref = act_to_traces.at(k);
                 std::set_union(orig.begin(), orig.end(), ref.begin(), ref.end(),
                                       std::back_inserter(res));
                 std::swap(res, orig);
@@ -175,11 +199,15 @@ struct DataMiningMetrics {
     size_t decl_coex_int_support(act_t a, act_t b, trace_t max_trace_id) {
         std::vector<act_t> unione{{a,b}};
         auto not_a = negate_presence(a, max_trace_id);
-        const std::vector<trace_t>& orig = act_to_traces.at(b);
-        std::vector<trace_t> res;
-        std::set_difference(not_a.begin(), not_a.end(), orig.begin(), orig.end(),
-                            std::back_inserter(res));
-        return (and_(unione)+res.size());
+        if (b == (act_t)-1) {
+            return (and_(unione)+not_a.size());
+        } else {
+            const std::vector<trace_t>& orig = act_to_traces.at(b);
+            std::vector<trace_t> res;
+            std::set_difference(not_a.begin(), not_a.end(), orig.begin(), orig.end(),
+                                std::back_inserter(res));
+            return (and_(unione)+res.size());
+        }
     }
 
     double decl_coex_conf(act_t a, act_t b) {

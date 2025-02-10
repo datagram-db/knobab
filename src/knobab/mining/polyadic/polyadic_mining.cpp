@@ -35,6 +35,7 @@ static INLINE void mine_a_b(std::unordered_map<std::string, std::ofstream>& data
             A = actA;
         } else {
             A = -1;
+            forAllLogsCacheMap[log_name][actA] = cA;
         }
         ssize_t actB = env.db.event_label_mapper.signed_get(cB);
         if (actB >= 0) {
@@ -42,6 +43,7 @@ static INLINE void mine_a_b(std::unordered_map<std::string, std::ofstream>& data
             B = actB;
         } else {
             B = -1;
+            forAllLogsCacheMap[log_name][actB] = cB;
         }
         auto& rc = rcv[log_name];
         auto& used = usedv[log_name];
@@ -52,20 +54,47 @@ static INLINE void mine_a_b(std::unordered_map<std::string, std::ofstream>& data
         result_map.clear();
         rc.log_size = g.log_size;
 
-        g.mine_for_AB_clauses(mining_supp, polyadic, A, B, clause, forAllLogsCacheMap[log_name], min_int_supp_patts[log_name], rc, used, binary_pattern, true);
-        g.finalise_binary_run(std::ceil(((double)mining_supp) * (sqm.multiple_logs[log_name].db.nTraces())),
-                              used,
-                              A, B);
+        rc.A = A;
+        rc.B = B;
 
-        for (const auto& simple_cls: rc.for_is_clause_present) {
-            auto ternary = result_container::get_simple_ternary_clause(simple_cls, cA, cB);
-            rc.complex_operator(simple_cls, g.graph.get(simple_cls), cA, cB, g.log_size, result_map[log_name]);
-            FastDatalessClause x(std::get<0>(ternary), std::get<1>(ternary), std::get<2>(ternary), 2);
-            g.Phi.erase(
-                    std::remove_if(g.Phi.begin(), g.Phi.end(),
-                                   [&x](const pattern_mining_result<FastDatalessClause> & o) { return o.clause == x; }),
-                    g.Phi.end());
-        }
+        g.clearResultsVector();
+        g.extractPatternsForcibly(polyadic, A, B,  0, true, true, false, true);
+        pat.clear();
+
+        g.set_complex_operator(rc, g.crespBA, cA,cB,  result_map[log_name]);
+        g.set_complex_operator(rc, g.respAB, cA,cB,  result_map[log_name]);
+        g.set_complex_operator(rc, g.respBA, cA,cB,  result_map[log_name]);
+        g.set_complex_operator(rc, g.precAB, cA,cB,  result_map[log_name]);
+        g.set_complex_operator(rc, g.precBA, cA,cB,  result_map[log_name]);
+        g.set_complex_operator(rc, g.cprecAB, cA,cB,  result_map[log_name]);
+        g.set_complex_operator(rc, g.cprecBA, cA,cB,  result_map[log_name]);
+        g.set_complex_operator(rc, g.csuccAB, cA,cB,  result_map[log_name]);
+        g.set_complex_operator(rc, g.csuccBA, cA,cB,  result_map[log_name]);
+        g.set_complex_operator(rc, g.succAB, cA,cB,  result_map[log_name]);
+        g.set_complex_operator(rc, g.succBA, cA,cB,  result_map[log_name]);
+
+//        g.mine_for_AB_clauses(mining_supp, polyadic, A, B, clause, forAllLogsCacheMap[log_name], min_int_supp_patts[log_name], rc, used,
+//                              {A,B}, true);
+//        g.finalise_binary_run(std::ceil(((double)mining_supp) * (sqm.multiple_logs[log_name].db.nTraces())),
+//                              used,
+//                              A, B);
+//        bool skip;
+//        for (const auto& simple_cls: rc.for_is_clause_present) {
+//            skip = false;
+//            for (const auto& ref : g.extra_mining)
+//                if (ref.first == simple_cls.first) {
+//                    skip = true;
+//                    break;
+//                }
+//            if (skip) continue;
+//            auto ternary = result_container::get_simple_ternary_clause(simple_cls, cA, cB);
+//            rc.complex_operator(simple_cls, g.graph.get(simple_cls), cA, cB, g.log_size, result_map[log_name]);
+//            FastDatalessClause x(std::get<0>(ternary), std::get<1>(ternary), std::get<2>(ternary), 2);
+//            g.Phi.erase(
+//                    std::remove_if(g.Phi.begin(), g.Phi.end(),
+//                                   [&x](const pattern_mining_result<FastDatalessClause> & o) { return o.clause == x; }),
+//                    g.Phi.end());
+//        }
 
         const auto& aAct = act_Labels[log_name][A];
         const auto& bAct = act_Labels[log_name][B];
@@ -79,18 +108,27 @@ static INLINE void mine_a_b(std::unordered_map<std::string, std::ofstream>& data
         std::set_intersection(pat.A_not_B.begin(), pat.A_not_B.end(), pat.B_not_A.begin(), pat.B_not_A.end(), std::back_inserter(pat.excl_OCC));
         std::vector<size_t> tmp;
         std::set_union(pat.neither_ACT.begin(), pat.neither_ACT.end(), pat.A_and_B.begin(), pat.A_and_B.end(), std::back_inserter(tmp));
-
-        for (const auto& v : g.extra_mining) {
-            auto ternary = result_container::get_simple_ternary_clause(v, cA, cB);
-            FastDatalessClause x(std::get<0>(ternary), std::get<1>(ternary), std::get<2>(ternary), 2);
-            for (const auto& p : g.Phi) {
-                if (p.clause == x) {
-                    auto& node = g.graph.get(v);
-                    rc.complex_operator(v, node, cA, cB, g.log_size, result_map[log_name]);
-                    break;
-                }
-            }
-        }
+        g.graph.get(g.resp_existenceAB).set(pat.A_and_B, aNoAct, pat.A_not_B);
+        g.graph.get(g.resp_existenceBA).set(pat.A_and_B, bNoAct, pat.B_not_A);
+        g.graph.get(g.coexistenceAB_BA).set(pat.A_and_B, pat.neither_ACT, pat.excl_OCC);
+        g.graph.get(g.choiceAB_BA).set(pat.A_or_B, pat.neither_ACT, pat.neither_ACT);
+        g.graph.get(g.exclchoiceAB_BA).set(pat.excl_OCC, tmp, tmp);
+        g.set_complex_operator(rc, g.resp_existenceAB,  cA,cB,  result_map[log_name]);
+        g.set_complex_operator(rc, g.resp_existenceBA,   cA,cB, result_map[log_name]);
+        g.set_complex_operator(rc, g.coexistenceAB_BA,  cA,cB,  result_map[log_name]);
+        g.set_complex_operator(rc, g.choiceAB_BA,   cA,cB, result_map[log_name]);
+        g.set_complex_operator(rc, g.exclchoiceAB_BA,   cA,cB, result_map[log_name]);
+//        for (const auto& v : g.extra_mining) {
+//            auto ternary = result_container::get_simple_ternary_clause(v, cA, cB);
+//            FastDatalessClause x(std::get<0>(ternary), std::get<1>(ternary), std::get<2>(ternary), 2);
+//            for (const auto& p : g.Phi) {
+//                if (p.clause == x) {
+//                    auto& node = g.graph.get(v);
+//                    rc.complex_operator(v, node, cA, cB, g.log_size, result_map[log_name]);
+//                    break;
+//                }
+//            }
+//        }
         polyadic_bolt::serialize_to_file(result_map[log_name], dataless_logs[log_name]);
     }
 }
@@ -390,12 +428,13 @@ std::unordered_map<std::string, std::vector<std::vector<size_t>>> W1, W2;
                     W1[log].resize(env.db.act_table_by_act_id.secondary_index.size());
                     while (cp.first != cp.second) {
                         if ((keepFirstEvent) || (cp.first->entry.id.parts.trace_id != 0)) {
-                            auto& tuple = beginsX.emplace_back();
+                            std::vector<std::pair<std::string,union_minimal>> tuple;// = beginsX.emplace_back();
                             size_t offset = cp.first - env.db.act_table_by_act_id.table.data();
                             for (const auto& [key, table] : env.db.attribute_name_to_table) {
                                 table.resolve_record_if_exists3(offset, tuple);
                             }
                             std::sort(tuple.begin(), tuple.end());
+                            beginsX.emplace_back(tuple);
                             W1[log][cp.first->entry.id.parts.trace_id].emplace_back(beginsY.size());
                             beginsY.emplace_back(clazz);
                         }
@@ -406,7 +445,7 @@ std::unordered_map<std::string, std::vector<std::vector<size_t>>> W1, W2;
                 DEBUG_ASSERT(!sqm.multiple_logs.empty());
                 // TODO: provide a refinement based upon the number of the occurrences of the activity numbers
                 auto refinement = dataful_folder / ("Refinement_exists_"+act);
-                train_and_dump_to_csv2(sqm.multiple_logs, W1, refinement.string(), beginsX,beginsY, "Exists", "", true, sqm.multiple_logs.size(),numerical,
+                train_and_dump_to_csv2(sqm.multiple_logs, W1, refinement.string(), beginsX,beginsY, "Exists", "All", true, sqm.multiple_logs.size(),numerical,
                                        {}, act ,
                                       false);
             }
