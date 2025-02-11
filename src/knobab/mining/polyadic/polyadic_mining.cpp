@@ -140,7 +140,6 @@ std::pair<double,double> algorithmic_strategy::polyadic_dataful_mining_and_refin
     using std::chrono::duration_cast;
     using std::chrono::duration;
     using std::chrono::milliseconds;
-
     mining_supp = std::max(std::min(mining_supp, 1.0), 0.0);
 
     auto dataful_folder = folder / "dataful_comsis";
@@ -218,34 +217,36 @@ std::pair<double,double> algorithmic_strategy::polyadic_dataful_mining_and_refin
                 if (cp_acts.first > cp_acts.second)
                     std::swap(cp_acts.first, cp_acts.second);
 
-                if (elements[cp_acts].empty()) {
+                //if (elements[cp_acts].empty())
+                {
                     std::cerr << "#" << idx << " = " << cp_acts << std::endl;
                     // Some of the frequent patterns might be duplicated, as starting to expand from the same activity label
                     // So, I am only considering one pair once per activity label
                     elements[cp_acts].emplace_back(log_name, idx);
-#ifdef DEBUG
-                    {
-                        std::unordered_map<std::string, size_t> allLogsIn;
-                        for (const auto& pair : elements[cp_acts]) {
-                            auto it = allLogsIn.emplace(pair.first, pair.second);
-                            const auto& first = ref[pair.second];
-                            const auto& previous = ref[it.first->second];
-                            {
-                                auto it2 = first.second.begin();
-                                std::cerr << kb.db.event_label_mapper.get(*it2++) <<","<< kb.db.event_label_mapper.get(*it2++)<<std::endl;
-                            }
-                            {
-                                auto it2 = previous.second.begin();
-                                std::cerr << kb.db.event_label_mapper.get(*it2++) <<","<< kb.db.event_label_mapper.get(*it2++)<<std::endl;
-                            }
-                            DEBUG_ASSERT(it.second);
-                        }
-                    };
-
-#endif
-                } else {
-                    indices_to_remove[log_name].emplace(idx);
+//#ifdef DEBUG
+//                    {
+//                        std::unordered_map<std::string, size_t> allLogsIn;
+//                        for (const auto& pair : elements[cp_acts]) {
+//                            auto it = allLogsIn.emplace(pair.first, pair.second);
+//                            const auto& first = ref[pair.second];
+//                            const auto& previous = ref[it.first->second];
+//                            {
+//                                auto it2 = first.second.begin();
+//                                std::cerr << kb.db.event_label_mapper.get(*it2++) <<","<< kb.db.event_label_mapper.get(*it2++)<<std::endl;
+//                            }
+//                            {
+//                                auto it2 = previous.second.begin();
+//                                std::cerr << kb.db.event_label_mapper.get(*it2++) <<","<< kb.db.event_label_mapper.get(*it2++)<<std::endl;
+//                            }
+//                            DEBUG_ASSERT(it.second);
+//                        }
+//                    };
+//
+//#endif
                 }
+//                else {
+//                    indices_to_remove[log_name].emplace(idx);
+//                }
 
             } else {
                 auto it = itemset.begin();
@@ -425,7 +426,7 @@ std::unordered_map<std::string, std::vector<std::vector<size_t>>> W1, W2;
                     int clazz = std::stoi(log);
                     auto A = env.db.event_label_mapper.get(act);
                     auto cp = env.db.timed_dataless_exists(A);
-                    W1[log].resize(env.db.act_table_by_act_id.secondary_index.size());
+                    W1[log].resize(env.db.nTraces());
                     while (cp.first != cp.second) {
                         if ((keepFirstEvent) || (cp.first->entry.id.parts.trace_id != 0)) {
                             std::vector<std::pair<std::string,union_minimal>> tuple;// = beginsX.emplace_back();
@@ -435,6 +436,7 @@ std::unordered_map<std::string, std::vector<std::vector<size_t>>> W1, W2;
                             }
                             std::sort(tuple.begin(), tuple.end());
                             beginsX.emplace_back(tuple);
+                            DEBUG_ASSERT(cp.first->entry.id.parts.trace_id < W1[log].size());
                             W1[log][cp.first->entry.id.parts.trace_id].emplace_back(beginsY.size());
                             beginsY.emplace_back(clazz);
                         }
@@ -444,14 +446,15 @@ std::unordered_map<std::string, std::vector<std::vector<size_t>>> W1, W2;
 
                 DEBUG_ASSERT(!sqm.multiple_logs.empty());
                 // TODO: provide a refinement based upon the number of the occurrences of the activity numbers
+
                 auto refinement = dataful_folder / ("Refinement_exists_"+act);
                 train_and_dump_to_csv2(sqm.multiple_logs, W1, refinement.string(), beginsX,beginsY, "Exists", "All", true, sqm.multiple_logs.size(),numerical,
                                        {}, act ,
                                       false);
+
             }
         }
     }
-//    exit(200);
 
     // Now, going for the binary patterns.
     // 0. Initalising the same components from fast SAT
@@ -516,6 +519,8 @@ std::unordered_map<std::string, std::vector<std::vector<size_t>>> W1, W2;
 
     }
 
+
+
     // 1. Mining jointly the shared clauses, so to pertain the information of which traces satisfy or not specific
     //    activation conditions
     FastDatalessClause cache_clause;
@@ -541,12 +546,15 @@ std::unordered_map<std::string, std::vector<std::vector<size_t>>> W1, W2;
     std::vector<std::vector<std::pair<std::string,union_minimal>>> X;
     std::vector<int> y;
     std::vector<size_t> correspondences;
-    fill_in_policy fip = DistinguishingPayload;
+    fill_in_policy fip = StraightforwardFillIn;
     double sampling_probability = 1.0;
     std::unordered_map<int, std::vector<std::pair<double,std::vector<dt_predicate>>>> model;
     std::unordered_map<std::string, std::unordered_map<std::vector<dt_predicate>, std::vector<std::unordered_set<ActivationCases>>>> results_for_serialization;
     std::unordered_set<std::vector<dt_predicate>> all_predicates_of_interest;
     std::vector<std::string> empty_vector;
+
+
+#if 0
     for (auto it = activities.rbegin(), en = activities.rend(); it != en; ) {
         const auto& actA = *it;
 //        if (!order_of_visit_for_compactness.contains(actA))
@@ -938,7 +946,7 @@ std::unordered_map<std::string, std::vector<std::vector<size_t>>> W1, W2;
             }
         }
     }
-
+#endif
 
 ////    PayloadPreserving pp;
 //    for (const auto& [actA, rest] : order_of_visit_for_compactness) {

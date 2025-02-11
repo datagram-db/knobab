@@ -215,7 +215,7 @@ struct payload_preserving {
                 }
             }
         }
-        DEBUG_ASSERT(S.size()> 1);
+//        DEBUG_ASSERT(S.size()> 1);
         return S.size() > 1;
     }
 
@@ -277,7 +277,7 @@ struct payload_preserving {
                 }
             }
         }
-        DEBUG_ASSERT(S.size()> 1);
+//        DEBUG_ASSERT(S.size()> 1);
         return S.size() > 1;
     }
 
@@ -341,12 +341,13 @@ struct payload_preserving {
             const auto& kb = env.db;
             // MEMENTO: auto class_id = std::stoi(log_name); !!!
             ssize_t found = kb.event_label_mapper.signed_get(act_label);
-            DEBUG_ASSERT(found != -1);
-            auto it = kb.timed_dataless_exists(found);
-            DEBUG_ASSERT(it.first != it.second);
-            while (it.first != it.second) {
-                fill_by_record(log_name, env, cached_record, (ActTable::record*)it.first);
-                it.first++;
+            if (found>=0) {
+                auto it = kb.timed_dataless_exists(found);
+                DEBUG_ASSERT(it.first != it.second);
+                while (it.first != it.second) {
+                    fill_by_record(log_name, env, cached_record, (ActTable::record*)it.first);
+                    it.first++;
+                }
             }
         }
     }

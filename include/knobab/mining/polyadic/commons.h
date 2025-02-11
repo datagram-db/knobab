@@ -128,16 +128,18 @@ struct CSV_SERIALIZATION {
                              const std::vector<std::vector<std::pair<std::string,union_minimal>>>& X,
                              const std::vector<std::vector<size_t>>& traces,
                              size_t sigma_id) {
-        static std::vector<int> resultsVector(size(), 0);
-//        static std::vector<size_t> modelVector(model.size(), 0);
+//        const auto sizeCurr = size();
+        static std::vector<int> resultsVector;
+        resultsVector.resize(size());
         for (auto& val : resultsVector) val = 0;
-//        for (auto& val : modelVector) val = 0;
         for (const auto& offset : traces.at(sigma_id)) {
             // Collecting the information associated to the payloads of the events
             collect_rawpayload_csv_results_row(resultsVector, model, X[offset]);
         }
         auto vlen = traces.at(sigma_id).size();
         std::tuple<clazz_t, disj_case_t, is_all_some_otherwise> record_true{0,-1,true}, record_false{0,-1,false};
+//        const auto nowSize = size();
+        DEBUG_ASSERT(resultsVector.size() == size());
         for (size_t i = 0, N = size(); i<N; i++) {
             const auto& val = order_of_appearance.get(i);
             size_t clazz = std::get<0>(val);
@@ -188,15 +190,23 @@ private:
                     }
                 }
                 if (found) {
-                    results[order_of_appearance.getKey(record_true)]++;
-                    results[order_of_appearance.getKey(record_false)]++;
+                    const auto key1 = order_of_appearance.getKey(record_true);
+                    const auto key2 = order_of_appearance.getKey(record_false);
+                    DEBUG_ASSERT(key1 < results.size());
+                    DEBUG_ASSERT(key2 < results.size());
+                    results[key1]++;
+                    results[key2]++;
                     hasAMatch = true; //!some_label.empty();
                 }
             }
             std::get<1>(record_true) = std::get<1>(record_false) = -1;
             if (hasAMatch) {
-                results[order_of_appearance.getKey(record_true)]++;
-                results[order_of_appearance.getKey(record_false)]++;
+                const auto key1 = order_of_appearance.getKey(record_true);
+                const auto key2 = order_of_appearance.getKey(record_false);
+                DEBUG_ASSERT(key1 < results.size());
+                DEBUG_ASSERT(key2 < results.size());
+                results[key1]++;
+                results[key2]++;
             }
         }
     }

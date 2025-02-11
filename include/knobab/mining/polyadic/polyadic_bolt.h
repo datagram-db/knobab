@@ -131,7 +131,7 @@ struct result_container {
             if (x.first != std::get<0>(obj))
                 continue;
             if (x.second) {
-                if ((std::get<1>(obj) == A) && (std::get<2>(obj) == B))
+                if (((std::get<1>(obj) == A) && (std::get<2>(obj) == B)) || (x.first == "ExclChoice") || (x.first == "Choice") || (x.first == "CoExistence"))
                     return x;
             } else {
                 if ((std::get<2>(obj) == A) && (std::get<1>(obj) == B))
