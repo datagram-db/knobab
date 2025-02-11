@@ -270,7 +270,7 @@ int main(int argc, char **argv) {
     // -s 0.1 -d user -i day -i span -i "__class" -i "__label" -i time -i fulltime -p"/home/giacomo/projects/knobab2_loggen/EMeriTAte/dyskinetic/polyadic_Algo1_dataless_algo4/polyadic_Algo1_dataless.json"
     //
 
-    // -s 0.0 -d user -i day -i span -i "__class" -i "__label" -i time -t time -p"/home/giacomo/projects/knobab2_loggen/EMeriTAte/osuleaf/polyadic_Algo3_dataless.json" -E "/home/giacomo/projects/knobab2_loggen/EMeriTAte/osuleaf/polyadic_Algo3_dataless_json_test" -k
+    // -s 0.0 -d user -i day -i span -i "__class" -i "__label" -i time -t time -p"/media/giacomo/Data/osuleaf/polyadic_Algo3_dataless.json" -E "/media/giacomo/Data/osuleaf/test" -k
     // -s 0.0 -d user -i day -i span -i "__class" -i "__label" -i time -t time -p"/home/giacomo/projects/knobab2_loggen/EMeriTAte/japanese_vowels/polyadic_Algo2_dataful.json" -E "/home/giacomo/projects/knobab2_loggen/EMeriTAte/japanese_vowels/test_mine" -k
     struct benchmarking result;
     result.filename_polyadic = "/home/giacomo/projects/sdd-processing/sdd-processing/log_weekly.json";

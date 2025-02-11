@@ -180,6 +180,7 @@ std::pair<double,double> algorithmic_strategy::polyadic_dataful_mining_and_refin
 
         // Mining just the unary clauses
         support.emplace_back(g.run1(mining_supp, polyadic, &kb.db, ref));
+        std::set<std::pair<std::string,std::string>> met_pairs;
 
         // Determining which itemsets can be computed non in-tandem
         // 1) Determining which itemsets are shared and which are not
@@ -217,15 +218,21 @@ std::pair<double,double> algorithmic_strategy::polyadic_dataful_mining_and_refin
                 if (cp_acts.first > cp_acts.second)
                     std::swap(cp_acts.first, cp_acts.second);
 
+                // The element was already inserted
+                if (!met_pairs.insert(cp_acts).second)
+                    continue;
+
                 //if (elements[cp_acts].empty())
                 {
                     std::cerr << "#" << idx << " = " << cp_acts << std::endl;
+#ifdef DEBUG
                     // Some of the frequent patterns might be duplicated, as starting to expand from the same activity label
                     // So, I am only considering one pair once per activity label
                     for (const auto& ref : elements[cp_acts]) {
                         if (ref.first == log_name)
-                            DEBUG_ASSERT(false);
+                            DEBUG_ASSERT(false); // met_pairs should prevent this from happening
                     }
+#endif
                     elements[cp_acts].emplace_back(log_name, idx);
 //#ifdef DEBUG
 //                    {
