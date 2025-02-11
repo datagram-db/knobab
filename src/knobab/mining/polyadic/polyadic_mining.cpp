@@ -572,13 +572,13 @@ std::unordered_map<std::string, std::vector<std::vector<size_t>>> W1, W2;
         const auto& rest = (order_of_visit_for_compactness.contains(actA)) ? order_of_visit_for_compactness.find(actA)->second : empty_vector;
         std::pair<std::string,std::string> cp;
         cp.first = actA;
-        bool isADataBeingCollected = false, isBDataBeingCollected =false; // If there is no purpuse for pre-collecting the data, then this is set to false
+        // bool isADataBeingCollected = false, isBDataBeingCollected =false; // If there is no purpuse for pre-collecting the data, then this is set to false
 
         for (const auto& actB : rest) {
 #ifdef DEBUG
             std::cout << "(" << actA << "," << actB << ")" << std::endl;
 #endif
-            isBDataBeingCollected = false;
+            // isBDataBeingCollected = false;
             Bpayloads.clear();
             cp.second = actB;
             bool hadContained = elements.contains(cp);
@@ -622,7 +622,7 @@ std::unordered_map<std::string, std::vector<std::vector<size_t>>> W1, W2;
             }
 
             // Determining which are the logs that have the clauses being really satisfied, and not just satisfying vacuously or not being represented
-            std::unordered_map<simple_declare, std::vector<std::string>> logs_with_sat_clauses;
+            std::unordered_map<simple_declare, std::unordered_set<std::string>> logs_with_sat_clauses;
 
             /**
              * Se la clausola senza dati non è soddisfatta, allora la sua versione raffinata potrebbe essere o vacuamente
@@ -650,40 +650,42 @@ std::unordered_map<std::string, std::vector<std::vector<size_t>>> W1, W2;
                         // Adding only if the clause is satisfied or not satisfied
                         if (node.first == "Succession") {
                             if (node.second) {
-                                logs_with_sat_clauses[g.precAB].emplace_back(log_name);
-                                logs_with_sat_clauses[g.respAB].emplace_back(log_name);
+                                logs_with_sat_clauses[g.precAB].emplace(log_name);
+                                logs_with_sat_clauses[g.respAB].emplace(log_name);
                             } else {
-                                logs_with_sat_clauses[g.precBA].emplace_back(log_name);
-                                logs_with_sat_clauses[g.respBA].emplace_back(log_name);
+                                logs_with_sat_clauses[g.precBA].emplace(log_name);
+                                logs_with_sat_clauses[g.respBA].emplace(log_name);
                             }
                         } else if (node.first == "ChainSuccession") {
                             if (node.second) {
-                                logs_with_sat_clauses[g.cprecAB].emplace_back(log_name);
-                                logs_with_sat_clauses[g.crespAB].emplace_back(log_name);
+                                logs_with_sat_clauses[g.cprecAB].emplace(log_name);
+                                logs_with_sat_clauses[g.crespAB].emplace(log_name);
                             } else {
-                                logs_with_sat_clauses[g.cprecBA].emplace_back(log_name);
-                                logs_with_sat_clauses[g.crespBA].emplace_back(log_name);
+                                logs_with_sat_clauses[g.cprecBA].emplace(log_name);
+                                logs_with_sat_clauses[g.crespBA].emplace(log_name);
                             }
                         } else
-                            logs_with_sat_clauses[node].emplace_back(log_name);
+                            logs_with_sat_clauses[node].emplace(log_name);
                     }
                 }
             }
 
-            for (auto it = logs_with_sat_clauses.begin(); it != logs_with_sat_clauses.end(); it++) {
-                auto ternary = result_container::get_simple_ternary_clause(it->first, actA, actB);
-                size_t shift = it->first.second ? 0 : 1;
+            for (auto it2 = logs_with_sat_clauses.begin(); it2 != logs_with_sat_clauses.end(); it2++) {
+                auto ternary = result_container::get_simple_ternary_clause(it2->first, actA, actB);
+                size_t shift = it2->first.second ? 0 : 1;
 
-                act_target_correlation_preserver* current = it->first.second ? &act_ab : &act_ba;
-                DEBUG_ASSERT(current->payload_map.contains(it->first));
+                // Osserva: the posso solo ottenere i Chain* e i Precedence/Response
+                act_target_correlation_preserver* current = it2->first.second ? &act_ab : &act_ba;
+                if (!current->payload_map.contains(it2->first))
+                    continue;
 
-                if (it->second.size() > 1) {
+                if (it2->second.size() > 1) {
                     // Filling in all of the events corresponding to the activation
-                    if (!isADataBeingCollected) {
-                        Apayloads.fill_all_activations(sqm.multiple_logs, cp.first);
-                        isADataBeingCollected = true;
-                    } //else
-//                        pp.clear_from_offset(); // Removing all of the payloads from previous insertions
+//                     if (!isADataBeingCollected) {
+//                         Apayloads.fill_all_activations(sqm.multiple_logs, cp.first);
+//                         isADataBeingCollected = true;
+//                     } //else
+// //                        pp.clear_from_offset(); // Removing all of the payloads from previous insertions
 
                     /// XXX: start copy
                     X.clear();
@@ -692,13 +694,16 @@ std::unordered_map<std::string, std::vector<std::vector<size_t>>> W1, W2;
                     model.clear();
                     all_predicates_of_interest.clear();
 
-                    bool result = Apayloads.load_activation_with_policy(it->first,
+                    std::pair<std::string,constituent_t> cp33;
+                    std::unordered_map<std::pair<std::string,constituent_t>, size_t> resultMap = Apayloads.load_activation_with_policy(it2->first,
                                                           current->payload_map,
                                                           X,
                                                           y,
                                                           correspondences,
                                                           fip,
+                                                          sqm.multiple_logs,
                                                           sampling_probability);
+                    bool result = !resultMap.empty();
 
                     DecisionTree activations(X, y, numerical, categorical, 5);
 
@@ -710,9 +715,10 @@ std::unordered_map<std::string, std::vector<std::vector<size_t>>> W1, W2;
                             results_for_serialization.clear();
 
                             const std::unordered_map<std::string,std::vector<std::unordered_map<ActTable::record*,
-                                    std::unordered_map<ActivationCases,std::unordered_set<ActTable::record*>>>>>& def2 = current->payload_map.at(it->first);
+                                    std::unordered_map<ActivationCases,std::unordered_set<ActTable::record*>>>>>& def2 = current->payload_map.at(it2->first);
 
                             for (const auto& [log_name, traces] : def2) {
+                                cp33.first = log_name;
                                 std::unordered_map<std::vector<dt_predicate>, std::vector<std::unordered_set<ActivationCases>> >& for_log = results_for_serialization[log_name];
                                 size_t N = sqm.multiple_logs[log_name].db.nTraces();
 
@@ -722,7 +728,11 @@ std::unordered_map<std::string, std::vector<std::vector<size_t>>> W1, W2;
                                     if (events.empty()) continue;
 
                                     for (const auto& [record_ptr, map_] : events) {
-                                        const auto* payload = Apayloads.get_payloads_from_offset(log_name, record_ptr);
+                                        cp33.second = record_ptr;
+                                        auto it33 = resultMap.find(cp33);
+                                        if (it33 == resultMap.end())
+                                            continue;
+                                        // const auto* payload = Apayloads.get_payloads_from_offset(log_name, record_ptr);
 
                                         for (const auto& [_, disjunctions] : model) {
                                             for (const auto& [score, alternative] : disjunctions) {
@@ -732,7 +742,7 @@ std::unordered_map<std::string, std::vector<std::vector<size_t>>> W1, W2;
                                                 auto& results = for_log[alternative];
                                                 if (results.empty())
                                                     results.resize(N);
-                                                bool test = dt_predicate::test_conjunctive_predicate(alternative, *payload);
+                                                bool test = dt_predicate::test_conjunctive_predicate(alternative, X[it33->second]);
                                                 for (const auto& [cases_, S] : map_) {
                                                     switch (cases_) {
                                                         case ActivationIsViolated:
@@ -761,16 +771,16 @@ std::unordered_map<std::string, std::vector<std::vector<size_t>>> W1, W2;
                             for (const auto& dt : all_predicates_of_interest) {
                                 for (auto& [log_name, dataful] : dataful_logs) {
                                     size_t N = sqm.multiple_logs[log_name].db.nTraces();
-                                    auto it2 = results_for_serialization.find(log_name);
+                                    auto it2_ = results_for_serialization.find(log_name);
                                     dataful << "\"" << std::get<0>(ternary) << "(" << std::get<1>(ternary) << "," << std::get<2>(ternary) << ") act " << dt_predicate::conjunction_to_string(dt) << "\",";
-                                    if (it2 == results_for_serialization.end()) {
+                                    if (it2_ == results_for_serialization.end()) {
                                         for (size_t ntrace = 0; ntrace<N; ntrace++) {
                                             dataful << -2;
                                             if (ntrace != (N-1)) dataful << ",";
                                         }
                                     } else {
-                                        auto it3 = it2->second.find(dt);
-                                        if (it3 == it2->second.end()) {
+                                        auto it3 = it2_->second.find(dt);
+                                        if (it3 == it2_->second.end()) {
                                             for (size_t ntrace = 0; ntrace<N; ntrace++) {
                                                 dataful << -2;
                                                 if (ntrace != (N-1)) dataful << ",";
@@ -798,10 +808,10 @@ std::unordered_map<std::string, std::vector<std::vector<size_t>>> W1, W2;
                     // We are collecting target conditions only if the classification outcome from the activation is not good enough
                     // TODO: fix the remaining code
                     if (!result) {
-                        if (!isBDataBeingCollected) {
-                            Bpayloads.fill_all_activations(sqm.multiple_logs, cp.second); // filling in the payload from the current ones
-                            isBDataBeingCollected = true;
-                        }
+                        // if (!isBDataBeingCollected) {
+                        //     Bpayloads.fill_all_activations(sqm.multiple_logs, cp.second); // filling in the payload from the current ones
+                        //     isBDataBeingCollected = true;
+                        // }
 
                         //// XXX: start paste
                         X.clear();
@@ -810,13 +820,15 @@ std::unordered_map<std::string, std::vector<std::vector<size_t>>> W1, W2;
                         model.clear();
                         all_predicates_of_interest.clear();
 
-                        result = Bpayloads.load_target_with_policy(it->first,
+                        resultMap = Bpayloads.load_target_with_policy(it2->first,
                                                               current->payload_map,
                                                               X,
                                                               y,
                                                               correspondences,
                                                               fip,
+                                                              sqm.multiple_logs,
                                                               sampling_probability);
+                        result = !resultMap.empty();
 
                         if (result) {
                             DecisionTree targets(X, y, numerical, categorical, 5);
@@ -827,11 +839,12 @@ std::unordered_map<std::string, std::vector<std::vector<size_t>>> W1, W2;
                                 results_for_serialization.clear();
 
                                 const std::unordered_map<std::string,std::vector<std::unordered_map<ActTable::record*,
-                                        std::unordered_map<ActivationCases,std::unordered_set<ActTable::record*>>>>>& def2 = current->payload_map.at(it->first);
+                                        std::unordered_map<ActivationCases,std::unordered_set<ActTable::record*>>>>>& def2 = current->payload_map.at(it2->first);
 
                                 for (const auto& [log_name, traces] : def2) {
                                     std::unordered_map<std::vector<dt_predicate>, std::vector<std::unordered_set<ActivationCases>> >& for_log = results_for_serialization[log_name];
                                     size_t N = sqm.multiple_logs[log_name].db.nTraces();
+                                    cp33.first = log_name;
 
                                     DEBUG_ASSERT(traces.size() == N);
                                     for (size_t trace_id = 0; trace_id < N; trace_id++) {
@@ -841,7 +854,10 @@ std::unordered_map<std::string, std::vector<std::vector<size_t>>> W1, W2;
                                         for (const auto& [record_ptr_old, map_] : events) {
                                             for (const auto& [_, S] : map_) {
                                                 for (const auto& record_ptr : S) {
-                                                    const auto* payload = Apayloads.get_payloads_from_offset(log_name, record_ptr);
+                                                     cp33.second = record_ptr;
+                                        auto it33 = resultMap.find(cp33);
+                                        if (it33 == resultMap.end())
+                                            continue;
 
                                                     for (const auto& [_, disjunctions] : model) {
                                                         for (const auto& [score, alternative] : disjunctions) {
@@ -851,7 +867,7 @@ std::unordered_map<std::string, std::vector<std::vector<size_t>>> W1, W2;
                                                             auto& results = for_log[alternative];
                                                             if (results.empty())
                                                                 results.resize(N);
-                                                            bool test = dt_predicate::test_conjunctive_predicate(alternative, *payload);
+                                                            bool test = dt_predicate::test_conjunctive_predicate(alternative, X[it33->second]);
                                                             for (const auto& [cases, S] : map_) {
                                                                 switch (cases) {
                                                                     case ActivationIsViolated:
@@ -940,28 +956,28 @@ std::unordered_map<std::string, std::vector<std::vector<size_t>>> W1, W2;
                 std::swap(cp.first, cp.second);
         }
         it++;
-        if (rest.empty()) {
-            Bpayloads.clear();
-            Apayloads.clear();
-            isBDataBeingCollected = false;
-            isADataBeingCollected = false;
-        } else {
-            const auto& lastB = *rest.rbegin();
-
-            if (it == en)
-                break;
-            else if (*it == lastB) {
-                std::swap(Bpayloads, Apayloads);
-                Bpayloads.clear();
-                isBDataBeingCollected = false;
-                isADataBeingCollected = true;
-            } else {
-                Bpayloads.clear();
-                Apayloads.clear();
-                isBDataBeingCollected = false;
-                isADataBeingCollected = false;
-            }
-        }
+        // if (rest.empty()) {
+        //     Bpayloads.clear();
+        //     Apayloads.clear();
+        //     isBDataBeingCollected = false;
+        //     isADataBeingCollected = false;
+        // } else {
+        //     const auto& lastB = *rest.rbegin();
+        //
+        //     if (it == en)
+        //         break;
+        //     else if (*it == lastB) {
+        //         std::swap(Bpayloads, Apayloads);
+        //         Bpayloads.clear();
+        //         isBDataBeingCollected = false;
+        //         isADataBeingCollected = true;
+        //     } else {
+        //         Bpayloads.clear();
+        //         Apayloads.clear();
+        //         isBDataBeingCollected = false;
+        //         isADataBeingCollected = false;
+        //     }
+        // }
     }
 
 ////    PayloadPreserving pp;
