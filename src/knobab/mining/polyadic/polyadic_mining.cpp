@@ -222,6 +222,10 @@ std::pair<double,double> algorithmic_strategy::polyadic_dataful_mining_and_refin
                     std::cerr << "#" << idx << " = " << cp_acts << std::endl;
                     // Some of the frequent patterns might be duplicated, as starting to expand from the same activity label
                     // So, I am only considering one pair once per activity label
+                    for (const auto& ref : elements[cp_acts]) {
+                        if (ref.first == log_name)
+                            DEBUG_ASSERT(false);
+                    }
                     elements[cp_acts].emplace_back(log_name, idx);
 //#ifdef DEBUG
 //                    {
@@ -554,7 +558,6 @@ std::unordered_map<std::string, std::vector<std::vector<size_t>>> W1, W2;
     std::vector<std::string> empty_vector;
 
 
-#if 0
     for (auto it = activities.rbegin(), en = activities.rend(); it != en; ) {
         const auto& actA = *it;
 //        if (!order_of_visit_for_compactness.contains(actA))
@@ -668,6 +671,7 @@ std::unordered_map<std::string, std::vector<std::vector<size_t>>> W1, W2;
                 DEBUG_ASSERT(current->payload_map.contains(it->first));
 
                 if (it->second.size() > 1) {
+                    // Filling in all of the events corresponding to the activation
                     if (!isADataBeingCollected) {
                         Apayloads.fill_all_activations(sqm.multiple_logs, cp.first);
                         isADataBeingCollected = true;
@@ -932,6 +936,8 @@ std::unordered_map<std::string, std::vector<std::vector<size_t>>> W1, W2;
         if (rest.empty()) {
             Bpayloads.clear();
             Apayloads.clear();
+            isBDataBeingCollected = false;
+            isADataBeingCollected = false;
         } else {
             const auto& lastB = *rest.rbegin();
 
@@ -940,13 +946,16 @@ std::unordered_map<std::string, std::vector<std::vector<size_t>>> W1, W2;
             else if (*it == lastB) {
                 std::swap(Bpayloads, Apayloads);
                 Bpayloads.clear();
+                isBDataBeingCollected = false;
+                isADataBeingCollected = true;
             } else {
                 Bpayloads.clear();
                 Apayloads.clear();
+                isBDataBeingCollected = false;
+                isADataBeingCollected = false;
             }
         }
     }
-#endif
 
 ////    PayloadPreserving pp;
 //    for (const auto& [actA, rest] : order_of_visit_for_compactness) {
