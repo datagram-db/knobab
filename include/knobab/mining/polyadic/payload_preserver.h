@@ -204,30 +204,6 @@ struct payload_preserving {
                     record_to_clazz[cached_record][clazz].emplace_back(record);
                     S.insert(clazz);
                 }
-                // for (const auto& [key, offset_with_clazz] : uniqueness_as_ptr) {
-                //     size_t nOfClazzes = offset_with_clazz.size();
-                //     const auto* payload = key.get();
-                //     if ((nOfClazzes == 1) || (casus == StraightforwardFillIn)) {
-                //         for (const auto&  [clazz, offsets] : offset_with_clazz) {
-                //             bool found = false;
-                //             for (auto* ptr : offsets) {
-                //                 if (trace.contains(ptr))  {
-                //                     found = true;
-                //                     break;
-                //                 }
-                //             }
-                //             if (!found) continue; // Inserting the element only if one of the recorts appears among the activations
-                //
-                //             // Inserting one payload speciment per class, so not to bias the classification
-                //             if (dist(engine) <= sampling_probability) {
-                //                 X.emplace_back(*payload);
-                //                 y.emplace_back(clazz);
-                //                 S.emplace(clazz);
-                //                 redundantXCorrespondences.emplace_back(key.offset);
-                //             }
-                //         }
-                //     }
-                // }
             }
         }
 //        DEBUG_ASSERT(S.size()> 1);
@@ -292,34 +268,8 @@ struct payload_preserving {
                     record_to_clazz[cached_record][clazz].emplace_back(record);
                     S.insert(clazz);
                 }
-                // for (const auto& [key, offset_with_clazz] : uniqueness_as_ptr) {
-                //     size_t nOfClazzes = offset_with_clazz.size();
-                //     const auto* payload = key.get();
-                //     if ((nOfClazzes == 1) || (casus == StraightforwardFillIn)) {
-                //         for (const auto&  [clazz, offsets] : offset_with_clazz) {
-                //             bool found = false;
-                //             for (auto* ptr : offsets) {
-                //                 if (trace.contains(ptr))  {
-                //                     found = true;
-                //                     break;
-                //                 }
-                //             }
-                //             if (!found) continue; // Inserting the element only if one of the recorts appears among the activations
-                //
-                //             // Inserting one payload speciment per class, so not to bias the classification
-                //             if (dist(engine) <= sampling_probability) {
-                //                 X.emplace_back(*payload);
-                //                 y.emplace_back(clazz);
-                //                 S.emplace(clazz);
-                //                 redundantXCorrespondences.emplace_back(key.offset);
-                //             }
-                //         }
-                //     }
-                // }
             }
         }
-//        DEBUG_ASSERT(S.size()> 1);
-
         if (S.size()>1) {
             std::pair<std::string,constituent_t> cp;
             for (const auto& [record, clazzes] : record_to_clazz) {
@@ -338,44 +288,6 @@ struct payload_preserving {
             }
         }
         return mapping_for_elements;
-        // for (const auto& [log_name, all_traces] : it->second) {
-        //     for (const auto &trace: all_traces) {
-        //
-        //
-        //         // for (const auto& [key, offset_with_clazz] : uniqueness_as_ptr) {
-        //         //     size_t nOfClazzes = offset_with_clazz.size();
-        //         //     const auto* payload = key.get();
-        //         //     if ((nOfClazzes == 1) || (casus == StraightforwardFillIn)) {
-        //         //         for (const auto&  [clazz, offsets] : offset_with_clazz) {
-        //         //             bool found = false;
-        //         //             // Looding for the value among the targets
-        //         //             for (auto* ptr : offsets) {
-        //         //                 for (const auto& [key2, vals2] : trace) {
-        //         //                     for (const auto& [casus2, set] : vals2) {
-        //         //                         if (set.contains(ptr)) {
-        //         //                             found = true;
-        //         //                             break;
-        //         //                         }
-        //         //                     }
-        //         //                     if (found) break;
-        //         //                 }
-        //         //                 if (found) break;
-        //         //             }
-        //         //             if (!found) continue; // Inserting the element only if one of the recorts appears among the activations
-        //         //
-        //         //             // Inserting one payload speciment per class, so not to bias the classification
-        //         //             if (dist(engine) <= sampling_probability) {
-        //         //                 X.emplace_back(*payload);
-        //         //                 y.emplace_back(clazz);
-        //         //                 redundantXCorrespondences.emplace_back(key.offset);
-        //         //             }
-        //         //         }
-        //         //     }
-        //         // }
-        //     }
-        // }
-//        DEBUG_ASSERT(S.size()> 1);
-       // return S.size() > 1;
     }
 
     // TODO: correlation condition between activation and target

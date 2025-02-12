@@ -341,6 +341,10 @@ int main(int argc, char **argv) {
     result.filename_polyadic.clear();
     if (polyadicJSON) {
         result.filename_polyadic = args::get(polyadicJSON);
+        if ((!std::filesystem::exists(result.filename_polyadic)) || (!std::filesystem::is_regular_file(result.filename_polyadic))) {
+            std::cerr << "File " << result.filename_polyadic << " does not exist" << std::endl;
+            exit(1);
+        }
     }
     if (polyadicMine) {
         result.isFilenamePolyadic = false;

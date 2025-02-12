@@ -680,6 +680,7 @@ std::unordered_map<std::string, std::vector<std::vector<size_t>>> W1, W2;
                     continue;
 
                 if (it2->second.size() > 1) {
+                    std::cout << " - " << std::get<2>(ternary) << std::endl;
                     // Filling in all of the events corresponding to the activation
 //                     if (!isADataBeingCollected) {
 //                         Apayloads.fill_all_activations(sqm.multiple_logs, cp.first);
@@ -705,14 +706,22 @@ std::unordered_map<std::string, std::vector<std::vector<size_t>>> W1, W2;
                                                           sampling_probability);
                     bool result = !resultMap.empty();
 
-                    DecisionTree activations(X, y, numerical, categorical, 5);
-
+                    // If there are events enough to differentiate between classes
                     if (result) {
+                        DecisionTree activations(X, y, numerical, categorical, 5);
                         activations.splitTree(false);
                         result = activations.goodness > 0.5;
+                        // If the data-aware classification outcome for all the activations is satisfactory
                         if (result) {
+                            std::cout << " - Activation differentation! " << std::endl;
+                            // Defining the model
                             activations.populate_children_predicates2(model);
                             results_for_serialization.clear();
+                            for (const auto& [_, disjunctions] : model) {
+                                for (const auto& [score, alternative] : disjunctions) {
+                                    all_predicates_of_interest.emplace(alternative);
+                                }
+                            }
 
                             const std::unordered_map<std::string,std::vector<std::unordered_map<ActTable::record*,
                                     std::unordered_map<ActivationCases,std::unordered_set<ActTable::record*>>>>>& def2 = current->payload_map.at(it2->first);
@@ -736,12 +745,12 @@ std::unordered_map<std::string, std::vector<std::vector<size_t>>> W1, W2;
 
                                         for (const auto& [_, disjunctions] : model) {
                                             for (const auto& [score, alternative] : disjunctions) {
-                                                if (trace_id == 0) {
-                                                    all_predicates_of_interest.emplace(alternative);
-                                                }
+
                                                 auto& results = for_log[alternative];
                                                 if (results.empty())
                                                     results.resize(N);
+
+                                                // If the payload is doable and the record is associated with some considerations on the satisfaction and activation, then I can desume the overall satisfiability in a more precise way per clause activation
                                                 bool test = dt_predicate::test_conjunctive_predicate(alternative, X[it33->second]);
                                                 for (const auto& [cases_, S] : map_) {
                                                     switch (cases_) {
@@ -795,7 +804,10 @@ std::unordered_map<std::string, std::vector<std::vector<size_t>>> W1, W2;
                                                 } else {
                                                     dataful << 1;
                                                 }
-                                                if (ntrace != (N-1)) dataful << ",";
+                                                if (ntrace != (N-1))
+                                                    dataful << ",";
+                                                else
+                                                    dataful << std::endl;
                                             }
                                         }
                                     }
@@ -830,14 +842,25 @@ std::unordered_map<std::string, std::vector<std::vector<size_t>>> W1, W2;
                                                               sampling_probability);
                         result = !resultMap.empty();
 
+                        //If I can load the data for more than one single class, thus I am able to make some distinctions
                         if (result) {
                             DecisionTree targets(X, y, numerical, categorical, 5);
                             targets.splitTree(false);
-                            result = activations.goodness > 0.5;
+                            result = targets.goodness > 0.5;
+                            // and if I am able to provide a good classification, then it means that I can differentiate
+                            // the different clauses by payloading condition
                             if (result) {
+                                std::cout << " - Target differentation! " << std::endl;
+                                // Generating the model, as the classess being extracted from the tree
                                 targets.populate_children_predicates2(model);
                                 results_for_serialization.clear();
+                                for (const auto& [_, disjunctions] : model) {
+                                    for (const auto& [score, alternative] : disjunctions) {
+                                        all_predicates_of_interest.emplace(alternative);
+                                    }
+                                }
 
+                                // Returning whether the activation was satisfied or not and, depending on this, I need to change the activation bit
                                 const std::unordered_map<std::string,std::vector<std::unordered_map<ActTable::record*,
                                         std::unordered_map<ActivationCases,std::unordered_set<ActTable::record*>>>>>& def2 = current->payload_map.at(it2->first);
 
@@ -855,9 +878,9 @@ std::unordered_map<std::string, std::vector<std::vector<size_t>>> W1, W2;
                                             for (const auto& [_, S] : map_) {
                                                 for (const auto& record_ptr : S) {
                                                      cp33.second = record_ptr;
-                                        auto it33 = resultMap.find(cp33);
-                                        if (it33 == resultMap.end())
-                                            continue;
+                                                     auto it33 = resultMap.find(cp33);
+                                                     if (it33 == resultMap.end())
+                                                        continue;
 
                                                     for (const auto& [_, disjunctions] : model) {
                                                         for (const auto& [score, alternative] : disjunctions) {
@@ -922,7 +945,10 @@ std::unordered_map<std::string, std::vector<std::vector<size_t>>> W1, W2;
                                                     } else {
                                                         dataful << 1;
                                                     }
-                                                    if (ntrace != (N-1)) dataful << ",";
+                                                    if (ntrace != (N-1))
+                                                        dataful << ",";
+                                                    else
+                                                        dataful << std::endl;
                                                 }
                                             }
                                         }
@@ -935,10 +961,11 @@ std::unordered_map<std::string, std::vector<std::vector<size_t>>> W1, W2;
                                 // thus immediately achieving the learning over the A.x <= T.x + \theta
 
                                 if (!result) {
+
+                                    std::cout << " - No refinement was possible (ignoring correlation for the time being) " << std::endl;
                                     // if not even this further kind of refinement works, then we fall back to
                                     // the full daless mining across all the element of the traces
-                                    mine_a_b(dataless_logs, gv, sqm, forAllLogsCacheMap, rcv, usedv, pat,result_map, act_Labels, noact_Labels,
-                                             min_int_supp_patts, mining_supp, polyadic, clause, actA, actB);
+
                                 }
                             }
                         }
