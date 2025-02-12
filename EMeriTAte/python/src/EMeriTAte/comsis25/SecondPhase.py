@@ -12,36 +12,72 @@ from EMeriTAte.computation_steps.learn_from_cpp_csvs import loadDataset
 
 
 
-def neu_pipeline(poly_folder):
+def neu_pipeline(poly_folder,
+                 clazzName='class'):
     dir = os.path.join(poly_folder, "dataful_comsis")
     assert os.path.isdir(dir)
     init_match = r"^Refinement\_init\_payload\_(\d+)\.csv$"
     exists_match = r"^Refinement\_exists\_.+\_payload_(\d+)\.csv$"
     end_match = r"^Refinement\_end\_.+\_payload_(\d+)\.csv$"
+    dataless_match = r"output\_csv\_(\d)+\.csv"
+    dataful_match = r"output\_csv\_(\d)+\_dataful\_\.csv"
 
-    payload = defaultdict(list)
+    payload_colfeat_tracerow = defaultdict(list)
+    class_no_traces = dict()
     for f in sorted(listdir(dir)):
         if os.path.isfile(os.path.join(dir, f)):
             init = re.match(init_match, f)
             if init:
                 clazz = init.group(1)
                 df = pandas.read_csv(os.path.join(dir, f))
-                payload[clazz].append(df)
+                if clazz not in class_no_traces:
+                    class_no_traces[clazz] = len(df.index)
+                else:
+                    assert class_no_traces[clazz] == len(df.index)
+                payload_colfeat_tracerow[clazz].append(df.transpose())
             else:
                 exists = re.match(exists_match, f)
                 if exists:
                     clazz = exists.group(1)
                     df = pandas.read_csv(os.path.join(dir, f))
-                    payload[clazz].append(df)
+                    if clazz not in class_no_traces:
+                        class_no_traces[clazz] = len(df.index)
+                    else:
+                        assert class_no_traces[clazz] == len(df.index)
+                    payload_colfeat_tracerow[clazz].append(df.transpose())
                 else:
                     ends = re.match(end_match, f)
                     if ends:
                         clazz = ends.group(1)
                         df = pandas.read_csv(os.path.join(dir, f))
-                        payload[clazz].append(df)
-
-    payload = [(clazz, pandas.concat(dfs, axis=1)) for clazz, dfs in payload.items()]
-    return loadDataset(payload)
+                        if clazz not in class_no_traces:
+                            class_no_traces[clazz] = len(df.index)
+                        else:
+                            assert class_no_traces[clazz] == len(df.index)
+                        payload_colfeat_tracerow[clazz].append(df.transpose())
+                    else:
+                        dataless = re.match(dataless_match, f)
+                        if dataless:
+                            clazz = dataless.group(1)
+                            df = pandas.read_csv(os.path.join(dir, f), index_col=0, header=None)
+                            payload_colfeat_tracerow[clazz].append(df)
+                            N = len(df.transpose().index)
+                            if clazz not in class_no_traces:
+                                class_no_traces[clazz] = N
+                            else:
+                                assert class_no_traces[clazz] == N
+                        else:
+                            dataful = re.match(dataful_match, f)
+                            if dataful:
+                                clazz = dataful.group(1)
+                                df = pandas.read_csv(os.path.join(dir, f), index_col=0, header=None)
+                                payload_colfeat_tracerow[clazz].append(df)
+                                if clazz not in class_no_traces:
+                                    class_no_traces[clazz] = N
+                                else:
+                                    assert class_no_traces[clazz] == N
+    payload_colfeat_tracerow = [(clazz, pandas.concat(map(lambda x : x.transpose().reset_index(drop=True, inplace=False), dfs), axis=1)) for clazz, dfs in payload_colfeat_tracerow.items()]
+    return loadDataset(payload_colfeat_tracerow, clazzName, False)
 
 
 def old_pipeline(json_file, numclasses,
@@ -52,7 +88,8 @@ def old_pipeline(json_file, numclasses,
                  time_field = "time",
                  reclassify = False,
                  ignorable = None,
-                 class_field = "class"):
+                 class_field = "class",
+                 regex = r"output\_csv\_(\d)+\.csv"):
     from EMeriTAte.KnoBABEMeriTAteSupport import KnobabEmeritateSupport
     from EMeriTAte.computation_steps.crawl_single_model import ProcessClasses, dump_txt_files
     from EMeriTAte.utilities.utils import ForParsing
@@ -60,7 +97,7 @@ def old_pipeline(json_file, numclasses,
 
     if ignorable is None:
         ignorable = ["day", "span", "__class", "__label", "fulltime"]
-    regex = r"output\_csv\_(\d)+\.csv"
+
     polyint = 1 if polymine else 0
     poly_var = "nopoly" if ((not polymine)) else "poly"
     red = 1 if reduce else 0
@@ -132,6 +169,6 @@ def knowledge_extraction_algorithm(json_file_from_first_phase: str,
 
 
 if __name__ == "__main__":
-    d = neu_pipeline("/home/giacomo/projects/knobab2_loggen/EMeriTAte/italy_power_demand/polyadic_Algo1_dataless_algo4/poly_s0_0")
+    d = neu_pipeline("/media/giacomo/Data/osuleaf/test/")
     print(d)
     # knowledge_extraction_algorithm("/home/giacomo/projects/knobab2_loggen/EMeriTAte/italy_power_demand/polyadic_Algo1_dataless.json", 5)

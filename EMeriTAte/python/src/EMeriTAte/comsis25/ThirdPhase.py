@@ -70,7 +70,7 @@ def training(dataset_name, dict_list, first_phase, second_phase, poly, supp, red
                 "weighted_recall": weighted_recall,
                 "macro_f1": macro_f1,
                 "weighted_f1": weighted_f1,
-                "model": os.linesep.join(export_text2(rf, X.columns, show_weights=True))
+                # "model": os.linesep.join(export_text2(rf, X.columns, show_weights=True))
             }
         else:
             accuracy = accuracy_score(y_test, y_pred)
@@ -87,15 +87,14 @@ def training(dataset_name, dict_list, first_phase, second_phase, poly, supp, red
                 "recall": recall,
                 "f1": f1,
                 "roc": {"fpr": fpr, "tpr": tpr, "thresholds": thresholds},
-                "model": os.linesep.join(export_text2(rf, X.columns, show_weights=True))
+                # "model": os.linesep.join(export_text2(rf, X.columns, show_weights=True))
             }
         print(d)
         writer.writerow(d)
         outcsv.flush()
 
-
-if __name__ == "__main__":
-    dataset = "load_basic_motions"
+def load_traditional():
+    dataset = "osuleaf"
     nclasses = 9
     supp = 0
     s = 1 if supp == 1.0 else (0 if supp == 0.0 else supp)
@@ -105,17 +104,45 @@ if __name__ == "__main__":
     class_field = "class"
     criterion = "gini"
     max_depth = 5
-    path, elements = f"/home/giacomo/projects/knobab2_loggen/EMeriTAte/{dataset}/polyadic_Algo1_dataless_algo4/poly_s{s}_0", f"/home/giacomo/projects/knobab2_loggen/EMeriTAte/{dataset}/polyadic_Algo1_dataless_algo4/polyadic_Algo1_dataless.json_{s}_0_1_0_clazz={{clazz}}.txt"
+    path, elements = f"/media/giacomo/Data/{dataset}/polyadic_Algo1_dataless_algo4/poly_s{s}_0", f"/media/giacomo/Data/{dataset}/polyadic_Algo1_dataless_algo4/polyadic_Algo1_dataless.json_{s}_0_1_0_clazz={{clazz}}.txt"
     class_files = []
     ## Reading all of the class files that have been dumped
     for f in [f for f in listdir(path) if isfile(join(path, f))]:
         m = re.search(regex, f)
         if m is not None:
             clazz = int(m.group(1))
-            txt = elements.format(clazz=clazz)
+            # txt = elements.format(clazz=clazz)
             class_files.append((clazz, os.path.join(path, f)))
-            assert os.path.isfile(txt)
+            # assert os.path.isfile(txt)
     ## Loading all of the datasets belonging to that class
     dict_list = loadDataset(class_files, class_field)
+    return dict_list
 
-    training(dataset, dict_list, 1, 4, True, supp, False, nclasses=nclasses)
+
+if __name__ == "__main__":
+    # dataset = "load_basic_motions"
+    # nclasses = 9
+    # supp = 0
+    # s = 1 if supp == 1.0 else (0 if supp == 0.0 else supp)
+    #
+    # regex = r"output\_csv\_(\d)+\.csv"
+    # split = 0.3
+    # class_field = "class"
+    # criterion = "gini"
+    # max_depth = 5
+    # path, elements = f"/home/giacomo/projects/knobab2_loggen/EMeriTAte/{dataset}/polyadic_Algo1_dataless_algo4/poly_s{s}_0", f"/home/giacomo/projects/knobab2_loggen/EMeriTAte/{dataset}/polyadic_Algo1_dataless_algo4/polyadic_Algo1_dataless.json_{s}_0_1_0_clazz={{clazz}}.txt"
+    # class_files = []
+    # ## Reading all of the class files that have been dumped
+    # for f in [f for f in listdir(path) if isfile(join(path, f))]:
+    #     m = re.search(regex, f)
+    #     if m is not None:
+    #         clazz = int(m.group(1))
+    #         txt = elements.format(clazz=clazz)
+    #         class_files.append((clazz, os.path.join(path, f)))
+    #         assert os.path.isfile(txt)
+    # ## Loading all of the datasets belonging to that class
+    # dict_list = loadDataset(class_files, class_field)
+
+    from EMeriTAte.comsis25.SecondPhase import neu_pipeline
+    dict_list = load_traditional()#neu_pipeline("/media/giacomo/Data/osuleaf/test/")
+    training("osuleaf", dict_list, 1, 4, True, 0.0, False, nclasses=6, max_depth=5)

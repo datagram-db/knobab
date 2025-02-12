@@ -88,7 +88,7 @@ def performMiningOverAnalysedLog(analysis_log, toPertainYesEvents, timefield):
 
 # doLinearised = False
 # global_conf = MiningConfiguration.polyadic_spade(0.8, maxsize=2, maxlen=2)
-c = Chemists("/home/giacomo/projects/sdd-processing/sdd-processing/i_want_a_new_drug.json")
+# c = Chemists("/home/giacomo/projects/sdd-processing/sdd-processing/i_want_a_new_drug.json")
 class MedicalAnalysis:
     def __init__(self, conf):
         logger.remove(0)
@@ -97,6 +97,7 @@ class MedicalAnalysis:
             f = conf.logging_file
         logger.add(f, level=conf.logging_level)
         self.collectDrugsName = set()
+        c = Chemists("/home/giacomo/projects/sdd-processing/sdd-processing/i_want_a_new_drug.json")
         self.environments = {k: compute(k, getFolder(conf.folder, k), self.collectDrugsName, c) for k in conf.patients}
         self.conf = conf
         # global_conf.doMining = self.conf.doMining

@@ -162,6 +162,9 @@ std::pair<double,double> algorithmic_strategy::polyadic_dataful_mining_and_refin
     std::unordered_map<std::string, size_t> min_int_supp_patts;
     std::vector<std::string> activities;
 
+    auto r_preprocessing1 = high_resolution_clock::now();
+
+
     std::unordered_map<std::string, std::ofstream> dataless_logs;
     std::unordered_map<std::string, std::ofstream> dataful_logs;
     DEBUG_ASSERT(!sqm.multiple_logs.empty());
@@ -224,7 +227,7 @@ std::pair<double,double> algorithmic_strategy::polyadic_dataful_mining_and_refin
 
                 //if (elements[cp_acts].empty())
                 {
-                    std::cerr << "#" << idx << " = " << cp_acts << std::endl;
+                    // std::cerr << "#" << idx << " = " << cp_acts << std::endl;
 #ifdef DEBUG
                     // Some of the frequent patterns might be duplicated, as starting to expand from the same activity label
                     // So, I am only considering one pair once per activity label
@@ -418,6 +421,70 @@ std::unordered_map<std::string, std::vector<std::vector<size_t>>> W1, W2;
             train_and_dump_to_csv3(sqm.multiple_logs, W1, refinement.string(), endsX,endsY, "EndAll", "EndSome", false, sqm.multiple_logs.size(),numerical, categorical );
         }
     }
+    if ((!refine_init) || (!refine_ends)) {
+        std::unordered_set<std::string> all_acts;
+        for (const auto& [log, env] : sqm.multiple_logs) {
+            all_acts.insert(env.db.event_label_mapper.int_to_T.begin(), env.db.event_label_mapper.int_to_T.end());
+        }
+        for (const auto& act : all_acts) {
+            for (const auto& [log, env] : sqm.multiple_logs) {
+                ssize_t act_id = env.db.event_label_mapper.signed_get(act) ;
+                const auto N = env.db.nTraces();
+                auto& dataless = dataless_logs[log];
+                if (act_id == -1) {
+                    if (!refine_init) {
+                        dataless << std::quoted("Init("+act+")") << ",";
+                        // Filling up all the elements with -1
+                        for (size_t ntrace = 0; ntrace<N; ntrace++) {
+                            dataless << -1;
+                            if (ntrace != (N-1))
+                                dataless << ",";
+                        }
+                        dataless << std::endl;
+                    }
+                    if (!refine_ends) {
+                        dataless << std::quoted("Ends("+act+")") << ",";
+                        // Filling up all the elements with -1
+                        for (size_t ntrace = 0; ntrace<N; ntrace++) {
+                            dataless << -1;
+                            if (ntrace != (N-1))
+                                dataless << ",";
+                        }
+                        dataless << std::endl;
+                    }
+                } else {
+                    if (!refine_init) {
+                        dataless << std::quoted("Init("+act+")") << ",";
+                        for (size_t ntrace = 0; ntrace<N; ntrace++) {
+                            const auto &IDX = env.db.act_table_by_act_id.secondary_index.at(ntrace).first;
+                            if (IDX->contains((act_t)act_id)) {
+                                dataless << 1;
+                            } else {
+                                dataless << -1;
+                            }
+                            if (ntrace != (N-1))
+                                dataless << ",";
+                        }
+                        dataless << std::endl;
+                    }
+                    if (!refine_ends) {
+                        dataless << std::quoted("Ends("+act+")") << ",";
+                        for (size_t ntrace = 0; ntrace<N; ntrace++) {
+                            const auto &IDX = env.db.act_table_by_act_id.secondary_index.at(ntrace).second;
+                            if (IDX->contains((act_t)act_id)) {
+                                dataless << 1;
+                            } else {
+                                dataless << -1;
+                            }
+                            if (ntrace != (N-1))
+                                dataless << ",";
+                        }
+                        dataless << std::endl;
+                    }
+                }
+            }
+        }
+    }
 
     bool keepFirstEvent = true;
     if (refine_existentials) {
@@ -576,7 +643,7 @@ std::unordered_map<std::string, std::vector<std::vector<size_t>>> W1, W2;
 
         for (const auto& actB : rest) {
 #ifdef DEBUG
-            std::cout << "(" << actA << "," << actB << ")" << std::endl;
+            // std::cout << "(" << actA << "," << actB << ")" << std::endl;
 #endif
             // isBDataBeingCollected = false;
             Bpayloads.clear();
@@ -680,7 +747,7 @@ std::unordered_map<std::string, std::vector<std::vector<size_t>>> W1, W2;
                     continue;
 
                 if (it2->second.size() > 1) {
-                    std::cout << " - " << std::get<2>(ternary) << std::endl;
+                    // std::cout << " - " << std::get<2>(ternary) << std::endl;
                     // Filling in all of the events corresponding to the activation
 //                     if (!isADataBeingCollected) {
 //                         Apayloads.fill_all_activations(sqm.multiple_logs, cp.first);
@@ -713,7 +780,7 @@ std::unordered_map<std::string, std::vector<std::vector<size_t>>> W1, W2;
                         result = activations.goodness > 0.5;
                         // If the data-aware classification outcome for all the activations is satisfactory
                         if (result) {
-                            std::cout << " - Activation differentation! " << std::endl;
+                            // std::cout << " - Activation differentation! " << std::endl;
                             // Defining the model
                             activations.populate_children_predicates2(model);
                             results_for_serialization.clear();
@@ -787,6 +854,7 @@ std::unordered_map<std::string, std::vector<std::vector<size_t>>> W1, W2;
                                             dataful << -2;
                                             if (ntrace != (N-1)) dataful << ",";
                                         }
+                                        dataful << std::endl;
                                     } else {
                                         auto it3 = it2_->second.find(dt);
                                         if (it3 == it2_->second.end()) {
@@ -794,6 +862,7 @@ std::unordered_map<std::string, std::vector<std::vector<size_t>>> W1, W2;
                                                 dataful << -2;
                                                 if (ntrace != (N-1)) dataful << ",";
                                             }
+                                            dataful << std::endl;
                                         } else {
                                             for (size_t ntrace = 0; ntrace<N; ntrace++) {
                                                 const auto& set = it3->second[ntrace];
@@ -806,9 +875,8 @@ std::unordered_map<std::string, std::vector<std::vector<size_t>>> W1, W2;
                                                 }
                                                 if (ntrace != (N-1))
                                                     dataful << ",";
-                                                else
-                                                    dataful << std::endl;
                                             }
+                                            dataful << std::endl;
                                         }
                                     }
                                 }
@@ -850,7 +918,7 @@ std::unordered_map<std::string, std::vector<std::vector<size_t>>> W1, W2;
                             // and if I am able to provide a good classification, then it means that I can differentiate
                             // the different clauses by payloading condition
                             if (result) {
-                                std::cout << " - Target differentation! " << std::endl;
+                                // std::cout << " - Target differentation! " << std::endl;
                                 // Generating the model, as the classess being extracted from the tree
                                 targets.populate_children_predicates2(model);
                                 results_for_serialization.clear();
@@ -926,15 +994,19 @@ std::unordered_map<std::string, std::vector<std::vector<size_t>>> W1, W2;
                                         if (it2 == results_for_serialization.end()) {
                                             for (size_t ntrace = 0; ntrace<N; ntrace++) {
                                                 dataful << -2;
-                                                if (ntrace != (N-1)) dataful << ",";
+                                                if (ntrace != (N-1))
+                                                    dataful << ",";
                                             }
+                                            dataful << std::endl;
                                         } else {
                                             auto it3 = it2->second.find(dt);
                                             if (it3 == it2->second.end()) {
                                                 for (size_t ntrace = 0; ntrace<N; ntrace++) {
                                                     dataful << -2;
-                                                    if (ntrace != (N-1)) dataful << ",";
+                                                    if (ntrace != (N-1))
+                                                        dataful << ",";
                                                 }
+                                                dataful << std::endl;
                                             } else {
                                                 for (size_t ntrace = 0; ntrace<N; ntrace++) {
                                                     const auto& set = it3->second[ntrace];
@@ -947,9 +1019,8 @@ std::unordered_map<std::string, std::vector<std::vector<size_t>>> W1, W2;
                                                     }
                                                     if (ntrace != (N-1))
                                                         dataful << ",";
-                                                    else
-                                                        dataful << std::endl;
                                                 }
+                                                dataful << std::endl;
                                             }
                                         }
                                     }
@@ -962,7 +1033,7 @@ std::unordered_map<std::string, std::vector<std::vector<size_t>>> W1, W2;
 
                                 if (!result) {
 
-                                    std::cout << " - No refinement was possible (ignoring correlation for the time being) " << std::endl;
+                                    // std::cout << " - No refinement was possible (ignoring correlation for the time being) " << std::endl;
                                     // if not even this further kind of refinement works, then we fall back to
                                     // the full daless mining across all the element of the traces
 
@@ -1104,14 +1175,15 @@ std::unordered_map<std::string, std::vector<std::vector<size_t>>> W1, W2;
 //            g.mine_for_AB_clauses(mining_supp, polyadic, A, B, cache_clause, forAllLogsCacheMap[log_name], min_int_supp_patts[log_name], rc, used, binary_pattern);
 //        }
 //    }
-
-
 //    // 3. Last, finalising the collection of the patterns in Phi for each log
 //    for (auto& [log_name, g]: gv) {
 //        g.finalise_run(minimum_support_thresholds[log_name], usedv[log_name]);
 //    }
 
-    return  {-1,-1};
+    auto r_preprocessing2 = high_resolution_clock::now();
+    duration<double, std::milli> ms_double = (r_preprocessing2-r_preprocessing1 );
+    double total_time =  ms_double.count();
+    return  {total_time,0.0};
 }
 
 
