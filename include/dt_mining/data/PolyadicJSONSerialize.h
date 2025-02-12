@@ -31,7 +31,10 @@ class PolyadicJSONSerialize {
 public:
     PolyadicJSONSerialize(std::ostream& os);
 
-
+    void transfer_information(PolyadicJSONSerialize&& obj) {
+        hierarchy.swap(obj.hierarchy);
+        types.swap(obj.types);
+    }
 
     inline void start() {
         jw.begin_object();

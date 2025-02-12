@@ -1,3 +1,4 @@
+.idea/*
 EMeriTAte/python/src/EMeriTAte/comsis25/italy_power_demand
 EMeriTAte/load_basic_motions_train_test_split.json
 EMeriTAte/dyskinetic_train_test_split.json

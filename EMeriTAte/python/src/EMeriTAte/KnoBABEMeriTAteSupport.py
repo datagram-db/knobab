@@ -1,6 +1,6 @@
 from typing import List
 
-import knobab_emeritate_support
+
 
 #bool reclassify,
                              # bool reduction,
@@ -24,6 +24,7 @@ def _call_original(mining_supp:float,
                    time:str,
                    reduction:bool=False,
                    data_aware:bool=False):
+    import knobab_emeritate_support
     """
     Calling the original C++ function from python
     """

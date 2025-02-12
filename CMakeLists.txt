@@ -3,7 +3,12 @@ cmake_minimum_required(VERSION 3.20)
 project(knobab_server)
 set(CMAKE_SYSTEM_NAME Linux)
 set(WITH_DEMO false)
-
+set(ANTLR_BUILD_CPP_TESTS OFF)
+set(WITH_TESTS OFF)
+set(WITH_BENCHMARK_TOOLS OFF)
+set(WITH_TOOLS OFF)
+set( WITH_JNI OFF) 
+set(JNI OFF)
 include_directories(submodules/tabulate/include)
 #include_directories(/usr/include/c++/14/)
 #set(CMAKE_C_COMPILER clang-19 CACHE INTERNAL "C compiler")
@@ -254,7 +259,8 @@ add_executable(knobab_json new_pipeline.cpp src/knobab/v30/EMeriTAte.cpp
 
 target_link_libraries(knobab_json antlr4_static yaucl_hashing yaucl_bpm yaucl_structures
         yaucl_numeric yaucl_data yaucl_graph  yaucl_data yaucl_bpm knobab  knobab_ndp   yaucl_learning  knobab_mining)
-
+set(THREADS_PREFER_PTHREAD_FLAG ON)
+find_package(Threads REQUIRED)
 add_executable(DTMining dt_mine_main.cpp
         src/dt_mining/utils/fish.cpp
         src/dt_mining/utils/BasicRecord.cpp
@@ -272,7 +278,7 @@ add_executable(DTMining dt_mine_main.cpp
         include/dt_mining/dt_mining.h
         src/dt_mining/dt_mining.cpp
 )
-target_link_libraries(DTMining  PRIVATE catch24  yaucl_numeric) # Removing CapnProto::kj CapnProto::capnp, as ywe are no more using this to serialize!
+target_link_libraries(DTMining  PRIVATE catch24  yaucl_numeric Threads::Threads) # Removing CapnProto::kj CapnProto::capnp, as ywe are no more using this to serialize!
 
 #FetchContent_MakeAvailable(Catch2)
 #list(APPEND CMAKE_MODULE_PATH ${catch2_SOURCE_DIR}/extras)

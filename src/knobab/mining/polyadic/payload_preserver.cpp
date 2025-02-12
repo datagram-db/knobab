@@ -7,7 +7,7 @@
 
 
 
-std::vector<std::pair<std::string,union_minimal>>* constituent_idx_key::get() const {
+/*std::vector<std::pair<std::string,union_minimal>>* constituent_idx_key::get() const {
     if (payload)
         return payload;
     else
@@ -16,7 +16,7 @@ std::vector<std::pair<std::string,union_minimal>>* constituent_idx_key::get() co
 
 bool constituent_idx_key::operator<(const constituent_idx_key& rhs) const {
     return   *get() < *rhs.get();
-}
+}*/
 
 //void PayloadPreserving::fill_all_recorded_targets(const std::unordered_map<std::string, Environment>& databases) {
 //    clear_from_offset(set_step+1);

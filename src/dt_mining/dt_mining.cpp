@@ -401,6 +401,7 @@ std::string DTMining::dt_mine_and_ts_to_polyadic(const std::string& benchmark_re
 
         std::cout << "Starting to json-serialize..." << std::endl;
         auto t1_jserial = high_resolution_clock::now();
+        pjs.transfer_information(std::move(payloads));
         pjs.start();
         pjs.heading();
         std::fstream payload_read{polyadic_tmp_file};

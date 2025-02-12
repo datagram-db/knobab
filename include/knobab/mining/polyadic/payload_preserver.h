@@ -23,7 +23,7 @@ using simple_declare = std::pair<std::string, bool>; // originally: defined with
 struct Environment;
 struct payload_preserving;
 
-struct constituent_idx_key {
+/*struct constituent_idx_key {
     payload_preserving* ptr;
     size_t offset;
     std::vector<std::pair<std::string,union_minimal>>* payload;
@@ -32,7 +32,7 @@ struct constituent_idx_key {
 
     std::vector<std::pair<std::string,union_minimal>>* get() const;
     bool operator<(const constituent_idx_key& rhs) const;
-};
+};*/
 
 using constituent_t = ActTable::record*;
 
@@ -110,58 +110,58 @@ struct payload_preserving {
     using X_offset_t = size_t;
     using log_id = std::string;
     using payload_t = std::vector<std::pair<std::string,union_minimal>>;
-    std::map<constituent_idx_key, std::unordered_map<int,std::unordered_set<constituent_t>>> uniqueness_as_ptr;
-    std::vector<payload_t> redundantX;
-    std::unordered_map<std::tuple<log_id,trace_t,event_t>, std::unordered_map<constituent_t, X_offset_t>> classref;
+    // std::map<constituent_idx_key, std::unordered_map<int,std::unordered_set<constituent_t>>> uniqueness_as_ptr;
+    // std::vector<payload_t> redundantX;
+    // std::unordered_map<std::tuple<log_id,trace_t,event_t>, std::unordered_map<constituent_t, X_offset_t>> classref;
 
     inline void clear() {
-        uniqueness_as_ptr.clear();
-        redundantX.clear();
-        classref.clear();
+        // uniqueness_as_ptr.clear();
+        // redundantX.clear();
+        // classref.clear();
     }
 
-    inline const std::unordered_map<int,std::unordered_set<constituent_t>>& get_correlations_from_offset(const log_id& log, constituent_t object) const {
-        std::tuple<log_id,trace_t,event_t> idx{log, (trace_t)object->entry.id.parts.trace_id, (event_t)object->entry.id.parts.event_id};
-        auto it = classref.find(idx);
-        if (it == classref.end())
-            return empty_result;
-        auto it2 = it->second.find(object);
-        if (it2 == it->second.end())
-            return empty_result;
-        return get_correlations_from_offset(it2->second);
-    }
-    inline const payload_t * get_payloads_from_offset(const log_id& log, constituent_t object) const {
-        std::tuple<log_id,trace_t,event_t> idx{log, (trace_t)object->entry.id.parts.trace_id, (event_t)object->entry.id.parts.event_id};
-        auto it = classref.find(idx);
-        if (it == classref.end())
-            return &empty_payload;
-        auto it2 = it->second.find(object);
-        if (it2 == it->second.end())
-            return &empty_payload;
-        return get_payloads_from_offset(it2->second);
-    }
+    // inline const std::unordered_map<int,std::unordered_set<constituent_t>>& get_correlations_from_offset(const log_id& log, constituent_t object) const {
+    //     std::tuple<log_id,trace_t,event_t> idx{log, (trace_t)object->entry.id.parts.trace_id, (event_t)object->entry.id.parts.event_id};
+    //     auto it = classref.find(idx);
+    //     if (it == classref.end())
+    //         return empty_result;
+    //     auto it2 = it->second.find(object);
+    //     if (it2 == it->second.end())
+    //         return empty_result;
+    //     return get_correlations_from_offset(it2->second);
+    // }
+    // inline const payload_t * get_payloads_from_offset(const log_id& log, constituent_t object) const {
+    //     std::tuple<log_id,trace_t,event_t> idx{log, (trace_t)object->entry.id.parts.trace_id, (event_t)object->entry.id.parts.event_id};
+    //     auto it = classref.find(idx);
+    //     if (it == classref.end())
+    //         return &empty_payload;
+    //     auto it2 = it->second.find(object);
+    //     if (it2 == it->second.end())
+    //         return &empty_payload;
+    //     return get_payloads_from_offset(it2->second);
+    // }
 
     /**
      * Returning the mapping between the classes and the knobab records associated to the payload for each offset associated to the current payload object
      * @param object    redundantX offset to be retrieved from redundantXCorrespondences
      * @return          An empty map if there is no correspondence, otherwise some correpsondence containing at least one class and one record
      */
-    inline const std::unordered_map<int,std::unordered_set<constituent_t>>& get_correlations_from_offset(size_t object) const {
-        constituent_idx_key obj{(payload_preserving*)this, object};
-        auto it = uniqueness_as_ptr.find(obj);
-        if (it == uniqueness_as_ptr.end())
-            return empty_result;
-        else
-            return it->second;
-    }
-    inline const payload_t * get_payloads_from_offset(size_t object) const {
-        constituent_idx_key obj{(payload_preserving*)this, object};
-        auto it = uniqueness_as_ptr.find(obj);
-        if (it == uniqueness_as_ptr.end())
-            return &empty_payload;
-        else
-            return (const payload_t *)it->first.get();
-    }
+    // inline const std::unordered_map<int,std::unordered_set<constituent_t>>& get_correlations_from_offset(size_t object) const {
+    //     constituent_idx_key obj{(payload_preserving*)this, object};
+    //     auto it = uniqueness_as_ptr.find(obj);
+    //     if (it == uniqueness_as_ptr.end())
+    //         return empty_result;
+    //     else
+    //         return it->second;
+    // }
+    // inline const payload_t * get_payloads_from_offset(size_t object) const {
+    //     constituent_idx_key obj{(payload_preserving*)this, object};
+    //     auto it = uniqueness_as_ptr.find(obj);
+    //     if (it == uniqueness_as_ptr.end())
+    //         return &empty_payload;
+    //     else
+    //         return (const payload_t *)it->first.get();
+    // }
 
     /**
      * Loading a linear representation for the classification
@@ -171,12 +171,13 @@ struct payload_preserving {
      * @param casus
      * @param sampling_probability
      */
-    bool load_activation_with_policy(const act_target_correlation_preserver::binary_clause& clause,
+    std::unordered_map<std::pair<std::string,constituent_t>, size_t> load_activation_with_policy(const act_target_correlation_preserver::binary_clause& clause,
                           const act_target_correlation_preserver::M& map,
                           std::vector<payload_t>& X,
                           std::vector<int>& y,
                           std::vector<size_t> redundantXCorrespondences,
                           fill_in_policy casus,
+                          const std::unordered_map<std::string, Environment>& env_map,
                           double sampling_probability= 1.0) {
         X.clear();
         y.clear();
@@ -185,38 +186,45 @@ struct payload_preserving {
         std::uniform_real_distribution<double> dist(0.0, 1.0);
         auto it = map.find(clause);
         if (it == map.end())
-            return true;
-
+            return {};
+        std::vector<std::pair<std::string,union_minimal>> cached_record;
+        std::map<std::vector<std::pair<std::string,union_minimal>>, std::unordered_map<int, std::vector<constituent_t>>> record_to_clazz;
+        std::unordered_map<std::pair<std::string,constituent_t>, size_t> mapping_for_elements;
         for (const auto& [log_name, all_traces] : it->second) {
+            const auto& env = env_map.find(log_name)->second;
+            int clazz = std::stoi(log_name);
             for (const auto& trace : all_traces) {
-                for (const auto& [key, offset_with_clazz] : uniqueness_as_ptr) {
-                    size_t nOfClazzes = offset_with_clazz.size();
-                    const auto* payload = key.get();
-                    if ((nOfClazzes == 1) || (casus == StraightforwardFillIn)) {
-                        for (const auto&  [clazz, offsets] : offset_with_clazz) {
-                            bool found = false;
-                            for (auto* ptr : offsets) {
-                                if (trace.contains(ptr))  {
-                                    found = true;
-                                    break;
-                                }
-                            }
-                            if (!found) continue; // Inserting the element only if one of the recorts appears among the activations
-
-                            // Inserting one payload speciment per class, so not to bias the classification
-                            if (dist(engine) <= sampling_probability) {
-                                X.emplace_back(*payload);
-                                y.emplace_back(clazz);
-                                S.emplace(clazz);
-                                redundantXCorrespondences.emplace_back(key.offset);
-                            }
-                        }
+                for (const auto& [record, _] : trace) {
+                    const size_t offset = record - env.db.act_table_by_act_id.table.data();;
+                    cached_record.clear();
+                    for (const auto& [key, table] : env.db.attribute_name_to_table) {
+                        table.resolve_record_if_exists3(offset, cached_record);
                     }
+                    std::sort(cached_record.begin(), cached_record.end());
+                    record_to_clazz[cached_record][clazz].emplace_back(record);
+                    S.insert(clazz);
                 }
             }
         }
 //        DEBUG_ASSERT(S.size()> 1);
-        return S.size() > 1;
+        if (S.size()>1) {
+            std::pair<std::string,constituent_t> cp;
+            for (const auto& [record, clazzes] : record_to_clazz) {
+                if (dist(engine) <= sampling_probability) {
+                                for (const auto& [clazz, recrords] : clazzes) {
+                    cp.first = std::to_string(clazz);
+                    auto N = X.size();
+                    X.emplace_back(record);
+                    y.emplace_back(clazz);
+                    for (const auto& ref : recrords) {
+                        cp.second = ref;
+                        mapping_for_elements[cp] = N;
+                    }
+                }
+                }
+            }
+        }
+        return mapping_for_elements;
     }
 
     /**
@@ -227,12 +235,13 @@ struct payload_preserving {
  * @param casus
  * @param sampling_probability
  */
-    bool load_target_with_policy(const act_target_correlation_preserver::binary_clause& clause,
+    std::unordered_map<std::pair<std::string,constituent_t>, size_t> load_target_with_policy(const act_target_correlation_preserver::binary_clause& clause,
                               const act_target_correlation_preserver::M& map,
                               std::vector<payload_t>& X,
                               std::vector<int>& y,
                               std::vector<size_t> redundantXCorrespondences,
                               fill_in_policy casus,
+                          const std::unordered_map<std::string, Environment>& env_map,
                               double sampling_probability= 1.0) {
         X.clear();
         y.clear();
@@ -241,44 +250,44 @@ struct payload_preserving {
         std::uniform_real_distribution<double> dist(0.0, 1.0);
         auto it = map.find(clause);
         if (it == map.end())
-            return true;
-
-        for (const auto& [log_name, all_traces] : it->second) {
-            for (const auto &trace: all_traces) {
-                for (const auto& [key, offset_with_clazz] : uniqueness_as_ptr) {
-                    size_t nOfClazzes = offset_with_clazz.size();
-                    const auto* payload = key.get();
-                    if ((nOfClazzes == 1) || (casus == StraightforwardFillIn)) {
-                        for (const auto&  [clazz, offsets] : offset_with_clazz) {
-                            bool found = false;
-                            // Looding for the value among the targets
-                            for (auto* ptr : offsets) {
-                                for (const auto& [key2, vals2] : trace) {
-                                    for (const auto& [casus2, set] : vals2) {
-                                        if (set.contains(ptr)) {
-                                            found = true;
-                                            break;
-                                        }
-                                    }
-                                    if (found) break;
-                                }
-                                if (found) break;
-                            }
-                            if (!found) continue; // Inserting the element only if one of the recorts appears among the activations
-
-                            // Inserting one payload speciment per class, so not to bias the classification
-                            if (dist(engine) <= sampling_probability) {
-                                X.emplace_back(*payload);
-                                y.emplace_back(clazz);
-                                redundantXCorrespondences.emplace_back(key.offset);
-                            }
-                        }
+            return {};
+        std::vector<std::pair<std::string,union_minimal>> cached_record;
+        std::map<std::vector<std::pair<std::string,union_minimal>>, std::unordered_map<int, std::vector<constituent_t>>> record_to_clazz;
+        std::unordered_map<std::pair<std::string,constituent_t>, size_t> mapping_for_elements;
+                for (const auto& [log_name, all_traces] : it->second) {
+            const auto& env = env_map.find(log_name)->second;
+            int clazz = std::stoi(log_name);
+            for (const auto& trace : all_traces) {
+                for (const auto& [record, _] : trace) {
+                    const size_t offset = record - env.db.act_table_by_act_id.table.data();;
+                    cached_record.clear();
+                    for (const auto& [key, table] : env.db.attribute_name_to_table) {
+                        table.resolve_record_if_exists3(offset, cached_record);
                     }
+                    std::sort(cached_record.begin(), cached_record.end());
+                    record_to_clazz[cached_record][clazz].emplace_back(record);
+                    S.insert(clazz);
                 }
             }
         }
-//        DEBUG_ASSERT(S.size()> 1);
-        return S.size() > 1;
+        if (S.size()>1) {
+            std::pair<std::string,constituent_t> cp;
+            for (const auto& [record, clazzes] : record_to_clazz) {
+                if (dist(engine) <= sampling_probability) {
+                                for (const auto& [clazz, recrords] : clazzes) {
+                    cp.first = std::to_string(clazz);
+                    auto N = X.size();
+                    X.emplace_back(record);
+                    y.emplace_back(clazz);
+                    for (const auto& ref : recrords) {
+                        cp.second = ref;
+                        mapping_for_elements[cp] = N;
+                    }
+                }
+                }
+            }
+        }
+        return mapping_for_elements;
     }
 
     // TODO: correlation condition between activation and target
@@ -287,70 +296,70 @@ struct payload_preserving {
  * Returns -1 if the payload is not there for the current element, and otherwise the offset in the redundantX
  * assumption: needs to add clazz before payload
  */
-    inline ssize_t has_payload(const log_id& log_name, /*trace_t trace_id, event_t event_id,*/ constituent_t constituent_id) {
-        const auto& trace_id = constituent_id->entry.id.parts.trace_id;
-        const auto& event_id = constituent_id->entry.id.parts.event_id;
-        std::tuple<log_id,trace_t,event_t> key{log_name,trace_id,event_id};
-        auto it = classref.find(key);
-        if (it == classref.end()) {
-            return -1;
-        }
-        auto it2 = it->second.find(constituent_id);
-        return (it2 == it->second.end()) ? -1 : (ssize_t)it2->second;
-    }
+    // inline ssize_t has_payload(const log_id& log_name, /*trace_t trace_id, event_t event_id,*/ constituent_t constituent_id) {
+    //     const auto& trace_id = constituent_id->entry.id.parts.trace_id;
+    //     const auto& event_id = constituent_id->entry.id.parts.event_id;
+    //     std::tuple<log_id,trace_t,event_t> key{log_name,trace_id,event_id};
+    //     auto it = classref.find(key);
+    //     if (it == classref.end()) {
+    //         return -1;
+    //     }
+    //     auto it2 = it->second.find(constituent_id);
+    //     return (it2 == it->second.end()) ? -1 : (ssize_t)it2->second;
+    // }
+    //
+    // inline bool add_payload(const log_id& log_name, /*trace_t trace_id, event_t event_id,*/ constituent_t constituent_id, payload_t& payload) {
+    //     std::sort(payload.begin(), payload.end());
+    //     int clazz = std::stoi(log_name);
+    //     const auto& trace_id = constituent_id->entry.id.parts.trace_id;
+    //     const auto& event_id = constituent_id->entry.id.parts.event_id;
+    //     std::tuple<log_id,trace_t,event_t> key{log_name,trace_id,event_id};
+    //     constituent_idx_key ptr{&payload};
+    //     auto it = uniqueness_as_ptr.find(ptr);
+    //     size_t offset = redundantX.size();
+    //     if (it == uniqueness_as_ptr.end()) {
+    //         redundantX.emplace_back(payload);
+    //         constituent_idx_key vals{this, offset};
+    //         uniqueness_as_ptr[vals][clazz].emplace(constituent_id);
+    //         classref[key][constituent_id] = offset;
+    //         return true;
+    //     } else {
+    //         offset = it->first.offset;
+    //         auto& ref = classref[key];
+    //         return ref.emplace(constituent_id, offset).second;
+    //     }
+    // }
 
-    inline bool add_payload(const log_id& log_name, /*trace_t trace_id, event_t event_id,*/ constituent_t constituent_id, payload_t& payload) {
-        std::sort(payload.begin(), payload.end());
-        int clazz = std::stoi(log_name);
-        const auto& trace_id = constituent_id->entry.id.parts.trace_id;
-        const auto& event_id = constituent_id->entry.id.parts.event_id;
-        std::tuple<log_id,trace_t,event_t> key{log_name,trace_id,event_id};
-        constituent_idx_key ptr{&payload};
-        auto it = uniqueness_as_ptr.find(ptr);
-        size_t offset = redundantX.size();
-        if (it == uniqueness_as_ptr.end()) {
-            redundantX.emplace_back(payload);
-            constituent_idx_key vals{this, offset};
-            uniqueness_as_ptr[vals][clazz].emplace(constituent_id);
-            classref[key][constituent_id] = offset;
-            return true;
-        } else {
-            offset = it->first.offset;
-            auto& ref = classref[key];
-            return ref.emplace(constituent_id, offset).second;
-        }
-    }
+//     inline void fill_by_record(const std::string& log_name, const Environment& env, std::vector<std::pair<std::string,union_minimal>>& cached_record, ActTable::record* record) {
+//         const auto& act_id = record->entry.id.parts.act;
+//         if (this->has_payload(log_name, /*trace_id, event_id,*/ record) == -1) {
+//             size_t offset = record - env.db.act_table_by_act_id.table.data();
+// //            DEBUG_ASSERT(act_id == found);
+//             cached_record.clear();
+//             for (const auto& [key, table] : env.db.attribute_name_to_table) {
+//                 table.resolve_record_if_exists3(offset, cached_record);
+// //                                table.resolve_record_if_exists2(offset, tuple);
+//             }
+//             this->add_payload(log_name, /*trace_id, event_id,*/ record, cached_record);
+//         }
+//     }
 
-    inline void fill_by_record(const std::string& log_name, const Environment& env, std::vector<std::pair<std::string,union_minimal>>& cached_record, ActTable::record* record) {
-        const auto& act_id = record->entry.id.parts.act;
-        if (this->has_payload(log_name, /*trace_id, event_id,*/ record) == -1) {
-            size_t offset = record - env.db.act_table_by_act_id.table.data();
-//            DEBUG_ASSERT(act_id == found);
-            cached_record.clear();
-            for (const auto& [key, table] : env.db.attribute_name_to_table) {
-                table.resolve_record_if_exists3(offset, cached_record);
-//                                table.resolve_record_if_exists2(offset, tuple);
-            }
-            this->add_payload(log_name, /*trace_id, event_id,*/ record, cached_record);
-        }
-    }
-
-    void fill_all_activations(const std::unordered_map<std::string, Environment>& databases, const std::string& act_label) {
-        std::vector<std::pair<std::string,union_minimal>> cached_record;
-        for (const auto& [log_name, env ] : databases) {
-            const auto& kb = env.db;
-            // MEMENTO: auto class_id = std::stoi(log_name); !!!
-            ssize_t found = kb.event_label_mapper.signed_get(act_label);
-            if (found>=0) {
-                auto it = kb.timed_dataless_exists(found);
-                DEBUG_ASSERT(it.first != it.second);
-                while (it.first != it.second) {
-                    fill_by_record(log_name, env, cached_record, (ActTable::record*)it.first);
-                    it.first++;
-                }
-            }
-        }
-    }
+    // void fill_all_activations(const std::unordered_map<std::string, Environment>& databases, const std::string& act_label) {
+    //     std::vector<std::pair<std::string,union_minimal>> cached_record;
+    //     for (const auto& [log_name, env ] : databases) {
+    //         const auto& kb = env.db;
+    //         // MEMENTO: auto class_id = std::stoi(log_name); !!!
+    //         ssize_t found = kb.event_label_mapper.signed_get(act_label);
+    //         if (found>=0) {
+    //             auto it = kb.timed_dataless_exists(found);
+    //             DEBUG_ASSERT(it.first != it.second);
+    //             while (it.first != it.second) {
+    //                 fill_by_record(log_name, env, cached_record, (ActTable::record*)it.first);
+    //                 it.first++;
+    //             }
+    //         }
+    //     }
+    // }
 
 private:
     std::unordered_map<int,std::unordered_set<constituent_t>> empty_result;

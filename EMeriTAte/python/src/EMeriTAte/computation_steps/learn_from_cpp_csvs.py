@@ -17,7 +17,7 @@ from pathlib import Path
 # modelfile = Path(folder).name + ".txt"
 
 
-def load_single_file_and_append_class(t:Tuple[int,str], clazz='class')->pandas.DataFrame:
+def load_single_file_and_append_class(t:Tuple[int,str], clazz='class', transpose=True)->pandas.DataFrame:
     obj = None
     if isinstance(t[1], str):
         obj = pandas.read_csv(t[1], index_col=0, header=None)
@@ -25,11 +25,14 @@ def load_single_file_and_append_class(t:Tuple[int,str], clazz='class')->pandas.D
         obj = t[1]
     else:
         raise TypeError("ERROR: expecting either a string or pandas.DataFrame")
-    df0 = obj.transpose()
+    if transpose:
+        df0 = obj.transpose()
+    else:
+        df0 = obj
     df0[clazz] = t[0]
     return df0
 
-def loadDataset(classls, clazz='class'):
+def loadDataset(classls, clazz='class', transpose=True):
     # for idx, x in enumerate(classls):
     #     df0 = pandas.read_csv(x, index_col=0, header=None).transpose()
     #     df0['class'] = idx
@@ -37,7 +40,7 @@ def loadDataset(classls, clazz='class'):
     # df0['class'] = 0
     # df1 = pandas.read_csv(class1, index_col=0, header=None).transpose()
     # df1['class'] = 1
-    return pandas.concat(map(lambda x: load_single_file_and_append_class(x,clazz), classls), axis=0, ignore_index=True).fillna(-1)
+    return pandas.concat(map(lambda x: load_single_file_and_append_class(x,clazz,transpose), classls), axis=0, ignore_index=True).fillna(-1)
 
 def readFileForSpec(filename):
     S = set()
