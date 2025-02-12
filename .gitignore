@@ -35,3 +35,4 @@ EMeriTAte/dist/
 EMeriTAte/test/
 EMeriTAte/python/src/EMeriTAte/japanese_vowels.csv
 dist/*
+/EMeriTAte/dyskinetic/
