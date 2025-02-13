@@ -58,8 +58,8 @@
 int main() {
 
     // Function parameters
-    std::string benchmark_result_file = "benchmarks.json";
-    std::string folder = "/media/giacomo/Data/osuleaf"; //"/home/giacomo/projects/knobab2_loggen/EMeriTAte/test";
+    std::string benchmark_result_file = "benchmarks_dtfinal.json";
+    std::string folder = "/home/giacomo/projects/knobab2_loggen/EMeriTAte/dyskinetic"; //"/home/giacomo/projects/knobab2_loggen/EMeriTAte/test";
     double precision = 0.0001;
     double max_val = 1000000000.0;
     const bool isAlgo3 = false;

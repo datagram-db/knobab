@@ -349,7 +349,7 @@ struct myParser {
                         if (std::holds_alternative<std::string>(v)) {
                             envFiller.visitField(k, std::get<std::string>(v));
                         } else {
-                            auto it = schema_def.find(keyV);
+                            auto it = schema_def.find(k);
                             if (it != schema_def.end()) {
                                 if (it->second == "discrete") {
                                     envFiller.visitField(k, (size_t)std::get<double>(v));

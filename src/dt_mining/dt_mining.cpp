@@ -153,7 +153,7 @@ std::string DTMining::dt_mine_and_ts_to_polyadic(const std::string& benchmark_re
             }
             per_trace_stats.avgSegmentSize = per_trace_stats.event_wise_mine_time = per_trace_stats.event_wise_serial_time =  0;
             GUEL.clear();
-            auto& seg_ref = trace.classSegments[0];
+//            auto& seg_ref = trace.classSegments[0];
             size_t total_events = 0;
             for (const auto& obj : trace.classSegments)
                 total_events += obj.size();
@@ -168,11 +168,11 @@ std::string DTMining::dt_mine_and_ts_to_polyadic(const std::string& benchmark_re
                 per_trace_stats.avgSegmentSize += per_segment_stats.clazzSegmentSize;
                 per_segment_stats.event_wise_serial_time = per_segment_stats.event_wise_mine_time = per_segment_stats.nConstituents = 0.0;
                 const int& clazz = clazz_segment.withClass;
-                std::string clazs = std::to_string(seg_ref.withClass);
+                std::string clazs = std::to_string(clazz_segment.withClass);
 
                 // writing the initial event payloads as the first constituents for the event
-                for (size_t event_id = 0; event_id<total_events; event_id++) {
-                    seg_ref.retrieve_raw_data(event_id, raw_payload);
+                for (size_t event_id = 0; event_id<per_segment_stats.clazzSegmentSize; event_id++) {
+                    clazz_segment.retrieve_raw_data(event_id, raw_payload);
                     polyadic_events[discreteEventOffset+event_id][1].emplace_back(capnp_constituent_serializer::build(0, raw_payload, discreteEventOffset+event_id, clazs));
                 }
 

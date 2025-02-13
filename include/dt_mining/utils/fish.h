@@ -169,7 +169,7 @@ public:
         if (!isDataless) {
             for (const auto&[k,f] : funmap) {
                 auto tmp = call_c_function(dim_values, begin, end, f);
-                if ((!std::isnan(tmp)) && (std::abs(tmp)>eps)) {
+                if ((!std::isnan(tmp)) && (std::abs(tmp)>eps) && (!std::isinf(tmp))) {
                     m.emplace("values_"+k, tmp);
                 }
             }
@@ -180,10 +180,10 @@ public:
 //                }
 //            }
             auto val = call_c_int_function(dim_values, begin, end, CO_FirstMin_ac);
-            if ((!std::isnan(val)) && (std::abs(val)>eps))
+            if ((!std::isnan(val)) && (std::abs(val)>eps) && (!std::isinf(val)))
                 m.emplace("values_acf_first_min", val);
             val = call_c_int_function(dim_values, begin, end, PD_PeriodicityWang_th0_01);
-            if ((!std::isnan(val)) && (std::abs(val)>eps))
+            if ((!std::isnan(val)) && (std::abs(val)>eps)&& (!std::isinf(val)))
                 m.emplace("values_periodicity", val);
 //            val = call_c_int_function(time_values, begin, end, CO_FirstMin_ac);
 //            if ((!std::isnan(val)) && (std::abs(val)>eps))
@@ -193,9 +193,9 @@ public:
 //            m.emplace("time_periodicity", val);
         } else {
             auto cp = my_mean_variance(itv, env);
-            if (std::abs(cp.first)>eps)
+            if (std::abs(cp.first)>eps&& (!std::isinf(cp.first)))
                 m.emplace("values_mean", cp.first);
-            if (std::abs(cp.second)>eps) {
+            if (std::abs(cp.second)>eps&& (!std::isinf(cp.first))) {
                 m.emplace("values_var", cp.second);
                 m.emplace("values_stdev", std::sqrt(cp.second));
             }
@@ -210,16 +210,16 @@ public:
 //            m.emplace("time_median", my_median(itt, ent));
         }
         auto val = *my_max_element(itv, env);
-        if ((!std::isnan(val)) && (std::abs(val)>eps))
+        if ((!std::isnan(val)) && (std::abs(val)>eps)&& (!std::isinf(val)))
             m.emplace("values_max", val);
         val = *my_min_element(itv, env);
-        if ((!std::isnan(val)) && (std::abs(val)>eps))
+        if ((!std::isnan(val)) && (std::abs(val)>eps)&& (!std::isinf(val)))
             m.emplace("values_min", val);
         val = *my_max_element(itt, ent);
-        if ((!std::isnan(val)) && (std::abs(val)>eps))
+        if ((!std::isnan(val)) && (std::abs(val)>eps)&& (!std::isinf(val)))
             m.emplace("time_max", val);
         val = *my_min_element(itt, ent);
-        if ((!std::isnan(val)) && (std::abs(val)>eps))
+        if ((!std::isnan(val)) && (std::abs(val)>eps)&& (!std::isinf(val)))
             m.emplace("time_min", val);
         return m;
     }
