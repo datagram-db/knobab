@@ -225,43 +225,7 @@ std::pair<double,double> algorithmic_strategy::polyadic_dataful_mining_and_refin
                 if (!met_pairs.insert(cp_acts).second)
                     continue;
 
-                //if (elements[cp_acts].empty())
-                {
-                    // std::cerr << "#" << idx << " = " << cp_acts << std::endl;
-#ifdef DEBUG
-                    // Some of the frequent patterns might be duplicated, as starting to expand from the same activity label
-                    // So, I am only considering one pair once per activity label
-                    for (const auto& ref : elements[cp_acts]) {
-                        if (ref.first == log_name)
-                            DEBUG_ASSERT(false); // met_pairs should prevent this from happening
-                    }
-#endif
-                    elements[cp_acts].emplace_back(log_name, idx);
-//#ifdef DEBUG
-//                    {
-//                        std::unordered_map<std::string, size_t> allLogsIn;
-//                        for (const auto& pair : elements[cp_acts]) {
-//                            auto it = allLogsIn.emplace(pair.first, pair.second);
-//                            const auto& first = ref[pair.second];
-//                            const auto& previous = ref[it.first->second];
-//                            {
-//                                auto it2 = first.second.begin();
-//                                std::cerr << kb.db.event_label_mapper.get(*it2++) <<","<< kb.db.event_label_mapper.get(*it2++)<<std::endl;
-//                            }
-//                            {
-//                                auto it2 = previous.second.begin();
-//                                std::cerr << kb.db.event_label_mapper.get(*it2++) <<","<< kb.db.event_label_mapper.get(*it2++)<<std::endl;
-//                            }
-//                            DEBUG_ASSERT(it.second);
-//                        }
-//                    };
-//
-//#endif
-                }
-//                else {
-//                    indices_to_remove[log_name].emplace(idx);
-//                }
-
+                elements[cp_acts].emplace_back(log_name, idx);
             } else {
                 auto it = itemset.begin();
                 const auto& ref2 = kb.db.event_label_mapper.get(*it);
@@ -1040,7 +1004,6 @@ std::unordered_map<std::string, std::vector<std::vector<size_t>>> W1, W2;
                                 }
                             }
                         }
-                        /// XXX: end paste
                     }
 
 
@@ -1054,131 +1017,8 @@ std::unordered_map<std::string, std::vector<std::vector<size_t>>> W1, W2;
                 std::swap(cp.first, cp.second);
         }
         it++;
-        // if (rest.empty()) {
-        //     Bpayloads.clear();
-        //     Apayloads.clear();
-        //     isBDataBeingCollected = false;
-        //     isADataBeingCollected = false;
-        // } else {
-        //     const auto& lastB = *rest.rbegin();
-        //
-        //     if (it == en)
-        //         break;
-        //     else if (*it == lastB) {
-        //         std::swap(Bpayloads, Apayloads);
-        //         Bpayloads.clear();
-        //         isBDataBeingCollected = false;
-        //         isADataBeingCollected = true;
-        //     } else {
-        //         Bpayloads.clear();
-        //         Apayloads.clear();
-        //         isBDataBeingCollected = false;
-        //         isADataBeingCollected = false;
-        //     }
-        // }
     }
 
-////    PayloadPreserving pp;
-//    for (const auto& [actA, rest] : order_of_visit_for_compactness) {
-//        // TODO: cache the payload for a by accessing the activated for a, and store the current size, so that it can be cleared the one for B by resizing
-//
-//
-//    }
-//    for (const auto& [pair, entries] : elements) {
-//        std::unordered_set<std::string> logs;
-//        if (entries.size() > 1) {
-//            for (const auto& [log_name, offset] : entries) {
-//                bool firstInsertion = logs.insert(log_name).second;
-//                DEBUG_ASSERT(firstInsertion);
-//                DEBUG_ASSERT(frequent_itemsets[log_name].size() > offset);
-//                auto& g = gv[log_name];
-//                const auto& binary_pattern = frequent_itemsets[log_name][offset];
-//                auto& rc = rcv[log_name];
-//                auto& used = usedv[log_name];
-//                auto it = binary_pattern.second.begin();
-//                auto A = *it;
-//                it++;
-//                auto B = *it;
-//                const auto& cA = forAllLogsCacheMap[log_name].at(A);;
-//                const auto& cB = forAllLogsCacheMap[log_name].at(B);
-//                if (cB > cA)
-//                    std::swap(A, B);
-//                // False: do not finalise the clause insertion in phi!
-//                g.mine_for_AB_clauses(mining_supp, polyadic, A, B, cache_clause, forAllLogsCacheMap[log_name], min_int_supp_patts[log_name], rc, used, binary_pattern, false);
-//            }
-//            std::unordered_map<simple_declare, std::unordered_map<std::string,const SimpleDeclare*>> matchedClausesFromBoundary;
-//            for (const auto& log_name : logs) {
-//                auto& rc = rcv[log_name];
-//                auto& map = forAllLogsCacheMap[log_name];
-//                for (const auto& fast_clause : rc.boundary_result) {
-//                    cache_clause.left = map.at(fast_clause.A);
-//                    cache_clause.right = map.at(fast_clause.B);
-//                    cache_clause.casusu = fast_clause.name.first;
-//                    simple_declare fc = fast_clause.name;
-//                    matchedClausesFromBoundary[fc].emplace(log_name, &fast_clause);
-//                }
-//            }
-//            for (const auto&  [scl, mp] : matchedClausesFromBoundary) {
-//                if (mp.size() == 1) {
-//                    // This is the sole instance of the clause, and appears in only one log
-//                    auto it = mp.begin();
-//                    for (const auto& [log_name, v] : gv) {
-//                        if (log_name != it->first) {
-//                            const auto& genOrSelf = v.graph.generalise(scl);
-//                            if (!genOrSelf.empty()) {
-//                                // ???
-//                            }
-//                        }
-//                    }
-//                }
-////                else if (mp.size() == entries.size()) {
-////                    // This clause is present at all levels of the refinements
-////                }
-//                else {
-//
-//                }
-//            }
-//        }
-//
-//    }
-//
-//
-//    // 2. Mining for the non-shared clauses
-//    // 2a) Marking as to remove the items that are binary and already handled in the previous phase, that is, the ones having
-//    // more than one other log containing those
-//    for (auto it = elements.begin(); it != elements.end();  ) {
-//        if ((it->second.size() != 1)) {
-//            for (const auto &ref: it->second) {
-//                indices_to_remove[ref.first].emplace(
-//                        ref.second);  // Not using directly the frequent itemsets for mining the shared clauses
-//            }
-//            it++;
-//        }
-//    }
-//    elements.clear();
-//    for (auto& [k,v] : indices_to_remove) {
-//        remove_index(frequent_itemsets[k], std::vector<size_t>(v.begin(), v.end())); // Removing the shared frequent itemset by index, so that those can be handled joinly along the elements of the map.
-//        // Also, removing all the  patterns with __missing
-//    }
-//
-//    // 2b) Last, we are mining the binary patterns that binary and not shared across the logs
-//    for (const auto& [log_name, fis] : frequent_itemsets) {
-//        auto& g = gv[log_name];
-//        auto& rc = rcv[log_name];
-//        auto& used = usedv[log_name];
-//
-//        for (const auto& binary_pattern : fis) {
-//            auto it = binary_pattern.second.begin();
-//            auto A = *it;
-//            it++;
-//            auto B = *it;
-//            g.mine_for_AB_clauses(mining_supp, polyadic, A, B, cache_clause, forAllLogsCacheMap[log_name], min_int_supp_patts[log_name], rc, used, binary_pattern);
-//        }
-//    }
-//    // 3. Last, finalising the collection of the patterns in Phi for each log
-//    for (auto& [log_name, g]: gv) {
-//        g.finalise_run(minimum_support_thresholds[log_name], usedv[log_name]);
-//    }
 
     auto r_preprocessing2 = high_resolution_clock::now();
     duration<double, std::milli> ms_double = (r_preprocessing2-r_preprocessing1 );

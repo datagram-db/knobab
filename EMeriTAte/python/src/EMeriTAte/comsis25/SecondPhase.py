@@ -2,6 +2,7 @@ import os.path
 import re
 import shutil
 from collections import defaultdict
+from datetime import datetime
 from os import listdir
 from os.path import isfile, join
 from pathlib import Path
@@ -112,8 +113,13 @@ def old_pipeline(json_file, numclasses,
         shutil.copyfile(json_file, dst_json)
     pp = os.path.join(json_algo4_dir, desired_folder)
 
+    per_element_mining_begin = datetime.now()
     knobab = KnobabEmeritateSupport(support, environment_field, dst_json, ignorable, reclassify)
     knobab.call_interface(time_field, False, json_algo4_dir if not reclassify else pp, polymine, reduce)
+    per_element_mining_end = datetime.now()
+    mining_and_json_ser = per_element_mining_end - per_element_mining_begin
+    per_element_mining = mining_and_json_ser.total_seconds() * 1000
+    print("per_element_mining (ms):", per_element_mining)
 
     for i in range(numclasses):
         pc = ProcessClasses()
@@ -124,8 +130,13 @@ def old_pipeline(json_file, numclasses,
     class_files = []
 
     if not reclassify:
+        fast_sat_mining_begin = datetime.now()
         knobab.call_interface(time_field, True, pp, polymine, reduce)
         pp, final = pp, dst_json + f"_{supp}_{red}_{polyint}_{rec}_clazz={{clazz}}.txt"
+        fast_sat_mining_end = datetime.now()
+        mining_and_json_ser = fast_sat_mining_end - fast_sat_mining_begin
+        fast_sat_mining = mining_and_json_ser.total_seconds() * 1000
+        print("fast_sat_mining (ms):", fast_sat_mining)
 
         ## Reading all of the class files that have been dumped
         for f in [f for f in listdir(pp) if isfile(join(pp, f))]:
@@ -156,19 +167,11 @@ def knowledge_extraction_algorithm(json_file_from_first_phase: str,
         polymine = kwargs.get("polymine", True)
         return old_pipeline(json_file_from_first_phase, numclasses, polymine, reduce, support, environment_field, time_field, False, ignorable)
     elif algorithm == 5:
-        numclasses = kwargs.get("numclasses", 2)
-        ignorable = kwargs.get("ignorable", None)
-        time_field = kwargs.get("time_field", "time")
-        environment_field = kwargs.get("environment_field", "user")
-        support = kwargs.get("support", 0.0)
-        reduce = kwargs.get("reduce", False)
-        polymine = kwargs.get("polymine", True)
-        return old_pipeline(json_file_from_first_phase, numclasses, polymine, reduce, support, environment_field,
-                            time_field, True, ignorable)
+        pass ## TODO: merge the algorithm in python
 
 
 
 if __name__ == "__main__":
-    d = neu_pipeline("/media/giacomo/Data/osuleaf/test/")
-    print(d)
-    # knowledge_extraction_algorithm("/home/giacomo/projects/knobab2_loggen/EMeriTAte/italy_power_demand/polyadic_Algo1_dataless.json", 5)
+    # d = neu_pipeline("/media/giacomo/Data/osuleaf/test/")
+    # print(d)
+    knowledge_extraction_algorithm("/home/giacomo/projects/knobab2_loggen/EMeriTAte/dyskinetic/polyadic_Algo1_dataless.json", 4)

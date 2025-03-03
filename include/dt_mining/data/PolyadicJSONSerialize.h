@@ -32,7 +32,7 @@ public:
     PolyadicJSONSerialize(std::ostream& os);
 
     void transfer_information(PolyadicJSONSerialize&& obj) {
-        hierarchy.swap(obj.hierarchy);
+//        hierarchy.swap(obj.hierarchy);
         types.swap(obj.types);
     }
 

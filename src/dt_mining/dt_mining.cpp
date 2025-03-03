@@ -329,7 +329,7 @@ std::string DTMining::dt_mine_and_ts_to_polyadic(const std::string& benchmark_re
                                 payloads.set_up_numeric_variables(k);
                             }
                             auto att1 = act_level_max_span.emplace(full_poly_event.label, full_poly_event.span);
-                            if (att1.second || ((!att1.second) && (att1.first->second <= full_poly_event.span))) {
+                            if ((att1.second || ((!att1.second) && (att1.first->second <= full_poly_event.span)))) {
                                 if (att1.first->second < full_poly_event.span) {
                                     att1.first->second = full_poly_event.span;
                                     CC[full_poly_event.label].clear();
@@ -353,7 +353,12 @@ std::string DTMining::dt_mine_and_ts_to_polyadic(const std::string& benchmark_re
                     vals.clear();
                 }
                 CC.clear();
+                auto& map2 = CCC["__raw_data"]["__raw_data"];
+                DEBUG_ASSERT(map2.size() == 1);
+                payloads.json_serialize_constituent(map2[0]);
+
                 for (auto& [var, map] : CCC) {
+                    if (var == "__raw_data") continue;
                     std::unordered_map<size_t, std::vector<CacheConstituent>> C3;
                     for (auto& [cond, objs] : map ) {
                         for (auto& full_poly_event: objs) {

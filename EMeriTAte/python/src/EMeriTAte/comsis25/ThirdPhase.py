@@ -126,12 +126,9 @@ def training(dataset_name, dict_list, first_phase, second_phase, poly, supp, red
     print(f"recall: {statistics.fmean(ls_recall)} pm {(max(ls_recall)-min(ls_recall))/2}")
     print(f"f1: {statistics.fmean(ls_f1)} pm {(max(ls_f1)-min(ls_f1))/2}")
 
-def load_traditional():
-    dataset = "osuleaf"
-    nclasses = 9
-    supp = 0
+def load_traditional(dataset = "osuleaf", supp = 0):
+    # nclasses = 9
     s = 1 if supp == 1.0 else (0 if supp == 0.0 else supp)
-
     regex = r"output\_csv\_(\d)+\.csv"
     split = 0.3
     class_field = "class"
@@ -176,6 +173,8 @@ if __name__ == "__main__":
     # ## Loading all of the datasets belonging to that class
     # dict_list = loadDataset(class_files, class_field)
 
+    # dict_list = load_traditional("osuleaf")
+    # training("osuleaf_old2", dict_list, 1, 4, True, 0.0, False, nclasses=6, max_depth=5)
     from EMeriTAte.comsis25.SecondPhase import neu_pipeline
     dict_list = neu_pipeline("/home/giacomo/projects/knobab2_loggen/EMeriTAte/dyskinetic/test") #load_traditional()#
-    training("dyskinetic", dict_list, 1, 4, True, 0.0, False, nclasses=6, max_depth=5)
+    training("dyskinetic_dataful", dict_list, 1, 4, True, 0.0, False, nclasses=8, max_depth=5)

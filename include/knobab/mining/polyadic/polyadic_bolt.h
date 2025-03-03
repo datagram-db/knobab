@@ -643,7 +643,7 @@ struct polyadic_bolt {
                 }
 
                 TRACE_SET_ADD(viol_p[flip], a_trace_id);
-                if (hasShift) {
+                if (hasFlip) {
                     pp[flip]->add_activation_with_target_violation(log_name, a_beginend.first,fprec_node, log_size);
                 }
 
@@ -745,7 +745,7 @@ struct polyadic_bolt {
                      a_beginend.first->entry.id.parts.event_id)) {
                     // Ok, I have a match!
                     if (hasShift) {
-                        pp[shift]->add_activation_with_target(log_name, a_beginend.first, resp_node, log_size, a_beginend.first);
+                        pp[shift]->add_activation_with_target(log_name, a_beginend.first, resp_node, log_size, b_beginend.first);
                     }
                 }
                 else {

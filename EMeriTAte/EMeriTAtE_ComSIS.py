@@ -25,12 +25,12 @@ def new_pipeline(csv_folder:str,
 
 
 if __name__ == "__main__":
-    benchmark_file = "benchmark_japanese.json"
-    mining("dyskinetic", True, 1, benchmark_file, numclazzes=2)
+    benchmark_file = "benchmark_dyskinetic.json"
     # benchmark_file = "benchmark_italy.json"
-    # for i in range(5):
-    #     logger.info(f"Run #{i}")
-    #     logger.info("Algo 1 running")
+    for i in range(5):
+        logger.info(f"Run #{i}")
+        logger.info("Algo 1 running")
+        mining("dyskinetic", True, 1, benchmark_file, numclazzes=2)
     #     mining("italy_power_demand", True, 1, benchmark_file, numclazzes=2)
         # logger.info("Algo 2 [Dataless] running")
         # mining("italy_power_demand", True, 2, benchmark_file, numclazzes=2)

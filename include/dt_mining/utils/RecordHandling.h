@@ -511,63 +511,63 @@ private:
 //        DEBUG_ASSERT((GRP_START(x)+GRP_INT_DURATION(x)-1) == (GRP_INT_DURATION(x)));
         push_task(pool, futures, straight[group_type], GRP_START(x), GRP_FINISH(x));
         for (size_t current_span = 1; current_span <= GRP_INT_DURATION(x); ++current_span) {
-            for (size_t start = GRP_START(x); start <= (GRP_FINISH(x)-current_span+1); start++) {
-                if (start + current_span - 1 > GRP_FINISH(x)) {
+            for (size_t beta = GRP_START(x); beta <= (GRP_FINISH(x) - current_span + 1); beta++) {
+                if (beta + current_span - 1 > GRP_FINISH(x)) {
                     continue;
                 }
                 std::optional<Group> Inext;
-                if (GRP_FINISHES_AT(x, start)) {
+                if (GRP_FINISHES_AT(x, beta)) {
                     Inext = inIntervalTree(groups[flip], GRP_FINISH(x) + 1);
                 }
-                if (GRP_STARTS_AT(x, start)) {
-                    auto Iprev = inIntervalTree(groups[flip], start - 1);
+                if (GRP_STARTS_AT(x, beta)) {
+                    auto Iprev = inIntervalTree(groups[flip], beta - 1);
                     if (Iprev.has_value()) {
-                        push_task(pool, futures, OneHiccup_S41[group_type], start - 1, start + current_span - 1);
+                        push_task(pool, futures, OneHiccup_S41[group_type], beta - 1, beta + current_span - 1);
                         if (Inext.has_value()) {
-                            push_task(pool, futures, HV4_3[group_type], start - 1, start + current_span);
+                            push_task(pool, futures, HV4_3[group_type], beta - 1, beta + current_span);
                         }
                         if (GRP_INT_DURATION(Iprev.value())) {
-                            auto Iprevprev = inIntervalTree(groups[group_type], start - 2);
+                            auto Iprevprev = inIntervalTree(groups[group_type], beta - 2);
                             if (Iprevprev.has_value()) {
-                                push_task(pool, futures, TwoHiccups_S32[group_type], start - 2, start + current_span - 1);
+                                push_task(pool, futures, TwoHiccups_S32[group_type], beta - 2, beta + current_span - 1);
                             }
                         } else {
-                            for (int prev_start = GRP_START(Iprev.value());
-                                     prev_start <= GRP_FINISH(Iprev.value());
-                                     prev_start++) {
-                                if (prev_start == start - 1) {
-                                    continue;
-                                }
-                                push_task(pool, futures, HV6_1[group_type], prev_start, start + current_span - 1);
-                                begin_match[prev_start].insert(start + current_span - 1);
-                            }
+//                            for (int prev_start = GRP_START(Iprev.value());
+//                                     prev_start <= GRP_FINISH(Iprev.value());
+//                                     prev_start++) {
+//                                if (prev_start == beta - 1) {
+//                                    continue;
+//                                }
+//                                push_task(pool, futures, HV6_1[group_type], prev_start, beta + current_span - 1);
+//                                begin_match[prev_start].insert(beta + current_span - 1);
+//                            }
                         }
                     }
                 }
-                if ((GRP_FINISHES_AT(x, start + current_span - 1)) && (Inext.has_value())) {
+                if ((GRP_FINISHES_AT(x, beta + current_span - 1)) && (Inext.has_value())) {
                     bool found = false;
                     if (GRP_IS_SINGLET(Inext.value())) {
                         auto Inextnext = inIntervalTree(groups[group_type], GRP_FINISH(x) + 2);
                         if (Inextnext.has_value()) {
                             found = true;
-                            push_task(pool, futures, EndHiccup_S23[group_type], start, start + current_span);
+                            push_task(pool, futures, EndHiccup_S23[group_type], beta, beta + current_span);
                         }
                     }
                     if (!found) {
-                        push_task(pool, futures, End2Hiccups_S14[group_type], start, start + current_span - 1);
+                        push_task(pool, futures, End2Hiccups_S14[group_type], beta, beta + current_span - 1);
                     }
                 }
             }
         }
-        for (const auto& [begin, ends] : begin_match) {
-            for (int end : ends) {
-                if (begin_match.find(end + 1) != begin_match.end()) {
-                    for (int new_end_time : begin_match[end + 1]) {
-                        push_task(pool, futures, HV5_2[group_type], begin, new_end_time);
-                    }
-                }
-            }
-        }
+//        for (const auto& [begin, ends] : begin_match) {
+//            for (int end : ends) {
+//                if (begin_match.find(end + 1) != begin_match.end()) {
+//                    for (int new_end_time : begin_match[end + 1]) {
+//                        push_task(pool, futures, HV5_2[group_type], begin, new_end_time);
+//                    }
+//                }
+//            }
+//        }
     }
 
     void Algorithm4(ThreadPool& pool,
